@@ -15,7 +15,7 @@ const POI_ICON = {
   school: "🏫", academia: "🎓", health: "🏥", mall: "🛒", train: "🚉",
   worship: "🕍", police: "🚓", fire: "🚒", library: "📚", community: "🏘️",
   gov: "🏛️", culture: "🎭", busstation: "🚌", park: "🌳", sport: "⚽",
-  shop: "🏪", fuel: "⛽", bank: "🏦", junction: "🛣️", post: "📮", cemetery: "🪦",
+  shop: "🏪", fuel: "⛽", bank: "🏦", junction: "🛣️", post: "📮", cemetery: "🪦", hood: "🏙️",
 };
 
 // מציגים ב"ליד התחנה" רק מקומות עד ~5–6 דק׳ הליכה אמיתית
@@ -619,6 +619,8 @@ function autoCheck(s) {
     }
     return { tone: "neutral", text: "בדיקה אוטומטית: ההצעה מבוססת על מרחק אווירי (אין נתוני הליכה לרחוב זה)." };
   }
+  if (s.lm)
+    return { tone: "ok", text: "בדיקה אוטומטית: התחנה קרויה על-שם מוסד או מקום (לא על-שם רחוב) — ככל הנראה שם תקין." };
   if (s.k === "spelling" || s.k === "uncertain")
     return { tone: "warn", text: "בדיקה אוטומטית: ההבדל בין השם לכתובת הוא ברמת אות/כתיב — ייתכן שזו אותה מילה." };
   if (s.ms) return { tone: "neutral", text: "בדיקה אוטומטית: לפי המפה הרחוב הקרוב לתחנה הוא «" + s.ms + "» (" + s.md + " מ׳); בכתובת רשום «" + s.s + "»." };

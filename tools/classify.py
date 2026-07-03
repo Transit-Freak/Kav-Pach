@@ -12,7 +12,7 @@ PREV=os.environ.get('PREV',''); OUT=os.environ.get('OUT','next-station/data.json
 PREF=['שדרות','שדרת',"שד'",'שד','רחוב',"רח'",'רח','דרך','סמטת','סמטה',"סמ'",'שכונת',"שכ'",'כיכר','ככר','מחלף','כביש']
 TITLES={'הרב','רב','דר','דוקטור','פרופ','השר','ראל','אלוף','סרן','הנשיא','מר','גנרל','בי"ס','ביה"ס','בית','ספר','גן','קניון'}
 # מוקדים "מרכזיים" שראויים לשמש שם תחנה (עד 100 מ׳)
-MAJOR_POI={'train','busstation','mall','health','academia','gov','culture','cemetery'}
+MAJOR_POI={'train','busstation','mall','health','academia','gov','culture','cemetery','hood'}
 # "הצעות כלליות": הרחוב המצטלב בשם רחוק מהתחנה (>=CLOSER_FAR מ׳ / לא נמצא בקרבת מקום),
 # בעוד רחוב אחר עובר ממש לידה (<=CLOSER_CAP מ׳) ובהפרש מוחשי (>=CLOSER_GAP מ׳).
 CLOSER_CAP=24
