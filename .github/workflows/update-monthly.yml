@@ -187,8 +187,17 @@ jobs:
                 elif k=='lm': rw[k]={'min':None,'d':None}  # אין מסלול הליכה כלל — סימן מובהק לחוסר חיבור
               if rw: s['rw']=rw; walked+=1
             except Exception: pass
+          # "שם מטעה": ההליכה למקום-שבשם חושבה הרגע — מקדמים כבר בריצה זו (ולא רק בשבועית הבאה)
+          for s in d['stops']:
+            w=(s.get('rw') or {}).get('lm'); p=s.get('lmp')
+            if s.get('k')=='uncertain' and s.get('lm') and w and p and (w.get('d') is None or (w['d'] or 0)>max(2*p['d'],p['d']+600)):
+              s['k']='mislead'
+          cnts=d.get('counts') or {}
+          cnts['mislead']=sum(1 for s in d['stops'] if s.get('k')=='mislead')
+          cnts['uncertain']=sum(1 for s in d['stops'] if s.get('k')=='uncertain')
+          d['counts']=cnts
           json.dump(d, open('next-station/data.json','w'), ensure_ascii=False, separators=(',',':'))
-          print('stops enriched with walking times:', en, '| closer streets walked:', walked)
+          print('stops enriched with walking times:', en, '| closer streets walked:', walked, '| mislead:', cnts['mislead'])
           PY
           docker rm -f osrm || true
 

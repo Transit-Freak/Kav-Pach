@@ -6,6 +6,7 @@ const CATS = {
   reversal: { label: "היפוך / ציון-דרך", color: "#7c3aed", desc: "הרחוב האמיתי מופיע שני בשם" },
   spelling: { label: "טעות כתיב", color: "#d97706", desc: "אותו רחוב, אות שונה — כנראה שגיאה" },
   streetvar: { label: "אי-התאמה ברחוב", color: "#0891b2", desc: "הרחוב נכתב כאן אחרת מרוב התחנות באותו רחוב" },
+  mislead: { label: "שם מטעה", color: "#e11d48", desc: "קרויה על-שם מקום שאין אליו הליכה סבירה מהתחנה (נבדק במסלול הליכה אמיתי)" },
   uncertain: { label: "ספק / כתיב חלופי", color: "#64748b", desc: "כנראה לא טעות — הבדל כתיב, או שם על-שם מוסד/ציון-דרך (בית ספר, מרפאה, ישיבה…)" },
   closer: { label: "הצעות כלליות", color: "#16a34a", desc: "הרחוב המצטלב בשם רחוק מהתחנה — יש רחוב אחר קרוב יותר שכדאי שיופיע בשם" },
 };
@@ -418,7 +419,7 @@ function App() {
   }, [sel]);
 
   // סדר חומרה לקטגוריות — "ספק" תמיד אחרון
-  const RANK = { mismatch: 0, reversal: 1, spelling: 2, streetvar: 3, uncertain: 4, closer: 5 };
+  const RANK = { mismatch: 0, reversal: 1, spelling: 2, streetvar: 3, mislead: 4, uncertain: 5, closer: 6 };
 
   // useDeferredValue: תיבת החיפוש מגיבה מיד לכל הקלדה, והסינון הכבד רץ ברקע
   // (בלי זה כל אות "תוקעת" את המקלדת בטלפון עד שהסינון מסתיים)
@@ -635,7 +636,7 @@ function App() {
 
 // מחולל מכתב פנייה לרשות — רשימת הליקויים בעיר, מוכן להעתקה/הורדה
 function LetterModal({ data, initial, onClose }) {
-  const ERR = ["mismatch", "reversal", "spelling", "streetvar"];
+  const ERR = ["mismatch", "reversal", "spelling", "streetvar", "mislead"];
   const cities = useMemo(() => {
     const m = new Map();
     data.stops.forEach((s) => { if (ERR.includes(s.k) && s.t) m.set(s.t, (m.get(s.t) || 0) + 1); });

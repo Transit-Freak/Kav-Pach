@@ -147,3 +147,5 @@ jobs:
 # reclassify: clean namesake matches (identifying-words fix) + pick up מורן if landed
 
 # reclassify: streetvar whose name exactly matches a nearby place (צומת כרם) -> landmark, not variance
+
+# reclassify: new category שם מטעה — namesake unreachable by foot (2x aerial / no route)
