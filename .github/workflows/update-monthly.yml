@@ -41,7 +41,7 @@ jobs:
       - name: Overpass — points of interest
         run: |
           set -euo pipefail
-          Q='[out:json][timeout:700][bbox:29.4,34.2,33.35,35.95];(nwr["amenity"~"^(school|university|college|kindergarten|hospital|clinic|townhall|police|fire_station|library|community_centre|courthouse|theatre|cinema|bus_station|marketplace|fuel|bank|place_of_worship|post_office|grave_yard|social_facility|nursing_home|retirement_home)$"]["name"];nwr["landuse"="cemetery"]["name"];nwr["shop"~"^(mall|department_store|supermarket|convenience)$"]["name"];nwr["railway"="station"]["name"];nwr["leisure"~"^(park|sports_centre|stadium|pitch)$"]["name"];nwr["tourism"~"^(museum|attraction)$"]["name"];nwr["office"="government"]["name"];nwr["public_transport"="station"]["name"];nwr["highway"="motorway_junction"]["name"];nwr["junction"="yes"]["name"];nwr["building"~"^(synagogue|mosque|church|chapel|temple|religious|school|university|college|kindergarten|civic|public|hospital|government)$"]["name"];nwr["place"~"^(neighbourhood|suburb|quarter)$"]["name"];);out center tags;'
+          Q='[out:json][timeout:700][bbox:29.4,34.2,33.35,35.95];(nwr["amenity"~"^(school|university|college|kindergarten|hospital|clinic|townhall|police|fire_station|library|community_centre|courthouse|theatre|cinema|bus_station|marketplace|fuel|bank|place_of_worship|post_office|grave_yard|social_facility|nursing_home|retirement_home)$"]["name"];nwr["landuse"="cemetery"]["name"];nwr["shop"~"^(mall|department_store|supermarket|convenience)$"]["name"];nwr["railway"="station"]["name"];nwr["leisure"~"^(park|sports_centre|stadium|pitch)$"]["name"];nwr["tourism"~"^(museum|attraction)$"]["name"];nwr["office"="government"]["name"];nwr["public_transport"="station"]["name"];nwr["highway"="motorway_junction"]["name"];nwr["junction"="yes"]["name"];nwr["building"~"^(synagogue|mosque|church|chapel|temple|religious|school|university|college|kindergarten|civic|public|hospital|government)$"]["name"];nwr["place"~"^(neighbourhood|suburb|quarter)$"]["name"];nwr["barrier"~"^(border_control|checkpoint)$"]["name"];);out center tags;'
           for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
             if curl -fsS --max-time 800 --data-urlencode "data=$Q" "$ep" -o poi_raw.json; then echo "got $(wc -c < poi_raw.json) bytes"; break; fi
             echo "endpoint failed, next"; sleep 5
@@ -55,6 +55,7 @@ jobs:
             hw=t.get('highway'); jn=t.get('junction')
             if hw=='motorway_junction' or jn=='yes': return 'junction'
             if t.get('place') in ('neighbourhood','suburb','quarter'): return 'hood'
+            if t.get('barrier') in ('border_control','checkpoint'): return 'checkpoint'
             if sh in ('mall','department_store'): return 'mall'
             if sh in ('supermarket','convenience'): return 'shop'
             if am=='fuel': return 'fuel'
@@ -87,7 +88,7 @@ jobs:
             return 'other'
           out=[]
           for e in d.get('elements',[]):
-            t=e.get('tags',{}); name=t.get('name')
+            t=e.get('tags',{}); name=t.get('name:he') or t.get('name')
             if not name: continue
             lat=e.get('lat'); lon=e.get('lon')
             if lat is None:
