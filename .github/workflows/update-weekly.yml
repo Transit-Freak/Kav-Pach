@@ -159,3 +159,5 @@ jobs:
 # reclassify: remote namesake matching is exact-token only (אביק != אביב); מפעל is generic
 
 # reclassify: generic words blocked with definite article too (הכנסת = כנסת)
+
+# reclassify: דלק/כללית/אבן are generic — last namesake noise family
