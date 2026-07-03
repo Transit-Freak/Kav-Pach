@@ -73,3 +73,5 @@ jobs:
           git push -f origin osm-roads
 
 # refetch: user named רחוב מורן in ניר גלים on OSM — pick it up
+
+# refetch: retry — Overpass had not yet ingested the מורן edit on the previous run
