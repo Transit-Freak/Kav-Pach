@@ -403,6 +403,10 @@ for r in rows[1:]:
     nb=nearby(la,lo,800)  # רדיוס רחב — לשטחים גדולים; הסינונים בהמשך (100/300 מ׳) לא מושפעים
     # קרויה על-שם מקום אמיתי סמוך (POI) — שם תקין, לא מוצגת כלל
     if cat in ('reversal','mismatch') and name_matches_poi(prim,nb): cnt['landmark']+=1; continue
+    # "אי-התאמה ברחוב" שהיא בעצם שם מקום מדויק: "צומת כרם" ברחוב עין כרם —
+    # השם זהה במלואו למקום אמיתי סמוך (עד 300 מ׳), אז זו קריאה מכוונת ולא סטיית-כתיב
+    if cat=='streetvar' and any(dist<=300 and nl(p['n'])==nl(prim) for dist,p in nb):
+        cnt['landmark']+=1; continue
     # שם על-שם מוסד/ציון-דרך ("מרפאה", "הישיבה/רמב''ם") בלי POI תואם — לספק, בלי הצעת-שינוי.
     # רץ אחרי בדיקת ה-POI, כדי ש"מרכז ביג קסטינה" ליד הקניון ייעלם ולא יסומן בכלל.
     lm=landmark_name(prim) if cat in ('reversal','mismatch') else None
