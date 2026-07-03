@@ -96,6 +96,12 @@ def same_street(a,b):
 def ktiv_only(a,b):
     sa=re.sub('[יו]','',nf(a)); sb=re.sub('[יו]','',nf(b))
     return sa==sb and len(sa)>=3
+def joined_typo(a,b):
+    # "קוסטריקה" מול "קוסטה ריקה": השם התאחד למילה אחת עם שיבוש אות —
+    # זו טעות כתיב אמיתית, לא "קיצור" (אף מילה לא הושמטה, רק הרווח והאות)
+    ja=re.sub(r'\s[א-ת]$','',nl(a)).replace(' ','')
+    jb=re.sub(r'\s[א-ת]$','',nl(b)).replace(' ','')
+    return len(ja)>=6 and len(jb)>=6 and ja!=jb and lev(ja,jb)<=1
 def abbrev_pair(a,b):
     # קיצור, לא טעות כתיב: "לדזינסקי" מול "עובד לדיז'נסקי" — פסק ה'spelling'
     # הגיע מהשוואת המילה האחרונה בלבד, אבל צד אחד השמיט מילים מהשם המלא.
@@ -401,7 +407,7 @@ for r in rows[1:]:
                 closer_cands.append(rec); continue
         cnt['exact']+=1; continue
     if samestreet: cat='streetvar'
-    elif rel(prim,st)=='spelling': cat='uncertain' if (ktiv_only(prim,st) or abbrev_pair(prim,st)) else 'spelling'
+    elif rel(prim,st)=='spelling': cat='uncertain' if (ktiv_only(prim,st) or (abbrev_pair(prim,st) and not joined_typo(prim,st))) else 'spelling'
     elif cross and rel(cross,st) in ('exact','spelling'):
         cat='uncertain' if rel(cross,st)=='spelling' and ktiv_only(cross,st) else 'reversal'
     elif named_after_city(name,c): cnt['settlement']+=1; continue

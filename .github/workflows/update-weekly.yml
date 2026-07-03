@@ -165,3 +165,5 @@ jobs:
 # reclassify: remove the שם מטעה category entirely — too many false positives
 
 # reclassify: joined-words comparison (קוסטריקה = קוסטה ריקה) — one-word spellings match their street
+
+# reclassify: joined-word with a letter typo (קוסטריקה) is a spelling error, not ספק
