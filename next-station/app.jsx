@@ -53,6 +53,17 @@ function lcsMark(a, b, which) {
   return out.map(([ch, d, k]) => d ? <span className="d-hl" key={k}>{ch}</span> : <span key={k}>{ch}</span>);
 }
 
+// טקסט "שם על-שם מוסד/ציון-דרך" — מדויק לפי המילה שזוהתה (צומת ≠ מוסד)
+const LM_PLACE = ["צומת", "שכונ", "מסוף", "מסעף", "פארק", "חוף", "אזור", "קרית", "קריית", "רמת", "גבעת", "הר", "עלמין", "העלמין", "קבר", "הקברות", "מחנה", "מגרש", "מתחם", "מיתחם"];
+function lmKind(s) {
+  if (!s.lmw) return "מוסד או מקום";
+  const place = LM_PLACE.some((w) => s.lmw.startsWith(w));
+  return (place ? "ציון-דרך" : "מוסד") + " («" + s.lmw + "»)";
+}
+function lmText(s) {
+  return "🏛️ התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב — ככל הנראה שם תקין.";
+}
+
 // כפתור העתקה כללי — מעתיק טקסט ללוח עם משוב "הועתק"
 function CopyBtn({ label, make }) {
   const [ok, setOk] = useState(false);
@@ -120,7 +131,7 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
         {CATS[s.k].label} — {CATS[s.k].desc}
       </div>
       {s.lm ? (
-        <div className="d-diff">🏛️ התחנה קרויה על-שם מוסד או מקום (לא על-שם רחוב) — ככל הנראה שם תקין.</div>
+        <div className="d-diff">{lmText(s)}</div>
       ) : (s.k === "spelling" || s.k === "uncertain") && (
         <div className="d-diff">💬 בשם התחנה: «<b>{lcsMark(primName(s.n), s.s, "a")}</b>» · בכתובת: «<b>{lcsMark(primName(s.n), s.s, "b")}</b>»</div>
       )}
@@ -669,7 +680,7 @@ function autoCheck(s) {
     return { tone: "neutral", text: "בדיקה אוטומטית: ההצעה מבוססת על מרחק אווירי (אין נתוני הליכה לרחוב זה)." };
   }
   if (s.lm)
-    return { tone: "ok", text: "בדיקה אוטומטית: התחנה קרויה על-שם מוסד או מקום (לא על-שם רחוב) — ככל הנראה שם תקין." };
+    return { tone: "ok", text: "בדיקה אוטומטית: התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב — ככל הנראה שם תקין." };
   if (s.k === "spelling" || s.k === "uncertain")
     return { tone: "warn", text: "בדיקה אוטומטית: ההבדל בין השם לכתובת הוא ברמת אות/כתיב — ייתכן שזו אותה מילה." };
   if (s.ms) return { tone: "neutral", text: "בדיקה אוטומטית: לפי המפה הרחוב הקרוב לתחנה הוא «" + s.ms + "» (" + s.md + " מ׳); בכתובת רשום «" + s.s + "»." };

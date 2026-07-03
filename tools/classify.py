@@ -105,9 +105,12 @@ LANDMARK_WORDS=('מרכז','בית ','בית ספר','ביהס','ביס','גן '
   'מגרש','מכון','מחנה','תמרכזית','עיריה','עירייה','עירית','עיריית','שוק','רמת','גבעת',
   'עלמין','העלמין','בית עלמין','בית קברות','הקברות','קבר ','הר ')
 def landmark_name(s):
-    # מקף הופך לרווח ("בית-עלמין" ≡ "בית עלמין"); גרשיים/נקודות נמחקים
+    # מקף הופך לרווח ("בית-עלמין" ≡ "בית עלמין"); גרשיים/נקודות נמחקים.
+    # מחזירה את מילת ציון-הדרך שנמצאה (למשל "צומת") — לתצוגה מדויקת באתר
     s=re.sub(r'\s+',' ',re.sub('[\"׳״.]','',(s or '')).replace('-',' ').replace("'",'')).strip()
-    return any(s==w.strip() or s.startswith(w) or (' '+w) in (' '+s) for w in LANDMARK_WORDS)
+    for w in LANDMARK_WORDS:
+        if s==w.strip() or s.startswith(w) or (' '+w) in (' '+s): return w.strip()
+    return None
 # השוואת רחובות עמידה למקפים/גרשיים/כתיב מלא (לזיהוי "הצעות כלליות" בלבד)
 def streets_match(a,b):
     a=(a or '').replace('-',' '); b=(b or '').replace('-',' ')
@@ -344,8 +347,8 @@ for r in rows[1:]:
     if cat in ('reversal','mismatch') and name_matches_poi(prim,nb): cnt['landmark']+=1; continue
     # שם על-שם מוסד/ציון-דרך ("מרפאה", "הישיבה/רמב''ם") בלי POI תואם — לספק, בלי הצעת-שינוי.
     # רץ אחרי בדיקת ה-POI, כדי ש"מרכז ביג קסטינה" ליד הקניון ייעלם ולא יסומן בכלל.
-    lm=False
-    if cat in ('reversal','mismatch') and landmark_name(prim): cat='uncertain'; lm=True
+    lm=landmark_name(prim) if cat in ('reversal','mismatch') else None
+    if lm: cat='uncertain'
     cnt[cat]+=1
     sug=None
     # לא מציעים שם שאינו עברית (כתב ערבי/מספרי): אם הרחוב הקרוב ביותר כזה — אין הצעה
@@ -370,7 +373,7 @@ for r in rows[1:]:
         if rt: pr['rt']=rt
         pois.append(pr)
     rec={'c':code,'n':name,'s':st,'t':c,'la':la,'lo':lo,'k':cat,'p':pois,'ms':ms,'md':md}
-    if lm: rec['lm']=1  # ספק מסוג "שם-מוסד" — לתצוגה מותאמת (בלי השוואת אותיות)
+    if lm: rec['lm']=1; rec['lmw']=lm  # ספק מסוג "שם-מוסד/ציון-דרך" + המילה שזוהתה (צומת, שכונה...)
     if sug: rec['sug']=sug
     if psug: rec['psug']=psug; rec['psugd']=psugd
     if sv: rec['sv']={'use':sv[0],'maj':sv[1],'n':sv[2]}
