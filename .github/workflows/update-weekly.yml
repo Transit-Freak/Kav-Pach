@@ -123,3 +123,5 @@ jobs:
 # reclassify: abbreviated street names (לדזינסקי = עובד לדיזנסקי) are ספק, not טעות כתיב
 
 # reclassify: area POIs (cemetery/park/hood) match up to 800m by centroid; הר -> landmark word (הר הזיתים)
+
+# reclassify: checkpoints layer + Hebrew POI names landed; מעבר/מחסום -> landmark words
