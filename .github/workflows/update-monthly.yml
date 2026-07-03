@@ -165,16 +165,12 @@ jobs:
                 k+=1
               en+=1
             except Exception: pass
-          # מרחקי הליכה אמיתיים: "הצעות כלליות" (רחובות ראשי/מצטלב/מוצע) + "המקום שבשם"
-          # (lmp — צומת ערוגות ↔ מושב ערוגות): תחנה בלי חיבור הליכה סביר תסומן באתר כחשודה.
+          # מרחקי הליכה אמיתיים: "הצעות כלליות" (רחובות ראשי/מצטלב/מוצע)
           walked=0
           for s in d['stops']:
-            if s.get('la') is None: continue
-            targets=[]
-            if s.get('k')=='closer':
-              rds=s.get('roads',{})
-              targets=[(k,rds[k]['pt'][1],rds[k]['pt'][0]) for k in ('prim','cur','sug') if rds.get(k) and rds[k].get('pt')]
-            if s.get('lmp'): targets.append(('lm',s['lmp']['lo'],s['lmp']['la']))
+            if s.get('la') is None or s.get('k')!='closer': continue
+            rds=s.get('roads',{})
+            targets=[(k,rds[k]['pt'][1],rds[k]['pt'][0]) for k in ('prim','cur','sug') if rds.get(k) and rds[k].get('pt')]
             if not targets: continue
             coords="%s,%s;"%(s['lo'],s['la'])+";".join("%s,%s"%(x,y) for _,x,y in targets)
             try:
@@ -184,20 +180,10 @@ jobs:
               rw={}
               for i,(k,_,_) in enumerate(targets,1):
                 if dur[i] is not None: rw[k]={'min':max(1,round(dur[i]/60)),'d':round(dis[i]) if i<len(dis) and dis[i] is not None else None}
-                elif k=='lm': rw[k]={'min':None,'d':None}  # אין מסלול הליכה כלל — סימן מובהק לחוסר חיבור
               if rw: s['rw']=rw; walked+=1
             except Exception: pass
-          # "שם מטעה": ההליכה למקום-שבשם חושבה הרגע — מקדמים כבר בריצה זו (ולא רק בשבועית הבאה)
-          for s in d['stops']:
-            w=(s.get('rw') or {}).get('lm'); p=s.get('lmp')
-            if s.get('k')=='uncertain' and s.get('lm') and w and p and (w.get('d') is None or (w['d'] or 0)>max(2*p['d'],p['d']+600)):
-              s['k']='mislead'
-          cnts=d.get('counts') or {}
-          cnts['mislead']=sum(1 for s in d['stops'] if s.get('k')=='mislead')
-          cnts['uncertain']=sum(1 for s in d['stops'] if s.get('k')=='uncertain')
-          d['counts']=cnts
           json.dump(d, open('next-station/data.json','w'), ensure_ascii=False, separators=(',',':'))
-          print('stops enriched with walking times:', en, '| closer streets walked:', walked, '| mislead:', cnts['mislead'])
+          print('stops enriched with walking times:', en, '| closer streets walked:', walked)
           PY
           docker rm -f osrm || true
 

@@ -294,7 +294,7 @@ for key,lst in _grp.items():
         if ref==top or seg_diff(ref,top): continue
         if abs(len(ref.split())-tt)<=1 or nf(ref)==nf(top): STREETVAR[code2]=(raw,maj_raw,topn)
 print('street-variance flags:',len(STREETVAR))
-cnt={'exact':0,'settlement':0,'spelling':0,'streetvar':0,'uncertain':0,'reversal':0,'mismatch':0,'landmark':0,'mapok':0,'noaddr':0,'closer':0,'mislead':0}
+cnt={'exact':0,'settlement':0,'spelling':0,'streetvar':0,'uncertain':0,'reversal':0,'mismatch':0,'landmark':0,'mapok':0,'noaddr':0,'closer':0}
 suspects=[]; closer_cands=[]
 EXIST=defaultdict(set)  # שמות-תחנות קיימים לכל עיר — לבדיקת התנגשות שמות מוצעים
 CURINFO={}  # code -> (name, street) נוכחיים — לזיהוי תיקונים אמיתיים מול הריצה הקודמת
@@ -415,19 +415,11 @@ for r in rows[1:]:
     # שם על-שם מוסד/ציון-דרך ("מרפאה", "הישיבה/רמב''ם") בלי POI תואם — לספק, בלי הצעת-שינוי.
     # רץ אחרי בדיקת ה-POI, כדי ש"מרכז ביג קסטינה" ליד הקניון ייעלם ולא יסומן בכלל.
     lm=landmark_name(prim) if cat in ('reversal','mismatch') else None
-    nk=None; lmrw=None
     if lm:
         # מסוף / תחנה מרכזית: התחנה היא-היא המסוף — שם נכון בהגדרה, לא מוצגת כלל
         if lm in ('מסוף','תחנה מרכזית','ת מרכזית','תמרכזית','תפעולית','תפעולי'):
             cnt['landmark']+=1; continue
         cat='uncertain'
-        nk=locate_namesake(prim,la,lo)
-        rw0=PREVRW.get(code)
-        # הליכה קודמת נגררת רק אם המקום שאותר לא השתנה
-        if rw0 and rw0.get('lm') and nk and PREVLMP.get(code)==nk[1]['n']: lmrw=rw0['lm']
-        # "שם מטעה": קרויה על-שם מקום שאין אליו הליכה סבירה (פי-2 מהאווירי / אין מסלול)
-        if nk and lmrw and (lmrw.get('d') is None or lmrw['d']>max(2*nk[0],nk[0]+600)):
-            cat='mislead'
     cnt[cat]+=1
     sug=None
     # לא מציעים שם שאינו עברית (כתב ערבי/מספרי): אם הרחוב הקרוב ביותר כזה — אין הצעה
@@ -454,8 +446,6 @@ for r in rows[1:]:
     rec={'c':code,'n':name,'s':st,'t':c,'la':la,'lo':lo,'k':cat,'p':pois,'ms':ms,'md':md}
     if lm:
         rec['lm']=1; rec['lmw']=lm  # ספק מסוג "שם-מוסד/ציון-דרך" + המילה שזוהתה (צומת, שכונה...)
-        if nk: rec['lmp']={'n':nk[1]['n'],'k':nk[1]['k'],'d':nk[0],'la':nk[1]['la'],'lo':nk[1]['lo']}
-        if lmrw: rec['rw']={'lm':lmrw}
     if sug: rec['sug']=sug
     if psug: rec['psug']=psug; rec['psugd']=psugd
     if sv: rec['sv']={'use':sv[0],'maj':sv[1],'n':sv[2]}

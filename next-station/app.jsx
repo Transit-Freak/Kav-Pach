@@ -6,7 +6,6 @@ const CATS = {
   reversal: { label: "היפוך / ציון-דרך", color: "#7c3aed", desc: "הרחוב האמיתי מופיע שני בשם" },
   spelling: { label: "טעות כתיב", color: "#d97706", desc: "אותו רחוב, אות שונה — כנראה שגיאה" },
   streetvar: { label: "אי-התאמה ברחוב", color: "#0891b2", desc: "הרחוב נכתב כאן אחרת מרוב התחנות באותו רחוב" },
-  mislead: { label: "שם מטעה", color: "#e11d48", desc: "קרויה על-שם מקום שאין אליו הליכה סבירה מהתחנה (נבדק במסלול הליכה אמיתי)" },
   uncertain: { label: "ספק / כתיב חלופי", color: "#64748b", desc: "כנראה לא טעות — הבדל כתיב, או שם על-שם מוסד/ציון-דרך (בית ספר, מרפאה, ישיבה…)" },
   closer: { label: "הצעות כלליות", color: "#16a34a", desc: "הרחוב המצטלב בשם רחוק מהתחנה — יש רחוב אחר קרוב יותר שכדאי שיופיע בשם" },
 };
@@ -74,16 +73,7 @@ function lmKind(s) {
   return (place ? "ציון-דרך" : "מוסד") + " («" + s.lmw + "»)";
 }
 function lmText(s) {
-  const base = "🏛️ התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב";
-  // ב"שם מטעה" אין להוסיף "כנראה תקין" — האזהרה למטה אומרת את ההפך
-  return s.k === "mislead" ? base + "." : base + " — ככל הנראה שם תקין.";
-}
-// "המקום שבשם" רחוק/לא נגיש בהליכה? חשודה: אולי השם מטעה את הנוסעים.
-// w.d==null = המסלול חושב ולא נמצא כלל; אחרת — הליכה ארוכה בהרבה מהמרחק האווירי
-function lmWalkBad(s) {
-  const w = s.rw && s.rw.lm;
-  if (!w || !s.lmp) return false;
-  return w.d == null || w.d > Math.max(2 * s.lmp.d, s.lmp.d + 600);
+  return "🏛️ התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב — ככל הנראה שם תקין.";
 }
 
 // כפתור העתקה כללי — מעתיק טקסט ללוח עם משוב "הועתק"
@@ -153,22 +143,7 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
         {CATS[s.k].label} — {CATS[s.k].desc}
       </div>
       {s.lm ? (
-        <div className="d-diff">
-          {lmText(s)}
-          {s.lmp && (() => {
-            const w = s.rw && s.rw.lm;
-            return (
-              <div className="d-lmp">
-                📍 המקום שבשם: <b>{s.lmp.n}</b> — {s.lmp.d} מ׳ בקו אווירי
-                {w && w.d != null && <> · 🚶 הליכה אמיתית: <b>{w.d} מ׳</b> ({w.min} דק׳)</>}
-                {w && w.d == null && <> · 🚶 <b>לא נמצא מסלול הליכה</b></>}
-                {lmWalkBad(s) && (
-                  <div className="d-lmbad">⚠️ חשודה: אין חיבור הליכה סביר בין התחנה למקום שבשם — ייתכן שהשם מטעה.</div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
+        <div className="d-diff">{lmText(s)}</div>
       ) : (s.k === "spelling" || s.k === "uncertain") && (() => {
         const dp = diffPair(primName(s.n), s.s);
         return (
@@ -421,7 +396,7 @@ function App() {
   }, [sel]);
 
   // סדר חומרה לקטגוריות — "ספק" תמיד אחרון
-  const RANK = { mismatch: 0, reversal: 1, spelling: 2, streetvar: 3, mislead: 4, uncertain: 5, closer: 6 };
+  const RANK = { mismatch: 0, reversal: 1, spelling: 2, streetvar: 3, uncertain: 4, closer: 5 };
 
   // useDeferredValue: תיבת החיפוש מגיבה מיד לכל הקלדה, והסינון הכבד רץ ברקע
   // (בלי זה כל אות "תוקעת" את המקלדת בטלפון עד שהסינון מסתיים)
@@ -441,6 +416,7 @@ function App() {
       .filter(
         (s) =>
           // "הכל" מציג רק קטגוריות-שגיאה; "הצעות כלליות" נפרדות ונבחרות בצ'יפ שלהן
+          CATS[s.k] &&
           (cat === "all" ? s.k !== "closer" : s.k === cat) &&
           !(s.k === "closer" && walkBad(s)) && // מסתירים הצעות שההליכה הפריכה
           (!activeOnly || s.act !== false) &&
@@ -638,7 +614,7 @@ function App() {
 
 // מחולל מכתב פנייה לרשות — רשימת הליקויים בעיר, מוכן להעתקה/הורדה
 function LetterModal({ data, initial, onClose }) {
-  const ERR = ["mismatch", "reversal", "spelling", "streetvar", "mislead"];
+  const ERR = ["mismatch", "reversal", "spelling", "streetvar"];
   const cities = useMemo(() => {
     const m = new Map();
     data.stops.forEach((s) => { if (ERR.includes(s.k) && s.t) m.set(s.t, (m.get(s.t) || 0) + 1); });
@@ -726,11 +702,8 @@ function autoCheck(s) {
     }
     return { tone: "neutral", text: "בדיקה אוטומטית: ההצעה מבוססת על מרחק אווירי (אין נתוני הליכה לרחוב זה)." };
   }
-  if (s.lm) {
-    if (lmWalkBad(s))
-      return { tone: "warn", text: "בדיקה אוטומטית: התחנה קרויה על-שם " + lmKind(s) + ", אך אין חיבור הליכה סביר בינה לבין «" + s.lmp.n + "» — השם עשוי להטעות." };
+  if (s.lm)
     return { tone: "ok", text: "בדיקה אוטומטית: התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב — ככל הנראה שם תקין." };
-  }
   if (s.k === "spelling" || s.k === "uncertain")
     return { tone: "warn", text: "בדיקה אוטומטית: ההבדל בין השם לכתובת הוא ברמת אות/כתיב — ייתכן שזו אותה מילה." };
   if (s.ms) return { tone: "neutral", text: "בדיקה אוטומטית: לפי המפה הרחוב הקרוב לתחנה הוא «" + s.ms + "» (" + s.md + " מ׳); בכתובת רשום «" + s.s + "»." };

@@ -161,3 +161,5 @@ jobs:
 # reclassify: generic words blocked with definite article too (הכנסת = כנסת)
 
 # reclassify: דלק/כללית/אבן are generic — last namesake noise family
+
+# reclassify: remove the שם מטעה category entirely — too many false positives
