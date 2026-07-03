@@ -20,9 +20,12 @@ const POI_ICON = {
 
 // מציגים ב"ליד התחנה" רק מקומות עד ~5–6 דק׳ הליכה אמיתית
 const NEARBY_MAX_MIN = 6;
-// זמן הליכה אפקטיבי לסינון: אמיתי (אם סביר) אחרת הערכה אווירית
-function effWalkMin(x) {
-  if (x.rt && x.rt.d != null && x.rt.d <= 4 * x.d + 300) return x.rt.min;
+// זמן הליכה אפקטיבי לסינון: חי (אם הגיע) > צרוב מראש > הערכה אווירית.
+// אותו זמן שמוצג הוא גם זה שמסנן — אחרת מקום "קרוב אווירית" אך עם הליכה
+// ארוכה (למשל מעבר לכביש מהיר) היה נשאר ברשימת "עד ~5 דק'" עם 18 דק'.
+function effWalkMin(x, live) {
+  const rt = live || x.rt;
+  if (rt && rt.d != null && rt.d <= 4 * x.d + 300) return rt.min;
   return x.d < 80 ? 1 : Math.round(x.d / 80);
 }
 // החלק בשם התחנה שאמור להיות הרחוב (לפני ה-/)
@@ -104,7 +107,7 @@ const Row = React.memo(function Row({ s, on, times, onSel, onRoute, routeBusy, o
 // כל פרטי התחנה — משותף לפאנל שעל המפה ולשורה ברשימה.
 // inList=true: מדלג על שדות שכבר מוצגים בכותרת השורה (מספר, רחוב, עיר)
 function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
-  const nearPois = (s.p || []).map((x, i) => ({ x, i })).filter((o) => effWalkMin(o.x) <= NEARBY_MAX_MIN);
+  const nearPois = (s.p || []).map((x, i) => ({ x, i })).filter((o) => effWalkMin(o.x, times && times[o.i]) <= NEARBY_MAX_MIN);
   return (
     <>
       {!inList && <div className="d-row">מס׳ תחנה: <b>{s.c}</b></div>}
