@@ -80,7 +80,7 @@ function lmText(s) {
 function lmWalkBad(s) {
   const w = s.rw && s.rw.lm;
   if (!w || !s.lmp) return false;
-  return w.d == null || w.d > Math.max(3 * s.lmp.d, s.lmp.d + 800);
+  return w.d == null || w.d > Math.max(2 * s.lmp.d, s.lmp.d + 600);
 }
 
 // כפתור העתקה כללי — מעתיק טקסט ללוח עם משוב "הועתק"

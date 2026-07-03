@@ -143,3 +143,5 @@ jobs:
 # reclassify: enable missing-cross-street rule (well-mapped areas only) + dotted-abbrev fix + אנדרטה/חווה landmarks
 
 # reclassify: missing-cross well-mapped radius 350->500m (moshav stops like ניר וגל/ערבה sit at village edges)
+
+# reclassify: clean namesake matches (identifying-words fix) + pick up מורן if landed
