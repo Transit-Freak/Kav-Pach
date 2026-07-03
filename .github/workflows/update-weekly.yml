@@ -153,3 +153,5 @@ jobs:
 # reclassify: מסוף/תחנה מרכזית stops are the terminal itself — never an error, hidden entirely
 
 # reclassify: operational stops (תחנה תפעולית) are service stops — hidden like terminals
+
+# reclassify: מסחרי/מחנה/סופר are generic — מרכז מסחרי and מחנה עופרית leave שם מטעה
