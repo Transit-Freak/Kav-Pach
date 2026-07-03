@@ -121,3 +121,5 @@ jobs:
 # reclassify: care-homes POI layer landed (153 בתי אבות incl. לב אבות)
 
 # reclassify: abbreviated street names (לדזינסקי = עובד לדיזנסקי) are ספק, not טעות כתיב
+
+# reclassify: area POIs (cemetery/park/hood) match up to 800m by centroid; הר -> landmark word (הר הזיתים)

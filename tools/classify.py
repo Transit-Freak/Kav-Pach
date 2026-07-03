@@ -103,7 +103,7 @@ LANDMARK_WORDS=('מרכז','בית ','בית ספר','ביהס','ביס','גן '
   'בריכה','אצטדיון','מוזיאון','תיכון','חטב','בית אבות','מעון','פנימי','אולם ספורט',
   'שכונה','שכונת','צומת','מסוף','מסעף','פארק','חוף','מועדון','מלון','מפעל','אזור','קרית','קריית','מגדל',
   'מגרש','מכון','מחנה','תמרכזית','עיריה','עירייה','עירית','עיריית','שוק','רמת','גבעת',
-  'עלמין','העלמין','בית עלמין','בית קברות','הקברות','קבר ')
+  'עלמין','העלמין','בית עלמין','בית קברות','הקברות','קבר ','הר ')
 def landmark_name(s):
     # מקף הופך לרווח ("בית-עלמין" ≡ "בית עלמין"); גרשיים/נקודות נמחקים
     s=re.sub(r'\s+',' ',re.sub('[\"׳״.]','',(s or '')).replace('-',' ').replace("'",'')).strip()
@@ -143,17 +143,21 @@ def hav(a,b,c,d):
     return 2*Rr*math.asin(math.sqrt(math.sin((c-a)*pr/2)**2+math.cos(a*pr)*math.cos(c*pr)*math.sin((d-b)*pr/2)**2))
 def nearby(la,lo,rad=500):
     if la is None: return []
-    res=[]; ck=(round(la/0.001),round(lo/0.001)); R=range(-5,6)
+    rng=int(rad/110)+1  # תאי-רשת של ~110 מ׳ — מכסים את הרדיוס המבוקש
+    res=[]; ck=(round(la/0.001),round(lo/0.001)); R=range(-rng,rng+1)
     for dx in R:
         for dy in R:
             for p in GP.get((ck[0]+dx,ck[1]+dy),[]):
                 dd=hav(la,lo,p['la'],p['lo'])
                 if dd<=rad: res.append((round(dd),p))
     res.sort(key=lambda x:x[0]); return res
+# שטחים גדולים (בית עלמין, פארק, שכונה) — המרחק נמדד למרכז השטח, לכן תחנה
+# בשולי בית העלמין בהר הזיתים יוצאת "549 מ׳" ממנו; להם מותר רדיוס גדול יותר
+_AREA_POI={'cemetery','park','hood'}
 def name_matches_poi(name,plist):
     nt=[t for t in tk(nf(name)) if len(t)>=3]
     for dist,p in plist:
-        if dist>500: continue
+        if dist>(800 if p['k'] in _AREA_POI else 500): continue
         for a in nt:
             for b in [t for t in tk(nf(p['n'])) if len(t)>=3]:
                 if a==b or (max(len(a),len(b))>=4 and lev(a,b)<=1): return p
@@ -335,7 +339,7 @@ for r in rows[1:]:
     # כולל "כביש 411" ממוספר) — השם תקין, לא מוצגת
     if cat in ('reversal','mismatch') and any(dd<=120 and rel(prim,nm2) in ('exact','spelling') for nm2,dd in nr):
         cnt['mapok']+=1; continue
-    nb=nearby(la,lo)
+    nb=nearby(la,lo,800)  # רדיוס רחב — לשטחים גדולים; הסינונים בהמשך (100/300 מ׳) לא מושפעים
     # קרויה על-שם מקום אמיתי סמוך (POI) — שם תקין, לא מוצגת כלל
     if cat in ('reversal','mismatch') and name_matches_poi(prim,nb): cnt['landmark']+=1; continue
     # שם על-שם מוסד/ציון-דרך ("מרפאה", "הישיבה/רמב''ם") בלי POI תואם — לספק, בלי הצעת-שינוי.
