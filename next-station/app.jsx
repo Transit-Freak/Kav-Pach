@@ -360,6 +360,11 @@ function App() {
   const dq = useDeferredValue(q);
   // סינון חדש (חיפוש/קטגוריה/פעילות) — חוזרים לעמוד הראשון
   useEffect(() => { setCap(PAGE); }, [cat, dq, activeOnly]);
+  // החלפת קטגוריה — הרשימה הפנימית חוזרת לראשה (שלא ניתקע עמוק ברשימה שהתקצרה)
+  useEffect(() => {
+    const el = document.querySelector(".list");
+    if (el && el.scrollTop) el.scrollTop = 0;
+  }, [cat]);
   const filtered = useMemo(() => {
     if (!data) return [];
     const qn = nq(dq);

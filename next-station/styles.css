@@ -270,8 +270,10 @@ body {
 .share-btn:hover { background:#e0e7ff; }
 
 /* ===== ביצועים (טלפון) ===== */
-/* כרטיסים שמחוץ למסך לא עוברים חישוב-פריסה וציור — הגלילה נשארת חלקה גם עם מאות כרטיסים */
-.item { content-visibility: auto; contain-intrinsic-size: auto 180px; }
+/* לא משתמשים ב-content-visibility על הכרטיסים: בכרום לאנדרואיד הוא מתנגש עם
+   עיגון-הגלילה של הדפדפן והדף "נתקע" (אפשר להזיז רק את המפה). המהירות מגיעה
+   מהממורשות (React.memo), מהחיפוש הנדחה ומהעימוד — לא מכאן. */
+html, body, .list { overflow-anchor: none; }
 /* כפתור "הצגת עוד" בסוף הרשימה */
 .more-btn {
   margin: 4px 0 8px; padding: 12px; border: 1.5px dashed var(--line); background: var(--surface);
