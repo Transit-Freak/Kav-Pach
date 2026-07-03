@@ -197,10 +197,23 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add next-station/data.json next-station/history.json
-          git add next-station/changes.json 2>/dev/null || true
-          git commit -m "monthly: full refresh (GTFS + OSM POI/roads + walking times)" || echo "no change"
-          git push origin HEAD:main
+          # הריצה ארוכה (~40 דק׳) ו-main עלול לזוז בינתיים — שומרים את הפלט,
+          # מתעדכנים ל-main העדכני, מחילים מחדש ודוחפים (עד 4 ניסיונות)
+          cp next-station/data.json /tmp/out-data.json
+          cp next-station/history.json /tmp/out-hist.json 2>/dev/null || true
+          cp next-station/changes.json /tmp/out-chg.json 2>/dev/null || true
+          for i in 1 2 3 4; do
+            git fetch origin main && git reset --hard origin/main
+            cp /tmp/out-data.json next-station/data.json
+            [ -f /tmp/out-hist.json ] && cp /tmp/out-hist.json next-station/history.json
+            [ -f /tmp/out-chg.json ] && cp /tmp/out-chg.json next-station/changes.json
+            git add next-station/data.json next-station/history.json
+            git add next-station/changes.json 2>/dev/null || true
+            if git diff --cached --quiet; then echo "no change"; break; fi
+            git commit -m "monthly: full refresh (GTFS + OSM POI/roads + walking times)"
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected (main moved) — retry $i"; sleep 10
+          done
 
       - name: Refresh osm-poi and osm-roads cache branches
         run: |
@@ -223,3 +236,5 @@ jobs:
 # trigger: full monthly refresh — populate real OSRM walking distance for "הצעות כלליות"
 
 # trigger: monthly — villages layer + walking check to the namesake place (צומת ערוגות)
+
+# trigger: monthly rerun — previous run lost its push in a main race (now hardened)
