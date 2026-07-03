@@ -24,25 +24,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch GTFS + ClusterToLine (line types)
+      - name: Fetch GTFS
         run: |
           set -euo pipefail
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
           curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
             -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt
-          curl -fSL --connect-timeout 20 --max-time 300 --retry 6 --retry-all-errors --retry-delay 20 -A "$UA" \
-            -o cluster.zip "https://gtfs.mot.gov.il/gtfsfiles/ClusterToLine.zip" || echo "cluster download failed (optional)"
-          unzip -o cluster.zip || true
           ls -la
 
       - name: Detect skipped stops (Jerusalem + Tel Aviv)
         run: |
           set -euo pipefail
-          CL=$(ls *luster*.[cC][sS][vV] 2>/dev/null | head -1 || true)
-          echo "cluster file: ${CL:-none}"
+          # סוגי הקווים מהקובץ המצומצם שכבר בריפו (data-main.json — אותו קובץ שקו פח מציג)
           STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt SHAPES=shapes.txt \
-            CLUSTER="$CL" CITIES="ירושלים,תל אביב יפו" python3 tools/skiplines.py
+            MAIN=data-main.json CITIES="ירושלים,תל אביב יפו" python3 tools/skiplines.py
 
 # retry: MOT GTFS endpoint timeout at 15:27Z
 # rerun: ClusterToLine download failed last run — urban-only filter never applied; retry harder

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # ניסוי "קווים שמדלגים": מזהה קווים שנוסעים ממש ליד תחנה פעילה — ולא עוצרים בה.
 # האות החזק: "סנדוויץ'" — הקו עוצר בתחנה שלפני ובתחנה שאחרי, ומדלג רק על האמצעית.
-# קלט (משתני סביבה): STOPS, STOP_TIMES, TRIPS, ROUTES, SHAPES, CLUSTER (ClusterToLine.csv, רשות)
+# קלט (משתני סביבה): STOPS, STOP_TIMES, TRIPS, ROUTES, SHAPES, MAIN (data-main.json — הקובץ המצומצם)
 # פלט: הדפסת ממצאים ליומן בלבד — שום דבר לא נכתב לאתר.
 import csv, os, re, sys, math
 from collections import defaultdict
@@ -11,7 +11,7 @@ STOP_TIMES=os.environ.get('STOP_TIMES','stop_times.txt')
 TRIPS=os.environ.get('TRIPS','trips.txt')
 ROUTES=os.environ.get('ROUTES','routes.txt')
 SHAPES=os.environ.get('SHAPES','shapes.txt')
-CLUSTER=os.environ.get('CLUSTER','')
+MAIN=os.environ.get('MAIN','data-main.json')
 CITIES=[c.strip() for c in os.environ.get('CITIES','ירושלים,תל אביב יפו').split(',')]
 
 NEAR_M=25        # תחנה נחשבת "על המסלול" עד מרחק זה מהקו
@@ -42,28 +42,21 @@ for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
     rroutes[r['route_id']]={'num':r.get('route_short_name',''),'desc':r.get('route_desc',''),
                             'long':r.get('route_long_name',''),'agency':r.get('agency_id',''),
                             'rtype':r.get('route_type','3')}   # 3=אוטובוס, 0/2=רכבת/רק"ל
-# סוג קו רשמי מהקובץ המצומצם (ClusterToLine): OfficeLineId -> (LineType, תת-סוג)
-# LineType: עירוני/בינעירוני/אזורי; תת-הסוג (ClusterSubDesc) מסמן קווי תלמידים וכד'.
+# סוג קו רשמי מהקובץ המצומצם (data-main.json — ההמרה של "מצומצם.xlsx" שקו פח משתמש בה):
+# לכל שורה: [0]=מקט, [6]=סוג קו (עירוני/בינעירוני/אזורי), [7]=ייחודיות הקו (סדיר/תלמידים/לילה/מזינים)
+import json
 linetype={}; linesub={}
-if CLUSTER and os.path.exists(CLUSTER):
-    with open(CLUSTER,encoding='utf-8-sig',errors='replace') as f:
-        rd=csv.DictReader(f)
-        cols={k.strip():k for k in (rd.fieldnames or [])}
-        kid=next((cols[k] for k in cols if 'officelineid' in k.lower().replace('_','')),None)
-        kty=next((cols[k] for k in cols if 'linetype' in k.lower().replace('_','')),None)
-        ksub=next((cols[k] for k in cols if 'subdesc' in k.lower().replace('_','')),None)
-        print('עמודות הקובץ המצומצם:',rd.fieldnames)
-        if kid and kty:
-            for r in rd:
-                linetype[r[kid].strip()]=r[kty].strip()
-                if ksub: linesub[r[kid].strip()]=(r.get(ksub) or '').strip()
-    print('סוגי קווים מהקובץ המצומצם:',len(linetype))
-    print('ערכי LineType:',sorted(set(linetype.values())))
-    print('ערכי תת-סוג:',sorted(set(linesub.values()))[:30])
+if MAIN and os.path.exists(MAIN):
+    for r in json.load(open(MAIN,encoding='utf-8')):
+        mk=str(r[0]).strip().lstrip('0')
+        if mk: linetype[mk]=str(r[6]).strip(); linesub[mk]=str(r[7]).strip()
+    print('קווים מהקובץ המצומצם:',len(linetype))
+    print('ערכי סוג קו:',sorted(set(linetype.values())))
+    print('ערכי ייחודיות:',sorted(set(linesub.values())))
 else:
-    print('אזהרה: אין קובץ ClusterToLine — סינון סוג-קו ייעשה לפי שם בלבד')
+    print('אזהרה: אין קובץ מצומצם (data-main.json) — סינון סוג-קו לא יפעל')
 def _makat(rid):
-    return rroutes.get(rid,{}).get('desc','').split('-')[0].strip()
+    return rroutes.get(rid,{}).get('desc','').split('-')[0].strip().lstrip('0')
 def route_type(rid):
     return linetype.get(_makat(rid),'')
 def route_sub(rid):
