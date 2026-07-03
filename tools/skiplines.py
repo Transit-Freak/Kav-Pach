@@ -125,6 +125,19 @@ def project(shape_m,arc,x,y):
             best=(d,arc[i]+t*math.sqrt(L2),cross<0,i)
     return best
 
+# אינדקס-רשת לתחנות העיר — בודקים לכל מסלול רק תחנות שבקרבתו (ולא את כל העיר)
+GRID=0.001
+sgrid=defaultdict(list)
+for sid,s in stops.items():
+    sgrid[(int(s['la']/GRID),int(s['lo']/GRID))].append(sid)
+def near_stop_ids(pts):
+    out=set()
+    for la,lo in pts:
+        c=(int(la/GRID),int(lo/GRID))
+        for dx in (-1,0,1):
+            for dy in (-1,0,1): out.update(sgrid.get((c[0]+dx,c[1]+dy),()))
+    return out
+
 findings=[]
 for (rid,sh),t in rep.items():
     if sh not in shapes: continue
@@ -151,8 +164,9 @@ for (rid,sh),t in rep.items():
     served_arc.sort()
     if len(served_arc)<3: continue
     info=rroutes.get(rid,{})
-    # מועמדות: תחנות-עיר פעילות שאינן ברצף העצירה
-    for sid,s in stops.items():
+    # מועמדות: רק תחנות שבסמוך למסלול (אינדקס רשת), פעילות, שאינן ברצף העצירה
+    for sid in near_stop_ids(pts):
+        s=stops[sid]
         if sid in servedset or not stop_lines.get(sid): continue
         x,y=xy(s)
         p=project(m,arc,x,y)
