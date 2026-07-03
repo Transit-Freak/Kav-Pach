@@ -17,6 +17,7 @@ CITIES=[c.strip() for c in os.environ.get('CITIES','ירושלים,תל אביב
 NEAR_M=25        # תחנה נחשבת "על המסלול" עד מרחק זה מהקו
 ALONG_MIN=50     # הקו חייב ללוות את התחנה לאורך לפחות כך (מ׳) — מסנן חציית-צומת
 SANDWICH_M=800   # תחנה עצורה לפני ואחרי בטווח זה לאורך המסלול
+SANDWICH_MIN=120 # אבל לא צמוד מדי — עצירה 40 מ' משם היא אותו צומת (עמדה סמוכה), לא דילוג
 TERMINAL_M=300   # מתעלמים מקצוות המסלול (אזורי מסוף)
 
 def city(d):
@@ -39,7 +40,8 @@ print('תחנות בערי הניסוי:',len(stops))
 rroutes={}
 for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
     rroutes[r['route_id']]={'num':r.get('route_short_name',''),'desc':r.get('route_desc',''),
-                            'long':r.get('route_long_name',''),'agency':r.get('agency_id','')}
+                            'long':r.get('route_long_name',''),'agency':r.get('agency_id',''),
+                            'rtype':r.get('route_type','3')}   # 3=אוטובוס, 0/2=רכבת/רק"ל
 # סוג קו רשמי מהקובץ המצומצם (ClusterToLine): OfficeLineId -> LineType (עירוני/בינעירוני/אזורי)
 linetype={}
 if CLUSTER and os.path.exists(CLUSTER):
@@ -68,7 +70,8 @@ print('נסיעות-נציג (קו×מסלול):',len(rep))
 
 # ---- עצירות: רצף התחנות של כל נציג + אילו קווים עוצרים בכל תחנת-עיר ----
 served=defaultdict(list)          # trip נציג -> [(seq, stop_id)]
-stop_lines=defaultdict(set)       # stop_id עירוני -> קווים שעוצרים בו
+stop_lines=defaultdict(set)       # stop_id עירוני -> קווי אוטובוס שעוצרים בו
+rail_stops=set()
 with open(STOP_TIMES,encoding='utf-8-sig') as f:
     rd=csv.reader(f); hdr=next(rd); hi={h:i for i,h in enumerate(hdr)}
     TI,SIx,SQ=hi['trip_id'],hi['stop_id'],hi['stop_sequence']
@@ -76,7 +79,9 @@ with open(STOP_TIMES,encoding='utf-8-sig') as f:
         t=r[TI]
         if r[SIx] in stops:
             rt=trip2route.get(t)
-            if rt: stop_lines[r[SIx]].add(rroutes.get(rt,{}).get('num',''))
+            if rt and rroutes.get(rt,{}).get('rtype','3')=='3':
+                stop_lines[r[SIx]].add(rroutes.get(rt,{}).get('num',''))
+            elif rt: rail_stops.add(r[SIx])   # תחנת רכבת/רק"ל — לא מועמדת לדילוג-אוטובוס
         if t in rep_trips:
             try: served[t].append((int(r[SQ]),r[SIx]))
             except: pass
@@ -143,6 +148,7 @@ for (rid,sh),t in rep.items():
     if sh not in shapes: continue
     ty=route_type(rid)
     if ty and ty!='עירוני': continue   # בינעירוני/אזורי מדלגים בצדק — מחוץ לניסוי
+    if rroutes.get(rid,{}).get('rtype','3')!='3': continue   # בודקים רק קווי אוטובוס
     seq=[s for _,s in sorted(served.get(t,[]))]
     if len(seq)<5: continue
     pts=shapes[sh]
@@ -178,6 +184,8 @@ for (rid,sh),t in rep.items():
         before=pos-served_arc[j-1] if j>0 else 1e9
         after=served_arc[j]-pos if j<len(served_arc) else 1e9
         if before>SANDWICH_M or after>SANDWICH_M: continue  # אין סנדוויץ' — אולי מהיר
+        if before<SANDWICH_MIN or after<SANDWICH_MIN: continue  # עמדה סמוכה באותו צומת
+        if sid in rail_stops: continue                       # תחנת רק"ל/רכבת
         # ליווי לאורך הרחוב: כמה מטרים מהמסלול נשארים קרוב לתחנה
         near=sum(math.hypot(m[i+1][0]-m[i][0],m[i+1][1]-m[i][1]) for i in range(len(m)-1)
                  if min(math.hypot(m[i][0]-x,m[i][1]-y),math.hypot(m[i+1][0]-x,m[i+1][1]-y))<=45)
@@ -193,11 +201,13 @@ best={}
 for f in findings:
     k=(f['line'],f['sid'])
     if k not in best or f['before']+f['after']<best[k]['before']+best[k]['after']: best[k]=f
-ranked=sorted(best.values(),key=lambda f:(-len(f['others']),f['before']+f['after']))
+skippers=defaultdict(set)
+for f in best.values(): skippers[f['sid']].add(f['line'])
+ranked=sorted(best.values(),key=lambda f:(len(skippers[f['sid']]),-len(f['others']),f['before']+f['after']))
 print()
 print('=== ממצאים: קווים עירוניים שחולפים ליד תחנה פעילה בלי לעצור (סנדוויץ׳) ===')
 print('סה"כ:',len(ranked))
 for f in ranked[:40]:
     s=f['stop']
-    print(' קו %s | %s | מדלג על: %s (%s) [%s] | מרחק מהקו %dמ | עוצר %dמ לפני ו-%dמ אחרי | קווים שכן עוצרים: %s'%(
-        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],','.join(f['others'])))
+    print(' קו %s | %s | מדלג על: %s (%s) [%s] | מרחק מהקו %dמ | עוצר %dמ לפני ו-%dמ אחרי | מדלגים על התחנה: %d קווים | עוצרים בה: %s'%(
+        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[f['sid']]),','.join(f['others'])))
