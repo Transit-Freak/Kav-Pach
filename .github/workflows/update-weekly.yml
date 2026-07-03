@@ -127,3 +127,5 @@ jobs:
 # reclassify: checkpoints layer + Hebrew POI names landed; מעבר/מחסום -> landmark words
 
 # reclassify: suggested names use Israeli stop format X/Y (no spaces around the slash)
+
+# dry-run: count stops whose named cross-street does not exist in the map at all (no behavior change)

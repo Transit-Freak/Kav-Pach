@@ -204,6 +204,14 @@ def nearest_roads(la,lo,topn=4):
                 seen.add((ri,i)); g=RD[ri]['g']; d=segdist(la,lo,g[i],g[i+1]); nm=RD[ri]['n']; key=nf(nm)
                 if key not in cands or d<cands[key][0]: cands[key]=(d,nm)
     return [(nm,round(d)) for d,nm in sorted(cands.values())[:topn]]
+def road_exists(la,lo,name,rad=1000):
+    # האם קיים במפה רחוב בשם הזה עד רדיוס נתון (השוואת-רחובות עמידה לכתיב/מקפים)
+    if la is None or not name: return False
+    rng=int(rad/300)+1; ck=(int(la/CELL),int(lo/CELL)); names=set()
+    for dx in range(-rng,rng+1):
+        for dy in range(-rng,rng+1):
+            for ri,_ in GR.get((ck[0]+dx,ck[1]+dy),[]): names.add(RD[ri]['n'])
+    return any(streets_match(nm,name) for nm in names)
 def road_near(la,lo,name,rad=150):
     # גאומטריית הרחוב (קטע סמוך לתחנה) + הנקודה הקרובה ביותר — לסימון על המפה
     key=nf(name); best=None; ck=(int(la/CELL),int(lo/CELL))
@@ -267,6 +275,7 @@ for key,lst in _grp.items():
         if ref==top or seg_diff(ref,top): continue
         if abs(len(ref.split())-tt)<=1 or nf(ref)==nf(top): STREETVAR[code2]=(raw,maj_raw,topn)
 print('street-variance flags:',len(STREETVAR))
+DRY_MISSING=[]  # ניסוי: מצטלב שלא קיים במפה (ספירה בלבד)
 cnt={'exact':0,'settlement':0,'spelling':0,'streetvar':0,'uncertain':0,'reversal':0,'mismatch':0,'landmark':0,'mapok':0,'noaddr':0,'closer':0}
 suspects=[]; closer_cands=[]
 EXIST=defaultdict(set)  # שמות-תחנות קיימים לכל עיר — לבדיקת התנגשות שמות מוצעים
@@ -311,6 +320,15 @@ for r in rows[1:]:
             if cross and best and best[1]<=CLOSER_CAP and not streets_match(best[0],cross):
                 if cross_d is None: flag=best[1]<=20
                 else: flag=cross_d>=CLOSER_FAR and (cross_d-best[1])>=CLOSER_GAP
+            # ---- ניסוי (ספירה בלבד, לא משנה כלום): מצטלב שלא קיים במפה בכלל ----
+            # "דרך ניר וגל/ערבה" — אין שום רחוב "ערבה" עד ק"מ. מדפיסים ליומן כדי
+            # להעריך כמה התראות כאלה יהיו ומה טיבן, לפני שמדליקים כלל אמיתי.
+            if cross and cross_d is None and not flag:
+                crs=cross.strip()
+                if (len(nf(crs))>=3 and not arabic_translit(crs) and not odd_road(crs)
+                        and not landmark_name(crs) and not acronymish(crs)
+                        and not streets_match(crs,st) and not road_exists(la,lo,crs)):
+                    DRY_MISSING.append((code,name,c,crs,best))
             if flag:
                 near_name,near_d=best
                 primc=parts[0].strip()
@@ -418,6 +436,9 @@ for rec in closer_cands:
     suspects.append(rec); cnt['closer']+=1
 print('closer kept:',cnt['closer'],'| rw carried:',carried)
 if OVR: print('manual overrides applied:',len(OVR))
+if DRY_MISSING:
+    print('[dry-run] cross-street missing from map entirely:',len(DRY_MISSING))
+    for x in DRY_MISSING[:30]: print('   ',x[0],'|',x[1],'|',x[2],'| חסר במפה:',x[3],'| חלופה קרובה:',x[4])
 print('classification:',cnt)
 print('suspects:',len(suspects),'| %.1fs'%(time.time()-t0))
 os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
