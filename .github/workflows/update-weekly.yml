@@ -155,3 +155,5 @@ jobs:
 # reclassify: operational stops (תחנה תפעולית) are service stops — hidden like terminals
 
 # reclassify: מסחרי/מחנה/סופר are generic — מרכז מסחרי and מחנה עופרית leave שם מטעה
+
+# reclassify: remote namesake matching is exact-token only (אביק != אביב); מפעל is generic
