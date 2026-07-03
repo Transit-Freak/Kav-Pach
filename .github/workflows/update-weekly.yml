@@ -115,3 +115,5 @@ jobs:
 # reclassify: unified — named-only roads (road-90 revert), building POIs (ישיבת הרי יהודה), Latin-name filter
 
 # reclassify: neighborhoods layer landed (1,929 hoods incl. אושיות) + name-bound overrides
+
+# reclassify: numbered highways are back for matching-only (כביש 411 stops -> mapok, never suggested)

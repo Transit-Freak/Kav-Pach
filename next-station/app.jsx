@@ -15,7 +15,7 @@ const POI_ICON = {
   school: "🏫", academia: "🎓", health: "🏥", mall: "🛒", train: "🚉",
   worship: "🕍", police: "🚓", fire: "🚒", library: "📚", community: "🏘️",
   gov: "🏛️", culture: "🎭", busstation: "🚌", park: "🌳", sport: "⚽",
-  shop: "🏪", fuel: "⛽", bank: "🏦", junction: "🛣️", post: "📮", cemetery: "🪦", hood: "🏙️",
+  shop: "🏪", fuel: "⛽", bank: "🏦", junction: "🛣️", post: "📮", cemetery: "🪦", hood: "🏙️", care: "🧓",
 };
 
 // מציגים ב"ליד התחנה" רק מקומות עד ~5–6 דק׳ הליכה אמיתית
