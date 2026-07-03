@@ -444,9 +444,10 @@ function App() {
           const diffs = prev
             ? Object.keys(CATS).map((k) => ({ k, d: (cur.c[k] || 0) - (prev.c[k] || 0) })).filter((x) => x.d !== 0)
             : null;
+          const prevRun = hist[hist.length - 2]; // הריצה שמולה נמדדו התיקונים — להצגת התאריך
           return (
             <div className="trend">
-              📈 מאז הריצה הקודמת: <b>{fixedN.toLocaleString()}</b> תחנות תוקנו במקור (מאומת מול הטקסט ב-GTFS)
+              📈 מאז הריצה הקודמת{prevRun ? " (" + prevRun.d.split("-").reverse().join(".") + ")" : ""}: <b>{fixedN.toLocaleString()}</b> תחנות תוקנו במקור (מאומת מול הטקסט ב-GTFS)
               {!prev && <span> · השוואת הקטגוריות תתחדש בריצה הבאה (כללי הזיהוי עודכנו)</span>}
               {prev && (diffs.length === 0
                 ? " · ללא שינוי בקטגוריות"
