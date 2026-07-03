@@ -42,22 +42,32 @@ for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
     rroutes[r['route_id']]={'num':r.get('route_short_name',''),'desc':r.get('route_desc',''),
                             'long':r.get('route_long_name',''),'agency':r.get('agency_id',''),
                             'rtype':r.get('route_type','3')}   # 3=אוטובוס, 0/2=רכבת/רק"ל
-# סוג קו רשמי מהקובץ המצומצם (ClusterToLine): OfficeLineId -> LineType (עירוני/בינעירוני/אזורי)
-linetype={}
+# סוג קו רשמי מהקובץ המצומצם (ClusterToLine): OfficeLineId -> (LineType, תת-סוג)
+# LineType: עירוני/בינעירוני/אזורי; תת-הסוג (ClusterSubDesc) מסמן קווי תלמידים וכד'.
+linetype={}; linesub={}
 if CLUSTER and os.path.exists(CLUSTER):
     with open(CLUSTER,encoding='utf-8-sig',errors='replace') as f:
         rd=csv.DictReader(f)
         cols={k.strip():k for k in (rd.fieldnames or [])}
         kid=next((cols[k] for k in cols if 'officelineid' in k.lower().replace('_','')),None)
         kty=next((cols[k] for k in cols if 'linetype' in k.lower().replace('_','')),None)
+        ksub=next((cols[k] for k in cols if 'subdesc' in k.lower().replace('_','')),None)
+        print('עמודות הקובץ המצומצם:',rd.fieldnames)
         if kid and kty:
-            for r in rd: linetype[r[kid].strip()]=r[kty].strip()
+            for r in rd:
+                linetype[r[kid].strip()]=r[kty].strip()
+                if ksub: linesub[r[kid].strip()]=(r.get(ksub) or '').strip()
     print('סוגי קווים מהקובץ המצומצם:',len(linetype))
+    print('ערכי LineType:',sorted(set(linetype.values())))
+    print('ערכי תת-סוג:',sorted(set(linesub.values()))[:30])
 else:
     print('אזהרה: אין קובץ ClusterToLine — סינון סוג-קו ייעשה לפי שם בלבד')
+def _makat(rid):
+    return rroutes.get(rid,{}).get('desc','').split('-')[0].strip()
 def route_type(rid):
-    d=rroutes.get(rid,{}).get('desc','')
-    return linetype.get(d.split('-')[0].strip(),'')
+    return linetype.get(_makat(rid),'')
+def route_sub(rid):
+    return linesub.get(_makat(rid),'')
 
 # ---- נסיעות: נציג אחד לכל (קו, מסלול) ----
 trip2route={}; rep={}   # rep[(route_id,shape_id)] = trip_id נציג
@@ -148,6 +158,7 @@ for (rid,sh),t in rep.items():
     if sh not in shapes: continue
     ty=route_type(rid)
     if ty and ty!='עירוני': continue   # בינעירוני/אזורי מדלגים בצדק — מחוץ לניסוי
+    if 'תלמיד' in route_sub(rid): continue   # קווי תלמידים עוצרים רק איפה שצריך — לא דילוג
     if rroutes.get(rid,{}).get('rtype','3')!='3': continue   # בודקים רק קווי אוטובוס
     seq=[s for _,s in sorted(served.get(t,[]))]
     if len(seq)<5: continue
