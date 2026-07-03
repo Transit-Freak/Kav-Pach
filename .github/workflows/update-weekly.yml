@@ -113,3 +113,5 @@ jobs:
 # reclassify: hyphen ≡ space in name normalization (גיסר א-נסף ↔ גסר א נסף) — 41 false mismatches become exact/spelling
 
 # reclassify: unified — named-only roads (road-90 revert), building POIs (ישיבת הרי יהודה), Latin-name filter
+
+# reclassify: neighborhoods layer landed (1,929 hoods incl. אושיות) + name-bound overrides

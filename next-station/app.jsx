@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useMemo } = React;
+const { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } = React;
 
 // קטגוריות הזיהוי — צבע, תווית והסבר
 const CATS = {
@@ -77,6 +77,29 @@ function stopText(s) {
     "קישור לתחנה: " + window.location.origin + window.location.pathname + "#stop=" + s.c,
   ].filter(Boolean).join("\n");
 }
+
+// שורה ברשימה — ממורשת (React.memo): נבנית מחדש רק כשהתחנה/הבחירה שלה משתנות,
+// ולא בכל הקלדה בחיפוש או בחירת תחנה אחרת. זה מה שמונע קיפאון בטלפון.
+const Row = React.memo(function Row({ s, on, times, onSel, onRoute, routeBusy, onReport }) {
+  return (
+    <div className={"item" + (on ? " on" : "")}>
+      <button className="it-head" onClick={() => onSel(s)}>
+        <div className="it-top">
+          <span className="badge" style={{ background: CATS[s.k].color }}>{CATS[s.k].label}</span>
+          <span className="code">{s.c}</span>
+        </div>
+        <div className="it-name">{s.n}</div>
+        <div className="it-street">
+          רחוב בכתובת: <b>{s.s}</b>
+          {s.t ? " · " + s.t : ""}
+        </div>
+      </button>
+      <div className="it-detail">
+        <StopDetails s={s} inList onRoute={onRoute} routeBusy={routeBusy} times={times} onReport={onReport} />
+      </div>
+    </div>
+  );
+});
 
 // כל פרטי התחנה — משותף לפאנל שעל המפה ולשורה ברשימה.
 // inList=true: מדלג על שדות שכבר מוצגים בכותרת השורה (מספר, רחוב, עיר)
@@ -181,6 +204,9 @@ function App() {
   const [chg, setChg] = useState(null); // יומן "תוקן!" — תחנות שתוקנו במקור
   const [showFixed, setShowFixed] = useState(false);
   const [letterCity, setLetterCity] = useState(null); // מחולל מכתב לרשות (null=סגור)
+  // כמה שורות מציגים בפועל — מתחילים קטן (מהיר בטלפון) ומרחיבים בכפתור "הצגת עוד"
+  const PAGE = 120;
+  const [cap, setCap] = useState(PAGE);
   const mapRef = useRef(null);
   const markRef = useRef(null);
   const routeRef = useRef(null);
@@ -189,7 +215,8 @@ function App() {
   const OSRM = "https://routing.openstreetmap.de/routed-foot";
 
   // מסלול הליכה אמיתי מהתחנה לנקודת העניין — ניתוב חי בדפדפן (OSRM foot, FOSSGIS)
-  function showRoute(from, poi) {
+  // useCallback: פונקציה יציבה, כדי ששורות הרשימה הממורשות (React.memo) לא ייבנו מחדש לחינם
+  const showRoute = useCallback(function (from, poi) {
     const m = mapRef.current;
     if (!m || from.la == null || poi.la == null) return;
     setSel(from);
@@ -209,7 +236,7 @@ function App() {
         setRoute({ ok: true, to: poi.n, d: Math.round(rt.distance), min: Math.max(1, Math.round(rt.duration / 60)) });
       })
       .catch(() => setRoute({ err: true, to: poi.n }));
-  }
+  }, []);
   function clearRoute() {
     if (routeRef.current) { routeRef.current.remove(); routeRef.current = null; }
     setRoute(null);
@@ -219,7 +246,12 @@ function App() {
     // טוקן יומי כדי שעדכוני-הנתונים האוטומטיים יגיעו למשתמשים תוך יום (ולא יישארו ב-cache)
     fetch("data.json?v=" + window.NS_BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
-      .then(setData)
+      .then((d) => {
+        // מחרוזת-חיפוש מנורמלת אחת לכל תחנה, מחושבת פעם אחת בטעינה —
+        // כך שכל הקלדה בחיפוש לא מנרמלת מחדש 4 שדות לכל תחנה (איטי מאוד בטלפון)
+        (d.stops || []).forEach((s) => { s._q = nq([s.t, s.n, s.c, s.s].join("|")); });
+        setData(d);
+      })
       .catch(() => setData({ counts: {}, stops: [] }));
     // היסטוריית ספירות (רשומה ליום) — להצגת מגמה מאז הריצה הקודמת
     fetch("history.json?v=" + window.NS_BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -323,9 +355,14 @@ function App() {
   // סדר חומרה לקטגוריות — "ספק" תמיד אחרון
   const RANK = { mismatch: 0, reversal: 1, spelling: 2, streetvar: 3, uncertain: 4, closer: 5 };
 
+  // useDeferredValue: תיבת החיפוש מגיבה מיד לכל הקלדה, והסינון הכבד רץ ברקע
+  // (בלי זה כל אות "תוקעת" את המקלדת בטלפון עד שהסינון מסתיים)
+  const dq = useDeferredValue(q);
+  // סינון חדש (חיפוש/קטגוריה/פעילות) — חוזרים לעמוד הראשון
+  useEffect(() => { setCap(PAGE); }, [cat, dq, activeOnly]);
   const filtered = useMemo(() => {
     if (!data) return [];
-    const qn = nq(q);
+    const qn = nq(dq);
     const farness = (s) => (s.curd == null ? 1e9 : s.curd); // מצטלב לא-נמצא = הכי רחוק
     return data.stops
       .filter(
@@ -334,14 +371,14 @@ function App() {
           (cat === "all" ? s.k !== "closer" : s.k === cat) &&
           !(s.k === "closer" && walkBad(s)) && // מסתירים הצעות שההליכה הפריכה
           (!activeOnly || s.act !== false) &&
-          (!qn || nq(s.t).indexOf(qn) >= 0 || nq(s.n).indexOf(qn) >= 0 || nq(s.c).indexOf(qn) >= 0 || nq(s.s).indexOf(qn) >= 0)
+          (!qn || (s._q || "").indexOf(qn) >= 0)
       )
       .sort((a, b) =>
         (RANK[a.k] - RANK[b.k]) ||
         // בהצעות כלליות: מהרחוב המצטלב הרחוק ביותר אל הקרוב
         (a.k === "closer" ? farness(b) - farness(a) : Number(a.c) - Number(b.c))
       );
-  }, [data, cat, q, activeOnly]);
+  }, [data, cat, dq, activeOnly]);
 
   const hasActiveInfo = !!(data && data.stops.some((s) => s.act === false));
 
@@ -359,8 +396,7 @@ function App() {
   }
 
   if (!data) return <div className="boot">טוען נתונים…</div>;
-  const CAP = 600;
-  const shown = filtered.slice(0, CAP);
+  const shown = filtered.slice(0, cap);
   // מספר "הצעות כלליות" שמוצגות בפועל = אלה שההליכה לא הפריכה
   const closerValid = data.stops.reduce((a, s) => a + (s.k === "closer" && !walkBad(s) ? 1 : 0), 0);
 
@@ -476,32 +512,27 @@ function App() {
           )}
           <div className="count">
             מציג {shown.length.toLocaleString()} מתוך {filtered.length.toLocaleString()}
-            {filtered.length > CAP ? " — צמצמו בחיפוש כדי לראות את השאר" : ""}
             <button className="dl-btn" onClick={downloadCSV} disabled={!filtered.length} title="הורדת התצוגה הנוכחית כקובץ אקסל">⬇ אקסל ({filtered.length.toLocaleString()})</button>
             <button className="dl-btn letter-btn" onClick={() => setLetterCity("")} title="יצירת מכתב פנייה לעירייה/משרד התחבורה עם רשימת הליקויים בעיר">📨 מכתב לרשות</button>
           </div>
           <div className="list">
-            {shown.map((s, i) => {
-              const on = sel && sel.c === s.c;
-              return (
-                <div className={"item" + (on ? " on" : "")} key={s.c + "_" + i}>
-                  <button className="it-head" onClick={() => setSel(s)}>
-                    <div className="it-top">
-                      <span className="badge" style={{ background: CATS[s.k].color }}>{CATS[s.k].label}</span>
-                      <span className="code">{s.c}</span>
-                    </div>
-                    <div className="it-name">{s.n}</div>
-                    <div className="it-street">
-                      רחוב בכתובת: <b>{s.s}</b>
-                      {s.t ? " · " + s.t : ""}
-                    </div>
-                  </button>
-                  <div className="it-detail">
-                    <StopDetails s={s} inList onRoute={showRoute} routeBusy={route && route.loading} times={sel && sel.c === s.c ? poiTimes : null} onReport={setReportStop} />
-                  </div>
-                </div>
-              );
-            })}
+            {shown.map((s) => (
+              <Row
+                key={s.c}
+                s={s}
+                on={!!(sel && sel.c === s.c)}
+                times={sel && sel.c === s.c ? poiTimes : null}
+                onSel={setSel}
+                onRoute={showRoute}
+                routeBusy={!!(route && route.loading)}
+                onReport={setReportStop}
+              />
+            ))}
+            {filtered.length > shown.length && (
+              <button className="more-btn" onClick={() => setCap(cap + PAGE)}>
+                הצגת עוד {Math.min(PAGE, filtered.length - shown.length).toLocaleString()} תחנות ({(filtered.length - shown.length).toLocaleString()} נוספות בסינון הנוכחי)
+              </button>
+            )}
             {shown.length === 0 && <div className="empty">לא נמצאו תחנות בסינון הנוכחי.</div>}
           </div>
         </div>
@@ -651,6 +682,18 @@ function mailtoUrl(subject, body) {
   return "mailto:" + REPORT_TO + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
 }
 
+// קישור אישור מהמייל: פותח Issue מוכן-מראש ב-GitHub; שליחתו (ע"י בעל המאגר בלבד)
+// מוסיפה את התחנה ל-overrides.json אוטומטית דרך ה-Action approve-report.
+function approveIssueUrl(s, reason, note) {
+  const title = "[אישור] תחנה " + s.c;
+  const body =
+    "code: " + s.c + "\n" +
+    "name: " + s.n + "\n" +
+    "note: " + reason + (note ? " — " + note : "") + "\n\n" +
+    "לחיצה על Submit new issue תאשר את התחנה כ'לא תקלה' (האישור אוטומטי, תקף כל עוד שם התחנה לא השתנה).";
+  return "https://github.com/Transit-Freak/kav-bochan/issues/new?title=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(body);
+}
+
 function ReportModal({ s, onClose }) {
   const [reason, setReason] = useState("זו לא תקלה — השם/הרחוב תקין");
   const [note, setNote] = useState("");
@@ -664,7 +707,7 @@ function ReportModal({ s, onClose }) {
       fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ subject, code: s.c, name: s.n, city: s.t, category: s.k, addr: s.s, mapStreet: s.ms, suggested: s.sug, reason, note, autoCheck: ac.text, message: body }),
+        body: JSON.stringify({ subject, code: s.c, name: s.n, city: s.t, category: s.k, addr: s.s, mapStreet: s.ms, suggested: s.sug, reason, note, autoCheck: ac.text, message: body, approveLink: approveIssueUrl(s, reason, note) }),
       })
         .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); setDone("sent"); })
         .catch(() => { window.location.href = mailtoUrl(subject, body); setDone("mail"); });

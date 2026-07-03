@@ -1,0 +1,80 @@
+name: approve-report
+
+# אישור דיווח במייל: קישור במייל-הדיווח פותח Issue בשם "[אישור] תחנה X".
+# ה-workflow מוודא שפותח ה-Issue הוא בעל המאגר בלבד, מוסיף את התחנה
+# ל-overrides.json (מותנה-שם), מריץ סיווג-מחדש (מיטבי) וסוגר את ה-Issue.
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: approve-report
+  cancel-in-progress: false
+
+jobs:
+  approve:
+    # ביטחון: רק Issues שפתח בעל המאגר עצמו מתקבלים
+    if: startsWith(github.event.issue.title, '[אישור]') && github.event.issue.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply override from issue body
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          python3 - <<'PY'
+          import json,os,re,datetime
+          b=os.environ.get('BODY','')
+          def grab(k):
+              m=re.search(r'^%s:\s*(.+)$'%k,b,re.M)
+              return m.group(1).strip() if m else None
+          code,name=grab('code'),grab('name')
+          assert code and name, 'issue body missing code/name lines'
+          note=grab('note') or ''
+          f='next-station/overrides.json'
+          d=json.load(open(f))
+          d[code]={'n':name,'note':(note+' (אושר במייל '+datetime.date.today().isoformat()+')').strip()}
+          json.dump(d,open(f,'w'),ensure_ascii=False,indent=1)
+          print('override added:',code,'|',name)
+          PY
+
+      - name: Reclassify with fresh GTFS (best-effort — אם MOT לא זמין, הריצה השבועית תשלים)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          URL="https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          curl -fSL --connect-timeout 20 --max-time 900 --retry 3 --retry-all-errors --retry-delay 10 -A "$UA" -o gtfs.zip "$URL"
+          unzip -o gtfs.zip stops.txt stop_times.txt
+          SID=$(head -1 stop_times.txt | tr -d '\r' | tr ',' '\n' | grep -n -x 'stop_id' | cut -d: -f1)
+          awk -F, -v c="$SID" 'NR>1{gsub(/\r/,"",$c); if($c!="") a[$c]=1} END{for(k in a) print k}' stop_times.txt | sort > active_stops.txt
+          git fetch origin osm-poi && git show FETCH_HEAD:poi.json > poi.json
+          git fetch origin osm-roads && git show FETCH_HEAD:roads.json > roads.json
+          cp next-station/data.json prev.json 2>/dev/null || echo '{}' > prev.json
+          STOPS=stops.txt POI=poi.json ROADS=roads.json ACTIVE=active_stops.txt \
+            PREV=prev.json HISTORY=next-station/history.json CHANGES=next-station/changes.json \
+            OUT=next-station/data.json python3 tools/classify.py
+          rm -f gtfs.zip stops.txt stop_times.txt active_stops.txt poi.json roads.json prev.json
+
+      - name: Commit, push & close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add next-station/overrides.json
+          git add next-station/data.json next-station/history.json next-station/changes.json 2>/dev/null || true
+          git commit -m "approve: manual override from issue #$NUM"
+          git push origin HEAD:main
+          gh issue close "$NUM" -c "✅ האישור נקלט ונפרס — התחנה סומנה כ'לא תקלה' ותוסר מהרשימה (אם הסיווג-מחדש לא רץ כעת, היא תוסר בריצה הקרובה)." || true

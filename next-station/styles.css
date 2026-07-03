@@ -268,3 +268,13 @@ body {
 .share-btn { margin-top:8px; width:100%; padding:7px; border:1px solid #c7d2fe; background:#eef2ff;
   color:#4338ca; font-weight:700; font-size:13px; border-radius:8px; cursor:pointer; }
 .share-btn:hover { background:#e0e7ff; }
+
+/* ===== ביצועים (טלפון) ===== */
+/* כרטיסים שמחוץ למסך לא עוברים חישוב-פריסה וציור — הגלילה נשארת חלקה גם עם מאות כרטיסים */
+.item { content-visibility: auto; contain-intrinsic-size: auto 180px; }
+/* כפתור "הצגת עוד" בסוף הרשימה */
+.more-btn {
+  margin: 4px 0 8px; padding: 12px; border: 1.5px dashed var(--line); background: var(--surface);
+  border-radius: 12px; font: inherit; font-weight: 800; font-size: 13.5px; color: var(--brand); cursor: pointer;
+}
+.more-btn:hover { border-color: var(--brand); background: var(--brand-soft); }
