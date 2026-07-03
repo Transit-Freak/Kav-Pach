@@ -43,3 +43,5 @@ jobs:
           echo "cluster file: ${CL:-none}"
           STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt SHAPES=shapes.txt \
             CLUSTER="$CL" CITIES="ירושלים,תל אביב יפו" python3 tools/skiplines.py
+
+# retry: MOT GTFS endpoint timeout at 15:27Z
