@@ -162,10 +162,18 @@ _AREA_POI={'cemetery','park','hood','village'}
 _GEN_TOK={'צומת','מחלף','מסעף','שכונת','שכונה','פארק','מסוף','מעבר','מחסום','קרית','קריית',
   'כביש','דרך','רחוב','מרכז','כפר','מושב','קיבוץ','גבעת','רמת','חוף','אזור','תעשיה','תעשייה','תחנת','תחנה'}
 def _toks(s): return [t for t in tk(nf(s)) if len(t)>=3 and t not in _GEN_TOK]
+# מילים גנריות של מוסדות — אסור שיתאימו בין שני מקומות שונים ("בי''ס בר לב" ≠ "בי''ס אוסישקין",
+# "מלון כרמל" ≠ "דור אלון"): מילה כזו מתאימה רק בשוויון מלא, לא בדמיון-אות
+_LM_GEN={'ביס','ביהס','מתנס','מרפאה','מרפאת','מלון','מלונות','מועדון','עירוני','עירונית','תיכון','יסודי',
+  'קניון','מגרש','היכל','אולם','בריכה','בריכת','ישיבה','ישיבת','אולפנה','סמינר','כולל','מוזיאון','אצטדיון',
+  'ספריה','ספרייה','מקוה','מקווה','קופת','חולים','כנסת','מדרש','קברות','עלמין','תורה','תלמוד','מעון',
+  'פנימיה','מסגד','כנסיה','כנסייה','מרכזית','אנדרטת','אנדרטה','חוות','גולף','כדורגל','כדורסל','ספורט','מתחם'}
 def _tok_match(nt,p):
     for a in nt:
         for b in _toks(p['n']):
-            if a==b or (max(len(a),len(b))>=4 and lev(a,b)<=1): return True
+            if a==b: return True
+            if a in _LM_GEN or b in _LM_GEN: continue
+            if max(len(a),len(b))>=4 and lev(a,b)<=1: return True
     return False
 def name_matches_poi(name,plist):
     nt=_toks(name)
@@ -175,13 +183,17 @@ def name_matches_poi(name,plist):
         if dist>(800 if p['k'] in _AREA_POI else 500): continue
         if _tok_match(nt,p): return p
     return None
+def _toks_id(s): return [t for t in _toks(s) if t not in _LM_GEN]
 def locate_namesake(name,la,lo,rad=3000):
     # המקום שהתחנה קרויה על-שמו — גם רחוק (צומת ערוגות ↔ מושב ערוגות, עד 3 ק"מ).
-    # הרשימה ממוינת לפי מרחק, ולכן ההתאמה הראשונה היא הקרובה ביותר
-    nt=_toks(name)
+    # הרשימה ממוינת לפי מרחק, ולכן ההתאמה הראשונה היא הקרובה ביותר.
+    # אין מילה מזהה בשם (רק "בי''ס"/"מרפאה") — אין איתור, עדיף כלום מהתאמה שגויה
+    nt=_toks_id(name)
     if not nt: return None
     for dist,p in nearby(la,lo,rad):
-        if _tok_match(nt,p): return (dist,p)
+        pt=_toks_id(p['n'])
+        if any(a==b or (max(len(a),len(b))>=4 and lev(a,b)<=1) for a in nt for b in pt):
+            return (dist,p)
     return None
 _rdsrc=json.load(open(ROADS)); RD=_rdsrc['roads']; CELL=0.003; GR={}
 for ri,rd in enumerate(RD):
@@ -235,7 +247,7 @@ SN,SD,SC,LA,LO,SI=ix['stop_name'],ix['stop_desc'],ix['stop_code'],ix['stop_lat']
 ACTIVE=None
 if os.path.exists(ACTIVE_PATH):
     ACTIVE=set(l.strip() for l in open(ACTIVE_PATH) if l.strip()); print('active stop_ids:',len(ACTIVE))
-PREVRT={}; PREVRW={}; PREVERR={}
+PREVRT={}; PREVRW={}; PREVERR={}; PREVLMP={}
 ERRCATS=('mismatch','reversal','spelling','streetvar')
 if PREV and os.path.exists(PREV):
     try:
@@ -244,6 +256,7 @@ if PREV and os.path.exists(PREV):
             for p in s.get('p',[]):
                 if p.get('rt'): PREVRT[(s['c'],p['n'])]=p['rt']
             if s.get('rw'): PREVRW[s['c']]=s['rw']  # הליכות אמיתיות (closer + מקום-שבשם) מחושבות חודשי
+            if s.get('lmp'): PREVLMP[s['c']]=s['lmp']['n']  # לאיזה מקום חושבה ההליכה — נגרר רק אם לא השתנה
             # תחנות שסומנו כשגיאה בריצה הקודמת — לזיהוי תיקונים אמיתיים במקור
             if s.get('k') in ERRCATS: PREVERR[s['c']]={'n':s['n'],'s':s['s'],'t':s.get('t',''),'k':s['k']}
         print('carried-forward rt:',len(PREVRT),'| closer rw:',len(PREVRW),'| prev errors:',len(PREVERR))
@@ -425,7 +438,8 @@ for r in rows[1:]:
         nk=locate_namesake(prim,la,lo)
         if nk: rec['lmp']={'n':nk[1]['n'],'k':nk[1]['k'],'d':nk[0],'la':nk[1]['la'],'lo':nk[1]['lo']}
         rw0=PREVRW.get(code)
-        if rw0 and rw0.get('lm'): rec['rw']={'lm':rw0['lm']}
+        # גוררים הליכה קודמת רק אם המקום שאותר לא השתנה (אחרת הזמן שייך למקום אחר)
+        if rw0 and rw0.get('lm') and nk and PREVLMP.get(code)==nk[1]['n']: rec['rw']={'lm':rw0['lm']}
     if sug: rec['sug']=sug
     if psug: rec['psug']=psug; rec['psugd']=psugd
     if sv: rec['sv']={'use':sv[0],'maj':sv[1],'n':sv[2]}
