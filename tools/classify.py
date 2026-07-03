@@ -89,6 +89,11 @@ def same_street(a,b):
 def ktiv_only(a,b):
     sa=re.sub('[יו]','',nf(a)); sb=re.sub('[יו]','',nf(b))
     return sa==sb and len(sa)>=3
+def abbrev_pair(a,b):
+    # קיצור, לא טעות כתיב: "לדזינסקי" מול "עובד לדיז'נסקי" — פסק ה'spelling'
+    # הגיע מהשוואת המילה האחרונה בלבד, אבל צד אחד השמיט מילים מהשם המלא.
+    # טעות כתיב אמיתית = אותו מספר מילים והבדל אות; מספר מילים שונה = קיצור -> ספק
+    return len(tk(nf(a)))!=len(tk(nf(b)))
 def cn(s): return re.sub(r'\s*/\s*',' / ',re.sub(r'\s+',' ',(s or '').strip()))  # שם-תחנה מנורמל להשוואה
 # שם על-שם מוסד/ציון-דרך (מרפאה, בית ספר, הישיבה...) — שם תחנה תקין, לא טעות "היפוך".
 LANDMARK_WORDS=('מרכז','בית ','בית ספר','ביהס','ביס','גן ','גן ילדים','מרפאה','קופח','קופ','קופת חולים',
@@ -319,7 +324,7 @@ for r in rows[1:]:
                 closer_cands.append(rec); continue
         cnt['exact']+=1; continue
     if samestreet: cat='streetvar'
-    elif rel(prim,st)=='spelling': cat='uncertain' if ktiv_only(prim,st) else 'spelling'
+    elif rel(prim,st)=='spelling': cat='uncertain' if (ktiv_only(prim,st) or abbrev_pair(prim,st)) else 'spelling'
     elif cross and rel(cross,st) in ('exact','spelling'):
         cat='uncertain' if rel(cross,st)=='spelling' and ktiv_only(cross,st) else 'reversal'
     elif named_after_city(name,c): cnt['settlement']+=1; continue

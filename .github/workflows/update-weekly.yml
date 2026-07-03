@@ -119,3 +119,5 @@ jobs:
 # reclassify: numbered highways are back for matching-only (כביש 411 stops -> mapok, never suggested)
 
 # reclassify: care-homes POI layer landed (153 בתי אבות incl. לב אבות)
+
+# reclassify: abbreviated street names (לדזינסקי = עובד לדיזנסקי) are ספק, not טעות כתיב
