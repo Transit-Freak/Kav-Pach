@@ -125,3 +125,5 @@ jobs:
 # reclassify: area POIs (cemetery/park/hood) match up to 800m by centroid; הר -> landmark word (הר הזיתים)
 
 # reclassify: checkpoints layer + Hebrew POI names landed; מעבר/מחסום -> landmark words
+
+# reclassify: suggested names use Israeli stop format X/Y (no spaces around the slash)

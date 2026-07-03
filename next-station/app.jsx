@@ -53,6 +53,18 @@ function lcsMark(a, b, which) {
   return out.map(([ch, d, k]) => d ? <span className="d-hl" key={k}>{ch}</span> : <span key={k}>{ch}</span>);
 }
 
+// כשצד אחד קיצור של השני (מספר מילים שונה, "רקאנטי" מול "אברהם רקנאטי") —
+// השוואת האותיות נעשית רק מול המילים המקבילות בסוף השם המלא,
+// והמילים שהושמטו ("אברהם") מוצגות רגיל ולא מסומנות כ"אותיות חסרות"
+function diffPair(a, b) {
+  const ta = String(a).trim().split(/\s+/), tb = String(b).trim().split(/\s+/);
+  if (ta.length < tb.length)
+    return { a, b: tb.slice(tb.length - ta.length).join(" "), bHead: tb.slice(0, tb.length - ta.length).join(" ") + " " };
+  if (tb.length < ta.length)
+    return { a: ta.slice(ta.length - tb.length).join(" "), aHead: ta.slice(0, ta.length - tb.length).join(" ") + " ", b };
+  return { a, b };
+}
+
 // טקסט "שם על-שם מוסד/ציון-דרך" — מדויק לפי המילה שזוהתה (צומת ≠ מוסד)
 const LM_PLACE = ["צומת", "שכונ", "מסוף", "מסעף", "פארק", "חוף", "אזור", "קרית", "קריית", "רמת", "גבעת", "הר", "עלמין", "העלמין", "קבר", "הקברות", "מחנה", "מגרש", "מתחם", "מיתחם", "מעבר", "מחסום"];
 function lmKind(s) {
@@ -132,9 +144,12 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
       </div>
       {s.lm ? (
         <div className="d-diff">{lmText(s)}</div>
-      ) : (s.k === "spelling" || s.k === "uncertain") && (
-        <div className="d-diff">💬 בשם התחנה: «<b>{lcsMark(primName(s.n), s.s, "a")}</b>» · בכתובת: «<b>{lcsMark(primName(s.n), s.s, "b")}</b>»</div>
-      )}
+      ) : (s.k === "spelling" || s.k === "uncertain") && (() => {
+        const dp = diffPair(primName(s.n), s.s);
+        return (
+          <div className="d-diff">💬 בשם התחנה: «<b>{dp.aHead}{lcsMark(dp.a, dp.b, "a")}</b>» · בכתובת: «<b>{dp.bHead}{lcsMark(dp.a, dp.b, "b")}</b>»</div>
+        );
+      })()}
       {s.sv && (
         <div className="d-sv">
           🛣️ ברחוב זה <b>{s.sv.n}</b> תחנות כותבות «<b>{s.sv.maj}</b>» — וכאן כתוב «<b>{s.sv.use}</b>»

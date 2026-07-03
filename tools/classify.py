@@ -297,7 +297,8 @@ for r in rows[1:]:
             if flag:
                 near_name,near_d=best
                 primc=parts[0].strip()
-                sugname=primc+' / '+near_name
+                # פורמט שמות התחנות בישראל: "X/Y" בלי רווחים סביב הלוכסן
+                sugname=primc+'/'+near_name
                 nb=nearby(la,lo)
                 pois=[]
                 for dist,p in nb:
