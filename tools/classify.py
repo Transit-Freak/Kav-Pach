@@ -111,7 +111,9 @@ def streets_match(a,b):
 LANDMARKISH=('מחלף','יציאה','כניסה','מסוף','צומת','כביש ','מגרש','מיתחם','מתחם','פארק','פאתי','תחנת','ת. ')
 _AR=re.compile(r'[؀-ۿ]')  # שם רחוב בכתב ערבי — לא ניתן להשוות מול שם עברי ב-GTFS
 # שם שאינו עברית שמישה (כתב ערבי / לטיני / מספרי) — לא מציעים אותו כשם תחנה
-def odd_road(nm): return bool(_AR.search(nm or '')) or bool(re.search(r'[A-Za-z]',nm or '')) or bool(re.fullmatch(r'[\d/ ]+',(nm or '').strip()))
+# "רחוב מוזר" — לא מציעים אותו לעולם כשם: כתב ערבי/לטיני, מספרי בלבד,
+# או כביש ממוספר ("כביש 411") — האחרון משמש לזיהוי בלבד, לא כהצעת שינוי
+def odd_road(nm): return bool(_AR.search(nm or '')) or bool(re.search(r'[A-Za-z]',nm or '')) or bool(re.fullmatch(r'[\d/ ]+',(nm or '').strip())) or bool(re.fullmatch(r'כביש \d+',(nm or '').strip()))
 def acronymish(s): return bool(re.search(r'["׳״]|\x27\x27', s or ''))  # ר"ת (קק"ל) ש-OSM נוטה לפענח
 # שם רחוב ערבי בתעתיק עברי (אל-/אבו/ואדי…): אותו רחוב מתועתק אחרת ב-GTFS ובמפה,
 # ולכן השוואת רחובות אינה אמינה — לא מציעים "רחוב קרוב יותר" במקרים אלה.
@@ -324,7 +326,9 @@ for r in rows[1:]:
     else: cat='mismatch'
     if sv and cat in ('spelling','uncertain'): cat='streetvar'
     nr=nearest_roads(la,lo,4); ms,md=(nr[0] if nr else (None,None))
-    if cat in ('reversal','mismatch') and ms and rel(prim,ms) in ('exact','spelling'):
+    # השם תואם כביש/רחוב שעובר ליד התחנה (עד 120 מ׳, לאו דווקא הקרוב ביותר,
+    # כולל "כביש 411" ממוספר) — השם תקין, לא מוצגת
+    if cat in ('reversal','mismatch') and any(dd<=120 and rel(prim,nm2) in ('exact','spelling') for nm2,dd in nr):
         cnt['mapok']+=1; continue
     nb=nearby(la,lo)
     # קרויה על-שם מקום אמיתי סמוך (POI) — שם תקין, לא מוצגת כלל

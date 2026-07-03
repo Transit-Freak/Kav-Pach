@@ -23,7 +23,9 @@ jobs:
       - name: Query Overpass for named roads (with geometry)
         run: |
           set -euo pipefail
-          Q='[out:json][timeout:900][bbox:29.4,34.2,33.35,35.95];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|road)$"]["name"];out geom;'
+          # רחובות עם שם + כבישים ממוספרים בלי שם (ref בלבד, דרגות ראשיות) — האחרונים
+          # נקראים "כביש N" ומשמשים לזיהוי בלבד (המסווג לעולם לא מציע שם כזה)
+          Q='[out:json][timeout:900][bbox:29.4,34.2,33.35,35.95];(way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|road)$"]["name"];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|motorway_link|trunk_link|primary_link|secondary_link)$"]["ref"][!"name"];);out geom;'
           ok=0
           for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
             echo "== trying $ep =="
@@ -37,17 +39,22 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           import json
+          import re
           d=json.load(open('raw.json'))
-          out=[]
+          out=[]; nref=0
           for e in d.get('elements',[]):
             if e.get('type')!='way': continue
-            name=e.get('tags',{}).get('name'); geom=e.get('geometry')
+            tags=e.get('tags',{}); name=tags.get('name'); geom=e.get('geometry')
+            if not name:
+              # כביש ממוספר בלי שם: ref="411" (או "40;411" — לוקחים את הראשון) -> "כביש 411"
+              m=re.match(r'\s*(\d+)',str(tags.get('ref','')))
+              if m: name='כביש '+m.group(1); nref+=1
             if not name or not geom: continue
             pts=[[round(p['lat'],5),round(p['lon'],5)] for p in geom]
             if len(pts)>=2: out.append({'n':name,'g':pts})
           import datetime
           json.dump({'generated':datetime.date.today().isoformat(),'count':len(out),'roads':out}, open('roads.json','w'), ensure_ascii=False, separators=(',',':'))
-          print('named roads:', len(out))
+          print('roads:', len(out), '| of which numbered-by-ref:', nref)
           PY
           ls -la roads.json
 
