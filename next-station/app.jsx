@@ -274,11 +274,13 @@ function App() {
     const m = /#stop=(\d+)/.exec(window.location.hash || "");
     if (m) { const s = data.stops.find((x) => x.c === m[1]); if (s) setSel(s); }
   }, [data]);
-  // שומר את התחנה הנבחרת בכתובת — כך שאפשר להעתיק/לשתף את הקישור מסרגל הדפדפן
+  // שומר את התחנה הנבחרת בכתובת — כך שאפשר להעתיק/לשתף את הקישור מסרגל הדפדפן.
+  // רק אחרי שהנתונים נטענו — אחרת ה-# של קישור עמוק נמחק לפני שהספקנו לקרוא אותו
   useEffect(() => {
+    if (!data) return;
     if (sel) history.replaceState(null, "", "#stop=" + sel.c);
     else if (window.location.hash) history.replaceState(null, "", window.location.pathname + window.location.search);
-  }, [sel]);
+  }, [sel, data]);
 
   // אתחול מפה
   useEffect(() => {

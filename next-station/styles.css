@@ -285,3 +285,8 @@ html, body, .list { overflow-anchor: none; }
   border-radius: 12px; font: inherit; font-weight: 800; font-size: 13.5px; color: var(--brand); cursor: pointer;
 }
 .more-btn:hover { border-color: var(--brand); background: var(--brand-soft); }
+
+/* מיקום תוויות על המפה: Leaflet מחשב מיקום בהנחת LTR — בדף RTL התווית זזה
+   חצי-רוחב מהנקודה. ה-pane של התוויות עובד LTR (חישוב מדויק), הטקסט נשאר עברית */
+.leaflet-tooltip-pane { direction: ltr; }
+.leaflet-tooltip-pane .leaflet-tooltip { direction: rtl; }
