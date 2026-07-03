@@ -412,6 +412,9 @@ for r in rows[1:]:
     lm=landmark_name(prim) if cat in ('reversal','mismatch') else None
     nk=None; lmrw=None
     if lm:
+        # מסוף / תחנה מרכזית: התחנה היא-היא המסוף — שם נכון בהגדרה, לא מוצגת כלל
+        if lm in ('מסוף','תחנה מרכזית','ת מרכזית','תמרכזית'):
+            cnt['landmark']+=1; continue
         cat='uncertain'
         nk=locate_namesake(prim,la,lo)
         rw0=PREVRW.get(code)
