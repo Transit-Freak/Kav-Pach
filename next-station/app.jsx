@@ -363,18 +363,19 @@ function App() {
     markRef.current = L.marker([sel.la, sel.lo])
       .addTo(m)
       .bindPopup("<b>" + esc(sel.n) + "</b><br>רחוב בכתובת: " + esc(sel.s) + "<br>" + esc(sel.t));
-    // "הצעות כלליות": נקודה מדויקת על כל רחוב, עם השם ממש על הנקודה (לא מרחף)
+    // "הצעות כלליות": נקודה מדויקת על כל רחוב, עם השם צמוד לנקודה.
+    // כיוונים שונים (מעל/מתחת) — שהתוויות לא יכסו זו את זו או את הנקודה עצמה
     if (sel.k === "closer" && sel.roads) {
       const rg = L.layerGroup();
-      const draw = (road, color, cls) => {
+      const draw = (road, color, cls, dir) => {
         if (!road || !road.pt) return;
         L.circleMarker(road.pt, { radius: 7, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 })
           .addTo(rg)
-          .bindTooltip(esc(road.n), { permanent: true, direction: "center", className: "road-lbl " + cls });
+          .bindTooltip(esc(road.n), { permanent: true, direction: dir, offset: [0, dir === "bottom" ? 6 : -6], className: "road-lbl " + cls });
       };
-      draw(sel.roads.prim, "#64748b", "prim");  // אפור — הרחוב הראשי
-      draw(sel.roads.cur, "#dc2626", "cur");     // אדום — המצטלב שבשם כיום
-      draw(sel.roads.sug, "#16a34a", "sug");     // ירוק — הרחוב המוצע
+      draw(sel.roads.prim, "#64748b", "prim", "top");     // אפור — הרחוב הראשי (מעל)
+      draw(sel.roads.cur, "#dc2626", "cur", "top");        // אדום — המצטלב שבשם כיום (רחוק מהאחרים)
+      draw(sel.roads.sug, "#16a34a", "sug", "bottom");     // ירוק — הרחוב המוצע (מתחת)
       rg.addTo(m);
       roadsLayerRef.current = rg;
     }
