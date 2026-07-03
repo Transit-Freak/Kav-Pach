@@ -280,7 +280,14 @@ function App() {
   // אתחול מפה
   useEffect(() => {
     if (mapRef.current || !document.getElementById("map")) return;
-    const m = L.map("map", { center: [31.6, 34.9], zoom: 8, zoomControl: true });
+    // מסך מגע: אצבע אחת גוללת את הדף, שתי אצבעות מזיזות את המפה —
+    // אחרת המפה "חוטפת" כל גרירה והדף נראה תקוע (התוסף מציג הסבר קצר על המפה)
+    const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    const m = L.map("map", {
+      center: [31.6, 34.9], zoom: 8, zoomControl: true,
+      gestureHandling: coarse, // אם התוסף לא נטען — האפשרות פשוט מתעלמת
+      gestureHandlingOptions: { duration: 1500, text: { touch: "להזזת המפה — שתי אצבעות (אצבע אחת גוללת את הדף)", scroll: "להגדלה — Ctrl + גלגלת", scrollMac: "להגדלה — ⌘ + גלגלת" } },
+    });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap", maxZoom: 19,
     }).addTo(m);
