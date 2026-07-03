@@ -131,3 +131,5 @@ jobs:
 # dry-run: count stops whose named cross-street does not exist in the map at all (no behavior change)
 
 # reclassify: enable missing-cross-street rule (well-mapped areas only) + dotted-abbrev fix + אנדרטה/חווה landmarks
+
+# reclassify: missing-cross well-mapped radius 350->500m (moshav stops like ניר וגל/ערבה sit at village edges)

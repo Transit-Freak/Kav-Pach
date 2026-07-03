@@ -330,7 +330,7 @@ for r in rows[1:]:
                         and not landmark_name(crs) and not acronymish(crs)
                         and not crs.replace('-',' ').startswith(('ככר','כיכר'))
                         and not streets_match(crs,st)
-                        and len(nr8)>=8 and nr8[7][1]<=350
+                        and len(nr8)>=8 and nr8[7][1]<=500
                         and sum(1 for nm2,_ in nr8 if not odd_road(nm2))>=6
                         and not road_exists(la,lo,crs)):
                     nocross=True
