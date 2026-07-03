@@ -13,7 +13,10 @@ PREV=os.environ.get('PREV',''); OUT=os.environ.get('OUT','next-station/data.json
 OVR={}
 _ovr=os.environ.get('OVERRIDES','next-station/overrides.json')
 if os.path.exists(_ovr):
-    try: OVR={k:v for k,v in json.load(open(_ovr)).items() if not k.startswith('_')}
+    try:
+        for k,v in json.load(open(_ovr)).items():
+            if k.startswith('_'): continue
+            OVR[k]=v if isinstance(v,dict) else {'note':v}
     except Exception as e: print('overrides load failed:',e)
 
 PREF=['שדרות','שדרת',"שד'",'שד','רחוב',"רח'",'רח','דרך','סמטת','סמטה',"סמ'",'שכונת',"שכ'",'כיכר','ככר','מחלף','כביש']
@@ -242,7 +245,9 @@ for r in rows[1:]:
     name,desc,code=r[SN],r[SD],r[SC]; st=street(desc); c=city(desc)
     CURINFO[code]=(name,st)
     if c: EXIST[c].add(cn(name))
-    if code in OVR: cnt['exact']+=1; continue  # אושר ידנית כתקין
+    _ov=OVR.get(code)
+    # האישור מותנה בשם: השתנה שם התחנה ב-GTFS — האישור פג והיא נבדקת מחדש
+    if _ov and _ov.get('n')==name: cnt['exact']+=1; continue
     try: la=round(float(r[LA]),5); lo=round(float(r[LO]),5)
     except: la=lo=None
     realstreet=st and not re.fullmatch(r'[\d ]+',st)
