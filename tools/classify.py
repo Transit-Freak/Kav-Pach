@@ -9,6 +9,13 @@ t0=time.time()
 STOPS=os.environ.get('STOPS','stops.txt'); POI=os.environ.get('POI','poi.json')
 ROADS=os.environ.get('ROADS','roads.json'); ACTIVE_PATH=os.environ.get('ACTIVE','active_stops.txt')
 PREV=os.environ.get('PREV',''); OUT=os.environ.get('OUT','next-station/data.json')
+# תחנות שאושרו ידנית כ"לא תקלה" (מדיווחי משתמשים) — המסווג מדלג עליהן
+OVR={}
+_ovr=os.environ.get('OVERRIDES','next-station/overrides.json')
+if os.path.exists(_ovr):
+    try: OVR={k:v for k,v in json.load(open(_ovr)).items() if not k.startswith('_')}
+    except Exception as e: print('overrides load failed:',e)
+
 PREF=['שדרות','שדרת',"שד'",'שד','רחוב',"רח'",'רח','דרך','סמטת','סמטה',"סמ'",'שכונת',"שכ'",'כיכר','ככר','מחלף','כביש']
 TITLES={'הרב','רב','דר','דוקטור','פרופ','השר','ראל','אלוף','סרן','הנשיא','מר','גנרל','בי"ס','ביה"ס','בית','ספר','גן','קניון'}
 # מוקדים "מרכזיים" שראויים לשמש שם תחנה (עד 100 מ׳)
@@ -235,6 +242,7 @@ for r in rows[1:]:
     name,desc,code=r[SN],r[SD],r[SC]; st=street(desc); c=city(desc)
     CURINFO[code]=(name,st)
     if c: EXIST[c].add(cn(name))
+    if code in OVR: cnt['exact']+=1; continue  # אושר ידנית כתקין
     try: la=round(float(r[LA]),5); lo=round(float(r[LO]),5)
     except: la=lo=None
     realstreet=st and not re.fullmatch(r'[\d ]+',st)
@@ -363,6 +371,7 @@ for rec in closer_cands:
     if rw: rec['rw']=rw; carried+=1
     suspects.append(rec); cnt['closer']+=1
 print('closer kept:',cnt['closer'],'| rw carried:',carried)
+if OVR: print('manual overrides applied:',len(OVR))
 print('classification:',cnt)
 print('suspects:',len(suspects),'| %.1fs'%(time.time()-t0))
 os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
