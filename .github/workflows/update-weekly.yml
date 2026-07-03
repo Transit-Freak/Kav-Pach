@@ -151,3 +151,5 @@ jobs:
 # reclassify: new category שם מטעה — namesake unreachable by foot (2x aerial / no route)
 
 # reclassify: מסוף/תחנה מרכזית stops are the terminal itself — never an error, hidden entirely
+
+# reclassify: operational stops (תחנה תפעולית) are service stops — hidden like terminals
