@@ -293,3 +293,7 @@ html, body, .list { overflow-anchor: none; }
 
 /* סימון והעתקת טקסט חופשית בפרטי התחנה — כפתורי-כותרת חסומים לסימון כברירת מחדל בכרום */
 .it-head, .it-detail, .detail { user-select: text; -webkit-user-select: text; }
+
+/* "המקום שבשם" + סימון חשודה (אין חיבור הליכה למקום שהתחנה קרויה על-שמו) */
+.d-lmp { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #fde68a; }
+.d-lmbad { margin-top: 4px; color: #b91c1c; font-weight: 800; }

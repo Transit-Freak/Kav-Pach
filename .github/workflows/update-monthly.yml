@@ -41,7 +41,7 @@ jobs:
       - name: Overpass — points of interest
         run: |
           set -euo pipefail
-          Q='[out:json][timeout:700][bbox:29.4,34.2,33.35,35.95];(nwr["amenity"~"^(school|university|college|kindergarten|hospital|clinic|townhall|police|fire_station|library|community_centre|courthouse|theatre|cinema|bus_station|marketplace|fuel|bank|place_of_worship|post_office|grave_yard|social_facility|nursing_home|retirement_home)$"]["name"];nwr["landuse"="cemetery"]["name"];nwr["shop"~"^(mall|department_store|supermarket|convenience)$"]["name"];nwr["railway"="station"]["name"];nwr["leisure"~"^(park|sports_centre|stadium|pitch)$"]["name"];nwr["tourism"~"^(museum|attraction)$"]["name"];nwr["office"="government"]["name"];nwr["public_transport"="station"]["name"];nwr["highway"="motorway_junction"]["name"];nwr["junction"="yes"]["name"];nwr["building"~"^(synagogue|mosque|church|chapel|temple|religious|school|university|college|kindergarten|civic|public|hospital|government)$"]["name"];nwr["place"~"^(neighbourhood|suburb|quarter)$"]["name"];nwr["barrier"~"^(border_control|checkpoint)$"]["name"];);out center tags;'
+          Q='[out:json][timeout:700][bbox:29.4,34.2,33.35,35.95];(nwr["amenity"~"^(school|university|college|kindergarten|hospital|clinic|townhall|police|fire_station|library|community_centre|courthouse|theatre|cinema|bus_station|marketplace|fuel|bank|place_of_worship|post_office|grave_yard|social_facility|nursing_home|retirement_home)$"]["name"];nwr["landuse"="cemetery"]["name"];nwr["shop"~"^(mall|department_store|supermarket|convenience)$"]["name"];nwr["railway"="station"]["name"];nwr["leisure"~"^(park|sports_centre|stadium|pitch)$"]["name"];nwr["tourism"~"^(museum|attraction)$"]["name"];nwr["office"="government"]["name"];nwr["public_transport"="station"]["name"];nwr["highway"="motorway_junction"]["name"];nwr["junction"="yes"]["name"];nwr["building"~"^(synagogue|mosque|church|chapel|temple|religious|school|university|college|kindergarten|civic|public|hospital|government)$"]["name"];nwr["place"~"^(neighbourhood|suburb|quarter|village|hamlet)$"]["name"];nwr["barrier"~"^(border_control|checkpoint)$"]["name"];);out center tags;'
           for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
             if curl -fsS --max-time 800 --data-urlencode "data=$Q" "$ep" -o poi_raw.json; then echo "got $(wc -c < poi_raw.json) bytes"; break; fi
             echo "endpoint failed, next"; sleep 5
@@ -55,6 +55,7 @@ jobs:
             hw=t.get('highway'); jn=t.get('junction')
             if hw=='motorway_junction' or jn=='yes': return 'junction'
             if t.get('place') in ('neighbourhood','suburb','quarter'): return 'hood'
+            if t.get('place') in ('village','hamlet'): return 'village'
             if t.get('barrier') in ('border_control','checkpoint'): return 'checkpoint'
             if sh in ('mall','department_store'): return 'mall'
             if sh in ('supermarket','convenience'): return 'shop'
@@ -104,7 +105,7 @@ jobs:
       - name: Overpass — named roads
         run: |
           set -euo pipefail
-          Q='[out:json][timeout:900][bbox:29.4,34.2,33.35,35.95];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|road)$"]["name"];out geom;'
+          Q='[out:json][timeout:900][bbox:29.4,34.2,33.35,35.95];(way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link|road)$"]["name"];way["highway"~"^(motorway|trunk|primary|secondary|tertiary|motorway_link|trunk_link|primary_link|secondary_link)$"]["ref"][!"name"];);out geom;'
           for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
             if curl -fsS --max-time 1000 --data-urlencode "data=$Q" "$ep" -o roads_raw.json; then echo "got $(wc -c < roads_raw.json) bytes"; break; fi
             echo "endpoint failed, next"; sleep 5
@@ -112,9 +113,13 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('roads_raw.json')); out=[]
+          import re
           for e in d.get('elements',[]):
             if e.get('type')!='way': continue
-            name=e.get('tags',{}).get('name'); geom=e.get('geometry')
+            tags=e.get('tags',{}); name=tags.get('name'); geom=e.get('geometry')
+            if not name:
+              m=re.match(r'\s*(\d+)',str(tags.get('ref','')))
+              if m: name='כביש '+m.group(1)
             if not name or not geom: continue
             pts=[[round(p['lat'],5),round(p['lon'],5)] for p in geom]
             if len(pts)>=2: out.append({'n':name,'g':pts})
@@ -160,21 +165,26 @@ jobs:
                 k+=1
               en+=1
             except Exception: pass
-          # "הצעות כלליות": מרחק הליכה אמיתי מהתחנה לרחובות (ראשי/מצטלב-נוכחי/מוצע)
-          # כדי לקבוע איזה רחוב באמת קרוב יותר בהליכה (לא בקו אווירי).
+          # מרחקי הליכה אמיתיים: "הצעות כלליות" (רחובות ראשי/מצטלב/מוצע) + "המקום שבשם"
+          # (lmp — צומת ערוגות ↔ מושב ערוגות): תחנה בלי חיבור הליכה סביר תסומן באתר כחשודה.
           walked=0
           for s in d['stops']:
-            if s.get('k')!='closer' or s.get('la') is None: continue
-            rds=s.get('roads',{}); keys=[k for k in ('prim','cur','sug') if rds.get(k) and rds[k].get('pt')]
-            if not keys: continue
-            coords="%s,%s;"%(s['lo'],s['la'])+";".join("%s,%s"%(rds[k]['pt'][1],rds[k]['pt'][0]) for k in keys)
+            if s.get('la') is None: continue
+            targets=[]
+            if s.get('k')=='closer':
+              rds=s.get('roads',{})
+              targets=[(k,rds[k]['pt'][1],rds[k]['pt'][0]) for k in ('prim','cur','sug') if rds.get(k) and rds[k].get('pt')]
+            if s.get('lmp'): targets.append(('lm',s['lmp']['lo'],s['lmp']['la']))
+            if not targets: continue
+            coords="%s,%s;"%(s['lo'],s['la'])+";".join("%s,%s"%(x,y) for _,x,y in targets)
             try:
               with urllib.request.urlopen(base+coords+"?sources=0&annotations=duration,distance",timeout=15) as r:
                 j=json.load(r)
-              dur=j['durations'][0]; dis=(j.get('distances') or [[None]*(len(keys)+1)])[0]
+              dur=j['durations'][0]; dis=(j.get('distances') or [[None]*(len(targets)+1)])[0]
               rw={}
-              for i,k in enumerate(keys,1):
+              for i,(k,_,_) in enumerate(targets,1):
                 if dur[i] is not None: rw[k]={'min':max(1,round(dur[i]/60)),'d':round(dis[i]) if i<len(dis) and dis[i] is not None else None}
+                elif k=='lm': rw[k]={'min':None,'d':None}  # אין מסלול הליכה כלל — סימן מובהק לחוסר חיבור
               if rw: s['rw']=rw; walked+=1
             except Exception: pass
           json.dump(d, open('next-station/data.json','w'), ensure_ascii=False, separators=(',',':'))
@@ -211,3 +221,5 @@ jobs:
           git push -f origin osm-roads-tmp:osm-roads
 
 # trigger: full monthly refresh — populate real OSRM walking distance for "הצעות כלליות"
+
+# trigger: monthly — villages layer + walking check to the namesake place (צומת ערוגות)

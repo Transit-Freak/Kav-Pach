@@ -15,7 +15,7 @@ const POI_ICON = {
   school: "🏫", academia: "🎓", health: "🏥", mall: "🛒", train: "🚉",
   worship: "🕍", police: "🚓", fire: "🚒", library: "📚", community: "🏘️",
   gov: "🏛️", culture: "🎭", busstation: "🚌", park: "🌳", sport: "⚽",
-  shop: "🏪", fuel: "⛽", bank: "🏦", junction: "🛣️", post: "📮", cemetery: "🪦", hood: "🏙️", care: "🧓", checkpoint: "🛂",
+  shop: "🏪", fuel: "⛽", bank: "🏦", junction: "🛣️", post: "📮", cemetery: "🪦", hood: "🏙️", care: "🧓", checkpoint: "🛂", village: "🏡",
 };
 
 // מציגים ב"ליד התחנה" רק מקומות עד ~5–6 דק׳ הליכה אמיתית
@@ -74,6 +74,13 @@ function lmKind(s) {
 }
 function lmText(s) {
   return "🏛️ התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב — ככל הנראה שם תקין.";
+}
+// "המקום שבשם" רחוק/לא נגיש בהליכה? חשודה: אולי השם מטעה את הנוסעים.
+// w.d==null = המסלול חושב ולא נמצא כלל; אחרת — הליכה ארוכה בהרבה מהמרחק האווירי
+function lmWalkBad(s) {
+  const w = s.rw && s.rw.lm;
+  if (!w || !s.lmp) return false;
+  return w.d == null || w.d > Math.max(3 * s.lmp.d, s.lmp.d + 800);
 }
 
 // כפתור העתקה כללי — מעתיק טקסט ללוח עם משוב "הועתק"
@@ -143,7 +150,22 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
         {CATS[s.k].label} — {CATS[s.k].desc}
       </div>
       {s.lm ? (
-        <div className="d-diff">{lmText(s)}</div>
+        <div className="d-diff">
+          {lmText(s)}
+          {s.lmp && (() => {
+            const w = s.rw && s.rw.lm;
+            return (
+              <div className="d-lmp">
+                📍 המקום שבשם: <b>{s.lmp.n}</b> — {s.lmp.d} מ׳ בקו אווירי
+                {w && w.d != null && <> · 🚶 הליכה אמיתית: <b>{w.d} מ׳</b> ({w.min} דק׳)</>}
+                {w && w.d == null && <> · 🚶 <b>לא נמצא מסלול הליכה</b></>}
+                {lmWalkBad(s) && (
+                  <div className="d-lmbad">⚠️ חשודה: אין חיבור הליכה סביר בין התחנה למקום שבשם — ייתכן שהשם מטעה.</div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
       ) : (s.k === "spelling" || s.k === "uncertain") && (() => {
         const dp = diffPair(primName(s.n), s.s);
         return (
@@ -694,8 +716,11 @@ function autoCheck(s) {
     }
     return { tone: "neutral", text: "בדיקה אוטומטית: ההצעה מבוססת על מרחק אווירי (אין נתוני הליכה לרחוב זה)." };
   }
-  if (s.lm)
+  if (s.lm) {
+    if (lmWalkBad(s))
+      return { tone: "warn", text: "בדיקה אוטומטית: התחנה קרויה על-שם " + lmKind(s) + ", אך אין חיבור הליכה סביר בינה לבין «" + s.lmp.n + "» — השם עשוי להטעות." };
     return { tone: "ok", text: "בדיקה אוטומטית: התחנה קרויה על-שם " + lmKind(s) + " ולא על-שם רחוב — ככל הנראה שם תקין." };
+  }
   if (s.k === "spelling" || s.k === "uncertain")
     return { tone: "warn", text: "בדיקה אוטומטית: ההבדל בין השם לכתובת הוא ברמת אות/כתיב — ייתכן שזו אותה מילה." };
   if (s.ms) return { tone: "neutral", text: "בדיקה אוטומטית: לפי המפה הרחוב הקרוב לתחנה הוא «" + s.ms + "» (" + s.md + " מ׳); בכתובת רשום «" + s.s + "»." };

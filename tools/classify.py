@@ -156,14 +156,31 @@ def nearby(la,lo,rad=500):
     res.sort(key=lambda x:x[0]); return res
 # שטחים גדולים (בית עלמין, פארק, שכונה) — המרחק נמדד למרכז השטח, לכן תחנה
 # בשולי בית העלמין בהר הזיתים יוצאת "549 מ׳" ממנו; להם מותר רדיוס גדול יותר
-_AREA_POI={'cemetery','park','hood'}
+_AREA_POI={'cemetery','park','hood','village'}
+# מילים גנריות שאינן מזהות מקום — "צומת" בשם התחנה לא אמור להתאים ל"צומת אחר" סמוך
+_GEN_TOK={'צומת','מחלף','מסעף','שכונת','שכונה','פארק','מסוף','מעבר','מחסום','קרית','קריית',
+  'כביש','דרך','רחוב','מרכז','כפר','מושב','קיבוץ','גבעת','רמת','חוף','אזור','תעשיה','תעשייה','תחנת','תחנה'}
+def _toks(s): return [t for t in tk(nf(s)) if len(t)>=3 and t not in _GEN_TOK]
+def _tok_match(nt,p):
+    for a in nt:
+        for b in _toks(p['n']):
+            if a==b or (max(len(a),len(b))>=4 and lev(a,b)<=1): return True
+    return False
 def name_matches_poi(name,plist):
-    nt=[t for t in tk(nf(name)) if len(t)>=3]
+    nt=_toks(name)
     for dist,p in plist:
+        # יישובים אינם מסתירים אוטומטית — הם משמשים רק לאיתור "המקום שבשם" ולבדיקת הליכה
+        if p['k']=='village': continue
         if dist>(800 if p['k'] in _AREA_POI else 500): continue
-        for a in nt:
-            for b in [t for t in tk(nf(p['n'])) if len(t)>=3]:
-                if a==b or (max(len(a),len(b))>=4 and lev(a,b)<=1): return p
+        if _tok_match(nt,p): return p
+    return None
+def locate_namesake(name,la,lo,rad=3000):
+    # המקום שהתחנה קרויה על-שמו — גם רחוק (צומת ערוגות ↔ מושב ערוגות, עד 3 ק"מ).
+    # הרשימה ממוינת לפי מרחק, ולכן ההתאמה הראשונה היא הקרובה ביותר
+    nt=_toks(name)
+    if not nt: return None
+    for dist,p in nearby(la,lo,rad):
+        if _tok_match(nt,p): return (dist,p)
     return None
 _rdsrc=json.load(open(ROADS)); RD=_rdsrc['roads']; CELL=0.003; GR={}
 for ri,rd in enumerate(RD):
@@ -217,7 +234,7 @@ if PREV and os.path.exists(PREV):
         for s in pd.get('stops',[]):
             for p in s.get('p',[]):
                 if p.get('rt'): PREVRT[(s['c'],p['n'])]=p['rt']
-            if s.get('k')=='closer' and s.get('rw'): PREVRW[s['c']]=s['rw']
+            if s.get('rw'): PREVRW[s['c']]=s['rw']  # הליכות אמיתיות (closer + מקום-שבשם) מחושבות חודשי
             # תחנות שסומנו כשגיאה בריצה הקודמת — לזיהוי תיקונים אמיתיים במקור
             if s.get('k') in ERRCATS: PREVERR[s['c']]={'n':s['n'],'s':s['s'],'t':s.get('t',''),'k':s['k']}
         print('carried-forward rt:',len(PREVRT),'| closer rw:',len(PREVRW),'| prev errors:',len(PREVERR))
@@ -374,7 +391,14 @@ for r in rows[1:]:
         if rt: pr['rt']=rt
         pois.append(pr)
     rec={'c':code,'n':name,'s':st,'t':c,'la':la,'lo':lo,'k':cat,'p':pois,'ms':ms,'md':md}
-    if lm: rec['lm']=1; rec['lmw']=lm  # ספק מסוג "שם-מוסד/ציון-דרך" + המילה שזוהתה (צומת, שכונה...)
+    if lm:
+        rec['lm']=1; rec['lmw']=lm  # ספק מסוג "שם-מוסד/ציון-דרך" + המילה שזוהתה (צומת, שכונה...)
+        # איתור המקום שבשם + בדיקת הליכה אמיתית אליו (מחושבת בריצה החודשית; נגררת בינתיים):
+        # תחנה על-שם מקום שאין אליו חיבור הליכה סביר תסומן באתר כחשודה
+        nk=locate_namesake(prim,la,lo)
+        if nk: rec['lmp']={'n':nk[1]['n'],'k':nk[1]['k'],'d':nk[0],'la':nk[1]['la'],'lo':nk[1]['lo']}
+        rw0=PREVRW.get(code)
+        if rw0 and rw0.get('lm'): rec['rw']={'lm':rw0['lm']}
     if sug: rec['sug']=sug
     if psug: rec['psug']=psug; rec['psugd']=psugd
     if sv: rec['sv']={'use':sv[0],'maj':sv[1],'n':sv[2]}
