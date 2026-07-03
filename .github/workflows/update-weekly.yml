@@ -129,3 +129,5 @@ jobs:
 # reclassify: suggested names use Israeli stop format X/Y (no spaces around the slash)
 
 # dry-run: count stops whose named cross-street does not exist in the map at all (no behavior change)
+
+# reclassify: enable missing-cross-street rule (well-mapped areas only) + dotted-abbrev fix + אנדרטה/חווה landmarks

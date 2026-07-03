@@ -103,7 +103,7 @@ LANDMARK_WORDS=('מרכז','בית ','בית ספר','ביהס','ביס','גן '
   'בריכה','אצטדיון','מוזיאון','תיכון','חטב','בית אבות','מעון','פנימי','אולם ספורט',
   'שכונה','שכונת','צומת','מסוף','מסעף','פארק','חוף','מועדון','מלון','מפעל','אזור','קרית','קריית','מגדל',
   'מגרש','מכון','מחנה','תמרכזית','עיריה','עירייה','עירית','עיריית','שוק','רמת','גבעת',
-  'עלמין','העלמין','בית עלמין','בית קברות','הקברות','קבר ','הר ','מעבר ','מחסום')
+  'עלמין','העלמין','בית עלמין','בית קברות','הקברות','קבר ','הר ','מעבר ','מחסום','אנדרט','חוות','חווה','חוה ')
 def landmark_name(s):
     # מקף הופך לרווח ("בית-עלמין" ≡ "בית עלמין"); גרשיים/נקודות נמחקים.
     # מחזירה את מילת ציון-הדרך שנמצאה (למשל "צומת") — לתצוגה מדויקת באתר
@@ -113,7 +113,8 @@ def landmark_name(s):
     return None
 # השוואת רחובות עמידה למקפים/גרשיים/כתיב מלא (לזיהוי "הצעות כלליות" בלבד)
 def streets_match(a,b):
-    a=(a or '').replace('-',' '); b=(b or '').replace('-',' ')
+    # מקפים ונקודות ≡ רווח ("י.ח.ברנר" ↔ "ברנר") — קיצורים עם נקודות אינם אי-התאמה
+    a=(a or '').replace('-',' ').replace('.',' '); b=(b or '').replace('-',' ').replace('.',' ')
     return rel(a,b) in ('exact','spelling') or same_street(a,b) or ktiv_only(a,b)
 # כתובות תיאוריות (מחלף/יציאה/מסוף…) אינן רחוב — לא מציעים להן רחוב חלופי
 LANDMARKISH=('מחלף','יציאה','כניסה','מסוף','צומת','כביש ','מגרש','מיתחם','מתחם','פארק','פאתי','תחנת','ת. ')
@@ -275,7 +276,6 @@ for key,lst in _grp.items():
         if ref==top or seg_diff(ref,top): continue
         if abs(len(ref.split())-tt)<=1 or nf(ref)==nf(top): STREETVAR[code2]=(raw,maj_raw,topn)
 print('street-variance flags:',len(STREETVAR))
-DRY_MISSING=[]  # ניסוי: מצטלב שלא קיים במפה (ספירה בלבד)
 cnt={'exact':0,'settlement':0,'spelling':0,'streetvar':0,'uncertain':0,'reversal':0,'mismatch':0,'landmark':0,'mapok':0,'noaddr':0,'closer':0}
 suspects=[]; closer_cands=[]
 EXIST=defaultdict(set)  # שמות-תחנות קיימים לכל עיר — לבדיקת התנגשות שמות מוצעים
@@ -320,20 +320,27 @@ for r in rows[1:]:
             if cross and best and best[1]<=CLOSER_CAP and not streets_match(best[0],cross):
                 if cross_d is None: flag=best[1]<=20
                 else: flag=cross_d>=CLOSER_FAR and (cross_d-best[1])>=CLOSER_GAP
-            # ---- ניסוי (ספירה בלבד, לא משנה כלום): מצטלב שלא קיים במפה בכלל ----
-            # "דרך ניר וגל/ערבה" — אין שום רחוב "ערבה" עד ק"מ. מדפיסים ליומן כדי
-            # להעריך כמה התראות כאלה יהיו ומה טיבן, לפני שמדליקים כלל אמיתי.
+            # מצטלב שלא קיים במפה בכלל ("דרך ניר וגל/ערבה" — אין שום רחוב "ערבה" עד ק"מ).
+            # נבדק רק בסביבה ממופה-היטב (>=8 רחובות בשם עד 350 מ׳, רובם עבריים) —
+            # אחרת "חסר במפה" מעיד על מיפוי דל, לא על שם שגוי. כיכרות מדולגות (אינן בשכבה).
+            nocross=False
             if cross and cross_d is None and not flag:
                 crs=cross.strip()
                 if (len(nf(crs))>=3 and not arabic_translit(crs) and not odd_road(crs)
                         and not landmark_name(crs) and not acronymish(crs)
-                        and not streets_match(crs,st) and not road_exists(la,lo,crs)):
-                    DRY_MISSING.append((code,name,c,crs,best))
-            if flag:
-                near_name,near_d=best
+                        and not crs.replace('-',' ').startswith(('ככר','כיכר'))
+                        and not streets_match(crs,st)
+                        and len(nr8)>=8 and nr8[7][1]<=350
+                        and sum(1 for nm2,_ in nr8 if not odd_road(nm2))>=6
+                        and not road_exists(la,lo,crs)):
+                    nocross=True
+            if flag or nocross:
+                # במקרה "מצטלב לא קיים": מציעים חלופה רק אם יש רחוב סביר עד 60 מ׳
+                if nocross and not (best and best[1]<=60): near_name=near_d=None
+                else: near_name,near_d=best
                 primc=parts[0].strip()
                 # פורמט שמות התחנות בישראל: "X/Y" בלי רווחים סביב הלוכסן
-                sugname=primc+'/'+near_name
+                sugname=(primc+'/'+near_name) if near_name else None
                 nb=nearby(la,lo)
                 pois=[]
                 for dist,p in nb:
@@ -356,11 +363,13 @@ for r in rows[1:]:
                 if cross:
                     rc=road_near(la,lo,parts[1].strip())
                     if rc: roads['cur']=rc
-                rsug=road_near(la,lo,near_name)
+                rsug=road_near(la,lo,near_name) if near_name else None
                 if rsug: roads['sug']=rsug
                 rec={'c':code,'n':name,'s':st,'t':c,'la':la,'lo':lo,'k':'closer',
-                     'p':pois,'ms':near_name,'md':near_d,'sug':sugname,
+                     'p':pois,'ms':(near_name or (best[0] if best else None)),
+                     'md':(near_d if near_d is not None else (best[1] if best else None)),'sug':sugname,
                      'cur':(parts[1].strip() if cross else None),'curd':cross_d,'roads':roads}
+                if nocross: rec['nocross']=1  # המצטלב שבשם לא קיים במפה כלל
                 if psug: rec['psug']=psug; rec['psugd']=psugd
                 if ACTIVE is not None and r[SI] not in ACTIVE: rec['act']=False
                 # מאומת לפי הליכה אמיתית בשלב שאחרי הלולאה (לא חוסם את הסיווg)
@@ -429,16 +438,14 @@ for r in rows[1:]:
 csug=Counter((rec['t'],cn(rec['sug'])) for rec in closer_cands)
 carried=0
 for rec in closer_cands:
-    if csug[(rec['t'],cn(rec['sug']))]>1 or cn(rec['sug']) in EXIST.get(rec['t'],()):
+    if rec.get('sug') and (csug[(rec['t'],cn(rec['sug']))]>1 or cn(rec['sug']) in EXIST.get(rec['t'],())):
         cnt['exact']+=1; continue
     rw=PREVRW.get(rec['c'])
     if rw: rec['rw']=rw; carried+=1
     suspects.append(rec); cnt['closer']+=1
 print('closer kept:',cnt['closer'],'| rw carried:',carried)
 if OVR: print('manual overrides applied:',len(OVR))
-if DRY_MISSING:
-    print('[dry-run] cross-street missing from map entirely:',len(DRY_MISSING))
-    for x in DRY_MISSING[:30]: print('   ',x[0],'|',x[1],'|',x[2],'| חסר במפה:',x[3],'| חלופה קרובה:',x[4])
+print('closer with missing cross-street:',sum(1 for r in suspects if r.get('nocross')))
 print('classification:',cnt)
 print('suspects:',len(suspects),'| %.1fs'%(time.time()-t0))
 os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)

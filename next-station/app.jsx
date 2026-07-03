@@ -179,10 +179,12 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
       )}
       {s.k === "closer" && (
         <div className="d-sug">
-          {s.cur
+          {s.nocross
+            ? <>📍 הרחוב המצטלב שבשם («<b>{s.cur}</b>») <b>לא נמצא במפה כלל</b> בסביבת התחנה, למרות שהאזור ממופה היטב — ייתכן ששמו שגוי או שהרחוב אינו קיים.</>
+            : s.cur
             ? <>📍 הרחוב המצטלב שבשם («<b>{s.cur}</b>»{s.curd != null ? " — כ-" + s.curd + " מ׳ מהתחנה" : " — אינו ליד התחנה"}) רחוק יותר מהרחוב <b>{s.ms}</b> (<b>{s.md}</b> מ׳), שעובר ממש לידה.</>
             : <>📍 הרחוב <b>{s.ms}</b> עובר ממש ליד התחנה (<b>{s.md}</b> מ׳) ואינו מופיע בשם.</>}
-          <div className="d-sug-name">💡 שם מוצע: <b>{s.sug}</b></div>
+          {s.sug && <div className="d-sug-name">💡 שם מוצע: <b>{s.sug}</b></div>}
           {s.rw && (s.rw.cur || s.rw.sug) && (
             <div className="d-walk-cmp">
               🚶 הליכה אמיתית מהתחנה:
@@ -194,7 +196,9 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
               )}
             </div>
           )}
-          <div className="d-map-legend"><span className="lg cur">● בשם כיום</span> <span className="lg sug">● מוצע</span> — מסומנים על המפה</div>
+          {s.roads && (s.roads.cur || s.roads.sug) && (
+            <div className="d-map-legend"><span className="lg cur">● בשם כיום</span> <span className="lg sug">● מוצע</span> — מסומנים על המפה</div>
+          )}
         </div>
       )}
       {s.sug && s.k !== "closer" && (
@@ -709,6 +713,8 @@ const REPORT_TO = "shlomihartman@gmail.com"; // יעד ברירת-מחדל (mail
 // "בדיקה אוטומטית" — הערכת המערכת את עצמה, להצגה למדווח ולצירוף לדיווח
 function autoCheck(s) {
   if (s.k === "closer") {
+    if (s.nocross)
+      return { tone: "warn", text: "בדיקה אוטומטית: הרחוב «" + s.cur + "» שבשם התחנה לא נמצא במפה כלל בסביבתה (אזור ממופה היטב) — ייתכן ששם התחנה שגוי, או שהרחוב חסר במפה." };
     const w = s.rw;
     if (w && w.cur && w.sug) {
       if (w.sug.d <= w.cur.d)
