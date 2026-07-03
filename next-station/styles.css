@@ -174,8 +174,12 @@ body {
   #map { position: relative; inset: auto; height: 260px; flex: none; }
   .route-info { position: relative; top: auto; left: auto; right: auto; margin: 8px 10px 0; border-radius: 12px; }
   .detail {
-    position: static; width: 100%; max-width: 100%; margin: 0;
+    /* relative (לא static) — כדי שכפתור ה-X ימוקם ביחס לכרטיס ולא ביחס למפה */
+    position: relative; width: 100%; max-width: 100%; margin: 0;
     border: none; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; padding: 14px 16px 18px;
+    /* בטלפון הכרטיס זורם עם הדף — אסור שיהיה אזור-גלילה פנימי: בכרום-אנדרואיד
+       מגע שמתחיל על אלמנט כזה (עם overscroll contain) "ננעל" ולא מגלגל את הדף */
+    max-height: none; overflow: visible; overscroll-behavior: auto;
   }
   .detail .d-x { position: absolute; top: 10px; left: 10px; float: none; margin: 0; }
   .d-poi-row { flex-wrap: wrap; }
