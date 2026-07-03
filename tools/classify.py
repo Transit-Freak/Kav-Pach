@@ -75,7 +75,14 @@ def rel(tok,act):
     a2,b2=tk(nf(tok)),tk(nf(act))
     # definite article ה ("מעפילים" vs "המעפילים") is a grammatical variant, not a spelling error
     if a2 and b2 and (a2[-1]=='ה'+b2[-1] or b2[-1]=='ה'+a2[-1]): return 'exact'
+    # איחוד מילים: "קוסטריקה" ↔ "קוסטה ריקה" — משווים בלי רווחים (אחרי הסרת אות-מקטע
+    # כמו "קוסטריקה ד"). שוויון מלא באיחוד = אותו שם; הבדל של אות = כנראה אותו שם (ספק)
+    ja=re.sub(r'\s[א-ת]$','',nl(tok)).replace(' ','')
+    jb=re.sub(r'\s[א-ת]$','',nl(act)).replace(' ','')
+    joined=len(ja)>=6 and len(jb)>=6
+    if joined and ja==jb: return 'exact'
     if a2 and b2 and lev(a2[-1],b2[-1])<=2 and max(len(a2[-1]),len(b2[-1]))>=4: return 'spelling'
+    if joined and lev(ja,jb)<=1: return 'spelling'
     return None
 def fuzzy_in(t,toks):
     for b in toks:

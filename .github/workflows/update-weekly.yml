@@ -163,3 +163,5 @@ jobs:
 # reclassify: דלק/כללית/אבן are generic — last namesake noise family
 
 # reclassify: remove the שם מטעה category entirely — too many false positives
+
+# reclassify: joined-words comparison (קוסטריקה = קוסטה ריקה) — one-word spellings match their street
