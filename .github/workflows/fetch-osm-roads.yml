@@ -71,3 +71,5 @@ jobs:
           git add -A
           git commit -m "OSM named roads for Israel"
           git push -f origin osm-roads
+
+# refetch: user named רחוב מורן in ניר גלים on OSM — pick it up
