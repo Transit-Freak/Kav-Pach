@@ -1,7 +1,7 @@
 name: skiplines-experiment
 
-# ניסוי בלבד: זיהוי קווים עירוניים שחולפים ליד תחנה פעילה בלי לעצור בה
-# (ירושלים + תל אביב). מדפיס ממצאים ליומן — לא נוגע באתר ולא דוחף כלום.
+# "הקו המדלג" (ניסיוני): זיהוי קווים עירוניים שחולפים ליד תחנה פעילה בלי לעצור בה
+# (ירושלים + תל אביב). מדפיס ממצאים ליומן וכותב skip-stops/data.json לאתר.
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: skiplines-experiment
@@ -38,7 +38,23 @@ jobs:
           set -euo pipefail
           # סוגי הקווים מהקובץ המצומצם שכבר בריפו (data-main.json — אותו קובץ שקו פח מציג)
           STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt SHAPES=shapes.txt \
-            MAIN=data-main.json CITIES="ירושלים,תל אביב יפו" python3 tools/skiplines.py
+            MAIN=data-main.json CITIES="ירושלים,תל אביב יפו" OUT=skip-stops/data.json python3 tools/skiplines.py
 
-# retry: MOT GTFS endpoint timeout at 15:27Z
-# rerun: ClusterToLine download failed last run — urban-only filter never applied; retry harder
+      - name: Commit data.json to main
+        run: |
+          set -euo pipefail
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # main עלול לזוז בזמן הריצה — שומרים פלט, מתעדכנים, מחילים ודוחפים (עם ניסיונות חוזרים)
+          cp skip-stops/data.json /tmp/out-skip.json
+          for i in 1 2 3 4; do
+            git fetch origin main && git reset --hard origin/main
+            cp /tmp/out-skip.json skip-stops/data.json
+            git add skip-stops/data.json
+            if git diff --cached --quiet; then
+              echo "data unchanged — nothing to commit"; break; fi
+            git commit -m "skip-stops: refresh findings (Jerusalem + Tel Aviv)"
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected (main moved) — retry $i"; sleep 10
+          done

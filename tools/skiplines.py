@@ -2,7 +2,7 @@
 # ניסוי "קווים שמדלגים": מזהה קווים שנוסעים ממש ליד תחנה פעילה — ולא עוצרים בה.
 # האות החזק: "סנדוויץ'" — הקו עוצר בתחנה שלפני ובתחנה שאחרי, ומדלג רק על האמצעית.
 # קלט (משתני סביבה): STOPS, STOP_TIMES, TRIPS, ROUTES, SHAPES, MAIN (data-main.json — הקובץ המצומצם)
-# פלט: הדפסת ממצאים ליומן בלבד — שום דבר לא נכתב לאתר.
+# פלט: הדפסת ממצאים ליומן; אם OUT מוגדר — נכתב גם JSON לאתר (skip-stops/data.json).
 import csv, os, re, sys, math
 from collections import defaultdict
 
@@ -163,16 +163,17 @@ for (rid,sh),t in rep.items():
     total=arc[-1]
     cl=math.cos(math.radians(la0))
     def xy(s): return (s['lo']*111320*cl, s['la']*110540)
-    # מיקומי התחנות העצורות לאורך המסלול
+    # מיקומי התחנות העצורות לאורך המסלול (+ מזהה התחנה — לתצוגת "עוצר ב-X לפני")
     served_arc=[]
     servedset=set(seq)
     for sid in seq:
         s=stops.get(sid)
         if not s: continue
         p=project(m,arc,*xy(s))
-        if p and p[0]<=60: served_arc.append(p[1])
+        if p and p[0]<=60: served_arc.append((p[1],sid))
     served_arc.sort()
     if len(served_arc)<3: continue
+    positions=[a for a,_ in served_arc]
     info=rroutes.get(rid,{})
     # מועמדות: רק תחנות שבסמוך למסלול (אינדקס רשת), פעילות, שאינן ברצף העצירה
     for sid in near_stop_ids(pts):
@@ -184,9 +185,9 @@ for (rid,sh),t in rep.items():
         pos=p[1]
         if pos<TERMINAL_M or pos>total-TERMINAL_M: continue # אזור מסוף
         import bisect
-        j=bisect.bisect_left(served_arc,pos)
-        before=pos-served_arc[j-1] if j>0 else 1e9
-        after=served_arc[j]-pos if j<len(served_arc) else 1e9
+        j=bisect.bisect_left(positions,pos)
+        before=pos-positions[j-1] if j>0 else 1e9
+        after=positions[j]-pos if j<len(positions) else 1e9
         if before>SANDWICH_M or after>SANDWICH_M: continue  # אין סנדוויץ' — אולי מהיר
         if before<SANDWICH_MIN or after<SANDWICH_MIN: continue  # עמדה סמוכה באותו צומת
         if sid in rail_stops: continue                       # תחנת רק"ל/רכבת
@@ -196,9 +197,15 @@ for (rid,sh),t in rep.items():
         if near<ALONG_MIN: continue
         others=stop_lines[sid]-{info.get('num','')}
         if not others: continue
+        # קטע המסלול סביב התחנה (למפה באתר): ±400 מ' לאורך הקו, מדולל עד 40 נקודות
+        i0=bisect.bisect_left(arc,pos-400); i1=bisect.bisect_right(arc,pos+400)
+        segp=pts[max(0,i0-1):i1+1]
+        step=max(1,len(segp)//40)
+        seg=[[round(a,5),round(b,5)] for a,b in segp[::step]]+([[round(segp[-1][0],5),round(segp[-1][1],5)]] if len(segp)%step!=1 else [])
         findings.append({'line':info.get('num',''),'agency':info.get('agency',''),'long':info.get('long',''),
                          'type':ty,'stop':s,'sid':sid,'dist':round(p[0]),'before':round(before),'after':round(after),
-                         'others':sorted(others)[:8]})
+                         'bsid':served_arc[j-1][1],'asid':served_arc[j][1],'seg':seg,
+                         'others':sorted(others)})
 
 # איחוד כפילויות (אותו קו ואותה תחנה בכמה חלופות) + דירוג
 best={}
@@ -214,4 +221,30 @@ print('סה"כ:',len(ranked))
 for f in ranked[:40]:
     s=f['stop']
     print(' קו %s | %s | מדלג על: %s (%s) [%s] | מרחק מהקו %dמ | עוצר %dמ לפני ו-%dמ אחרי | מדלגים על התחנה: %d קווים | עוצרים בה: %s'%(
-        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[f['sid']]),','.join(f['others'])))
+        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[f['sid']]),','.join(f['others'][:8])))
+
+# ---- פלט JSON לאתר ----
+OUT=os.environ.get('OUT','')
+if OUT:
+    import datetime
+    def stop_ref(sid):
+        s=stops.get(sid) or {}
+        return {'n':s.get('name',''),'c':s.get('code',''),'la':round(s.get('la',0),5),'lo':round(s.get('lo',0),5)}
+    items=[]
+    for f in ranked:
+        s=f['stop']
+        items.append({
+            'line':f['line'],'dest':f['long'],'city':s['city'],
+            'stop':s['name'],'code':s['code'],'sid':f['sid'],
+            'la':round(s['la'],5),'lo':round(s['lo'],5),
+            'dist':f['dist'],'before':f['before'],'after':f['after'],
+            'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
+            'skippers':sorted(skippers[f['sid']]),
+            'others':f['others'][:12],'onum':len(f['others']),
+            'seg':f['seg'],
+        })
+    out={'gen':datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
+         'cities':CITIES,'total':len(items),'items':items}
+    os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
+    json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+    print('נכתב',OUT,'(%d ממצאים)'%len(items))
