@@ -173,7 +173,7 @@ def _tok_match(nt,p):
     for a in nt:
         for b in _toks(p['n']):
             if a==b: return True
-            if a in _LM_GEN or b in _LM_GEN: continue
+            if _lm_gen(a) or _lm_gen(b): continue
             if max(len(a),len(b))>=4 and lev(a,b)<=1: return True
     return False
 def name_matches_poi(name,plist):
@@ -184,7 +184,9 @@ def name_matches_poi(name,plist):
         if dist>(800 if p['k'] in _AREA_POI else 500): continue
         if _tok_match(nt,p): return p
     return None
-def _toks_id(s): return [t for t in _toks(s) if t not in _LM_GEN]
+# מילה גנרית נחסמת גם עם ה' הידיעה ("הכנסת" ≡ "כנסת")
+def _lm_gen(t): return t in _LM_GEN or (t.startswith('ה') and t[1:] in _LM_GEN)
+def _toks_id(s): return [t for t in _toks(s) if not _lm_gen(t)]
 def locate_namesake(name,la,lo,rad=3000):
     # המקום שהתחנה קרויה על-שמו — גם רחוק (צומת ערוגות ↔ מושב ערוגות, עד 3 ק"מ).
     # הרשימה ממוינת לפי מרחק, ולכן ההתאמה הראשונה היא הקרובה ביותר.
