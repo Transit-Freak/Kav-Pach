@@ -152,6 +152,7 @@ for (rid,sh),t in rep.items():
     ty=route_type(rid)
     if ty and ty!='עירוני': continue   # בינעירוני/אזורי מדלגים בצדק — מחוץ לניסוי
     if 'תלמיד' in route_sub(rid): continue   # קווי תלמידים עוצרים רק איפה שצריך — לא דילוג
+    if 'חנה וסע' in rroutes.get(rid,{}).get('long',''): continue   # שאטלים ישירים במהותם
     if rroutes.get(rid,{}).get('rtype','3')!='3': continue   # בודקים רק קווי אוטובוס
     seq=[s for _,s in sorted(served.get(t,[]))]
     if len(seq)<5: continue

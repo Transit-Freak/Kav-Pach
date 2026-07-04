@@ -73,6 +73,18 @@ function Detail({ it }) {
         {nSkip > 1 && (
           <p>מדלגים על התחנה הזו גם: {(it.skippers || []).filter((x) => x !== it.line).map((o) => <span key={o} className="chip warn">{o}</span>)}</p>
         )}
+        {nSkip >= 3 && (
+          <p className="sysnote">
+            ⚠️ <b>{nSkip} קווים שונים</b> מדלגים על התחנה הזו — כנראה דילוג מכוון
+            (תכנון הציר, למשל תחנות ייעודיות לחלק מהקווים) ולא טעות.
+          </p>
+        )}
+        {it._lt >= 8 && (
+          <p className="sysnote">
+            ⚠️ קו {it.line} מדלג על <b>{it._lt} תחנות</b> ב{it.city} — ייתכן שזה מסלול
+            עם מקטע מהיר מכוון, לא דילוג נקודתי.
+          </p>
+        )}
         <p className="mut">
           ייתכן שיש סיבה מוצדקת — נתיב נסיעה שממנו אי-אפשר לעצור, עומס במפרץ, או החלטת תכנון מכוונת.
           הממצא מבוסס על השוואת מסלול הקו (GTFS) לרצף התחנות שלו בלבד.
@@ -90,7 +102,7 @@ const Row = React.memo(function Row({ it, open, onToggle }) {
         <span className="line-badge">{it.line}</span>
         <span className="it-main">
           <span className="it-title">מדלג על: {it.stop} <span className="code">({it.code})</span></span>
-          <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים</span>
+          <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים{it._sys ? <span className="tag-sys">שיטתי</span> : null}</span>
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </button>
@@ -107,6 +119,7 @@ function App() {
   const [q, setQ] = useState("");
   const [openKey, setOpenKey] = useState(null);
   const [page, setPage] = useState(1);
+  const [showSys, setShowSys] = useState(false);
   const dq = useDeferredValue(q);
 
   useEffect(() => {
@@ -118,21 +131,31 @@ function App() {
 
   const items = useMemo(() => {
     if (!data) return [];
-    return (data.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid, _i: i,
+    const raw = (data.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid, _i: i,
       _q: (it.line + " " + it.stop + " " + it.code + " " + it.city).toLowerCase() }));
+    // "דילוג שיטתי" — כשכמה קווים מדלגים על אותה תחנה (תכנון ציר, כמו דרך בגין
+    // בת"א) זה כנראה מכוון ולא טעות. קו בודד שמדלג על הרבה תחנות רק מסומן בהערה.
+    const perLine = {};
+    raw.forEach((it) => { const k = it.line + "@" + it.city; perLine[k] = (perLine[k] || 0) + 1; });
+    raw.forEach((it) => {
+      it._lt = perLine[it.line + "@" + it.city];
+      it._sys = (it.skippers || []).length >= 3;
+    });
+    return raw;
   }, [data]);
 
   const filtered = useMemo(() => {
     const needle = dq.trim().toLowerCase();
     return items.filter((it) => {
+      if (!showSys && it._sys && !needle) return false;
       if (city && it.city !== city) return false;
       if (!needle) return true;
       if (it.line === needle) return true;
       return it._q.includes(needle);
     });
-  }, [items, city, dq]);
+  }, [items, city, dq, showSys]);
 
-  useEffect(() => { setPage(1); }, [city, dq]);
+  useEffect(() => { setPage(1); }, [city, dq, showSys]);
 
   if (err) return <div className="boot">שגיאה בטעינת הנתונים — ייתכן שההרצה הראשונה עוד לא הסתיימה. נסו לרענן מאוחר יותר.</div>;
   if (!data) return <div className="boot">טוען נתונים…</div>;
@@ -140,6 +163,7 @@ function App() {
   const cities = data.cities || [];
   const byCity = {};
   items.forEach((it) => { byCity[it.city] = (byCity[it.city] || 0) + 1; });
+  const sysN = items.filter((it) => it._sys).length;
   const shown = filtered.slice(0, page * PAGE);
 
   return (
@@ -159,9 +183,11 @@ function App() {
       <div className="explain">
         <b>איך זה עובד?</b> משווים את מסלול הנסיעה של כל קו עירוני (GTFS של משרד התחבורה) לרצף התחנות
         שהוא עוצר בהן. תחנה נחשבת "מדולגת" רק אם הקו עובר עד 25 מ' ממנה, בצד הנכון של הכביש, נוסע לאורך
-        הרחוב (לא רק חוצה אותו), ועוצר בתחנות משני צדדיה במרחק סביר. קווי תלמידים, קווים בין-עירוניים
-        ואזוריים לא נבדקים — להם מותר לדלג. הרשימה ממוינת מהחשוד ביותר: תחנות שקו בודד מדלג עליהן
-        בזמן שהרבה קווים אחרים עוצרים.
+        הרחוב (לא רק חוצה אותו), ועוצר בתחנות משני צדדיה במרחק סביר. קווי תלמידים, שאטלים (חנה וסע),
+        קווים בין-עירוניים ואזוריים לא נבדקים — להם מותר לדלג. בנוסף, המערכת בודקת אם עוד קווים עושים
+        את אותו הדבר: כשכמה קווים מדלגים על אותה תחנה, או שקו מדלג על תחנות רבות ברצף (כמו ציר דרך בגין
+        בת"א) — זה מסומן "דילוג שיטתי", כנראה מכוון, ומוסתר כברירת מחדל. הרשימה ממוינת מהחשוד ביותר:
+        תחנות שקו בודד מדלג עליהן בזמן שהרבה קווים אחרים עוצרים.
       </div>
 
       <div className="controls">
@@ -170,6 +196,10 @@ function App() {
           {cities.map((c) => (
             <button key={c} className={"chipf" + (city === c ? " on" : "")} onClick={() => setCity(c)}>{c}</button>
           ))}
+          <button className={"chipf sys" + (showSys ? " on" : "")} onClick={() => setShowSys(!showSys)}
+            title="דילוג ששייך כנראה לתכנון: כמה קווים מדלגים על אותה תחנה, או קו שמדלג על תחנות רבות">
+            {showSys ? "מציג" : "מוסתרים"} {sysN} דילוגים שיטתיים
+          </button>
         </div>
         <input
           className="search" type="search" dir="rtl"

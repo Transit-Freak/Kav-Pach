@@ -36,6 +36,8 @@ header h1 {
   padding: 6px 14px; font-size: 14.5px; cursor: pointer; font-family: inherit; color: #334155;
 }
 .chipf.on { background: #d97706; border-color: #d97706; color: #fff; font-weight: 700; }
+.chipf.sys { border-style: dashed; color: #64748b; font-size: 13px; }
+.chipf.sys.on { background: #475569; border-color: #475569; color: #fff; }
 .search {
   flex: 1; min-width: 220px; border: 1px solid #e2e8f0; border-radius: 10px;
   padding: 9px 12px; font-size: 15px; font-family: inherit; background: #fff;
@@ -88,6 +90,14 @@ header h1 {
   padding: 1px 8px; margin: 0 2px 3px; font-size: 13.5px; font-weight: 600; color: #334155;
 }
 .chip.warn { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+.sysnote {
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 8px 10px; font-size: 13.5px; color: #475569;
+}
+.tag-sys {
+  display: inline-block; margin-right: 6px; padding: 0 7px; border-radius: 999px;
+  background: #f1f5f9; border: 1px solid #cbd5e1; color: #64748b; font-size: 11.5px; font-weight: 700;
+}
 
 .empty { text-align: center; color: #94a3b8; padding: 30px 0; }
 .more-btn {
