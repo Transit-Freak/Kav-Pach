@@ -155,6 +155,7 @@ def near_stop_ids(pts):
     return out
 
 findings=[]
+shape_stops={}   # (route_id, shape_id) -> תחנות העצירה לפי הסדר לאורך המסלול
 for (rid,sh),t in rep.items():
     if sh not in shapes: continue
     ty=route_type(rid)   # סינון הקווים כבר נעשה ב-line_ok בשלב הנסיעות
@@ -179,6 +180,7 @@ for (rid,sh),t in rep.items():
     served_arc.sort()
     if len(served_arc)<3: continue
     positions=[a for a,_ in served_arc]
+    shape_stops[(rid,sh)]=[sid for _,sid in served_arc]   # סדר העצירות לאורך המסלול (לרשימה באתר)
     info=rroutes.get(rid,{})
     # מועמדות: רק תחנות שבסמוך למסלול (אינדקס רשת), פעילות, שאינן ברצף העצירה
     for sid in near_stop_ids(pts):
@@ -210,7 +212,7 @@ for (rid,sh),t in rep.items():
         seg=[[round(a,5),round(b,5)] for a,b in segp[::step]]+([[round(segp[-1][0],5),round(segp[-1][1],5)]] if len(segp)%step!=1 else [])
         findings.append({'line':info.get('num',''),'agency':info.get('agency',''),'long':info.get('long',''),
                          'type':ty,'stop':s,'sid':sid,'dist':round(p[0]),'before':round(before),'after':round(after),
-                         'bsid':served_arc[j-1][1],'asid':served_arc[j][1],'seg':seg,'shp':sh,
+                         'bsid':served_arc[j-1][1],'asid':served_arc[j][1],'seg':seg,'shp':sh,'rid':rid,
                          'others':sorted(others)})
 
 # איחוד כפילויות (אותו קו ואותה תחנה בכמה חלופות) + דירוג
@@ -245,25 +247,36 @@ if OUT:
             'la':round(s['la'],5),'lo':round(s['lo'],5),
             'dist':f['dist'],'before':f['before'],'after':f['after'],
             'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
+            'bsid':f['bsid'],'asid':f['asid'],'skey':f['rid']+'|'+f['shp'],
             'skippers':sorted(skippers[f['sid']]),
             'others':f['others'][:12],'onum':len(f['others']),
             'seg':f['seg'],'shp':f['shp'],
         })
     # מסלולים מלאים לתצוגה — כל מסלול נשמר פעם אחת, מדולל עד 80 נקודות (קו-מתאר)
-    shp_out={}
+    # + רשימת תחנות העצירה של כל מסלול (מזהים בלבד) ומילון פרטי-תחנה משותף
+    shp_out={}; shstops_out={}; stopsd={}
     for f in ranked:
         sh=f['shp']
-        if sh in shp_out: continue
-        p=shapes.get(sh) or []
-        st=max(1,len(p)//80)
-        dec=[[round(a,5),round(b,5)] for a,b in p[::st]]
-        if p and (len(p)-1)%st!=0: dec.append([round(p[-1][0],5),round(p[-1][1],5)])
-        shp_out[sh]=dec
+        if sh not in shp_out:
+            p=shapes.get(sh) or []
+            st=max(1,len(p)//80)
+            dec=[[round(a,5),round(b,5)] for a,b in p[::st]]
+            if p and (len(p)-1)%st!=0: dec.append([round(p[-1][0],5),round(p[-1][1],5)])
+            shp_out[sh]=dec
+        skey=f['rid']+'|'+f['shp']
+        if skey in shstops_out: continue
+        sl=shape_stops.get((f['rid'],f['shp'])) or []
+        shstops_out[skey]=sl
+        for sid in sl:
+            if sid not in stopsd:
+                s2=stops.get(sid) or {}
+                stopsd[sid]=[s2.get('name',''),s2.get('code',''),round(s2.get('la',0),5),round(s2.get('lo',0),5)]
     # רשימת הערים לתפריט הסינון באתר — לפי מספר ממצאים, מהגדולה לקטנה
     from collections import Counter
     ccnt=Counter(it['city'] for it in items if it['city'])
     out={'gen':datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
-         'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items,'shapes':shp_out}
+         'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items,
+         'shapes':shp_out,'shapestops':shstops_out,'stopsd':stopsd}
     os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
     json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     print('נכתב',OUT,'(%d ממצאים)'%len(items))

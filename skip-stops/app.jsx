@@ -7,7 +7,7 @@ const PAGE = 100;
 function fmtM(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' ק"מ' : Math.round(m) + " מ'"; }
 
 /* ---------- מפה ---------- */
-function SkipMap({ it, route }) {
+function SkipMap({ it, route, lineStops }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   const [full, setFull] = useState(false);
@@ -36,6 +36,13 @@ function SkipMap({ it, route }) {
     if (seg.length > 1) {
       L.polyline(seg, { color: "#d97706", weight: 5, opacity: 0.85 }).addTo(map);
     }
+    // כל תחנות העצירה של הקו — נקודות קטנות עם שם בריחוף
+    (lineStops || []).forEach((st) => {
+      if (!st[2] && !st[3]) return;
+      L.circleMarker([st[2], st[3]], {
+        radius: 4, color: "#b45309", weight: 2, fillColor: "#fde68a", fillOpacity: 1,
+      }).addTo(map).bindTooltip(st[0], { direction: "top", className: "sk-tip" });
+    });
     const mk = (la, lo, color, label, dir) => {
       if (!la && !lo) return null;
       const m = L.circleMarker([la, lo], {
@@ -52,7 +59,7 @@ function SkipMap({ it, route }) {
     map.fitBounds(L.latLngBounds(pts).pad(0.25));
     setFull(false);
     return () => { mapRef.current = null; map.remove(); };
-  }, [it, route]);
+  }, [it, route, lineStops]);
 
   const toggleFull = () => {
     const map = mapRef.current;
@@ -77,14 +84,25 @@ function SkipMap({ it, route }) {
 }
 
 /* ---------- פירוט ממצא ---------- */
-function Detail({ it, shapes }) {
+function Detail({ it, db }) {
   const nSkip = (it.skippers || []).length;
+  // רשימת תחנות הקו לפי הסדר + מיקום התחנה המדולגת בתוכה
+  const sids = (db.shapestops && it.skey ? db.shapestops[it.skey] : null) || [];
+  const sd = db.stopsd || {};
+  const lineStops = sids.map((x) => sd[x]).filter(Boolean);
+  const listing = [];
+  sids.forEach((x) => {
+    if (x === it.asid) listing.push({ skip: true, n: it.stop, c: it.code });
+    const r = sd[x];
+    if (r) listing.push({ n: r[0], c: r[1], b: x === it.bsid || x === it.asid });
+  });
   return (
     <div className="detail">
-      <SkipMap it={it} route={shapes && it.shp ? shapes[it.shp] : null} />
+      <SkipMap it={it} route={db.shapes && it.shp ? db.shapes[it.shp] : null} lineStops={lineStops} />
       <div className="legend">
         <span><i className="dot red" /> התחנה המדולגת</span>
-        <span><i className="dot green" /> תחנות שהקו כן עוצר בהן</span>
+        <span><i className="dot green" /> העצירות שלפני ואחרי</span>
+        <span><i className="dot small" /> שאר תחנות הקו</span>
         <span><i className="ln" /> הקטע סביב התחנה</span>
         <span><i className="ln lt" /> שאר מסלול קו {it.line}</span>
       </div>
@@ -115,6 +133,18 @@ function Detail({ it, shapes }) {
             עם מקטע מהיר מכוון, לא דילוג נקודתי.
           </p>
         )}
+        {listing.length > 0 && (
+          <details className="stoplist">
+            <summary>רשימת התחנות של קו {it.line} במסלול הזה ({listing.filter((x) => !x.skip).length})</summary>
+            <ol>
+              {listing.map((x, i) => (
+                <li key={i} className={x.skip ? "skip" : (x.b ? "adj" : "")}>
+                  {x.skip ? "⛔ " : ""}{x.n} <span className="code">({x.c})</span>{x.skip ? " — מדולגת" : ""}
+                </li>
+              ))}
+            </ol>
+          </details>
+        )}
         <p className="mut">
           ייתכן שיש סיבה מוצדקת — נתיב נסיעה שממנו אי-אפשר לעצור, עומס במפרץ, או החלטת תכנון מכוונת.
           הממצא מבוסס על השוואת מסלול הקו (GTFS) לרצף התחנות שלו בלבד.
@@ -125,7 +155,7 @@ function Detail({ it, shapes }) {
 }
 
 /* ---------- שורה ---------- */
-const Row = React.memo(function Row({ it, open, onToggle, shapes }) {
+const Row = React.memo(function Row({ it, open, onToggle, db }) {
   return (
     <div className={"it" + (open ? " open" : "")}>
       <button className="it-head" onClick={onToggle}>
@@ -136,7 +166,7 @@ const Row = React.memo(function Row({ it, open, onToggle, shapes }) {
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </button>
-      {open && <Detail it={it} shapes={shapes} />}
+      {open && <Detail it={it} db={db} />}
     </div>
   );
 });
@@ -244,7 +274,7 @@ function App() {
 
       <div className="list">
         {shown.map((it) => (
-          <Row key={it._k} it={it} open={openKey === it._k} shapes={data.shapes}
+          <Row key={it._k} it={it} open={openKey === it._k} db={data}
             onToggle={() => setOpenKey(openKey === it._k ? null : it._k)} />
         ))}
         {shown.length === 0 && <div className="empty">לא נמצאו תוצאות.</div>}
