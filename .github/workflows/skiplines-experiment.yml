@@ -4,6 +4,8 @@ name: skiplines-experiment
 # (ירושלים + תל אביב). מדפיס ממצאים ליומן וכותב skip-stops/data.json לאתר.
 
 on:
+  schedule:
+    - cron: '0 3 * * *'   # כל לילה 03:00 UTC — רענון יומי כמו שאר האתר
   push:
     paths:
       - '.github/workflows/skiplines-experiment.yml'
