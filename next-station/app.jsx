@@ -461,6 +461,7 @@ function App() {
         </div>
         <div className="src">
           נתונים: משרד התחבורה (GTFS){data.generated ? " · עודכן לאחרונה: " + data.generated.split("-").reverse().join(".") : ""}
+          {" "}· מתעדכן אוטומטית כל לילה בסביבות 05:00
           {(() => {
             // תאריך עדכון נתוני המפה (OSM) — מציגים את הישן מבין POI/כבישים (הערבות הזהירה)
             const o = data.osm; if (!o) return "";
