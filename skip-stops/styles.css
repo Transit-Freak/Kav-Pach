@@ -74,7 +74,15 @@ header h1 {
 .arrow { color: #cbd5e1; font-size: 12px; flex: 0 0 auto; }
 
 .detail { padding: 0 14px 14px; user-select: text; }
+.map-wrap { position: relative; }
 .map { height: 300px; border-radius: 10px; border: 1px solid #e2e8f0; }
+.full-btn {
+  position: absolute; bottom: 10px; right: 10px; z-index: 800;
+  background: #fff; border: 1px solid #cbd5e1; border-radius: 8px;
+  padding: 5px 12px; font-family: inherit; font-size: 13px; font-weight: 700;
+  color: #b45309; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+.full-btn:hover { border-color: #f59e0b; }
 .legend {
   display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: #64748b; margin: 8px 2px;
 }
@@ -88,6 +96,7 @@ header h1 {
   display: inline-block; width: 22px; height: 5px; border-radius: 3px;
   background: #d97706; vertical-align: 2px; margin-left: 5px;
 }
+.legend .ln.lt { background: #fbd38d; height: 3px; }
 .facts { font-size: 15px; }
 .facts p { margin: 8px 0; }
 .facts .mut { font-size: 13.5px; color: #94a3b8; }

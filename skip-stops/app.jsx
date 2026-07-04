@@ -7,8 +7,10 @@ const PAGE = 100;
 function fmtM(m) { return m >= 1000 ? (m / 1000).toFixed(1) + ' ק"מ' : Math.round(m) + " מ'"; }
 
 /* ---------- מפה ---------- */
-function SkipMap({ it }) {
+function SkipMap({ it, route }) {
   const ref = useRef(null);
+  const mapRef = useRef(null);
+  const [full, setFull] = useState(false);
   useEffect(() => {
     if (!ref.current) return;
     const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
@@ -19,11 +21,17 @@ function SkipMap({ it }) {
         text: { touch: "להזזת המפה גללו בשתי אצבעות", scroll: "לזום: Ctrl + גלילה", scrollMac: "לזום: ⌘ + גלילה" },
       },
     });
+    mapRef.current = map;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
     }).addTo(map);
 
+    // המסלול המלא של הקו — קו דק ובהיר מתחת לקטע המודגש
+    const rt = (route || []).filter((p) => p.length === 2);
+    if (rt.length > 1) {
+      L.polyline(rt, { color: "#f59e0b", weight: 3, opacity: 0.5, dashArray: "1 6" }).addTo(map);
+    }
     const seg = (it.seg || []).filter((p) => p.length === 2);
     if (seg.length > 1) {
       L.polyline(seg, { color: "#d97706", weight: 5, opacity: 0.85 }).addTo(map);
@@ -42,21 +50,43 @@ function SkipMap({ it }) {
 
     const pts = seg.length > 1 ? seg : [[it.la, it.lo]];
     map.fitBounds(L.latLngBounds(pts).pad(0.25));
-    return () => map.remove();
-  }, [it]);
-  return <div className="map" ref={ref} />;
+    setFull(false);
+    return () => { mapRef.current = null; map.remove(); };
+  }, [it, route]);
+
+  const toggleFull = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const rt = (route || []).filter((p) => p.length === 2);
+    const seg = (it.seg || []).filter((p) => p.length === 2);
+    const tgt = !full && rt.length > 1 ? rt : (seg.length > 1 ? seg : [[it.la, it.lo]]);
+    map.fitBounds(L.latLngBounds(tgt).pad(0.15));
+    setFull(!full);
+  };
+
+  return (
+    <div className="map-wrap">
+      <div className="map" ref={ref} />
+      {(route || []).length > 1 && (
+        <button className="full-btn" onClick={toggleFull}>
+          {full ? "התמקדות בתחנה" : "כל המסלול"}
+        </button>
+      )}
+    </div>
+  );
 }
 
 /* ---------- פירוט ממצא ---------- */
-function Detail({ it }) {
+function Detail({ it, shapes }) {
   const nSkip = (it.skippers || []).length;
   return (
     <div className="detail">
-      <SkipMap it={it} />
+      <SkipMap it={it} route={shapes && it.shp ? shapes[it.shp] : null} />
       <div className="legend">
         <span><i className="dot red" /> התחנה המדולגת</span>
         <span><i className="dot green" /> תחנות שהקו כן עוצר בהן</span>
-        <span><i className="ln" /> מסלול קו {it.line}</span>
+        <span><i className="ln" /> הקטע סביב התחנה</span>
+        <span><i className="ln lt" /> שאר מסלול קו {it.line}</span>
       </div>
       <div className="facts">
         <p>
@@ -95,7 +125,7 @@ function Detail({ it }) {
 }
 
 /* ---------- שורה ---------- */
-const Row = React.memo(function Row({ it, open, onToggle }) {
+const Row = React.memo(function Row({ it, open, onToggle, shapes }) {
   return (
     <div className={"it" + (open ? " open" : "")}>
       <button className="it-head" onClick={onToggle}>
@@ -106,7 +136,7 @@ const Row = React.memo(function Row({ it, open, onToggle }) {
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </button>
-      {open && <Detail it={it} />}
+      {open && <Detail it={it} shapes={shapes} />}
     </div>
   );
 });
@@ -214,7 +244,7 @@ function App() {
 
       <div className="list">
         {shown.map((it) => (
-          <Row key={it._k} it={it} open={openKey === it._k}
+          <Row key={it._k} it={it} open={openKey === it._k} shapes={data.shapes}
             onToggle={() => setOpenKey(openKey === it._k ? null : it._k)} />
         ))}
         {shown.length === 0 && <div className="empty">לא נמצאו תוצאות.</div>}

@@ -210,7 +210,7 @@ for (rid,sh),t in rep.items():
         seg=[[round(a,5),round(b,5)] for a,b in segp[::step]]+([[round(segp[-1][0],5),round(segp[-1][1],5)]] if len(segp)%step!=1 else [])
         findings.append({'line':info.get('num',''),'agency':info.get('agency',''),'long':info.get('long',''),
                          'type':ty,'stop':s,'sid':sid,'dist':round(p[0]),'before':round(before),'after':round(after),
-                         'bsid':served_arc[j-1][1],'asid':served_arc[j][1],'seg':seg,
+                         'bsid':served_arc[j-1][1],'asid':served_arc[j][1],'seg':seg,'shp':sh,
                          'others':sorted(others)})
 
 # איחוד כפילויות (אותו קו ואותה תחנה בכמה חלופות) + דירוג
@@ -247,13 +247,23 @@ if OUT:
             'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
             'skippers':sorted(skippers[f['sid']]),
             'others':f['others'][:12],'onum':len(f['others']),
-            'seg':f['seg'],
+            'seg':f['seg'],'shp':f['shp'],
         })
+    # מסלולים מלאים לתצוגה — כל מסלול נשמר פעם אחת, מדולל עד 80 נקודות (קו-מתאר)
+    shp_out={}
+    for f in ranked:
+        sh=f['shp']
+        if sh in shp_out: continue
+        p=shapes.get(sh) or []
+        st=max(1,len(p)//80)
+        dec=[[round(a,5),round(b,5)] for a,b in p[::st]]
+        if p and (len(p)-1)%st!=0: dec.append([round(p[-1][0],5),round(p[-1][1],5)])
+        shp_out[sh]=dec
     # רשימת הערים לתפריט הסינון באתר — לפי מספר ממצאים, מהגדולה לקטנה
     from collections import Counter
     ccnt=Counter(it['city'] for it in items if it['city'])
     out={'gen':datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
-         'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items}
+         'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items,'shapes':shp_out}
     os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
     json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     print('נכתב',OUT,'(%d ממצאים)'%len(items))
