@@ -497,7 +497,7 @@ function ChoiceScreen({ onPick }) {
       <div className="max-w-7xl w-full">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
-          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">ארבעה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
+          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">חמישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
