@@ -167,3 +167,5 @@ jobs:
 # reclassify: joined-words comparison (קוסטריקה = קוסטה ריקה) — one-word spellings match their street
 
 # reclassify: joined-word with a letter typo (קוסטריקה) is a spelling error, not ספק
+
+# rerun: resume category comparison (first run after rules stabilized)
