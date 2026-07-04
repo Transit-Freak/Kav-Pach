@@ -147,7 +147,7 @@ function App() {
   const filtered = useMemo(() => {
     const needle = dq.trim().toLowerCase();
     return items.filter((it) => {
-      if (!showSys && it._sys && !needle) return false;
+      if (!showSys && it._sys) return false;
       if (city && it.city !== city) return false;
       if (!needle) return true;
       if (it.line === needle) return true;
@@ -174,8 +174,8 @@ function App() {
           קווים עירוניים שעוברים ממש ליד תחנה פעילה, עוצרים בתחנה שלפניה ובתחנה שאחריה — אבל עליה מדלגים.
         </p>
         <div className="stats">
-          <span className="stat"><b>{data.total}</b> ממצאים</span>
-          {cities.map((c) => <span key={c} className="stat">{c}: <b>{byCity[c] || 0}</b></span>)}
+          <span className="stat"><b>{data.total}</b> ממצאים בכל הארץ</span>
+          {cities.slice(0, 4).map((c) => <span key={c} className="stat">{c}: <b>{byCity[c] || 0}</b></span>)}
           <span className="stat mut">עודכן: {data.gen}</span>
         </div>
       </header>
@@ -192,10 +192,12 @@ function App() {
 
       <div className="controls">
         <div className="chips">
-          <button className={"chipf" + (!city ? " on" : "")} onClick={() => setCity("")}>הכול</button>
-          {cities.map((c) => (
-            <button key={c} className={"chipf" + (city === c ? " on" : "")} onClick={() => setCity(c)}>{c}</button>
-          ))}
+          <select className="city-sel" value={city} onChange={(e) => setCity(e.target.value)}>
+            <option value="">כל הארץ ({items.length})</option>
+            {cities.map((c) => (
+              <option key={c} value={c}>{c} ({byCity[c] || 0})</option>
+            ))}
+          </select>
           <button className={"chipf sys" + (showSys ? " on" : "")} onClick={() => setShowSys(!showSys)}
             title="דילוג ששייך כנראה לתכנון: כמה קווים מדלגים על אותה תחנה, או קו שמדלג על תחנות רבות">
             {showSys ? "מציג" : "מוסתרים"} {sysN} דילוגים שיטתיים
@@ -203,7 +205,7 @@ function App() {
         </div>
         <input
           className="search" type="search" dir="rtl"
-          placeholder="חיפוש: מספר קו, שם תחנה או מק״ט…"
+          placeholder="חיפוש: מספר קו, שם תחנה, עיר או מק״ט…"
           value={q} onChange={(e) => setQ(e.target.value)}
         />
       </div>
@@ -225,7 +227,7 @@ function App() {
 
       <footer>
         ניסוי במסגרת <a href="../">הקו הבוחן</a> · הנתונים: GTFS + הקובץ המצומצם של משרד התחבורה ·
-        הבדיקה מכסה כרגע את ירושלים ותל אביב בלבד
+        הבדיקה מכסה את כל הקווים העירוניים בארץ
       </footer>
     </div>
   );

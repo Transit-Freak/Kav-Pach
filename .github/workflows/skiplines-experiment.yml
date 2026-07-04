@@ -1,7 +1,7 @@
 name: skiplines-experiment
 
 # "הקו המדלג" (ניסיוני): זיהוי קווים עירוניים שחולפים ליד תחנה פעילה בלי לעצור בה
-# (ירושלים + תל אביב). מדפיס ממצאים ליומן וכותב skip-stops/data.json לאתר.
+# (כל הארץ). מדפיס ממצאים ליומן וכותב skip-stops/data.json לאתר.
 
 on:
   schedule:
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
 
@@ -35,12 +35,12 @@ jobs:
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt
           ls -la
 
-      - name: Detect skipped stops (Jerusalem + Tel Aviv)
+      - name: Detect skipped stops (nationwide)
         run: |
           set -euo pipefail
           # סוגי הקווים מהקובץ המצומצם שכבר בריפו (data-main.json — אותו קובץ שקו פח מציג)
           STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt SHAPES=shapes.txt \
-            MAIN=data-main.json CITIES="ירושלים,תל אביב יפו" OUT=skip-stops/data.json python3 tools/skiplines.py
+            MAIN=data-main.json CITIES=ALL OUT=skip-stops/data.json python3 tools/skiplines.py
 
       - name: Commit data.json to main
         run: |
@@ -56,7 +56,7 @@ jobs:
             git add skip-stops/data.json
             if git diff --cached --quiet; then
               echo "data unchanged — nothing to commit"; break; fi
-            git commit -m "skip-stops: refresh findings (Jerusalem + Tel Aviv)"
+            git commit -m "skip-stops: refresh findings (nationwide)"
             if git push origin HEAD:main; then break; fi
             echo "push rejected (main moved) — retry $i"; sleep 10
           done

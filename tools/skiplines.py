@@ -12,7 +12,9 @@ TRIPS=os.environ.get('TRIPS','trips.txt')
 ROUTES=os.environ.get('ROUTES','routes.txt')
 SHAPES=os.environ.get('SHAPES','shapes.txt')
 MAIN=os.environ.get('MAIN','data-main.json')
-CITIES=[c.strip() for c in os.environ.get('CITIES','ירושלים,תל אביב יפו').split(',')]
+# CITIES ריק או "ALL" = כל הארץ; אחרת רשימת ערים מופרדת בפסיקים (מצב הניסוי המקורי)
+_c=os.environ.get('CITIES','').strip()
+CITIES=[] if _c in ('','ALL') else [c.strip() for c in _c.split(',')]
 
 NEAR_M=25        # תחנה נחשבת "על המסלול" עד מרחק זה מהקו
 ALONG_MIN=50     # הקו חייב ללוות את התחנה לאורך לפחות כך (מ׳) — מסנן חציית-צומת
@@ -31,10 +33,10 @@ stops={}
 for r in rows[1:]:
     if len(r)<=SD: continue
     c=city(r[SD])
-    if c not in CITIES: continue
+    if CITIES and c not in CITIES: continue
     try: stops[r[SI]]={'code':r[SC],'name':r[SN],'city':c,'la':float(r[LA]),'lo':float(r[LO])}
     except: pass
-print('תחנות בערי הניסוי:',len(stops))
+print('תחנות בתחום הבדיקה:',len(stops),'(כל הארץ)' if not CITIES else '')
 
 # ---- קווים ----
 rroutes={}
@@ -62,14 +64,23 @@ def route_type(rid):
 def route_sub(rid):
     return linesub.get(_makat(rid),'')
 
-# ---- נסיעות: נציג אחד לכל (קו, מסלול) ----
+# רק קווים שנבדקים בניסוי: עירוני (או לא מסווג), לא תלמידים, לא חנה-וסע, אוטובוס בלבד
+def line_ok(rid):
+    ty=route_type(rid)
+    if ty and ty!='עירוני': return False       # בינעירוני/אזורי מדלגים בצדק
+    if 'תלמיד' in route_sub(rid): return False  # קווי תלמידים עוצרים רק איפה שצריך
+    if 'חנה וסע' in rroutes.get(rid,{}).get('long',''): return False  # שאטלים ישירים
+    if rroutes.get(rid,{}).get('rtype','3')!='3': return False        # רק אוטובוס
+    return True
+
+# ---- נסיעות: נציג אחד לכל (קו, מסלול) — רק לקווים הנבדקים ----
 trip2route={}; rep={}   # rep[(route_id,shape_id)] = trip_id נציג
 for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     trip2route[r['trip_id']]=r['route_id']
     key=(r['route_id'],r.get('shape_id',''))
-    if r.get('shape_id') and key not in rep: rep[key]=r['trip_id']
+    if r.get('shape_id') and key not in rep and line_ok(r['route_id']): rep[key]=r['trip_id']
 rep_trips={t:k for k,t in rep.items()}
-print('נסיעות-נציג (קו×מסלול):',len(rep))
+print('נסיעות-נציג (קו×מסלול, קווים נבדקים):',len(rep))
 
 # ---- עצירות: רצף התחנות של כל נציג + אילו קווים עוצרים בכל תחנת-עיר ----
 served=defaultdict(list)          # trip נציג -> [(seq, stop_id)]
@@ -90,25 +101,22 @@ with open(STOP_TIMES,encoding='utf-8-sig') as f:
             except: pass
 print('תחנות-עיר עם שירות:',len(stop_lines))
 
-# ---- מסלולים (shapes): רק כאלה שנוגעים בערי הניסוי ----
-BBOX=[(31.65,35.05,31.92,35.30),(31.98,34.72,32.18,34.90)]  # ירושלים, ת"א רבתי
-def inbox(la,lo): return any(a<=la<=c and b<=lo<=d for a,b,c,d in BBOX)
+# ---- מסלולים (shapes): רק של הקווים הנבדקים (הסינון קוצץ את רוב הקובץ) ----
 need_shapes={k[1] for k in rep}
 shapes={}
 with open(SHAPES,encoding='utf-8-sig') as f:
     rd=csv.reader(f); hdr=next(rd); hi={h:i for i,h in enumerate(hdr)}
     SH,SLA,SLO,SSQ=hi['shape_id'],hi['shape_pt_lat'],hi['shape_pt_lon'],hi['shape_pt_sequence']
-    cur=None; pts=[]; hit=False
+    cur=None; pts=[]
     def flush():
-        global cur,pts,hit
-        if cur and hit and cur in need_shapes: shapes[cur]=[p[1:] for p in sorted(pts)]
-        cur=None; pts=[]; hit=False
+        global cur,pts
+        if cur and pts and cur in need_shapes: shapes[cur]=[p[1:] for p in sorted(pts)]
+        cur=None; pts=[]
     for r in rd:
         sh=r[SH]
         if sh!=cur: flush(); cur=sh
-        try:
-            la,lo=float(r[SLA]),float(r[SLO]); pts.append((int(r[SSQ]),la,lo))
-            if not hit and inbox(la,lo): hit=True
+        if sh not in need_shapes: continue
+        try: pts.append((int(r[SSQ]),float(r[SLA]),float(r[SLO])))
         except: pass
     flush()
 print('מסלולים רלוונטיים:',len(shapes))
@@ -149,11 +157,7 @@ def near_stop_ids(pts):
 findings=[]
 for (rid,sh),t in rep.items():
     if sh not in shapes: continue
-    ty=route_type(rid)
-    if ty and ty!='עירוני': continue   # בינעירוני/אזורי מדלגים בצדק — מחוץ לניסוי
-    if 'תלמיד' in route_sub(rid): continue   # קווי תלמידים עוצרים רק איפה שצריך — לא דילוג
-    if 'חנה וסע' in rroutes.get(rid,{}).get('long',''): continue   # שאטלים ישירים במהותם
-    if rroutes.get(rid,{}).get('rtype','3')!='3': continue   # בודקים רק קווי אוטובוס
+    ty=route_type(rid)   # סינון הקווים כבר נעשה ב-line_ok בשלב הנסיעות
     seq=[s for _,s in sorted(served.get(t,[]))]
     if len(seq)<5: continue
     pts=shapes[sh]
@@ -198,10 +202,11 @@ for (rid,sh),t in rep.items():
         if near<ALONG_MIN: continue
         others=stop_lines[sid]-{info.get('num','')}
         if not others: continue
-        # קטע המסלול סביב התחנה (למפה באתר): ±400 מ' לאורך הקו, מדולל עד 40 נקודות
-        i0=bisect.bisect_left(arc,pos-400); i1=bisect.bisect_right(arc,pos+400)
+        # קטע המסלול סביב התחנה (למפה באתר): ±300 מ' לאורך הקו, מדולל עד 24 נקודות
+        # (כיסוי ארצי — חוסכים נפח קובץ; המפה ממילא מתמקדת סביב התחנה)
+        i0=bisect.bisect_left(arc,pos-300); i1=bisect.bisect_right(arc,pos+300)
         segp=pts[max(0,i0-1):i1+1]
-        step=max(1,len(segp)//40)
+        step=max(1,len(segp)//24)
         seg=[[round(a,5),round(b,5)] for a,b in segp[::step]]+([[round(segp[-1][0],5),round(segp[-1][1],5)]] if len(segp)%step!=1 else [])
         findings.append({'line':info.get('num',''),'agency':info.get('agency',''),'long':info.get('long',''),
                          'type':ty,'stop':s,'sid':sid,'dist':round(p[0]),'before':round(before),'after':round(after),
@@ -244,8 +249,11 @@ if OUT:
             'others':f['others'][:12],'onum':len(f['others']),
             'seg':f['seg'],
         })
+    # רשימת הערים לתפריט הסינון באתר — לפי מספר ממצאים, מהגדולה לקטנה
+    from collections import Counter
+    ccnt=Counter(it['city'] for it in items if it['city'])
     out={'gen':datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
-         'cities':CITIES,'total':len(items),'items':items}
+         'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items}
     os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
     json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     print('נכתב',OUT,'(%d ממצאים)'%len(items))

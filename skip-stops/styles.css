@@ -36,6 +36,12 @@ header h1 {
   padding: 6px 14px; font-size: 14.5px; cursor: pointer; font-family: inherit; color: #334155;
 }
 .chipf.on { background: #d97706; border-color: #d97706; color: #fff; font-weight: 700; }
+.city-sel {
+  border: 1px solid #e2e8f0; background: #fff; border-radius: 999px;
+  padding: 7px 14px; font-size: 14.5px; font-family: inherit; color: #334155; cursor: pointer;
+  max-width: 230px;
+}
+.city-sel:focus { outline: 2px solid #f59e0b; border-color: transparent; }
 .chipf.sys { border-style: dashed; color: #64748b; font-size: 13px; }
 .chipf.sys.on { background: #475569; border-color: #475569; color: #fff; }
 .search {
