@@ -39,8 +39,6 @@ body {
 .brand h1 { font-family: "Heebo", sans-serif; font-size: 24px; font-weight: 900; margin: 0; letter-spacing: -0.02em; }
 .brand p { margin: 2px 0 0; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
 .src { font-size: 12px; color: var(--ink-faint); font-weight: 600; }
-.sk-link { color: #b45309; text-decoration: none; font-weight: 700; }
-.sk-link:hover { text-decoration: underline; }
 
 /* ---- stats ---- */
 .stats { display: flex; gap: 10px; padding: 14px 20px; flex-wrap: wrap; background: var(--surface); border-bottom: 1px solid var(--line); }

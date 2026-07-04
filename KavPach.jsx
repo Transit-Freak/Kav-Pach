@@ -583,6 +583,25 @@ function ChoiceScreen({ onPick }) {
               <span className="inline-flex items-center gap-2 mt-5 bg-sky-400 text-sky-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
             </div>
           </a>
+
+          {/* הקו המדלג — ניסוי חדש (אפליקציה עצמאית בתיקיית skip-stops/) */}
+          <a
+            href="skip-stops/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#451a03 0%,#7c2d12 52%,#d97706 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#f59e0b' }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28">
+                <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[11px] font-black self-start">ניסיוני</span>
+                {/* הסמל של "הקו המדלג" — אוטובוס שחולף (אמוג'י 🚌) */}
+                <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🚌</span>
+              </div>
+              <h2 className="text-3xl font-[900] text-amber-200">הקו המדלג</h2>
+              <p className="text-amber-100/80 font-bold mt-2 text-sm leading-relaxed">קווים שחולפים ליד תחנה פעילה — בלי לעצור בה</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-amber-400 text-amber-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
         </div>
 
         <p className="text-center text-slate-400 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן</p>

@@ -468,7 +468,6 @@ function App() {
             return ds.length ? " · מפה (OpenStreetMap): עודכנה " + ds[0].split("-").reverse().join(".") : "";
           })()}
           {" "}· נבנה ע"י שלמה הרטמן
-          {" "}· <a className="sk-link" href="../skip-stops/">🚌 חדש (ניסיוני): הקו המדלג — קווים שמדלגים על תחנות</a>
         </div>
         {(() => {
           if (!hist || hist.length < 2) return null;
