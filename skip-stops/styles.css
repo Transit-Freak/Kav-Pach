@@ -57,6 +57,11 @@ header h1 {
   overflow: hidden;
 }
 .it.open { border-color: #f59e0b; box-shadow: 0 1px 8px rgba(217, 119, 6, .12); }
+.grp-list { padding: 0 12px 10px; }
+.it.inner { margin-bottom: 6px; border-color: #f1f5f9; background: #f8fafc; }
+.it.inner.open { border-color: #f59e0b; background: #fff; }
+.it.inner .it-head { padding: 9px 12px; }
+.it.inner .it-title { font-size: 14.5px; }
 .it-head {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: right;
   background: none; border: 0; padding: 12px 14px; cursor: pointer; font-family: inherit;

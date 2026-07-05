@@ -155,11 +155,11 @@ function Detail({ it, db }) {
 }
 
 /* ---------- שורה ---------- */
-const Row = React.memo(function Row({ it, open, onToggle, db }) {
+const Row = React.memo(function Row({ it, open, onToggle, db, inner }) {
   return (
-    <div className={"it" + (open ? " open" : "")}>
+    <div className={"it" + (open ? " open" : "") + (inner ? " inner" : "")}>
       <button className="it-head" onClick={onToggle}>
-        <span className="line-badge">{it.line}</span>
+        {!inner && <span className="line-badge">{it.line}</span>}
         <span className="it-main">
           <span className="it-title">מדלג על: {it.stop} <span className="code">({it.code})</span></span>
           <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים{it._sys ? <span className="tag-sys">שיטתי</span> : null}</span>
@@ -171,6 +171,31 @@ const Row = React.memo(function Row({ it, open, onToggle, db }) {
   );
 });
 
+/* ---------- קבוצה: כל הדילוגים של אותו קו באותה עיר תחת כרטיס אחד ---------- */
+const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub, setOpenSub, db }) {
+  const it = items[0];
+  return (
+    <div className={"it grp" + (open ? " open" : "")}>
+      <button className="it-head" onClick={onToggle}>
+        <span className="line-badge">{it.line}</span>
+        <span className="it-main">
+          <span className="it-title">מדלג על {items.length} תחנות</span>
+          <span className="it-sub">{it.city} · {items.slice(0, 3).map((x) => x.stop).join(" · ")}{items.length > 3 ? " · …" : ""}</span>
+        </span>
+        <span className="arrow">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="grp-list">
+          {items.map((x) => (
+            <Row key={x._k} it={x} inner open={openSub === x._k} db={db}
+              onToggle={() => setOpenSub(openSub === x._k ? null : x._k)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
 /* ---------- אפליקציה ---------- */
 function App() {
   const [data, setData] = useState(null);
@@ -178,6 +203,7 @@ function App() {
   const [city, setCity] = useState("");
   const [q, setQ] = useState("");
   const [openKey, setOpenKey] = useState(null);
+  const [openSub, setOpenSub] = useState(null);
   const [page, setPage] = useState(1);
   const [showSys, setShowSys] = useState(false);
   const dq = useDeferredValue(q);
@@ -224,7 +250,17 @@ function App() {
   const byCity = {};
   items.forEach((it) => { byCity[it.city] = (byCity[it.city] || 0) + 1; });
   const sysN = items.filter((it) => it._sys).length;
-  const shown = filtered.slice(0, page * PAGE);
+  // קיבוץ: כל הדילוגים של אותו קו באותה עיר — כרטיס אחד (הסדר לפי הממצא המדורג הכי גבוה)
+  const groups = [];
+  {
+    const gm = new Map();
+    filtered.forEach((it) => {
+      const k = it.line + "@" + it.city;
+      if (!gm.has(k)) { gm.set(k, []); groups.push(gm.get(k)); }
+      gm.get(k).push(it);
+    });
+  }
+  const shown = groups.slice(0, page * PAGE);
 
   return (
     <div className="wrap">
@@ -270,17 +306,24 @@ function App() {
         />
       </div>
 
-      <div className="count">{filtered.length === items.length ? "" : filtered.length + " תוצאות"}</div>
+      <div className="count">{filtered.length === items.length ? "" : filtered.length + " תוצאות (" + groups.length + " קווים)"}</div>
 
       <div className="list">
-        {shown.map((it) => (
-          <Row key={it._k} it={it} open={openKey === it._k} db={data}
-            onToggle={() => setOpenKey(openKey === it._k ? null : it._k)} />
-        ))}
+        {shown.map((g) => {
+          const gk = "g:" + g[0].line + "@" + g[0].city;
+          return g.length === 1 ? (
+            <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={data}
+              onToggle={() => setOpenKey(openKey === g[0]._k ? null : g[0]._k)} />
+          ) : (
+            <LineGroup key={gk} items={g} open={openKey === gk} db={data}
+              openSub={openSub} setOpenSub={setOpenSub}
+              onToggle={() => setOpenKey(openKey === gk ? null : gk)} />
+          );
+        })}
         {shown.length === 0 && <div className="empty">לא נמצאו תוצאות.</div>}
-        {filtered.length > shown.length && (
+        {groups.length > shown.length && (
           <button className="more-btn" onClick={() => setPage(page + 1)}>
-            הצגת עוד ({filtered.length - shown.length} נוספים)
+            הצגת עוד ({groups.length - shown.length} קווים נוספים)
           </button>
         )}
       </div>
