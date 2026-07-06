@@ -265,7 +265,7 @@ SN,SD,SC,LA,LO,SI=ix['stop_name'],ix['stop_desc'],ix['stop_code'],ix['stop_lat']
 ACTIVE=None
 if os.path.exists(ACTIVE_PATH):
     ACTIVE=set(l.strip() for l in open(ACTIVE_PATH) if l.strip()); print('active stop_ids:',len(ACTIVE))
-PREVRT={}; PREVRW={}; PREVERR={}; PREVLMP={}
+PREVRT={}; PREVRW={}; PREVERR={}; PREVLMP={}; PREVK={}
 ERRCATS=('mismatch','reversal','spelling','streetvar')
 if PREV and os.path.exists(PREV):
     try:
@@ -277,6 +277,7 @@ if PREV and os.path.exists(PREV):
             if s.get('lmp'): PREVLMP[s['c']]=s['lmp']['n']  # לאיזה מקום חושבה ההליכה — נגרר רק אם לא השתנה
             # תחנות שסומנו כשגיאה בריצה הקודמת — לזיהוי תיקונים אמיתיים במקור
             if s.get('k') in ERRCATS: PREVERR[s['c']]={'n':s['n'],'s':s['s'],'t':s.get('t',''),'k':s['k']}
+            PREVK[s['c']]=(s.get('k',''),s.get('n',''))
         print('carried-forward rt:',len(PREVRT),'| closer rw:',len(PREVRW),'| prev errors:',len(PREVERR))
     except Exception as e: print('prev load failed:',e)
 from collections import defaultdict, Counter
@@ -507,6 +508,20 @@ if CHANGES and PREVERR:
     if fixed: ch.append({'d':today,'fixed':fixed})
     json.dump(ch[-60:],open(CHANGES,'w'),ensure_ascii=False,separators=(',',':'))
     print('source fixes detected:',len(fixed))
+
+# אילו תחנות שינו קטגוריה מאז הריצה הקודמת — נפתח באתר בלחיצה על חיצי המגמה
+CATDIFF=os.environ.get('CATDIFF','')
+if CATDIFF and PREVK:
+    curk={s['c']:(s['k'],s['n']) for s in suspects}
+    chd=[]
+    for c0,(k0,n0) in PREVK.items():
+        nk,nn=curk.get(c0,('',''))
+        if nk!=k0: chd.append({'c':c0,'n':nn or n0,'f':k0,'t':nk})
+    for c0,(nk,nn) in curk.items():
+        if c0 not in PREVK: chd.append({'c':c0,'n':nn,'f':'','t':nk})
+    json.dump({'d':datetime.date.today().isoformat(),'ch':chd[:800]},
+              open(CATDIFF,'w'),ensure_ascii=False,separators=(',',':'))
+    print('category changes vs prev run:',len(chd))
 
 # היסטוריית ספירות — רשומה אחת ליום (ריצה אחרונה באותו יום גוברת), למעקב מגמות באתר
 HIST=os.environ.get('HISTORY','')

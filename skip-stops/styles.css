@@ -50,6 +50,13 @@ header h1 {
 }
 .search:focus { outline: 2px solid #f59e0b; border-color: transparent; }
 .count { font-size: 13px; color: #94a3b8; min-height: 18px; margin-bottom: 4px; }
+.controls2 { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 8px; }
+.fsel {
+  border: 1px solid #e2e8f0; background: #fff; border-radius: 8px;
+  padding: 6px 10px; font-size: 13.5px; font-family: inherit; color: #475569; cursor: pointer;
+  max-width: 210px;
+}
+.fsel:focus { outline: 2px solid #f59e0b; border-color: transparent; }
 
 .list { overflow-anchor: none; }
 .it {

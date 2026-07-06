@@ -206,6 +206,11 @@ function App() {
   const [openSub, setOpenSub] = useState(null);
   const [page, setPage] = useState(1);
   const [showSys, setShowSys] = useState(false);
+  const [fOp, setFOp] = useState("");       // מפעיל
+  const [fMahoz, setFMahoz] = useState(""); // מחוז (מהקובץ המצומצם)
+  const [fUniq, setFUniq] = useState(""); // ייחודיות הקו (סדיר/לילה/מזינים)
+  const [fGap, setFGap] = useState(0);      // מרחק מזערי מהעצירה הקרובה
+  const [fSkips, setFSkips] = useState(""); // כמה תחנות הקו מדלג
   const dq = useDeferredValue(q);
 
   useEffect(() => {
@@ -235,13 +240,18 @@ function App() {
     return items.filter((it) => {
       if (!showSys && it._sys) return false;
       if (city && it.city !== city) return false;
+      if (fOp && it.op !== fOp) return false;
+      if (fMahoz && it.mahoz !== fMahoz) return false;
+      if (fUniq && (it.uniq || "סדיר") !== fUniq) return false;
+      if (fGap && Math.min(it.before, it.after) < fGap) return false;
+      if (fSkips === "1" ? it._lt !== 1 : (fSkips && it._lt < +fSkips)) return false;
       if (!needle) return true;
       if (it.line === needle) return true;
       return it._q.includes(needle);
     });
-  }, [items, city, dq, showSys]);
+  }, [items, city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips]);
 
-  useEffect(() => { setPage(1); }, [city, dq, showSys]);
+  useEffect(() => { setPage(1); }, [city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips]);
 
   if (err) return <div className="boot">שגיאה בטעינת הנתונים — ייתכן שההרצה הראשונה עוד לא הסתיימה. נסו לרענן מאוחר יותר.</div>;
   if (!data) return <div className="boot">טוען נתונים…</div>;
@@ -305,6 +315,50 @@ function App() {
           value={q} onChange={(e) => setQ(e.target.value)}
         />
       </div>
+
+      {(() => {
+        const uniqVals = (arr) => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, "he"));
+        const ops = uniqVals(items.map((it) => it.op));
+        const mahozs = uniqVals(items.map((it) => it.mahoz));
+        const uniqs = uniqVals(items.map((it) => it.uniq || "סדיר"));
+        return (
+          <div className="controls2">
+            {ops.length > 0 && (
+              <select className="fsel" value={fOp} onChange={(e) => setFOp(e.target.value)}>
+                <option value="">מפעיל: הכול</option>
+                {ops.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            )}
+            {mahozs.length > 0 && (
+              <select className="fsel" value={fMahoz} onChange={(e) => setFMahoz(e.target.value)}>
+                <option value="">מחוז: הכול</option>
+                {mahozs.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            )}
+            {uniqs.length > 1 && (
+              <select className="fsel" value={fUniq} onChange={(e) => setFUniq(e.target.value)}>
+                <option value="">סוג קו: הכול</option>
+                {uniqs.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            )}
+            <select className="fsel" value={fGap} onChange={(e) => setFGap(+e.target.value)}>
+              <option value="0">מרחק מהעצירות: הכול</option>
+              <option value="150">150 מ' ומעלה</option>
+              <option value="200">200 מ' ומעלה</option>
+              <option value="300">300 מ' ומעלה</option>
+              <option value="500">500 מ' ומעלה</option>
+            </select>
+            <select className="fsel" value={fSkips} onChange={(e) => setFSkips(e.target.value)}>
+              <option value="">דילוגים לקו: הכול</option>
+              <option value="1">תחנה אחת בלבד</option>
+              <option value="2">2 תחנות ומעלה</option>
+              <option value="3">3 תחנות ומעלה</option>
+              <option value="5">5 תחנות ומעלה</option>
+              <option value="8">8 תחנות ומעלה</option>
+            </select>
+          </div>
+        );
+      })()}
 
       <div className="count">{filtered.length === items.length ? "" : filtered.length + " תוצאות (" + groups.length + " קווים)"}</div>
 

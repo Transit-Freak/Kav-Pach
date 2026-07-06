@@ -235,6 +235,8 @@ function App() {
   const [reportStop, setReportStop] = useState(null); // תחנה שמדווחים עליה
   const [hist, setHist] = useState(null); // היסטוריית ספירות למגמות
   const [chg, setChg] = useState(null); // יומן "תוקן!" — תחנות שתוקנו במקור
+  const [catd, setCatd] = useState(null); // תחנות ששינו קטגוריה בריצה האחרונה
+  const [showCat, setShowCat] = useState(null); // איזה חץ-קטגוריה פתוח
   const [showFixed, setShowFixed] = useState(false);
   const [letterCity, setLetterCity] = useState(null); // מחולל מכתב לרשות (null=סגור)
   // כמה שורות מציגים בפועל — מתחילים קטן (מהיר בטלפון) ומרחיבים בכפתור "הצגת עוד"
@@ -292,6 +294,10 @@ function App() {
       .then(setHist)
       .catch(() => {});
     // יומן תיקונים במקור — תחנות ששמן/כתובתן שונו ב-GTFS ויצאו מרשימת השגיאות
+    fetch("catdiff.json?v=" + window.NS_BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setCatd)
+      .catch(() => {});
     fetch("changes.json?v=" + window.NS_BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => (r.ok ? r.json() : null))
       .then(setChg)
@@ -485,17 +491,44 @@ function App() {
           const prevRun = hist[hist.length - 2]; // הריצה שמולה נמדדו התיקונים — להצגת התאריך
           return (
             <div className="trend">
-              📈 מאז הריצה הקודמת{prevRun ? " (" + prevRun.d.split("-").reverse().join(".") + ")" : ""}: <b>{fixedN.toLocaleString()}</b> תחנות תוקנו במקור (מאומת מול הטקסט ב-GTFS)
+              📈 מאז הריצה הקודמת{prevRun ? " (" + prevRun.d.split("-").reverse().join(".") + ")" : ""}:{" "}
+              {fixedN > 0 ? (
+                <button className="fixed-btn" onClick={() => setShowFixed(!showFixed)}>
+                  <b>{fixedN.toLocaleString()}</b> תחנות תוקנו במקור {showFixed ? "▲" : "▼"}
+                </button>
+              ) : (
+                <span><b>0</b> תחנות תוקנו במקור</span>
+              )}
+              {" "}(מאומת מול הטקסט ב-GTFS)
               {!prev && <span> · השוואת הקטגוריות תתחדש בריצה הבאה (כללי הזיהוי עודכנו)</span>}
               {prev && (diffs.length === 0
                 ? " · ללא שינוי בקטגוריות"
-                : diffs.map((x, i) => (
+                : diffs.map((x) => (
                     <span key={x.k}>
                       {" · "}
-                      {CATS[x.k].label}{" "}
-                      <b className={x.d < 0 ? "down" : "up"}>{x.d < 0 ? "▼" : "▲"}{Math.abs(x.d).toLocaleString()}</b>
+                      <button className="cat-btn" title="לחצו לצפייה בתחנות ששונו"
+                        onClick={() => setShowCat(showCat === x.k ? null : x.k)}>
+                        {CATS[x.k].label}{" "}
+                        <b className={x.d < 0 ? "down" : "up"}>{x.d < 0 ? "▼" : "▲"}{Math.abs(x.d).toLocaleString()}</b>
+                      </button>
                     </span>
                   )))}
+              {showCat && catd && catd.ch && (() => {
+                const rel = catd.ch.filter((e) => e.f === showCat || e.t === showCat);
+                const lbl = (k) => (k && CATS[k] ? CATS[k].label : "לא ברשימה");
+                return (
+                  <div className="fixed-list">
+                    <div className="fixed-date">{lbl(showCat)} — תחנות ששונו בריצה של {catd.d.split("-").reverse().join(".")}</div>
+                    {rel.length === 0 && <div className="fixed-row">אין פירוט לריצה הזו.</div>}
+                    {rel.slice(0, 80).map((e, i) => (
+                      <div className="fixed-row" key={e.c + "_" + i}>
+                        <span className="code">{e.c}</span> {e.n} · <s>{lbl(e.f)}</s> ← <b>{lbl(e.t)}</b>
+                      </div>
+                    ))}
+                    {rel.length > 80 && <div className="fixed-row">ועוד {rel.length - 80}…</div>}
+                  </div>
+                );
+              })()}
             </div>
           );
         })()}

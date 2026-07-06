@@ -12,6 +12,7 @@ TRIPS=os.environ.get('TRIPS','trips.txt')
 ROUTES=os.environ.get('ROUTES','routes.txt')
 SHAPES=os.environ.get('SHAPES','shapes.txt')
 MAIN=os.environ.get('MAIN','data-main.json')
+AGENCY=os.environ.get('AGENCY','')
 # CITIES ריק או "ALL" = כל הארץ; אחרת רשימת ערים מופרדת בפסיקים (מצב הניסוי המקורי)
 _c=os.environ.get('CITIES','').strip()
 CITIES=[] if _c in ('','ALL') else [c.strip() for c in _c.split(',')]
@@ -48,11 +49,13 @@ for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
 # סוג קו רשמי מהקובץ המצומצם (data-main.json — ההמרה של "מצומצם.xlsx" שקו פח משתמש בה):
 # לכל שורה: [0]=מקט, [6]=סוג קו (עירוני/בינעירוני/אזורי), [7]=ייחודיות הקו (סדיר/תלמידים/לילה/מזינים)
 import json
-linetype={}; linesub={}
+linetype={}; linesub={}; linedist={}
 if MAIN and os.path.exists(MAIN):
     for r in json.load(open(MAIN,encoding='utf-8')):
         mk=str(r[0]).strip().lstrip('0')
-        if mk: linetype[mk]=str(r[6]).strip(); linesub[mk]=str(r[7]).strip()
+        if mk:
+            linetype[mk]=str(r[6]).strip(); linesub[mk]=str(r[7]).strip()
+            linedist[mk]=str(r[5]).strip()   # מחוז
     print('קווים מהקובץ המצומצם:',len(linetype))
     print('ערכי סוג קו:',sorted(set(linetype.values())))
     print('ערכי ייחודיות:',sorted(set(linesub.values())))
@@ -64,6 +67,13 @@ def route_type(rid):
     return linetype.get(_makat(rid),'')
 def route_sub(rid):
     return linesub.get(_makat(rid),'')
+def route_dist(rid):
+    return linedist.get(_makat(rid),'')
+# שמות מפעילים מ-agency.txt (רשות)
+agencies={}
+if AGENCY and os.path.exists(AGENCY):
+    for r in csv.DictReader(open(AGENCY,encoding='utf-8-sig')):
+        agencies[r.get('agency_id','')]=r.get('agency_name','')
 
 # רק קווים שנבדקים בניסוי: עירוני (או לא מסווג), לא תלמידים, לא חנה-וסע, אוטובוס בלבד
 def line_ok(rid):
@@ -252,6 +262,8 @@ if OUT:
             'skippers':sorted(skippers[f['sid']]),
             'others':f['others'][:12],'onum':len(f['others']),
             'seg':f['seg'],'shp':f['shp'],
+            'op':agencies.get(f['agency'],''),'mahoz':route_dist(f['rid']),
+            'uniq':route_sub(f['rid']) or 'סדיר',
         })
     # מסלולים מלאים לתצוגה — כל מסלול נשמר פעם אחת, מדולל עד 80 נקודות (קו-מתאר)
     # + רשימת תחנות העצירה של כל מסלול (מזהים בלבד) ומילון פרטי-תחנה משותף

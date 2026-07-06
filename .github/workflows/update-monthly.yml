@@ -134,7 +134,7 @@ jobs:
           set -euo pipefail
           cp next-station/data.json prev.json 2>/dev/null || echo '{}' > prev.json
           STOPS=stops.txt POI=poi.json ROADS=roads.json ACTIVE=active_stops.txt \
-            PREV=prev.json HISTORY=next-station/history.json CHANGES=next-station/changes.json \
+            PREV=prev.json HISTORY=next-station/history.json CHANGES=next-station/changes.json CATDIFF=next-station/catdiff.json \
             OUT=next-station/data.json python3 tools/classify.py
 
       - name: Build OSRM (foot) and compute real walking times
@@ -197,13 +197,16 @@ jobs:
           cp next-station/data.json /tmp/out-data.json
           cp next-station/history.json /tmp/out-hist.json 2>/dev/null || true
           cp next-station/changes.json /tmp/out-chg.json 2>/dev/null || true
+          cp next-station/catdiff.json /tmp/out-catd.json 2>/dev/null || true
           for i in 1 2 3 4; do
             git fetch origin main && git reset --hard origin/main
             cp /tmp/out-data.json next-station/data.json
             [ -f /tmp/out-hist.json ] && cp /tmp/out-hist.json next-station/history.json
             [ -f /tmp/out-chg.json ] && cp /tmp/out-chg.json next-station/changes.json
+            [ -f /tmp/out-catd.json ] && cp /tmp/out-catd.json next-station/catdiff.json
             git add next-station/data.json next-station/history.json
             git add next-station/changes.json 2>/dev/null || true
+            git add next-station/catdiff.json 2>/dev/null || true
             if git diff --cached --quiet; then echo "no change"; break; fi
             git commit -m "monthly: full refresh (GTFS + OSM POI/roads + walking times)"
             if git push origin HEAD:main; then break; fi
