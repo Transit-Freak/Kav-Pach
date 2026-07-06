@@ -260,7 +260,7 @@ if OUT:
             'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
             'bsid':f['bsid'],'asid':f['asid'],'skey':f['rid']+'|'+f['shp'],
             'skippers':sorted(skippers[f['sid']]),
-            'others':f['others'][:12],'onum':len(f['others']),
+            'others':f['others'],'onum':len(f['others']),
             'seg':f['seg'],'shp':f['shp'],
             'op':agencies.get(f['agency'],''),'mahoz':route_dist(f['rid']),
             'uniq':route_sub(f['rid']) or 'סדיר',

@@ -84,8 +84,11 @@ function SkipMap({ it, route, lineStops }) {
 }
 
 /* ---------- פירוט ממצא ---------- */
-function Detail({ it, db }) {
+function Detail({ it, db, onLine }) {
   const nSkip = (it.skippers || []).length;
+  const [allOthers, setAllOthers] = useState(false);
+  const others = it.others || [];
+  const shownOthers = allOthers ? others : others.slice(0, 12);
   // רשימת תחנות הקו לפי הסדר + מיקום התחנה המדולגת בתוכה
   const sids = (db.shapestops && it.skey ? db.shapestops[it.skey] : null) || [];
   const sd = db.stopsd || {};
@@ -115,8 +118,16 @@ function Detail({ it, db }) {
         </p>
         <p>
           בתחנה עוצרים <b>{it.onum}</b> קווים אחרים:{" "}
-          {(it.others || []).map((o) => <span key={o} className="chip">{o}</span>)}
-          {it.onum > (it.others || []).length ? " ועוד…" : ""}
+          {shownOthers.map((o) => (
+            <button key={o} className="chip clk" title={"הצגת הממצאים של קו " + o}
+              onClick={() => onLine && onLine(o)}>{o}</button>
+          ))}
+          {others.length > 12 && (
+            <button className="chip more" onClick={() => setAllOthers(!allOthers)}>
+              {allOthers ? "פחות ▲" : "עוד " + (others.length - 12) + " ▼"}
+            </button>
+          )}
+          {it.onum > others.length && !allOthers ? " (הרשימה המלאה תופיע ברענון הבא)" : ""}
         </p>
         {nSkip > 1 && (
           <p>מדלגים על התחנה הזו גם: {(it.skippers || []).filter((x) => x !== it.line).map((o) => <span key={o} className="chip warn">{o}</span>)}</p>
@@ -155,7 +166,7 @@ function Detail({ it, db }) {
 }
 
 /* ---------- שורה ---------- */
-const Row = React.memo(function Row({ it, open, onToggle, db, inner }) {
+const Row = React.memo(function Row({ it, open, onToggle, db, inner, onLine }) {
   return (
     <div className={"it" + (open ? " open" : "") + (inner ? " inner" : "")}>
       <button className="it-head" onClick={onToggle}>
@@ -166,13 +177,13 @@ const Row = React.memo(function Row({ it, open, onToggle, db, inner }) {
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </button>
-      {open && <Detail it={it} db={db} />}
+      {open && <Detail it={it} db={db} onLine={onLine} />}
     </div>
   );
 });
 
 /* ---------- קבוצה: כל הדילוגים של אותו קו באותה עיר תחת כרטיס אחד ---------- */
-const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub, setOpenSub, db }) {
+const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub, setOpenSub, db, onLine }) {
   const it = items[0];
   return (
     <div className={"it grp" + (open ? " open" : "")}>
@@ -187,7 +198,7 @@ const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub
       {open && (
         <div className="grp-list">
           {items.map((x) => (
-            <Row key={x._k} it={x} inner open={openSub === x._k} db={db}
+            <Row key={x._k} it={x} inner open={openSub === x._k} db={db} onLine={onLine}
               onToggle={() => setOpenSub(openSub === x._k ? null : x._k)} />
           ))}
         </div>
@@ -212,6 +223,7 @@ function App() {
   const [fGap, setFGap] = useState(0);      // מרחק מזערי מהעצירה הקרובה
   const [fSkips, setFSkips] = useState(0); // כמה תחנות הקו מדלג (לפחות)
   const dq = useDeferredValue(q);
+  const goLine = (ln) => { setQ(ln); setOpenKey(null); setOpenSub(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   useEffect(() => {
     fetch("data.json?v=" + BUILD)
@@ -363,10 +375,10 @@ function App() {
         {shown.map((g) => {
           const gk = "g:" + g[0].line + "@" + g[0].city;
           return g.length === 1 ? (
-            <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={data}
+            <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={data} onLine={goLine}
               onToggle={() => setOpenKey(openKey === g[0]._k ? null : g[0]._k)} />
           ) : (
-            <LineGroup key={gk} items={g} open={openKey === gk} db={data}
+            <LineGroup key={gk} items={g} open={openKey === gk} db={data} onLine={goLine}
               openSub={openSub} setOpenSub={setOpenSub}
               onToggle={() => setOpenKey(openKey === gk ? null : gk)} />
           );
