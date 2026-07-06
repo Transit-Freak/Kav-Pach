@@ -1523,6 +1523,10 @@ function KavPach() {
 
   const [tab, setTab] = useState("redundant"); 
   const [searchCity, setSearchCity] = useState("");
+  const [overlapMap, setOverlapMap] = useState(null); // חפיפת מסלולים בין קווים (kavpach-overlap.json, מתעדכן לילית)
+  useEffect(() => {
+    fetch('kavpach-overlap.json').then(r => (r.ok ? r.json() : null)).then(d => d && setOverlapMap(d.lines || null)).catch(() => {});
+  }, []);
   const [filterDistrict, setFilterDistrict] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [redundantSortBy, setRedundantSortBy] = useState("score"); 
@@ -3139,6 +3143,24 @@ const DAYS_FILTER = [
                             </span>
                           )}
                         </div>
+
+                        {(() => {
+                          const ov = overlapMap && overlapMap[String(res.makat || '').replace(/^0+/, '').trim()];
+                          if (!ov || !ov.length) return null;
+                          return (
+                            <div className="mb-4 bg-sky-50 border border-sky-200 rounded-2xl px-3 py-2">
+                              <div className="text-[10px] font-black text-sky-700 mb-1">🔀 חפיפת מסלול — לנוסעים יש חלופות</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {ov.map(([mk2, num2, long2, pct, shared]) => (
+                                  <span key={mk2} title={`${long2} · ${shared} תחנות משותפות`}
+                                    className="text-[10px] font-black bg-white border border-sky-200 text-sky-800 px-2 py-0.5 rounded-full cursor-help">
+                                    קו {num2} · {pct}%
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {res.protections.length > 0 && (
                           <div className="mb-4 bg-emerald-50 border border-emerald-200 rounded-2xl px-3 py-2">

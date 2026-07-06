@@ -10,6 +10,7 @@ on:
     paths:
       - '.github/workflows/skiplines-experiment.yml'
       - 'tools/skiplines.py'
+      - 'tools/overlap.py'
   workflow_dispatch:
 
 permissions:
@@ -42,6 +43,12 @@ jobs:
           STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt SHAPES=shapes.txt \
             MAIN=data-main.json AGENCY=agency.txt CITIES=ALL OUT=skip-stops/data.json python3 tools/skiplines.py
 
+      - name: Route overlap for kav-pach (same GTFS)
+        run: |
+          set -euo pipefail
+          TRIPS=trips.txt STOP_TIMES=stop_times.txt ROUTES=routes.txt \
+            OUT=kavpach-overlap.json python3 tools/overlap.py
+
       - name: Commit data.json to main
         run: |
           set -euo pipefail
@@ -50,13 +57,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # main עלול לזוז בזמן הריצה — שומרים פלט, מתעדכנים, מחילים ודוחפים (עם ניסיונות חוזרים)
           cp skip-stops/data.json /tmp/out-skip.json
+          cp kavpach-overlap.json /tmp/out-ovl.json 2>/dev/null || true
           for i in 1 2 3 4; do
             git fetch origin main && git reset --hard origin/main
             cp /tmp/out-skip.json skip-stops/data.json
+            [ -f /tmp/out-ovl.json ] && cp /tmp/out-ovl.json kavpach-overlap.json
             git add skip-stops/data.json
+            git add kavpach-overlap.json 2>/dev/null || true
             if git diff --cached --quiet; then
               echo "data unchanged — nothing to commit"; break; fi
-            git commit -m "skip-stops: refresh findings (nationwide)"
+            git commit -m "data: refresh skip-stops findings + route overlap"
             if git push origin HEAD:main; then break; fi
             echo "push rejected (main moved) — retry $i"; sleep 10
           done
