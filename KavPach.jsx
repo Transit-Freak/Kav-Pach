@@ -632,6 +632,10 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
   const [selectedLine, setSelectedLine] = useState(null);
   const [expandSearch, setExpandSearch] = useState('');
   const [expandMatches, setExpandMatches] = useState([]);
+  const [gTripsCity, setGTripsCity] = useState('');
+  const [gTripsCrowded, setGTripsCrowded] = useState(false);
+  const [gTripsSort, setGTripsSort] = useState({ key: 'peakLoad', direction: 'desc' });
+  const [gTripsVisible, setGTripsVisible] = useState(80);
   const [areaFilter, setAreaFilter] = useState(null);
 
   // ניקוד מוזהב (0-100, גבוה יותר = טוב יותר) — ההפך המדויק מניקוד קו פח
@@ -880,7 +884,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
         </header>
 
         <nav className="flex bg-slate-200/50 backdrop-blur p-1.5 rounded-[2rem] mb-12 max-w-4xl mx-auto shadow-inner border border-slate-200 overflow-x-auto">
-          {[['top', 'star', 'הקווים המצטיינים', 'bg-white text-amber-600 shadow-md'], ['areas', 'chart', 'ניתוח אזורי', 'bg-white text-amber-600 shadow-md'], ['expand', 'zap', 'הזדמנויות הרחבה', 'bg-white text-emerald-600 shadow-md'], ['about', 'info', 'על המערכת', 'bg-white text-indigo-600 shadow-md']].map(([id, icon, label, activeCls]) => (
+          {[['top', 'star', 'הקווים המצטיינים', 'bg-white text-amber-600 shadow-md'], ['areas', 'chart', 'ניתוח אזורי', 'bg-white text-amber-600 shadow-md'], ['expand', 'zap', 'הזדמנויות הרחבה', 'bg-white text-emerald-600 shadow-md'], ['allTrips', 'list', 'כל הנסיעות', 'bg-white text-rose-600 shadow-md'], ['about', 'info', 'על המערכת', 'bg-white text-indigo-600 shadow-md']].map(([id, icon, label, activeCls]) => (
             <button key={id} onClick={() => setGoldenTab(id)}
               className={`flex-1 min-w-[120px] py-3.5 rounded-[1.5rem] font-black text-sm transition-all flex items-center justify-center gap-2 ${goldenTab === id ? activeCls : 'text-slate-500 hover:text-slate-700'}`}>
               <Ic n={icon} size={16} /> {label}
@@ -1099,14 +1103,26 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
             const doExpandSearch = () => {
               const q = expandSearch.trim();
               if (!q) return;
-              const matches = goldenLines.filter(l => String(l.lineNum) === q || String(l.makat) === q);
+              let matches = goldenLines.filter(l => String(l.lineNum) === q || String(l.makat) === q);
+              if (matches.length === 0) {
+                // הקו לא ברשימת המצטיינים — בונים אותו ישירות מנתוני הנסיעות (כל קו במערכת)
+                const cityOnly2 = (s2) => s2 ? (s2.indexOf(' - ') > 0 ? s2.slice(0, s2.indexOf(' - ')).trim() : s2.split('/')[0].trim()) : '';
+                const seen = new Map();
+                trips.forEach(t => {
+                  if (String(t.lineNum) !== q && String(t.makat || '').replace(/^0+/, '') !== q) return;
+                  const pair = [cityOnly2(t.origin), cityOnly2(t.dest)].sort().join('-');
+                  const gk = `${t.lineNum}_${pair}`;
+                  if (!seen.has(gk)) seen.set(gk, { lineNum: t.lineNum, makat: t.makat, origin: t.origin, dest: t.dest, district: t.district || '', groupKey: gk, notGolden: true });
+                });
+                matches = [...seen.values()];
+              }
               if (matches.length === 1) { setSelectedLine(matches[0]); setExpandMatches([]); }
               else setExpandMatches(matches);
             };
             return (
               <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 max-w-lg mx-auto">
                 <h2 className="text-xl font-black text-slate-900 mb-2 text-right">הזדמנויות הרחבה</h2>
-                <p className="text-slate-400 font-bold text-sm mb-6 text-right">הקלד מספר קו לניתוח, או חזור לרשימה לבחירה מהקווים המצטיינים</p>
+                <p className="text-slate-400 font-bold text-sm mb-6 text-right">הקלד מספר קו לניתוח — כל קו במערכת, לא רק מהמצטיינים — או חזור לרשימה לבחירה</p>
                 <div className="flex gap-3 mb-4">
                   <button onClick={doExpandSearch} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-black transition-colors shrink-0">חפש</button>
                   <input
@@ -1130,7 +1146,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
                   </div>
                 )}
                 {expandMatches.length === 0 && expandSearch && (
-                  <p className="text-xs font-bold text-rose-500 text-right">קו {expandSearch} לא נמצא בקווים המצטיינים</p>
+                  <p className="text-xs font-bold text-rose-500 text-right">קו {expandSearch} לא נמצא במערכת</p>
                 )}
                 <button onClick={() => setGoldenTab('top')} className="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-8 py-3 rounded-2xl font-black text-sm transition-colors">← חזרה לרשימה</button>
               </div>
@@ -1200,7 +1216,9 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <div className="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl shadow-md">{selectedLine.lineNum}</div>
                     <div>
-                      <h2 className="text-2xl font-black text-slate-900">הזדמנויות הרחבה — קו {selectedLine.lineNum}</h2>
+                      <h2 className="text-2xl font-black text-slate-900">הזדמנויות הרחבה — קו {selectedLine.lineNum}
+                        {selectedLine.notGolden && <span className="mr-2 align-middle text-[11px] font-black bg-slate-100 text-slate-500 border border-slate-200 rounded-full px-3 py-1">נבחר ידנית — לא ברשימת המצטיינים</span>}
+                      </h2>
                       <p className="text-slate-500 font-bold">{selectedLine.origin} ← {selectedLine.dest} · {selectedLine.district}</p>
                     </div>
                   </div>
@@ -1347,6 +1365,75 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
         })()}
 
         {/* ── טאב: אודות ── */}
+        {/* ── טאב: כל הנסיעות — הפוך מקו פח: מהעמוסה ביותר לריקה ── */}
+        {goldenTab === 'allTrips' && (() => {
+          const sCity = gTripsCity.trim().toLowerCase();
+          let rows = trips;
+          if (sCity) rows = rows.filter(t => (t.origin || '').toLowerCase().includes(sCity) || (t.dest || '').toLowerCase().includes(sCity) || String(t.lineNum) === gTripsCity.trim());
+          if (gTripsCrowded) rows = rows.filter(t => t.peakLoad >= (t.capacity || 50) * 0.85);
+          const { key, direction } = gTripsSort;
+          rows = [...rows].sort((a, b) => direction === 'desc' ? (b[key] || 0) - (a[key] || 0) : (a[key] || 0) - (b[key] || 0));
+          const SortBtns = ({ k }) => (
+            <span className="inline-flex flex-col -space-y-1.5 mr-1 align-middle">
+              <button onClick={() => setGTripsSort({ key: k, direction: 'desc' })} className={key === k && direction === 'desc' ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}><Ic n="chevronUp" size={12} strokeWidth="3" /></button>
+              <button onClick={() => setGTripsSort({ key: k, direction: 'asc' })} className={key === k && direction === 'asc' ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}><Ic n="chevronDown" size={12} strokeWidth="3" /></button>
+            </span>
+          );
+          return (
+            <div className="bg-white p-6 md:p-8 rounded-[3rem] border border-slate-200 shadow-sm">
+              <header className="mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-900 mb-2">כל הנסיעות במערכת</h2>
+                  <p className="text-slate-500 font-bold text-sm">כמו בקו פח — אבל הפוך: מהנסיעה העמוסה ביותר לריקה. אתרו נסיעות שמתפקעות ודורשות תגבור.</p>
+                </div>
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                  <label className="flex items-center gap-3 bg-amber-50/60 border-2 border-amber-100 text-amber-800 px-4 py-3 rounded-2xl cursor-pointer hover:bg-amber-50 transition-colors w-full md:w-auto font-black text-sm">
+                    <input type="checkbox" checked={gTripsCrowded} onChange={e => setGTripsCrowded(e.target.checked)} className="w-5 h-5 accent-amber-600 rounded" />
+                    רק נסיעות עמוסות (85%+ מהקיבולת)
+                  </label>
+                  <SearchInput value={gTripsCity} onSubmit={setGTripsCity} placeholder="חיפוש עיר או מספר קו — Enter"
+                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 pl-12 font-black outline-none focus:border-slate-900 text-right shadow-sm" />
+                </div>
+              </header>
+              <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100 max-h-[60vh]">
+                <table className="w-full text-right border-collapse">
+                  <thead className="sticky top-0 bg-slate-50 shadow-sm z-20">
+                    <tr className="text-slate-400 text-xs font-black uppercase">
+                      <th className="p-5">מס&apos; קו</th>
+                      <th className="p-5">מוצא</th>
+                      <th className="p-5">יעד</th>
+                      <th className="p-5">שעה</th>
+                      <th className="p-5"><span className="inline-flex items-center gap-1">נוסעים <SortBtns k="ridership" /></span></th>
+                      <th className="p-5"><span className="inline-flex items-center gap-1">עומס שיא <SortBtns k="peakLoad" /></span></th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm font-bold text-slate-700">
+                    {rows.slice(0, gTripsVisible).map((t, i) => {
+                      const occ = (t.capacity || 50) > 0 ? Math.round((t.peakLoad / (t.capacity || 50)) * 100) : 0;
+                      return (
+                        <tr key={`gt-${t.id || i}`} className="vrow border-t border-slate-100 hover:bg-amber-50/40 transition-colors">
+                          <td className="p-5 font-black"><span className="bg-amber-500 text-white px-3 py-1.5 rounded-xl">{t.lineNum}</span></td>
+                          <td className="p-5">{t.origin}</td>
+                          <td className="p-5">{t.dest}</td>
+                          <td className="p-5 font-black">{t.time}</td>
+                          <td className="p-5">{t.ridership}</td>
+                          <td className={`p-5 font-black ${occ >= 85 ? 'text-rose-600' : occ >= 60 ? 'text-amber-600' : ''}`}>{Math.round(t.peakLoad)} <span className="text-[11px] text-slate-400">({occ}%)</span></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {rows.length > gTripsVisible && (
+                <button onClick={() => setGTripsVisible(gTripsVisible + 150)}
+                  className="mt-5 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-2xl font-black text-sm transition-colors">
+                  הצג עוד ({(rows.length - gTripsVisible).toLocaleString()} נסיעות נוספות)
+                </button>
+              )}
+            </div>
+          );
+        })()}
+
         {goldenTab === 'about' && (
           <div className="space-y-8">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
