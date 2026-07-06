@@ -190,7 +190,7 @@ const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub
       <button className="it-head" onClick={onToggle}>
         <span className="line-badge">{it.line}</span>
         <span className="it-main">
-          <span className="it-title">מדלג על {items.length} תחנות</span>
+          <span className="it-title">מדלג על {items.length} תחנות{it.ty && it.ty !== "עירוני" ? <span className="tag-sys ty">{it.ty}</span> : null}</span>
           <span className="it-sub">{it.city} · {items.slice(0, 3).map((x) => x.stop).join(" · ")}{items.length > 3 ? " · …" : ""}</span>
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
