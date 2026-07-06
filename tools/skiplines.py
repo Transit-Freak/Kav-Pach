@@ -23,6 +23,9 @@ ALONG_MIN=50     # הקו חייב ללוות את התחנה לאורך לפח�
 SANDWICH_M=800   # תחנה עצורה לפני ואחרי בטווח זה לאורך המסלול
 SANDWICH_MIN=120 # אבל לא צמוד מדי — עצירה 40 מ' משם היא אותו צומת (עמדה סמוכה), לא דילוג
 TERMINAL_M=300   # מתעלמים מקצוות המסלול (אזורי מסוף)
+# תחנות שהן חלק ממסוף/תחנה מרכזית — לא מועמדות לדילוג: אוטובוס עוצר רק ברציף
+# שלו וחולף ליד רציפים אחרים; זה תפעול תקין, לא דילוג (אותו כלל כמו בהתחנה הבאה)
+TERM_WORDS=('מסוף','ת.מרכזית','ת. מרכזית','תחנה מרכזית','רציף','תפעולי')
 
 def city(d):
     m=re.search(r'עיר:\s*(.*?)\s*רציף:', d or ''); return m.group(1).strip() if m else ''
@@ -196,6 +199,7 @@ for (rid,sh),t in rep.items():
     for sid in near_stop_ids(pts):
         s=stops[sid]
         if sid in servedset or not stop_lines.get(sid): continue
+        if any(w in s['name'] for w in TERM_WORDS): continue   # רציף במסוף — לא דילוג
         x,y=xy(s)
         p=project(m,arc,x,y)
         if not p or p[0]>NEAR_M or not p[2]: continue       # רחוק / בצד שמאל
@@ -228,7 +232,7 @@ for (rid,sh),t in rep.items():
 # איחוד כפילויות (אותו קו ואותה תחנה בכמה חלופות) + דירוג
 best={}
 for f in findings:
-    k=(f['line'],f['sid'],f['type'])   # קו עירוני וקו בין-עירוני עם אותו מספר — ממצאים נפרדים
+    k=(f['line'],f['stop']['code'],f['type'])   # לפי מק"ט — תחנות כפולות באותו מק"ט מתאחדות
     if k not in best or f['before']+f['after']<best[k]['before']+best[k]['after']: best[k]=f
 skippers=defaultdict(set)   # (תחנה, סוג קו) -> קווים מדלגים — הסוגים לא מתערבבים
 for f in best.values(): skippers[(f['sid'],f['type'])].add(f['line'])
