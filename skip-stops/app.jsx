@@ -210,6 +210,8 @@ const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub
 /* ---------- אפליקציה ---------- */
 function App() {
   const [data, setData] = useState(null);
+  const [interD, setInterD] = useState(null);   // קווים לא-עירוניים — נטען רק כשמבקשים
+  const [interBusy, setInterBusy] = useState(false);
   const [err, setErr] = useState(null);
   const [city, setCity] = useState("");
   const [q, setQ] = useState("");
@@ -233,9 +235,32 @@ function App() {
       .catch((e) => setErr(e));
   }, []);
 
+  // הקובץ הלא-עירוני כבד — נטען פעם אחת, רק כשבוחרים סוג קו שאינו עירוני
+  useEffect(() => {
+    if (fType === "עירוני" || interD || interBusy) return;
+    setInterBusy(true);
+    fetch("data-inter.json?v=" + BUILD)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { setInterD(d || { items: [] }); setInterBusy(false); })
+      .catch(() => { setInterD({ items: [] }); setInterBusy(false); });
+  }, [fType, interD, interBusy]);
+
+  // מאחדים את שתי החבילות לעבודה אחידה בהמשך
+  const db = useMemo(() => {
+    if (!data) return null;
+    if (!interD || !interD.items || !interD.items.length) return data;
+    return {
+      ...data,
+      items: data.items.concat(interD.items),
+      shapes: { ...data.shapes, ...(interD.shapes || {}) },
+      shapestops: { ...data.shapestops, ...(interD.shapestops || {}) },
+      stopsd: { ...data.stopsd, ...(interD.stopsd || {}) },
+    };
+  }, [data, interD]);
+
   const items = useMemo(() => {
-    if (!data) return [];
-    const raw = (data.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid, _i: i,
+    if (!db) return [];
+    const raw = (db.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid + "@" + (it.ty || ""), _i: i,
       _q: (it.line + " " + it.stop + " " + it.code + " " + it.city).toLowerCase() }));
     // "דילוג שיטתי" — כשכמה קווים מדלגים על אותה תחנה (תכנון ציר, כמו דרך בגין
     // בת"א) זה כנראה מכוון ולא טעות. קו בודד שמדלג על הרבה תחנות רק מסומן בהערה.
@@ -246,7 +271,7 @@ function App() {
       it._sys = (it.skippers || []).length >= 3;
     });
     return raw;
-  }, [data]);
+  }, [db]);
 
   const filtered = useMemo(() => {
     const needle = dq.trim().toLowerCase();
@@ -270,9 +295,9 @@ function App() {
   if (err) return <div className="boot">שגיאה בטעינת הנתונים — ייתכן שההרצה הראשונה עוד לא הסתיימה. נסו לרענן מאוחר יותר.</div>;
   if (!data) return <div className="boot">טוען נתונים…</div>;
 
-  const cities = data.cities || [];
   const byCity = {};
-  items.forEach((it) => { byCity[it.city] = (byCity[it.city] || 0) + 1; });
+  items.forEach((it) => { if (it.city) byCity[it.city] = (byCity[it.city] || 0) + 1; });
+  const cities = Object.keys(byCity).sort((a, b) => byCity[b] - byCity[a]);
   const sysN = items.filter((it) => it._sys).length;
   // קיבוץ: כל הדילוגים של אותו קו באותה עיר — כרטיס אחד (הסדר לפי הממצא המדורג הכי גבוה)
   const groups = [];
@@ -294,7 +319,7 @@ function App() {
           קווים עירוניים שעוברים ממש ליד תחנה פעילה, עוצרים בתחנה שלפניה ובתחנה שאחריה — אבל עליה מדלגים.
         </p>
         <div className="stats">
-          <span className="stat"><b>{data.total}</b> ממצאים בכל הארץ</span>
+          <span className="stat"><b>{items.length.toLocaleString()}</b> ממצאים</span>
           {cities.slice(0, 4).map((c) => <span key={c} className="stat">{c}: <b>{byCity[c] || 0}</b></span>)}
           <span className="stat mut">עודכן: {data.gen}</span>
         </div>
@@ -378,16 +403,19 @@ function App() {
         );
       })()}
 
-      <div className="count">{filtered.length === items.length ? "" : filtered.length + " תוצאות (" + groups.length + " קווים)"}</div>
+      <div className="count">
+        {interBusy ? "טוען קווים לא-עירוניים… " : ""}
+        {filtered.length === items.length ? "" : filtered.length + " תוצאות (" + groups.length + " קווים)"}
+      </div>
 
       <div className="list">
         {shown.map((g) => {
           const gk = "g:" + g[0].line + "@" + g[0].city + "@" + (g[0].ty || "");
           return g.length === 1 ? (
-            <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={data} onLine={goLine}
+            <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={db} onLine={goLine}
               onToggle={() => setOpenKey(openKey === g[0]._k ? null : g[0]._k)} />
           ) : (
-            <LineGroup key={gk} items={g} open={openKey === gk} db={data} onLine={goLine}
+            <LineGroup key={gk} items={g} open={openKey === gk} db={db} onLine={goLine}
               openSub={openSub} setOpenSub={setOpenSub}
               onToggle={() => setOpenKey(openKey === gk ? null : gk)} />
           );

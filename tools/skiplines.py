@@ -243,53 +243,58 @@ for f in ranked[:40]:
 
 # ---- פלט JSON לאתר ----
 OUT=os.environ.get('OUT','')
+OUT2=os.environ.get('OUT2','')   # קווים לא-עירוניים — קובץ נפרד שנטען באתר רק לפי בקשה
 if OUT:
     import datetime
+    from collections import Counter
     def stop_ref(sid):
         s=stops.get(sid) or {}
         return {'n':s.get('name',''),'c':s.get('code',''),'la':round(s.get('la',0),5),'lo':round(s.get('lo',0),5)}
-    items=[]
-    for f in ranked:
-        s=f['stop']
-        items.append({
-            'line':f['line'],'dest':f['long'],'city':s['city'],
-            'stop':s['name'],'code':s['code'],'sid':f['sid'],
-            'la':round(s['la'],5),'lo':round(s['lo'],5),
-            'dist':f['dist'],'before':f['before'],'after':f['after'],
-            'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
-            'bsid':f['bsid'],'asid':f['asid'],'skey':f['rid']+'|'+f['shp'],
-            'skippers':sorted(skippers[(f['sid'],f['type'])]),
-            'ty':f['type'] or '',
-            'others':f['others'],'onum':len(f['others']),
-            'seg':f['seg'],'shp':f['shp'],
-            'op':agencies.get(f['agency'],''),'mahoz':route_dist(f['rid']),
-            'uniq':route_sub(f['rid']) or 'סדיר',
-        })
-    # מסלולים מלאים לתצוגה — כל מסלול נשמר פעם אחת, מדולל עד 80 נקודות (קו-מתאר)
-    # + רשימת תחנות העצירה של כל מסלול (מזהים בלבד) ומילון פרטי-תחנה משותף
-    shp_out={}; shstops_out={}; stopsd={}
-    for f in ranked:
-        sh=f['shp']
-        if sh not in shp_out:
-            p=shapes.get(sh) or []
-            st=max(1,len(p)//80)
-            dec=[[round(a,5),round(b,5)] for a,b in p[::st]]
-            if p and (len(p)-1)%st!=0: dec.append([round(p[-1][0],5),round(p[-1][1],5)])
-            shp_out[sh]=dec
-        skey=f['rid']+'|'+f['shp']
-        if skey in shstops_out: continue
-        sl=shape_stops.get((f['rid'],f['shp'])) or []
-        shstops_out[skey]=sl
-        for sid in sl:
-            if sid not in stopsd:
-                s2=stops.get(sid) or {}
-                stopsd[sid]=[s2.get('name',''),s2.get('code',''),round(s2.get('la',0),5),round(s2.get('lo',0),5)]
-    # רשימת הערים לתפריט הסינון באתר — לפי מספר ממצאים, מהגדולה לקטנה
-    from collections import Counter
-    ccnt=Counter(it['city'] for it in items if it['city'])
-    out={'gen':datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
-         'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items,
-         'shapes':shp_out,'shapestops':shstops_out,'stopsd':stopsd}
+    def build(sub):
+        """בונה חבילת JSON עצמאית (ממצאים + מסלולים + רשימות תחנות) לתת-קבוצה של ממצאים"""
+        items=[]
+        for f in sub:
+            s=f['stop']
+            items.append({
+                'line':f['line'],'dest':f['long'],'city':s['city'],
+                'stop':s['name'],'code':s['code'],'sid':f['sid'],
+                'la':round(s['la'],5),'lo':round(s['lo'],5),
+                'dist':f['dist'],'before':f['before'],'after':f['after'],
+                'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
+                'bsid':f['bsid'],'asid':f['asid'],'skey':f['rid']+'|'+f['shp'],
+                'skippers':sorted(skippers[(f['sid'],f['type'])]),
+                'ty':f['type'] or '',
+                'others':f['others'],'onum':len(f['others']),
+                'seg':f['seg'],'shp':f['shp'],
+                'op':agencies.get(f['agency'],''),'mahoz':route_dist(f['rid']),
+                'uniq':route_sub(f['rid']) or 'סדיר',
+            })
+        shp_out={}; shstops_out={}; stopsd={}
+        for f in sub:
+            sh=f['shp']
+            if sh not in shp_out:
+                p2=shapes.get(sh) or []
+                st=max(1,len(p2)//80)
+                dec=[[round(a,5),round(b,5)] for a,b in p2[::st]]
+                if p2 and (len(p2)-1)%st!=0: dec.append([round(p2[-1][0],5),round(p2[-1][1],5)])
+                shp_out[sh]=dec
+            skey=f['rid']+'|'+f['shp']
+            if skey in shstops_out: continue
+            sl=shape_stops.get((f['rid'],f['shp'])) or []
+            shstops_out[skey]=sl
+            for sid in sl:
+                if sid not in stopsd:
+                    s2=stops.get(sid) or {}
+                    stopsd[sid]=[s2.get('name',''),s2.get('code',''),round(s2.get('la',0),5),round(s2.get('lo',0),5)]
+        ccnt=Counter(it['city'] for it in items if it['city'])
+        return {'gen':datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d'),
+                'cities':[c for c,_ in ccnt.most_common()],'total':len(items),'items':items,
+                'shapes':shp_out,'shapestops':shstops_out,'stopsd':stopsd}
+    urban=[f for f in ranked if (f['type'] or 'עירוני')=='עירוני']
+    rest=[f for f in ranked if (f['type'] or 'עירוני')!='עירוני']
     os.makedirs(os.path.dirname(OUT) or '.',exist_ok=True)
-    json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-    print('נכתב',OUT,'(%d ממצאים)'%len(items))
+    json.dump(build(urban),open(OUT,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+    print('נכתב',OUT,'(%d ממצאים עירוניים)'%len(urban))
+    if OUT2:
+        json.dump(build(rest),open(OUT2,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+        print('נכתב',OUT2,'(%d ממצאים לא-עירוניים)'%len(rest))
