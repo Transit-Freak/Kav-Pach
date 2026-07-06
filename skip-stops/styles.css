@@ -57,6 +57,16 @@ header h1 {
   max-width: 210px;
 }
 .fsel:focus { outline: 2px solid #f59e0b; border-color: transparent; }
+.fnum {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid #e2e8f0; background: #fff; border-radius: 8px;
+  padding: 5px 10px; font-size: 13.5px; color: #475569;
+}
+.fnum input {
+  width: 64px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px 6px;
+  font-family: inherit; font-size: 13.5px; text-align: center;
+}
+.fnum input:focus { outline: 2px solid #f59e0b; border-color: transparent; }
 
 .list { overflow-anchor: none; }
 .it {

@@ -210,7 +210,7 @@ function App() {
   const [fMahoz, setFMahoz] = useState(""); // מחוז (מהקובץ המצומצם)
   const [fUniq, setFUniq] = useState(""); // ייחודיות הקו (סדיר/לילה/מזינים)
   const [fGap, setFGap] = useState(0);      // מרחק מזערי מהעצירה הקרובה
-  const [fSkips, setFSkips] = useState(""); // כמה תחנות הקו מדלג
+  const [fSkips, setFSkips] = useState(0); // כמה תחנות הקו מדלג (לפחות)
   const dq = useDeferredValue(q);
 
   useEffect(() => {
@@ -244,7 +244,7 @@ function App() {
       if (fMahoz && it.mahoz !== fMahoz) return false;
       if (fUniq && (it.uniq || "סדיר") !== fUniq) return false;
       if (fGap && Math.min(it.before, it.after) < fGap) return false;
-      if (fSkips === "1" ? it._lt !== 1 : (fSkips && it._lt < +fSkips)) return false;
+      if (fSkips > 0 && it._lt < fSkips) return false;
       if (!needle) return true;
       if (it.line === needle) return true;
       return it._q.includes(needle);
@@ -341,21 +341,18 @@ function App() {
                 {uniqs.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             )}
-            <select className="fsel" value={fGap} onChange={(e) => setFGap(+e.target.value)}>
-              <option value="0">מרחק מהעצירות: הכול</option>
-              <option value="150">150 מ' ומעלה</option>
-              <option value="200">200 מ' ומעלה</option>
-              <option value="300">300 מ' ומעלה</option>
-              <option value="500">500 מ' ומעלה</option>
-            </select>
-            <select className="fsel" value={fSkips} onChange={(e) => setFSkips(e.target.value)}>
-              <option value="">דילוגים לקו: הכול</option>
-              <option value="1">תחנה אחת בלבד</option>
-              <option value="2">2 תחנות ומעלה</option>
-              <option value="3">3 תחנות ומעלה</option>
-              <option value="5">5 תחנות ומעלה</option>
-              <option value="8">8 תחנות ומעלה</option>
-            </select>
+            <label className="fnum">
+              מרחק מהעצירות לפחות
+              <input type="number" min="0" step="50" inputMode="numeric" placeholder="0"
+                value={fGap || ""} onChange={(e) => setFGap(Math.max(0, +e.target.value || 0))} />
+              מ'
+            </label>
+            <label className="fnum">
+              הקו מדלג על לפחות
+              <input type="number" min="0" step="1" inputMode="numeric" placeholder="0"
+                value={fSkips || ""} onChange={(e) => setFSkips(Math.max(0, +e.target.value || 0))} />
+              תחנות
+            </label>
           </div>
         );
       })()}
