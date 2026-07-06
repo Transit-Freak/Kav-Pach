@@ -631,6 +631,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
   const [visibleCount, setVisibleCount] = useState(60);
   const [selectedLine, setSelectedLine] = useState(null);
   const [expandSearch, setExpandSearch] = useState('');
+  const [expandCity, setExpandCity] = useState('');
   const [expandMatches, setExpandMatches] = useState([]);
   const [gTripsCity, setGTripsCity] = useState('');
   const [gTripsCrowded, setGTripsCrowded] = useState(false);
@@ -1116,39 +1117,73 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
                 });
                 matches = [...seen.values()];
               }
+              const c = expandCity.trim().toLowerCase();
+              if (c) matches = matches.filter(l => (l.origin || '').toLowerCase().includes(c) || (l.dest || '').toLowerCase().includes(c));
               if (matches.length === 1) { setSelectedLine(matches[0]); setExpandMatches([]); }
               else setExpandMatches(matches);
             };
             return (
-              <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-10 max-w-lg mx-auto">
-                <h2 className="text-xl font-black text-slate-900 mb-2 text-right">הזדמנויות הרחבה</h2>
-                <p className="text-slate-400 font-bold text-sm mb-6 text-right">הקלד מספר קו לניתוח — כל קו במערכת, לא רק מהמצטיינים — או חזור לרשימה לבחירה</p>
-                <div className="flex gap-3 mb-4">
-                  <button onClick={doExpandSearch} className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-black text-sm hover:bg-black transition-colors shrink-0">חפש</button>
-                  <input
-                    type="text"
-                    value={expandSearch}
-                    onChange={e => { setExpandSearch(e.target.value); setExpandMatches([]); }}
-                    onKeyDown={e => e.key === 'Enter' && doExpandSearch()}
-                    placeholder="מספר קו..."
-                    className="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl px-5 py-3 font-black text-sm outline-none focus:border-slate-900 text-right"
-                  />
+              <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm max-w-4xl mx-auto transition-opacity duration-300 opacity-100">
+                <header className="mb-8">
+                  <h2 className="text-2xl font-black text-slate-900 mb-2">הזדמנויות הרחבה</h2>
+                  <p className="text-slate-500 font-bold text-sm leading-relaxed">
+                    המערכת מזהה את חלונות הזמן העמוסים של הקו ומציעה <strong>שעות יציאה קונקרטיות להוספה</strong>,
+                    עד להורדת העומס לרמה נוחה (85% מהקיבולת). אפשר לנתח <strong>כל קו במערכת</strong> — לא רק את המצטיינים.
+                  </p>
+                </header>
+
+                <div className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 mb-4 shadow-inner">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                    <div>
+                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">מספר קו / מק&quot;ט</label>
+                      <input
+                        type="text"
+                        value={expandSearch}
+                        onChange={e => { setExpandSearch(e.target.value); setExpandMatches([]); }}
+                        onKeyDown={e => e.key === 'Enter' && doExpandSearch()}
+                        placeholder="למשל 1, 480..."
+                        className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 font-black text-sm outline-none focus:border-slate-900 shadow-sm transition-all text-right"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">עיר (רשות — לצמצום תוצאות)</label>
+                      <input
+                        type="text"
+                        value={expandCity}
+                        onChange={e => { setExpandCity(e.target.value); setExpandMatches([]); }}
+                        onKeyDown={e => e.key === 'Enter' && doExpandSearch()}
+                        placeholder="הקלד שם עיר..."
+                        className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 font-black text-sm outline-none focus:border-slate-900 shadow-sm transition-all text-right"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-slate-200 mt-6">
+                    <button
+                      onClick={doExpandSearch}
+                      className="bg-amber-500 hover:bg-amber-600 text-white px-10 py-4 rounded-2xl font-black transition-all shadow-lg active:scale-95 flex items-center gap-3"
+                    >
+                      <Ic n="zap" size={20} /> חפש הזדמנויות
+                    </button>
+                    <button onClick={() => setGoldenTab('top')} className="bg-white border-2 border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 px-6 py-4 rounded-2xl font-black text-sm transition-colors">← חזרה לרשימת המצטיינים</button>
+                  </div>
                 </div>
+
                 {expandMatches.length > 1 && (
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-2 mb-2 mt-6">
                     <p className="text-xs font-black text-slate-500 text-right">נמצאו מספר מסלולים — בחר:</p>
                     {expandMatches.map(l => (
                       <button key={l.groupKey} onClick={() => { setSelectedLine(l); setExpandMatches([]); }}
-                        className="w-full text-right bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3 font-black text-sm transition-colors">
+                        className="w-full text-right bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-2xl px-5 py-3 font-black text-sm transition-colors">
                         קו {l.lineNum} · {l.origin} ← {l.dest} · {l.district}
+                        {l.notGolden && <span className="mr-2 text-[10px] font-black bg-slate-100 text-slate-500 border border-slate-200 rounded-full px-2 py-0.5">לא ברשימת המצטיינים</span>}
                       </button>
                     ))}
                   </div>
                 )}
                 {expandMatches.length === 0 && expandSearch && (
-                  <p className="text-xs font-bold text-rose-500 text-right">קו {expandSearch} לא נמצא במערכת</p>
+                  <p className="text-xs font-bold text-rose-500 text-right mt-4">קו {expandSearch} לא נמצא במערכת{expandCity ? " בעיר שהוקלדה" : ""}</p>
                 )}
-                <button onClick={() => setGoldenTab('top')} className="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 px-8 py-3 rounded-2xl font-black text-sm transition-colors">← חזרה לרשימה</button>
               </div>
             );
           }
