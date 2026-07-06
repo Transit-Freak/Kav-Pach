@@ -74,3 +74,5 @@ jobs:
             if git push origin HEAD:main; then break; fi
             echo "push rejected (main moved) — retry $i"; sleep 10
           done
+
+# retry: MOT GTFS endpoint timeout at 08:55Z
