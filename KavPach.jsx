@@ -594,8 +594,18 @@ function ChoiceScreen({ onPick }) {
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
                 <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[11px] font-black self-start">ניסיוני</span>
-                {/* הסמל של "הקו המדלג" — אוטובוס שחולף (אמוג'י 🚌) */}
-                <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🚌</span>
+                {/* הסמל של "הקו המדלג" — אוטובוס מקפץ מעל תחנה (זהה ל-favicon של הכלי) */}
+                <svg viewBox="4 4 26 26" style={{ width: '96px', height: '96px' }} className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 26 L10 26 Q17 15 24 26 L30 26" stroke="#fde68a" strokeWidth="2" fill="none" strokeDasharray="2.5 2" strokeLinecap="round" />
+                  <circle cx="17" cy="26" r="2.6" fill="#7c2d12" stroke="#fff" strokeWidth="1.4" />
+                  <circle cx="7" cy="26" r="2.6" fill="#fff" />
+                  <circle cx="27" cy="26" r="2.6" fill="#fff" />
+                  <rect x="10" y="6" width="14" height="9" rx="2.5" fill="#fff" />
+                  <rect x="12" y="8" width="4" height="3.5" rx="1" fill="#d97706" />
+                  <rect x="18" y="8" width="4" height="3.5" rx="1" fill="#d97706" />
+                  <circle cx="13" cy="15" r="1.6" fill="#7c2d12" />
+                  <circle cx="21" cy="15" r="1.6" fill="#7c2d12" />
+                </svg>
               </div>
               <h2 className="text-3xl font-[900] text-amber-200">הקו המדלג</h2>
               <p className="text-amber-100/80 font-bold mt-2 text-sm leading-relaxed">קווים שחולפים ליד תחנה פעילה — בלי לעצור בה</p>
