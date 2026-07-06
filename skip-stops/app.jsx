@@ -173,7 +173,7 @@ const Row = React.memo(function Row({ it, open, onToggle, db, inner, onLine }) {
         {!inner && <span className="line-badge">{it.line}</span>}
         <span className="it-main">
           <span className="it-title">מדלג על: {it.stop} <span className="code">({it.code})</span></span>
-          <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים{it._sys ? <span className="tag-sys">שיטתי</span> : null}</span>
+          <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים{it.ty && it.ty !== "עירוני" ? <span className="tag-sys ty">{it.ty}</span> : null}{it._sys ? <span className="tag-sys">שיטתי</span> : null}</span>
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </button>
@@ -220,6 +220,7 @@ function App() {
   const [fOp, setFOp] = useState("");       // מפעיל
   const [fMahoz, setFMahoz] = useState(""); // מחוז (מהקובץ המצומצם)
   const [fUniq, setFUniq] = useState(""); // ייחודיות הקו (סדיר/לילה/מזינים)
+  const [fType, setFType] = useState("עירוני"); // סוג קו — עירוני כברירת מחדל
   const [fGap, setFGap] = useState(0);      // מרחק מזערי מהעצירה הקרובה
   const [fSkips, setFSkips] = useState(0); // כמה תחנות הקו מדלג (לפחות)
   const dq = useDeferredValue(q);
@@ -239,9 +240,9 @@ function App() {
     // "דילוג שיטתי" — כשכמה קווים מדלגים על אותה תחנה (תכנון ציר, כמו דרך בגין
     // בת"א) זה כנראה מכוון ולא טעות. קו בודד שמדלג על הרבה תחנות רק מסומן בהערה.
     const perLine = {};
-    raw.forEach((it) => { const k = it.line + "@" + it.city; perLine[k] = (perLine[k] || 0) + 1; });
+    raw.forEach((it) => { const k = it.line + "@" + it.city + "@" + (it.ty || ""); perLine[k] = (perLine[k] || 0) + 1; });
     raw.forEach((it) => {
-      it._lt = perLine[it.line + "@" + it.city];
+      it._lt = perLine[it.line + "@" + it.city + "@" + (it.ty || "")];
       it._sys = (it.skippers || []).length >= 3;
     });
     return raw;
@@ -251,19 +252,20 @@ function App() {
     const needle = dq.trim().toLowerCase();
     return items.filter((it) => {
       if (!showSys && it._sys) return false;
+      if (fType !== "all" && (it.ty || "עירוני") !== fType) return false;
       if (city && it.city !== city) return false;
       if (fOp && it.op !== fOp) return false;
       if (fMahoz && it.mahoz !== fMahoz) return false;
       if (fUniq && (it.uniq || "סדיר") !== fUniq) return false;
       if (fGap && Math.min(it.before, it.after) < fGap) return false;
-      if (fSkips > 0 && it._lt < fSkips) return false;
+      if (fSkips > 0 && it._lt >= fSkips) return false;
       if (!needle) return true;
       if (it.line === needle) return true;
       return it._q.includes(needle);
     });
-  }, [items, city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips]);
+  }, [items, city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
 
-  useEffect(() => { setPage(1); }, [city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips]);
+  useEffect(() => { setPage(1); }, [city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
 
   if (err) return <div className="boot">שגיאה בטעינת הנתונים — ייתכן שההרצה הראשונה עוד לא הסתיימה. נסו לרענן מאוחר יותר.</div>;
   if (!data) return <div className="boot">טוען נתונים…</div>;
@@ -277,7 +279,7 @@ function App() {
   {
     const gm = new Map();
     filtered.forEach((it) => {
-      const k = it.line + "@" + it.city;
+      const k = it.line + "@" + it.city + "@" + (it.ty || "");
       if (!gm.has(k)) { gm.set(k, []); groups.push(gm.get(k)); }
       gm.get(k).push(it);
     });
@@ -301,8 +303,9 @@ function App() {
       <div className="explain">
         <b>איך זה עובד?</b> משווים את מסלול הנסיעה של כל קו עירוני (GTFS של משרד התחבורה) לרצף התחנות
         שהוא עוצר בהן. תחנה נחשבת "מדולגת" רק אם הקו עובר עד 10 מ' ממנה, בצד הנכון של הכביש, נוסע לאורך
-        הרחוב (לא רק חוצה אותו), ועוצר בתחנות משני צדדיה במרחק סביר. קווי תלמידים, שאטלים (חנה וסע),
-        קווים בין-עירוניים ואזוריים לא נבדקים — להם מותר לדלג. בנוסף, המערכת בודקת אם עוד קווים עושים
+        הרחוב (לא רק חוצה אותו), ועוצר בתחנות משני צדדיה במרחק סביר. קווי תלמידים ושאטלים (חנה וסע)
+        לא נבדקים. כברירת מחדל מוצגים קווים עירוניים — קווים בין-עירוניים ואזוריים (שלהם מותר
+        לדלג יותר) נבדקים גם, ואפשר לבחור אותם במסנן סוג הקו. בנוסף, המערכת בודקת אם עוד קווים עושים
         את אותו הדבר: כשכמה קווים מדלגים על אותה תחנה, או שקו מדלג על תחנות רבות ברצף (כמו ציר דרך בגין
         בת"א) — זה מסומן "דילוג שיטתי", כנראה מכוון, ומוסתר כברירת מחדל. הרשימה ממוינת מהחשוד ביותר:
         תחנות שקו בודד מדלג עליהן בזמן שהרבה קווים אחרים עוצרים.
@@ -335,6 +338,12 @@ function App() {
         const uniqs = uniqVals(items.map((it) => it.uniq || "סדיר"));
         return (
           <div className="controls2">
+            <select className="fsel" value={fType} onChange={(e) => setFType(e.target.value)}>
+              <option value="עירוני">קווים עירוניים</option>
+              <option value="בינעירוני">קווים בין-עירוניים</option>
+              <option value="אזורי">קווים אזוריים</option>
+              <option value="all">כל סוגי הקווים</option>
+            </select>
             {ops.length > 0 && (
               <select className="fsel" value={fOp} onChange={(e) => setFOp(e.target.value)}>
                 <option value="">מפעיל: הכול</option>
@@ -360,8 +369,8 @@ function App() {
               מ'
             </label>
             <label className="fnum">
-              הקו מדלג על לפחות
-              <input type="number" min="0" step="1" inputMode="numeric" placeholder="0"
+              הקו מדלג על פחות מ-
+              <input type="number" min="0" step="1" inputMode="numeric" placeholder="∞"
                 value={fSkips || ""} onChange={(e) => setFSkips(Math.max(0, +e.target.value || 0))} />
               תחנות
             </label>
@@ -373,7 +382,7 @@ function App() {
 
       <div className="list">
         {shown.map((g) => {
-          const gk = "g:" + g[0].line + "@" + g[0].city;
+          const gk = "g:" + g[0].line + "@" + g[0].city + "@" + (g[0].ty || "");
           return g.length === 1 ? (
             <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={data} onLine={goLine}
               onToggle={() => setOpenKey(openKey === g[0]._k ? null : g[0]._k)} />

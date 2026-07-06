@@ -75,10 +75,9 @@ if AGENCY and os.path.exists(AGENCY):
     for r in csv.DictReader(open(AGENCY,encoding='utf-8-sig')):
         agencies[r.get('agency_id','')]=r.get('agency_name','')
 
-# רק קווים שנבדקים בניסוי: עירוני (או לא מסווג), לא תלמידים, לא חנה-וסע, אוטובוס בלבד
+# הקווים שנבדקים: כל סוגי הקווים (עירוני/בינעירוני/אזורי — האתר מציג עירוני כברירת מחדל
+# ומסנן לפי הסוג), חוץ מקווי תלמידים ושאטלי חנה-וסע. אוטובוס בלבד.
 def line_ok(rid):
-    ty=route_type(rid)
-    if ty and ty!='עירוני': return False       # בינעירוני/אזורי מדלגים בצדק
     if 'תלמיד' in route_sub(rid): return False  # קווי תלמידים עוצרים רק איפה שצריך
     if 'חנה וסע' in rroutes.get(rid,{}).get('long',''): return False  # שאטלים ישירים
     if rroutes.get(rid,{}).get('rtype','3')!='3': return False        # רק אוטובוס
@@ -229,18 +228,18 @@ for (rid,sh),t in rep.items():
 # איחוד כפילויות (אותו קו ואותה תחנה בכמה חלופות) + דירוג
 best={}
 for f in findings:
-    k=(f['line'],f['sid'])
+    k=(f['line'],f['sid'],f['type'])   # קו עירוני וקו בין-עירוני עם אותו מספר — ממצאים נפרדים
     if k not in best or f['before']+f['after']<best[k]['before']+best[k]['after']: best[k]=f
-skippers=defaultdict(set)
-for f in best.values(): skippers[f['sid']].add(f['line'])
-ranked=sorted(best.values(),key=lambda f:(len(skippers[f['sid']]),-len(f['others']),f['before']+f['after']))
+skippers=defaultdict(set)   # (תחנה, סוג קו) -> קווים מדלגים — הסוגים לא מתערבבים
+for f in best.values(): skippers[(f['sid'],f['type'])].add(f['line'])
+ranked=sorted(best.values(),key=lambda f:(len(skippers[(f['sid'],f['type'])]),-len(f['others']),f['before']+f['after']))
 print()
 print('=== ממצאים: קווים עירוניים שחולפים ליד תחנה פעילה בלי לעצור (סנדוויץ׳) ===')
 print('סה"כ:',len(ranked))
 for f in ranked[:40]:
     s=f['stop']
     print(' קו %s | %s | מדלג על: %s (%s) [%s] | מרחק מהקו %dמ | עוצר %dמ לפני ו-%dמ אחרי | מדלגים על התחנה: %d קווים | עוצרים בה: %s'%(
-        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[f['sid']]),','.join(f['others'][:8])))
+        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[(f['sid'],f['type'])]),','.join(f['others'][:8])))
 
 # ---- פלט JSON לאתר ----
 OUT=os.environ.get('OUT','')
@@ -259,7 +258,8 @@ if OUT:
             'dist':f['dist'],'before':f['before'],'after':f['after'],
             'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
             'bsid':f['bsid'],'asid':f['asid'],'skey':f['rid']+'|'+f['shp'],
-            'skippers':sorted(skippers[f['sid']]),
+            'skippers':sorted(skippers[(f['sid'],f['type'])]),
+            'ty':f['type'] or '',
             'others':f['others'],'onum':len(f['others']),
             'seg':f['seg'],'shp':f['shp'],
             'op':agencies.get(f['agency'],''),'mahoz':route_dist(f['rid']),
