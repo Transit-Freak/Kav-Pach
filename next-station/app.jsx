@@ -491,7 +491,7 @@ function App() {
           const prevRun = hist[hist.length - 2]; // הריצה שמולה נמדדו התיקונים — להצגת התאריך
           return (
             <div className="trend">
-              📈 מאז הריצה הקודמת{prevRun ? " (" + prevRun.d.split("-").reverse().join(".") + ")" : ""}:{" "}
+              📈 ריצה אחרונה: {cur.d.split("-").reverse().join(".")} · בהשוואה לריצה הקודמת{prevRun ? " מ-" + prevRun.d.split("-").reverse().join(".") : ""}:{" "}
               {fixedN > 0 ? (
                 <button className="fixed-btn" onClick={() => setShowFixed(!showFixed)}>
                   <b>{fixedN.toLocaleString()}</b> תחנות תוקנו במקור {showFixed ? "▲" : "▼"}
