@@ -1,0 +1,108 @@
+name: citymap-demo
+
+# חד-פעמי: חילוץ כל הקווים העירוניים של עיר אחת (גאומטריה + תחנות) מ-GTFS
+# לצורך דמו של מפת רשת סכמטית. הפלט נדחף לענף citymap-data — לא נוגע באתר.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/citymap-demo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: citymap-demo
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
+            -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt
+
+      - name: Extract city lines
+        run: |
+          set -euo pipefail
+          python3 - <<'EOF'
+          import csv, json, re
+          CITY='קרית גת'
+          # הקווים העירוניים של העיר לפי הקובץ המצומצם (מוצא=יעד=העיר, סוג עירוני, לא תלמידים)
+          makats=set()
+          for r in json.load(open('data-main.json',encoding='utf-8')):
+              if str(r[6]).strip()=='עירוני' and 'תלמיד' not in str(r[7]) and str(r[3]).strip()==CITY and str(r[4]).strip()==CITY:
+                  makats.add(str(r[0]).strip().lstrip('0'))
+          print('makats:',sorted(makats))
+          routes={}
+          for r in csv.DictReader(open('routes.txt',encoding='utf-8-sig')):
+              mk=r.get('route_desc','').split('-')[0].strip().lstrip('0')
+              if mk in makats and r.get('route_type','3')=='3':
+                  routes[r['route_id']]={'mk':mk,'num':r.get('route_short_name',''),'long':r.get('route_long_name','')}
+          print('route_ids:',len(routes))
+          # נסיעה נציגה = ה-shape הנפוץ ביותר לכל route_id
+          from collections import Counter, defaultdict
+          shp_count=defaultdict(Counter); trip_of={}
+          for r in csv.DictReader(open('trips.txt',encoding='utf-8-sig')):
+              rid=r['route_id']
+              if rid in routes and r.get('shape_id'):
+                  shp_count[rid][r['shape_id']]+=1
+                  trip_of.setdefault((rid,r['shape_id']),r['trip_id'])
+          rep={}
+          for rid,c in shp_count.items():
+              sh=c.most_common(1)[0][0]
+              rep[trip_of[(rid,sh)]]={'rid':rid,'sh':sh}
+          # תחנות של כל נציג
+          stopinfo={}
+          rows=list(csv.reader(open('stops.txt',encoding='utf-8-sig')))
+          ix={h:i for i,h in enumerate(rows[0])}
+          for r in rows[1:]:
+              try: stopinfo[r[ix['stop_id']]]=[r[ix['stop_name']],r[ix['stop_code']],float(r[ix['stop_lat']]),float(r[ix['stop_lon']])]
+              except: pass
+          seqs=defaultdict(list)
+          with open('stop_times.txt',encoding='utf-8-sig') as f:
+              rd=csv.reader(f); hdr=next(rd); hi={h:i for i,h in enumerate(hdr)}
+              TI,SI,SQ=hi['trip_id'],hi['stop_id'],hi['stop_sequence']
+              for r in rd:
+                  if r[TI] in rep:
+                      seqs[r[TI]].append((int(r[SQ]),r[SI]))
+          need={v['sh'] for v in rep.values()}
+          shp=defaultdict(list)
+          with open('shapes.txt',encoding='utf-8-sig') as f:
+              rd=csv.reader(f); hdr=next(rd); hi={h:i for i,h in enumerate(hdr)}
+              SH,LA,LO,SQ=hi['shape_id'],hi['shape_pt_lat'],hi['shape_pt_lon'],hi['shape_pt_sequence']
+              for r in rd:
+                  if r[SH] in need:
+                      shp[r[SH]].append((int(r[SQ]),float(r[LA]),float(r[LO])))
+          out=[]
+          for t,v in rep.items():
+              info=routes[v['rid']]
+              stops=[stopinfo.get(s,[None])[:] for _,s in sorted(seqs[t]) if s in stopinfo]
+              pts=[[la,lo] for _,la,lo in sorted(shp[v['sh']])]
+              out.append({'rid':v['rid'],'mk':info['mk'],'num':info['num'],'long':info['long'],
+                          'stops':stops,'shape':pts})
+          json.dump({'city':CITY,'lines':out},open('city-lines.json','w'),ensure_ascii=False)
+          print('lines:',len(out),'| size KB:',len(json.dumps(out))//1024)
+          EOF
+
+      - name: Push to citymap-data branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p /tmp/o && cp city-lines.json /tmp/o/
+          git checkout --orphan citymap-data
+          git rm -rfq . || true
+          cp /tmp/o/city-lines.json .
+          git add city-lines.json
+          git commit -m "citymap demo data"
+          git push -f origin citymap-data
