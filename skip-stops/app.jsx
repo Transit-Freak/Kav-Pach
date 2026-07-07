@@ -314,7 +314,7 @@ function App() {
   return (
     <div className="wrap">
       <header>
-        <h1>🚌 הקו המדלג <span className="beta">ניסיוני</span></h1>
+        <h1>🚌 הקו המדלג <span className="beta">חדש</span></h1>
         <p className="tag">
           קווים עירוניים שעוברים ממש ליד תחנה פעילה, עוצרים בתחנה שלפניה ובתחנה שאחריה — אבל עליה מדלגים.
         </p>

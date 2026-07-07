@@ -574,7 +574,6 @@ function ChoiceScreen({ onPick }) {
             <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#60a5fa' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-sky-400 text-sky-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
                 {/* הסמל של "התחנה הבאה" — זהה לאתר עצמו (אמוג'י תחנת אוטובוס 🚏) */}
                 <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🚏</span>
               </div>
@@ -593,7 +592,7 @@ function ChoiceScreen({ onPick }) {
             <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#f59e0b' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[11px] font-black self-start">ניסיוני</span>
+                <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
                 {/* הסמל של "הקו המדלג" — אוטובוס מקפץ מעל תחנה (זהה ל-favicon של הכלי) */}
                 <svg viewBox="4 4 26 26" style={{ width: '96px', height: '96px' }} className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 26 L10 26 Q17 15 24 26 L30 26" stroke="#fde68a" strokeWidth="2" fill="none" strokeDasharray="2.5 2" strokeLinecap="round" />
