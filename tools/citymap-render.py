@@ -25,6 +25,14 @@ la0=sum(s[2] for L in lines for s in L['stops'])/sum(len(L['stops']) for L in li
 cl=math.cos(math.radians(la0))
 def xy(la,lo): return (lo*111320*cl, la*110540)
 
+# קבועי הסקאלה כוילו על קרית גת (~6 ק"מ אלכסון); בעיר קטנה מהם הם גסים מדי —
+# שכונות שלמות "מתיישרות" וקווים שונים נדבקים לאותו מסדרון. מכווצים לפי גודל העיר.
+_pts=[xy(s[2],s[3]) for L in lines for s in L['stops']]
+_diag=math.hypot(max(q[0] for q in _pts)-min(q[0] for q in _pts),
+                 max(q[1] for q in _pts)-min(q[1] for q in _pts))
+SCALE=max(0.35,min(1.0,_diag/6000))
+CLUSTER_M*=SCALE; AXIS_TOL*=SCALE
+
 # ---- קיבוץ תחנות לצמתים ----
 # ההשוואה מול העוגן (הנקודה הראשונה) ולא מול הצנטרואיד: צנטרואיד נודד מאחד
 # בשרשרת פינות שונות לאשכול אחד ויוצר "חזרות לאותו צומת" שלא קיימות במציאות.
@@ -66,7 +74,7 @@ for seq in routes.values(): junction.add(seq[0]); junction.add(seq[-1])
 # ריצה שתחנות הביניים שלה סוטות הרבה מהמיתר בין שני הצמתים (למשל צלילה של
 # 700מ' לתוך שכונה, כמו אבני החושן) — התחנה הסוטה ביותר הופכת לצומת, אחרת
 # הציור "חותך את הפינה" ומעלים את הצלילה.
-DEV_M=380
+DEV_M=380*SCALE
 _changed=True
 while _changed:
     _changed=False
