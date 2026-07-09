@@ -667,12 +667,25 @@ if _poip and _os.path.exists(_poip):
         return 0.0
     _CAND=[(0,0)]+[(dx,dy) for dy in (0,-28,28,-52,52) for dx in (0,-36,36,-68,68) if (dx,dy)!=(0,0)]
     _KINDS={'hood','park','mall','cemetery'}
-    _seenp=set(); bgels=[]
+    # רק מקומות מרכזיים: שכונות תמיד; פארקים רק בשם "פארק" (לא כל גן/גינה),
+    # קניונים ובתי עלמין — במכסה קטנה, קרובים למרכז המפה קודם
+    _seenp=set(); _cands=[]
     for p in _poid['poi']:
         if p['k'] not in _KINDS or p['n'] in _seenp: continue
         if not re.search(r'[\u05d0-\u05ea]',p['n']): continue  # שמות לועזיים = כפילויות OSM
         if not (la1<p['la']<la2 and lo1<p['lo']<lo2): continue
-        _seenp.add(p['n'])
+        if p['k']=='park' and not p['n'].startswith(('פארק','הפארק')): continue
+        if p['k']=='mall' and 'קניון' not in p['n']: continue
+        if p['k']=='cemetery' and not p['n'].startswith('בית עלמין'): continue
+        _seenp.add(p['n']); _cands.append(p)
+    _lac,_loc=(la1+la2)/2,(lo1+lo2)/2
+    _cands.sort(key=lambda p:(p['k']!='hood', abs(p['la']-_lac)+abs(p['lo']-_loc)))
+    _QUOTA={'park':7,'mall':4,'cemetery':2}; _used={}
+    bgels=[]
+    for p in _cands:
+        if p['k']!='hood':
+            if _used.get(p['k'],0)>=_QUOTA[p['k']]: continue
+            _used[p['k']]=_used.get(p['k'],0)+1
         px,py=xy(p['la'],p['lo'])
         x,y=P((_interp(px,cols)*U,_interp(py,rows)*U))
         if not (PAD-20<x<W-PAD+20 and PAD-20<y<H-PAD+20): continue
