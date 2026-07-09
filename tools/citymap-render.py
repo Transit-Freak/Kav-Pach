@@ -281,13 +281,18 @@ print('ריצות שנותבו מחדש למניעת זרועות דבוקות:'
 allx=[p for key in runs for p in (npos(key[0])[0],npos(key[1])[0])]
 ally=[p for key in runs for p in (npos(key[0])[1],npos(key[1])[1])]
 minx,maxx,miny,maxy=min(allx),max(allx),min(ally),max(ally)
-H=1000; PAD=60
+# ערים צפופות מקבלות קנבס גדול יותר ופסים דקים — אחרת ת"א נדחסת לגודל של קרית גת
+NL=len(lines)
+_dens=max(0,min(NL-14,66))
+H=1000+_dens*22; PAD=60
 sc=(H-2*PAD)/(maxy-miny)
 W=int(2*PAD+(maxx-minx)*sc)
-if W>1150:
-    W=1150; sc=(W-2*PAD)/(maxx-minx); H=int(2*PAD+(maxy-miny)*sc)
+WMAX=1150+_dens*18
+if W>WMAX:
+    W=WMAX; sc=(W-2*PAD)/(maxx-minx); H=int(2*PAD+(maxy-miny)*sc)
 def P(p): return (PAD+(p[0]-minx)*sc, H-PAD-(p[1]-miny)*sc)
-OFF=5.0
+OFF=5.0 if NL<=16 else (4.0 if NL<=28 else 3.2 if NL<=48 else 2.7)
+LNW=3.6 if NL<=16 else (3.0 if NL<=28 else 2.6 if NL<=48 else 2.3)
 
 # ---- קיבוץ גלובלי לפי קטע גאומטרי אלמנטרי ----
 # ריצות שונות (בין זוגות צמתים שונים) יכולות לחפוף גאומטרית; היסט פר-ריצה לא מפריד אותן.
@@ -458,7 +463,7 @@ for i,L in enumerate(lines):
             off=(grp.index(num)-(len(grp)-1)/2)*OFF
             fr=segdir.get(k,k)[0]  # כיוון השרשרת (רציף לאורך המסדרון), לא מיון נקודות
             if (round(p1[0]),round(p1[1]))!=fr: off=-off  # נסיעה נגד כיוון השרשרת — אותו נתיב פיזי
-            if segcnt[k]>=2: off+=3.2  # בזרוע החוזרת זה יוצא הצד הנגדי — נפתח מרווח בין הזרועות
+            if segcnt[k]>=2: off+=OFF*0.64  # בזרוע החוזרת זה יוצא הצד הנגדי — נפתח מרווח בין הזרועות
             (x1,y1),(x2,y2)=P(p1),P(p2)
             Ls=math.hypot(x2-x1,y2-y1) or 1
             dx,dy=(x2-x1)/Ls,(y2-y1)/Ls
@@ -720,13 +725,14 @@ body{{margin:0;font-family:'Assistant','Heebo',sans-serif;background:#eef1f5}}
 .wrap{{max-width:1200px;margin:12px auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.1)}}
 .hdr{{background:#1e3a8a;color:#fff;padding:12px 20px;font-weight:900;font-size:19px}}
 .hdr small{{font-weight:700;opacity:.75;font-size:12px;margin-right:10px}}
-.chips{{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0}}
+.chips{{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;max-height:96px;overflow-y:auto}}
 .chip{{display:flex;align-items:center;gap:7px;border:2px solid var(--c);background:#fff;border-radius:999px;padding:4px 12px 4px 8px;cursor:pointer;font-family:inherit}}
 .chip b{{background:var(--c);color:#fff;border-radius:6px;padding:2px 9px;font-size:14px}}
 .chip span{{font-size:11.5px;font-weight:700;color:#475569;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .chip.on{{background:var(--c)}} .chip.on span{{color:#fff}}
 .main{{display:flex;align-items:stretch}}
-.main svg{{flex:none;display:block;margin:0 auto;max-width:100%;height:auto}}
+.mapbox{{flex:1;overflow:auto}}
+.main svg{{display:block;margin:0 auto}}
 .side{{width:0;overflow:hidden;transition:width .25s;background:#f8fafc;border-right:1px solid #e2e8f0}}
 body.sel .side{{width:270px;overflow-y:auto;max-height:760px}}
 .strip{{display:none;padding:10px 12px}}
@@ -739,8 +745,8 @@ body.sel .strip.on{{display:block}}
 .srow:last-child i::after{{display:none}}
 .srow.k{{color:#1e3a8a;font-weight:900;font-size:13px}}
 .srow.k i{{background:#1e3a8a;border-color:#1e3a8a}}
-.ln{{stroke-width:3.6;opacity:.96;transition:all .2s;cursor:pointer}}
-.lnw{{stroke:#fff;stroke-width:5.8}}
+.ln{{stroke-width:{LNW};opacity:.96;transition:all .2s;cursor:pointer}}
+.lnw{{stroke:#fff;stroke-width:{LNW+2.2}}}
 .lnc,.lncw{{display:none;pointer-events:none}}
 .gst{{pointer-events:none;transition:opacity .2s}}
 .gst text{{font-size:12.5px;font-weight:900;fill:#1e3a8a;stroke:#fff;stroke-width:5;paint-order:stroke}}
@@ -757,7 +763,7 @@ body.sel .strt{{opacity:.3}}
 <div class="hdr">מפת רשת הקווים — {escape(d["city"])} <small>סכמטי · נוצר אוטומטית מ-GTFS · לחצו על קו</small></div>
 <div class="chips"><button class="chip" data-l="" style="--c:#0f172a"><b>הכול</b></button>{''.join(chips)}</div>
 <div class="main">
-<svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">{''.join(svg)}</svg>
+<div class="mapbox"><svg viewBox="0 0 {W} {H}" width="{W}" height="{H}" xmlns="http://www.w3.org/2000/svg">{''.join(svg)}</svg></div>
 <div class="side">{''.join(strips)}</div>
 </div>
 </div>

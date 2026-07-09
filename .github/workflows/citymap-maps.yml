@@ -58,6 +58,21 @@ jobs:
           cp /tmp/citydata/cities.json citymap/cities.json
           ls citymap/maps | head -50
 
+      - name: Push extracted city data (citymap-data branch)
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/dataw
+          git worktree add --detach /tmp/dataw
+          cd /tmp/dataw
+          git checkout --orphan citymap-data
+          git rm -rf --quiet . || true
+          cp /tmp/citydata/*.json .
+          git add -A
+          git commit -m "data: citymap extracted city lines"
+          git push -f origin citymap-data
+
       - name: Commit maps to main
         run: |
           set -euo pipefail
