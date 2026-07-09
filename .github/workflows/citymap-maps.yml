@@ -1,0 +1,83 @@
+name: citymap-maps
+
+# מפות רשת סכמטיות לכל עיר (ניסוי): חילוץ קווים עירוניים מ-GTFS + רינדור
+# מפה סטטית לכל עיר. רץ שבועי — רשתות הקווים משתנות לאט.
+
+on:
+  schedule:
+    - cron: '30 3 * * 5'
+  push:
+    paths:
+      - '.github/workflows/citymap-maps.yml'
+      - 'tools/citymap.py'
+      - 'tools/citymap-render.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: citymap-maps
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          curl -fSL --connect-timeout 20 --max-time 1800 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
+            -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt
+
+      - name: Fetch POI layer (osm-poi branch)
+        run: |
+          set -euo pipefail
+          git fetch origin osm-poi --depth 1
+          git show origin/osm-poi:poi.json > poi.json
+
+      - name: Extract city lines
+        run: |
+          set -euo pipefail
+          OUTDIR=/tmp/citydata python3 tools/citymap.py
+
+      - name: Render maps
+        run: |
+          set -euo pipefail
+          mkdir -p citymap/maps
+          for f in /tmp/citydata/*.json; do
+            b="$(basename "$f")"
+            [ "$b" = "cities.json" ] && continue
+            POI=poi.json python3 tools/citymap-render.py "$f" "citymap/maps/${b%.json}.html"
+          done
+          cp /tmp/citydata/cities.json citymap/cities.json
+          ls citymap/maps | head -50
+
+      - name: Commit maps to main
+        run: |
+          set -euo pipefail
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt poi.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # main עלול לזוז בזמן הריצה — שומרים פלט, מתעדכנים, מחילים ודוחפים (עם ניסיונות חוזרים)
+          rm -rf /tmp/out-citymap && mkdir -p /tmp/out-citymap
+          cp -r citymap/maps /tmp/out-citymap/maps
+          cp citymap/cities.json /tmp/out-citymap/cities.json
+          for i in 1 2 3 4; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p citymap
+            rm -rf citymap/maps
+            cp -r /tmp/out-citymap/maps citymap/maps
+            cp /tmp/out-citymap/cities.json citymap/cities.json
+            git add citymap/maps citymap/cities.json
+            if git diff --cached --quiet; then
+              echo "maps unchanged — nothing to commit"; break; fi
+            git commit -m "data: refresh citymap network maps"
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected (main moved) — retry $i"; sleep 10
+          done

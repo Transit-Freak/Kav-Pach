@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מפת רשת — הקו הבוחן</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M4 22 L12 22 L18 14 L28 14" stroke="%23c2185b" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M4 10 L10 10 L16 18 L28 24" stroke="%231565c0" stroke-width="3.4" fill="none" stroke-linecap="round"/><circle cx="12" cy="22" r="3" fill="%23fff" stroke="%230f172a" stroke-width="2"/><circle cx="16" cy="14.6" r="3" fill="%23fff" stroke="%230f172a" stroke-width="2"/></svg>'>
+<style>
+  html,body{margin:0;height:100%;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#eef1f5}
+  .top{background:#1e3a8a;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-size:19px;font-weight:900;margin:0}
+  .tag{background:#a78bfa;color:#2e1065;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
+  .top select{font-family:inherit;font-weight:800;font-size:15px;padding:7px 12px;border-radius:12px;border:none;background:#fff;color:#0f172a;min-width:170px}
+  .top a{color:#bfdbfe;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
+  .top .sub{font-size:11.5px;opacity:.75;font-weight:700;flex-basis:100%;margin-top:2px}
+  iframe{border:none;width:100%;height:calc(100% - 92px);display:block;background:#fff}
+  .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>🚌 מפת רשת</h1>
+    <span class="tag">ניסוי</span>
+    <select id="city" aria-label="בחירת עיר"></select>
+    <a href="../">→ הקו הבוחן</a>
+    <div class="sub">מפה סכמטית של קווי העיר, נוצרת אוטומטית מנתוני GTFS · לחצו על קו במפה כדי להדגיש אותו ולראות את כל התחנות · מתעדכן שבועית</div>
+  </div>
+  <iframe id="frame" title="מפת הרשת"></iframe>
+  <script>
+    const sel=document.getElementById('city'), frame=document.getElementById('frame');
+    const saved=localStorage.getItem('citymap-city');
+    fetch('cities.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(cities=>{
+      cities.sort((a,b)=>a.name.localeCompare(b.name,'he'));
+      for(const c of cities){
+        const o=document.createElement('option');
+        o.value=c.name; o.textContent=`${c.name} (${c.lines} קווים)`;
+        sel.appendChild(o);
+      }
+      const start=(saved&&cities.some(c=>c.name===saved))?saved:(cities.some(c=>c.name==='קרית גת')?'קרית גת':cities[0]?.name);
+      if(start){ sel.value=start; load(start); }
+      sel.onchange=()=>{ localStorage.setItem('citymap-city',sel.value); load(sel.value); };
+    }).catch(()=>{
+      document.body.insertAdjacentHTML('beforeend','<div class="msg">המפות עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧</div>');
+      frame.style.display='none';
+    });
+    function load(city){ frame.src='maps/'+encodeURIComponent(city)+'.html'; }
+  </script>
+</body>
+</html>

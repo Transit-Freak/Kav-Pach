@@ -497,7 +497,7 @@ function ChoiceScreen({ onPick }) {
       <div className="max-w-7xl w-full">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
-          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">חמישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
+          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -609,6 +609,32 @@ function ChoiceScreen({ onPick }) {
               <h2 className="text-3xl font-[900] text-amber-200">הקו המדלג</h2>
               <p className="text-amber-100/80 font-bold mt-2 text-sm leading-relaxed">קווים שחולפים ליד תחנה פעילה — בלי לעצור בה</p>
               <span className="inline-flex items-center gap-2 mt-5 bg-amber-400 text-amber-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
+
+          {/* מפת רשת — ניסוי (אפליקציה עצמאית בתיקיית citymap/) */}
+          <a
+            href="citymap/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#1e1b4b 0%,#4c1d95 55%,#7c3aed 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#8b5cf6' }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28">
+                <span className="bg-violet-300 text-violet-950 px-3 py-1 rounded-full text-[11px] font-black self-start">ניסוי</span>
+                {/* הסמל — רשת קווים סכמטית מוקטנת (זהה ל-favicon של הכלי) */}
+                <svg viewBox="2 2 28 28" style={{ width: '96px', height: '96px' }} className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 22 L12 22 L18 14 L28 14" stroke="#f9a8d4" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 9 L10 9 L17 18 L17 27" stroke="#c4b5fd" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8 27 L14 27 L22 19 L28 25" stroke="#fde68a" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="22" r="2.6" fill="#fff" stroke="#312e81" strokeWidth="1.5" />
+                  <circle cx="17" cy="15.2" r="2.6" fill="#fff" stroke="#312e81" strokeWidth="1.5" />
+                  <circle cx="22" cy="19" r="2.6" fill="#fff" stroke="#312e81" strokeWidth="1.5" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-[900] text-violet-200">מפת רשת</h2>
+              <p className="text-violet-100/80 font-bold mt-2 text-sm leading-relaxed">בוחרים עיר — ומקבלים מפה סכמטית של כל קוויה, כמו הפוסטרים בתחנות</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-violet-300 text-violet-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
             </div>
           </a>
         </div>
