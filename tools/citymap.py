@@ -63,14 +63,24 @@ for rid,t in trip_of.items():
     info=routes[rid]
     st=[[stops[sid][0],stops[sid][1],stops[sid][2],stops[sid][3]] for _,sid in sq if sid in stops]
     if len(st)<MIN_STOPS: continue
+    sids=[sid for _,sid in sq if sid in stops]   # מיושר אחד-לאחד עם st
     # שיוך לפי היכן התחנות בפועל; אם ל-stop_desc אין ערים — נסיגה למוצא/יעד מהרישוי
     percity=defaultdict(int)
-    for _,sid in sq:
+    for sid in sids:
         c=stopcity.get(sid,'')
         if c: percity[c]+=1
     cs={c for c,n in percity.items() if n>=CITY_MIN_STOPS} or set(info['cities'])
     for c in cs:
-        bycity[c].append({'rid':rid,'mk':info['mk'],'num':info['num'],'long':info['long'],'stops':st})
+        # חיתוך לקטע העירוני: מהתחנה הראשונה בעיר עד האחרונה, +2 תחנות המשך מכל צד —
+        # אחרת מפת בת ים נמתחת עד אוניברסיטת ת"א והעיר עצמה נדחקת לפינה
+        idxs=[i for i,sid in enumerate(sids) if stopcity.get(sid)==c]
+        if idxs:
+            lo=max(0,idxs[0]-2); hi=min(len(st),idxs[-1]+3)
+            stc=st[lo:hi]
+        else:
+            stc=st
+        if len(stc)<6: continue
+        bycity[c].append({'rid':rid,'mk':info['mk'],'num':info['num'],'long':info['long'],'stops':stc})
 
 os.makedirs(OUTDIR,exist_ok=True)
 cities=[]
