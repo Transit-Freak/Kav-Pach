@@ -208,6 +208,38 @@ def _street_snap():
     return fixed
 print('צמתים שהוצמדו לרחוב שלהם:',_street_snap()+_street_snap())
 
+# ---- יישור סטיות קטנות ----
+# צמתים עוקבים שסטייתם הרוחבית האמיתית קטנה מחצי-דלי אבל נפלו לעמודות/שורות
+# שכנות (ביג קסטינה מול המסוף: 118מ' הצידה => אלכסון מיותר). מיישרים גם בלי
+# שם רחוב משותף; זז הצומת הפחות מחובר, וכל השומרים של הצמדת-רחוב חלים.
+_deg=defaultdict(set)
+for jj2 in _jpaths():
+    for Pp,Qq in zip(jj2,jj2[1:]):
+        _deg[Pp].add(Qq); _deg[Qq].add(Pp)
+def _align_snap():
+    fixed=0
+    for jj2 in _jpaths():
+        for A,B in zip(jj2,jj2[1:]):
+            if len(_deg[B])>len(_deg[A]): A,B=B,A   # זז הפחות-מחובר
+            for ax_ in (0,1):
+                if abs(clusters[A][ax_]-clusters[B][ax_])>AXIS_TOL*0.6: continue
+                a,b=nidx[A][ax_],nidx[B][ax_]
+                if abs(a-b)!=1: continue
+                cand=(a,nidx[B][1]) if ax_==0 else (nidx[B][0],a)
+                if cand in _taken or cand in _spans(): continue
+                (ac2,ar2)=nidx[A]
+                blocked=False
+                if ac2==cand[0]:
+                    for r2 in range(min(ar2,cand[1])+1,max(ar2,cand[1])):
+                        if (ac2,r2) in _taken: blocked=True; break
+                elif ar2==cand[1]:
+                    for c3 in range(min(ac2,cand[0])+1,max(ac2,cand[0])):
+                        if (c3,ar2) in _taken: blocked=True; break
+                if blocked: continue
+                _taken.discard(nidx[B]); nidx[B]=cand; _taken.add(cand); fixed+=1
+    return fixed
+print('צמתים שיושרו (סטיות קטנות):',_align_snap()+_align_snap())
+
 def npos(c):
     # רשת אחידה: העמודה/שורה ה-i-ית יושבת ב-i*U — מרכז צפוף מקבל מרחב כמו הפרברים,
     # מרחקים ארוכים נדחסים (כמו בפוסטרים הרשמיים), ואלכסונים יוצאים 45° מדויק.
