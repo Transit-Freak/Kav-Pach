@@ -319,7 +319,8 @@ for r in rows[1:]:
     if c: EXIST[c].add(cn(name))
     _ov=OVR.get(code)
     # האישור מותנה בשם: השתנה שם התחנה ב-GTFS — האישור פג והיא נבדקת מחדש
-    if _ov and _ov.get('n')==name: cnt['exact']+=1; continue
+    # השוואה מנורמלת — שמות GTFS מגיעים לעיתים עם רווחים כפולים/נגררים
+    if _ov and ' '.join(str(_ov.get('n','')).split())==' '.join(name.split()): cnt['exact']+=1; continue
     try: la=round(float(r[LA]),5); lo=round(float(r[LO]),5)
     except: la=lo=None
     realstreet=st and not re.fullmatch(r'[\d ]+',st)
