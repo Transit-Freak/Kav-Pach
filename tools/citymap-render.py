@@ -169,7 +169,7 @@ def _street_snap():
         for A,B in zip(jj,jj[1:]):
             if not (_streets(A)&_streets(B)): continue
             for ax_ in (0,1):
-                if abs(clusters[A][ax_]-clusters[B][ax_])>AXIS_TOL*0.8: continue
+                if abs(clusters[A][ax_]-clusters[B][ax_])>AXIS_TOL*1.1: continue
                 a,b=nidx[A][ax_],nidx[B][ax_]
                 if abs(a-b)!=1: continue
                 cand=(a,nidx[B][1]) if ax_==0 else (nidx[B][0],a)
@@ -322,8 +322,22 @@ for _ in range(3):
     if not _imp: break
 print('ריצות שנותבו מחדש למניעת זרועות דבוקות:',sum(1 for v in elbow.values() if v!='d'))
 
-allx=[p for key in runs for p in (npos(key[0])[0],npos(key[1])[0])]
-ally=[p for key in runs for p in (npos(key[0])[1],npos(key[1])[1])]
+def _warp_axis(vals):
+    if len(vals)<2: return [0.0]
+    gaps=[vals[i+1]-vals[i] for i in range(len(vals)-1)]
+    med=sorted(gaps)[len(gaps)//2] or 1.0
+    pos=[0.0]
+    for g in gaps: pos.append(pos[-1]+U*max(0.62,min(1.42,math.sqrt(max(g,1.0)/med))))
+    return pos
+_WX=_warp_axis(cols); _WY=_warp_axis(rows)
+def _wmap(v,pos):
+    t=v/U; i=int(math.floor(t))
+    if i<0: return pos[0]+t*U
+    if i>=len(pos)-1: return pos[-1]+(t-(len(pos)-1))*U
+    return pos[i]+(t-i)*(pos[i+1]-pos[i])
+def _W2(p): return (_wmap(p[0],_WX),_wmap(p[1],_WY))
+allx=[_W2(npos(key[i]))[0] for key in runs for i in (0,1)]
+ally=[_W2(npos(key[i]))[1] for key in runs for i in (0,1)]
 minx,maxx,miny,maxy=min(allx),max(allx),min(ally),max(ally)
 # ערים צפופות מקבלות קנבס גדול יותר ופסים דקים — אחרת ת"א נדחסת לגודל של קרית גת
 NL=len(lines)
@@ -334,7 +348,9 @@ W=int(2*PAD+(maxx-minx)*sc)
 WMAX=1150+_dens*18
 if W>WMAX:
     W=WMAX; sc=(W-2*PAD)/(maxx-minx); H=int(2*PAD+(maxy-miny)*sc)
-def P(p): return (PAD+(p[0]-minx)*sc, H-PAD-(p[1]-miny)*sc)
+def P(p):
+    w=_W2(p)
+    return (PAD+(w[0]-minx)*sc, H-PAD-(w[1]-miny)*sc)
 OFF=5.0 if NL<=16 else (4.0 if NL<=28 else 3.2 if NL<=48 else 2.7)
 LNW=3.6 if NL<=16 else (3.0 if NL<=28 else 2.6 if NL<=48 else 2.3)
 
