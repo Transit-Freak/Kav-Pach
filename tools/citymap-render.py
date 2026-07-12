@@ -31,7 +31,10 @@ _pts=[xy(s[2],s[3]) for L in lines for s in L['stops']]
 _diag=math.hypot(max(q[0] for q in _pts)-min(q[0] for q in _pts),
                  max(q[1] for q in _pts)-min(q[1] for q in _pts))
 SCALE=max(0.35,min(1.0,_diag/6000))
-CLUSTER_M*=SCALE; AXIS_TOL*=SCALE
+CLUSTER_M*=SCALE
+# יישור עמודות מתכווץ פחות: תחנות על אותו רחוב מפוזרות ~100מ' לרוחב גם בעיר
+# קטנה, וסף נמוך מדי מפצל רחוב ישר לזיגזג בין עמודות
+AXIS_TOL*=max(SCALE,0.68)
 
 # ---- קיבוץ תחנות לצמתים ----
 # ההשוואה מול העוגן (הנקודה הראשונה) ולא מול הצנטרואיד: צנטרואיד נודד מאחד
@@ -141,6 +144,39 @@ def _flap_fix():
                         _taken.discard(nidx[B]); nidx[B]=cand; _taken.add(cand); fixed+=1
     return fixed
 print('צמתים שהוצמדו לשכניהם (תיקון ריצוד):',_flap_fix()+_flap_fix())
+
+# ---- רחוב ישר נשאר ישר ----
+# צמתים עוקבים על קו שחולקים שם רחוב (מתוך "רחוב/רחוב" בשמות התחנות) ושהסטייה
+# הרוחבית האמיתית ביניהם קטנה — מוצמדים לאותה עמודה/שורה, אחרת רחוב ישר
+# מצטייר כזיגזג בין דליי-יישור שכנים.
+def _streets(c):
+    ts=set()
+    for nm in clusters[c][2]:
+        for part in nm.split('/'):
+            p=part.strip()
+            for pre in ('שדרות ',"שד' ",'דרך ','רחוב '):
+                if p.startswith(pre): p=p[len(pre):]
+            if len(p)>=3: ts.add(p)
+    return ts
+def _street_snap():
+    fixed=0
+    for num,seq in routes.items():
+        jj=[]
+        for c in seq:
+            if c in junction:
+                n_=node_of[c]
+                if not jj or jj[-1]!=n_: jj.append(n_)
+        for A,B in zip(jj,jj[1:]):
+            if not (_streets(A)&_streets(B)): continue
+            for ax_ in (0,1):
+                if abs(clusters[A][ax_]-clusters[B][ax_])>AXIS_TOL*0.8: continue
+                a,b=nidx[A][ax_],nidx[B][ax_]
+                if abs(a-b)!=1: continue
+                cand=(a,nidx[B][1]) if ax_==0 else (nidx[B][0],a)
+                if cand in _taken: continue
+                _taken.discard(nidx[B]); nidx[B]=cand; _taken.add(cand); fixed+=1
+    return fixed
+print('צמתים שהוצמדו לרחוב שלהם:',_street_snap()+_street_snap())
 
 def npos(c):
     # רשת אחידה: העמודה/שורה ה-i-ית יושבת ב-i*U — מרכז צפוף מקבל מרחב כמו הפרברים,
