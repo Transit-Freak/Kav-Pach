@@ -158,6 +158,26 @@ def _streets(c):
                 if p.startswith(pre): p=p[len(pre):]
             if len(p)>=3: ts.add(p)
     return ts
+def _jpaths():
+    for num2,seq2 in routes.items():
+        jj2=[]
+        for c2 in seq2:
+            if c2 in junction:
+                n2=node_of[c2]
+                if not jj2 or jj2[-1]!=n2: jj2.append(n2)
+        yield jj2
+def _spans():
+    # תאים שיושבים על קטע ישר בין שני צמתים עוקבים של קו כלשהו — אסור
+    # להצמיד צומת לתוכם (הוא ייראה כאילו הקו עובר דרכו פעמיים)
+    sp=set()
+    for jj2 in _jpaths():
+        for Pp,Qq in zip(jj2,jj2[1:]):
+            (pc,pr),(qc,qr)=nidx[Pp],nidx[Qq]
+            if pc==qc:
+                for r2 in range(min(pr,qr)+1,max(pr,qr)): sp.add((pc,r2))
+            elif pr==qr:
+                for c3 in range(min(pc,qc)+1,max(pc,qc)): sp.add((c3,pr))
+    return sp
 def _street_snap():
     fixed=0
     for num,seq in routes.items():
@@ -173,7 +193,17 @@ def _street_snap():
                 a,b=nidx[A][ax_],nidx[B][ax_]
                 if abs(a-b)!=1: continue
                 cand=(a,nidx[B][1]) if ax_==0 else (nidx[B][0],a)
-                if cand in _taken: continue
+                if cand in _taken or cand in _spans(): continue
+                # גם הקטע החדש A-B אסור שיעבור דרך צומת קיים
+                (ac2,ar2)=nidx[A]
+                blocked=False
+                if ac2==cand[0]:
+                    for r2 in range(min(ar2,cand[1])+1,max(ar2,cand[1])):
+                        if (ac2,r2) in _taken: blocked=True; break
+                elif ar2==cand[1]:
+                    for c3 in range(min(ac2,cand[0])+1,max(ac2,cand[0])):
+                        if (c3,ar2) in _taken: blocked=True; break
+                if blocked: continue
                 _taken.discard(nidx[B]); nidx[B]=cand; _taken.add(cand); fixed+=1
     return fixed
 print('צמתים שהוצמדו לרחוב שלהם:',_street_snap()+_street_snap())
