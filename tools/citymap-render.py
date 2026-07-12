@@ -166,12 +166,14 @@ def _jpaths():
                 n2=node_of[c2]
                 if not jj2 or jj2[-1]!=n2: jj2.append(n2)
         yield jj2
-def _spans():
+def _spans(mover=None):
     # תאים שיושבים על קטע ישר בין שני צמתים עוקבים של קו כלשהו — אסור
-    # להצמיד צומת לתוכם (הוא ייראה כאילו הקו עובר דרכו פעמיים)
+    # להצמיד צומת לתוכם (הוא ייראה כאילו הקו עובר דרכו פעמיים). קטעים
+    # שהצומת-הזז הוא קצה שלהם לא נספרים — הזזה רק מקצרת/מזיזה אותם.
     sp=set()
     for jj2 in _jpaths():
         for Pp,Qq in zip(jj2,jj2[1:]):
+            if mover is not None and (Pp==mover or Qq==mover): continue
             (pc,pr),(qc,qr)=nidx[Pp],nidx[Qq]
             if pc==qc:
                 for r2 in range(min(pr,qr)+1,max(pr,qr)): sp.add((pc,r2))
@@ -193,7 +195,7 @@ def _street_snap():
                 a,b=nidx[A][ax_],nidx[B][ax_]
                 if abs(a-b)!=1: continue
                 cand=(a,nidx[B][1]) if ax_==0 else (nidx[B][0],a)
-                if cand in _taken or cand in _spans(): continue
+                if cand in _taken or cand in _spans(B): continue
                 # גם הקטע החדש A-B אסור שיעבור דרך צומת קיים
                 (ac2,ar2)=nidx[A]
                 blocked=False
@@ -226,7 +228,7 @@ def _align_snap():
                 a,b=nidx[A][ax_],nidx[B][ax_]
                 if abs(a-b)!=1: continue
                 cand=(a,nidx[B][1]) if ax_==0 else (nidx[B][0],a)
-                if cand in _taken or cand in _spans(): continue
+                if cand in _taken or cand in _spans(B): continue
                 (ac2,ar2)=nidx[A]
                 blocked=False
                 if ac2==cand[0]:
@@ -410,6 +412,8 @@ W=int(2*PAD+(maxx-minx)*sc)
 WMAX=1150+_dens*18
 if W>WMAX:
     W=WMAX; sc=(W-2*PAD)/(maxx-minx); H=int(2*PAD+(maxy-miny)*sc)
+if sc>0.088:   # תא רשת לא גדל מעבר ל~88px — עיר קטנה לא נמתחת לקנבס ענק
+    sc=0.088; H=int(2*PAD+(maxy-miny)*sc); W=int(2*PAD+(maxx-minx)*sc)
 def P(p):
     w=_W2(p)
     return (PAD+(w[0]-minx)*sc, H-PAD-(w[1]-miny)*sc)
