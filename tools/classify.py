@@ -410,7 +410,10 @@ for r in rows[1:]:
                 closer_cands.append(rec); continue
         cnt['exact']+=1; continue
     if samestreet: cat='streetvar'
-    elif rel(prim,st)=='spelling': cat='uncertain' if (ktiv_only(prim,st) or (abbrev_pair(prim,st) and not joined_typo(prim,st))) else 'spelling'
+    elif rel(prim,st)=='spelling':
+        # כתיב מלא/חסר בלבד (ויצמן↔וייצמן, העליה↔העלייה) — אותו רחוב, לא ממצא
+        if ktiv_only(prim,st): cnt['exact']+=1; continue
+        cat='uncertain' if (abbrev_pair(prim,st) and not joined_typo(prim,st)) else 'spelling'
     elif cross and rel(cross,st) in ('exact','spelling'):
         cat='uncertain' if rel(cross,st)=='spelling' and ktiv_only(cross,st) else 'reversal'
     elif named_after_city(name,c): cnt['settlement']+=1; continue

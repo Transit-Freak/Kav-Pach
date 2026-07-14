@@ -10,6 +10,7 @@ name: update-weekly
 on:
   schedule:
     - cron: '0 2 * * *'   # כל לילה 02:00 UTC (05:00 ישראל)
+  # (דחיפה: הפעלת סיווג-מחדש אחרי סינון וריאציות כתיב)
   push:
     paths:
       - '.github/workflows/update-weekly.yml'
