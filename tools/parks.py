@@ -1,0 +1,311 @@
+# -*- coding: utf-8 -*-
+# נגישות תחבורה ציבורית לאזורי תעשייה — חילוץ.
+# קלט: פוליגונים של landuse=industrial + שבילי הולכי-רגל מ-Overpass (PARKS_RAW),
+#       GTFS מלא (stops/stop_times/trips/routes/calendar).
+# פלט: OUTDIR/p<i>.json לכל פארק + OUTDIR/parks.json (אינדקס).
+#
+# העיקרון המרכזי (בקשת המשתמש): להבדיל בין תחנה שבאמת בתוך הפארק לתחנת
+# צומת/כניסה — השיוך גאומטרי (בתוך הפוליגון / עד 150מ' / עד 450מ'), ושמות
+# צומת/מחלף/כביש לעולם לא נספרים כ"בתוך".
+import csv, json, math, os, re, datetime
+from collections import defaultdict
+
+RAW = os.environ.get('PARKS_RAW', 'parks-raw.json')
+STOPS = os.environ.get('STOPS', 'stops.txt')
+STOPTIMES = os.environ.get('STOPTIMES', 'stop_times.txt')
+TRIPS = os.environ.get('TRIPS', 'trips.txt')
+ROUTES = os.environ.get('ROUTES', 'routes.txt')
+CAL = os.environ.get('CAL', 'calendar.txt')
+OUTDIR = os.environ.get('OUTDIR', 'parks-out')
+
+GATE_M = 150      # עד כאן מגבול הפארק — "כניסה"
+NEAR_M = 450      # עד כאן — "צומת/ליד"; רחוק יותר לא רלוונטי לפארק
+COVER_M = 400     # רדיוס הליכה סבירה לחישוב כיסוי שטח
+MIN_AREA_KM2 = 0.04
+GAP_MIN = 90      # פער בדקות בין הגעות עוקבות שנחשב "חור" בשירות
+GAP_WIN = ('05:30', '20:00')
+JUNCTION_RE = re.compile(r'צומת|מחלף|מסעף|כביש \d')
+
+# ---- קריאת Overpass ----
+raw = json.load(open(RAW, encoding='utf-8'))
+polys = []   # (name, [(la,lo),...])
+foot = []    # [(la,lo),...]
+for e in raw.get('elements', []):
+    t = e.get('tags', {}) or {}
+    if t.get('landuse') == 'industrial' and t.get('name'):
+        nm = re.sub(r'\s+', ' ', t['name']).strip()
+        if e.get('type') == 'way' and e.get('geometry'):
+            pts = [(p['lat'], p['lon']) for p in e['geometry']]
+            if len(pts) >= 4:
+                polys.append((nm, pts))
+        elif e.get('type') == 'relation':
+            for m in e.get('members', []):
+                if m.get('role') == 'outer' and m.get('geometry'):
+                    pts = [(p['lat'], p['lon']) for p in m['geometry']]
+                    if len(pts) >= 4:
+                        polys.append((nm, pts))
+    elif e.get('type') == 'way' and e.get('geometry'):
+        hw = t.get('highway', '')
+        if hw in ('footway', 'path', 'pedestrian', 'steps') or \
+           t.get('sidewalk') in ('both', 'left', 'right', 'separate'):
+            foot.append([(p['lat'], p['lon']) for p in e['geometry']])
+print('פוליגונים תעשייתיים עם שם:', len(polys), '| קטעי הולכי-רגל:', len(foot))
+
+# ---- גאומטריה מטרית ----
+def xy(la, lo, cl): return (lo * 111320 * cl, la * 110540)
+
+def poly_area_km2(pts, cl):
+    q = [xy(a, b, cl) for a, b in pts]
+    s = sum(q[i][0] * q[(i + 1) % len(q)][1] - q[(i + 1) % len(q)][0] * q[i][1]
+            for i in range(len(q)))
+    return abs(s) / 2 / 1e6
+
+def in_poly(la, lo, pts):
+    n = len(pts); inside = False
+    j = n - 1
+    for i in range(n):
+        (y1, x1), (y2, x2) = pts[i], pts[j]
+        if (x1 > lo) != (x2 > lo) and la < (y2 - y1) * (lo - x1) / ((x2 - x1) or 1e-12) + y1:
+            inside = not inside
+        j = i
+    return inside
+
+def seg_dist(p, a, b):
+    px, py = p; ax, ay = a; bx, by = b
+    dx, dy = bx - ax, by - ay
+    L2 = dx * dx + dy * dy
+    t = 0 if L2 == 0 else max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / L2))
+    return math.hypot(px - (ax + dx * t), py - (ay + dy * t))
+
+def dist_to_poly_m(la, lo, pts, cl):
+    p = xy(la, lo, cl)
+    q = [xy(a, b, cl) for a, b in pts]
+    return min(seg_dist(p, q[i], q[(i + 1) % len(q)]) for i in range(len(q)))
+
+# ---- קיבוץ פוליגונים לפארקים (אותו שם + קרובים = פארק אחד, כמו א.ת. מפוצל) ----
+parks = []   # {'name', 'polys':[pts,...], 'cen':(la,lo), 'cl', 'area'}
+for nm, pts in polys:
+    cla = sum(p[0] for p in pts) / len(pts); clo = sum(p[1] for p in pts) / len(pts)
+    cl = math.cos(math.radians(cla))
+    hit = None
+    for pk in parks:
+        if pk['name'] == nm and math.hypot((pk['cen'][0] - cla) * 110540,
+                                           (pk['cen'][1] - clo) * 111320 * cl) < 3000:
+            hit = pk; break
+    if hit:
+        hit['polys'].append(pts)
+    else:
+        parks.append({'name': nm, 'polys': [pts], 'cen': (cla, clo), 'cl': cl})
+for pk in parks:
+    pk['area'] = sum(poly_area_km2(p, pk['cl']) for p in pk['polys'])
+parks = [p for p in parks if p['area'] >= MIN_AREA_KM2]
+print('פארקים אחרי קיבוץ וסינון שטח:', len(parks))
+
+# ---- אינדקס מרחבי גס לפארקים ----
+def bbox(pk):
+    las = [a for pts in pk['polys'] for a, b in pts]
+    los = [b for pts in pk['polys'] for a, b in pts]
+    return min(las), max(las), min(los), max(los)
+CELL = 0.02   # ~2 ק"מ
+grid = defaultdict(list)
+for i, pk in enumerate(parks):
+    la1, la2, lo1, lo2 = bbox(pk)
+    pk['bbox'] = (la1, la2, lo1, lo2)
+    pad = 0.006
+    for gy in range(int((la1 - pad) / CELL), int((la2 + pad) / CELL) + 1):
+        for gx in range(int((lo1 - pad) / CELL), int((lo2 + pad) / CELL) + 1):
+            grid[(gy, gx)].append(i)
+
+# ---- תחנות ----
+def city_of(desc):
+    i = (desc or '').find('עיר:')
+    return desc[i + 4:].split('רציף:')[0].strip() if i >= 0 else ''
+
+stop_hits = defaultdict(list)   # stop_id -> [(park_idx, tier, dist_m)]
+stop_info = {}                  # stop_id -> (name, code, la, lo, city)
+for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
+    if r.get('location_type', '0') not in ('', '0'):
+        continue
+    try:
+        la = float(r['stop_lat']); lo = float(r['stop_lon'])
+    except (ValueError, KeyError):
+        continue
+    for pi in grid.get((int(la / CELL), int(lo / CELL)), []):
+        pk = parks[pi]
+        la1, la2, lo1, lo2 = pk['bbox']
+        pad = NEAR_M / 100000
+        if not (la1 - pad < la < la2 + pad and lo1 - pad < lo < lo2 + pad):
+            continue
+        inside = any(in_poly(la, lo, pts) for pts in pk['polys'])
+        d = 0 if inside else min(dist_to_poly_m(la, lo, pts, pk['cl']) for pts in pk['polys'])
+        if not inside and d > NEAR_M:
+            continue
+        junction = bool(JUNCTION_RE.search(r.get('stop_name', '')))
+        tier = 'near' if junction else ('in' if inside else ('gate' if d <= GATE_M else 'near'))
+        stop_hits[r['stop_id']].append((pi, tier, int(d)))
+        stop_info[r['stop_id']] = (r.get('stop_name', ''), r.get('stop_code', ''),
+                                   round(la, 5), round(lo, 5), city_of(r.get('stop_desc', '')))
+print('תחנות בטווח של פארק כלשהו:', len(stop_hits))
+
+# ---- לוח שנה: שירותים תקפים היום, לפי יום ----
+today = datetime.date.today()
+svc_days = {}
+if os.path.exists(CAL):
+    for r in csv.DictReader(open(CAL, encoding='utf-8-sig')):
+        try:
+            d1 = datetime.datetime.strptime(r['start_date'], '%Y%m%d').date()
+            d2 = datetime.datetime.strptime(r['end_date'], '%Y%m%d').date()
+        except (ValueError, KeyError):
+            continue
+        if not (d1 <= today <= d2):
+            continue
+        svc_days[r['service_id']] = {k for k in
+            ('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday')
+            if r.get(k) == '1'}
+
+# ---- קווים ----
+trip_meta = {}   # trip_id -> (route_id, service_id)
+for r in csv.DictReader(open(TRIPS, encoding='utf-8-sig')):
+    trip_meta[r['trip_id']] = (r['route_id'], r.get('service_id', ''))
+route_meta = {}
+for r in csv.DictReader(open(ROUTES, encoding='utf-8-sig')):
+    route_meta[r['route_id']] = (r.get('route_short_name', ''), r.get('route_long_name', ''))
+
+# ---- stop_times: הגעות בתחנות הרלוונטיות בלבד ----
+deps = defaultdict(list)   # (stop_id, route_id, daygroup) -> [minutes]
+DAYGROUPS = (('wd', 'tuesday'), ('fr', 'friday'), ('sa', 'saturday'))
+seen_active = set()
+for r in csv.DictReader(open(STOPTIMES, encoding='utf-8-sig')):
+    sid = r.get('stop_id')
+    if sid not in stop_hits:
+        continue
+    seen_active.add(sid)
+    tm = trip_meta.get(r.get('trip_id'))
+    if not tm:
+        continue
+    rid, svc = tm
+    days = svc_days.get(svc)
+    if days is None:
+        days = {'sunday', 'monday', 'tuesday', 'wednesday', 'thursday'}
+    t = (r.get('departure_time') or r.get('arrival_time') or '').strip()
+    m = re.match(r'^(\d+):(\d\d)', t)
+    if not m:
+        continue
+    mins = (int(m.group(1)) % 24) * 60 + int(m.group(2))
+    for gk, day in DAYGROUPS:
+        if day in days:
+            deps[(sid, rid, gk)].append(mins)
+
+def hhmm(m): return f'{m // 60:02d}:{m % 60:02d}'
+
+deps_by_sid = defaultdict(dict)   # sid -> {(rid,gk): [minutes]}
+for (sid, rid, gk), mins in deps.items():
+    deps_by_sid[sid][(rid, gk)] = mins
+
+# ---- הרכבת פלט לכל פארק ----
+os.makedirs(OUTDIR, exist_ok=True)
+TIER_RANK = {'in': 0, 'gate': 1, 'near': 2}
+w1, w2 = [int(x[:2]) * 60 + int(x[3:]) for x in GAP_WIN]
+index = []
+out_i = 0
+for pi, pk in enumerate(parks):
+    stops_here = []
+    for sid, hits in stop_hits.items():
+        if sid not in seen_active:
+            continue
+        for hpi, tier, d in hits:
+            if hpi == pi:
+                nm, code, la, lo, city = stop_info[sid]
+                stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo,
+                                   't': tier, 'd': d, 'city': city})
+    # קווים: לכל route בוחרים את התחנה הטובה ביותר בפארק
+    best_stop = {}
+    seen_rids = set()
+    for s in stops_here:
+        for (rid, gk) in deps_by_sid.get(s['sid'], ()):
+            seen_rids.add(rid)
+            cur = best_stop.get(rid)
+            rank = (TIER_RANK[s['t']], s['d'])
+            if cur is None or rank < cur[0]:
+                best_stop[rid] = (rank, s)
+    lines = []
+    for rid in seen_rids:
+        _, s = best_stop[rid]
+        num, longnm = route_meta.get(rid, ('?', ''))
+        dest = longnm.split('<->')[-1].split('-')[0].strip() if '<->' in longnm else longnm[:30]
+        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s['t']}
+        for gk, _ in DAYGROUPS:
+            mins = sorted(set(deps.get((s['sid'], rid, gk), [])))
+            rec[gk] = [hhmm(m) for m in mins]
+            if gk == 'wd':
+                gaps = []
+                win = [m for m in mins if w1 <= m <= w2]
+                for a, b in zip(win, win[1:]):
+                    if b - a >= GAP_MIN:
+                        gaps.append([hhmm(a), hhmm(b), b - a])
+                if mins and win and win[0] - w1 >= GAP_MIN:
+                    gaps.insert(0, [GAP_WIN[0], hhmm(win[0]), win[0] - w1])
+                rec['gaps'] = gaps
+        if any(rec[gk] for gk, _ in DAYGROUPS):
+            lines.append(rec)
+    lines.sort(key=lambda L: (TIER_RANK[L['t']],
+                              int(re.match(r'\d+', L['num']).group(0)) if re.match(r'\d+', L['num']) else 999))
+    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול תחנות in/gate
+    cl = pk['cl']
+    cov_pts = [xy(s['la'], s['lo'], cl) for s in stops_here if s['t'] in ('in', 'gate')]
+    total = hitn = 0
+    for pts in pk['polys']:
+        la1 = min(a for a, b in pts); la2 = max(a for a, b in pts)
+        lo1 = min(b for a, b in pts); lo2 = max(b for a, b in pts)
+        step_la = 60 / 110540; step_lo = 60 / (111320 * cl)
+        la_ = la1
+        while la_ <= la2:
+            lo_ = lo1
+            while lo_ <= lo2:
+                if in_poly(la_, lo_, pts):
+                    total += 1
+                    p = xy(la_, lo_, cl)
+                    if any(math.hypot(p[0] - q[0], p[1] - q[1]) <= COVER_M for q in cov_pts):
+                        hitn += 1
+                lo_ += step_lo
+            la_ += step_la
+    cov = round(hitn / total, 3) if total else 0.0
+    # שבילי הולכי-רגל בתחום הפארק (+150מ')
+    la1, la2, lo1, lo2 = pk['bbox']
+    pad = 0.0025
+    fw = []
+    flen = 0.0
+    for seg in foot:
+        if not any(la1 - pad < a < la2 + pad and lo1 - pad < b < lo2 + pad for a, b in seg):
+            continue
+        fw.append([[round(a, 5), round(b, 5)] for a, b in seg])
+        for (a1, b1), (a2, b2) in zip(seg, seg[1:]):
+            flen += math.hypot((a2 - a1) * 110540, (b2 - b1) * 111320 * cl)
+    city = ''
+    if stops_here:
+        cc = defaultdict(int)
+        for s in stops_here:
+            if s['city']:
+                cc[s['city']] += 1
+        if cc:
+            city = max(cc, key=cc.get)
+    rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
+           'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
+           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd')} for s in stops_here],
+           'lines': lines, 'cov400': cov,
+           'foot': fw, 'footlen': int(flen),
+           'gen': today.isoformat()}
+    fn = f'p{out_i}.json'
+    json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+    index.append({'f': fn, 'name': pk['name'], 'city': city, 'area': rec['area'],
+                  'lines': len(lines),
+                  'in': sum(1 for s in stops_here if s['t'] == 'in'),
+                  'cov': cov})
+    out_i += 1
+index.sort(key=lambda x: (x['city'], x['name']))
+json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
+          ensure_ascii=False, separators=(',', ':'))
+print('פארקים שנכתבו:', out_i)
+print('מהם עם קווים:', sum(1 for x in index if x['lines']),
+      '| בלי שירות בכלל:', sum(1 for x in index if not x['lines']))

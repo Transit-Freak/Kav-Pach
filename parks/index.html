@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>נגישות אזורי תעשייה — הקו הבוחן</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="4" y="14" width="8" height="12" fill="%230f766e"/><rect x="13" y="9" width="8" height="17" fill="%2314b8a6"/><path d="M21 26 V13 l6-4 v17 z" fill="%230f766e"/><circle cx="9" cy="29" r="2.4" fill="%23fff" stroke="%230f172a" stroke-width="1.6"/><circle cx="23" cy="29" r="2.4" fill="%23fff" stroke="%230f172a" stroke-width="1.6"/></svg>'>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#eef1f5;color:#0f172a}
+  .top{background:#134e4a;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-size:19px;font-weight:900;margin:0}
+  .tag{background:#5eead4;color:#134e4a;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
+  .top select{font-family:inherit;font-weight:800;font-size:15px;padding:7px 12px;border-radius:12px;border:none;background:#fff;color:#0f172a;min-width:230px;max-width:340px}
+  .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
+  .top .sub{font-size:11.5px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
+  .wrap{max-width:1250px;margin:12px auto;padding:0 10px;display:grid;grid-template-columns:1fr 430px;gap:12px}
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  #map{height:520px;border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+  .panel{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:14px 16px;max-height:640px;overflow-y:auto}
+  .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .stat{background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:6px 12px;font-size:12.5px;font-weight:800;color:#134e4a}
+  .stat b{font-size:15px}
+  .covbar{height:9px;border-radius:9999px;background:#e2e8f0;overflow:hidden;margin:2px 0 10px}
+  .covbar i{display:block;height:100%;background:linear-gradient(90deg,#14b8a6,#0d9488)}
+  .note{font-size:11px;color:#64748b;font-weight:700;margin:8px 0}
+  .line{border:1px solid #e2e8f0;border-radius:12px;padding:9px 12px;margin-bottom:8px}
+  .lhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}
+  .lnum{background:#134e4a;color:#fff;border-radius:7px;padding:2px 10px;font-weight:900;font-size:14.5px}
+  .ldest{font-weight:800;font-size:13px;color:#334155;flex:1;min-width:120px}
+  .tier{font-size:10.5px;font-weight:900;border-radius:9999px;padding:2px 9px}
+  .tier.in{background:#dcfce7;color:#14532d}.tier.gate{background:#fef9c3;color:#713f12}.tier.near{background:#fee2e2;color:#7f1d1d}
+  .lsub{font-size:11.5px;color:#64748b;font-weight:700;margin-top:3px}
+  .gaps{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+  .gap{background:#fee2e2;color:#991b1b;border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:800}
+  .times{display:none;margin-top:7px;font-size:12px;font-weight:700;color:#334155;line-height:1.9}
+  .line.open .times{display:block}
+  .times b{color:#134e4a;margin-left:4px}
+  .legend{display:flex;gap:12px;font-size:11.5px;font-weight:800;color:#475569;margin-bottom:8px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:4px;vertical-align:-1px}
+  .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
+  h2{font-size:15px;margin:12px 0 8px}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>🏭 נגישות אזורי תעשייה</h1>
+    <span class="tag">ניסוי</span>
+    <select id="park" aria-label="בחירת אזור תעשייה"></select>
+    <a href="../">→ הקו הבוחן</a>
+    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · נוצר אוטומטית מ-GTFS ו-OSM · מתעדכן שבועית</div>
+  </div>
+  <div class="wrap" id="wrap" style="display:none">
+    <div>
+      <div class="legend">
+        <span><i style="background:#16a34a"></i> תחנה בתוך האזור</span>
+        <span><i style="background:#eab308"></i> בכניסה (עד 150 מ')</span>
+        <span><i style="background:#dc2626"></i> צומת / בסביבה (עד 450 מ')</span>
+        <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל ממופים</span>
+      </div>
+      <div id="map"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+  <div class="msg" id="msg" style="display:none"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const sel=document.getElementById('park'), wrap=document.getElementById('wrap'),
+      panel=document.getElementById('panel'), msg=document.getElementById('msg');
+let map=null, layer=null;
+const TIER={in:'בתוך האזור',gate:'בכניסה',near:'צומת/בסביבה'};
+const COL={in:'#16a34a',gate:'#eab308',near:'#dc2626'};
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
+
+fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
+  idx=idx.filter(p=>p.lines>0);
+  const byCity={};
+  for(const p of idx) (byCity[p.city||'ללא עיר']=byCity[p.city||'ללא עיר']||[]).push(p);
+  for(const c of Object.keys(byCity).sort((a,b)=>a.localeCompare(b,'he'))){
+    const og=document.createElement('optgroup'); og.label=c;
+    for(const p of byCity[c].sort((a,b)=>a.name.localeCompare(b.name,'he'))){
+      const o=document.createElement('option'); o.value=p.f;
+      o.textContent=`${p.name} (${p.lines} קווים)`;
+      og.appendChild(o);
+    }
+    sel.appendChild(og);
+  }
+  const saved=localStorage.getItem('parks-park');
+  if(saved && idx.some(p=>p.f===saved)) sel.value=saved;
+  load(sel.value);
+  sel.onchange=()=>{localStorage.setItem('parks-park',sel.value);load(sel.value)};
+}).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
+
+function load(f){
+  fetch('data/'+f).then(r=>r.json()).then(d=>{
+    wrap.style.display='grid'; msg.style.display='none';
+    if(!map){ map=L.map('map'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap'}).addTo(map); }
+    if(layer) layer.remove();
+    layer=L.layerGroup().addTo(map);
+    let bounds=null;
+    for(const poly of d.polys){
+      const pg=L.polygon(poly,{color:'#134e4a',weight:2.5,fillColor:'#14b8a6',fillOpacity:.10}).addTo(layer);
+      bounds=bounds?bounds.extend(pg.getBounds()):pg.getBounds();
+    }
+    for(const seg of d.foot) L.polyline(seg,{color:'#14b8a6',weight:2,opacity:.8}).addTo(layer);
+    for(const s of d.stops){
+      L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[s.t],fillOpacity:1})
+        .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[s.t]}${s.d?` · ${s.d} מ' מהגבול`:''}`).addTo(layer);
+    }
+    if(bounds) map.fitBounds(bounds.pad(0.25));
+    const nin=d.stops.filter(s=>s.t=='in').length, ngate=d.stops.filter(s=>s.t=='gate').length,
+          nnear=d.stops.filter(s=>s.t=='near').length;
+    let h=`<div class="stats">
+      <span class="stat">שטח <b>${d.area}</b> קמ"ר</span>
+      <span class="stat">תחנות בפנים <b>${nin}</b></span>
+      <span class="stat">בכניסה <b>${ngate}</b></span>
+      <span class="stat">צומת/סביבה <b>${nnear}</b></span>
+      <span class="stat">שבילים ממופים <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
+    </div>
+    <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכה: ${Math.round(d.cov400*100)}% מהשטח במרחק 400 מ' מתחנה שבאזור עצמו</div>
+    <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
+    if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהצומת/מהכניסה</div>`;
+    h+=`<h2>קווים (${d.lines.length}) — לחצו לשעות המלאות</h2>`;
+    for(const L2 of d.lines){
+      const wd=L2.wd||[];
+      h+=`<div class="line" onclick="this.classList.toggle('open')">
+        <div class="lhead"><span class="lnum">${esc(L2.num)}</span>
+          <span class="ldest">${esc(L2.dest)}</span>
+          <span class="tier ${L2.t}">${TIER[L2.t]}</span></div>
+        <div class="lsub">תחנה: ${esc(L2.stop)} · יום חול: ${wd.length? wd.length+' הגעות · ראשונה '+wd[0]+' · אחרונה '+wd[wd.length-1] : 'אין שירות'}</div>
+        ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap">${fmtGap(g)}</span>`).join('')}</div>`:''}
+        <div class="times">
+          ${wd.length?`<div><b>יום חול:</b> ${wd.join(' · ')}</div>`:''}
+          ${L2.fr&&L2.fr.length?`<div><b>שישי:</b> ${L2.fr.join(' · ')}</div>`:''}
+          ${L2.sa&&L2.sa.length?`<div><b>שבת:</b> ${L2.sa.join(' · ')}</div>`:''}
+        </div>
+      </div>`;
+    }
+    h+=`<div class="note">⚠ שכבת המדרכות/שבילים מציגה רק מה שממופה ב-OSM — היעדר קו על המפה אינו הוכחה שאין מדרכה. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    panel.innerHTML=h;
+  }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
+}
+</script>
+</body>
+</html>

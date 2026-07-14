@@ -1,0 +1,73 @@
+name: parks-access
+
+# נגישות תחבורה ציבורית לאזורי תעשייה (ניסוי): פוליגונים + שבילים מ-OSM,
+# תחנות ולוחות זמנים מ-GTFS. רץ שבועי.
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'
+  push:
+    paths:
+      - '.github/workflows/parks-access.yml'
+      - 'tools/parks.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: parks-access
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Query Overpass — industrial polygons + footways around them
+        run: |
+          set -euo pipefail
+          Q='[out:json][timeout:900][bbox:29.4,34.2,33.35,35.95];(way["landuse"="industrial"]["name"];relation["landuse"="industrial"]["name"];)->.p;.p out geom;(way["highway"~"^(footway|path|pedestrian|steps)$"](around.p:300);way["sidewalk"~"^(both|left|right|separate)$"](around.p:300););out geom;'
+          ok=0
+          for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
+            echo "== trying $ep =="
+            if curl -fsS --max-time 1000 --data-urlencode "data=$Q" "$ep" -o parks-raw.json; then ok=1; echo "got $(wc -c < parks-raw.json) bytes"; break; fi
+            echo "failed, next endpoint"; sleep 45
+          done
+          [ "$ok" = "1" ] || { echo "all overpass endpoints failed"; exit 1; }
+
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          curl -fSL --connect-timeout 20 --max-time 1800 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
+            -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt
+
+      - name: Build park accessibility data
+        run: |
+          set -euo pipefail
+          PARKS_RAW=parks-raw.json OUTDIR=/tmp/parksout python3 tools/parks.py
+          ls /tmp/parksout | head -5
+          echo "files: $(ls /tmp/parksout | wc -l)"
+
+      - name: Commit to main
+        run: |
+          set -euo pipefail
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3 4; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks
+            rm -rf parks/data
+            cp -r /tmp/parksout parks/data
+            git add parks/data
+            if git diff --cached --quiet; then
+              echo "unchanged — nothing to commit"; break; fi
+            git commit -m "data: refresh industrial-park accessibility"
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected (main moved) — retry $i"; sleep 10
+          done
