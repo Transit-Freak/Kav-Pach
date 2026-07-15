@@ -11,6 +11,7 @@ import csv, json, math, os, re, datetime
 from collections import defaultdict
 
 RAW = os.environ.get('PARKS_RAW', 'parks-raw.json')
+OFFICIAL = os.environ.get('OFFICIAL', '')   # official.json (משרד הכלכלה); ריק = לדלג
 STOPS = os.environ.get('STOPS', 'stops.txt')
 STOPTIMES = os.environ.get('STOPTIMES', 'stop_times.txt')
 TRIPS = os.environ.get('TRIPS', 'trips.txt')
@@ -120,6 +121,43 @@ for pk in parks:
     pk['area'] = sum(poly_area_km2(p, pk['cl']) for p in pk['polys'])
 parks = [p for p in parks if p['area'] >= MIN_AREA_KM2]
 print('פארקים אחרי קיבוץ וסינון שטח:', len(parks))
+
+# ---- מקור רשמי (משרד הכלכלה): השלמת חסרים + העשרה ----
+# כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
+# עם הפוליגון הרשמי. כך משלימים אזורים (בעיקר בפריפריה) ש-OSM לא מיפה, ומצרפים
+# נתוני עובדים/שטח/מחוז לכל אזור רשמי.
+OFF_MATCH_M = 1500
+if OFFICIAL and os.path.exists(OFFICIAL):
+    official = json.load(open(OFFICIAL, encoding='utf-8'))
+    added = enriched = 0
+    for z in official:
+        opolys = [[(a, b) for a, b in ring] for ring in z.get('polys', [])]
+        if not opolys:
+            continue
+        allpts = [p for ring in opolys for p in ring]
+        zla = sum(p[0] for p in allpts) / len(allpts)
+        zlo = sum(p[1] for p in allpts) / len(allpts)
+        zcl = math.cos(math.radians(zla))
+        meta = {k: z.get(k) for k in ('district', 'avail', 'occ', 'cur_emp', 'fut_emp', 'open')}
+        meta['oname'] = z.get('name')
+        best = None
+        for pk in parks:
+            dd = math.hypot((pk['cen'][0] - zla) * 110540, (pk['cen'][1] - zlo) * 111320 * zcl)
+            if best is None or dd < best[1]:
+                best = (pk, dd)
+        if best and best[1] <= OFF_MATCH_M:
+            if 'official' not in best[0] or best[1] < best[0].get('_offd', 9e9):
+                best[0]['official'] = meta
+                best[0]['_offd'] = best[1]
+                enriched += 1
+        else:
+            nm = z.get('name') or 'אזור תעשייה רשמי'
+            npk = {'name': nm, 'noname': False, 'polys': opolys, 'cen': (zla, zlo),
+                   'cl': zcl, 'official': meta, '_offd': 0}
+            npk['area'] = sum(poly_area_km2(p, zcl) for p in opolys)
+            parks.append(npk)
+            added += 1
+    print('מקור רשמי: הוצמדו/הועשרו', enriched, '| נוספו כחדשים', added)
 
 # ---- אינדקס מרחבי גס לפארקים ----
 def bbox(pk):
@@ -360,6 +398,9 @@ for pi, pk in enumerate(parks):
            'lines': lines, 'cov400': cov,
            'foot': fw, 'footlen': int(flen),
            'gen': today.isoformat()}
+    off = pk.get('official')
+    if off:
+        rec['official'] = {k: off.get(k) for k in ('district', 'avail', 'occ', 'cur_emp', 'fut_emp', 'open')}
     fn = f'p{out_i}.json'
     json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
@@ -369,7 +410,8 @@ for pi, pk in enumerate(parks):
                   'lg': sum(1 for L in lines if L['t'] == 'gate'),
                   'ln': sum(1 for L in lines if L['t'] == 'near'),
                   'in': sum(1 for s in stops_here if s['t'] == 'in'),
-                  'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4)})
+                  'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
+                  'off': 1 if off else 0})
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),

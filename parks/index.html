@@ -40,6 +40,9 @@
   .stat b{font-size:15px}
   .covbar{height:9px;border-radius:9999px;background:#e2e8f0;overflow:hidden;margin:2px 0 10px}
   .covbar i{display:block;height:100%;background:linear-gradient(90deg,#14b8a6,#0d9488)}
+  .offbox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:9px 12px;margin:4px 0 10px}
+  .offh{font-size:12px;font-weight:900;color:#1e40af}
+  .offbadge{font-size:11px}
   .note{font-size:11px;color:#64748b;font-weight:700;margin:8px 0}
   .line{border:1px solid #e2e8f0;border-radius:12px;padding:9px 12px;margin-bottom:8px}
   .lhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}
@@ -141,7 +144,7 @@ function renderTable(){
   });
   tbody.innerHTML=rows.map(p=>`
     <tr class="${p.lines? '':'nosvc'}" data-f="${p.f}">
-      <td>${esc(p.name)}${p.lines? '':' ⚠'}</td>
+      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':''}${p.lines? '':' ⚠'}</td>
       <td>${esc(p.city||'—')}</td>
       <td class="num">${p.area}</td>
       <td class="num">${pill(p.li??0,'pi')}</td>
@@ -252,6 +255,19 @@ function openPark(f,push=true){
     </div>
     <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
     <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
+    if(d.official){
+      const o=d.official, nf=v=>(v==null?'—':Number(v).toLocaleString('he'));
+      h+=`<div class="offbox">
+        <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${o.district?` · מחוז ${esc(o.district)}`:''}</div>
+        <div class="stats" style="margin:6px 0 0">
+          <span class="stat">עובדים כיום <b>${nf(o.cur_emp)}</b></span>
+          ${o.fut_emp?`<span class="stat">עתידי <b>${nf(o.fut_emp)}</b></span>`:''}
+          <span class="stat">שטח פנוי <b>${nf(o.avail)}</b> מ"ר</span>
+          <span class="stat">תפוס <b>${nf(o.occ)}</b> מ"ר</span>
+          ${o.open?`<span class="stat">פתוח לשיווק <b>${o.open=='TRUE'?'כן':'לא'}</b></span>`:''}
+        </div>
+      </div>`;
+    }
     if(!d.lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית באזור הזה או בטווח 450 מ' ממנו</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהצומת/מהכניסה</div>`;
     if(d.lines.length) h+=`<h2>קווים (${d.lines.length}) — לחצו לשעות המלאות</h2>`;

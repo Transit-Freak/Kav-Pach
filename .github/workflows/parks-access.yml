@@ -11,6 +11,7 @@ on:
       - '.github/workflows/parks-access.yml'
       - 'tools/parks.py'
       - 'tools/fetch_footways.py'
+      - 'tools/fetch_official.py'
   workflow_dispatch:
 
 permissions:
@@ -71,17 +72,26 @@ jobs:
             -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt
 
+      - name: Fetch official industrial zones (משרד הכלכלה) — best-effort
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyproj
+          OFFICIAL_OUT=official.json python3 tools/fetch_official.py
+
       - name: Build park accessibility data
         run: |
           set -euo pipefail
-          PARKS_RAW=parks-raw.json OUTDIR=/tmp/parksout python3 tools/parks.py
+          # OFFICIAL רק אם נמשך בהצלחה — אחרת ממשיכים עם OSM בלבד
+          OFF=""; [ -f official.json ] && OFF=official.json
+          PARKS_RAW=parks-raw.json OFFICIAL="$OFF" OUTDIR=/tmp/parksout python3 tools/parks.py
           ls /tmp/parksout | head -5
           echo "files: $(ls /tmp/parksout | wc -l)"
 
       - name: Commit to main
         run: |
           set -euo pipefail
-          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json parks-polys.json footways.json regions.json
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json parks-polys.json footways.json regions.json official.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4; do
