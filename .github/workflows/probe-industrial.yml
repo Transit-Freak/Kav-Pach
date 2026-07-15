@@ -1,8 +1,8 @@
 name: probe-industrial
 
-# בדיקה חד-פעמית: מושך את dataset אזורי-התעשייה מ-data.gov.il (CKAN datastore),
-# מדווח את מבנה השדות, האם יש גאומטריה (קואורדינטות/פוליגון), סה"כ רשומות ודוגמאות.
-# דוחף דוח ל-probe-industrial-out. משמש להחליט אם לשלב את המקור הרשמי.
+# בדיקה חד-פעמית: מושך את כל אזורי-התעשייה הרשמיים מ-data.gov.il (CKAN datastore),
+# ממיר את הגאומטריה מ-ITM (רשת ישראל, EPSG:2039) ל-WGS84, ומוציא official-zones.json
+# עם מרכז (la/lo) + נתונים (עובדים/שטח/מחוז). דוחף ל-probe-industrial-out.
 
 on:
   push:
@@ -23,80 +23,65 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
-      - name: Pull industrial-zones dataset from data.gov.il
+      - name: Install pyproj (המרת ITM→WGS84)
+        run: python3 -m pip install --quiet pyproj
+      - name: Pull ALL industrial-zones + convert coords
         run: |
           set +e
           python3 - <<'PY'
-          import json, urllib.request, urllib.parse
+          import json, re, urllib.request, urllib.parse
+          from pyproj import Transformer
           out=[]
           def log(s): print(s); out.append(str(s))
           RID="30af8da4-7586-4b00-ac88-c5ee75251632"
           BASE="https://data.gov.il/api/3/action/"
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+          # EPSG:2039 = Israeli TM Grid (ITM). always_xy → (easting,northing)->(lon,lat)
+          TR=Transformer.from_crs("EPSG:2039","EPSG:4326",always_xy=True)
 
           def get(url):
               req=urllib.request.Request(url, headers={"user-agent":UA,"accept":"application/json"})
               with urllib.request.urlopen(req, timeout=60) as r:
                   return json.load(r)
 
-          # 1) datastore_search — שדות, סה"כ, דוגמאות
-          try:
-              u=BASE+"datastore_search?"+urllib.parse.urlencode({"resource_id":RID,"limit":8})
-              j=get(u)
-              res=j.get("result",{})
-              fields=res.get("fields",[])
-              total=res.get("total")
-              recs=res.get("records",[])
-              log("=== datastore_search ===")
-              log("סה\"כ רשומות: %s"%total)
-              log("")
-              log("שדות (%d):"%len(fields))
-              geom_hint=[]
-              for f in fields:
-                  fid=f.get("id"); ftype=f.get("type")
-                  log("   - %-30s [%s]"%(fid,ftype))
-                  low=str(fid).lower()
-                  if any(k in low for k in ("lat","lon","lng","x","y","geom","coord","north","east","itm","rt","סימן","קו","נצ","gis","polygon","shape")):
-                      geom_hint.append(fid)
-              log("")
-              log("שדות שנראים גאוגרפיים: %s"%(geom_hint or "— לא נמצאו במבט ראשון"))
-              log("")
-              log("=== 3 רשומות לדוגמה ===")
-              for i,rec in enumerate(recs[:3]):
-                  log("--- רשומה %d ---"%(i+1))
-                  for k,v in rec.items():
-                      sv=str(v)
-                      if len(sv)>120: sv=sv[:120]+"…"
-                      log("   %s: %s"%(k,sv))
-                  log("")
-              json.dump(res, open("industrial-sample.json","w"), ensure_ascii=False, indent=1)
-          except Exception as e:
-              log("datastore_search נכשל: %r"%e)
-
-          # 2) package_show — מטא-דאטה, אולי משאב GeoJSON/SHP נלווה
-          try:
-              # ה-package מכיל את ה-resource; ננסה לגלות אותו לפי חיפוש
-              u=BASE+"resource_show?"+urllib.parse.urlencode({"id":RID})
-              j=get(u)
-              r=j.get("result",{})
-              log("=== resource_show ===")
-              for k in ("name","format","description","url","datastore_active"):
-                  if k in r: log("   %s: %s"%(k,str(r[k])[:160]))
-          except Exception as e:
-              log("resource_show נכשל: %r"%e)
-
+          u=BASE+"datastore_search?"+urllib.parse.urlencode({"resource_id":RID,"limit":1000})
+          j=get(u); res=j.get("result",{}); recs=res.get("records",[])
+          log("=== רשימת אזורי תעשייה רשמית — %d רשומות ==="%len(recs))
+          zones=[]
+          for rec in recs:
+              geom=rec.get("geom") or ""
+              nums=[float(x) for x in re.findall(r'-?\d+\.?\d*', geom)]
+              la=lo=None
+              if len(nums)>=4:
+                  xs=nums[0::2]; ys=nums[1::2]   # ITM easting,northing pairs
+                  cx=sum(xs)/len(xs); cy=sum(ys)/len(ys)
+                  lo,la=TR.transform(cx,cy)       # -> lon,lat
+              z={"name":rec.get("alina_name"),"eng":rec.get("alina_eng_name"),
+                 "district":rec.get("district"),
+                 "avail":rec.get("available_space"),"occ":rec.get("occupied_space"),
+                 "cur_emp":rec.get("current_employees"),"fut_emp":rec.get("future_employees"),
+                 "open":rec.get("open_to_market"),
+                 "la":round(la,5) if la else None,"lo":round(lo,5) if lo else None}
+              zones.append(z)
+              log("  %-28s | %-10s | עובדים:%s | פנוי:%s מ\"ר | %s"%(
+                  str(z["name"])[:28], z["district"], z["cur_emp"], z["avail"],
+                  ("%.4f,%.4f"%(z["la"],z["lo"])) if z["la"] else "אין geom"))
+          nogeo=sum(1 for z in zones if z["la"] is None)
+          log("")
+          log("סה\"כ: %d | בלי גאומטריה תקינה: %d"%(len(zones),nogeo))
+          json.dump(zones, open("official-zones.json","w"), ensure_ascii=False, indent=1)
           open("probe-industrial.txt","w").write("\n".join(out))
           PY
-          ls -la probe-industrial.txt 2>/dev/null || true
+          ls -la official-zones.json probe-industrial.txt 2>/dev/null || true
       - name: Push results
         run: |
           set -euo pipefail
           cp probe-industrial.txt /tmp/r.txt 2>/dev/null || echo "no report">/tmp/r.txt
-          cp industrial-sample.json /tmp/s.json 2>/dev/null || echo '{}'>/tmp/s.json
+          cp official-zones.json /tmp/z.json 2>/dev/null || echo '[]'>/tmp/z.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan probe-ind-tmp; git reset
           find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -rf {} +
-          cp /tmp/r.txt probe-industrial.txt; cp /tmp/s.json industrial-sample.json
-          git add -A; git commit -m "probe: industrial-zones dataset structure from data.gov.il"
+          cp /tmp/r.txt probe-industrial.txt; cp /tmp/z.json official-zones.json
+          git add -A; git commit -m "probe: official industrial zones + WGS84 centroids from data.gov.il"
           git push -f origin probe-ind-tmp:probe-industrial-out
