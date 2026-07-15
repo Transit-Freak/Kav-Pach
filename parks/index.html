@@ -129,9 +129,9 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
   renderTable();
-  tblview.style.display='block';
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(h && idx.some(p=>p.f===h)) openPark(h,false);
+  else showTable();   // מציג את הטבלה + חושף את כפתור מפת-החום
 }).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
 
 function renderTable(){
@@ -226,6 +226,7 @@ function openPark(f,push=true){
   if(push) history.pushState({park:f},'','#'+encodeURIComponent(f));
   fetch('data/'+f).then(r=>r.json()).then(d=>{
     tblview.style.display='none'; wrap.style.display='grid'; backbtn.style.display='inline-block';
+    heatview.style.display='none'; heatbtn.style.display='none';
     msg.style.display='none';
     if(!map){ map=L.map('map'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       {attribution:'© OpenStreetMap'}).addTo(map); }
