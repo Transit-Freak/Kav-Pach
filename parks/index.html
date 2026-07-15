@@ -258,15 +258,16 @@ function openPark(f,push=true){
     <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
     if(d.official){
       const o=d.official, nf=v=>(v==null?'—':Number(v).toLocaleString('he'));
+      const ostats=[
+        o.cur_emp?`<span class="stat">עובדים כיום <b>${nf(o.cur_emp)}</b></span>`:'',
+        o.fut_emp?`<span class="stat">עובדים עתידי <b>${nf(o.fut_emp)}</b></span>`:'',
+        o.avail?`<span class="stat">שטח פנוי לשיווק <b>${nf(o.avail)}</b> מ"ר</span>`:'',
+        o.occ?`<span class="stat">שטח תפוס <b>${nf(o.occ)}</b> מ"ר</span>`:'',
+        o.open?`<span class="stat">פתוח לשיווק <b>${o.open=='TRUE'?'כן':'לא'}</b></span>`:''
+      ].filter(Boolean).join('');
       h+=`<div class="offbox">
         <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${o.district?` · מחוז ${esc(o.district)}`:''}</div>
-        <div class="stats" style="margin:6px 0 0">
-          <span class="stat">עובדים כיום <b>${nf(o.cur_emp)}</b></span>
-          ${o.fut_emp?`<span class="stat">עתידי <b>${nf(o.fut_emp)}</b></span>`:''}
-          <span class="stat">שטח פנוי <b>${nf(o.avail)}</b> מ"ר</span>
-          <span class="stat">תפוס <b>${nf(o.occ)}</b> מ"ר</span>
-          ${o.open?`<span class="stat">פתוח לשיווק <b>${o.open=='TRUE'?'כן':'לא'}</b></span>`:''}
-        </div>
+        ${ostats?`<div class="stats" style="margin:6px 0 0">${ostats}</div>`:'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>'}
       </div>`;
     }
     if(!d.lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית באזור הזה או בטווח 450 מ' ממנו</div>`;
