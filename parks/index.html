@@ -120,6 +120,8 @@ fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
   renderTable();
   tblview.style.display='block';
+  const h=decodeURIComponent((location.hash||'').slice(1));
+  if(h && idx.some(p=>p.f===h)) openPark(h,false);
 }).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
 
 function renderTable(){
@@ -155,7 +157,13 @@ tbody.onclick=e=>{
   const tr=e.target.closest('tr');
   if(tr) openPark(tr.dataset.f);
 };
-backbtn.onclick=()=>{wrap.style.display='none';backbtn.style.display='none';tblview.style.display='block'};
+function showTable(){wrap.style.display='none';backbtn.style.display='none';tblview.style.display='block'}
+backbtn.onclick=()=>history.back();
+// כפתור "אחורה" של הטלפון/דפדפן מחזיר לרשימה במקום לעזוב את העמוד
+window.addEventListener('popstate',e=>{
+  if(e.state&&e.state.park) openPark(e.state.park,false);
+  else showTable();
+});
 
 document.getElementById('csvbtn').onclick=()=>{
   const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים בכניסה','קווים בצומת/סביבה','תחנות בפנים','כיסוי הליכה %'];
@@ -166,7 +174,8 @@ document.getElementById('csvbtn').onclick=()=>{
   a.download='נגישות-אזורי-תעשייה.csv'; a.click();
 };
 
-function openPark(f){
+function openPark(f,push=true){
+  if(push) history.pushState({park:f},'','#'+encodeURIComponent(f));
   fetch('data/'+f).then(r=>r.json()).then(d=>{
     tblview.style.display='none'; wrap.style.display='grid'; backbtn.style.display='inline-block';
     msg.style.display='none';
