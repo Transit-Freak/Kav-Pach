@@ -28,12 +28,12 @@ JUNCTION_RE = re.compile(r'צומת|מחלף|מסעף|כביש \d')
 
 # ---- קריאת Overpass ----
 raw = json.load(open(RAW, encoding='utf-8'))
-polys = []   # (name, [(la,lo),...])
+polys = []   # (name-or-'', [(la,lo),...])
 foot = []    # [(la,lo),...]
 for e in raw.get('elements', []):
     t = e.get('tags', {}) or {}
-    if t.get('landuse') == 'industrial' and t.get('name'):
-        nm = re.sub(r'\s+', ' ', t['name']).strip()
+    if t.get('landuse') == 'industrial':
+        nm = re.sub(r'\s+', ' ', t.get('name', '')).strip()
         if e.get('type') == 'way' and e.get('geometry'):
             pts = [(p['lat'], p['lon']) for p in e['geometry']]
             if len(pts) >= 4:
@@ -82,10 +82,17 @@ def dist_to_poly_m(la, lo, pts, cl):
     q = [xy(a, b, cl) for a, b in pts]
     return min(seg_dist(p, q[i], q[(i + 1) % len(q)]) for i in range(len(q)))
 
-# ---- קיבוץ פוליגונים לפארקים (אותו שם + קרובים = פארק אחד, כמו א.ת. מפוצל) ----
-parks = []   # {'name', 'polys':[pts,...], 'cen':(la,lo), 'cl', 'area'}
-for nm, pts in polys:
-    cla = sum(p[0] for p in pts) / len(pts); clo = sum(p[1] for p in pts) / len(pts)
+# ---- קיבוץ פוליגונים לפארקים ----
+# בעלי שם: אותו שם + קרובים = פארק אחד (א.ת. מפוצל). חסרי שם: נצמדים לפארק
+# בעל-שם סמוך (עד 250מ'), אחרת מתקבצים בינם לבין עצמם (עד 500מ') ויקבלו שם
+# מהיישוב — "הכול ולא רק חלק": אזור תעשייה ממופה בלי שם עדיין מוצג.
+parks = []   # {'name', 'noname', 'polys':[pts,...], 'cen':(la,lo), 'cl', 'area'}
+def _cen(pts):
+    return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+named = [(nm, pts) for nm, pts in polys if nm]
+unnamed = [pts for nm, pts in polys if not nm]
+for nm, pts in named:
+    cla, clo = _cen(pts)
     cl = math.cos(math.radians(cla))
     hit = None
     for pk in parks:
@@ -95,7 +102,20 @@ for nm, pts in polys:
     if hit:
         hit['polys'].append(pts)
     else:
-        parks.append({'name': nm, 'polys': [pts], 'cen': (cla, clo), 'cl': cl})
+        parks.append({'name': nm, 'noname': False, 'polys': [pts], 'cen': (cla, clo), 'cl': cl})
+for pts in unnamed:
+    cla, clo = _cen(pts)
+    cl = math.cos(math.radians(cla))
+    best = None
+    for pk in parks:
+        dd = math.hypot((pk['cen'][0] - cla) * 110540, (pk['cen'][1] - clo) * 111320 * cl)
+        if dd > 2500: continue
+        if any(in_poly(cla, clo, q) for q in pk['polys']) or            min(dist_to_poly_m(cla, clo, q, cl) for q in pk['polys']) <= (250 if not pk['noname'] else 500):
+            if best is None or dd < best[1]: best = (pk, dd)
+    if best:
+        best[0]['polys'].append(pts)
+    else:
+        parks.append({'name': '', 'noname': True, 'polys': [pts], 'cen': (cla, clo), 'cl': cl})
 for pk in parks:
     pk['area'] = sum(poly_area_km2(p, pk['cl']) for p in pk['polys'])
 parks = [p for p in parks if p['area'] >= MIN_AREA_KM2]
@@ -212,6 +232,7 @@ TIER_RANK = {'in': 0, 'gate': 1, 'near': 2}
 w1, w2 = [int(x[:2]) * 60 + int(x[3:]) for x in GAP_WIN]
 index = []
 out_i = 0
+_noname_ser = {}
 for pi, pk in enumerate(parks):
     stops_here = []
     for sid, hits in stop_hits.items():
@@ -293,6 +314,14 @@ for pi, pk in enumerate(parks):
                 cc[s['city']] += 1
         if cc:
             city = max(cc, key=cc.get)
+    # מחוץ לישראל: ה-bbox של Overpass תופס גם ירדן/לבנון/סיני. אזור נשאר רק
+    # אם שמו עברי או שיש לו תחנת GTFS ישראלית בטווח.
+    if not re.search(r'[א-ת]', pk['name']) and not stops_here:
+        continue
+    if pk['noname']:
+        base = ('אזור תעשייה — ' + city) if city else 'אזור תעשייה ללא שם'
+        _noname_ser[base] = _noname_ser.get(base, 0) + 1
+        pk['name'] = base + (f" ({_noname_ser[base]})" if _noname_ser[base] > 1 else '')
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
            'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd')} for s in stops_here],
