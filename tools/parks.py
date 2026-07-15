@@ -169,7 +169,11 @@ for r in csv.DictReader(open(TRIPS, encoding='utf-8-sig')):
     trip_meta[r['trip_id']] = (r['route_id'], r.get('service_id', ''))
 route_meta = {}
 for r in csv.DictReader(open(ROUTES, encoding='utf-8-sig')):
-    route_meta[r['route_id']] = (r.get('route_short_name', ''), r.get('route_long_name', ''))
+    short = r.get('route_short_name', '')
+    if not short:   # לרכבות אין מספר קו — מתייגים לפי הסוג
+        rt = r.get('route_type', '3')
+        short = 'רכבת' if rt == '2' else ('רק"ל' if rt in ('0', '1') else '?')
+    route_meta[r['route_id']] = (short, r.get('route_long_name', ''))
 
 # ---- stop_times: הגעות בתחנות הרלוונטיות בלבד ----
 deps = defaultdict(list)   # (stop_id, route_id, daygroup) -> [minutes]
@@ -300,6 +304,9 @@ for pi, pk in enumerate(parks):
               ensure_ascii=False, separators=(',', ':'))
     index.append({'f': fn, 'name': pk['name'], 'city': city, 'area': rec['area'],
                   'lines': len(lines),
+                  'li': sum(1 for L in lines if L['t'] == 'in'),
+                  'lg': sum(1 for L in lines if L['t'] == 'gate'),
+                  'ln': sum(1 for L in lines if L['t'] == 'near'),
                   'in': sum(1 for s in stops_here if s['t'] == 'in'),
                   'cov': cov})
     out_i += 1

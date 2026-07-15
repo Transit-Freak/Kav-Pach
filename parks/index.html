@@ -11,9 +11,26 @@
   .top{background:#134e4a;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .top h1{font-size:19px;font-weight:900;margin:0}
   .tag{background:#5eead4;color:#134e4a;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
-  .top select{font-family:inherit;font-weight:800;font-size:15px;padding:7px 12px;border-radius:12px;border:none;background:#fff;color:#0f172a;min-width:230px;max-width:340px}
+  .top input{font-family:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:12px;border:none;min-width:220px}
   .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
   .top .sub{font-size:11.5px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
+  .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer}
+  /* ---- טבלה ---- */
+  .tblwrap{max-width:1250px;margin:12px auto;padding:0 10px}
+  .tblcard{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);overflow:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{position:sticky;top:0;background:#f0fdfa;color:#134e4a;font-weight:900;padding:9px 10px;border-bottom:2px solid #99f6e4;cursor:pointer;white-space:nowrap;user-select:none}
+  th .arr{font-size:10px;opacity:.7}
+  td{padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;white-space:nowrap}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#f0fdfa}
+  tr.nosvc td{color:#b91c1c;background:#fff7f7}
+  .num{text-align:center}
+  .pill{display:inline-block;min-width:26px;text-align:center;border-radius:8px;padding:1px 7px;font-weight:900}
+  .pi{background:#dcfce7;color:#14532d}.pg{background:#fef9c3;color:#713f12}.pn{background:#fee2e2;color:#7f1d1d}.p0{background:#f1f5f9;color:#94a3b8}
+  .covmini{display:inline-block;width:54px;height:7px;border-radius:9999px;background:#e2e8f0;overflow:hidden;vertical-align:middle;margin-left:5px}
+  .covmini i{display:block;height:100%;background:#14b8a6}
+  /* ---- תצוגת פארק ---- */
   .wrap{max-width:1250px;margin:12px auto;padding:0 10px;display:grid;grid-template-columns:1fr 430px;gap:12px}
   @media (max-width:900px){.wrap{grid-template-columns:1fr}}
   #map{height:520px;border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08)}
@@ -36,7 +53,7 @@
   .times{display:none;margin-top:7px;font-size:12px;font-weight:700;color:#334155;line-height:1.9}
   .line.open .times{display:block}
   .times b{color:#134e4a;margin-left:4px}
-  .legend{display:flex;gap:12px;font-size:11.5px;font-weight:800;color:#475569;margin-bottom:8px;flex-wrap:wrap}
+  .legend{display:flex;gap:12px;font-size:11.5px;font-weight:800;color:#475569;margin-bottom:8px;flex-wrap:wrap;align-items:center}
   .legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:4px;vertical-align:-1px}
   .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
   h2{font-size:15px;margin:12px 0 8px}
@@ -46,10 +63,31 @@
   <div class="top">
     <h1>🏭 נגישות אזורי תעשייה</h1>
     <span class="tag">ניסוי</span>
-    <select id="park" aria-label="בחירת אזור תעשייה"></select>
+    <button class="btn" id="backbtn" style="display:none">→ חזרה לרשימה</button>
+    <input id="q" type="search" placeholder="חיפוש אזור או יישוב…">
+    <button class="btn" id="csvbtn">⬇ הורדה לאקסל</button>
     <a href="../">→ הקו הבוחן</a>
-    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · נוצר אוטומטית מ-GTFS ו-OSM · מתעדכן שבועית</div>
+    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · נוצר אוטומטית מ-GTFS ו-OSM · מתעדכן שבועית</div>
   </div>
+
+  <div class="tblwrap" id="tblview" style="display:none">
+    <div class="tblcard">
+      <table id="tbl">
+        <thead><tr>
+          <th data-k="name">אזור תעשייה <span class="arr"></span></th>
+          <th data-k="city">יישוב <span class="arr"></span></th>
+          <th data-k="area" class="num">שטח קמ"ר <span class="arr"></span></th>
+          <th data-k="li" class="num">קווים בפנים <span class="arr"></span></th>
+          <th data-k="lg" class="num">בכניסה <span class="arr"></span></th>
+          <th data-k="ln" class="num">בצומת/סביבה <span class="arr"></span></th>
+          <th data-k="in" class="num">תחנות בפנים <span class="arr"></span></th>
+          <th data-k="cov" class="num">כיסוי הליכה <span class="arr"></span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="wrap" id="wrap" style="display:none">
     <div>
       <div class="legend">
@@ -66,39 +104,75 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-const sel=document.getElementById('park'), wrap=document.getElementById('wrap'),
-      panel=document.getElementById('panel'), msg=document.getElementById('msg');
-let map=null, layer=null;
+const tblview=document.getElementById('tblview'), wrap=document.getElementById('wrap'),
+      panel=document.getElementById('panel'), msg=document.getElementById('msg'),
+      backbtn=document.getElementById('backbtn'), q=document.getElementById('q'),
+      tbody=document.querySelector('#tbl tbody');
+let map=null, layer=null, IDX=[], sortK='li', sortDir=-1;
 const TIER={in:'בתוך האזור',gate:'בכניסה',near:'צומת/בסביבה'};
 const COL={in:'#16a34a',gate:'#eab308',near:'#dc2626'};
 
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
+function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 
 fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
-  idx=idx.filter(p=>p.lines>0);
-  const byCity={};
-  for(const p of idx) (byCity[p.city||'ללא עיר']=byCity[p.city||'ללא עיר']||[]).push(p);
-  for(const c of Object.keys(byCity).sort((a,b)=>a.localeCompare(b,'he'))){
-    const og=document.createElement('optgroup'); og.label=c;
-    for(const p of byCity[c].sort((a,b)=>a.name.localeCompare(b.name,'he'))){
-      const o=document.createElement('option'); o.value=p.f;
-      o.textContent=`${p.name} (${p.lines} קווים)`;
-      og.appendChild(o);
-    }
-    sel.appendChild(og);
-  }
-  const saved=localStorage.getItem('parks-park');
-  if(saved && idx.some(p=>p.f===saved)) sel.value=saved;
-  load(sel.value);
-  sel.onchange=()=>{localStorage.setItem('parks-park',sel.value);load(sel.value)};
+  IDX=idx;
+  renderTable();
+  tblview.style.display='block';
 }).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
 
-function load(f){
+function renderTable(){
+  const f=(q.value||'').trim();
+  let rows=IDX.filter(p=>!f || (p.name+' '+(p.city||'')).includes(f));
+  rows.sort((a,b)=>{
+    const va=a[sortK]??'', vb=b[sortK]??'';
+    const c=(typeof va==='number')? va-vb : String(va).localeCompare(String(vb),'he');
+    return c*sortDir || String(a.name).localeCompare(String(b.name),'he');
+  });
+  tbody.innerHTML=rows.map(p=>`
+    <tr class="${p.lines? '':'nosvc'}" data-f="${p.f}">
+      <td>${esc(p.name)}${p.lines? '':' ⚠'}</td>
+      <td>${esc(p.city||'—')}</td>
+      <td class="num">${p.area}</td>
+      <td class="num">${pill(p.li??0,'pi')}</td>
+      <td class="num">${pill(p.lg??0,'pg')}</td>
+      <td class="num">${pill(p.ln??0,'pn')}</td>
+      <td class="num">${pill(p.in??0,'pi')}</td>
+      <td class="num">${Math.round((p.cov||0)*100)}%<span class="covmini"><i style="width:${Math.round((p.cov||0)*100)}%"></i></span></td>
+    </tr>`).join('');
+  document.querySelectorAll('#tbl th').forEach(th=>{
+    th.querySelector('.arr').textContent = th.dataset.k===sortK ? (sortDir<0?'▼':'▲') : '';
+  });
+}
+document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;
+  if(sortK===k) sortDir*=-1; else {sortK=k; sortDir=(k==='name'||k==='city')?1:-1;}
+  renderTable();
+});
+q.oninput=renderTable;
+tbody.onclick=e=>{
+  const tr=e.target.closest('tr');
+  if(tr) openPark(tr.dataset.f);
+};
+backbtn.onclick=()=>{wrap.style.display='none';backbtn.style.display='none';tblview.style.display='block'};
+
+document.getElementById('csvbtn').onclick=()=>{
+  const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים בכניסה','קווים בצומת/סביבה','תחנות בפנים','כיסוי הליכה %'];
+  const rows=IDX.map(p=>[p.name,p.city||'',p.area,p.li??0,p.lg??0,p.ln??0,p.in??0,Math.round((p.cov||0)*100)]);
+  const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='נגישות-אזורי-תעשייה.csv'; a.click();
+};
+
+function openPark(f){
   fetch('data/'+f).then(r=>r.json()).then(d=>{
-    wrap.style.display='grid'; msg.style.display='none';
+    tblview.style.display='none'; wrap.style.display='grid'; backbtn.style.display='inline-block';
+    msg.style.display='none';
     if(!map){ map=L.map('map'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       {attribution:'© OpenStreetMap'}).addTo(map); }
+    setTimeout(()=>map.invalidateSize(),50);
     if(layer) layer.remove();
     layer=L.layerGroup().addTo(map);
     let bounds=null;
@@ -111,10 +185,11 @@ function load(f){
       L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[s.t],fillOpacity:1})
         .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[s.t]}${s.d?` · ${s.d} מ' מהגבול`:''}`).addTo(layer);
     }
-    if(bounds) map.fitBounds(bounds.pad(0.25));
+    if(bounds){ setTimeout(()=>map.fitBounds(bounds.pad(0.25)),80); }
     const nin=d.stops.filter(s=>s.t=='in').length, ngate=d.stops.filter(s=>s.t=='gate').length,
           nnear=d.stops.filter(s=>s.t=='near').length;
-    let h=`<div class="stats">
+    let h=`<h2 style="margin:0 0 8px">${esc(d.name)}${d.city?` · ${esc(d.city)}`:''}</h2>
+    <div class="stats">
       <span class="stat">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat">תחנות בפנים <b>${nin}</b></span>
       <span class="stat">בכניסה <b>${ngate}</b></span>
@@ -123,8 +198,9 @@ function load(f){
     </div>
     <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכה: ${Math.round(d.cov400*100)}% מהשטח במרחק 400 מ' מתחנה שבאזור עצמו</div>
     <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
-    if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהצומת/מהכניסה</div>`;
-    h+=`<h2>קווים (${d.lines.length}) — לחצו לשעות המלאות</h2>`;
+    if(!d.lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית באזור הזה או בטווח 450 מ' ממנו</div>`;
+    else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהצומת/מהכניסה</div>`;
+    if(d.lines.length) h+=`<h2>קווים (${d.lines.length}) — לחצו לשעות המלאות</h2>`;
     for(const L2 of d.lines){
       const wd=L2.wd||[];
       h+=`<div class="line" onclick="this.classList.toggle('open')">
