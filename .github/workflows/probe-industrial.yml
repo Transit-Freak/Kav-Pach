@@ -1,0 +1,102 @@
+name: probe-industrial
+
+# בדיקה חד-פעמית: מושך את dataset אזורי-התעשייה מ-data.gov.il (CKAN datastore),
+# מדווח את מבנה השדות, האם יש גאומטריה (קואורדינטות/פוליגון), סה"כ רשומות ודוגמאות.
+# דוחף דוח ל-probe-industrial-out. משמש להחליט אם לשלב את המקור הרשמי.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-industrial.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-industrial
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pull industrial-zones dataset from data.gov.il
+        run: |
+          set +e
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse
+          out=[]
+          def log(s): print(s); out.append(str(s))
+          RID="30af8da4-7586-4b00-ac88-c5ee75251632"
+          BASE="https://data.gov.il/api/3/action/"
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+          def get(url):
+              req=urllib.request.Request(url, headers={"user-agent":UA,"accept":"application/json"})
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  return json.load(r)
+
+          # 1) datastore_search — שדות, סה"כ, דוגמאות
+          try:
+              u=BASE+"datastore_search?"+urllib.parse.urlencode({"resource_id":RID,"limit":8})
+              j=get(u)
+              res=j.get("result",{})
+              fields=res.get("fields",[])
+              total=res.get("total")
+              recs=res.get("records",[])
+              log("=== datastore_search ===")
+              log("סה\"כ רשומות: %s"%total)
+              log("")
+              log("שדות (%d):"%len(fields))
+              geom_hint=[]
+              for f in fields:
+                  fid=f.get("id"); ftype=f.get("type")
+                  log("   - %-30s [%s]"%(fid,ftype))
+                  low=str(fid).lower()
+                  if any(k in low for k in ("lat","lon","lng","x","y","geom","coord","north","east","itm","rt","סימן","קו","נצ","gis","polygon","shape")):
+                      geom_hint.append(fid)
+              log("")
+              log("שדות שנראים גאוגרפיים: %s"%(geom_hint or "— לא נמצאו במבט ראשון"))
+              log("")
+              log("=== 3 רשומות לדוגמה ===")
+              for i,rec in enumerate(recs[:3]):
+                  log("--- רשומה %d ---"%(i+1))
+                  for k,v in rec.items():
+                      sv=str(v)
+                      if len(sv)>120: sv=sv[:120]+"…"
+                      log("   %s: %s"%(k,sv))
+                  log("")
+              json.dump(res, open("industrial-sample.json","w"), ensure_ascii=False, indent=1)
+          except Exception as e:
+              log("datastore_search נכשל: %r"%e)
+
+          # 2) package_show — מטא-דאטה, אולי משאב GeoJSON/SHP נלווה
+          try:
+              # ה-package מכיל את ה-resource; ננסה לגלות אותו לפי חיפוש
+              u=BASE+"resource_show?"+urllib.parse.urlencode({"id":RID})
+              j=get(u)
+              r=j.get("result",{})
+              log("=== resource_show ===")
+              for k in ("name","format","description","url","datastore_active"):
+                  if k in r: log("   %s: %s"%(k,str(r[k])[:160]))
+          except Exception as e:
+              log("resource_show נכשל: %r"%e)
+
+          open("probe-industrial.txt","w").write("\n".join(out))
+          PY
+          ls -la probe-industrial.txt 2>/dev/null || true
+      - name: Push results
+        run: |
+          set -euo pipefail
+          cp probe-industrial.txt /tmp/r.txt 2>/dev/null || echo "no report">/tmp/r.txt
+          cp industrial-sample.json /tmp/s.json 2>/dev/null || echo '{}'>/tmp/s.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan probe-ind-tmp; git reset
+          find . -maxdepth 1 -mindepth 1 -not -name '.git' -exec rm -rf {} +
+          cp /tmp/r.txt probe-industrial.txt; cp /tmp/s.json industrial-sample.json
+          git add -A; git commit -m "probe: industrial-zones dataset structure from data.gov.il"
+          git push -f origin probe-ind-tmp:probe-industrial-out
