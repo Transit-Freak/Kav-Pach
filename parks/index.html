@@ -250,7 +250,7 @@ function openPark(f,push=true){
       <span class="stat">צומת/סביבה <b>${nnear}</b></span>
       <span class="stat">שבילים ממופים <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
     </div>
-    <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכה: ${Math.round(d.cov400*100)}% מהשטח במרחק 400 מ' מתחנה שבאזור עצמו</div>
+    <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
     <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
     if(!d.lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית באזור הזה או בטווח 450 מ' ממנו</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהצומת/מהכניסה</div>`;
@@ -270,7 +270,7 @@ function openPark(f,push=true){
         </div>
       </div>`;
     }
-    h+=`<div class="note">⚠ שכבת המדרכות/שבילים מציגה רק מה שממופה ב-OSM — היעדר קו על המפה אינו הוכחה שאין מדרכה. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=`<div class="note">⚠ "כיסוי הליכתיות" = אחוז שטח האזור שנמצא במרחק 100 מ' משביל הולכי-רגל <b>ממופה ב-OSM</b>. מיפוי השבילים ב-OSM חלקי, ולכן ערך נמוך יכול לנבוע גם ממחסור במיפוי ולא רק ממחסור בשבילים בפועל. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
 }

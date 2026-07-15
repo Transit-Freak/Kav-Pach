@@ -126,6 +126,21 @@ def bbox(pk):
     las = [a for pts in pk['polys'] for a, b in pts]
     los = [b for pts in pk['polys'] for a, b in pts]
     return min(las), max(las), min(los), max(los)
+
+# מצב "אזורים בלבד": פולט את תיבות-הגבול (מרופדות) של האזורים האמיתיים ועוצר.
+# משמש את ה-workflow לשלב-שני — משיכת שבילי-הולכי-רגל מ-Overpass רק סביבם,
+# כדי לכסות את כל האזורים (גם ללא-שם) בלי להתקע ב-around על אלפי פוליגונים.
+if os.environ.get('EMIT_REGIONS'):
+    REG_PAD = 0.0027   # ~300מ' ריפוד לתפיסת שבילים בשולי האזור
+    regions = []
+    for pk in parks:
+        la1, la2, lo1, lo2 = bbox(pk)
+        regions.append([round(la1 - REG_PAD, 5), round(lo1 - REG_PAD, 5),
+                        round(la2 + REG_PAD, 5), round(lo2 + REG_PAD, 5)])
+    out = os.environ.get('REGIONS_OUT', 'regions.json')
+    json.dump(regions, open(out, 'w'), separators=(',', ':'))
+    print('אזורים שנפלטו:', len(regions), '->', out)
+    raise SystemExit(0)
 CELL = 0.02   # ~2 ק"מ
 grid = defaultdict(list)
 for i, pk in enumerate(parks):
@@ -275,9 +290,22 @@ for pi, pk in enumerate(parks):
             lines.append(rec)
     lines.sort(key=lambda L: (TIER_RANK[L['t']],
                               int(re.match(r'\d+', L['num']).group(0)) if re.match(r'\d+', L['num']) else 999))
-    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול תחנות in/gate
+    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'.
+    # כל שביל נשמר עם תיבת-גבול מטרית לדחייה-מהירה — נקודה רחוקה מהתיבה
+    # מדלגת על חישוב-המרחק היקר לאותו שביל.
     cl = pk['cl']
-    cov_pts = [xy(s['la'], s['lo'], cl) for s in stops_here if s['t'] in ('in', 'gate')]
+    foot_segs = []   # (segment_xy, bx1, bx2, by1, by2)
+    la1_p = min(a for pts in pk['polys'] for a, b in pts)
+    la2_p = max(a for pts in pk['polys'] for a, b in pts)
+    lo1_p = min(b for pts in pk['polys'] for a, b in pts)
+    lo2_p = max(b for pts in pk['polys'] for a, b in pts)
+    pad = 0.005
+    for seg in foot:
+        if len(seg) > 1 and any(la1_p - pad < a < la2_p + pad and lo1_p - pad < b < lo2_p + pad for a, b in seg):
+            sxy = [xy(a, b, cl) for a, b in seg]
+            bx1 = min(x for x, y in sxy); bx2 = max(x for x, y in sxy)
+            by1 = min(y for x, y in sxy); by2 = max(y for x, y in sxy)
+            foot_segs.append((sxy, bx1, bx2, by1, by2))
     total = hitn = 0
     for pts in pk['polys']:
         la1 = min(a for a, b in pts); la2 = max(a for a, b in pts)
@@ -289,9 +317,13 @@ for pi, pk in enumerate(parks):
             while lo_ <= lo2:
                 if in_poly(la_, lo_, pts):
                     total += 1
-                    p = xy(la_, lo_, cl)
-                    if any(math.hypot(p[0] - q[0], p[1] - q[1]) <= COVER_M for q in cov_pts):
-                        hitn += 1
+                    px, py = xy(la_, lo_, cl)
+                    for sxy, bx1, bx2, by1, by2 in foot_segs:
+                        if px < bx1 - 100 or px > bx2 + 100 or py < by1 - 100 or py > by2 + 100:
+                            continue   # דחייה-מהירה: הנקודה רחוקה מתיבת-השביל
+                        if min(seg_dist((px, py), sxy[i], sxy[i+1]) for i in range(len(sxy)-1)) <= 100:
+                            hitn += 1
+                            break
                 lo_ += step_lo
             la_ += step_la
     cov = round(hitn / total, 3) if total else 0.0
@@ -337,7 +369,7 @@ for pi, pk in enumerate(parks):
                   'lg': sum(1 for L in lines if L['t'] == 'gate'),
                   'ln': sum(1 for L in lines if L['t'] == 'near'),
                   'in': sum(1 for s in stops_here if s['t'] == 'in'),
-                  'cov': cov})
+                  'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4)})
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),

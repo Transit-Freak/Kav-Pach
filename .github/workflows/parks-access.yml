@@ -10,6 +10,7 @@ on:
     paths:
       - '.github/workflows/parks-access.yml'
       - 'tools/parks.py'
+      - 'tools/fetch_footways.py'
   workflow_dispatch:
 
 permissions:
@@ -26,19 +27,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Query Overpass — industrial polygons + footways around them
+      - name: Query Overpass — industrial polygons (בלי around, מהיר)
         run: |
           set -euo pipefail
-          # שני חלקים: כל הפוליגונים התעשייתיים (גם בלי שם — זול), ושבילי הולכי-רגל
-          # רק סביב בעלי-השם (around על עשרות אלפי פוליגונים חסרי-שם תוקע את השרת)
-          Q='[out:json][timeout:600][bbox:29.4,34.2,33.35,35.95];(way["landuse"="industrial"];relation["landuse"="industrial"]["name"];)->.all;.all out geom;(way["landuse"="industrial"]["name"];relation["landuse"="industrial"]["name"];)->.n;(way["highway"~"^(footway|path|pedestrian|steps)$"](around.n:300);way["sidewalk"~"^(both|left|right|separate)$"](around.n:300););out geom;'
+          # רק הפוליגונים התעשייתיים (עם שם ובלי שם). זול — בלי around על אלפי פוליגונים.
+          Q='[out:json][timeout:400][bbox:29.4,34.2,33.35,35.95];(way["landuse"="industrial"];relation["landuse"="industrial"]["name"];);out geom;'
           ok=0
-          for ep in https://overpass.kumi.systems/api/interpreter https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
+          for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
             echo "== trying $ep =="
-            if curl -fsS --max-time 700 --data-urlencode "data=$Q" "$ep" -o parks-raw.json; then ok=1; echo "got $(wc -c < parks-raw.json) bytes"; break; fi
+            if curl -fsS --max-time 450 --data-urlencode "data=$Q" "$ep" -o parks-polys.json; then ok=1; echo "got $(wc -c < parks-polys.json) bytes"; break; fi
             echo "failed, next endpoint"; sleep 45
           done
           [ "$ok" = "1" ] || { echo "all overpass endpoints failed"; exit 1; }
+
+      - name: Compute park regions (קיבוץ+סינון ← תיבות-גבול לשלב-השבילים)
+        run: |
+          set -euo pipefail
+          EMIT_REGIONS=1 PARKS_RAW=parks-polys.json REGIONS_OUT=regions.json python3 tools/parks.py
+          echo "regions: $(wc -c < regions.json) bytes"
+
+      - name: Query Overpass — footways within regions (מכסה גם ללא-שם)
+        run: |
+          set -euo pipefail
+          REGIONS=regions.json FOOT_OUT=footways.json CHUNK=100 python3 tools/fetch_footways.py
+
+      - name: Merge polygons + footways → parks-raw.json
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          a = json.load(open('parks-polys.json'))
+          b = json.load(open('footways.json'))
+          a['elements'] = a.get('elements', []) + b.get('elements', [])
+          json.dump(a, open('parks-raw.json', 'w'))
+          print('merged elements:', len(a['elements']))
+          PY
 
       - name: Fetch GTFS
         run: |
@@ -58,7 +81,7 @@ jobs:
       - name: Commit to main
         run: |
           set -euo pipefail
-          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json parks-polys.json footways.json regions.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4; do
