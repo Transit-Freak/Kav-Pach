@@ -164,6 +164,19 @@ window.addEventListener('popstate',e=>{
   if(e.state&&e.state.park) openPark(e.state.park,false);
   else showTable();
 });
+// החלקה צידית בתצוגת אזור מחזירה לרשימה (בנוסף למחוות הקצה של הטלפון).
+// המפה עצמה מוחרגת — החלקה עליה מזיזה את המפה.
+let _tx=null,_ty=null;
+wrap.addEventListener('touchstart',e=>{
+  if(e.target.closest('#map')){_tx=null;return}
+  _tx=e.touches[0].clientX;_ty=e.touches[0].clientY;
+},{passive:true});
+wrap.addEventListener('touchend',e=>{
+  if(_tx===null)return;
+  const dx=e.changedTouches[0].clientX-_tx, dy=e.changedTouches[0].clientY-_ty;
+  _tx=null;
+  if(Math.abs(dx)>90 && Math.abs(dy)<60) history.back();
+},{passive:true});
 
 document.getElementById('csvbtn').onclick=()=>{
   const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים בכניסה','קווים בצומת/סביבה','תחנות בפנים','כיסוי הליכה %'];
