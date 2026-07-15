@@ -275,9 +275,17 @@ for pi, pk in enumerate(parks):
             lines.append(rec)
     lines.sort(key=lambda L: (TIER_RANK[L['t']],
                               int(re.match(r'\d+', L['num']).group(0)) if re.match(r'\d+', L['num']) else 999))
-    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול תחנות in/gate
+    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'
     cl = pk['cl']
-    cov_pts = [xy(s['la'], s['lo'], cl) for s in stops_here if s['t'] in ('in', 'gate')]
+    foot_segs = []
+    la1_p = min(a for pts in pk['polys'] for a, b in pts)
+    la2_p = max(a for pts in pk['polys'] for a, b in pts)
+    lo1_p = min(b for pts in pk['polys'] for a, b in pts)
+    lo2_p = max(b for pts in pk['polys'] for a, b in pts)
+    pad = 0.005
+    for seg in foot:
+        if any(la1_p - pad < a < la2_p + pad and lo1_p - pad < b < lo2_p + pad for a, b in seg):
+            foot_segs.append([xy(a, b, cl) for a, b in seg])
     total = hitn = 0
     for pts in pk['polys']:
         la1 = min(a for a, b in pts); la2 = max(a for a, b in pts)
@@ -290,7 +298,13 @@ for pi, pk in enumerate(parks):
                 if in_poly(la_, lo_, pts):
                     total += 1
                     p = xy(la_, lo_, cl)
-                    if any(math.hypot(p[0] - q[0], p[1] - q[1]) <= COVER_M for q in cov_pts):
+                    accessible = False
+                    for seg in foot_segs:
+                        d_min = min(seg_dist(p, seg[i], seg[i+1]) for i in range(len(seg)-1)) if len(seg) > 1 else float('inf')
+                        if d_min <= 100:
+                            accessible = True
+                            break
+                    if accessible:
                         hitn += 1
                 lo_ += step_lo
             la_ += step_la
@@ -337,7 +351,7 @@ for pi, pk in enumerate(parks):
                   'lg': sum(1 for L in lines if L['t'] == 'gate'),
                   'ln': sum(1 for L in lines if L['t'] == 'near'),
                   'in': sum(1 for s in stops_here if s['t'] == 'in'),
-                  'cov': cov})
+                  'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4)})
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
