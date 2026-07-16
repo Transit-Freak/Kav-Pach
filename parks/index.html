@@ -266,7 +266,7 @@ function openPark(f,push=true){
         o.open?`<span class="stat">פתוח לשיווק <b>${o.open=='TRUE'?'כן':'לא'}</b></span>`:''
       ].filter(Boolean).join('');
       h+=`<div class="offbox">
-        <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${o.district?` · מחוז ${esc(o.district)}`:''}</div>
+        <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${(o.oname&&o.oname!==d.name)?` · שם רשמי: ${esc(o.oname)}`:''}${o.district?` · מחוז ${esc(o.district)}`:''}</div>
         ${ostats?`<div class="stats" style="margin:6px 0 0">${ostats}</div>`:'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>'}
       </div>`;
     }
