@@ -400,7 +400,7 @@ for pi, pk in enumerate(parks):
            'gen': today.isoformat()}
     off = pk.get('official')
     if off:
-        rec['official'] = {k: off.get(k) for k in ('oname', 'district', 'avail', 'occ', 'cur_emp', 'fut_emp', 'open')}
+        rec['official'] = {k: off.get(k) for k in ('oname', 'district', 'avail', 'occ', 'cur_emp', 'fut_emp')}
     fn = f'p{out_i}.json'
     json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
