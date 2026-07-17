@@ -202,7 +202,6 @@ def city_of(desc):
 
 stop_hits = defaultdict(list)   # stop_id -> [(park_idx, tier, dist_m)]
 stop_info = {}                  # stop_id -> (name, code, la, lo, city)
-junction_sids = set()           # תחנות ששמן צומת/מחלף — לא יעלו מעל 'near' גם בהליכה
 for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
     if r.get('location_type', '0') not in ('', '0'):
         continue
@@ -221,8 +220,6 @@ for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
         if not inside and d > NEAR_M:
             continue
         junction = bool(JUNCTION_RE.search(r.get('stop_name', '')))
-        if junction:
-            junction_sids.add(r['stop_id'])
         tier = 'near' if junction else ('in' if inside else ('gate' if d <= GATE_M else 'near'))
         stop_hits[r['stop_id']].append((pi, tier, int(d)))
         stop_info[r['stop_id']] = (r.get('stop_name', ''), r.get('stop_code', ''),
@@ -356,21 +353,21 @@ if OSRM_URL:
     print('OSRM: קריאות שהצליחו', routed, '| נכשלו', failed, '| זוגות', len(walk),
           '| דולגו (תקציב)', skipped)
 
-def _walk_tier(geo_tier, wm, is_junction):
+def _walk_tier(geo_tier, wm):
+    # סיווג לפי מרחק-הליכה אמיתי בלבד — כולל צמתים: צומת ≤400מ' הליכה נגיש ונספר.
     if geo_tier == 'in':
         return 'in'
     if wm is None:
         return geo_tier            # OSRM לא זמין/נכשל — ספק, נשאר גאומטרי
     if wm <= WALK_OK:
-        return 'near' if is_junction else 'gate'   # צומת לא יעלה מעל 'near'
+        return 'gate'
     if wm <= WALK_FAR:
         return 'near'
     return 'blocked'
 
 # סיווג-מחדש: כל hit מקבל tier לפי הליכה + מרחק-הליכה wm (או None אם אין OSRM)
 for sid, hits in stop_hits.items():
-    isj = sid in junction_sids
-    stop_hits[sid] = [(pi, _walk_tier(tier, walk.get((pi, sid)), isj), d, walk.get((pi, sid)))
+    stop_hits[sid] = [(pi, _walk_tier(tier, walk.get((pi, sid))), d, walk.get((pi, sid)))
                       for (pi, tier, d) in hits]
 
 # ---- הרכבת פלט לכל פארק ----
