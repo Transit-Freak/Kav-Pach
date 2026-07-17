@@ -68,6 +68,7 @@
     <span class="tag">ניסוי</span>
     <button class="btn" id="backbtn" style="display:none">→ חזרה לרשימה</button>
     <button class="btn" id="heatbtn" style="display:none">🗺 מפת חום</button>
+    <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…">
     <button class="btn" id="csvbtn">⬇ הורדה לאקסל</button>
     <a href="../">→ הקו הבוחן</a>
@@ -119,10 +120,17 @@ const tblview=document.getElementById('tblview'), wrap=document.getElementById('
       heatview=document.getElementById('heatview'), q=document.getElementById('q'),
       tbody=document.querySelector('#tbl tbody');
 let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sortDir=-1;
+let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מחדל) · 'e'=עד הכניסה/קצה
 const TIER={in:'בתוך האזור',gate:'נגיש · עד ~5 דק׳ הליכה',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
 const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
+// לפי המצב: tier, זמן ומרחק הליכה, וספירת-קווים לאזור
+function sTier(s){return (WALKMODE=='c'?s.t:s.te)||s.t}
+function sWt(s){return WALKMODE=='c'?s.wt:s.wte}
+function sWm(s){return WALKMODE=='c'?s.wm:s.wme}
+function cnt(p,k){const m={li:'lie',lg:'lge',ln:'lne'};return (WALKMODE=='c'?p[k]:p[m[k]])||0}
 function walkTxt(s){
-  if(s.wt!=null) return `🚶 ${s.wt} דק׳ · ${s.wm} מ׳ הליכה אמיתית`;
+  const wt=sWt(s),wm=sWm(s);
+  if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)`;
   if(s.d!=null) return `${s.d} מ׳ (מרחק אווירי — אין נתוני הליכה)`;
   return '';
 }
@@ -147,22 +155,23 @@ fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
 function renderTable(){
   const f=(q.value||'').trim();
   let rows=IDX.filter(p=>!f || (p.name+' '+(p.city||'')).includes(f));
+  const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(p[k]??'');
   rows.sort((a,b)=>{
-    const va=a[sortK]??'', vb=b[sortK]??'';
+    const va=val(a,sortK), vb=val(b,sortK);
     const c=(typeof va==='number')? va-vb : String(va).localeCompare(String(vb),'he');
     return c*sortDir || String(a.name).localeCompare(String(b.name),'he');
   });
-  tbody.innerHTML=rows.map(p=>`
-    <tr class="${p.lines? '':'nosvc'}" data-f="${p.f}">
-      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':''}${p.lines? '':' ⚠'}</td>
+  tbody.innerHTML=rows.map(p=>{const svc=cnt(p,'li')+cnt(p,'lg')+cnt(p,'ln');return `
+    <tr class="${svc? '':'nosvc'}" data-f="${p.f}">
+      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':''}${svc? '':' ⚠'}</td>
       <td>${esc(p.city||'—')}</td>
       <td class="num">${p.area}</td>
-      <td class="num">${pill(p.li??0,'pi')}</td>
-      <td class="num">${pill(p.lg??0,'pg')}</td>
-      <td class="num">${pill(p.ln??0,'pn')}</td>
+      <td class="num">${pill(cnt(p,'li'),'pi')}</td>
+      <td class="num">${pill(cnt(p,'lg'),'pg')}</td>
+      <td class="num">${pill(cnt(p,'ln'),'pn')}</td>
       <td class="num">${pill(p.in??0,'pi')}</td>
       <td class="num">${Math.round((p.cov||0)*100)}%<span class="covmini"><i style="width:${Math.round((p.cov||0)*100)}%"></i></span></td>
-    </tr>`).join('');
+    </tr>`}).join('');
   document.querySelectorAll('#tbl th').forEach(th=>{
     th.querySelector('.arr').textContent = th.dataset.k===sortK ? (sortDir<0?'▼':'▲') : '';
   });
@@ -192,9 +201,10 @@ function openHeatmap(){
   const hcol=(n)=>{if(n===0)return'#dc2626';if(n<=5)return'#eab308';if(n<=15)return'#16a34a';return'#065f46'};
   const hsiz=(n)=>{if(n===0)return 6;if(n<=5)return 12;if(n<=15)return 18;return 24};
   for(const p of IDX){
-    if(!p.li) continue;
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(p.li),color:'#fff',weight:2.5,fillColor:hcol(p.li),fillOpacity:.85})
-      .bindPopup(`<b>${esc(p.name)}</b><br>קווים בפנים: ${p.li}<br>סה"כ קווים: ${p.lines}`)
+    const li=cnt(p,'li');
+    if(!li) continue;
+    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(li),color:'#fff',weight:2.5,fillColor:hcol(li),fillOpacity:.85})
+      .bindPopup(`<b>${esc(p.name)}</b><br>קווים בפנים: ${li}<br>מדידה: עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור`)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
@@ -203,6 +213,15 @@ function openHeatmap(){
   if(bounds) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
 }
 heatbtn.onclick=openHeatmap;
+// מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
+document.getElementById('modebtn').onclick=()=>{
+  WALKMODE = WALKMODE=='c'?'e':'c';
+  document.getElementById('modebtn').textContent = WALKMODE=='c'?'🎯 מדידה: מרכז':'🚪 מדידה: כניסה';
+  renderTable();
+  if(heatview.style.display!=='none') openHeatmap();
+  const h=decodeURIComponent((location.hash||'').slice(1));
+  if(wrap.style.display!=='none' && h) openPark(h,false);
+};
 backbtn.onclick=()=>history.back();
 // כפתור "אחורה" של הטלפון/דפדפן מחזיר לרשימה במקום לעזוב את העמוד
 window.addEventListener('popstate',e=>{
@@ -225,7 +244,7 @@ wrap.addEventListener('touchend',e=>{
 
 document.getElementById('csvbtn').onclick=()=>{
   const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)','תחנות בפנים','כיסוי הליכה %'];
-  const rows=IDX.map(p=>[p.name,p.city||'',p.area,p.li??0,p.lg??0,p.ln??0,p.in??0,Math.round((p.cov||0)*100)]);
+  const rows=IDX.map(p=>[p.name,p.city||'',p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),p.in??0,Math.round((p.cov||0)*100)]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
@@ -249,22 +268,23 @@ function openPark(f,push=true){
       bounds=bounds?bounds.extend(pg.getBounds()):pg.getBounds();
     }
     for(const seg of d.foot) L.polyline(seg,{color:'#14b8a6',weight:2,opacity:.8}).addTo(layer);
+    const cen=polyCentroid(d.polys);
     for(const s of d.stops){
-      const cen=polyCentroid(d.polys);
+      if(sTier(s)=='blocked') continue;   // מעל 10 דק' במצב הנוכחי — לא מוצגת
       const dir=`https://www.google.com/maps/dir/?api=1&origin=${s.la},${s.lo}&destination=${cen[0]},${cen[1]}&travelmode=walking`;
-      L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[s.t]||'#94a3b8',fillOpacity:1})
-        .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[s.t]||s.t}<br>${walkTxt(s)}<br><a href="${dir}" target="_blank" rel="noopener">מסלול הליכה ›</a>`).addTo(layer);
+      L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[sTier(s)]||'#94a3b8',fillOpacity:1})
+        .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[sTier(s)]||sTier(s)}<br>${walkTxt(s)}<br><a href="${dir}" target="_blank" rel="noopener">מסלול הליכה ›</a>`).addTo(layer);
     }
     if(bounds){ setTimeout(()=>map.fitBounds(bounds.pad(0.25)),80); }
-    const nin=d.stops.filter(s=>s.t=='in').length, ngate=d.stops.filter(s=>s.t=='gate').length,
-          nnear=d.stops.filter(s=>s.t=='near').length, nblk=d.stops.filter(s=>s.t=='blocked').length;
+    const lines=(WALKMODE=='c'?d.lines:(d.linesE||d.lines));
+    const nin=d.stops.filter(s=>sTier(s)=='in').length, ngate=d.stops.filter(s=>sTier(s)=='gate').length,
+          nnear=d.stops.filter(s=>sTier(s)=='near').length;
     let h=`<h2 style="margin:0 0 8px">${esc(d.name)}${d.city?` · ${esc(d.city)}`:''}</h2>
     <div class="stats">
       <span class="stat">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat">תחנות בפנים <b>${nin}</b></span>
       <span class="stat">נגיש 🚶 <b>${ngate}</b></span>
       <span class="stat">רחוק 🚶 <b>${nnear}</b></span>
-      ${nblk?`<span class="stat" style="color:#64748b">חסום <b>${nblk}</b></span>`:''}
       <span class="stat">שבילים ממופים <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
     </div>
     <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
@@ -282,10 +302,10 @@ function openPark(f,push=true){
         ${ostats?`<div class="stats" style="margin:6px 0 0">${ostats}</div>`:'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>'}
       </div>`;
     }
-    if(!d.lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית באזור הזה או בטווח 450 מ' ממנו</div>`;
-    else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהצומת/מהכניסה</div>`;
-    if(d.lines.length) h+=`<h2>קווים (${d.lines.length}) — לחצו לשעות המלאות</h2>`;
-    for(const L2 of d.lines){
+    if(!lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
+    else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהכניסה/הסביבה</div>`;
+    if(lines.length) h+=`<h2>קווים (${lines.length}) — לחצו לשעות המלאות</h2>`;
+    for(const L2 of lines){
       const wd=L2.wd||[];
       h+=`<div class="line" onclick="this.classList.toggle('open')">
         <div class="lhead"><span class="lnum">${esc(L2.num)}</span>
@@ -300,7 +320,7 @@ function openPark(f,push=true){
         </div>
       </div>`;
     }
-    h+=`<div class="note">🚶 סיווג התחנות לפי <b>זמן הליכה אמיתי</b> (OSRM, עוקף מחסומים): נגיש ≤5 דק׳ · רחוק 5–10 דק׳. תחנה שמעל 10 דק׳ הליכה (למשל קרובה אווירית אך מעבר לכביש מהיר) <b>אינה מוצגת ואינה נספרת</b> — היא לא באמת משרתת את האזור. היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ הכול כבול לשלמות מיפוי ה-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=`<div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. הכפתור <b>"מדידה"</b> למעלה מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ הכול כבול לשלמות מיפוי ה-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
 }

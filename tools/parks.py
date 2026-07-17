@@ -304,11 +304,12 @@ def _boundary_samples(pk, k=8):
     step = len(pts) / k
     return [pts[int(i * step)] for i in range(k)]
 
-def _osrm_walk(origins, dests):
-    # מחזיר לכל origin זוג (מטרים, שניות) ליעד הקרוב-ביותר-בזמן מבין dests,
-    # או (None, None). origins ו-dests יכולים להיות באורכים שונים.
+def _osrm_walk(origins, bdests, center):
+    # קריאה אחת מחזירה לכל origin שני מדדים: עד הקצה הקרוב (min על bdests) ועד
+    # מרכז האזור (center, יעד נוסף). מחזיר (edge_m, edge_s, center_m, center_s).
+    dests = bdests + [center]
     coords = origins + dests
-    no, nd = len(origins), len(dests)
+    no, nb, nd = len(origins), len(bdests), len(dests)
     locs = ';'.join('%f,%f' % (lo, la) for la, lo in coords)
     src = ';'.join(str(i) for i in range(no))
     dst = ';'.join(str(i) for i in range(no, no + nd))
@@ -320,23 +321,23 @@ def _osrm_walk(origins, dests):
     dur = j.get('durations') or []
     out = []
     for i in range(no):
-        best = None   # (שניות, מטרים) עם השנייה המינימלית
         drow = dur[i] if i < len(dur) else []
         mrow = dist[i] if i < len(dist) else []
-        for jx in range(nd):
+        best = None   # הקצה הקרוב: (שניות, מטרים) מינימלי על bdests
+        for jx in range(nb):
             s = drow[jx] if jx < len(drow) else None
             if s is None:
                 continue
             if best is None or s < best[0]:
-                m = mrow[jx] if jx < len(mrow) else None
-                best = (s, m)
-        if best is None:
-            out.append((None, None))
-        else:
-            out.append((int(best[1]) if best[1] is not None else None, int(best[0])))
+                best = (s, mrow[jx] if jx < len(mrow) else None)
+        em, es = (best[1], best[0]) if best else (None, None)
+        cs = drow[nb] if nb < len(drow) else None       # מרכז = היעד האחרון
+        cm = mrow[nb] if nb < len(mrow) else None
+        out.append((int(em) if em is not None else None, int(es) if es is not None else None,
+                    int(cm) if cm is not None else None, int(cs) if cs is not None else None))
     return out
 
-walk = {}   # (pi, sid) -> (meters, seconds) או None
+walk = {}   # (pi, sid) -> (edge_m, edge_s, center_m, center_s) או None
 if OSRM_URL:
     # cache מתמיד: השרת הציבורי איטי מכדי לנתב את כל האזורים בריצה אחת, אז
     # שומרים תוצאות בין ריצות. מפתח = תחנה + מרכז-אזור מעוגל (יציב בין ריצות).
@@ -367,9 +368,9 @@ if OSRM_URL:
         todo = []
         for (sid, sla, slo) in cands:   # קודם מ-cache, מה שחסר -> לניתוב
             k = _ckey(sid, pk)
-            if k in cache:
-                v = cache[k]
-                walk[(pi, sid)] = tuple(v) if v else None
+            v = cache.get(k)
+            if v and len(v) == 4:        # פורמט 4-ערכי בלבד (ישן -> ננתב מחדש)
+                walk[(pi, sid)] = tuple(v)
                 newcache[k] = v
                 fromcache += 1
             else:
@@ -379,20 +380,21 @@ if OSRM_URL:
         if time.monotonic() - t0 > OSRM_BUDGET:
             skipped += len(todo)
             continue
-        dests = _boundary_samples(pk, 8)   # יעדי-גבול משותפים לכל תחנות האזור
-        for c0 in range(0, len(todo), 80):   # 80 מקורות + 8 יעדים ≤ מגבלת הטבלה
+        dests = _boundary_samples(pk, 8)   # יעדי-גבול משותפים; +מרכז האזור בפנים
+        center = (pk['cen'][0], pk['cen'][1])
+        for c0 in range(0, len(todo), 80):   # 80 מקורות + 9 יעדים ≤ מגבלת הטבלה
             chunk = todo[c0:c0 + 80]
             origins = [(sla, slo) for _, sla, slo in chunk]
             try:
-                res = _osrm_walk(origins, dests)
+                res = _osrm_walk(origins, dests, center)
                 routed += 1
             except Exception:
-                res = [(None, None)] * len(chunk)
+                res = [(None, None, None, None)] * len(chunk)
                 failed += 1
-            for (sid, _, _), ms in zip(chunk, res):
-                walk[(pi, sid)] = ms
-                if ms and ms[1] is not None:   # שומרים רק תוצאה תקינה (כשל -> ננסה שוב)
-                    newcache[_ckey(sid, pk)] = list(ms)
+            for (sid, _, _), v in zip(chunk, res):
+                walk[(pi, sid)] = v
+                if v and v[1] is not None:   # שומרים רק תוצאה תקינה (כשל -> ננסה שוב)
+                    newcache[_ckey(sid, pk)] = list(v)
             time.sleep(0.4)
     os.makedirs(OUTDIR, exist_ok=True)
     json.dump(newcache, open(os.path.join(OUTDIR, 'walk-cache.json'), 'w'), separators=(',', ':'))
@@ -411,15 +413,17 @@ def _walk_tier(geo_tier, sec):
         return 'near'
     return 'blocked'
 
-# סיווג-מחדש: כל hit -> (pi, tier, d, wm[מטר], wt[דקות])
+# סיווג-מחדש: כל hit -> (pi, d, tc, te, cm, cmin, em, emin)
+#   tc/cm/cmin = מרכז (ברירת-מחדל) · te/em/emin = קצה (כניסה). כשאין OSRM שניהם גאומטריים.
+def _mins(sec):
+    return round(sec / 60) if sec is not None else None
 for sid, hits in stop_hits.items():
     nh = []
     for (pi, tier, d) in hits:
-        ms = walk.get((pi, sid))
-        meters = ms[0] if ms else None
-        sec = ms[1] if ms else None
-        wt = round(sec / 60) if sec is not None else None
-        nh.append((pi, _walk_tier(tier, sec), d, meters, wt))
+        v = walk.get((pi, sid))
+        em, es, cm, cs = v if (v and len(v) == 4) else (None, None, None, None)
+        nh.append((pi, d, _walk_tier(tier, cs), _walk_tier(tier, es),
+                   cm, _mins(cs), em, _mins(es)))
     stop_hits[sid] = nh
 
 # ---- הרכבת פלט לכל פארק ----
@@ -442,30 +446,18 @@ def _foot_near(la1_p, la2_p, lo1_p, lo2_p, pad=0.008):
             si |= foot_grid.get((gy, gx), set())
     return si
 
-index = []
-out_i = 0
-_noname_ser = {}
-for pi, pk in enumerate(parks):
-    stops_here = []
-    for sid, hits in stop_hits.items():
-        if sid not in seen_active:
-            continue
-        for hpi, tier, d, wm, wt in hits:
-            if hpi == pi:
-                nm, code, la, lo, city = stop_info[sid]
-                stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo,
-                                   't': tier, 'd': d, 'wm': wm, 'wt': wt, 'city': city})
-    # קווים: לכל route בוחרים את התחנה הטובה ביותר בפארק. תחנה 'blocked'
-    # (מעל 800מ' הליכה אמיתית) אינה משרתת את האזור — לא נספרת.
+def build_lines(stops_here, tk):
+    # בונה את רשימת הקווים והספירות לפי מפתח-tier נתון: 'tc' (מרכז) או 'te' (קצה).
+    # תחנה 'blocked' באותו מצב אינה משרתת — לא נספרת.
     best_stop = {}
     seen_rids = set()
     for s in stops_here:
-        if s['t'] == 'blocked':
+        if s[tk] == 'blocked':
             continue
         for (rid, gk) in deps_by_sid.get(s['sid'], ()):
             seen_rids.add(rid)
             cur = best_stop.get(rid)
-            rank = (TIER_RANK[s['t']], s['d'])
+            rank = (TIER_RANK[s[tk]], s['d'])
             if cur is None or rank < cur[0]:
                 best_stop[rid] = (rank, s)
     lines = []
@@ -473,7 +465,7 @@ for pi, pk in enumerate(parks):
         _, s = best_stop[rid]
         num, longnm = route_meta.get(rid, ('?', ''))
         dest = longnm.split('<->')[-1].split('-')[0].strip() if '<->' in longnm else longnm[:30]
-        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s['t']}
+        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk]}
         for gk, _ in DAYGROUPS:
             mins = sorted(set(deps.get((s['sid'], rid, gk), [])))
             rec[gk] = [hhmm(m) for m in mins]
@@ -490,6 +482,28 @@ for pi, pk in enumerate(parks):
             lines.append(rec)
     lines.sort(key=lambda L: (TIER_RANK[L['t']],
                               int(re.match(r'\d+', L['num']).group(0)) if re.match(r'\d+', L['num']) else 999))
+    counts = (sum(1 for L in lines if L['t'] == 'in'),
+              sum(1 for L in lines if L['t'] == 'gate'),
+              sum(1 for L in lines if L['t'] == 'near'))
+    return lines, counts
+
+index = []
+out_i = 0
+_noname_ser = {}
+for pi, pk in enumerate(parks):
+    stops_here = []
+    for sid, hits in stop_hits.items():
+        if sid not in seen_active:
+            continue
+        for hit in hits:
+            if hit[0] == pi:
+                hpi, d, tc, te, cm, cmin, em, emin = hit
+                nm, code, la, lo, city = stop_info[sid]
+                stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo, 'd': d, 'city': city,
+                                   'tc': tc, 'te': te, 'wmc': cm, 'wtc': cmin, 'wme': em, 'wte': emin})
+    # קווים+ספירות פעמיים: מרכז (ברירת-מחדל) וקצה (כניסה)
+    lines_c, (lic, lgc, lnc) = build_lines(stops_here, 'tc')
+    lines_e, (lie, lge, lne) = build_lines(stops_here, 'te')
     # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'.
     # כל שביל נשמר עם תיבת-גבול מטרית לדחייה-מהירה — נקודה רחוקה מהתיבה
     # מדלגת על חישוב-המרחק היקר לאותו שביל.
@@ -556,11 +570,16 @@ for pi, pk in enumerate(parks):
         base = ('אזור תעשייה — ' + city) if city else 'אזור תעשייה ללא שם'
         _noname_ser[base] = _noname_ser.get(base, 0) + 1
         pk['name'] = base + (f" ({_noname_ser[base]})" if _noname_ser[base] > 1 else '')
+    # תחנה שחסומה בשני המצבים (מרכז וקצה) לא תוצג כלל; אחרת נשמרת עם שני
+    # ה-tiers (t=מרכז ברירת-מחדל, te=קצה) ושני הזמנים, וה-frontend מחליף לפי המתג.
+    outstops = [{'n': s['n'], 'c': s['c'], 'la': s['la'], 'lo': s['lo'], 'd': s['d'],
+                 't': s['tc'], 'te': s['te'], 'wt': s['wtc'], 'wm': s['wmc'],
+                 'wte': s['wte'], 'wme': s['wme']}
+                for s in stops_here if not (s['tc'] == 'blocked' and s['te'] == 'blocked')]
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
-           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd', 'wm', 'wt')}
-                     for s in stops_here if s['t'] != 'blocked'],
-           'lines': lines, 'cov400': cov,
+           'stops': outstops,
+           'lines': lines_c, 'linesE': lines_e, 'cov400': cov,
            'foot': fw, 'footlen': int(flen),
            'gen': today.isoformat()}
     off = pk.get('official')
@@ -570,11 +589,10 @@ for pi, pk in enumerate(parks):
     json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     index.append({'f': fn, 'name': pk['name'], 'city': city, 'area': rec['area'],
-                  'lines': len(lines),
-                  'li': sum(1 for L in lines if L['t'] == 'in'),
-                  'lg': sum(1 for L in lines if L['t'] == 'gate'),
-                  'ln': sum(1 for L in lines if L['t'] == 'near'),
-                  'in': sum(1 for s in stops_here if s['t'] == 'in'),
+                  'lines': len(lines_c),
+                  'li': lic, 'lg': lgc, 'ln': lnc,             # מרכז (ברירת-מחדל)
+                  'lie': lie, 'lge': lge, 'lne': lne,          # קצה (כניסה)
+                  'in': sum(1 for s in stops_here if s['tc'] == 'in'),
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
                   'off': 1 if off else 0})
     out_i += 1
