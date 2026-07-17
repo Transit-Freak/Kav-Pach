@@ -49,7 +49,7 @@
   .lnum{background:#134e4a;color:#fff;border-radius:7px;padding:2px 10px;font-weight:900;font-size:14.5px}
   .ldest{font-weight:800;font-size:13px;color:#334155;flex:1;min-width:120px}
   .tier{font-size:10.5px;font-weight:900;border-radius:9999px;padding:2px 9px}
-  .tier.in{background:#dcfce7;color:#14532d}.tier.gate{background:#fef9c3;color:#713f12}.tier.near{background:#fee2e2;color:#7f1d1d}
+  .tier.in{background:#dcfce7;color:#14532d}.tier.gate{background:#ecfccb;color:#3f6212}.tier.near{background:#fef9c3;color:#713f12}.tier.blocked{background:#e2e8f0;color:#475569}
   .lsub{font-size:11.5px;color:#64748b;font-weight:700;margin-top:3px}
   .gaps{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
   .gap{background:#fee2e2;color:#991b1b;border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:800}
@@ -82,8 +82,8 @@
           <th data-k="city">יישוב <span class="arr"></span></th>
           <th data-k="area" class="num">שטח קמ"ר <span class="arr"></span></th>
           <th data-k="li" class="num">קווים בפנים <span class="arr"></span></th>
-          <th data-k="lg" class="num">בכניסה <span class="arr"></span></th>
-          <th data-k="ln" class="num">בצומת/סביבה <span class="arr"></span></th>
+          <th data-k="lg" class="num">נגיש 🚶 <span class="arr"></span></th>
+          <th data-k="ln" class="num">רחוק 🚶 <span class="arr"></span></th>
           <th data-k="in" class="num">תחנות בפנים <span class="arr"></span></th>
           <th data-k="cov" class="num">כיסוי הליכה <span class="arr"></span></th>
         </tr></thead>
@@ -95,9 +95,10 @@
   <div class="wrap" id="wrap" style="display:none">
     <div>
       <div class="legend">
-        <span><i style="background:#16a34a"></i> תחנה בתוך האזור</span>
-        <span><i style="background:#eab308"></i> בכניסה (עד 150 מ')</span>
-        <span><i style="background:#dc2626"></i> צומת / בסביבה (עד 450 מ')</span>
+        <span><i style="background:#16a34a"></i> בתוך האזור</span>
+        <span><i style="background:#84cc16"></i> נגיש · עד ~400מ׳ הליכה</span>
+        <span><i style="background:#eab308"></i> רחוק · 400–800מ׳ הליכה</span>
+        <span><i style="background:#94a3b8"></i> חסום · מעל 800מ׳ הליכה (לא נספר)</span>
         <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל ממופים</span>
       </div>
       <div id="map"></div>
@@ -119,8 +120,18 @@ const tblview=document.getElementById('tblview'), wrap=document.getElementById('
       heatview=document.getElementById('heatview'), q=document.getElementById('q'),
       tbody=document.querySelector('#tbl tbody');
 let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sortDir=-1;
-const TIER={in:'בתוך האזור',gate:'בכניסה',near:'צומת/בסביבה'};
-const COL={in:'#16a34a',gate:'#eab308',near:'#dc2626'};
+const TIER={in:'בתוך האזור',gate:'נגיש · הליכה קצרה (עד ~400מ׳)',near:'רחוק · 400–800מ׳ הליכה',blocked:'חסום · מעל 800מ׳ הליכה אמיתית'};
+const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
+function walkTxt(s){
+  if(s.wm!=null) return `🚶 ${s.wm} מ׳ · ${Math.max(1,Math.round(s.wm/80))} דק׳ הליכה אמיתית`;
+  if(s.d!=null) return `${s.d} מ׳ (מרחק אווירי — אין נתוני הליכה)`;
+  return '';
+}
+function polyCentroid(polys){
+  let la=0,lo=0,n=0;
+  for(const pg of polys) for(const p of pg){la+=p[0];lo+=p[1];n++;}
+  return n?[la/n,lo/n]:[0,0];
+}
 
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
@@ -214,7 +225,7 @@ wrap.addEventListener('touchend',e=>{
 },{passive:true});
 
 document.getElementById('csvbtn').onclick=()=>{
-  const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים בכניסה','קווים בצומת/סביבה','תחנות בפנים','כיסוי הליכה %'];
+  const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)','תחנות בפנים','כיסוי הליכה %'];
   const rows=IDX.map(p=>[p.name,p.city||'',p.area,p.li??0,p.lg??0,p.ln??0,p.in??0,Math.round((p.cov||0)*100)]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
@@ -240,18 +251,21 @@ function openPark(f,push=true){
     }
     for(const seg of d.foot) L.polyline(seg,{color:'#14b8a6',weight:2,opacity:.8}).addTo(layer);
     for(const s of d.stops){
-      L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[s.t],fillOpacity:1})
-        .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[s.t]}${s.d?` · ${s.d} מ' מהגבול`:''}`).addTo(layer);
+      const cen=polyCentroid(d.polys);
+      const dir=`https://www.google.com/maps/dir/?api=1&origin=${s.la},${s.lo}&destination=${cen[0]},${cen[1]}&travelmode=walking`;
+      L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[s.t]||'#94a3b8',fillOpacity:1})
+        .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[s.t]||s.t}<br>${walkTxt(s)}<br><a href="${dir}" target="_blank" rel="noopener">מסלול הליכה ›</a>`).addTo(layer);
     }
     if(bounds){ setTimeout(()=>map.fitBounds(bounds.pad(0.25)),80); }
     const nin=d.stops.filter(s=>s.t=='in').length, ngate=d.stops.filter(s=>s.t=='gate').length,
-          nnear=d.stops.filter(s=>s.t=='near').length;
+          nnear=d.stops.filter(s=>s.t=='near').length, nblk=d.stops.filter(s=>s.t=='blocked').length;
     let h=`<h2 style="margin:0 0 8px">${esc(d.name)}${d.city?` · ${esc(d.city)}`:''}</h2>
     <div class="stats">
       <span class="stat">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat">תחנות בפנים <b>${nin}</b></span>
-      <span class="stat">בכניסה <b>${ngate}</b></span>
-      <span class="stat">צומת/סביבה <b>${nnear}</b></span>
+      <span class="stat">נגיש 🚶 <b>${ngate}</b></span>
+      <span class="stat">רחוק 🚶 <b>${nnear}</b></span>
+      ${nblk?`<span class="stat" style="color:#64748b">חסום <b>${nblk}</b></span>`:''}
       <span class="stat">שבילים ממופים <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
     </div>
     <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
@@ -287,7 +301,7 @@ function openPark(f,push=true){
         </div>
       </div>`;
     }
-    h+=`<div class="note">⚠ "כיסוי הליכתיות" = אחוז שטח האזור שנמצא במרחק 100 מ' משביל הולכי-רגל <b>ממופה ב-OSM</b>. מיפוי השבילים ב-OSM חלקי, ולכן ערך נמוך יכול לנבוע גם ממחסור במיפוי ולא רק ממחסור בשבילים בפועל. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=`<div class="note">🚶 סיווג התחנות לפי <b>מרחק הליכה אמיתי</b> (OSRM, עוקף מחסומים): נגיש ≤400מ׳ · רחוק 400–800מ׳ · <b>חסום</b> מעל 800מ׳ (למשל תחנה קרובה אווירית אך מעבר לכביש מהיר) — לא נספרת. היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ הכול כבול לשלמות מיפוי ה-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
 }

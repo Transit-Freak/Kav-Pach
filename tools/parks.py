@@ -7,7 +7,7 @@
 # העיקרון המרכזי (בקשת המשתמש): להבדיל בין תחנה שבאמת בתוך הפארק לתחנת
 # צומת/כניסה — השיוך גאומטרי (בתוך הפוליגון / עד 150מ' / עד 450מ'), ושמות
 # צומת/מחלף/כביש לעולם לא נספרים כ"בתוך".
-import csv, json, math, os, re, datetime
+import csv, json, math, os, re, datetime, time, urllib.request
 from collections import defaultdict
 
 RAW = os.environ.get('PARKS_RAW', 'parks-raw.json')
@@ -202,6 +202,7 @@ def city_of(desc):
 
 stop_hits = defaultdict(list)   # stop_id -> [(park_idx, tier, dist_m)]
 stop_info = {}                  # stop_id -> (name, code, la, lo, city)
+junction_sids = set()           # תחנות ששמן צומת/מחלף — לא יעלו מעל 'near' גם בהליכה
 for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
     if r.get('location_type', '0') not in ('', '0'):
         continue
@@ -220,6 +221,8 @@ for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
         if not inside and d > NEAR_M:
             continue
         junction = bool(JUNCTION_RE.search(r.get('stop_name', '')))
+        if junction:
+            junction_sids.add(r['stop_id'])
         tier = 'near' if junction else ('in' if inside else ('gate' if d <= GATE_M else 'near'))
         stop_hits[r['stop_id']].append((pi, tier, int(d)))
         stop_info[r['stop_id']] = (r.get('stop_name', ''), r.get('stop_code', ''),
@@ -285,9 +288,94 @@ deps_by_sid = defaultdict(dict)   # sid -> {(rid,gk): [minutes]}
 for (sid, rid, gk), mins in deps.items():
     deps_by_sid[sid][(rid, gk)] = mins
 
+# ---- הליכה אמיתית (OSRM foot): סיווג-מחדש לפי מרחק-הליכה בפועל ----
+# במקום מרחק אווירי — כמה מטרים באמת צריך ללכת מהתחנה לגבול האזור (עוקף מחסומים).
+# ספים: עד WALK_OK=נגיש ('gate') · עד WALK_FAR=רחוק ('near') · מעבר=חסום ('blocked').
+# תחנה שה-OSRM לא החזיר לה מסלול נשארת בסיווג הגאומטרי (ספק) עם wm=None.
+# best-effort ומוגבל-זמן — כשל/מגבלת-קצב נופלים חזרה לגאומטרי, לא שוברים בנייה.
+OSRM_URL = os.environ.get('OSRM_URL', '')
+WALK_OK, WALK_FAR = 400, 800
+OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
+
+def _nearest_vertex(la, lo, pk):
+    best = None
+    for pts in pk['polys']:
+        for a, b in pts:
+            dd = (a - la) ** 2 + (b - lo) ** 2
+            if best is None or dd < best[0]:
+                best = (dd, (a, b))
+    return best[1]
+
+def _osrm_walk(origins, dests):
+    # origins,dests: רשימות (la,lo) באורך זהה. מחזיר מטרים origin[i]->dest[i] (או None).
+    coords = origins + dests
+    n = len(origins)
+    locs = ';'.join('%f,%f' % (lo, la) for la, lo in coords)
+    src = ';'.join(str(i) for i in range(n))
+    dst = ';'.join(str(i) for i in range(n, 2 * n))
+    url = '%s/table/v1/foot/%s?sources=%s&destinations=%s&annotations=distance' % (OSRM_URL, locs, src, dst)
+    req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-parks/1.0'})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        dm = json.load(r).get('distances') or []
+    out = []
+    for i in range(n):
+        v = dm[i][i] if (i < len(dm) and i < len(dm[i])) else None
+        out.append(int(v) if v is not None else None)
+    return out
+
+walk = {}   # (pi, sid) -> walk meters (או None)
+if OSRM_URL:
+    park_cands = defaultdict(list)   # pi -> [(sid, la, lo)]
+    for sid, hits in stop_hits.items():
+        if sid not in seen_active:
+            continue
+        _, _, sla, slo, _ = stop_info[sid]
+        for (pi, tier, d) in hits:
+            if tier != 'in':
+                park_cands[pi].append((sid, sla, slo))
+    t0 = time.monotonic()
+    routed = failed = skipped = 0
+    for pi, cands in park_cands.items():
+        if time.monotonic() - t0 > OSRM_BUDGET:
+            skipped += len(cands)
+            continue
+        pk = parks[pi]
+        for c0 in range(0, len(cands), 45):   # מגבלת גודל טבלה בשרת הציבורי
+            chunk = cands[c0:c0 + 45]
+            origins = [(sla, slo) for _, sla, slo in chunk]
+            dests = [_nearest_vertex(sla, slo, pk) for _, sla, slo in chunk]
+            try:
+                wm = _osrm_walk(origins, dests)
+                routed += 1
+            except Exception:
+                wm = [None] * len(chunk)
+                failed += 1
+            for (sid, _, _), m in zip(chunk, wm):
+                walk[(pi, sid)] = m
+            time.sleep(0.4)
+    print('OSRM: קריאות שהצליחו', routed, '| נכשלו', failed, '| זוגות', len(walk),
+          '| דולגו (תקציב)', skipped)
+
+def _walk_tier(geo_tier, wm, is_junction):
+    if geo_tier == 'in':
+        return 'in'
+    if wm is None:
+        return geo_tier            # OSRM לא זמין/נכשל — ספק, נשאר גאומטרי
+    if wm <= WALK_OK:
+        return 'near' if is_junction else 'gate'   # צומת לא יעלה מעל 'near'
+    if wm <= WALK_FAR:
+        return 'near'
+    return 'blocked'
+
+# סיווג-מחדש: כל hit מקבל tier לפי הליכה + מרחק-הליכה wm (או None אם אין OSRM)
+for sid, hits in stop_hits.items():
+    isj = sid in junction_sids
+    stop_hits[sid] = [(pi, _walk_tier(tier, walk.get((pi, sid)), isj), d, walk.get((pi, sid)))
+                      for (pi, tier, d) in hits]
+
 # ---- הרכבת פלט לכל פארק ----
 os.makedirs(OUTDIR, exist_ok=True)
-TIER_RANK = {'in': 0, 'gate': 1, 'near': 2}
+TIER_RANK = {'in': 0, 'gate': 1, 'near': 2, 'blocked': 3}
 w1, w2 = [int(x[:2]) * 60 + int(x[3:]) for x in GAP_WIN]
 index = []
 out_i = 0
@@ -297,15 +385,18 @@ for pi, pk in enumerate(parks):
     for sid, hits in stop_hits.items():
         if sid not in seen_active:
             continue
-        for hpi, tier, d in hits:
+        for hpi, tier, d, wm in hits:
             if hpi == pi:
                 nm, code, la, lo, city = stop_info[sid]
                 stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo,
-                                   't': tier, 'd': d, 'city': city})
-    # קווים: לכל route בוחרים את התחנה הטובה ביותר בפארק
+                                   't': tier, 'd': d, 'wm': wm, 'city': city})
+    # קווים: לכל route בוחרים את התחנה הטובה ביותר בפארק. תחנה 'blocked'
+    # (מעל 800מ' הליכה אמיתית) אינה משרתת את האזור — לא נספרת.
     best_stop = {}
     seen_rids = set()
     for s in stops_here:
+        if s['t'] == 'blocked':
+            continue
         for (rid, gk) in deps_by_sid.get(s['sid'], ()):
             seen_rids.add(rid)
             cur = best_stop.get(rid)
@@ -400,7 +491,7 @@ for pi, pk in enumerate(parks):
         pk['name'] = base + (f" ({_noname_ser[base]})" if _noname_ser[base] > 1 else '')
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
-           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd')} for s in stops_here],
+           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd', 'wm')} for s in stops_here],
            'lines': lines, 'cov400': cov,
            'foot': fw, 'footlen': int(flen),
            'gen': today.isoformat()}

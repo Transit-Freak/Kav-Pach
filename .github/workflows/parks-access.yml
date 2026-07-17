@@ -24,7 +24,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -84,7 +84,10 @@ jobs:
           set -euo pipefail
           # OFFICIAL רק אם נמשך בהצלחה — אחרת ממשיכים עם OSM בלבד
           OFF=""; [ -f official.json ] && OFF=official.json
-          PARKS_RAW=parks-raw.json OFFICIAL="$OFF" OUTDIR=/tmp/parksout python3 tools/parks.py
+          # OSRM foot (FOSSGIS ציבורי) לסיווג תחנות לפי מרחק-הליכה אמיתי;
+          # best-effort ומוגבל-תקציב בתוך parks.py — כשל נופל חזרה לגאומטרי.
+          OSRM_URL="https://routing.openstreetmap.de/routed-foot" OSRM_BUDGET=1500 \
+            PARKS_RAW=parks-raw.json OFFICIAL="$OFF" OUTDIR=/tmp/parksout python3 tools/parks.py
           ls /tmp/parksout | head -5
           echo "files: $(ls /tmp/parksout | wc -l)"
 
