@@ -504,19 +504,18 @@ for pi, pk in enumerate(parks):
     # קווים+ספירות פעמיים: מרכז (ברירת-מחדל) וקצה (כניסה)
     lines_c, (lic, lgc, lnc) = build_lines(stops_here, 'tc')
     lines_e, (lie, lge, lne) = build_lines(stops_here, 'te')
-    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'.
-    # כל שביל נשמר עם תיבת-גבול מטרית לדחייה-מהירה — נקודה רחוקה מהתיבה
-    # מדלגת על חישוב-המרחק היקר לאותו שביל.
+    # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'. נספרים רק
+    # שבילים ש**נקודה מהם בתוך אזור התעשייה** — לא מדרכות של כבישים גובלים בחוץ.
+    # כל שביל נשמר עם תיבת-גבול מטרית לדחייה-מהירה.
     cl = pk['cl']
     foot_segs = []   # (segment_xy, bx1, bx2, by1, by2)
     la1_p = min(a for pts in pk['polys'] for a, b in pts)
     la2_p = max(a for pts in pk['polys'] for a, b in pts)
     lo1_p = min(b for pts in pk['polys'] for a, b in pts)
     lo2_p = max(b for pts in pk['polys'] for a, b in pts)
-    pad = 0.005
     for si in _foot_near(la1_p, la2_p, lo1_p, lo2_p):
         seg = foot[si]
-        if len(seg) > 1 and any(la1_p - pad < a < la2_p + pad and lo1_p - pad < b < lo2_p + pad for a, b in seg):
+        if len(seg) > 1 and any(in_poly(a, b, pts) for a, b in seg for pts in pk['polys']):
             sxy = [xy(a, b, cl) for a, b in seg]
             bx1 = min(x for x, y in sxy); bx2 = max(x for x, y in sxy)
             by1 = min(y for x, y in sxy); by2 = max(y for x, y in sxy)
@@ -542,14 +541,13 @@ for pi, pk in enumerate(parks):
                 lo_ += step_lo
             la_ += step_la
     cov = round(hitn / total, 3) if total else 0.0
-    # שבילי הולכי-רגל בתחום הפארק (+150מ')
+    # שבילי הולכי-רגל שבתוך האזור בלבד (נקודה מהם בתוך הפוליגון)
     la1, la2, lo1, lo2 = pk['bbox']
-    pad = 0.0025
     fw = []
     flen = 0.0
     for si in _foot_near(la1, la2, lo1, lo2):
         seg = foot[si]
-        if not any(la1 - pad < a < la2 + pad and lo1 - pad < b < lo2 + pad for a, b in seg):
+        if not any(in_poly(a, b, pts) for a, b in seg for pts in pk['polys']):
             continue
         fw.append([[round(a, 5), round(b, 5)] for a, b in seg])
         for (a1, b1), (a2, b2) in zip(seg, seg[1:]):

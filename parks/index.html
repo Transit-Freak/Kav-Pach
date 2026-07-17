@@ -99,7 +99,7 @@
         <span><i style="background:#16a34a"></i> בתוך האזור</span>
         <span><i style="background:#84cc16"></i> נגיש · עד ~5 דק׳ הליכה</span>
         <span><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>
-        <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל ממופים</span>
+        <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל בתוך האזור</span>
       </div>
       <div id="map"></div>
     </div>
@@ -285,7 +285,7 @@ function openPark(f,push=true){
       <span class="stat">תחנות בפנים <b>${nin}</b></span>
       <span class="stat">נגיש 🚶 <b>${ngate}</b></span>
       <span class="stat">רחוק 🚶 <b>${nnear}</b></span>
-      <span class="stat">שבילים ממופים <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
+      <span class="stat">שבילים באזור <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
     </div>
     <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
     <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
