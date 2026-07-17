@@ -26,6 +26,10 @@ MIN_AREA_KM2 = 0.04
 GAP_MIN = 90      # פער בדקות בין הגעות עוקבות שנחשב "חור" בשירות
 GAP_WIN = ('05:30', '20:00')
 JUNCTION_RE = re.compile(r'צומת|מחלף|מסעף|כביש \d')
+# תשתית רכבת (דיפו/מסילה/מוסך) מתויגת לפעמים ב-OSM כ-landuse=industrial אך אינה
+# אזור תעשייה-תעסוקה. רצועה דקה לאורך המסילה חופפת תחנות-כביש ומנפחת ספירת-קווים
+# כוזבת — לכן מסוננת החוצה.
+INFRA_RE = re.compile(r'דיפו|מסיל[הת] ברזל|מוסך רכב|מחסני רכבת')
 
 # ---- קריאת Overpass ----
 raw = json.load(open(RAW, encoding='utf-8'))
@@ -35,6 +39,8 @@ for e in raw.get('elements', []):
     t = e.get('tags', {}) or {}
     if t.get('landuse') == 'industrial':
         nm = re.sub(r'\s+', ' ', t.get('name', '')).strip()
+        if nm and INFRA_RE.search(nm):
+            continue   # תשתית רכבת — לא אזור תעשייה
         if e.get('type') == 'way' and e.get('geometry'):
             pts = [(p['lat'], p['lon']) for p in e['geometry']]
             if len(pts) >= 4:
