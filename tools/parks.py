@@ -294,22 +294,24 @@ OSRM_URL = os.environ.get('OSRM_URL', '')
 WALK_OK_SEC, WALK_FAR_SEC = 300, 600   # 5 / 10 דקות הליכה
 OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
 
-def _nearest_vertex(la, lo, pk):
-    best = None
-    for pts in pk['polys']:
-        for a, b in pts:
-            dd = (a - la) ** 2 + (b - lo) ** 2
-            if best is None or dd < best[0]:
-                best = (dd, (a, b))
-    return best[1]
+def _boundary_samples(pk, k=8):
+    # K נקודות פרוסות על גבול האזור — יעדי-ניתוב משותפים לכל תחנות האזור.
+    # כך מטריצת ה-OSRM היא N×K במקום N×N (פי ~6 פחות חישוב), ותחנה בוחרת
+    # את נקודת-הגבול הקרובה ביותר בהליכה.
+    pts = [p for ring in pk['polys'] for p in ring]
+    if len(pts) <= k:
+        return pts
+    step = len(pts) / k
+    return [pts[int(i * step)] for i in range(k)]
 
 def _osrm_walk(origins, dests):
-    # מחזיר לכל i זוג (מטרים, שניות) מ-origin[i] ל-dest[i], או (None, None).
+    # מחזיר לכל origin זוג (מטרים, שניות) ליעד הקרוב-ביותר-בזמן מבין dests,
+    # או (None, None). origins ו-dests יכולים להיות באורכים שונים.
     coords = origins + dests
-    n = len(origins)
+    no, nd = len(origins), len(dests)
     locs = ';'.join('%f,%f' % (lo, la) for la, lo in coords)
-    src = ';'.join(str(i) for i in range(n))
-    dst = ';'.join(str(i) for i in range(n, 2 * n))
+    src = ';'.join(str(i) for i in range(no))
+    dst = ';'.join(str(i) for i in range(no, no + nd))
     url = '%s/table/v1/foot/%s?sources=%s&destinations=%s&annotations=duration,distance' % (OSRM_URL, locs, src, dst)
     req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-parks/1.0'})
     with urllib.request.urlopen(req, timeout=60) as r:
@@ -317,10 +319,21 @@ def _osrm_walk(origins, dests):
     dist = j.get('distances') or []
     dur = j.get('durations') or []
     out = []
-    for i in range(n):
-        m = dist[i][i] if (i < len(dist) and i < len(dist[i])) else None
-        s = dur[i][i] if (i < len(dur) and i < len(dur[i])) else None
-        out.append((int(m) if m is not None else None, int(s) if s is not None else None))
+    for i in range(no):
+        best = None   # (שניות, מטרים) עם השנייה המינימלית
+        drow = dur[i] if i < len(dur) else []
+        mrow = dist[i] if i < len(dist) else []
+        for jx in range(nd):
+            s = drow[jx] if jx < len(drow) else None
+            if s is None:
+                continue
+            if best is None or s < best[0]:
+                m = mrow[jx] if jx < len(mrow) else None
+                best = (s, m)
+        if best is None:
+            out.append((None, None))
+        else:
+            out.append((int(best[1]) if best[1] is not None else None, int(best[0])))
     return out
 
 walk = {}   # (pi, sid) -> (meters, seconds) או None
@@ -340,10 +353,10 @@ if OSRM_URL:
             skipped += len(cands)
             continue
         pk = parks[pi]
-        for c0 in range(0, len(cands), 45):   # מגבלת גודל טבלה בשרת הציבורי
-            chunk = cands[c0:c0 + 45]
+        dests = _boundary_samples(pk, 8)   # יעדי-גבול משותפים לכל תחנות האזור
+        for c0 in range(0, len(cands), 80):   # 80 מקורות + 8 יעדים ≤ מגבלת הטבלה
+            chunk = cands[c0:c0 + 80]
             origins = [(sla, slo) for _, sla, slo in chunk]
-            dests = [_nearest_vertex(sla, slo, pk) for _, sla, slo in chunk]
             try:
                 res = _osrm_walk(origins, dests)
                 routed += 1

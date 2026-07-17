@@ -86,7 +86,7 @@ jobs:
           OFF=""; [ -f official.json ] && OFF=official.json
           # OSRM foot (FOSSGIS ציבורי) לסיווג תחנות לפי מרחק-הליכה אמיתי;
           # best-effort ומוגבל-תקציב בתוך parks.py — כשל נופל חזרה לגאומטרי.
-          OSRM_URL="https://routing.openstreetmap.de/routed-foot" OSRM_BUDGET=1500 \
+          OSRM_URL="https://routing.openstreetmap.de/routed-foot" OSRM_BUDGET=1800 \
             PARKS_RAW=parks-raw.json OFFICIAL="$OFF" OUTDIR=/tmp/parksout python3 tools/parks.py
           ls /tmp/parksout | head -5
           echo "files: $(ls /tmp/parksout | wc -l)"
