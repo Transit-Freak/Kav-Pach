@@ -558,7 +558,8 @@ for pi, pk in enumerate(parks):
         pk['name'] = base + (f" ({_noname_ser[base]})" if _noname_ser[base] > 1 else '')
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
-           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd', 'wm', 'wt')} for s in stops_here],
+           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd', 'wm', 'wt')}
+                     for s in stops_here if s['t'] != 'blocked'],
            'lines': lines, 'cov400': cov,
            'foot': fw, 'footlen': int(flen),
            'gen': today.isoformat()}
