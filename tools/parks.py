@@ -396,6 +396,22 @@ for sid, hits in stop_hits.items():
 os.makedirs(OUTDIR, exist_ok=True)
 TIER_RANK = {'in': 0, 'gate': 1, 'near': 2, 'blocked': 3}
 w1, w2 = [int(x[:2]) * 60 + int(x[3:]) for x in GAP_WIN]
+
+# אינדקס מרחבי לשבילים (פעם אחת) — בלעדיו כל פארק סורק את כל עשרות-אלפי
+# השבילים (O(פארקים×שבילים)). עם האינדקס כל פארק לוקח רק שבילים באזורו.
+FOOT_CELL = 0.02
+foot_grid = defaultdict(set)
+for si, seg in enumerate(foot):
+    for a, b in seg:
+        foot_grid[(int(a / FOOT_CELL), int(b / FOOT_CELL))].add(si)
+
+def _foot_near(la1_p, la2_p, lo1_p, lo2_p, pad=0.008):
+    si = set()
+    for gy in range(int((la1_p - pad) / FOOT_CELL), int((la2_p + pad) / FOOT_CELL) + 1):
+        for gx in range(int((lo1_p - pad) / FOOT_CELL), int((lo2_p + pad) / FOOT_CELL) + 1):
+            si |= foot_grid.get((gy, gx), set())
+    return si
+
 index = []
 out_i = 0
 _noname_ser = {}
@@ -454,7 +470,8 @@ for pi, pk in enumerate(parks):
     lo1_p = min(b for pts in pk['polys'] for a, b in pts)
     lo2_p = max(b for pts in pk['polys'] for a, b in pts)
     pad = 0.005
-    for seg in foot:
+    for si in _foot_near(la1_p, la2_p, lo1_p, lo2_p):
+        seg = foot[si]
         if len(seg) > 1 and any(la1_p - pad < a < la2_p + pad and lo1_p - pad < b < lo2_p + pad for a, b in seg):
             sxy = [xy(a, b, cl) for a, b in seg]
             bx1 = min(x for x, y in sxy); bx2 = max(x for x, y in sxy)
@@ -486,7 +503,8 @@ for pi, pk in enumerate(parks):
     pad = 0.0025
     fw = []
     flen = 0.0
-    for seg in foot:
+    for si in _foot_near(la1, la2, lo1, lo2):
+        seg = foot[si]
         if not any(la1 - pad < a < la2 + pad and lo1 - pad < b < lo2 + pad for a, b in seg):
             continue
         fw.append([[round(a, 5), round(b, 5)] for a, b in seg])
