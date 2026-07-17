@@ -338,6 +338,20 @@ def _osrm_walk(origins, dests):
 
 walk = {}   # (pi, sid) -> (meters, seconds) או None
 if OSRM_URL:
+    # cache מתמיד: השרת הציבורי איטי מכדי לנתב את כל האזורים בריצה אחת, אז
+    # שומרים תוצאות בין ריצות. מפתח = תחנה + מרכז-אזור מעוגל (יציב בין ריצות).
+    # כל ריצה משתמשת מחדש בקיים ומנתבת רק חדשים — הכיסוי גדל עד מלא תוך כמה ריצות.
+    CACHE_IN = os.environ.get('WALK_CACHE_IN', '')
+    cache = {}
+    if CACHE_IN and os.path.exists(CACHE_IN):
+        try:
+            cache = json.load(open(CACHE_IN))
+        except Exception:
+            cache = {}
+    newcache = {}
+    def _ckey(sid, pk):
+        return '%s|%.3f|%.3f' % (sid, pk['cen'][0], pk['cen'][1])
+
     park_cands = defaultdict(list)   # pi -> [(sid, la, lo)]
     for sid, hits in stop_hits.items():
         if sid not in seen_active:
@@ -347,15 +361,27 @@ if OSRM_URL:
             if tier != 'in':
                 park_cands[pi].append((sid, sla, slo))
     t0 = time.monotonic()
-    routed = failed = skipped = 0
+    routed = failed = skipped = fromcache = 0
     for pi, cands in park_cands.items():
-        if time.monotonic() - t0 > OSRM_BUDGET:
-            skipped += len(cands)
-            continue
         pk = parks[pi]
+        todo = []
+        for (sid, sla, slo) in cands:   # קודם מ-cache, מה שחסר -> לניתוב
+            k = _ckey(sid, pk)
+            if k in cache:
+                v = cache[k]
+                walk[(pi, sid)] = tuple(v) if v else None
+                newcache[k] = v
+                fromcache += 1
+            else:
+                todo.append((sid, sla, slo))
+        if not todo:
+            continue
+        if time.monotonic() - t0 > OSRM_BUDGET:
+            skipped += len(todo)
+            continue
         dests = _boundary_samples(pk, 8)   # יעדי-גבול משותפים לכל תחנות האזור
-        for c0 in range(0, len(cands), 80):   # 80 מקורות + 8 יעדים ≤ מגבלת הטבלה
-            chunk = cands[c0:c0 + 80]
+        for c0 in range(0, len(todo), 80):   # 80 מקורות + 8 יעדים ≤ מגבלת הטבלה
+            chunk = todo[c0:c0 + 80]
             origins = [(sla, slo) for _, sla, slo in chunk]
             try:
                 res = _osrm_walk(origins, dests)
@@ -365,9 +391,13 @@ if OSRM_URL:
                 failed += 1
             for (sid, _, _), ms in zip(chunk, res):
                 walk[(pi, sid)] = ms
+                if ms and ms[1] is not None:   # שומרים רק תוצאה תקינה (כשל -> ננסה שוב)
+                    newcache[_ckey(sid, pk)] = list(ms)
             time.sleep(0.4)
-    print('OSRM: קריאות שהצליחו', routed, '| נכשלו', failed, '| זוגות', len(walk),
-          '| דולגו (תקציב)', skipped)
+    os.makedirs(OUTDIR, exist_ok=True)
+    json.dump(newcache, open(os.path.join(OUTDIR, 'walk-cache.json'), 'w'), separators=(',', ':'))
+    print('OSRM: נותבו', routed, '| מ-cache', fromcache, '| נכשלו', failed,
+          '| זוגות', len(walk), '| דולגו (תקציב)', skipped, '| cache', len(newcache))
 
 def _walk_tier(geo_tier, sec):
     # סיווג לפי זמן-הליכה אמיתי — כולל צמתים: צומת ≤5 דק' הליכה נגיש ונספר.
