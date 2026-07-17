@@ -79,14 +79,39 @@ jobs:
           python3 -m pip install --quiet pyproj
           OFFICIAL_OUT=official.json python3 tools/fetch_official.py
 
+      - name: Set up local OSRM (foot) — מפת ישראל, ניתוב מקומי מלא
+        run: |
+          set -euo pipefail
+          # שרת OSRM מקומי עם פרופיל-רגל על מפת ישראל+פלסטין. ניתוב מקומי מיידי
+          # (בלי הגבלת-קצב) => כל התחנות נבדקות בריצה אחת, במקום ~30% בשרת ציבורי.
+          mkdir -p osrm && cd osrm
+          curl -fSL --connect-timeout 20 --max-time 600 --retry 6 --retry-all-errors --retry-delay 10 \
+            -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
+          echo "pbf: $(du -h map.osm.pbf | cut -f1)"
+          IMG=osrm/osrm-backend:latest
+          docker pull "$IMG"
+          # foot.lua מגיע בתוך ה-image ב-/opt/foot.lua
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-extract   -p /opt/foot.lua /data/map.osm.pbf
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-partition  /data/map.osrm
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-customize  /data/map.osrm
+          docker run -d --name osrm -p 5000:5000 -v "$PWD:/data" "$IMG" \
+            osrm-routed --algorithm mld --max-table-size 8000 /data/map.osrm
+          # המתנה לזמינות
+          up=0
+          for i in $(seq 1 40); do
+            if curl -fsS "http://localhost:5000/nearest/v1/foot/34.78,32.08" >/dev/null 2>&1; then
+              up=1; echo "OSRM up after ${i}x2s"; break; fi
+            sleep 2
+          done
+          [ "$up" = "1" ] || { echo "OSRM failed to start"; docker logs osrm || true; exit 1; }
+
       - name: Build park accessibility data
         run: |
           set -euo pipefail
           # OFFICIAL רק אם נמשך בהצלחה — אחרת ממשיכים עם OSM בלבד
           OFF=""; [ -f official.json ] && OFF=official.json
-          # OSRM foot (FOSSGIS ציבורי) לסיווג תחנות לפי מרחק-הליכה אמיתי;
-          # best-effort ומוגבל-תקציב בתוך parks.py — כשל נופל חזרה לגאומטרי.
-          OSRM_URL="https://routing.openstreetmap.de/routed-foot" OSRM_BUDGET=1800 \
+          # OSRM מקומי: מהיר ובלי הגבלת-קצב => תקציב גבוה + בלי sleep, כיסוי מלא.
+          OSRM_URL="http://localhost:5000" OSRM_BUDGET=3000 OSRM_SLEEP=0 \
             WALK_CACHE_IN=parks/data/walk-cache.json \
             PARKS_RAW=parks-raw.json OFFICIAL="$OFF" OUTDIR=/tmp/parksout python3 tools/parks.py
           ls /tmp/parksout | head -5

@@ -293,6 +293,7 @@ for (sid, rid, gk), mins in deps.items():
 OSRM_URL = os.environ.get('OSRM_URL', '')
 WALK_OK_SEC, WALK_FAR_SEC = 300, 600   # 5 / 10 דקות הליכה
 OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
+OSRM_SLEEP = float(os.environ.get('OSRM_SLEEP', '0.4'))   # השהיה בין קריאות (קצב שרת ציבורי; מקומי=0)
 
 def _boundary_samples(pk, k=8):
     # K נקודות פרוסות על גבול האזור — יעדי-ניתוב משותפים לכל תחנות האזור.
@@ -395,7 +396,8 @@ if OSRM_URL:
                 walk[(pi, sid)] = v
                 if v and v[1] is not None:   # שומרים רק תוצאה תקינה (כשל -> ננסה שוב)
                     newcache[_ckey(sid, pk)] = list(v)
-            time.sleep(0.4)
+            if OSRM_SLEEP:
+                time.sleep(OSRM_SLEEP)   # קצב-שרת ציבורי; שרת מקומי -> 0
     os.makedirs(OUTDIR, exist_ok=True)
     json.dump(newcache, open(os.path.join(OUTDIR, 'walk-cache.json'), 'w'), separators=(',', ':'))
     print('OSRM: נותבו', routed, '| מ-cache', fromcache, '| נכשלו', failed,
