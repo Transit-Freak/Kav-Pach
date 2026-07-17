@@ -285,13 +285,13 @@ deps_by_sid = defaultdict(dict)   # sid -> {(rid,gk): [minutes]}
 for (sid, rid, gk), mins in deps.items():
     deps_by_sid[sid][(rid, gk)] = mins
 
-# ---- הליכה אמיתית (OSRM foot): סיווג-מחדש לפי מרחק-הליכה בפועל ----
-# במקום מרחק אווירי — כמה מטרים באמת צריך ללכת מהתחנה לגבול האזור (עוקף מחסומים).
-# ספים: עד WALK_OK=נגיש ('gate') · עד WALK_FAR=רחוק ('near') · מעבר=חסום ('blocked').
-# תחנה שה-OSRM לא החזיר לה מסלול נשארת בסיווג הגאומטרי (ספק) עם wm=None.
+# ---- הליכה אמיתית (OSRM foot): סיווג-מחדש לפי זמן-הליכה בפועל ----
+# במקום מרחק אווירי — כמה דקות באמת צריך ללכת מהתחנה לגבול האזור (עוקף מחסומים).
+# ספים: עד WALK_OK_SEC=נגיש ('gate') · עד WALK_FAR_SEC=רחוק ('near') · מעבר=חסום.
+# תחנה שה-OSRM לא החזיר לה מסלול נשארת בסיווג הגאומטרי (ספק) עם wm/wt=None.
 # best-effort ומוגבל-זמן — כשל/מגבלת-קצב נופלים חזרה לגאומטרי, לא שוברים בנייה.
 OSRM_URL = os.environ.get('OSRM_URL', '')
-WALK_OK, WALK_FAR = 400, 800
+WALK_OK_SEC, WALK_FAR_SEC = 300, 600   # 5 / 10 דקות הליכה
 OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
 
 def _nearest_vertex(la, lo, pk):
@@ -304,23 +304,26 @@ def _nearest_vertex(la, lo, pk):
     return best[1]
 
 def _osrm_walk(origins, dests):
-    # origins,dests: רשימות (la,lo) באורך זהה. מחזיר מטרים origin[i]->dest[i] (או None).
+    # מחזיר לכל i זוג (מטרים, שניות) מ-origin[i] ל-dest[i], או (None, None).
     coords = origins + dests
     n = len(origins)
     locs = ';'.join('%f,%f' % (lo, la) for la, lo in coords)
     src = ';'.join(str(i) for i in range(n))
     dst = ';'.join(str(i) for i in range(n, 2 * n))
-    url = '%s/table/v1/foot/%s?sources=%s&destinations=%s&annotations=distance' % (OSRM_URL, locs, src, dst)
+    url = '%s/table/v1/foot/%s?sources=%s&destinations=%s&annotations=duration,distance' % (OSRM_URL, locs, src, dst)
     req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-parks/1.0'})
     with urllib.request.urlopen(req, timeout=60) as r:
-        dm = json.load(r).get('distances') or []
+        j = json.load(r)
+    dist = j.get('distances') or []
+    dur = j.get('durations') or []
     out = []
     for i in range(n):
-        v = dm[i][i] if (i < len(dm) and i < len(dm[i])) else None
-        out.append(int(v) if v is not None else None)
+        m = dist[i][i] if (i < len(dist) and i < len(dist[i])) else None
+        s = dur[i][i] if (i < len(dur) and i < len(dur[i])) else None
+        out.append((int(m) if m is not None else None, int(s) if s is not None else None))
     return out
 
-walk = {}   # (pi, sid) -> walk meters (או None)
+walk = {}   # (pi, sid) -> (meters, seconds) או None
 if OSRM_URL:
     park_cands = defaultdict(list)   # pi -> [(sid, la, lo)]
     for sid, hits in stop_hits.items():
@@ -342,33 +345,39 @@ if OSRM_URL:
             origins = [(sla, slo) for _, sla, slo in chunk]
             dests = [_nearest_vertex(sla, slo, pk) for _, sla, slo in chunk]
             try:
-                wm = _osrm_walk(origins, dests)
+                res = _osrm_walk(origins, dests)
                 routed += 1
             except Exception:
-                wm = [None] * len(chunk)
+                res = [(None, None)] * len(chunk)
                 failed += 1
-            for (sid, _, _), m in zip(chunk, wm):
-                walk[(pi, sid)] = m
+            for (sid, _, _), ms in zip(chunk, res):
+                walk[(pi, sid)] = ms
             time.sleep(0.4)
     print('OSRM: קריאות שהצליחו', routed, '| נכשלו', failed, '| זוגות', len(walk),
           '| דולגו (תקציב)', skipped)
 
-def _walk_tier(geo_tier, wm):
-    # סיווג לפי מרחק-הליכה אמיתי בלבד — כולל צמתים: צומת ≤400מ' הליכה נגיש ונספר.
+def _walk_tier(geo_tier, sec):
+    # סיווג לפי זמן-הליכה אמיתי — כולל צמתים: צומת ≤5 דק' הליכה נגיש ונספר.
     if geo_tier == 'in':
         return 'in'
-    if wm is None:
+    if sec is None:
         return geo_tier            # OSRM לא זמין/נכשל — ספק, נשאר גאומטרי
-    if wm <= WALK_OK:
+    if sec <= WALK_OK_SEC:
         return 'gate'
-    if wm <= WALK_FAR:
+    if sec <= WALK_FAR_SEC:
         return 'near'
     return 'blocked'
 
-# סיווג-מחדש: כל hit מקבל tier לפי הליכה + מרחק-הליכה wm (או None אם אין OSRM)
+# סיווג-מחדש: כל hit -> (pi, tier, d, wm[מטר], wt[דקות])
 for sid, hits in stop_hits.items():
-    stop_hits[sid] = [(pi, _walk_tier(tier, walk.get((pi, sid))), d, walk.get((pi, sid)))
-                      for (pi, tier, d) in hits]
+    nh = []
+    for (pi, tier, d) in hits:
+        ms = walk.get((pi, sid))
+        meters = ms[0] if ms else None
+        sec = ms[1] if ms else None
+        wt = round(sec / 60) if sec is not None else None
+        nh.append((pi, _walk_tier(tier, sec), d, meters, wt))
+    stop_hits[sid] = nh
 
 # ---- הרכבת פלט לכל פארק ----
 os.makedirs(OUTDIR, exist_ok=True)
@@ -382,11 +391,11 @@ for pi, pk in enumerate(parks):
     for sid, hits in stop_hits.items():
         if sid not in seen_active:
             continue
-        for hpi, tier, d, wm in hits:
+        for hpi, tier, d, wm, wt in hits:
             if hpi == pi:
                 nm, code, la, lo, city = stop_info[sid]
                 stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo,
-                                   't': tier, 'd': d, 'wm': wm, 'city': city})
+                                   't': tier, 'd': d, 'wm': wm, 'wt': wt, 'city': city})
     # קווים: לכל route בוחרים את התחנה הטובה ביותר בפארק. תחנה 'blocked'
     # (מעל 800מ' הליכה אמיתית) אינה משרתת את האזור — לא נספרת.
     best_stop = {}
@@ -488,7 +497,7 @@ for pi, pk in enumerate(parks):
         pk['name'] = base + (f" ({_noname_ser[base]})" if _noname_ser[base] > 1 else '')
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
-           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd', 'wm')} for s in stops_here],
+           'stops': [{k: s[k] for k in ('n', 'c', 'la', 'lo', 't', 'd', 'wm', 'wt')} for s in stops_here],
            'lines': lines, 'cov400': cov,
            'foot': fw, 'footlen': int(flen),
            'gen': today.isoformat()}

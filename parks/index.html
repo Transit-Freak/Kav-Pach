@@ -96,9 +96,9 @@
     <div>
       <div class="legend">
         <span><i style="background:#16a34a"></i> בתוך האזור</span>
-        <span><i style="background:#84cc16"></i> נגיש · עד ~400מ׳ הליכה</span>
-        <span><i style="background:#eab308"></i> רחוק · 400–800מ׳ הליכה</span>
-        <span><i style="background:#94a3b8"></i> חסום · מעל 800מ׳ הליכה (לא נספר)</span>
+        <span><i style="background:#84cc16"></i> נגיש · עד ~5 דק׳ הליכה</span>
+        <span><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>
+        <span><i style="background:#94a3b8"></i> חסום · מעל 10 דק׳ (לא נספר)</span>
         <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל ממופים</span>
       </div>
       <div id="map"></div>
@@ -120,10 +120,10 @@ const tblview=document.getElementById('tblview'), wrap=document.getElementById('
       heatview=document.getElementById('heatview'), q=document.getElementById('q'),
       tbody=document.querySelector('#tbl tbody');
 let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sortDir=-1;
-const TIER={in:'בתוך האזור',gate:'נגיש · הליכה קצרה (עד ~400מ׳)',near:'רחוק · 400–800מ׳ הליכה',blocked:'חסום · מעל 800מ׳ הליכה אמיתית'};
+const TIER={in:'בתוך האזור',gate:'נגיש · עד ~5 דק׳ הליכה',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
 const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
 function walkTxt(s){
-  if(s.wm!=null) return `🚶 ${s.wm} מ׳ · ${Math.max(1,Math.round(s.wm/80))} דק׳ הליכה אמיתית`;
+  if(s.wt!=null) return `🚶 ${s.wt} דק׳ · ${s.wm} מ׳ הליכה אמיתית`;
   if(s.d!=null) return `${s.d} מ׳ (מרחק אווירי — אין נתוני הליכה)`;
   return '';
 }
@@ -301,7 +301,7 @@ function openPark(f,push=true){
         </div>
       </div>`;
     }
-    h+=`<div class="note">🚶 סיווג התחנות לפי <b>מרחק הליכה אמיתי</b> (OSRM, עוקף מחסומים): נגיש ≤400מ׳ · רחוק 400–800מ׳ · <b>חסום</b> מעל 800מ׳ (למשל תחנה קרובה אווירית אך מעבר לכביש מהיר) — לא נספרת. היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ הכול כבול לשלמות מיפוי ה-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=`<div class="note">🚶 סיווג התחנות לפי <b>זמן הליכה אמיתי</b> (OSRM, עוקף מחסומים): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · <b>חסום</b> מעל 10 דק׳ (למשל תחנה קרובה אווירית אך מעבר לכביש מהיר) — לא נספרת. היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ הכול כבול לשלמות מיפוי ה-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דקות ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
 }
