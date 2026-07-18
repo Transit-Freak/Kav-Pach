@@ -106,8 +106,15 @@
     <div class="panel" id="panel"></div>
   </div>
 
-  <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;height:calc(100vh - 100px)" id="heatview">
-    <div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div>
+  <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
+    <div class="legend" style="margin:0">
+      <span>גודל = סך הקווים הנגישים · צבע = כמה מהם בתוך האזור:</span>
+      <span><i style="background:#dc2626"></i> אין בפנים</span>
+      <span><i style="background:#eab308"></i> מעט</span>
+      <span><i style="background:#16a34a"></i> הרבה</span>
+      <span><i style="background:#065f46"></i> מרכז חזק</span>
+    </div>
+    <div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);flex:1;min-height:0"></div>
   </div>
 
   <div class="msg" id="msg" style="display:none"></div>
@@ -181,7 +188,7 @@ document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{
   if(sortK===k) sortDir*=-1; else {sortK=k; sortDir=(k==='name'||k==='city')?1:-1;}
   renderTable();
 });
-q.oninput=renderTable;
+q.oninput=()=>{renderTable(); if(heatview.style.display!=='none') openHeatmap(false);};
 tbody.onclick=e=>{
   const tr=e.target.closest('tr');
   if(tr) openPark(tr.dataset.f);
@@ -194,24 +201,28 @@ function openHeatmap(fit=true){
       {attribution:'© OpenStreetMap'}).addTo(heatmap);
     heatLayer=L.layerGroup().addTo(heatmap);
   }
-  tblview.style.display='none';wrap.style.display='none';heatview.style.display='block';backbtn.style.display='inline-block';heatbtn.style.display='none';
+  tblview.style.display='none';wrap.style.display='none';heatview.style.display='flex';backbtn.style.display='inline-block';heatbtn.style.display='none';
   setTimeout(()=>heatmap.invalidateSize(),50);
   if(heatLayer) heatLayer.clearLayers();
-  let bounds=null;
-  const hcol=(n)=>{if(n===0)return'#dc2626';if(n<=5)return'#eab308';if(n<=15)return'#16a34a';return'#065f46'};
-  const hsiz=(n)=>{if(n===0)return 6;if(n<=5)return 12;if(n<=15)return 18;return 24};
+  const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
+  let bounds=null, shown=0;
+  // גודל לפי סך השירות (בפנים+נגיש+רחוק); צבע לפי כמה מזה בתוך האזור (מרכז↔פריפריה)
+  const hcol=(inl)=>{if(inl===0)return'#dc2626';if(inl<=5)return'#eab308';if(inl<=15)return'#16a34a';return'#065f46'};
+  const hsiz=(tot)=>{if(tot<=5)return 9;if(tot<=15)return 13;if(tot<=40)return 18;return 24};
   for(const p of IDX){
-    const li=cnt(p,'li');
-    if(!li) continue;
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(li),color:'#fff',weight:2.5,fillColor:hcol(li),fillOpacity:.85})
-      .bindPopup(`<b>${esc(p.name)}</b><br>קווים בפנים: ${li}<br>מדידה: עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור`)
+    if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
+    const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln'), tot=li+lg+ln;
+    if(!tot) continue;
+    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:'#fff',weight:2.5,fillColor:hcol(li),fillOpacity:.85})
+      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>בתוך: ${li} · נגיש: ${lg} · רחוק: ${ln}<br>מדידה: עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור`)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
     marker.on('click',()=>openPark(p.f,true));
+    shown++;
   }
-  // fitBounds רק בפתיחה ראשונה; בהחלפת מרכז↔כניסה שומרים על הזום/מיקום הנוכחי כדי להשוות
-  if(bounds && fit) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
+  // fitBounds בפתיחה ראשונה או כשמחפשים (זום למיקום שחיפשת); בהחלפת מרכז↔כניסה שומרים תצוגה
+  if(bounds && (fit || f)) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
 }
 heatbtn.onclick=()=>openHeatmap(true);
 // מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
