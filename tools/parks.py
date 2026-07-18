@@ -171,6 +171,51 @@ def bbox(pk):
     los = [b for pts in pk['polys'] for a, b in pts]
     return min(las), max(las), min(los), max(los)
 
+# ---- סינון אזורים מקוננים (בקשת המשתמש) ----
+# אזור קטן שרוב-שטחו בתוך אזור גדול יותר (למשל תחנת-כוח בתוך אזור-תעשייה, או
+# פוליגון-כפול way+relation) לא יוצג — הגדול ממילא תופס את אותן תחנות (הכלה
+# גאומטרית). מסירים את הקטן, ומעבירים אליו מטא רשמי אם לגדול חסר.
+CONTAIN_FRAC = 0.6
+def _frac_inside(small, big):
+    # אחוז שטח הקטן (דגימת רשת ~60מ') שנמצא גם בתוך הגדול
+    tot = hit = 0
+    for pts in small['polys']:
+        la1 = min(a for a, b in pts); la2 = max(a for a, b in pts)
+        lo1 = min(b for a, b in pts); lo2 = max(b for a, b in pts)
+        sla = 60 / 110540; slo = 60 / (111320 * small['cl'])
+        la = la1
+        while la <= la2:
+            lo = lo1
+            while lo <= lo2:
+                if in_poly(la, lo, pts):
+                    tot += 1
+                    if any(in_poly(la, lo, q) for q in big['polys']):
+                        hit += 1
+                lo += slo
+            la += sla
+    return hit / tot if tot else 0.0
+
+parks.sort(key=lambda p: -p['area'])   # גדולים קודם — קטן נבלע רק בגדול-שכבר-נשמר
+_kept = []
+_nested = 0
+for pk in parks:
+    pb = bbox(pk)
+    host = None
+    for big in _kept:
+        bb = bbox(big)
+        if pb[1] < bb[0] or pb[0] > bb[1] or pb[3] < bb[2] or pb[2] > bb[3]:
+            continue   # אין חפיפת-תיבות — דילוג מהיר
+        if _frac_inside(pk, big) >= CONTAIN_FRAC:
+            host = big; break
+    if host is not None:
+        if 'official' in pk and 'official' not in host:   # לא לאבד העשרה רשמית
+            host['official'] = pk['official']
+        _nested += 1
+    else:
+        _kept.append(pk)
+parks = _kept
+print('סינון אזורים מקוננים: הוסרו', _nested, '| נשארו', len(parks))
+
 # מצב "אזורים בלבד": פולט את תיבות-הגבול (מרופדות) של האזורים האמיתיים ועוצר.
 # משמש את ה-workflow לשלב-שני — משיכת שבילי-הולכי-רגל מ-Overpass רק סביבם,
 # כדי לכסות את כל האזורים (גם ללא-שם) בלי להתקע ב-around על אלפי פוליגונים.
