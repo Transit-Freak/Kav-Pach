@@ -108,11 +108,11 @@
 
   <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
     <div class="legend" style="margin:0">
-      <span>גודל = סך הקווים הנגישים · צבע = כמה מהם בתוך האזור:</span>
-      <span><i style="background:#dc2626"></i> אין בפנים</span>
-      <span><i style="background:#eab308"></i> מעט</span>
-      <span><i style="background:#16a34a"></i> הרבה</span>
-      <span><i style="background:#065f46"></i> מרכז חזק</span>
+      <span>קווים נגישים ברגל לפי המדידה שבחרת (מרכז/כניסה):</span>
+      <span><i style="background:#fde047"></i> 1–5</span>
+      <span><i style="background:#84cc16"></i> 6–15</span>
+      <span><i style="background:#16a34a"></i> 16–40</span>
+      <span><i style="background:#065f46"></i> 40+</span>
     </div>
     <div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);flex:1;min-height:0"></div>
   </div>
@@ -206,15 +206,16 @@ function openHeatmap(fit=true){
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
-  // גודל לפי סך השירות (בפנים+נגיש+רחוק); צבע לפי כמה מזה בתוך האזור (מרכז↔פריפריה)
-  const hcol=(inl)=>{if(inl===0)return'#dc2626';if(inl<=5)return'#eab308';if(inl<=15)return'#16a34a';return'#065f46'};
+  // גודל+צבע = מספר הקווים שאפשר להגיע אליהם ברגל לפי המדידה שבחרת (מרכז/כניסה):
+  // בתוך + עד מרחק-ההליכה שקבענו. יותר קווים => גדול וירוק יותר.
+  const hcol=(tot)=>{if(tot<=5)return'#fde047';if(tot<=15)return'#84cc16';if(tot<=40)return'#16a34a';return'#065f46'};
   const hsiz=(tot)=>{if(tot<=5)return 9;if(tot<=15)return 13;if(tot<=40)return 18;return 24};
   for(const p of IDX){
     if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
     const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln'), tot=li+lg+ln;
     if(!tot) continue;
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:'#fff',weight:2.5,fillColor:hcol(li),fillOpacity:.85})
-      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>בתוך: ${li} · נגיש: ${lg} · רחוק: ${ln}<br>מדידה: עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור`)
+    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:.85})
+      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>נגישים ברגל (${WALKMODE=='c'?'עד מרכז':'עד כניסה'}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
