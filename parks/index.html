@@ -187,7 +187,7 @@ tbody.onclick=e=>{
   if(tr) openPark(tr.dataset.f);
 };
 function showTable(){wrap.style.display='none';heatview.style.display='none';backbtn.style.display='none';heatbtn.style.display='inline-block';tblview.style.display='block'}
-function openHeatmap(){
+function openHeatmap(fit=true){
   if(!heatmap){
     heatmap=L.map('heatmap');
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -210,15 +210,16 @@ function openHeatmap(){
     else bounds.extend([p.la,p.lo]);
     marker.on('click',()=>openPark(p.f,true));
   }
-  if(bounds) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
+  // fitBounds רק בפתיחה ראשונה; בהחלפת מרכז↔כניסה שומרים על הזום/מיקום הנוכחי כדי להשוות
+  if(bounds && fit) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
 }
-heatbtn.onclick=openHeatmap;
+heatbtn.onclick=()=>openHeatmap(true);
 // מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
 document.getElementById('modebtn').onclick=()=>{
   WALKMODE = WALKMODE=='c'?'e':'c';
   document.getElementById('modebtn').textContent = WALKMODE=='c'?'🎯 מדידה: מרכז':'🚪 מדידה: כניסה';
   renderTable();
-  if(heatview.style.display!=='none') openHeatmap();
+  if(heatview.style.display!=='none') openHeatmap(false);   // שמור תצוגה בהחלפת מצב
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(wrap.style.display!=='none' && h) openPark(h,false);
 };
