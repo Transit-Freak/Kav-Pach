@@ -1,7 +1,9 @@
 name: parks-access
 
-# נגישות תחבורה ציבורית לאזורי תעשייה (ניסוי): פוליגונים + שבילים מ-OSM,
-# תחנות ולוחות זמנים מ-GTFS. רץ שבועי.
+# נגישות תחבורה ציבורית לאזורי תעשייה — מקור האזורים: הדאטהסט הרשמי של משרד
+# הכלכלה (data.gov.il, "רשימת אזורי תעשייה"). תחנות ולוחות זמנים מ-GTFS (משרד
+# התחבורה). חישוב הליכה מדויק ב-OSRM (רשת OSM). שבילי OSM רק למדד כיסוי-שטח.
+# רץ שבועי.
 
 on:
   schedule:
@@ -28,41 +30,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Query Overpass — industrial polygons (בלי around, מהיר)
+      - name: Fetch official industrial zones (משרד הכלכלה) — מקור האזורים
         run: |
           set -euo pipefail
-          # רק הפוליגונים התעשייתיים (עם שם ובלי שם). זול — בלי around על אלפי פוליגונים.
-          Q='[out:json][timeout:400][bbox:29.4,34.2,33.35,35.95];(way["landuse"="industrial"];relation["landuse"="industrial"]["name"];);out geom;'
-          ok=0
-          for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
-            echo "== trying $ep =="
-            if curl -fsS --max-time 450 --data-urlencode "data=$Q" "$ep" -o parks-polys.json; then ok=1; echo "got $(wc -c < parks-polys.json) bytes"; break; fi
-            echo "failed, next endpoint"; sleep 45
-          done
-          [ "$ok" = "1" ] || { echo "all overpass endpoints failed"; exit 1; }
+          # המקור הרשמי הוא מקור-האמת היחיד לאזורים. כשל כאן מפיל את הריצה
+          # (בלי המקור הרשמי אין מה לבנות במצב ממשלתי-בלבד).
+          python3 -m pip install --quiet pyproj
+          OFFICIAL_OUT=official.json python3 tools/fetch_official.py
+          echo "official.json: $(wc -c < official.json) bytes"
 
-      - name: Compute park regions (קיבוץ+סינון ← תיבות-גבול לשלב-השבילים)
+      - name: Compute park regions (מהאזורים הרשמיים ← תיבות-גבול לשלב-השבילים)
         run: |
           set -euo pipefail
-          EMIT_REGIONS=1 PARKS_RAW=parks-polys.json REGIONS_OUT=regions.json python3 tools/parks.py
+          EMIT_REGIONS=1 OFFICIAL_ONLY=1 OFFICIAL=official.json REGIONS_OUT=regions.json python3 tools/parks.py
           echo "regions: $(wc -c < regions.json) bytes"
 
-      - name: Query Overpass — footways within regions (מכסה גם ללא-שם)
+      - name: Query Overpass — footways within regions (למדד כיסוי-שטח בלבד)
         run: |
           set -euo pipefail
           REGIONS=regions.json FOOT_OUT=footways.json CHUNK=100 python3 tools/fetch_footways.py
 
-      - name: Merge polygons + footways → parks-raw.json
+      - name: parks-raw.json = שבילים בלבד (בלי פוליגונים מ-OSM)
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          a = json.load(open('parks-polys.json'))
-          b = json.load(open('footways.json'))
-          a['elements'] = a.get('elements', []) + b.get('elements', [])
-          json.dump(a, open('parks-raw.json', 'w'))
-          print('merged elements:', len(a['elements']))
-          PY
+          cp footways.json parks-raw.json
+          echo "footway elements: $(python3 -c "import json;print(len(json.load(open('parks-raw.json')).get('elements',[])))")"
 
       - name: Fetch GTFS
         run: |
@@ -72,18 +64,11 @@ jobs:
             -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt
 
-      - name: Fetch official industrial zones (משרד הכלכלה) — best-effort
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          python3 -m pip install --quiet pyproj
-          OFFICIAL_OUT=official.json python3 tools/fetch_official.py
-
       - name: Set up local OSRM (foot) — מפת ישראל, ניתוב מקומי מלא
         run: |
           set -euo pipefail
           # שרת OSRM מקומי עם פרופיל-רגל על מפת ישראל+פלסטין. ניתוב מקומי מיידי
-          # (בלי הגבלת-קצב) => כל התחנות נבדקות בריצה אחת, במקום ~30% בשרת ציבורי.
+          # (בלי הגבלת-קצב) => כל התחנות נבדקות בריצה אחת.
           mkdir -p osrm && cd osrm
           curl -fSL --connect-timeout 20 --max-time 600 --retry 6 --retry-all-errors --retry-delay 10 \
             -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
@@ -105,22 +90,22 @@ jobs:
           done
           [ "$up" = "1" ] || { echo "OSRM failed to start"; docker logs osrm || true; exit 1; }
 
-      - name: Build park accessibility data
+      - name: Build park accessibility data (ממשלתי-בלבד)
         run: |
           set -euo pipefail
-          # OFFICIAL רק אם נמשך בהצלחה — אחרת ממשיכים עם OSM בלבד
-          OFF=""; [ -f official.json ] && OFF=official.json
-          # OSRM מקומי: מהיר ובלי הגבלת-קצב => תקציב גבוה + בלי sleep, כיסוי מלא.
-          OSRM_URL="http://localhost:5000" OSRM_BUDGET=3000 OSRM_SLEEP=0 \
+          # OFFICIAL_ONLY: האזורים אך ורק מהדאטהסט הרשמי. GTFS לתחנות/זמנים,
+          # OSRM מקומי למרחק-הליכה מדויק, שבילי OSM רק למדד כיסוי-שטח.
+          OFFICIAL_ONLY=1 OFFICIAL=official.json \
+            OSRM_URL="http://localhost:5000" OSRM_BUDGET=3000 OSRM_SLEEP=0 \
             WALK_CACHE_IN=parks/data/walk-cache.json \
-            PARKS_RAW=parks-raw.json OFFICIAL="$OFF" OUTDIR=/tmp/parksout python3 tools/parks.py
+            PARKS_RAW=parks-raw.json OUTDIR=/tmp/parksout python3 tools/parks.py
           ls /tmp/parksout | head -5
           echo "files: $(ls /tmp/parksout | wc -l)"
 
       - name: Commit to main
         run: |
           set -euo pipefail
-          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json parks-polys.json footways.json regions.json official.json
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json footways.json regions.json official.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4; do
@@ -131,7 +116,7 @@ jobs:
             git add parks/data
             if git diff --cached --quiet; then
               echo "unchanged — nothing to commit"; break; fi
-            git commit -m "data: refresh industrial-park accessibility"
+            git commit -m "data: refresh industrial-park accessibility (רשמי)"
             if git push origin HEAD:main; then break; fi
             echo "push rejected (main moved) — retry $i"; sleep 10
           done

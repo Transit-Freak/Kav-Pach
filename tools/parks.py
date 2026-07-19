@@ -12,6 +12,8 @@ from collections import defaultdict
 
 RAW = os.environ.get('PARKS_RAW', 'parks-raw.json')
 OFFICIAL = os.environ.get('OFFICIAL', '')   # official.json (משרד הכלכלה); ריק = לדלג
+# מצב "ממשלתי בלבד": האזורים מגיעים אך ורק מהדאטהסט הרשמי (data.gov.il), לא מ-OSM.
+OFFICIAL_ONLY = bool(os.environ.get('OFFICIAL_ONLY'))
 STOPS = os.environ.get('STOPS', 'stops.txt')
 STOPTIMES = os.environ.get('STOPTIMES', 'stop_times.txt')
 TRIPS = os.environ.get('TRIPS', 'trips.txt')
@@ -32,7 +34,7 @@ JUNCTION_RE = re.compile(r'צומת|מחלף|מסעף|כביש \d')
 INFRA_RE = re.compile(r'דיפו|מסיל[הת] ברזל|מוסך רכב|מחסני רכבת')
 
 # ---- קריאת Overpass ----
-raw = json.load(open(RAW, encoding='utf-8'))
+raw = json.load(open(RAW, encoding='utf-8')) if os.path.exists(RAW) else {'elements': []}
 polys = []   # (name-or-'', [(la,lo),...])
 foot = []    # [(la,lo),...]
 for e in raw.get('elements', []):
@@ -126,7 +128,9 @@ for pts in unnamed:
 for pk in parks:
     pk['area'] = sum(poly_area_km2(p, pk['cl']) for p in pk['polys'])
 parks = [p for p in parks if p['area'] >= MIN_AREA_KM2]
-print('פארקים אחרי קיבוץ וסינון שטח:', len(parks))
+if OFFICIAL_ONLY:
+    parks = []   # מתעלמים מ-OSM; כל האזורים ייווצרו מהדאטהסט הרשמי בהמשך
+print('פארקים אחרי קיבוץ וסינון שטח:', len(parks), '(ממשלתי-בלבד)' if OFFICIAL_ONLY else '')
 
 # ---- מקור רשמי (משרד הכלכלה): השלמת חסרים + העשרה ----
 # כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
