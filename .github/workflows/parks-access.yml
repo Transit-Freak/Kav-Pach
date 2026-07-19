@@ -59,9 +59,18 @@ jobs:
       - name: Fetch GTFS
         run: |
           set -euo pipefail
+          # שרת ה-GTFS של משרד התחבורה נופל מדי פעם לכמה דקות. לולאת ניסיונות
+          # ארוכה (עד ~8–10 דק') כדי לתפוס התאוששות במקום ליפול על בליפ זמני.
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-          curl -fSL --connect-timeout 20 --max-time 1800 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
-            -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          ok=0
+          for a in 1 2 3 4 5 6 7 8; do
+            echo "== GTFS attempt $a =="
+            if curl -fSL --connect-timeout 40 --max-time 1800 -A "$UA" \
+                 -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"; then
+              ok=1; break; fi
+            echo "GTFS server not responding; waiting 60s"; sleep 60
+          done
+          [ "$ok" = "1" ] || { echo "GTFS server (gtfs.mot.gov.il) unreachable after retries"; exit 1; }
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt
 
       - name: Set up local OSRM (foot) — מפת ישראל, ניתוב מקומי מלא
