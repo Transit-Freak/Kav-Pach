@@ -497,7 +497,7 @@ function ChoiceScreen({ onPick }) {
       <div className="max-w-7xl w-full">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
-          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שבעה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
+          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">חמישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -612,30 +612,6 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
-          {/* נגישות אזורי תעשייה — ניסוי (אפליקציה עצמאית בתיקיית parks/) */}
-          <a
-            href="parks/"
-            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-            style={{ background: 'linear-gradient(155deg,#042f2e 0%,#115e59 55%,#0d9488 100%)' }}
-          >
-            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#2dd4bf' }} />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-teal-300 text-teal-950 px-3 py-1 rounded-full text-[11px] font-black self-start">ניסוי</span>
-                {/* הסמל — מפעל עם תחנות (זהה ל-favicon של הכלי) */}
-                <svg viewBox="2 4 28 27" style={{ width: '92px', height: '92px' }} className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="4" y="14" width="8" height="12" fill="#5eead4" />
-                  <rect x="13" y="9" width="8" height="17" fill="#99f6e4" />
-                  <path d="M21 26 V13 l6-4 v17 z" fill="#5eead4" />
-                  <circle cx="9" cy="29" r="2.4" fill="#fff" stroke="#042f2e" strokeWidth="1.6" />
-                  <circle cx="23" cy="29" r="2.4" fill="#fff" stroke="#042f2e" strokeWidth="1.6" />
-                </svg>
-              </div>
-              <h2 className="text-3xl font-[900] text-teal-100">נגישות אזורי תעשייה</h2>
-              <p className="text-teal-100/80 font-bold mt-2 text-sm leading-relaxed">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים — ואיפה החורים בשירות</p>
-              <span className="inline-flex items-center gap-2 mt-5 bg-teal-300 text-teal-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
-            </div>
-          </a>
         </div>
 
         <p className="text-center text-slate-400 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן</p>
