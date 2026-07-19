@@ -32,12 +32,10 @@ jobs:
           [ "$ok" = "1" ] || { echo "GTFS server unreachable"; exit 1; }
           echo "================ ALL FILES IN GTFS ZIP ================"
           unzip -l gtfs.zip
-          echo "================ translations.txt present? ================"
-          if unzip -l gtfs.zip | grep -qi 'translations'; then
-            echo "RESULT: YES — a translations file exists:"
-            unzip -p gtfs.zip translations.txt 2>/dev/null | head -8 || true
-          else
-            echo "RESULT: NO — no translations file in the GTFS package"
-          fi
-          echo "================ any English name columns in stops.txt? ================"
-          unzip -p gtfs.zip stops.txt | head -1
+          echo "================ translations.txt header + languages ================"
+          unzip -p gtfs.zip translations.txt | head -1
+          echo "--- שפות (עמודה 2) וכמות שורות בכל אחת: ---"
+          unzip -p gtfs.zip translations.txt | tail -n +2 | cut -d, -f2 | sort | uniq -c | sort -rn
+          echo "================ דוגמאות שורות באנגלית (,EN,) ================"
+          unzip -p gtfs.zip translations.txt | grep ',EN,' | head -15 || echo "אין שורות EN"
+          echo "סה\"כ שורות EN: $(unzip -p gtfs.zip translations.txt | grep -c ',EN,' || true)"
