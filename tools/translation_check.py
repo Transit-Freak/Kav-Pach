@@ -5,6 +5,8 @@
 #   literal — שם-מקום שתורגם מילולית במקום תעתיק (נחל→River/Creek)
 #   missing — חלק מהשם (מופרד ב-/) שנשמט באנגלית
 #   wrong   — תרגום שגוי סמנטי (רשימה ידנית קטנה — לא ניתן לזיהוי בכללים)
+# כל טעות כוללת גם enHe — תעתיק של התרגום-האנגלי לאותיות עבריות ("איך זה
+# נשמע באנגלית"), כדי שמי שלא קורא אנגלית יבין מיד למה התרגום שגוי.
 # פלט: OUTFILE (translation-errors.json) עם קיבוץ לפי סוג + תחנות (קוד+עיר).
 import csv, json, os, re
 
@@ -67,6 +69,72 @@ def parts(s): return [p for p in SEP.split(s) if p.strip()]
 LIT_HE = re.compile(r'\bנחל\b')
 LIT_EN = re.compile(r'\b(River|Creek|Stream|Brook)\b')
 
+# ---- תעתיק של התרגום-האנגלי לאותיות עבריות: "איך זה נשמע באנגלית" ----
+# מטרה: מי שלא קורא אנגלית יראה איך התרגום נשמע (She Uziyahu -> "שי אוזייהו")
+# ויבין מיד למה הוא שגוי. מילון למילים אנגליות שחוזרות + כללי-תעתיק לשמות מתועתקים.
+_EN_WORD = {
+  'creek':'קריק','road':'רוד','center':'סנטר','centre':'סנטר','river':'ריבר',
+  'junction':'ג׳אנקשן','station':'סטיישן','boulevard':'בולווארד','blvd':'בולווארד',
+  'train':'טריין','platforms':'פלטפורמס','platform':'פלטפורם','exit':'אקזיט',
+  'school':'סקול','west':'ווסט','east':'איסט','north':'נורת׳','south':'סאות׳',
+  'camp':'קמפ','mount':'מאונט','mt':'מאונט','central':'סנטרל','institute':'אינסטיטיוט',
+  'to':'טו','high':'היי','terminal':'טרמינל','roundabout':'ראונדאבאוט','rounabout':'ראונדאבאוט',
+  'bus':'באס','floor':'פלור','base':'בייס','college':'קולג׳','city':'סיטי',
+  'intersection':'אינטרסקשן','reserve':'ריזרב','cemetary':'סמטרי','cemetery':'סמטרי',
+  'hall':'הול','commercial':'קומרשל','police':'פוליס','policing':'פוליסינג','hotel':'הוטל',
+  'synagogue':'סינגוג','stadium':'סטדיום','parking':'פארקינג','hill':'היל','arena':'ארנה',
+  'sports':'ספורטס','sport':'ספורט','food':'פוד','directories':'דיירקטוריס',
+  'construction':'קונסטרקשן','infrastruction':'אינפרהסטרקשן','engineering':'אינג׳ינירינג',
+  'containers':'קונטיינרס','container':'קונטיינר','brigade':'בריגייד','jewish':'ג׳ואיש',
+  'ammunition':'אמוניישן','girl':'גירל','mr':'מיסטר','internazional':'אינטרנציונל',
+  'international':'אינטרנציונל','she':'שי','he':'הי','the':'דה','of':'אוף','and':'אנד',
+  'new':'ניו','old':'אולד','lake':'לייק','park':'פארק','beach':'ביץ׳','square':'סקוור',
+  'university':'יוניברסיטי','hospital':'הוספיטל','airport':'אירפורט','gate':'גייט',
+  'bridge':'ברידג׳','tower':'טאואר','museum':'מיוזיאום','market':'מרקט','factory':'פקטורי',
+  'kibbutz':'קיבוץ','kibuts':'קיבוץ','moshav':'מושב','industrial':'אינדסטריאל',
+  'mall':'מול','kfar':'כפר','kiryat':'קריית','derech':'דרך','beit':'בית','bet':'בית',
+}
+_DIG = [
+  ('tch','צ׳'),('sch','ש'),('sh','ש'),('ch','ח'),('th','ת'),('ph','פ'),
+  ('ck','ק'),('kh','ח'),('tz','צ'),('ts','צ'),('gh','ג'),('wh','ו'),('qu','קוו'),
+  ('ee','י'),('oo','ו'),('ou','או'),('ow','או'),('ai','יי'),('ay','יי'),
+  ('ei','יי'),('ey','יי'),('au','או'),('aw','או'),('oa','או'),('oi','וי'),('oy','וי'),
+]
+_CON = {'b':'ב','d':'ד','f':'פ','g':'ג','h':'ה','j':'ג׳','k':'ק','l':'ל',
+        'm':'מ','n':'נ','p':'פ','q':'ק','r':'ר','s':'ס','t':'ט','v':'ב','w':'ו',
+        'x':'קס','z':'ז'}
+_V_START = {'a':'א','e':'א','i':'אי','o':'או','u':'או'}
+_V_MID   = {'a':'', 'e':'', 'i':'י', 'o':'ו', 'u':'ו'}
+_V_END   = {'a':'ה','e':'', 'i':'י', 'o':'ו', 'u':'ו'}
+_SOFIT = {'מ':'ם','נ':'ן','צ':'ץ','פ':'ף','כ':'ך'}
+
+def _translit_word(w):
+    if w in _EN_WORD:
+        return _EN_WORD[w]
+    w = re.sub(r'(.)\1+', r'\1', w)   # אותיות כפולות -> בודדת (Sammy->Sami)
+    out, i, n = [], 0, len(w)
+    while i < n:
+        for d, h in _DIG:
+            if w.startswith(d, i):
+                out.append(h); i += len(d); break
+        else:
+            ch = w[i]
+            if ch in _V_MID:
+                out.append(_V_START[ch] if i == 0 else _V_END[ch] if i == n - 1 else _V_MID[ch])
+            elif ch == 'y':
+                out.append('י')
+            elif ch == 'c':
+                out.append('ס' if i + 1 < n and w[i + 1] in 'eiy' else 'ק')
+            elif ch in _CON:
+                out.append(_CON[ch])
+            i += 1
+    s = ''.join(out)
+    return s[:-1] + _SOFIT[s[-1]] if s and s[-1] in _SOFIT else s
+
+def translit_en_he(s):
+    parts = re.split(r'([A-Za-z]+)', s or '')
+    return ''.join(_translit_word(p.lower()) if p.isalpha() else p for p in parts).strip()
+
 def classify(he, en):
     if '  ' in en: return 'format', 'רווח כפול בתרגום'
     if '??' in en: return 'format', 'סימן "??" בתרגום'
@@ -92,7 +160,7 @@ for n in sorted(name2stops):
     cat, issue = classify(n, en)
     if cat:
         st = name2stops[n]
-        errors.append({'he': n, 'en': en, 'category': cat, 'issue': issue,
+        errors.append({'he': n, 'en': en, 'enHe': translit_en_he(en), 'category': cat, 'issue': issue,
                        'stops': [{'c': c} for c in sorted(st['codes'])][:20],
                        'cities': sorted(st['cities'])[:8]})
         seen.add(n)
@@ -103,7 +171,7 @@ if os.path.exists(MANUAL):
         n = m.get('he')
         if n in name2stops and he2en.get(n) == m.get('en') and n not in seen:
             st = name2stops[n]
-            errors.append({'he': n, 'en': m['en'], 'category': 'wrong', 'issue': m['issue'],
+            errors.append({'he': n, 'en': m['en'], 'enHe': translit_en_he(m['en']), 'category': 'wrong', 'issue': m['issue'],
                            'stops': [{'c': c} for c in sorted(st['codes'])][:20],
                            'cities': sorted(st['cities'])[:8]})
             seen.add(n)

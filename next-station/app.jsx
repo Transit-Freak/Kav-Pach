@@ -150,6 +150,7 @@ const TransRow = React.memo(function TransRow({ e }) {
           <span className="trans-en">{e.en}</span>
           <span className="badge" style={{ background: c.color }}>{c.label}</span>
         </div>
+        {e.enHe && <div className="trans-sound">🔊 נשמע באנגלית: <b>{e.enHe}</b></div>}
         <div className="trans-issue">{e.issue}</div>
         {cities && <div className="trans-cities">{cities}</div>}
       </div>
@@ -476,7 +477,7 @@ function App() {
     const list = (trans && trans.errors) || [];
     const qn = nq(dq);
     if (!qn) return list;
-    return list.filter((e) => nq([e.he, e.en, (e.cities || []).join(" ")].join("|")).indexOf(qn) >= 0);
+    return list.filter((e) => nq([e.he, e.en, e.enHe, (e.cities || []).join(" ")].join("|")).indexOf(qn) >= 0);
   }, [trans, dq]);
 
   const hasActiveInfo = !!(data && data.stops.some((s) => s.act === false));
