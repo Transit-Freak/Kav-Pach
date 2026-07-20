@@ -34,6 +34,13 @@ jobs:
           echo "lines:"; wc -l stops.txt
           echo "head:"; head -3 stops.txt
           cp stops.txt /tmp/stops.txt
+          echo "== Extract translations.txt, keep ENGLISH rows only (עברית->אנגלית) =="
+          unzip -o gtfs.zip translations.txt
+          # שומרים כותרת + שורות EN בלבד (מוותרים על ערבית ועברית-לעברית)
+          head -1 translations.txt > translations-en.txt
+          grep ',EN,' translations.txt >> translations-en.txt || true
+          echo "EN rows:"; wc -l translations-en.txt
+          cp translations-en.txt /tmp/translations-en.txt
           echo "== Extract stop_times.txt and derive active (served) stop_ids =="
           unzip -o gtfs.zip stop_times.txt
           ls -la stop_times.txt
@@ -46,14 +53,15 @@ jobs:
           echo "active stop_ids:"; wc -l active_stops.txt
           head -3 active_stops.txt
           cp active_stops.txt /tmp/active_stops.txt
-          echo "== Push stops.txt + active_stops.txt to gtfs-data branch =="
+          echo "== Push stops.txt + active_stops.txt + translations-en.txt to gtfs-data branch =="
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan gtfs-data
           git reset
-          find . -maxdepth 1 -mindepth 1 -not -name '.git' -not -name 'stops.txt' -not -name 'active_stops.txt' -exec rm -rf {} +
+          find . -maxdepth 1 -mindepth 1 -not -name '.git' -not -name 'stops.txt' -not -name 'active_stops.txt' -not -name 'translations-en.txt' -exec rm -rf {} +
           cp /tmp/stops.txt ./stops.txt
           cp /tmp/active_stops.txt ./active_stops.txt
+          cp /tmp/translations-en.txt ./translations-en.txt
           git add -A
-          git commit -m "GTFS stops.txt + active stop_ids from MOT"
+          git commit -m "GTFS stops.txt + active stop_ids + English translations from MOT"
           git push -f origin gtfs-data
