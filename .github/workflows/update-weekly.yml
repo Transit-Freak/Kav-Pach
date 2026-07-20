@@ -58,7 +58,7 @@ jobs:
             PREV=prev.json HISTORY=next-station/history.json CHANGES=next-station/changes.json CATDIFF=next-station/catdiff.json \
             OUT=next-station/data.json python3 tools/classify.py
 
-      - name: Detect English-translation errors (טעויות תרגום — עמוד נפרד)
+      - name: Detect English-translation errors (טעויות תרגום — קטגוריה באפליקציה)
         run: |
           set -euo pipefail
           python3 -m pip install --quiet pyspellchecker || true

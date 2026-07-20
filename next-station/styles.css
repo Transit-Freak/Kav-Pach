@@ -98,6 +98,17 @@ body {
 .it-street b { color: var(--ink); font-weight: 800; }
 .empty { padding: 40px 16px; text-align: center; color: var(--ink-faint); font-weight: 600; }
 
+/* ---- טעויות תרגום לאנגלית (קטגוריה נפרדת) ---- */
+.trans-note { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 9px 12px; line-height: 1.55; }
+.trans-note b { color: #3730a3; font-weight: 800; }
+.trans-item .trans-body { padding: 11px 13px; }
+.trans-names { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.trans-he { font-family: "Heebo", sans-serif; font-size: 15px; font-weight: 800; color: var(--ink); }
+.trans-arrow { color: var(--ink-faint); font-weight: 700; }
+.trans-en { font-size: 14px; font-weight: 700; color: var(--ink-soft); direction: ltr; unicode-bidi: isolate; }
+.trans-issue { font-size: 12.5px; color: var(--ink-soft); font-weight: 600; margin-top: 5px; line-height: 1.5; }
+.trans-cities { font-size: 12px; color: var(--ink-faint); font-weight: 700; margin-top: 3px; }
+
 /* ---- map ---- */
 .map-wrap { flex: 1; position: relative; min-width: 0; }
 #map { position: absolute; inset: 0; background: #e8eef3; }

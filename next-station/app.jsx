@@ -10,6 +10,16 @@ const CATS = {
   closer: { label: "הצעות כלליות", color: "#16a34a", desc: "הרחוב המצטלב בשם רחוק מהתחנה — יש רחוב אחר קרוב יותר שכדאי שיופיע בשם" },
 };
 
+// קטגוריה נפרדת: טעויות בתרגום-האנגלית הרשמי של שם התחנה (מ-GTFS).
+// אינה נספרת ב"סה"כ חשודות" — זו בדיקה שונה (שם↔תרגום, לא שם↔כתובת).
+const TRANS_CAT = { label: "טעויות תרגום לאנגלית", color: "#4f46e5", desc: "שם התחנה שהתרגום הרשמי שלו לאנגלית (GTFS משרד התחבורה) שגוי" };
+const TRANS_SUBCATS = {
+  wrong:   { label: "תרגום שגוי",   color: "#dc2626" },
+  missing: { label: "חלק חסר",       color: "#ea580c" },
+  literal: { label: "תרגום מילולי",  color: "#7c3aed" },
+  format:  { label: "פורמט / כתיב",   color: "#0891b2" },
+};
+
 // אייקון לסוג נקודת העניין (POI) מ-OpenStreetMap
 const POI_ICON = {
   school: "🏫", academia: "🎓", health: "🏥", mall: "🛒", train: "🚉",
@@ -127,6 +137,26 @@ const Row = React.memo(function Row({ s, on, times, onSel, onRoute, routeBusy, o
   );
 });
 
+// שורת טעות-תרגום — שם עברי ← תרגום אנגלי שגוי, עם תג סוג-הטעות והסבר.
+const TransRow = React.memo(function TransRow({ e }) {
+  const c = TRANS_SUBCATS[e.category] || { label: e.category, color: "#64748b" };
+  const cities = (e.cities || []).join(" · ");
+  return (
+    <div className="item trans-item" style={{ borderInlineStart: "4px solid " + c.color }}>
+      <div className="trans-body">
+        <div className="trans-names">
+          <span className="trans-he">{e.he}</span>
+          <span className="trans-arrow">→</span>
+          <span className="trans-en">{e.en}</span>
+          <span className="badge" style={{ background: c.color }}>{c.label}</span>
+        </div>
+        <div className="trans-issue">{e.issue}</div>
+        {cities && <div className="trans-cities">{cities}</div>}
+      </div>
+    </div>
+  );
+});
+
 // כל פרטי התחנה — משותף לפאנל שעל המפה ולשורה ברשימה.
 // inList=true: מדלג על שדות שכבר מוצגים בכותרת השורה (מספר, רחוב, עיר)
 function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
@@ -236,6 +266,7 @@ function App() {
   const [hist, setHist] = useState(null); // היסטוריית ספירות למגמות
   const [chg, setChg] = useState(null); // יומן "תוקן!" — תחנות שתוקנו במקור
   const [catd, setCatd] = useState(null); // תחנות ששינו קטגוריה בריצה האחרונה
+  const [trans, setTrans] = useState(null); // טעויות תרגום-לאנגלית (קטגוריה נפרדת)
   const [showCat, setShowCat] = useState(null); // איזה חץ-קטגוריה פתוח
   const [showFixed, setShowFixed] = useState(false);
   const [letterCity, setLetterCity] = useState(null); // מחולל מכתב לרשות (null=סגור)
@@ -301,6 +332,11 @@ function App() {
     fetch("changes.json?v=" + window.NS_BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => (r.ok ? r.json() : null))
       .then(setChg)
+      .catch(() => {});
+    // טעויות תרגום-לאנגלית — קטגוריה נפרדת (בדיקת שם↔תרגום, לא שם↔כתובת)
+    fetch("translation-errors.json?v=" + window.NS_BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setTrans)
       .catch(() => {});
   }, []);
 
@@ -435,6 +471,14 @@ function App() {
       );
   }, [data, cat, dq, activeOnly]);
 
+  // סינון טעויות-התרגום לפי החיפוש (שם עברי / אנגלי / עיר)
+  const transFiltered = useMemo(() => {
+    const list = (trans && trans.errors) || [];
+    const qn = nq(dq);
+    if (!qn) return list;
+    return list.filter((e) => nq([e.he, e.en, (e.cities || []).join(" ")].join("|")).indexOf(qn) >= 0);
+  }, [trans, dq]);
+
   const hasActiveInfo = !!(data && data.stops.some((s) => s.act === false));
 
   // הורדת התצוגה הנוכחית כקובץ אקסל (CSV עם BOM כדי שעברית תיפתח נכון ב-Excel)
@@ -451,7 +495,9 @@ function App() {
   }
 
   if (!data) return <div className="boot">טוען נתונים…</div>;
+  const inTrans = cat === "translation";
   const shown = filtered.slice(0, cap);
+  const transShown = transFiltered.slice(0, cap);
   // מספר "הצעות כלליות" שמוצגות בפועל = אלה שההליכה לא הפריכה
   const closerValid = data.stops.reduce((a, s) => a + (s.k === "closer" && !walkBad(s) ? 1 : 0), 0);
 
@@ -465,7 +511,6 @@ function App() {
             <p>תחנות אוטובוס ששמן אינו תואם לרחוב שבכתובת הרשמית</p>
           </div>
         </div>
-        <a href="translations.html" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#eef2ff", color: "#4f46e5", fontWeight: 800, fontSize: "13px", padding: "7px 13px", borderRadius: "10px", textDecoration: "none", marginTop: "6px", alignSelf: "flex-start" }}>🌐 טעויות תרגום לאנגלית (רשימה נפרדת) ←</a>
         <div className="src">
           נתונים: משרד התחבורה (GTFS){data.generated ? " · עודכן לאחרונה: " + data.generated.split("-").reverse().join(".") : ""}
           {" "}· מתעדכן אוטומטית כל לילה בסביבות 05:00
@@ -552,6 +597,17 @@ function App() {
             <span>{CATS[k].label}</span>
           </button>
         ))}
+        {trans && trans.count > 0 && (
+          <button
+            className={"stat" + (cat === "translation" ? " on" : "")}
+            style={{ "--c": TRANS_CAT.color }}
+            onClick={() => setCat(cat === "translation" ? "all" : "translation")}
+            title={TRANS_CAT.desc}
+          >
+            <b style={{ color: TRANS_CAT.color }}>{trans.count.toLocaleString()}</b>
+            <span>🌐 {TRANS_CAT.label}</span>
+          </button>
+        )}
       </div>
 
       {chg && chg.length > 0 && (() => {
@@ -596,30 +652,51 @@ function App() {
             </label>
           )}
           <div className="count">
-            מציג {shown.length.toLocaleString()} מתוך {filtered.length.toLocaleString()}
-            <button className="dl-btn" onClick={downloadCSV} disabled={!filtered.length} title="הורדת התצוגה הנוכחית כקובץ אקסל">⬇ אקסל ({filtered.length.toLocaleString()})</button>
-            <button className="dl-btn letter-btn" onClick={() => setLetterCity("")} title="יצירת מכתב פנייה לעירייה/משרד התחבורה עם רשימת הליקויים בעיר">📨 מכתב לרשות</button>
-          </div>
-          <div className="list">
-            {shown.map((s) => (
-              <Row
-                key={s.c}
-                s={s}
-                on={!!(sel && sel.c === s.c)}
-                times={sel && sel.c === s.c ? poiTimes : null}
-                onSel={setSel}
-                onRoute={showRoute}
-                routeBusy={!!(route && route.loading)}
-                onReport={setReportStop}
-              />
-            ))}
-            {filtered.length > shown.length && (
-              <button className="more-btn" onClick={() => setCap(cap + PAGE)}>
-                הצגת עוד {Math.min(PAGE, filtered.length - shown.length).toLocaleString()} תחנות ({(filtered.length - shown.length).toLocaleString()} נוספות בסינון הנוכחי)
-              </button>
+            {inTrans ? (
+              <>מציג {transShown.length.toLocaleString()} מתוך {transFiltered.length.toLocaleString()} טעויות תרגום</>
+            ) : (
+              <>
+                מציג {shown.length.toLocaleString()} מתוך {filtered.length.toLocaleString()}
+                <button className="dl-btn" onClick={downloadCSV} disabled={!filtered.length} title="הורדת התצוגה הנוכחית כקובץ אקסל">⬇ אקסל ({filtered.length.toLocaleString()})</button>
+                <button className="dl-btn letter-btn" onClick={() => setLetterCity("")} title="יצירת מכתב פנייה לעירייה/משרד התחבורה עם רשימת הליקויים בעיר">📨 מכתב לרשות</button>
+              </>
             )}
-            {shown.length === 0 && <div className="empty">לא נמצאו תחנות בסינון הנוכחי.</div>}
           </div>
+          {inTrans ? (
+            <div className="list">
+              <div className="trans-note">🌐 שמות תחנה שהתרגום הרשמי שלהם לאנגלית (מ-GTFS של משרד התחבורה) שגוי. בדיקה נפרדת — <b>אינה נספרת ב"סה"כ חשודות"</b> של הכלי הראשי (שם↔כתובת).</div>
+              {transShown.map((e, i) => (
+                <TransRow key={e.he + "_" + i} e={e} />
+              ))}
+              {transFiltered.length > transShown.length && (
+                <button className="more-btn" onClick={() => setCap(cap + PAGE)}>
+                  הצגת עוד {Math.min(PAGE, transFiltered.length - transShown.length).toLocaleString()} ({(transFiltered.length - transShown.length).toLocaleString()} נוספות בסינון הנוכחי)
+                </button>
+              )}
+              {transShown.length === 0 && <div className="empty">לא נמצאו טעויות תרגום בסינון הנוכחי.</div>}
+            </div>
+          ) : (
+            <div className="list">
+              {shown.map((s) => (
+                <Row
+                  key={s.c}
+                  s={s}
+                  on={!!(sel && sel.c === s.c)}
+                  times={sel && sel.c === s.c ? poiTimes : null}
+                  onSel={setSel}
+                  onRoute={showRoute}
+                  routeBusy={!!(route && route.loading)}
+                  onReport={setReportStop}
+                />
+              ))}
+              {filtered.length > shown.length && (
+                <button className="more-btn" onClick={() => setCap(cap + PAGE)}>
+                  הצגת עוד {Math.min(PAGE, filtered.length - shown.length).toLocaleString()} תחנות ({(filtered.length - shown.length).toLocaleString()} נוספות בסינון הנוכחי)
+                </button>
+              )}
+              {shown.length === 0 && <div className="empty">לא נמצאו תחנות בסינון הנוכחי.</div>}
+            </div>
+          )}
         </div>
 
         <div className="map-wrap">
