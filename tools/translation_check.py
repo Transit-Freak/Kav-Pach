@@ -93,6 +93,7 @@ _EN_WORD = {
   'bridge':'ברידג׳','tower':'טאואר','museum':'מיוזיאום','market':'מרקט','factory':'פקטורי',
   'kibbutz':'קיבוץ','kibuts':'קיבוץ','moshav':'מושב','industrial':'אינדסטריאל',
   'mall':'מול','kfar':'כפר','kiryat':'קריית','derech':'דרך','beit':'בית','bet':'בית',
+  'alight':'אלייט','alighting':'אלייטינג','boarding':'בורדינג','drop':'דרופ',
 }
 _DIG = [
   ('tch','צ׳'),('sch','ש'),('sh','ש'),('ch','ח'),('th','ת'),('ph','פ'),
@@ -132,7 +133,8 @@ def _translit_word(w):
     return s[:-1] + _SOFIT[s[-1]] if s and s[-1] in _SOFIT else s
 
 def translit_en_he(s):
-    parts = re.split(r'([A-Za-z]+)', s or '')
+    s = re.sub(r'([a-z]{3,})(?=[A-Z])', r'\1 ', s or '')   # מילים דבוקות (StationAlight) -> פיצול (לא Ha הידיעה)
+    parts = re.split(r'([A-Za-z]+)', s)
     return ''.join(_translit_word(p.lower()) if p.isalpha() else p for p in parts).strip()
 
 def classify(he, en):
