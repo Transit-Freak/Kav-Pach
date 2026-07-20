@@ -38,6 +38,7 @@ jobs:
           curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" -o gtfs.zip "$URL"
           unzip -o gtfs.zip stops.txt
           unzip -o gtfs.zip stop_times.txt
+          unzip -o gtfs.zip translations.txt
           SID=$(head -1 stop_times.txt | tr -d '\r' | tr ',' '\n' | grep -n -x 'stop_id' | cut -d: -f1)
           awk -F, -v c="$SID" 'NR>1{gsub(/\r/,"",$c); if($c!="") a[$c]=1} END{for(k in a) print k}' stop_times.txt | sort > active_stops.txt
           wc -l stops.txt active_stops.txt
@@ -57,10 +58,17 @@ jobs:
             PREV=prev.json HISTORY=next-station/history.json CHANGES=next-station/changes.json CATDIFF=next-station/catdiff.json \
             OUT=next-station/data.json python3 tools/classify.py
 
+      - name: Detect English-translation errors (טעויות תרגום — עמוד נפרד)
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyspellchecker || true
+          STOPS=stops.txt TRANS=translations.txt OUTFILE=next-station/translation-errors.json \
+            MANUAL=tools/translation-errors-manual.json python3 tools/translation_check.py
+
       - name: Commit refreshed data.json to main
         run: |
           set -euo pipefail
-          rm -f gtfs.zip stops.txt stop_times.txt active_stops.txt poi.json roads.json prev.json
+          rm -f gtfs.zip stops.txt stop_times.txt translations.txt active_stops.txt poi.json roads.json prev.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # main עלול לזוז בזמן הריצה — שומרים פלט, מתעדכנים, מחילים ודוחפים (עם ניסיונות חוזרים)
@@ -68,15 +76,18 @@ jobs:
           cp next-station/history.json /tmp/out-hist.json 2>/dev/null || true
           cp next-station/changes.json /tmp/out-chg.json 2>/dev/null || true
           cp next-station/catdiff.json /tmp/out-catd.json 2>/dev/null || true
+          cp next-station/translation-errors.json /tmp/out-trans.json 2>/dev/null || true
           for i in 1 2 3 4; do
             git fetch origin main && git reset --hard origin/main
             cp /tmp/out-data.json next-station/data.json
             [ -f /tmp/out-hist.json ] && cp /tmp/out-hist.json next-station/history.json
             [ -f /tmp/out-chg.json ] && cp /tmp/out-chg.json next-station/changes.json
             [ -f /tmp/out-catd.json ] && cp /tmp/out-catd.json next-station/catdiff.json
+            [ -f /tmp/out-trans.json ] && cp /tmp/out-trans.json next-station/translation-errors.json
             git add next-station/data.json next-station/history.json
             git add next-station/changes.json 2>/dev/null || true
             git add next-station/catdiff.json 2>/dev/null || true
+            git add next-station/translation-errors.json 2>/dev/null || true
             if git diff --cached --quiet; then
               echo "data unchanged — nothing to commit"; break; fi
             git commit -m "weekly: refresh stop names & classification from GTFS"

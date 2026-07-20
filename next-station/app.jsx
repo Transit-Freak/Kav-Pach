@@ -465,6 +465,7 @@ function App() {
             <p>תחנות אוטובוס ששמן אינו תואם לרחוב שבכתובת הרשמית</p>
           </div>
         </div>
+        <a href="translations.html" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#eef2ff", color: "#4f46e5", fontWeight: 800, fontSize: "13px", padding: "7px 13px", borderRadius: "10px", textDecoration: "none", marginTop: "6px", alignSelf: "flex-start" }}>🌐 טעויות תרגום לאנגלית (רשימה נפרדת) ←</a>
         <div className="src">
           נתונים: משרד התחבורה (GTFS){data.generated ? " · עודכן לאחרונה: " + data.generated.split("-").reverse().join(".") : ""}
           {" "}· מתעדכן אוטומטית כל לילה בסביבות 05:00
