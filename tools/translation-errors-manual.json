@@ -38,5 +38,945 @@
   "he": "איבטן/זמר",
   "en": "Avitan/Zemer",
   "issue": "'איבטן' (יישוב) תורגם כשם משפחה 'Avitan'"
+ },
+ {
+  "he": "אבן ח'לדון/עמרו בן אל עאס",
+  "en": "Ibn Haldoun D/Amro ben al A'as",
+  "issue": "האנגלית מוסיפה את האות \"D\" שאינה בשם העברי — כנראה הועתקה בטעות מהתחנה \"אבן ח'לדון ד\", וכך השם מציין תחנה אחרת (צ״ל: Ibn Haldoun/Amro ben al A'as)"
+ },
+ {
+  "he": "אולם הספורט",
+  "en": "Sports Court",
+  "issue": "אולם תורגם ל-Court שפירושו מגרש; אולם ספורט הוא מבנה סגור ולא מגרש (צ״ל: Sports Hall)"
+ },
+ {
+  "he": "אל ביאארה",
+  "en": "Al-Bayada",
+  "issue": "השם בעברית מסתיים ב-ר' (ביארה), אבל באנגלית נכתב Bayada עם d — שם אחר. תחנות דומות באותו אזור (אל ביארה 1-4) מתורגמות נכון Al Biara (צ״ל: Al-Bayara)"
+ },
+ {
+  "he": "אל ע'זאלי",
+  "en": "Al Azali",
+  "issue": "העיצור ע' (ע'ין, G) הושמט בתעתיק — השם הידוע אל-ע'זאלי (Al-Ghazali) הפך לשם אחר, Azali (צ״ל: Al-Ghazali)"
+ },
+ {
+  "he": "אלד'הר/מונתזה אל-דהר",
+  "en": "Har Elbad/Muntzha Al Dahar",
+  "issue": "החלק הראשון באנגלית הוא \"Har Elbad\" — שם אחר לגמרי שאינו קשור לאלד'הר. שאר תחנות אלד'הר מתורגמות Al-Dhahar (צ״ל: Al-Dhahar/Muntazah Al-Dhahar)"
+ },
+ {
+  "he": "אלדאר אלגרביה 8",
+  "en": "Al-Dar Al-Gharbiyya 6",
+  "issue": "המספר באנגלית שגוי: בעברית 8, באנגלית 6 (צ״ל: Al-Dar Al-Gharbiyya 8)"
+ },
+ {
+  "he": "אלברט איינשטיין/גולדה מאיר",
+  "en": "Albert Einstein/Golda Meit",
+  "issue": "שמה של גולדה מאיר נכתב \"Meit\" במקום \"Meir\" — האות האחרונה שגויה והופכת את השם לשם אחר (צ״ל: Albert Einstein/Golda Meir)"
+ },
+ {
+  "he": "אלבוח'ארי/שארע אפאק",
+  "en": "Al Bukhari/Shareh Al Faq",
+  "issue": "\"אפאק\" (אופקים) הפך באנגלית ל-\"Al Faq\" — פיצול שגוי שיוצר מילה אחרת. בתחנה סמוכה אותו רחוב מתועתק נכון: Afaq (צ״ל: Al Bukhari/Share' Afaq)"
+ },
+ {
+  "he": "אלאנביא",
+  "en": "Alnabi",
+  "issue": "אלאנביא פירושו \"הנביאים\" (Al-Anbiya), אך התעתיק \"Alnabi\" הוא מילה אחרת — \"הנביא\" ביחיד (צ״ל: Al-Anbiya)"
+ },
+ {
+  "he": "אלכסנדר זייד/שטרוק",
+  "en": "Alexander Zaid/Stuck",
+  "issue": "הרחוב קרוי על שם הרמן שטרוק (Struck). בתעתיק נשמטה האות r ונוצרה מילה אנגלית אחרת — Stuck ('תקוע') (צ״ל: Alexander Zaid/Struck)"
+ },
+ {
+  "he": "אלמדינה אלמנורה/מסעב בן עמיר",
+  "en": "Al-Madinah al-Munawwarah/Ben Ami Intersection",
+  "issue": "'מסעב בן עמיר' תורגם ל-'Ben Ami Intersection' — שם אחר לגמרי, ובנוסף נוספה המילה Intersection שאינה קיימת בעברית (צ״ל: Al-Madinah al-Munawwarah/Mus'ab Ben Amir)"
+ },
+ {
+  "he": "אלירמוק/הבתולה",
+  "en": "Eliramok/HaBetula",
+  "issue": "שם הרחוב הערבי אלירמוק (Al-Yarmouk) נקרא בטעות כשם עברי 'אלי-רמוק' — התעתיק Eliramok מוחק את השם המקורי (באותו קובץ הערך 'אלירמוק' לבדו תועתק נכון Al-Yarmouk) (צ״ל: Al-Yarmouk/HaBetula)"
+ },
+ {
+  "he": "אלעמאיר א",
+  "en": "Al Amir A",
+  "issue": "התעתיק משובש עד כדי מילה אחרת: אלעמאיר (אלעמאיר, שם השכונה) הפך ל-Al Amir (\"הנסיך\"). אותה שגיאה גם ב\"אלעמאיר ב\" (צ״ל: Al-Amayer A)"
+ },
+ {
+  "he": "אלעמאיר ב",
+  "en": "Al Amir B",
+  "issue": "כמו הקודם - אלעמאיר תועתק כ-Al Amir (\"הנסיך\"), מילה אחרת (צ״ל: Al-Amayer B)"
+ },
+ {
+  "he": "אמרי סופר/הרב אלישיב",
+  "en": "Omri Sofer/HaRav Elyashiv",
+  "issue": "אמרי סופר (על שם הספר) תועתק כ-Omri Sofer — 'עמרי' הוא שם אחר לגמרי מ'אמרי' (צ״ל: Imrei Sofer/HaRav Elyashiv)"
+ },
+ {
+  "he": "אמרי סופר/ישיבת מיר",
+  "en": "Omri Sofer/Mir Yeshiva",
+  "issue": "אמרי סופר תועתק כ-Omri Sofer — 'עמרי' הוא שם אחר לגמרי מ'אמרי' (צ״ל: Imrei Sofer/Mir Yeshiva)"
+ },
+ {
+  "he": "אמרי סופר/שבט הלוי",
+  "en": "Omri Sofer/Shevet HaLevi",
+  "issue": "אמרי סופר תועתק כ-Omri Sofer — 'עמרי' הוא שם אחר לגמרי מ'אמרי' (צ״ל: Imrei Sofer/Shevet HaLevi)"
+ },
+ {
+  "he": "אריה בינה/מרינוב",
+  "en": "Arye Bina/Martinov",
+  "issue": "מרינוב תועתק כ-Martinov עם אות ת' שאינה קיימת בעברית — נוצר שם משפחה אחר (מרטינוב במקום מרינוב) (צ״ל: Arye Bina/Marinov)"
+ },
+ {
+  "he": "אריה דושניצקי/יהודה בורלא",
+  "en": "Arie Dushinsky/Yehuda Burla",
+  "issue": "דושניצקי תועתק כ-Dushinsky — שם משפחה אחר (דושינסקי). בזוג אחר באותה רשימה אותו רחוב תועתק נכון: Dushnitski (צ״ל: Arye Dushnitski/Yehuda Burla)"
+ },
+ {
+  "he": "אריה דושניצקי/מוסד אחווה",
+  "en": "Arie Dushinsky/Ahva Institution",
+  "issue": "דושניצקי תועתק כ-Dushinsky — שם משפחה אחר (דושינסקי) במקום דושניצקי (צ״ל: Arye Dushnitski/Ahva Institution)"
+ },
+ {
+  "he": "באב אל-חאן/א-סולטאני",
+  "en": "Ban Al-Khan/Al-Sultani",
+  "issue": "\"באב\" (שער בערבית) תועתק בטעות כ-\"Ban\" — מילה אנגלית אחרת. בתחנה סמוכה (באב אל חאן/חמזה) הצורה הנכונה \"Bab\" מופיעה (צ״ל: Bab Al-Khan/Al-Sultani)"
+ },
+ {
+  "he": "בטן אלהווא/אלשאפעי",
+  "en": "A-Shafay/A-Shafay",
+  "issue": "החלק הראשון של השם (בטן אלהווא) הוחלף בכפילות של החלק השני — באנגלית כתוב פעמיים A-Shafay ושם השכונה נעלם (צ״ל: Batn Al-Hawa/A-Shafay)"
+ },
+ {
+  "he": "ביר אלבום/אלשייך עבד",
+  "en": "Be'er Album/Alsheikh Abu Alla",
+  "issue": "החלק השני תורגם לשם אחר: בעברית 'אלשייך עבד' אך באנגלית כתוב 'Abu Alla' — שם שונה לגמרי (צ״ל: Bir Album/Alsheikh Abd)"
+ },
+ {
+  "he": "ביס.חנוך עצמאי",
+  "en": "Self Education School",
+  "issue": "'חינוך עצמאי' הוא רשת החינוך העצמאי (Independent Education / Chinuch Atzmai); התרגום 'Self Education' משמעותו 'לימוד עצמי' — משמעות שונה (צ״ל: Chinuch Atzmai (Independent Education) School)"
+ },
+ {
+  "he": "בי''ס מישור הנוף/יהושע גיבשטיין",
+  "en": "Mishon HaNof School/Yehoshua Gibstein",
+  "issue": "תעתיק משובש: 'מישור' נכתב Mishon במקום Mishor — הופך למילה אחרת שאינה קיימת (צ״ל: Mishor HaNof School/Yehoshua Gibstein)"
+ },
+ {
+  "he": "בית הדפוס/בקי",
+  "en": "Beit Hadfus/Becky",
+  "issue": "שם הרחוב בקי תועתק כ-Becky — שם פרטי אנגלי שונה במקום תעתיק השם המקורי (צ״ל: Beit Hadfus/Baki)"
+ },
+ {
+  "he": "בית חולים סן ג'וזף",
+  "en": "Saint John Hospital",
+  "issue": "סן ג'וזף הוא Saint Joseph (יוסף), לא Saint John (ג'ון) — זה שם של בית חולים אחר בירושלים (צ״ל: Saint Joseph Hospital)"
+ },
+ {
+  "he": "בית כנסת עץ אפריים/החרוב",
+  "en": "Etz Hefer Synagogue/HaHaruv",
+  "issue": "אפריים תורגם ל-Hefer — שם אחר לגמרי במקום Efraim (צ״ל: Etz Efraim Synagogue/HaHaruv)"
+ },
+ {
+  "he": "בסיס נ.מ. אילת",
+  "en": "A.T Eilat Base",
+  "issue": "נ\"מ פירושו נגד-מטוסים (Anti-Aircraft, בקיצור A.A). הקיצור A.T באנגלית מציין Anti-Tank — נגד טנקים, כלומר משמעות צבאית שונה לגמרי (צ״ל: Eilat Anti-Aircraft (A.A.) Base)"
+ },
+ {
+  "he": "ג'ת פדלה/קעוש",
+  "en": "Jaff Fadla/Qaush",
+  "issue": "שם היישוב ג'ת נכתב \"Jaff\" — מילה אחרת לגמרי. בכל שאר התחנות באזור הוא מתועתק Jatt (צ״ל: Jatt Fadla/Qaush)"
+ },
+ {
+  "he": "גורודסקי/יחיאל פלדי",
+  "en": "Gorodiski/Yechiel Palsi",
+  "issue": "שם המשפחה פלדי תועתק כ-Palsi — האות ד הפכה ל-s והתקבל שם אחר (צ״ל: Gorodiski/Yechiel Paldi)"
+ },
+ {
+  "he": "גינת משחקים /מסילת יוסף",
+  "en": "Game Park/Mesilat Yosef",
+  "issue": "\"Game Park\" באנגלית פירושו שמורת חיות בר (ספארי), לא גינת משחקים. התרגום הנכון הוא Playground, כפי שמופיע בתחנות דומות (צ״ל: Playground/Mesilat Yosef)"
+ },
+ {
+  "he": "גרוסברג",
+  "en": "HaRozmarin",
+  "issue": "התרגום באנגלית הוא שם רחוב אחר לגמרי (הרוזמרין) במקום גרוסברג (צ״ל: Grossberg)"
+ },
+ {
+  "he": "גני טל/אליהו אילוז",
+  "en": "Gane Tal/Eliyahu Eilat",
+  "issue": "שם המשפחה אילוז תורגם כ-Eilat — שם אחר לגמרי (צ״ל: Gane Tal/Eliyahu Ilouz)"
+ },
+ {
+  "he": "גן שיקומי",
+  "en": "Rehabilitation Center",
+  "issue": "גן (גן ילדים שיקומי) תורגם כ-Center, מה שהופך את התחנה למרכז שיקום — מוסד אחר (צ״ל: Rehabilitative Kindergarten)"
+ },
+ {
+  "he": "דוד פנקס/הרב עובדיה יוסף",
+  "en": "David Pinchas/HaRav Ovadia Yosef",
+  "issue": "שם המשפחה פנקס תועתק כ-Pinchas, שהוא שם אחר לגמרי (פנחס). בכל שאר תחנות דוד פנקס התעתיק הוא Pinkas (צ״ל: David Pinkas/HaRav Ovadia Yosef)"
+ },
+ {
+  "he": "דן/הלוטם",
+  "en": "Dan/HaLotus",
+  "issue": "לוטם הוא שיח הלוטם (rockrose), אבל תורגם ל-Lotus שהוא צמח אחר לגמרי (לוטוס) (צ״ל: Dan/HaLotem)"
+ },
+ {
+  "he": "דניה/חוף השנהב",
+  "en": "Denya/HaShenhav Beach",
+  "issue": "הרחוב קרוי על שם המדינה חוף השנהב (כמו רחובות ליבריה הסמוכים), אך 'Beach' הופך אותו לחוף ים בשם שנהב ומשנה את המשמעות (צ״ל: Denya/Hof HaShenhav)"
+ },
+ {
+  "he": "דפנה/סבג ברוך",
+  "en": "Dafna/Sabag Naruch",
+  "issue": "השם הפרטי ברוך תועתק כ-Naruch במקום Baruch — האות הראשונה שובשה והשם הפך לשם אחר שאינו קיים (צ״ל: Dafna/Sabag Baruch)"
+ },
+ {
+  "he": "דרך האגמים/דרך אילות",
+  "en": "HaAgamim Road/Eilat Road",
+  "issue": "\"אילות\" תועתק כ-Eilat, שם העיר אילת — אבל אילות (Eilot) הוא שם אחר (על שם חבל אילות), כך שהאנגלית מפנה למקום אחר (צ״ל: HaAgamim Road/Eilot Road)"
+ },
+ {
+  "he": "דרך הטייסים",
+  "en": "HaTayaim Road",
+  "issue": "תעתיק משובש — חסרה האות s, כך שהשם הפך ל-Tayaim במקום Tayasim (הטייסים). כל התחנות הסמוכות באותו רחוב מתועתקות נכון (צ״ל: HaTayasim Road)"
+ },
+ {
+  "he": "דרך המלך",
+  "en": "David HaMelech",
+  "issue": "האנגלית מוסיפה את השם David שאינו קיים בעברית — 'דרך המלך' הפך ל'דוד המלך', שם רחוב אחר (צ״ל: HaMelekh Road)"
+ },
+ {
+  "he": "דרך הרכבת/חנית קיקוס",
+  "en": "HaRakevet Road/Ronit Kikus",
+  "issue": "השם הפרטי \"חנית\" תורגם ל-Ronit — שם אחר לגמרי (צ״ל: HaRakevet Road/Hanit Kikus)"
+ },
+ {
+  "he": "דרך השלום/מבצע חורב",
+  "en": "Derech Hashalom/Hativat Givati",
+  "issue": "באנגלית כתוב Hativat Givati (חטיבת גבעתי) במקום מבצע חורב — רחוב אחר לגמרי (צ״ל: Derech HaShalom/Mivtsa Horev)"
+ },
+ {
+  "he": "דרך הרבנית חנה/הגאולה",
+  "en": "Rabbinate Hanna Road/HaGeula",
+  "issue": "\"הרבנית\" (תואר של אישה) תורגם ל-Rabbinate שפירושו \"רבנות\" (המוסד) — משמעות שונה (צ״ל: HaRabbanit Hanna Road/HaGeula)"
+ },
+ {
+  "he": "דרך ירושלים/אורי כהן",
+  "en": "Jerusalem Road/Israel Belkind",
+  "issue": "באנגלית מופיע שם אחר לגמרי - Israel Belkind במקום אורי כהן (צ״ל: Jerusalem Road/Uri Cohen)"
+ },
+ {
+  "he": "דרך יצחק שמיר/פרופ. משה אדד",
+  "en": "Yitzhak Shamir Road/Prof. Moshe Adar",
+  "issue": "שם המשפחה אדד תועתק כ-Adar - שם אחר (אדר במקום אדד) (צ״ל: Yitzhak Shamir Road/Prof. Moshe Addad)"
+ },
+ {
+  "he": "דרך לוי אשכול/מיכאל וולך",
+  "en": "Levy Eshkol/Michael Wolf",
+  "issue": "שם המשפחה וולך תורגם כ-Wolf (וולף) - שם משפחה אחר (צ״ל: Levi Eshkol/Michael Wallach)"
+ },
+ {
+  "he": "דרך נחל קדם/דרך נחל פרת",
+  "en": "Nahal Kedem Road/Nahal Porat Road",
+  "issue": "נחל פרת תועתק \"Porat\" — שם אחר (פורת) במקום פרת. בתחנות סמוכות אותו רחוב מתורגם נכון \"Nahal Prat Road\" (צ״ל: Nahal Kedem Road/Nahal Prat Road)"
+ },
+ {
+  "he": "האגס/לימון",
+  "en": "Ha'Agam/Limon",
+  "issue": "העברית היא 'האגס' (עץ הפרי) אבל באנגלית נכתב Ha'Agam שפירושו 'האגם' — מילה אחרת לגמרי (צ״ל: Ha'Agas/Limon)"
+ },
+ {
+  "he": "הבישוף חגאר/עבאס",
+  "en": "HaBisBeach Hager/Aabas",
+  "issue": "המילה \"בישוף\" (Bishop) שובשה ל-\"BisBeach\" — כנראה החלפה אוטומטית שגויה שהפכה חלק מהמילה ל-Beach (חוף), וכך נוצר שם חסר משמעות (צ״ל: HaBishop Hajar/Abbas)"
+ },
+ {
+  "he": "הגן הבוטני זואולוגי",
+  "en": "David Ben Ga'on/Keren Kayemet Le'Israel",
+  "issue": "האנגלית היא שם תחנה אחר לגמרי (שמות רחובות) ולא קשורה לגן הבוטני-זואולוגי (צ״ל: Botanical & Zoological Garden)"
+ },
+ {
+  "he": "הזורעים/העומר",
+  "en": "HaTsorfim/Ha'Omer",
+  "issue": "הזורעים תורגם כ-HaTsorfim (הצורפים) — שם רחוב אחר לגמרי (צ״ל: HaZor'im/Ha'Omer)"
+ },
+ {
+  "he": "הזורעים/מעלה המורג",
+  "en": "HaTsorfim/Ma'ale HaMorag",
+  "issue": "הזורעים תורגם כ-HaTsorfim (הצורפים) — שם רחוב אחר לגמרי (צ״ל: HaZor'im/Ma'ale HaMorag)"
+ },
+ {
+  "he": "החצב/קדימה",
+  "en": "HeHatsav/Ahad HaAm",
+  "issue": "החלק השני תורגם לשם רחוב אחר לגמרי: בעברית כתוב קדימה, אבל באנגלית מופיע Ahad HaAm (אחד העם) (צ״ל: HaHatsav/Kadima)"
+ },
+ {
+  "he": "הירקון/התנאים",
+  "en": "HaYarkon/HaTe'enim",
+  "issue": "בעברית כתוב 'התנאים' (חכמי המשנה), אבל באנגלית תועתק 'HaTe'enim' — כלומר 'התאנים' (עצי תאנה), מילה אחרת לגמרי (צ״ל: HaYarkon/HaTana'im)"
+ },
+ {
+  "he": "הכביש האמריקאי 5/חי באשיר",
+  "en": "American Rd.5/Hai Nashir",
+  "issue": "השם 'באשיר' הפך באנגלית ל-'Nashir' — שם אחר (ב' הוחלפה ב-נ') (צ״ל: American Rd. 5/Hai Bashir)"
+ },
+ {
+  "he": "המייסדים/זכרון משה",
+  "en": "HaMeyasdim/Zikhron Yaakov",
+  "issue": "בעברית כתוב 'זכרון משה' אבל באנגלית תורגם 'Zikhron Yaakov' — שם אחר לגמרי (יעקב במקום משה) (צ״ל: HaMeyasdim/Zikhron Moshe)"
+ },
+ {
+  "he": "המברג/המשור",
+  "en": "Hamberg/HaMasor",
+  "issue": "המברג (רחוב על שם כלי העבודה מברג, לצד רחוב המשור) תועתק 'Hamberg' — נקרא כשם משפחה גרמני במקום שם הרחוב (צ״ל: HaMavreg/HaMasor)"
+ },
+ {
+  "he": "המברג/הרב אלישיב",
+  "en": "Hamberg/HaRav Elyashiv",
+  "issue": "המברג (כלי העבודה מברג) תועתק 'Hamberg' — נקרא כשם משפחה גרמני במקום שם הרחוב (צ״ל: HaMavreg/HaRav Elyashiv)"
+ },
+ {
+  "he": "המברג/הרב יוסף שלום אלישיב",
+  "en": "Hamberg/HaRavYosef Shalom Elyashiv",
+  "issue": "המברג (כלי העבודה מברג) תועתק 'Hamberg' — נקרא כשם משפחה גרמני במקום שם הרחוב (צ״ל: HaMavreg/HaRav Yosef Shalom Elyashiv)"
+ },
+ {
+  "he": "הנורית/מחתרת",
+  "en": "HaNurit/Underground",
+  "issue": "שם הרחוב 'מחתרת' תורגם מילולית ל-Underground, שבאנגלית נקרא כתיאור מקום (רכבת תחתית/מעבר תת-קרקעי) ולא כשם רחוב (צ״ל: HaNurit/HaMakhteret)"
+ },
+ {
+  "he": "הסיבים/טובה ושמשון דרנגר",
+  "en": "HaSivim/Drezner",
+  "issue": "בעברית הרחוב נקרא על שם טובה ושמשון דרנגר (לוחמי המחתרת בגטו קרקוב), אך באנגלית נכתב Drezner — שם של אדם אחר (יחיאל דרזנר מעולי הגרדום) (צ״ל: HaSivim/Tova and Shimshon Draenger)"
+ },
+ {
+  "he": "הקוממיות/נפחא",
+  "en": "HaKomemiyut/Naha",
+  "issue": "התעתיק \"Naha\" משמיט את האות פ' ומשנה את השם — נפחא צריך להיות Nafha (צ״ל: HaKomemiyut/Nafha)"
+ },
+ {
+  "he": "הר רמון/הר בוקר",
+  "en": "Mt. Rimon/Har Boker",
+  "issue": "הר רמון הוא Ramon (כמו מצפה רמון), אבל באנגלית נכתב Rimon — שם אחר (רימון). ברשומות סמוכות באותו קובץ אותו רחוב מתועתק נכון: Har Ramon (צ״ל: Har Ramon/Har Boker)"
+ },
+ {
+  "he": "הרב כהנמן/קוקה קולה",
+  "en": "HaRav Kahaneman/Citroen Plants",
+  "issue": "העברית אומרת 'קוקה קולה' אבל האנגלית אומרת 'Citroen Plants' (מפעלי סיטרואן) — שם אחר לגמרי (צ״ל: HaRav Kahaneman/Coca Cola)"
+ },
+ {
+  "he": "הרב ישראל אבו חצירא/הרב ברוט",
+  "en": "Rav Yitzchak Abuchatzeira/Rav Brot",
+  "issue": "שם פרטי שגוי: בעברית 'ישראל' אבו חצירא, באנגלית נכתב 'Yitzchak' (יצחק) (צ״ל: Rav Israel Abuchatzeira/Rav Brot)"
+ },
+ {
+  "he": "הרב עובדיה יוסף/דוד פנקס",
+  "en": "HaRav Ovadia Yosef/David Pinchas",
+  "issue": "שם המשפחה 'פנקס' (Pinkas) הפך באנגלית ל'Pinchas' (פנחס) — שם אחר (צ״ל: HaRav Ovadia Yosef/David Pinkas)"
+ },
+ {
+  "he": "הרב צאלח/האגס",
+  "en": "HaRav Tsalah/Ha'Agam",
+  "issue": "האגס (עץ הפרי) תורגם כ-Ha'Agam, כלומר \"האגם\" — מילה אחרת לגמרי (צ״ל: HaRav Tsalah/HaAgas)"
+ },
+ {
+  "he": "הרב שלום איפרגן/רבי דוד בוזגלו",
+  "en": "HaRav Shlomo Ifargan/Rabbi David Buzaglo",
+  "issue": "השם שלום הפך באנגלית ל-Shlomo — שם פרטי אחר (צ״ל: HaRav Shalom Ifargan/Rabbi David Buzaglo)"
+ },
+ {
+  "he": "הרב שלום משאש/הרב יעקב יצחקי",
+  "en": "HaRav Shlomo Mashash/HaRav Yaakov Yitzhaki",
+  "issue": "השם שלום הפך באנגלית ל-Shlomo — שם פרטי אחר (בתחנות אחרות של אותו רחוב נכתב נכון Shalom) (צ״ל: HaRav Shalom Mashash/HaRav Yaakov Yitzhaki)"
+ },
+ {
+  "he": "הרב שלום שבזי/שלום מנצורה",
+  "en": "HaRav Shalom Shabazi/Shlomo Mantsura",
+  "issue": "שלום מנצורה תורגם כ-Shlomo — שם פרטי אחר (צ״ל: HaRav Shalom Shabazi/Shalom Mantsura)"
+ },
+ {
+  "he": "הרי ירושלים",
+  "en": "HaRif",
+  "issue": "האנגלית אומרת \"הרי\"ף\" — שם רחוב אחר לגמרי, במקום הרי ירושלים (צ״ל: Hare Yerushalayim)"
+ },
+ {
+  "he": "ואדי אלקסב ח'ור סקר",
+  "en": "Wadi khabb",
+  "issue": "האנגלית \"Wadi khabb\" היא שם אחר לגמרי — בעברית כתוב ואדי אלקסב ח'ור סקר, ושום חלק מהשם לא מופיע באנגלית (צ״ל: Wadi al-Qasab Khor Saqr)"
+ },
+ {
+  "he": "ואדי אלסקיע/גברת אלנכל",
+  "en": "Wadi Al-Saqi/Ghabrat Al-Jabal",
+  "issue": "\"אלנכל\" (אל-נח'ל, דקלים) תורגם ל-\"Al-Jabal\" (הר) — מילה ערבית אחרת לגמרי (צ״ל: Wadi Al-Saqiya/Ghabrat Al-Nakhl)"
+ },
+ {
+  "he": "ואדי אל חאג'/2004",
+  "en": "Wadi Al Hajaj/2004",
+  "issue": "\"אל חאג'\" הוא Al-Haj, אבל באנגלית נכתב \"Hajaj\" — שם ערבי שונה (אל-חג'אג'). בתחנה סמוכה באותו רחוב התעתיק הנכון הוא Wadi al-Haj (צ״ל: Wadi Al Haj/2004)"
+ },
+ {
+  "he": "זאב ז'בוטינסקי/שדרות הבנאים",
+  "en": "Ze'ev Jabotinsky/Hanevi'im Boulevard",
+  "issue": "\"הבנאים\" תורגם כ-Hanevi'im (הנביאים) — שם רחוב אחר לגמרי (צ״ל: Ze'ev Jabotinsky/HaBana'im Boulevard)"
+ },
+ {
+  "he": "חזן/דולצין",
+  "en": "Hazan/Duzlin",
+  "issue": "האותיות התהפכו בתעתיק: דולצין (על שם אריה דולצין) הפך ל-Duzlin, שם אחר (צ״ל: Hazan/Dulzin)"
+ },
+ {
+  "he": "חטיבת הנגב/שועלי שמשון",
+  "en": "Hativat HaNegev/Shu'ale Shim'on",
+  "issue": "שמשון תורגם כ-Shim'on (שמעון) — שם אחר; צריך להיות Shimshon (צ״ל: Hativat HaNegev/Shu'ale Shimshon)"
+ },
+ {
+  "he": "חטיבת ביניים עתיד",
+  "en": "Atid High School",
+  "issue": "חטיבת ביניים היא Middle/Junior High School ולא High School (תיכון) (צ״ל: Atid Middle School)"
+ },
+ {
+  "he": "חטיבת כרמלי א",
+  "en": "Carmeli Division A",
+  "issue": "חטיבה צבאית היא Brigade; Division פירושו אוגדה (צ״ל: Carmeli Brigade A)"
+ },
+ {
+  "he": "חטיבת כרמלי ד",
+  "en": "Carmeli Division D",
+  "issue": "חטיבה צבאית היא Brigade; Division פירושו אוגדה (צ״ל: Carmeli Brigade D)"
+ },
+ {
+  "he": "חסן נימר חוסין/עומר אלמכתאר",
+  "en": "Hasan Nimaer/Bilal",
+  "issue": "החלק השני תורגם לשם אחר לגמרי: עומר אלמכתאר הפך ל-Bilal, שם שלא קשור. גם 'חוסין' נשמט מהחלק הראשון (צ״ל: Hasan Nimr Hussein/Omar Al-Mukhtar)"
+ },
+ {
+  "he": "טובים/מקורות",
+  "en": "Tuvim/Kuseife",
+  "issue": "מקורות תורגם ל-Kuseife (כסייפה) — שם של יישוב אחר לגמרי במקום Mekorot (צ״ל: Tuvim/Mekorot)"
+ },
+ {
+  "he": "טכניון/מעונות העמים",
+  "en": "Technion/Hasenat Dormitories",
+  "issue": "העמים תועתק כ-Hasenat — מילה אחרת לגמרי שאינה קשורה לשם העברי (צ״ל: Technion/Ha'Amim Dormitories)"
+ },
+ {
+  "he": "חשון/ירח אב",
+  "en": "Hoshen/Yareah Av",
+  "issue": "חשון (החודש חשוון, כמו שאר רחובות החודשים בסביבה) תועתק כ-Hoshen — מילה אחרת (חושן) (צ״ל: Heshvan/Yareah Av)"
+ },
+ {
+  "he": "חשון/שבט",
+  "en": "Hoshen/Shevet",
+  "issue": "חשון (החודש חשוון) תועתק כ-Hoshen — מילה אחרת (חושן) (צ״ל: Heshvan/Shevat)"
+ },
+ {
+  "he": "יוסף יבנאי/תורה ועבודה",
+  "en": "Yosef Banai/Torah Ve'Avoda",
+  "issue": "השם יבנאי תורגם ל-Banai — שם משפחה אחר לגמרי (בנאי במקום יבנאי) (צ״ל: Yosef Yavna'i/Torah Ve'Avoda)"
+ },
+ {
+  "he": "יחזקאל/הושע",
+  "en": "Yehezkel/Hashabat Square",
+  "issue": "הרחוב השני בעברית הוא הושע (הנביא), אבל באנגלית נכתב \"Hashabat Square\" (כיכר השבת) — כנראה הועתק בטעות מהתחנה יחזקאל/כיכר השבת (צ״ל: Yehezkel/Hoshea)"
+ },
+ {
+  "he": "יעקב אלעזר/קאנטרי רמות",
+  "en": "Ya'akov El'azar Bet/Country Ramot",
+  "issue": "באנגלית נוספה המילה \"Bet\" (ב') שלא קיימת בשם העברי, כך שהאנגלית מציינת תחנה/שם אחר (יעקב אלעזר ב') (צ״ל: Ya'akov El'azar/Country Ramot)"
+ },
+ {
+  "he": "יצחק ויטנברג/שחם",
+  "en": "Yitzhak Wittenberg/Shechem",
+  "issue": "שחם תורגם ל-Shechem, שהוא שם המקום שכם — מילה אחרת לגמרי מהרחוב שחם (צ״ל: Yitzhak Wittenberg/Shaham)"
+ },
+ {
+  "he": "כביש 5710/דרך הפרדסים",
+  "en": "Road 5710/Gan Yeshaya",
+  "issue": "התרגום מציג שם אחר לגמרי: 'דרך הפרדסים' תורגמה כ-Gan Yeshaya, שהוא שם של מקום אחר (גן יאשיה, שמופיע בתחנה אחרת על כביש 5803) (צ״ל: Road 5710/HaPardesim Road)"
+ },
+ {
+  "he": "כביש 3933/האלה",
+  "en": "Road 3933/Hala",
+  "issue": "התעתיק 'Hala' משובש והופך לשם אחר — 'האלה' צריך להיות Ha'Ela (כפי שמופיע נכון בתחנה 'כביש 3985/האלה' באותו קובץ) (צ״ל: Road 3933/Ha'Ela)"
+ },
+ {
+  "he": "כורום א רישה",
+  "en": "Burum Ar-Risha",
+  "issue": "האות כ' תועתקה כ-B במקום K, וכך נוצר שם אחר (Burum במקום Kurum) (צ״ל: Kurum a-Risha)"
+ },
+ {
+  "he": "כיכר ברנדיס",
+  "en": "Branseis Square",
+  "issue": "השם ברנדיס (Brandeis) שובש באנגלית ל-Branseis — האותיות התערבבו ונוצר שם שגוי (צ״ל: Brandeis Square)"
+ },
+ {
+  "he": "כיסרא/כניסה",
+  "en": "Bisra/Entrance",
+  "issue": "שם היישוב כיסרא תועתק כ-Bisra במקום Kisra — האות הראשונה הוחלפה והשם הפך לשם אחר (בתחנות סמוכות של אותו יישוב כתוב Kisra) (צ״ל: Kisra/Entrance)"
+ },
+ {
+  "he": "לוחמי הגטו/יטקובסקי אחים",
+  "en": "Lohamei HaGetaot/Yaktovski Brothers",
+  "issue": "השם יטקובסקי תועתק עם היפוך אותיות — Yaktovski במקום Yatkovski, וכך נוצר שם משפחה אחר (צ״ל: Lohamei HaGeta'ot/Yatkovski Brothers)"
+ },
+ {
+  "he": "מבצע אנטבה 1",
+  "en": "Mivtsa Entebbe 3",
+  "issue": "המספר באנגלית שגוי: בעברית התחנה היא מספר 1 אך באנגלית נכתב 3 (וקיימת תחנה אחרת שהיא באמת Entebbe 3) (צ״ל: Mivtsa Entebbe 1)"
+ },
+ {
+  "he": "מוזיאון",
+  "en": "Moshavat Kinneret Junction",
+  "issue": "העברית אומרת \"מוזיאון\" אבל האנגלית היא שם אחר לגמרי - צומת מושבת כנרת (צ״ל: Museum)"
+ },
+ {
+  "he": "מגרש כדורגל/אל סכאכני",
+  "en": "Football Stadium/Al Sabakhni",
+  "issue": "התעתיק משובש: \"סכאכני\" (Sakakni) הפך ל-Sabakhni - שם משפחה אחר (צ״ל: Football Field/Al Sakakni)"
+ },
+ {
+  "he": "מועצה מקומית יאנוח-ג'ת",
+  "en": "Januah Jat Regional Council",
+  "issue": "בעברית כתוב מועצה מקומית, אבל באנגלית תורגם Regional Council (מועצה אזורית) — סוג רשות שונה (צ״ל: Yanuh-Jat Local Council)"
+ },
+ {
+  "he": "מחלף גדרה לצפון/תחנת דלק",
+  "en": "Gedera Interchange to East/Gas Station",
+  "issue": "בעברית הכיוון הוא צפון, אבל באנגלית נכתב East (מזרח) — כיוון שגוי (צ״ל: Gedera Interchange to North/Gas Station)"
+ },
+ {
+  "he": "מחלף גולני/מקדונלדס למערב",
+  "en": "Golani Interchange/McDonald's to East",
+  "issue": "בעברית הכיוון הוא מערב, אבל באנגלית נכתב East (מזרח) — כיוון שגוי (צ״ל: Golani Interchange/McDonald's to West)"
+ },
+ {
+  "he": "מחלף העמקים/אלרואי",
+  "en": "HaAmakim Fork/Elroi",
+  "issue": "מחלף תורגם ל-Fork (הסתעפות/מזלג דרכים) — מילה אנגלית שגויה שמשנה את המשמעות (צ״ל: HaAmakim Interchange/Elroi)"
+ },
+ {
+  "he": "מחלף העמקים/ג'למה",
+  "en": "HaAmakim Fork/Jalama",
+  "issue": "מחלף תורגם ל-Fork (הסתעפות/מזלג דרכים) — מילה אנגלית שגויה שמשנה את המשמעות (צ״ל: HaAmakim Interchange/Jalama)"
+ },
+ {
+  "he": "מחלף קמה לדרום",
+  "en": "Kama Intersection East",
+  "issue": "הכיוון תורגם שגוי: בעברית 'לדרום' ובאנגלית 'East' (מזרח). בנוסף 'מחלף' תורגם 'Intersection' במקום 'Interchange' (צ״ל: Kama Interchange South)"
+ },
+ {
+  "he": "מחנה אליקים",
+  "en": "Eliakim Interchange",
+  "issue": "'מחנה' תורגם 'Interchange' (מחלף) במקום 'Camp' — משמעות שונה לגמרי (צ״ל: Eliakim Camp)"
+ },
+ {
+  "he": "מחנה אמיתי",
+  "en": "Amitai Interchange",
+  "issue": "'מחנה' תורגם 'Interchange' (מחלף) במקום 'Camp' — משמעות שונה לגמרי (צ״ל: Amitai Camp)"
+ },
+ {
+  "he": "מחנה טבץ",
+  "en": "Tecetz Camp",
+  "issue": "התעתיק משובש: 'טבץ' הפך ל-'Tecetz' — האות ב' הוחלפה ב-c והשם הפך לשם אחר (צ״ל: Tavetz Camp)"
+ },
+ {
+  "he": "מכולת/שדרות נתיבי הים",
+  "en": "Containers/Netivei HaYam Boulevard",
+  "issue": "\"מכולת\" היא חנות מכולת, אבל תורגמה כ-Containers (מכולות משא) — מילה אחרת לגמרי. בשאר הרשימה \"מכולת\" מתורגמת נכון כ-Grocery store (צ״ל: Grocery Store/Netivei HaYam Boulevard)"
+ },
+ {
+  "he": "מנהלי הנדסה ובת''ש/שד' בן גוריון",
+  "en": "Engineering. Construction and Infrastruction Directories",
+  "issue": "המילה \"Directories\" פירושה ספריות/מדריכי טלפון — לא \"מנהלי\" (אגפים/מנהלות). התרגום הנכון הוא Directorates. בנוסף \"Infrastruction\" אינה מילה באנגלית (צ\"ל Infrastructure) (צ״ל: Engineering, Construction and Infrastructure Directorates/Ben Gurion Blvd)"
+ },
+ {
+  "he": "מסוף עתיר ידע/איסוף",
+  "en": "Atid Yeda Terminal/Pickup",
+  "issue": "עתיר תורגם כ-Atid (עתיד) — מילה עברית אחרת; שם הפארק הוא עתיר ידע (Atir Yeda) (צ״ל: Atir Yeda Terminal/Pickup)"
+ },
+ {
+  "he": "מסוף עתיר ידע/הורדה",
+  "en": "Atid Yeda Termina/Dropoff",
+  "issue": "עתיר תורגם כ-Atid (עתיד) — מילה עברית אחרת; שם הפארק הוא עתיר ידע (Atir Yeda) (צ״ל: Atir Yeda Terminal/Dropoff)"
+ },
+ {
+  "he": "מסעף אזור תעשיה",
+  "en": "Industrial Area Terminal",
+  "issue": "המילה \"מסעף\" תורגמה ל-Terminal (מסוף) במקום Intersection — משמעות שונה לגמרי (צ״ל: Industrial Area Intersection)"
+ },
+ {
+  "he": "מסעף בית הארחה",
+  "en": "Guest House Terminal",
+  "issue": "המילה \"מסעף\" תורגמה ל-Terminal (מסוף) במקום Intersection — משמעות שונה לגמרי (צ״ל: Guest House Intersection)"
+ },
+ {
+  "he": "מסעף אשדות יעקב מאוחד",
+  "en": "Ashdot Ya'akon Me'uhad Intersection",
+  "issue": "\"יעקב\" נכתב Ya'akon במקום Ya'akov — האות שובשה והשם הפך לשם אחר (צ״ל: Ashdot Ya'akov Me'uhad Intersection)"
+ },
+ {
+  "he": "מסעף מגדל צפון",
+  "en": "Northern Tower Fork",
+  "issue": "מגדל כאן הוא שם היישוב מגדל, אבל תורגם מילולית ל-Tower (מגדל כמבנה) (צ״ל: Migdal North Fork)"
+ },
+ {
+  "he": "מסעף מגדל צפון/כניסה",
+  "en": "Northern Tower Fork/Entrance",
+  "issue": "מגדל כאן הוא שם היישוב מגדל, אבל תורגם מילולית ל-Tower (מגדל כמבנה) (צ״ל: Migdal North Fork/Entrance)"
+ },
+ {
+  "he": "מסעף כפר כמא מזרח",
+  "en": "Kfar Kama Termianl East",
+  "issue": "מסעף תורגם ל-Terminal (מסוף) — מילה שגויה, וגם באיות משובש (Termianl). המסעף המקביל מערבה תורגם נכון כ-Intersection (צ״ל: Kfar Kama Intersection East)"
+ },
+ {
+  "he": "מסעף משגב עם",
+  "en": "Misgav An Intersection",
+  "issue": "המילה עם תועתקה כ-An במקום Am — התעתיק המשובש הופך את שם הקיבוץ משגב עם למילה אחרת (צ״ל: Misgav Am Intersection)"
+ },
+ {
+  "he": "מסעף עדנים/ מ.א.דרום השרון",
+  "en": "Adanim Termianl/Drom Hasharon Regional Council",
+  "issue": "מסעף תורגם כ-Terminal (מסוף) — מילה אחרת לגמרי (וגם עם שגיאת כתיב Termianl). מסעף הוא צומת/הסתעפות, לא מסוף (צ״ל: Adanim Intersection/Drom HaSharon Regional Council)"
+ },
+ {
+  "he": "מעונות הסטודנטים נווה ריפקין",
+  "en": "Mneve Rifkin Dorms",
+  "issue": "\"נווה\" תועתק בטעות כ-\"Mneve\" — מילה חסרת משמעות (כנראה האות מ' נדבקה מהמילה מעונות). צריך להיות Neve (צ״ל: Neve Rifkin Dorms)"
+ },
+ {
+  "he": "מעוצה מקומית/חטין",
+  "en": "Regional Council/Hittin",
+  "issue": "מועצה מקומית היא Local Council; המונח Regional Council פירושו מועצה אזורית — סוג רשות אחר (צ״ל: Local Council/Hittin)"
+ },
+ {
+  "he": "מקורות/תחנת יתיר",
+  "en": "Kuseife/Yatir Station",
+  "issue": "\"מקורות\" תורגם כ-Kuseife (כסייפה) — שם יישוב אחר לגמרי במקום שם חברת המים מקורות (צ״ל: Mekorot/Yatir Station)"
+ },
+ {
+  "he": "מקמאן 12/יציאה",
+  "en": "Makman 13/Exit",
+  "issue": "המספר באנגלית שגוי: בעברית 12 ובאנגלית 13 (צ״ל: Makman 12/Exit)"
+ },
+ {
+  "he": "מרחצאות נוה מדבר",
+  "en": "Merhazaot Ein Gedi (spa)",
+  "issue": "בעברית מדובר במרחצאות נווה מדבר, אבל באנגלית נכתב עין גדי — מקום אחר לגמרי (כנראה הועתק מהתחנה הבאה ברשימה) (צ״ל: Merhatsaot Neve Midbar)"
+ },
+ {
+  "he": "מרינוב/גלרנטר",
+  "en": "Martinov/Gelrenter",
+  "issue": "מרינוב תועתק כ-Martinov עם ת' מיותרת — שם משפחה אחר. בתחנה סמוכה (מרינוב א') תועתק נכון Marinov (צ״ל: Marinov/Gelrenter)"
+ },
+ {
+  "he": "מרינוב/וונגרטן",
+  "en": "Martinov/Weingarten",
+  "issue": "מרינוב תועתק כ-Martinov עם ת' מיותרת — שם משפחה אחר. בתחנה סמוכה (מרינוב א') תועתק נכון Marinov (צ״ל: Marinov/Weingarten)"
+ },
+ {
+  "he": "מרכז זרזיר",
+  "en": "Zarzir Canter",
+  "issue": "שגיאת כתיב שהפכה למילה אחרת: Canter פירושו דהירת סוס, במקום Center (מרכז) (צ״ל: Zarzir Center)"
+ },
+ {
+  "he": "מרכז מסחרי מול הפארק/דרך ירושלים",
+  "en": "Mul HaPark Rercreation Center/Yerushalayim Road",
+  "issue": "בעברית זה מרכז מסחרי, אבל באנגלית נכתב Recreation Center (מרכז פנאי/נופש) — ובנוסף עם שגיאת כתיב (Rercreation) (צ״ל: Mul HaPark Commercial Center/Yerushalayim Road)"
+ },
+ {
+  "he": "משה פריד/בורוכוב",
+  "en": "Moshe Farid/Borochov",
+  "issue": "פריד תועתק כ-Farid (שם ערבי אחר) במקום Fried, כפי שמופיע נכון בתחנה סמוכה באותו רחוב (צ״ל: Moshe Fried/Borochov)"
+ },
+ {
+  "he": "נאות גולף",
+  "en": "Neot-Gulf",
+  "issue": "השכונה קרויה על שם מגרש הגולף, אבל באנגלית נכתב Gulf שפירושו מפרץ — מילה אחרת לגמרי. בשאר התחנות באותה שכונה נכתב נכון Golf (צ״ל: Neot Golf)"
+ },
+ {
+  "he": "נחל איילון/נחל רמות",
+  "en": "Nahal Ayalon/Nahal Sorek",
+  "issue": "באנגלית נכתב נחל שורק במקום נחל רמות — שם רחוב אחר לגמרי (צ״ל: Nahal Ayalon/Nahal Ramot)"
+ },
+ {
+  "he": "נורדאו/שועלי שמשון",
+  "en": "Nordau/Shu'ale Shim'on",
+  "issue": "שמשון תורגם כ-Shim'on (שמעון) — שם אחר; צריך להיות Shimshon (צ״ל: Nordau/Shu'ale Shimshon)"
+ },
+ {
+  "he": "נחל שקמה/נחל הירדן",
+  "en": "Nahal Shika/Nahal HaYarden",
+  "issue": "שקמה תועתק כ-Shika — נשמטה האות מ' והשם הפך לשם אחר (צ״ל: Nahal Shikma/Nahal HaYarden)"
+ },
+ {
+  "he": "נחמן סירקין/עמרם חזנוב",
+  "en": "Nahman Sirkin/Amram Roznov",
+  "issue": "שם המשפחה חזנוב תורגם ל-Roznov — שם משפחה אחר לגמרי (צ״ל: Nahman Sirkin/Amram Khazanov)"
+ },
+ {
+  "he": "סחלב/גרנית",
+  "en": "Sahlav/Gatit",
+  "issue": "גרנית תורגמה ל-Gatit — שם אחר לגמרי במקום Granit (השוו: סלע/גרניט -> Sela Granit באותו קובץ) (צ״ל: Sahlav/Granit)"
+ },
+ {
+  "he": "סלניקין/צמרות",
+  "en": "Salnikyu/Tsamarot",
+  "issue": "התעתיק Salnikyu משובש — הסיומת -ין הפכה ל--yu והשם נהיה שם אחר (צ״ל: Salnikin/Tsamarot)"
+ },
+ {
+  "he": "עבאס/הבישוף חגאר",
+  "en": "Aabas/HaBisBeach Hager",
+  "issue": "המילה \"הבישוף\" שובשה ל-\"HaBisBeach\" — נראה שהחלק \"חוף\" תורגם בטעות ל-Beach, והתוצאה היא מילה חסרת משמעות במקום התואר Bishop (בישוף) (צ״ל: Abbas/HaBishop Hajjar)"
+ },
+ {
+  "he": "עין א-תינה",
+  "en": "Ein a-Khina",
+  "issue": "תינה (Tina) הפכה באנגלית ל-Khina — מילה אחרת; האות ת' אינה Kh (צ״ל: Ein a-Tina)"
+ },
+ {
+  "he": "עילבון כנסייה",
+  "en": "Eilabun Entry",
+  "issue": "כנסייה תורגמה כ-Entry (כניסה) במקום Church (צ״ל: Eilabun Church)"
+ },
+ {
+  "he": "עין גנים / מחנה יהודה",
+  "en": "En Ganim/Yehuda Camp",
+  "issue": "מחנה יהודה הוא שם שכונה ותורגם מילולית כ-Yehuda Camp, מה שמשנה את המשמעות למחנה (צ״ל: En Ganim/Mahane Yehuda)"
+ },
+ {
+  "he": "עיריית טמרה",
+  "en": "Tamra City",
+  "issue": "עירייה תורגמה כ-City (העיר עצמה) במקום City Hall או Municipality — משמעות שונה (צ״ל: Tamra Municipality)"
+ },
+ {
+  "he": "עראמשה ו",
+  "en": "Aramsha 1",
+  "issue": "האות ו' תורגמה כמספר 1 — שגוי וגם מתנגש עם התחנה הקיימת \"עראמשה 1\". ו' היא האות השישית, כמו בתחנות המקבילות Aramsha A/B/G/D/H (צ״ל: Aramsha Vav (או Aramsha 6))"
+ },
+ {
+  "he": "פארק תעשיות ראם",
+  "en": "Mivtsa Industrial Zone",
+  "issue": "התרגום האנגלי מכיל שם אחר לגמרי — \"Mivtsa\" (מבצע) במקום ראם (צ״ל: Re'em Industrial Park)"
+ },
+ {
+  "he": "פרץ סנטר/שדרות הרב מישאל דהאן",
+  "en": "Perets Center/HaRav Michael Dahan Blvd",
+  "issue": "השם מישאל תורגם ל-Michael (מיכאל) — זה שם אחר. מישאל הוא Mishael (צ״ל: Perets Center/HaRav Mishael Dahan Blvd)"
+ },
+ {
+  "he": "צ. אלון/שדרות הגליל",
+  "en": "Ze'elon/HaGalil Boulevard",
+  "issue": "צ. אלון (צומת אלון) הפך באנגלית ל-Ze'elon — שם של עץ (צאלון), מילה אחרת לגמרי (צ״ל: Alon Junction/HaGalil Boulevard)"
+ },
+ {
+  "he": "צומת אבן שמואל",
+  "en": "Sven Shmuel Junction",
+  "issue": "\"אבן\" תועתק בטעות כ-Sven (שם סקנדינבי) במקום Even (צ״ל: Even Shmuel Junction)"
+ },
+ {
+  "he": "צומת ביתלו",
+  "en": "Bilu Junction",
+  "issue": "ביתלו הוא הכפר ביתילו שבאזור בנימין, אבל התרגום מפנה לצומת בילו שליד רחובות — מקום אחר לגמרי (צומת בילו האמיתי מופיע ברשימה בנפרד) (צ״ל: Beitillu Junction)"
+ },
+ {
+  "he": "צומת הגדי למזרח",
+  "en": "Kama Interchange East",
+  "issue": "האנגלית מציינת צומת אחר לגמרי (קמה) במקום הגדי — כנראה הועתק משורה שכנה. שאר הכיוונים של אותו צומת תורגמו נכון (HaGdi Junction) (צ״ל: HaGdi Junction East)"
+ },
+ {
+  "he": "צומת חורשת טל",
+  "en": "Chorshat Tal Interchange",
+  "issue": "המילה צומת תורגמה Interchange, שפירושה מחלף (הפרדה מפלסית) — מונח דרך שונה מצומת (צ״ל: Chorshat Tal Junction)"
+ },
+ {
+  "he": "צומת שמוע עותניאל",
+  "en": "Shmuel Otniel Junction",
+  "issue": "שמוע הוא שם היישוב (א-סמוע/שמוע) ליד עותניאל, אך באנגלית נכתב Shmuel - השם שמואל, שם אחר לגמרי (צ״ל: Shamua Otniel Junction)"
+ },
+ {
+  "he": "קוממיות/טשרניחובסקי",
+  "en": "Afula Illit Intersection/Komemiyut",
+  "issue": "האנגלית אומרת 'צומת עפולה עילית/קוממיות' — רחוב טשרניחובסקי לא מופיע כלל והוחלף בשם אחר לגמרי (צ״ל: Komemiyut/Tchernichovsky)"
+ },
+ {
+  "he": "קיבוץ משמר השרון לדרום",
+  "en": "Kibbutz Mishmar HaEmek Southward",
+  "issue": "התרגום מציין קיבוץ אחר לגמרי: משמר העמק במקום משמר השרון (צ״ל: Kibbutz Mishmar HaSharon Southward)"
+ },
+ {
+  "he": "קיבוץ משמר השרון לצפון",
+  "en": "Kibbutz Mishmar HaEmek Northward",
+  "issue": "התרגום מציין קיבוץ אחר לגמרי: משמר העמק במקום משמר השרון (צ״ל: Kibbutz Mishmar HaSharon Northward)"
+ },
+ {
+  "he": "קלמן גבריאלוב/הרב דוד נדב",
+  "en": "Kalman Gavrielov/HaRav David Nathan",
+  "issue": "השם נדב תורגם לשם אחר: Nathan (נתן) במקום Nadav (צ״ל: Kalman Gavrielov/HaRav David Nadav)"
+ },
+ {
+  "he": "קניון שפרעם/אלנכיל אזור תעשייה",
+  "en": "Shefar'am Mall/Alnabil Industrial Area",
+  "issue": "אלנכיל (אל-נח'יל, \"הדקלים\" בערבית) תועתק כ-Alnabil — שם אחר לגמרי (נביל). האות כ הפכה ל-b (צ״ל: Shefar'am Mall/Al-Nakhil Industrial Area)"
+ },
+ {
+  "he": "קרית חינוך שדות נגב",
+  "en": "Azata Education Center",
+  "issue": "העברית אומרת 'שדות נגב' אבל באנגלית כתוב 'Azata' — שם אחר (השם הישן של המועצה), לא תרגום של השם בעברית (צ״ל: Sdot Negev Education Center)"
+ },
+ {
+  "he": "קרל נטר/ שרגאי",
+  "en": "Karl Netter/Shraga",
+  "issue": "'שרגאי' תועתק כ-'Shraga' — נשמטה האות האחרונה והשם הפך לשם פרטי אחר (שרגא במקום שרגאי) (צ״ל: Karl Netter/Shragai)"
+ },
+ {
+  "he": "שד' העצמאות/בלפור",
+  "en": "Jabotinsky LRT Station/HaAtzmaut blvd.",
+  "issue": "האנגלית מציינת תחנת רכבת קלה ז'בוטינסקי שכלל לא מופיעה בעברית, ו'בלפור' חסר לגמרי (צ״ל: HaAtzmaut Blvd/Balfour)"
+ },
+ {
+  "he": "שד.הדקל/שד.הרב הרצוג",
+  "en": "HaDekel Blvd/HaRav Rerzog Blvd",
+  "issue": "שם הרב הרצוג שובש ל-Rerzog — שם שאינו קיים במקום Herzog (צ״ל: HaDekel Blvd/HaRav Herzog Blvd)"
+ },
+ {
+  "he": "שד.הרב הרצוג/שד.לוי אשכול",
+  "en": "HaRav Rerzog Blvd/Levi Eshkol Blvd",
+  "issue": "שם הרב הרצוג שובש ל-Rerzog — שם שאינו קיים במקום Herzog (צ״ל: HaRav Herzog Blvd/Levi Eshkol Blvd)"
+ },
+ {
+  "he": "שד.נהר הירדן/שד.הרב הרצוג",
+  "en": "Nahar HaYarden Blvd/HaRav Rerzog Blvd",
+  "issue": "השם הרצוג נכתב באנגלית Rerzog — שיבוש שהופך את השם לשם לא קיים (צ״ל: Nahar HaYarden Blvd/HaRav Herzog Blvd)"
+ },
+ {
+  "he": "שדרות הרצל/אהובה עוזרי",
+  "en": "Herzl Boulevard/Naomi Shemer",
+  "issue": "באנגלית כתוב שם של אדם אחר לגמרי - נעמי שמר במקום אהובה עוזרי (צ״ל: Herzl Boulevard/Ahuva Ozeri)"
+ },
+ {
+  "he": "שדרות הרב מישאל דהאן/אפרים לרון",
+  "en": "HaRav Michael Dahan Blvd/Efrayim Laron",
+  "issue": "מישאל תורגם כ-Michael (מיכאל) - שם פרטי אחר. בתחנה סמוכה באותו רחוב מופיע התעתיק הנכון Misha'el (צ״ל: HaRav Misha'el Dahan Blvd/Efrayim Laron)"
+ },
+ {
+  "he": "שדרות הרצל/יוסף קלויזנר",
+  "en": "Herzl Avenue/Yosef Koizner",
+  "issue": "התעתיק Koizner מחסיר את האות ל' והופך את שם המשפחה קלויזנר (Klausner) לשם אחר (צ״ל: Herzl Avenue/Yosef Klausner)"
+ },
+ {
+  "he": "שדרות תרומות/שדרות יצחק רבין",
+  "en": "Sajur Junction West",
+  "issue": "האנגלית היא שם של תחנה אחרת לגמרי (צומת סאג'ור מערב) ואין לה שום קשר לשם העברי (צ״ל: Trumot Blvd/Yitzhak Rabin Blvd)"
+ },
+ {
+  "he": "שדרות ששת הימים/הכלנית",
+  "en": "Sheshet HaYamim Boulevard/HaBalanit",
+  "issue": "הכלנית (הפרח) תועתקה בטעות \"Balanit\" — מילה אחרת; צריך להיות Kalanit (צ״ל: Sheshet HaYamim Boulevard/HaKalanit)"
+ },
+ {
+  "he": "שדרות עלי הכהן/שוהם",
+  "en": "Ali HaCohen Blvd/Shoham",
+  "issue": "עלי הכהן (הדמות המקראית עֵלִי) תועתק \"Ali\" — שם אחר; צריך להיות Eli (צ״ל: Eli HaCohen Blvd/Shoham)"
+ },
+ {
+  "he": "שכונת אלגמשה 2",
+  "en": "Al Khamsa Qtr 2",
+  "issue": "השם בעברית הוא אלגמשה (Al Gamsha), אבל באנגלית נכתב Khamsa — שם אחר לגמרי (בערבית: 'חמש'). בקובץ עצמו התחנה 'שכונת אלגמשה/ליד בית ספר' מתורגמת נכון Al Gamsha (צ״ל: Al Gamsha Qtr 2)"
+ },
+ {
+  "he": "שכונת אלגמשה 3",
+  "en": "Al Khamsa Qtr 3",
+  "issue": "השם בעברית הוא אלגמשה (Al Gamsha), אבל באנגלית נכתב Khamsa — שם אחר לגמרי (צ״ל: Al Gamsha Qtr 3)"
+ },
+ {
+  "he": "שכונת אלגמשה 4",
+  "en": "Al Khamsa Qtr 4",
+  "issue": "השם בעברית הוא אלגמשה (Al Gamsha), אבל באנגלית נכתב Khamsa — שם אחר לגמרי (צ״ל: Al Gamsha Qtr 4)"
+ },
+ {
+  "he": "שכונת אלגמשה 5",
+  "en": "Al Khamsa Qtr 5",
+  "issue": "השם בעברית הוא אלגמשה (Al Gamsha), אבל באנגלית נכתב Khamsa — שם אחר לגמרי (צ״ל: Al Gamsha Qtr 5)"
+ },
+ {
+  "he": "שכונת אלגמשה 8",
+  "en": "Al Khamsa Qtr 8",
+  "issue": "השם בעברית הוא אלגמשה (Al Gamsha), אבל באנגלית נכתב Khamsa — שם אחר לגמרי (צ״ל: Al Gamsha Qtr 8)"
+ },
+ {
+  "he": "שכונת אלגמשה 9",
+  "en": "Al Khamsa Qtr 9",
+  "issue": "השם בעברית הוא אלגמשה (Al Gamsha), אבל באנגלית נכתב Khamsa — שם אחר לגמרי (צ״ל: Al Gamsha Qtr 9)"
+ },
+ {
+  "he": "שלום מנצורה/הרב שלום זכריה",
+  "en": "Shlomo Mantsura/HaRav Shalom Zekharya",
+  "issue": "שם הרחוב בעברית הוא שלום מנצורה, אבל באנגלית נכתב Shlomo — שם פרטי אחר (שלמה במקום שלום) (צ״ל: Shalom Mantsura/HaRav Shalom Zekharya)"
+ },
+ {
+  "he": "שלום מנצורה/רבי עקיבא",
+  "en": "Shlomo Mantsura/Rabbi Akiva",
+  "issue": "שם הרחוב בעברית הוא שלום מנצורה, אבל באנגלית נכתב Shlomo — שם פרטי אחר (שלמה במקום שלום) (צ״ל: Shalom Mantsura/Rabbi Akiva)"
+ },
+ {
+  "he": "שלומית/יציאה",
+  "en": "Shulamit/Exit",
+  "issue": "שם היישוב שלומית תועתק כ-Shulamit, שהוא שם אחר (שולמית). בתחנה המקבילה שלומית/מרכז התעתיק הנכון הוא Shlomit (צ״ל: Shlomit/Exit)"
+ },
+ {
+  "he": "שער הגלבוע/אתר הסקי",
+  "en": "Sderot HaGilboa/Ski Resort",
+  "issue": "המילה \"שער\" תורגמה ל-Sderot (שדרות) — מילה אחרת לגמרי מהעברית (צ״ל: Sha'ar HaGilboa/Ski Resort)"
+ },
+ {
+  "he": "ת. רכבת אופקים רציפים/בינעירוני",
+  "en": "Ofakim Train Station Platforms/Municipal",
+  "issue": "\"בינעירוני\" תורגם ל-Municipal (עירוני) — ההפך מהמשמעות. התחנה העירונית המקבילה מתורגמת באותה מילה בדיוק, כך ששני הכיוונים נראים זהים באנגלית (צ״ל: Ofakim Train Station Platforms/Intercity)"
+ },
+ {
+  "he": "ת. רכבת יבנה מערב",
+  "en": "Yanve-West Railway Station",
+  "issue": "תעתיק משובש: Yanve במקום Yavne — היפוך אותיות שהופך את שם העיר לשם אחר (צ״ל: Yavne-West Railway Station)"
+ },
+ {
+  "he": "ת. רכבת עכו",
+  "en": "Acre Central Station",
+  "issue": "בעברית זו תחנת רכבת, אבל באנגלית כתוב Central Station (תחנה מרכזית) — מונח שמציין תחנת אוטובוסים מרכזית, מקום אחר בעכו (צ״ל: Acre Railway Station)"
+ },
+ {
+  "he": "תחנת מוניות באקה אל ע'רביה אל קודס",
+  "en": "Taxi Stand Baka Al-Arabiya Al-Quds",
+  "issue": "שם היישוב הוא באקה אל-ע'רביה (\"המערבית\" — Gharbiyye), אבל באנגלית נכתב Al-Arabiya (\"הערבית\") — מילה אחרת לגמרי שמשנה את שם היישוב (צ״ל: Taxi Stand Baqa al-Gharbiyye Al-Quds)"
+ },
+ {
+  "he": "תחנת מוניות מעלות ז'בוטינסקי",
+  "en": "Taxi Stand Ma’alot Jabotinsky and HaRav Kook",
+  "issue": "באנגלית נוסף רחוב \"HaRav Kook\" שלא קיים בשם העברי — כנראה הועתק בטעות מהתחנה הסמוכה, והתוצאה מציינת פינת רחובות שונה (צ״ל: Taxi Stand Ma'alot Jabotinsky)"
+ },
+ {
+  "he": "תחנת מוניות חיפה שער פלמר",
+  "en": "Haifa Sha'ar Plummer Taxi Station",
+  "issue": "הרחוב קרוי על שם פלמר (Palmer, מתכנן נמל חיפה); התעתיק Plummer הופך אותו לשם משפחה אחר (צ״ל: Haifa Sha'ar Palmer Taxi Station)"
+ },
+ {
+  "he": "תחנת מוניות חיפה שער פלמר ודרך העצמאות",
+  "en": "Haifa Sha'ar Plummer Ve Derech HaAtzmaout Taxi Sta",
+  "issue": "אותה שגיאה: פלמר הוא Palmer, לא Plummer — שם אחר (צ״ל: Haifa Sha'ar Palmer Ve Derech HaAtzmaut)"
+ },
+ {
+  "he": "תיכון הישאם אבו רומי",
+  "en": "Hashem Abu Rumi High School",
+  "issue": "השם הפרטי 'הישאם' (Hisham) תועתק כ-'Hashem' — שם ערבי אחר לגמרי (האשם) (צ״ל: Hisham Abu Rumi High School)"
+ },
+ {
+  "he": "תשרי/חשון",
+  "en": "Tishre/Hoshen",
+  "issue": "חשון הוא החודש חשוון, אך באנגלית נכתב Hoshen — שזו מילה אחרת (חושן, אבן החושן). בזוג סמוך זהה התרגום הנכון מופיע: Heshvan (צ״ל: Tishrei/Heshvan)"
  }
 ]
