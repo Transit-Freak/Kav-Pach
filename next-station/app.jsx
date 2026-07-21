@@ -141,6 +141,7 @@ const Row = React.memo(function Row({ s, on, times, onSel, onRoute, routeBusy, o
 const TransRow = React.memo(function TransRow({ e }) {
   const c = TRANS_SUBCATS[e.category] || { label: e.category, color: "#64748b" };
   const cities = (e.cities || []).join(" · ");
+  const codes = (e.stops || []).map((s) => s.c);
   return (
     <div className="item trans-item" style={{ borderInlineStart: "4px solid " + c.color }}>
       <div className="trans-body">
@@ -152,6 +153,13 @@ const TransRow = React.memo(function TransRow({ e }) {
         </div>
         {e.enHe && <div className="trans-sound">🔊 נשמע באנגלית: <b>{e.enHe}</b></div>}
         <div className="trans-issue">{e.issue}</div>
+        {codes.length > 0 && (
+          <div className="trans-codes">
+            {codes.length === 1 ? "מס׳ תחנה: " : "מס׳ תחנות: "}
+            {codes.slice(0, 8).join(" · ")}
+            {codes.length > 8 ? " ועוד " + (codes.length - 8) : ""}
+          </div>
+        )}
         {cities && <div className="trans-cities">{cities}</div>}
       </div>
     </div>
@@ -477,7 +485,7 @@ function App() {
     const list = (trans && trans.errors) || [];
     const qn = nq(dq);
     if (!qn) return list;
-    return list.filter((e) => nq([e.he, e.en, e.enHe, (e.cities || []).join(" ")].join("|")).indexOf(qn) >= 0);
+    return list.filter((e) => nq([e.he, e.en, e.enHe, (e.cities || []).join(" "), (e.stops || []).map((s) => s.c).join(" ")].join("|")).indexOf(qn) >= 0);
   }, [trans, dq]);
 
   const hasActiveInfo = !!(data && data.stops.some((s) => s.act === false));
