@@ -1,9 +1,10 @@
 name: parks-access
 
-# נגישות תחבורה ציבורית לאזורי תעשייה — מקור האזורים: הדאטהסט הרשמי של משרד
-# הכלכלה (data.gov.il, "רשימת אזורי תעשייה"). תחנות ולוחות זמנים מ-GTFS (משרד
-# התחבורה). חישוב הליכה מדויק ב-OSRM (רשת OSM). שבילי OSM רק למדד כיסוי-שטח.
-# רץ שבועי.
+# נגישות תחבורה ציבורית לאזורי תעשייה — מקורות האזורים: (א) הדאטהסט הרשמי של
+# משרד הכלכלה (data.gov.il, "רשימת אזורי תעשייה"); (ב) אזורי תעשייה מ-OSM
+# שאומתו כקיימים ע"י פאנל בוטים (parks/osm-check/osm-approved.json). תחנות
+# ולוחות זמנים מ-GTFS (משרד התחבורה). חישוב הליכה מדויק ב-OSRM (רשת OSM).
+# שבילי OSM רק למדד כיסוי-שטח. רץ שבועי.
 
 on:
   schedule:
@@ -39,10 +40,17 @@ jobs:
           OFFICIAL_OUT=official.json python3 tools/fetch_official.py
           echo "official.json: $(wc -c < official.json) bytes"
 
-      - name: Compute park regions (מהאזורים הרשמיים ← תיבות-גבול לשלב-השבילים)
+      - name: Fetch approved OSM industrial polygons (מאומתי-פאנל) — גאומטריה
         run: |
           set -euo pipefail
-          EMIT_REGIONS=1 OFFICIAL_ONLY=1 OFFICIAL=official.json REGIONS_OUT=regions.json python3 tools/parks.py
+          APPROVED=parks/osm-check/osm-approved.json OUT=osm-approved-raw.json \
+            python3 tools/fetch_osm_approved.py
+
+      - name: Compute park regions (רשמי + OSM מאומת ← תיבות-גבול לשלב-השבילים)
+        run: |
+          set -euo pipefail
+          EMIT_REGIONS=1 OFFICIAL=official.json PARKS_RAW=osm-approved-raw.json \
+            REGIONS_OUT=regions.json python3 tools/parks.py
           echo "regions: $(wc -c < regions.json) bytes"
 
       - name: Query Overpass — footways within regions (למדד כיסוי-שטח בלבד)
@@ -50,11 +58,16 @@ jobs:
           set -euo pipefail
           REGIONS=regions.json FOOT_OUT=footways.json CHUNK=100 python3 tools/fetch_footways.py
 
-      - name: parks-raw.json = שבילים בלבד (בלי פוליגונים מ-OSM)
+      - name: parks-raw.json = פוליגונים מאומתים + שבילים
         run: |
           set -euo pipefail
-          cp footways.json parks-raw.json
-          echo "footway elements: $(python3 -c "import json;print(len(json.load(open('parks-raw.json')).get('elements',[])))")"
+          python3 - <<'PY'
+          import json
+          foot = json.load(open('footways.json')).get('elements', [])
+          polys = json.load(open('osm-approved-raw.json')).get('elements', [])
+          json.dump({'elements': polys + foot}, open('parks-raw.json', 'w'))
+          print(f'industrial polygons: {len(polys)} | footway elements: {len(foot)}')
+          PY
 
       - name: Fetch GTFS
         run: |
@@ -99,33 +112,35 @@ jobs:
           done
           [ "$up" = "1" ] || { echo "OSRM failed to start"; docker logs osrm || true; exit 1; }
 
-      - name: Build park accessibility data (ממשלתי-בלבד)
+      - name: Build park accessibility data (רשמי + OSM מאומת)
         run: |
           set -euo pipefail
-          # OFFICIAL_ONLY: האזורים אך ורק מהדאטהסט הרשמי. GTFS לתחנות/זמנים,
-          # OSRM מקומי למרחק-הליכה מדויק, שבילי OSM רק למדד כיסוי-שטח.
-          OFFICIAL_ONLY=1 OFFICIAL=official.json \
-            OSRM_URL="http://localhost:5000" OSRM_BUDGET=3000 OSRM_SLEEP=0 \
+          # האזורים: פוליגונים מאומתים מ-OSM + הדאטהסט הרשמי (מיזוג/השלמה).
+          # GTFS לתחנות/זמנים, OSRM מקומי למרחק-הליכה מדויק, שבילי OSM לכיסוי-שטח.
+          # תקציב OSRM מוגדל — פי ~5 אזורים מקודם; המטמון מצטבר בין ריצות.
+          OFFICIAL=official.json \
+            OSRM_URL="http://localhost:5000" OSRM_BUDGET=9000 OSRM_SLEEP=0 \
             WALK_CACHE_IN=parks/data/walk-cache.json \
             PARKS_RAW=parks-raw.json OUTDIR=/tmp/parksout python3 tools/parks.py
           ls /tmp/parksout | head -5
           echo "files: $(ls /tmp/parksout | wc -l)"
 
-      - name: Commit to main
+      - name: Commit results (לענף שהריץ — main בריצה השבועית)
         run: |
           set -euo pipefail
-          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json footways.json regions.json official.json
+          BR="${GITHUB_REF_NAME:-main}"
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json footways.json regions.json official.json osm-approved-raw.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4; do
-            git fetch origin main && git reset --hard origin/main
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
             mkdir -p parks
             rm -rf parks/data
             cp -r /tmp/parksout parks/data
             git add parks/data
             if git diff --cached --quiet; then
               echo "unchanged — nothing to commit"; break; fi
-            git commit -m "data: refresh industrial-park accessibility (רשמי)"
-            if git push origin HEAD:main; then break; fi
-            echo "push rejected (main moved) — retry $i"; sleep 10
+            git commit -m "data: refresh industrial-park accessibility (רשמי + OSM מאומת)"
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected ($BR moved) — retry $i"; sleep 10
           done

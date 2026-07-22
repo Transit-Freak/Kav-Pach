@@ -1,0 +1,43 @@
+name: fetch-osm-industrial
+
+# משיכת כל אזורי התעשייה (landuse=industrial) מ-OSM לקובץ קומפקטי בענף.
+# חד-פעמי לבדיקת "קיים או לא" מול המאגר הרשמי — רץ רק על ענף הבדיקה.
+
+on:
+  push:
+    branches:
+      - claude/industrial-site-accessibility-check-cx8hkq
+    paths:
+      - '.github/workflows/fetch-osm-industrial.yml'
+      - 'tools/fetch_osm_industrial.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-osm-industrial
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Query Overpass — all landuse=industrial
+        run: |
+          set -euo pipefail
+          OUT=parks/osm-check/osm-industrial.json python3 tools/fetch_osm_industrial.py
+
+      - name: Commit to branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add parks/osm-check/osm-industrial.json
+          if git diff --cached --quiet; then
+            echo "unchanged — nothing to commit"; exit 0; fi
+          git commit -m "data: osm-industrial.json — כל אזורי התעשייה מ-OSM (בדיקת קיום)"
+          git push origin HEAD
