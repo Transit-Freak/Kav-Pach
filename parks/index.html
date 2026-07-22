@@ -109,6 +109,7 @@
   <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
     <div class="legend" style="margin:0">
       <span>קווים נגישים ברגל לפי המדידה שבחרת (מרכז/כניסה):</span>
+      <span><i style="background:#dc2626"></i> ללא קווים</span>
       <span><i style="background:#fde047"></i> 1–5</span>
       <span><i style="background:#84cc16"></i> 6–15</span>
       <span><i style="background:#16a34a"></i> 16–40</span>
@@ -207,15 +208,17 @@ function openHeatmap(fit=true){
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
   // גודל+צבע = מספר הקווים שאפשר להגיע אליהם ברגל לפי המדידה שבחרת (מרכז/כניסה):
-  // בתוך + עד מרחק-ההליכה שקבענו. יותר קווים => גדול וירוק יותר.
-  const hcol=(tot)=>{if(tot<=5)return'#fde047';if(tot<=15)return'#84cc16';if(tot<=40)return'#16a34a';return'#065f46'};
-  const hsiz=(tot)=>{if(tot<=5)return 9;if(tot<=15)return 13;if(tot<=40)return 18;return 24};
+  // בתוך + עד מרחק-ההליכה שקבענו. יותר קווים => גדול וירוק יותר. אפס = אדום —
+  // חור בשירות, הנתון שהאתר בא לחשוף.
+  const hcol=(tot)=>{if(!tot)return'#dc2626';if(tot<=5)return'#fde047';if(tot<=15)return'#84cc16';if(tot<=40)return'#16a34a';return'#065f46'};
+  const hsiz=(tot)=>{if(!tot)return 8;if(tot<=5)return 9;if(tot<=15)return 13;if(tot<=40)return 18;return 24};
   for(const p of IDX){
     if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
     const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln'), tot=li+lg+ln;
-    if(!tot) continue;
     const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:.85})
-      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>נגישים ברגל (${WALKMODE=='c'?'עד מרכז':'עד כניסה'}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`)
+      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>`+(tot
+        ?`נגישים ברגל (${WALKMODE=='c'?'עד מרכז':'עד כניסה'}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
+        :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${WALKMODE=='c'?'עד מרכז':'עד כניסה'})`))
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
