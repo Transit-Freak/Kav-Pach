@@ -626,7 +626,7 @@ function App() {
         return (
           <div className="fixedbar">
             <button className="fixedbar-h" onClick={() => setShowFixed(!showFixed)}>
-              🔧 <b>{(total + totalRn).toLocaleString()}</b> תחנות ששמן שונה ב-GTFS מאז {chg[0].d.split("-").reverse().join(".")} — {total.toLocaleString()} תיקוני חשודות · {totalRn.toLocaleString()} שינויי שם כלליים {showFixed ? "▲" : "▼"}
+              🔧 <b>{(total + totalRn).toLocaleString()}</b> תחנות ששמן או כתובתן שונו ב-GTFS מאז {chg[0].d.split("-").reverse().join(".")} — {total.toLocaleString()} תיקוני חשודות · {totalRn.toLocaleString()} שינויי שם כלליים {showFixed ? "▲" : "▼"}
             </button>
             {showFixed && (
               <div className="fixed-list">
@@ -638,8 +638,8 @@ function App() {
                       <div className="fixed-date">{e.d.split("-").reverse().join(".")} — {(e.fixed || []).length} תיקוני חשודות · {rn.length + (e.rn_more || 0)} שינויי שם</div>
                       {(e.fixed || []).map((f, i) => (
                         <div className="fixed-row" key={"f" + f.c + "_" + i}>
-                          🔧 <span className="code">{f.c}</span> {f.t} · <s>{f.on}</s> ← <b>{f.nn}</b>
-                          {f.os !== f.ns && <span className="fixed-street"> (כתובת: {f.os} ← {f.ns})</span>}
+                          🔧 <span className="code">{f.c}</span> {f.t} · {f.on !== f.nn ? (<><s>{f.on}</s> ← <b>{f.nn}</b></>) : (<b>{f.nn}</b>)}
+                          {f.os !== f.ns && <span className="fixed-street"> (הכתובת שונתה: <s>{f.os}</s> ← <b>{f.ns}</b>)</span>}
                         </div>
                       ))}
                       {rn.slice(0, 200).map((f, i) => (
