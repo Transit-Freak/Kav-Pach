@@ -56,6 +56,7 @@ jobs:
           cp next-station/data.json prev.json 2>/dev/null || echo '{}' > prev.json
           STOPS=stops.txt POI=poi.json ROADS=roads.json ACTIVE=active_stops.txt \
             PREV=prev.json HISTORY=next-station/history.json CHANGES=next-station/changes.json CATDIFF=next-station/catdiff.json \
+            SNAPSHOT=next-station/stops-names.json \
             OUT=next-station/data.json python3 tools/classify.py
 
       - name: Detect English-translation errors (טעויות תרגום — קטגוריה באפליקציה)
@@ -77,6 +78,7 @@ jobs:
           cp next-station/changes.json /tmp/out-chg.json 2>/dev/null || true
           cp next-station/catdiff.json /tmp/out-catd.json 2>/dev/null || true
           cp next-station/translation-errors.json /tmp/out-trans.json 2>/dev/null || true
+          cp next-station/stops-names.json /tmp/out-snap.json 2>/dev/null || true
           for i in 1 2 3 4; do
             git fetch origin main && git reset --hard origin/main
             cp /tmp/out-data.json next-station/data.json
@@ -84,10 +86,12 @@ jobs:
             [ -f /tmp/out-chg.json ] && cp /tmp/out-chg.json next-station/changes.json
             [ -f /tmp/out-catd.json ] && cp /tmp/out-catd.json next-station/catdiff.json
             [ -f /tmp/out-trans.json ] && cp /tmp/out-trans.json next-station/translation-errors.json
+            [ -f /tmp/out-snap.json ] && cp /tmp/out-snap.json next-station/stops-names.json
             git add next-station/data.json next-station/history.json
             git add next-station/changes.json 2>/dev/null || true
             git add next-station/catdiff.json 2>/dev/null || true
             git add next-station/translation-errors.json 2>/dev/null || true
+            git add next-station/stops-names.json 2>/dev/null || true
             if git diff --cached --quiet; then
               echo "data unchanged — nothing to commit"; break; fi
             git commit -m "weekly: refresh stop names & classification from GTFS"

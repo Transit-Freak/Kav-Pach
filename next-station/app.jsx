@@ -621,25 +621,36 @@ function App() {
 
       {chg && chg.length > 0 && (() => {
         const total = chg.reduce((a, e) => a + (e.fixed || []).length, 0);
-        if (!total) return null;
+        const totalRn = chg.reduce((a, e) => a + (e.renamed || []).length + (e.rn_more || 0), 0);
+        if (!total && !totalRn) return null;
         return (
           <div className="fixedbar">
             <button className="fixedbar-h" onClick={() => setShowFixed(!showFixed)}>
-              🔧 <b>{total.toLocaleString()}</b> תחנות תוקנו במקור (שם/כתובת שונו ב-GTFS) מאז {chg[0].d.split("-").reverse().join(".")} {showFixed ? "▲" : "▼"}
+              🔧 <b>{(total + totalRn).toLocaleString()}</b> תחנות ששמן שונה ב-GTFS מאז {chg[0].d.split("-").reverse().join(".")} — {total.toLocaleString()} תיקוני חשודות · {totalRn.toLocaleString()} שינויי שם כלליים {showFixed ? "▲" : "▼"}
             </button>
             {showFixed && (
               <div className="fixed-list">
-                {chg.slice().reverse().map((e) => (
-                  <div key={e.d}>
-                    <div className="fixed-date">{e.d.split("-").reverse().join(".")} — {e.fixed.length} תיקונים</div>
-                    {e.fixed.map((f, i) => (
-                      <div className="fixed-row" key={f.c + "_" + i}>
-                        <span className="code">{f.c}</span> {f.t} · <s>{f.on}</s> ← <b>{f.nn}</b>
-                        {f.os !== f.ns && <span className="fixed-street"> (כתובת: {f.os} ← {f.ns})</span>}
-                      </div>
-                    ))}
-                  </div>
-                ))}
+                {chg.slice().reverse().map((e) => {
+                  const rn = e.renamed || [];
+                  const rnMore = Math.max(0, rn.length - 200) + (e.rn_more || 0);
+                  return (
+                    <div key={e.d}>
+                      <div className="fixed-date">{e.d.split("-").reverse().join(".")} — {(e.fixed || []).length} תיקוני חשודות · {rn.length + (e.rn_more || 0)} שינויי שם</div>
+                      {(e.fixed || []).map((f, i) => (
+                        <div className="fixed-row" key={"f" + f.c + "_" + i}>
+                          🔧 <span className="code">{f.c}</span> {f.t} · <s>{f.on}</s> ← <b>{f.nn}</b>
+                          {f.os !== f.ns && <span className="fixed-street"> (כתובת: {f.os} ← {f.ns})</span>}
+                        </div>
+                      ))}
+                      {rn.slice(0, 200).map((f, i) => (
+                        <div className="fixed-row" key={"r" + f.c + "_" + i}>
+                          ✏️ <span className="code">{f.c}</span> {f.t} · <s>{f.on}</s> ← <b>{f.nn}</b>
+                        </div>
+                      ))}
+                      {rnMore > 0 && <div className="fixed-row">ועוד {rnMore.toLocaleString()} שינויי שם…</div>}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
