@@ -8,7 +8,7 @@ name: parks-access
 
 on:
   schedule:
-    - cron: '0 4 * * 0'
+    - cron: '0 7 * * 0'   # ראשון 07:00 UTC (10:00 ישראל בקיץ) — מיושר לשעת הרענון היומי
   push:
     paths:
       - '.github/workflows/parks-access.yml'
