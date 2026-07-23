@@ -83,6 +83,141 @@ function SkipMap({ it, route, lineStops }) {
   );
 }
 
+/* ---------- מפה מרוכזת: כל הקווים שמדלגים על אותה תחנה ---------- */
+const LINE_COLORS = ["#e11d48", "#2563eb", "#16a34a", "#9333ea", "#ea580c", "#0891b2",
+  "#ca8a04", "#db2777", "#4d7c0f", "#7c3aed", "#0d9488", "#b91c1c", "#1d4ed8", "#a16207"];
+
+function MultiSkipMap({ items, db, hidden }) {
+  const ref = useRef(null);
+  const mapRef = useRef(null);
+  const layersRef = useRef({});
+  const [full, setFull] = useState(false);
+  const it0 = items[0];
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    const map = L.map(ref.current, {
+      scrollWheelZoom: false,
+      gestureHandling: coarse,
+      gestureHandlingOptions: {
+        text: { touch: "להזזת המפה גללו בשתי אצבעות", scroll: "לזום: Ctrl + גלילה", scrollMac: "לזום: ⌘ + גלילה" },
+      },
+    });
+    mapRef.current = map;
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+    layersRef.current = {};
+    items.forEach((it, i) => {
+      const color = LINE_COLORS[i % LINE_COLORS.length];
+      const lg = L.layerGroup();
+      const rt = ((db.shapes && it.shp ? db.shapes[it.shp] : null) || []).filter((p) => p.length === 2);
+      if (rt.length > 1) lg.addLayer(L.polyline(rt, { color, weight: 3, opacity: 0.55 }));
+      const seg = (it.seg || []).filter((p) => p.length === 2);
+      if (seg.length > 1) {
+        lg.addLayer(L.polyline(seg, { color, weight: 6, opacity: 0.9 })
+          .bindTooltip("קו " + it.line, { sticky: true, className: "sk-tip" }));
+      }
+      lg.addTo(map);
+      layersRef.current[it._k] = lg;
+    });
+    // התחנה המדולגת — סימון אחד לכולם
+    L.circleMarker([it0.la, it0.lo], { radius: 9, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+      .addTo(map)
+      .bindTooltip("מדולגת: " + it0.stop, { permanent: true, direction: "top", offset: [0, -9], className: "sk-tip" });
+    const segs = items.flatMap((it) => (it.seg || []).filter((p) => p.length === 2));
+    map.fitBounds(L.latLngBounds(segs.length ? segs : [[it0.la, it0.lo]]).pad(0.2));
+    setFull(false);
+    return () => { mapRef.current = null; layersRef.current = {}; map.remove(); };
+  }, [items, db]);
+
+  // הדלקה/כיבוי של קו — בלי לבנות את המפה מחדש
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    items.forEach((it) => {
+      const lg = layersRef.current[it._k];
+      if (!lg) return;
+      const off = hidden.has(it._k);
+      if (off && map.hasLayer(lg)) map.removeLayer(lg);
+      if (!off && !map.hasLayer(lg)) map.addLayer(lg);
+    });
+  }, [hidden, items]);
+
+  const toggleFull = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const vis = items.filter((it) => !hidden.has(it._k));
+    const pts = full
+      ? vis.flatMap((it) => (it.seg || []).filter((p) => p.length === 2))
+      : vis.flatMap((it) => ((db.shapes && it.shp ? db.shapes[it.shp] : null) || []).filter((p) => p.length === 2));
+    map.fitBounds(L.latLngBounds(pts.length ? pts : [[it0.la, it0.lo]]).pad(0.15));
+    setFull(!full);
+  };
+
+  return (
+    <div className="map-wrap">
+      <div className="map big" ref={ref} />
+      <button className="full-btn" onClick={toggleFull}>{full ? "התמקדות בתחנה" : "כל המסלולים"}</button>
+    </div>
+  );
+}
+
+/* ---------- קבוצה: תחנה שכמה קווים מדלגים עליה ---------- */
+const StopGroup = React.memo(function StopGroup({ items, open, onToggle, db, onLine }) {
+  const it = items[0];
+  const [hidden, setHidden] = useState(() => new Set());
+  const flip = (k) => setHidden((h) => { const n = new Set(h); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  return (
+    <div className={"it grp" + (open ? " open" : "")}>
+      <button className="it-head" onClick={onToggle}>
+        <span className="stop-badge">{items.length} קווים</span>
+        <span className="it-main">
+          <span className="it-title">מדלגים על: {it.stop} <span className="code">({it.code})</span></span>
+          <span className="it-sub">{it.city} · {items.slice(0, 8).map((x) => x.line).join(" · ")}{items.length > 8 ? " · …" : ""} · {it.onum} קווים כן עוצרים</span>
+        </span>
+        <span className="arrow">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="detail">
+          <div className="lnchips">
+            {items.map((x, i) => {
+              const color = LINE_COLORS[i % LINE_COLORS.length];
+              const off = hidden.has(x._k);
+              return (
+                <button key={x._k} className={"lnchip" + (off ? " off" : "")}
+                  style={off ? {} : { background: color, borderColor: color }}
+                  title={(off ? "הצגת" : "הסתרת") + " קו " + x.line + " במפה — " + x.dest}
+                  onClick={() => flip(x._k)}>
+                  {x.line}
+                </button>
+              );
+            })}
+            <span className="lnchips-hint">לחיצה על קו מסתירה/מציגה אותו במפה</span>
+          </div>
+          <MultiSkipMap items={items} db={db} hidden={hidden} />
+          <div className="legend">
+            <span><i className="dot red" /> התחנה המדולגת</span>
+            <span><i className="ln" /> הקטע סביב התחנה (עבה) ושאר המסלול (דק) — בצבע הקו</span>
+          </div>
+          <div className="facts">
+            <p>
+              <b>{items.length} קווים</b> עוברים ליד תחנת <b>{it.stop}</b> (מק"ט {it.code}) בלי לעצור בה,
+              בזמן ש-<b>{it.onum}</b> קווים אחרים כן עוצרים. ריכוז כזה הוא בדרך כלל תכנון מכוון של הציר —
+              אבל שווה בדיקה אם התחנה מסומנת נכון.
+            </p>
+            <p className="mut">לפרטי קו בודד (עצירות לפני/אחרי, רשימת תחנות) — חפשו את מספר הקו בתצוגה הרגילה: {items.slice(0, 12).map((x) => (
+              <button key={x._k} className="chip clk" onClick={() => onLine && onLine(x.line)}>{x.line}</button>
+            ))}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 /* ---------- פירוט ממצא ---------- */
 function Detail({ it, db, onLine }) {
   const nSkip = (it.skippers || []).length;
@@ -219,6 +354,7 @@ function App() {
   const [openSub, setOpenSub] = useState(null);
   const [page, setPage] = useState(1);
   const [showSys, setShowSys] = useState(false);
+  const [byStop, setByStop] = useState(false); // תצוגה לפי תחנה: כל הקווים שמדלגים עליה יחד
   const [fOp, setFOp] = useState("");       // מפעיל
   const [fMahoz, setFMahoz] = useState(""); // מחוז (מהקובץ המצומצם)
   const [fUniq, setFUniq] = useState(""); // ייחודיות הקו (סדיר/לילה/מזינים)
@@ -276,7 +412,7 @@ function App() {
   const filtered = useMemo(() => {
     const needle = dq.trim().toLowerCase();
     return items.filter((it) => {
-      if (!showSys && it._sys) return false;
+      if (!byStop && !showSys && it._sys) return false;
       if (fType !== "all" && (it.ty || "עירוני") !== fType) return false;
       if (city && it.city !== city) return false;
       if (fOp && it.op !== fOp) return false;
@@ -288,9 +424,9 @@ function App() {
       if (it.line === needle) return true;
       return it._q.includes(needle);
     });
-  }, [items, city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
+  }, [items, city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
 
-  useEffect(() => { setPage(1); }, [city, dq, showSys, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
+  useEffect(() => { setPage(1); }, [city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
 
   if (err) return <div className="boot">שגיאה בטעינת הנתונים — ייתכן שההרצה הראשונה עוד לא הסתיימה. נסו לרענן מאוחר יותר.</div>;
   if (!data) return <div className="boot">טוען נתונים…</div>;
@@ -300,8 +436,18 @@ function App() {
   const cities = Object.keys(byCity).sort((a, b) => byCity[b] - byCity[a]);
   const sysN = items.filter((it) => it._sys).length;
   // קיבוץ: כל הדילוגים של אותו קו באותה עיר — כרטיס אחד (הסדר לפי הממצא המדורג הכי גבוה)
+  // ובתצוגה-לפי-תחנה: כל הקווים שמדלגים על אותה תחנה — כרטיס אחד, מרובי-הקווים קודם
   const groups = [];
-  {
+  if (byStop) {
+    const gm = new Map();
+    filtered.forEach((it) => {
+      if (!gm.has(it.code)) gm.set(it.code, []);
+      gm.get(it.code).push(it);
+    });
+    [...gm.values()].filter((g) => g.length >= 2)
+      .sort((a, b) => b.length - a.length)
+      .forEach((g) => groups.push(g));
+  } else {
     const gm = new Map();
     filtered.forEach((it) => {
       const k = it.line + "@" + it.city + "@" + (it.ty || "");
@@ -310,6 +456,7 @@ function App() {
     });
   }
   const shown = groups.slice(0, page * PAGE);
+  const stopN = (() => { const c = {}; items.forEach((it) => { c[it.code] = (c[it.code] || 0) + 1; }); return Object.values(c).filter((n) => n >= 2).length; })();
 
   return (
     <div className="wrap">
@@ -347,6 +494,10 @@ function App() {
           <button className={"chipf sys" + (showSys ? " on" : "")} onClick={() => setShowSys(!showSys)}
             title="דילוג ששייך כנראה לתכנון: כמה קווים מדלגים על אותה תחנה, או קו שמדלג על תחנות רבות">
             {showSys ? "מציג" : "מוסתרים"} {sysN} דילוגים שיטתיים
+          </button>
+          <button className={"chipf bystop" + (byStop ? " on" : "")} onClick={() => setByStop(!byStop)}
+            title="כרטיס אחד לכל תחנה שכמה קווים מדלגים עליה — כל המסלולים על מפה אחת, בצבע שונה לכל קו">
+            🚏 לפי תחנה ({stopN})
           </button>
         </div>
         <input
@@ -410,6 +561,13 @@ function App() {
 
       <div className="list">
         {shown.map((g) => {
+          if (byStop) {
+            const sk = "s:" + g[0].code;
+            return (
+              <StopGroup key={sk} items={g} open={openKey === sk} db={db} onLine={(ln) => { setByStop(false); goLine(ln); }}
+                onToggle={() => setOpenKey(openKey === sk ? null : sk)} />
+            );
+          }
           const gk = "g:" + g[0].line + "@" + g[0].city + "@" + (g[0].ty || "");
           return g.length === 1 ? (
             <Row key={g[0]._k} it={g[0]} open={openKey === g[0]._k} db={db} onLine={goLine}

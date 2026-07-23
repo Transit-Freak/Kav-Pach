@@ -171,3 +171,22 @@ footer a { color: #b45309; }
   .it-head { padding: 10px 10px; }
   .detail { padding: 0 10px 12px; }
 }
+
+/* ---- תצוגה לפי תחנה: כמה קווים מדלגים על אותה תחנה ---- */
+.chipf.bystop { color: #0f766e; border-color: #99f6e4; }
+.chipf.bystop.on { background: #0f766e; border-color: #0f766e; color: #fff; }
+.stop-badge {
+  flex: 0 0 auto; min-width: 46px; text-align: center; background: #0f766e; color: #fff;
+  font-family: "Heebo", sans-serif; font-weight: 800; font-size: 14px;
+  border-radius: 9px; padding: 8px 8px;
+}
+.map.big { height: 420px; }
+.lnchips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.lnchip {
+  border: 2px solid #94a3b8; background: #94a3b8; color: #fff; border-radius: 8px;
+  min-width: 44px; padding: 4px 10px; font-family: "Heebo", sans-serif; font-weight: 800;
+  font-size: 15px; cursor: pointer;
+}
+.lnchip.off { background: #fff; color: #94a3b8; border-style: dashed; opacity: .75; }
+.lnchips-hint { font-size: 12px; color: #94a3b8; }
+@media (max-width: 640px) { .map.big { height: 320px; } }
