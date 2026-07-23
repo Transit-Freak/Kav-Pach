@@ -313,10 +313,12 @@ cnt={'exact':0,'settlement':0,'spelling':0,'streetvar':0,'uncertain':0,'reversal
 suspects=[]; closer_cands=[]
 EXIST=defaultdict(set)  # שמות-תחנות קיימים לכל עיר — לבדיקת התנגשות שמות מוצעים
 CURINFO={}  # code -> (name, street) נוכחיים — לזיהוי תיקונים אמיתיים מול הריצה הקודמת
+CURCITY={}  # code -> עיר — לתצוגת יומן שינויי-השם
 for r in rows[1:]:
     if len(r)<=SD: continue
     name,desc,code=r[SN],r[SD],r[SC]; st=street(desc); c=city(desc)
     CURINFO[code]=(name,st)
+    CURCITY[code]=c
     if c: EXIST[c].add(cn(name))
     _ov=OVR.get(code)
     # האישור מותנה בשם: השתנה שם התחנה ב-GTFS — האישור פג והיא נבדקת מחדש
@@ -495,24 +497,47 @@ json.dump({'generated':datetime.date.today().isoformat(),
 print('wrote',OUT)
 # מעקב "תוקן!": תחנה שסומנה כשגיאה, יצאה מהרשימה, *והטקסט שלה השתנה ב-GTFS* —
 # תוקנה באמת במקור (שינוי כללי-סיווג אצלנו לא נספר, כי הטקסט נשאר זהה).
+# ובנוסף: פירוט *כל* שינויי-השם בין ריצות (לא רק חשודות) — snapshot של שמות כל
+# התחנות נשמר בין ריצות (SNAPSHOT), וההשוואה מולו תופסת כל תחנה ששמה השתנה.
 CHANGES=os.environ.get('CHANGES','')
-if CHANGES and PREVERR:
-    curflag={s['c'] for s in suspects if s['k'] in ERRCATS}
+SNAP=os.environ.get('SNAPSHOT','')
+renamed=[]
+if SNAP:
+    try: oldsnap=json.load(open(SNAP))
+    except Exception: oldsnap={}
+    for c0,(nm2,_s2) in CURINFO.items():
+        pv=oldsnap.get(c0)
+        if pv and pv[0]!=nm2:
+            renamed.append({'c':c0,'t':CURCITY.get(c0) or (pv[1] if len(pv)>1 else ''),
+                            'on':pv[0],'nn':nm2})
+    json.dump({c0:[nm,CURCITY.get(c0,'')] for c0,(nm,_s) in CURINFO.items()},
+              open(SNAP,'w'),ensure_ascii=False,separators=(',',':'))
+    print('renamed since prev run:',len(renamed),'' if oldsnap else '(ריצה ראשונה — נוצר snapshot)')
+if CHANGES:
     fixed=[]
-    for c0,pv in PREVERR.items():
-        if c0 in curflag: continue
-        ci=CURINFO.get(c0)
-        if not ci: continue  # התחנה הוסרה מה-GTFS — לא "תיקון"
-        nm2,st2=ci
-        if nm2!=pv['n'] or st2!=pv['s']:
-            fixed.append({'c':c0,'t':pv['t'],'k':pv['k'],'on':pv['n'],'os':pv['s'],'nn':nm2,'ns':st2})
+    if PREVERR:
+        curflag={s['c'] for s in suspects if s['k'] in ERRCATS}
+        for c0,pv in PREVERR.items():
+            if c0 in curflag: continue
+            ci=CURINFO.get(c0)
+            if not ci: continue  # התחנה הוסרה מה-GTFS — לא "תיקון"
+            nm2,st2=ci
+            if nm2!=pv['n'] or st2!=pv['s']:
+                fixed.append({'c':c0,'t':pv['t'],'k':pv['k'],'on':pv['n'],'os':pv['s'],'nn':nm2,'ns':st2})
     try: ch=json.load(open(CHANGES))
     except Exception: ch=[]
     today=datetime.date.today().isoformat()
     ch=[e for e in ch if e.get('d')!=today]
-    if fixed: ch.append({'d':today,'fixed':fixed})
+    entry={}
+    if fixed: entry['fixed']=fixed
+    fixedcodes={f['c'] for f in fixed}
+    rn=[r for r in renamed if r['c'] not in fixedcodes]
+    if rn:
+        entry['renamed']=rn[:1500]
+        if len(rn)>1500: entry['rn_more']=len(rn)-1500
+    if entry: ch.append({'d':today,**entry})
     json.dump(ch[-60:],open(CHANGES,'w'),ensure_ascii=False,separators=(',',':'))
-    print('source fixes detected:',len(fixed))
+    print('source fixes detected:',len(fixed),'| renamed logged:',len(rn))
 
 # אילו תחנות שינו קטגוריה מאז הריצה הקודמת — נפתח באתר בלחיצה על חיצי המגמה
 CATDIFF=os.environ.get('CATDIFF','')
