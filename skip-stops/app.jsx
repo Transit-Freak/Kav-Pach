@@ -109,6 +109,9 @@ function MultiSkipMap({ items, db, hidden }) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 19,
     }).addTo(map);
+    // קביעת התצוגה לפני הוספת השכבות — הוספת וקטורים למפה בלי view קורסת ב-Leaflet
+    const segs = items.flatMap((it) => (it.seg || []).filter((p) => p.length === 2));
+    map.fitBounds(L.latLngBounds(segs.length ? segs : [[it0.la, it0.lo]]).pad(0.2));
     layersRef.current = {};
     items.forEach((it, i) => {
       const color = LINE_COLORS[i % LINE_COLORS.length];
@@ -127,8 +130,6 @@ function MultiSkipMap({ items, db, hidden }) {
     L.circleMarker([it0.la, it0.lo], { radius: 9, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
       .addTo(map)
       .bindTooltip("מדולגת: " + it0.stop, { permanent: true, direction: "top", offset: [0, -9], className: "sk-tip" });
-    const segs = items.flatMap((it) => (it.seg || []).filter((p) => p.length === 2));
-    map.fitBounds(L.latLngBounds(segs.length ? segs : [[it0.la, it0.lo]]).pad(0.2));
     setFull(false);
     return () => { mapRef.current = null; layersRef.current = {}; map.remove(); };
   }, [items, db]);
