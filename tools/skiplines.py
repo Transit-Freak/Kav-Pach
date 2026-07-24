@@ -234,16 +234,21 @@ best={}
 for f in findings:
     k=(f['line'],f['stop']['code'],f['type'])   # לפי מק"ט — תחנות כפולות באותו מק"ט מתאחדות
     if k not in best or f['before']+f['after']<best[k]['before']+best[k]['after']: best[k]=f
-skippers=defaultdict(set)   # (תחנה, סוג קו) -> קווים מדלגים — הסוגים לא מתערבבים
-for f in best.values(): skippers[(f['sid'],f['type'])].add(f['line'])
-ranked=sorted(best.values(),key=lambda f:(len(skippers[(f['sid'],f['type'])]),-len(f['others']),f['before']+f['after']))
+# (מק"ט, סוג קו) -> קווים מדלגים — עירוני ובין-עירוני לא מתערבבים, אבל סוג ריק
+# נחשב עירוני (כמו באתר): אחרת קו בלי סוג יושב בדלי נפרד ולא "רואה" את שאר
+# המדלגים על אותה תחנה (850 ליד 316 ברבי עקיבא, 96 ליד 27 העירוניים בבלינסון).
+# המפתח לפי מק"ט ולא לפי stop_id — תחנות כפולות באותו מק"ט מתאחדות גם כאן.
+skippers=defaultdict(set)
+def _skkey(f): return (f['stop']['code'], f['type'] or 'עירוני')
+for f in best.values(): skippers[_skkey(f)].add(f['line'])
+ranked=sorted(best.values(),key=lambda f:(len(skippers[_skkey(f)]),-len(f['others']),f['before']+f['after']))
 print()
 print('=== ממצאים: קווים עירוניים שחולפים ליד תחנה פעילה בלי לעצור (סנדוויץ׳) ===')
 print('סה"כ:',len(ranked))
 for f in ranked[:40]:
     s=f['stop']
     print(' קו %s | %s | מדלג על: %s (%s) [%s] | מרחק מהקו %dמ | עוצר %dמ לפני ו-%dמ אחרי | מדלגים על התחנה: %d קווים | עוצרים בה: %s'%(
-        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[(f['sid'],f['type'])]),','.join(f['others'][:8])))
+        f['line'],f['long'][:40],s['name'],s['code'],s['city'],f['dist'],f['before'],f['after'],len(skippers[_skkey(f)]),','.join(f['others'][:8])))
 
 # ---- פלט JSON לאתר ----
 OUT=os.environ.get('OUT','')
@@ -266,7 +271,7 @@ if OUT:
                 'dist':f['dist'],'before':f['before'],'after':f['after'],
                 'bstop':stop_ref(f['bsid']),'astop':stop_ref(f['asid']),
                 'bsid':f['bsid'],'asid':f['asid'],'skey':f['rid']+'|'+f['shp'],
-                'skippers':sorted(skippers[(f['sid'],f['type'])]),
+                'skippers':sorted(skippers[_skkey(f)]),
                 'ty':f['type'] or '',
                 'others':f['others'],'onum':len(f['others']),
                 'seg':f['seg'],'shp':f['shp'],
