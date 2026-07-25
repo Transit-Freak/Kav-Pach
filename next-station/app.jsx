@@ -175,7 +175,7 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
       {!inList && <div className="d-row">מס׳ תחנה: <b>{s.c}</b></div>}
       {!inList && <div className="d-row">רחוב בכתובת: <b>{s.s}</b></div>}
       {s.ms && (
-        <div className="d-row">🗺️ רחוב לפי המפה: <b>{s.ms}</b> <span className="d-poi-d">{s.md} מ׳</span></div>
+        <div className="d-row">🗺️ {s.k === "closer" ? "הרחוב המצטלב הקרוב לפי המפה" : "רחוב לפי המפה"}: <b>{s.ms}</b> <span className="d-poi-d">{s.md} מ׳</span></div>
       )}
       {!inList && s.t && <div className="d-row">עיר: {s.t}</div>}
       <div className="d-cat" style={{ color: CATS[s.k].color }}>
@@ -201,6 +201,9 @@ function StopDetails({ s, inList, onRoute, routeBusy, times, onReport }) {
             : s.cur
             ? <>📍 הרחוב המצטלב שבשם («<b>{s.cur}</b>»{s.curd != null ? " — כ-" + s.curd + " מ׳ מהתחנה" : " — אינו ליד התחנה"}) רחוק יותר מהרחוב <b>{s.ms}</b> (<b>{s.md}</b> מ׳), שעובר ממש לידה.</>
             : <>📍 הרחוב <b>{s.ms}</b> עובר ממש ליד התחנה (<b>{s.md}</b> מ׳) ואינו מופיע בשם.</>}
+          {s.sug && s.sug.includes("/") && (
+            <div className="d-conv">ℹ️ לפי מוסכמת השמות, החלק שלפני הלוכסן («<b>{s.sug.split("/")[0]}</b>») הוא הרחוב שבו התחנה נמצאת — הוא נשאר. ההצעה מחליפה רק את הרחוב המצטלב שאחרי הלוכסן.</div>
+          )}
           {s.sug && <div className="d-sug-name">💡 שם מוצע: <b>{s.sug}</b></div>}
           {s.rw && (s.rw.cur || s.rw.sug) && (
             <div className="d-walk-cmp">
