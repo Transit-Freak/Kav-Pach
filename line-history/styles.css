@@ -1,0 +1,63 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Heebo", system-ui, sans-serif; background: #eef1f5; color: #0f172a; }
+.boot { padding: 70px 20px; text-align: center; color: #475569; font-weight: 800; font-size: 16px; }
+.wrap { max-width: 1150px; margin: 0 auto; padding: 14px 12px 30px; }
+header h1 { font-size: 24px; font-weight: 900; margin: 6px 0 4px; }
+.beta { background: #ddd6fe; color: #4c1d95; padding: 3px 11px; border-radius: 9999px; font-size: 11px; font-weight: 900; vertical-align: 6px; }
+.tag { color: #475569; font-weight: 700; font-size: 13.5px; margin: 0 0 8px; }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 5px 12px; font-size: 12.5px; font-weight: 800; color: #334155; }
+.stat.mut { color: #94a3b8; }
+.tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.tab { border: none; border-radius: 9999px; padding: 7px 17px; font-family: inherit; font-weight: 800; font-size: 14px; background: #e2e8f0; color: #475569; cursor: pointer; }
+.tab.on { background: #4c1d95; color: #fff; }
+.card { background: #fff; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.08); padding: 14px 16px; }
+.search { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 13px; font-size: 15px; font-family: inherit; }
+.search.sm { flex: 1; min-width: 180px; width: auto; padding: 6px 11px; font-size: 13px; }
+.search:focus { outline: 2px solid #7c3aed; border-color: transparent; }
+.empty { padding: 28px 10px; text-align: center; color: #64748b; font-weight: 700; font-size: 14px; line-height: 1.9; }
+.mut { color: #94a3b8; font-size: 12px; font-weight: 700; }
+.llist { margin-top: 10px; }
+.lrow { display: flex; align-items: center; gap: 10px; width: 100%; text-align: right; border: 1px solid #eee; background: #fff; border-radius: 12px; padding: 9px 11px; margin-bottom: 7px; font-family: inherit; cursor: pointer; }
+.lrow:hover { border-color: #7c3aed; }
+.badge { background: #4c1d95; color: #fff; border-radius: 10px; padding: 5px 15px; font-weight: 900; font-size: 20px; }
+.badge.sm { font-size: 15px; padding: 4px 11px; min-width: 44px; text-align: center; }
+.ldest { font-weight: 800; font-size: 13.5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lmeta { color: #64748b; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+/* --- עמוד קו --- */
+.linewrap { display: grid; grid-template-columns: 360px 1fr; gap: 12px; }
+@media (max-width: 860px) { .linewrap { grid-template-columns: 1fr; } }
+.back { border: none; background: none; color: #7c3aed; font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; padding: 0 0 8px; }
+.linehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dest { font-weight: 800; font-size: 13.5px; color: #334155; }
+.facts { font-size: 12px; color: #64748b; font-weight: 700; margin: 4px 0 10px; }
+.months { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; align-items: center; }
+.mchip { border: 1.5px solid #e2e8f0; background: #fff; border-radius: 9999px; padding: 4px 12px; font-size: 12px; font-weight: 800; color: #475569; cursor: pointer; font-family: inherit; }
+.mchip b { color: #7c3aed; }
+.mchip.on { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+.mchip.on b { color: #fff; }
+.tl { position: relative; padding-right: 17px; }
+.tl::before { content: ""; position: absolute; right: 5px; top: 6px; bottom: 6px; width: 3px; border-radius: 3px; background: #e9d5ff; }
+.ev { position: relative; padding: 8px 10px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 8px; cursor: pointer; }
+.ev::before { content: ""; position: absolute; right: -17px; top: 15px; width: 10px; height: 10px; border-radius: 50%; background: #fff; border: 3px solid #7c3aed; }
+.ev.sel { border-color: #7c3aed; background: #faf5ff; }
+.ev .d { font-size: 11px; color: #64748b; font-weight: 800; }
+.ev .t { font-weight: 700; font-size: 13px; margin-top: 2px; }
+.ev .sub { font-size: 12px; color: #475569; font-weight: 700; margin-top: 3px; line-height: 1.7; }
+.k { display: inline-block; border-radius: 8px; padding: 1px 9px; font-size: 11px; font-weight: 900; color: #fff; margin-left: 5px; }
+.vhead { font-size: 13.5px; font-weight: 700; color: #334155; margin-bottom: 9px; }
+.map { height: 480px; border-radius: 12px; border: 1px solid #e2e8f0; }
+@media (max-width: 640px) { .map { height: 340px; } }
+.legend { display: flex; gap: 14px; font-size: 12px; font-weight: 800; color: #475569; margin-top: 9px; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 22px; height: 0; border-top: 4px solid; border-radius: 2px; margin-left: 5px; vertical-align: 3px; }
+.legend .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; vertical-align: -1px; margin-left: 5px; }
+.lh-tip { font-family: "Heebo", sans-serif; font-weight: 700; direction: rtl; }
+/* --- תחנות --- */
+.slist { margin-top: 8px; }
+.srow { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #f1f5f9; padding: 7px 2px; font-size: 13.5px; }
+.srow .nm { font-weight: 700; }
+.srow .nm s { color: #b91c1c; }
+.srow .code { color: #94a3b8; font-weight: 700; font-size: 11.5px; }
+.srow .meta { color: #64748b; font-size: 12px; font-weight: 700; }
+footer { margin-top: 18px; text-align: center; color: #94a3b8; font-size: 12px; font-weight: 700; }
+footer a { color: #7c3aed; }

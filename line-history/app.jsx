@@ -1,0 +1,284 @@
+/* הקו בזמן — היסטוריית מסלולים ותחנות מהשוואת GTFS יומית.
+   הנתונים: line-history/data, נוצר ע"י tools/linehistory.py ב-GitHub Actions. */
+const { useState, useEffect, useMemo, useRef } = React;
+const BUILD = window.LH_BUILD || "0";
+
+const KINDS = {
+  baseline: { label: "תיעוד ראשון", color: "#64748b" },
+  new:      { label: "וריאנט חדש", color: "#16a34a" },
+  route:    { label: "שינוי מסלול", color: "#7c3aed" },
+  redraw:   { label: "תיקון שרטוט", color: "#0891b2" },
+  stops:    { label: "שינוי תחנות", color: "#d97706" },
+  removed:  { label: "הוסר מהרישום", color: "#dc2626" },
+};
+const SKINDS = {
+  new:     { label: "חדשה", color: "#16a34a" },
+  del:     { label: "בוטלה", color: "#dc2626" },
+  renamed: { label: "שינוי שם", color: "#d97706" },
+  moved:   { label: "הזזת מיקום", color: "#2563eb" },
+};
+
+// פענוח polyline (precision 5)
+function decodeShape(str) {
+  const pts = []; let i = 0, la = 0, lo = 0;
+  while (i < str.length) {
+    for (const which of [0, 1]) {
+      let b, shift = 0, result = 0;
+      do { b = str.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      const d = (result & 1) ? ~(result >> 1) : (result >> 1);
+      if (which === 0) la += d; else lo += d;
+    }
+    pts.push([la / 1e5, lo / 1e5]);
+  }
+  return pts;
+}
+
+function fsafe(rd) { return rd.replace(/#/g, "H").replace(/\//g, "_"); }
+function fmtD(d) { return (d || "").split("-").reverse().join("."); }
+
+/* ---------- מפת לפני/אחרי ---------- */
+function DiffMap({ cur, prev, curStops, prevStops }) {
+  const ref = useRef(null);
+  const mapRef = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    const map = L.map(ref.current, { scrollWheelZoom: !coarse });
+    mapRef.current = map;
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
+    }).addTo(map);
+    const all = cur.concat(prev || []);
+    map.fitBounds(L.latLngBounds(all.length ? all : [[32.08, 34.78]]).pad(0.1));
+    if (prev && prev.length > 1) {
+      L.polyline(prev, { color: "#dc2626", weight: 4, opacity: 0.75, dashArray: "8 7" }).addTo(map);
+    }
+    if (cur.length > 1) {
+      L.polyline(cur, { color: prev ? "#16a34a" : "#4c1d95", weight: 5, opacity: 0.9 }).addTo(map);
+    }
+    const curCodes = new Set((curStops || []).map((s) => s[0]));
+    const prevCodes = new Set((prevStops || []).map((s) => s[0]));
+    (curStops || []).forEach((s) => {
+      const isNew = prevStops && !prevCodes.has(s[0]);
+      L.circleMarker([s[2], s[3]], {
+        radius: isNew ? 8 : 5, color: isNew ? "#fff" : "#4c1d95", weight: 2,
+        fillColor: isNew ? "#16a34a" : "#fff", fillOpacity: 1,
+      }).addTo(map).bindTooltip((isNew ? "נוספה: " : "") + s[1], { direction: "top", className: "lh-tip" });
+    });
+    (prevStops || []).forEach((s) => {
+      if (curCodes.has(s[0])) return;
+      L.circleMarker([s[2], s[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1, dashArray: "3 3" })
+        .addTo(map).bindTooltip("ירדה: " + s[1], { direction: "top", className: "lh-tip" });
+    });
+    return () => { mapRef.current = null; map.remove(); };
+  }, [cur, prev, curStops, prevStops]);
+  return <div className="map" ref={ref} />;
+}
+
+/* ---------- עמוד קו ---------- */
+function LinePage({ rd, onBack }) {
+  const [lf, setLf] = useState(null);
+  const [err, setErr] = useState(null);
+  const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
+  const [mon, setMon] = useState("");
+  useEffect(() => {
+    setLf(null); setErr(null); setSel(null); setMon("");
+    fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((d) => { setLf(d); setSel(d.versions.length - 1); })
+      .catch(setErr);
+  }, [rd]);
+  if (err) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button><div className="empty">לא נמצאו נתונים לוריאנט הזה.</div></div>;
+  if (!lf) return <div className="card">טוען…</div>;
+  const vs = lf.versions;
+  const months = [...new Set(vs.map((v) => v.d.slice(0, 7)))].reverse();
+  const shown = vs.map((v, i) => ({ v, i })).filter((x) => !mon || x.v.d.slice(0, 7) === mon).reverse();
+  const v = vs[sel] || vs[vs.length - 1];
+  const pi = vs.indexOf(v) - 1;
+  const pv = pi >= 0 ? vs[pi] : null;
+  const cur = decodeShape(v.shp);
+  const prev = pv && v.k !== "baseline" ? decodeShape(pv.shp) : null;
+  return (
+    <div className="linewrap">
+      <div className="card side">
+        <button className="back" onClick={onBack}>→ חזרה לחיפוש</button>
+        <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
+        <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {months.length > 1 && (
+          <div className="months">
+            <button className={"mchip" + (!mon ? " on" : "")} onClick={() => setMon("")}>הכול</button>
+            {months.map((m) => (
+              <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>
+                {m.split("-").reverse().join(".")} <b>{vs.filter((x) => x.d.slice(0, 7) === m).length}</b>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="tl">
+          {shown.map(({ v: x, i }) => (
+            <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
+              <div className="d">{fmtD(x.d)}</div>
+              <div className="t">
+                <span className="k" style={{ background: (KINDS[x.k] || {}).color || "#64748b" }}>{(KINDS[x.k] || { label: x.k }).label}</span>
+                {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
+              </div>
+              {(x.add || x.rem) && (
+                <div className="sub">
+                  {x.add && <div>➕ נוספו: {x.add.join(", ")}</div>}
+                  {x.rem && <div>➖ ירדו: {x.rem.join(", ")}</div>}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card main">
+        <div className="vhead">
+          גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : " — הגרסה המתועדת הראשונה"}
+        </div>
+        <DiffMap cur={cur} prev={prev} curStops={v.stops} prevStops={pv && v.k !== "baseline" ? pv.stops : null} />
+        <div className="legend">
+          {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם</span>}
+          <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
+          <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
+          <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
+        </div>
+        <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {v.stops.length} תחנות בגרסה זו.</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- טאב תחנות ---------- */
+function StopsTab() {
+  const [months, setMonths] = useState(null);
+  const [mon, setMon] = useState("");
+  const [chs, setChs] = useState(null);
+  const [kind, setKind] = useState("");
+  const [q, setQ] = useState("");
+  useEffect(() => {
+    fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => r.json())
+      .then((d) => { const ms = d.stopMonths || []; setMonths(ms); if (ms.length) setMon(ms[0]); })
+      .catch(() => setMonths([]));
+  }, []);
+  useEffect(() => {
+    if (!mon) return;
+    setChs(null);
+    fetch("data/changes/stops-" + mon + ".json?v=" + BUILD)
+      .then((r) => (r.ok ? r.json() : { changes: [] }))
+      .then((d) => setChs(d.changes || []))
+      .catch(() => setChs([]));
+  }, [mon]);
+  if (months === null) return <div className="card">טוען…</div>;
+  if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
+  const needle = q.trim();
+  const list = (chs || []).filter((c) => (!kind || c.k === kind) &&
+    (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
+  const counts = {};
+  (chs || []).forEach((c) => { counts[c.k] = (counts[c.k] || 0) + 1; });
+  return (
+    <div className="card">
+      <div className="months">
+        {months.slice(0, 18).map((m) => (
+          <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+        ))}
+      </div>
+      <div className="months">
+        <button className={"mchip" + (!kind ? " on" : "")} onClick={() => setKind("")}>הכול {(chs || []).length}</button>
+        {Object.entries(SKINDS).map(([k, v]) => (
+          <button key={k} className={"mchip" + (kind === k ? " on" : "")} onClick={() => setKind(k)}>{v.label} <b>{counts[k] || 0}</b></button>
+        ))}
+        <input className="search sm" type="search" placeholder="חיפוש תחנה / עיר / מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
+      </div>
+      {chs === null ? "טוען…" : (
+        <div className="slist">
+          {list.slice(0, 300).map((c, i) => (
+            <div className="srow" key={c.c + c.k + i}>
+              <span className="k" style={{ background: (SKINDS[c.k] || {}).color }}>{(SKINDS[c.k] || { label: c.k }).label}</span>
+              <span className="nm">
+                {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
+                <span className="code"> ({c.c})</span>
+              </span>
+              <span className="meta">
+                {c.t} · {fmtD(c.d)}
+                {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b></>}
+                {c.k === "del" && c.lines && c.lines.length > 0 && <> · שירתה: {c.lines.slice(0, 8).join(", ")}</>}
+              </span>
+            </div>
+          ))}
+          {list.length === 0 && <div className="empty">אין שינויים תואמים בחודש הזה.</div>}
+          {list.length > 300 && <div className="empty">מוצגים 300 הראשונים מתוך {list.length}.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- אפליקציה ---------- */
+function App() {
+  const [idx, setIdx] = useState(null);
+  const [err, setErr] = useState(null);
+  const [tab, setTab] = useState("lines");
+  const [q, setQ] = useState("");
+  const [rd, setRd] = useState(null);
+  useEffect(() => {
+    fetch("data/lines.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(setIdx)
+      .catch(setErr);
+  }, []);
+  if (err) return <div className="boot">הנתונים עוד לא נוצרו — הריצה הראשונה של הצינור תיצור אותם. נסו לרענן מאוחר יותר.</div>;
+  if (!idx) return <div className="boot">טוען נתונים…</div>;
+  const needle = q.trim();
+  const list = needle
+    ? idx.lines.filter((l) => l.line === needle || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)).slice(0, 60)
+    : [];
+  const changed = idx.lines.filter((l) => l.v > 1).length;
+  return (
+    <div className="wrap">
+      <header>
+        <h1>🕰️ הקו בזמן <span className="beta">ניסוי</span></h1>
+        <p className="tag">כל שינוי שנכנס לתוקף במסלולי הקווים ובתחנות — מסלול, שרטוט, תחנות ושמות. מהשוואת ה-GTFS של משרד התחבורה, יום מול יום.</p>
+        <div className="stats">
+          <span className="stat"><b>{idx.lines.length.toLocaleString()}</b> וריאנטים מתועדים</span>
+          <span className="stat"><b>{changed.toLocaleString()}</b> עם שינויים</span>
+          <span className="stat mut">עודכן: {idx.gen}</span>
+        </div>
+      </header>
+      <div className="tabs">
+        <button className={"tab" + (tab === "lines" ? " on" : "")} onClick={() => { setTab("lines"); setRd(null); }}>🚌 קווים</button>
+        <button className={"tab" + (tab === "stops" ? " on" : "")} onClick={() => { setTab("stops"); setRd(null); }}>🚏 תחנות</button>
+      </div>
+      {tab === "stops" ? <StopsTab /> : rd ? (
+        <LinePage rd={rd} onBack={() => setRd(null)} />
+      ) : (
+        <div className="card">
+          <input className="search" type="search" dir="rtl" autoFocus
+            placeholder="חיפוש קו: מספר קו, מק״ט, יעד או מפעיל…"
+            value={q} onChange={(e) => setQ(e.target.value)} />
+          {needle ? (
+            <div className="llist">
+              {list.map((l) => (
+                <button key={l.rd} className="lrow" onClick={() => setRd(l.rd)}>
+                  <span className="badge sm">{l.line}</span>
+                  <span className="ldest">{l.dest}</span>
+                  <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}</span>
+                </button>
+              ))}
+              {list.length === 0 && <div className="empty">לא נמצא קו תואם.</div>}
+            </div>
+          ) : (
+            <div className="empty">הקלידו מספר קו כדי לראות את ההיסטוריה שלו.<br />
+              <span className="mut">התיעוד המלא מתחיל מהריצה הראשונה של הצינור; היסטוריה מ-2022 תתווסף בהמשך ממאגר אופן באס.</span></div>
+          )}
+        </div>
+      )}
+      <footer>
+        ניסוי במסגרת <a href="../">הקו הבוחן</a> · הנתונים: GTFS משרד התחבורה · קרדיט היסטורי עתידי: אופן באס, הסדנא לידע ציבורי
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
