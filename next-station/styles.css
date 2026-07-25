@@ -316,3 +316,5 @@ html, body, .list { overflow-anchor: none; }
 /* "המקום שבשם" + סימון חשודה (אין חיבור הליכה למקום שהתחנה קרויה על-שמו) */
 .d-lmp { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #fde68a; }
 .d-lmbad { margin-top: 4px; color: #b91c1c; font-weight: 800; }
+.d-conv { margin: 6px 0 2px; font-size: 12.5px; color: #64748b; line-height: 1.6; }
+.d-conv b { color: #334155; }
