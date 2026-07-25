@@ -80,3 +80,24 @@ jobs:
             echo "===== $f ====="
             curl -fsS --max-time 30 "$f" | grep -in "s3\|archive\|download\|http" | head -25 || true
           done
+
+      - name: Find real archive path from their source code
+        run: |
+          set +e
+          git clone --depth 1 https://github.com/hasadna/open-bus-gtfs-etl /tmp/etl 2>/dev/null
+          echo "=== אזכורי נתיב הארכיון בקוד ==="
+          grep -rn "gtfs-data\|gtfs_data\|archive\|WORKDIR\|data.hasadna\|url" /tmp/etl --include="*.py" -i | grep -vi test | head -30
+          echo "=== נסיונות נתיב על open-bus-gtfs-data.hasadna.org.il ==="
+          for p in \
+            "gtfs_archive/2023/06/01/israel-public-transportation.zip" \
+            "gtfs-data/2023/06/01/israel-public-transportation.zip" \
+            "2023-06-01/israel-public-transportation.zip" \
+            "gtfs/2023/06/01/israel-public-transportation.zip" \
+            "data/gtfs/2023/06/01/israel-public-transportation.zip" \
+          ; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 -I "https://open-bus-gtfs-data.hasadna.org.il/$p")
+            echo "HTTP $code | /$p"
+          done
+          echo "=== שורש השרת ==="
+          curl -s --max-time 20 "https://open-bus-gtfs-data.hasadna.org.il/" | head -c 1500
+          true
