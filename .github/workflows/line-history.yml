@@ -1,0 +1,63 @@
+name: line-history
+
+# "הקו בזמן" — תיעוד יומי של שינויי מסלולים ותחנות מהשוואת GTFS.
+# הריצה הראשונה יוצרת בסיס (כל הגרסאות הנוכחיות); מכאן והלאה רק שינויים.
+
+on:
+  schedule:
+    - cron: '30 7 * * *'   # 10:30 ישראל בקיץ — אחרי חלון הפרסום של משרד התחבורה
+  push:
+    branches: [main]   # הבסיס נבנה פעם אחת על main — לא על ענפי עבודה
+    paths:
+      - '.github/workflows/line-history.yml'
+      - 'tools/linehistory.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: line-history
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
+            -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt
+
+      - name: Diff line & stop history
+        run: |
+          set -euo pipefail
+          STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt \
+            SHAPES=shapes.txt AGENCY=agency.txt MAIN=data-main.json \
+            OUTDIR=line-history/data python3 tools/linehistory.py
+
+      - name: Commit (לענף שהריץ — main בריצה המתוזמנת)
+        run: |
+          set -euo pipefail
+          BR="${GITHUB_REF_NAME:-main}"
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp -r line-history/data /tmp/lh-out
+          for i in 1 2 3 4; do
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
+            rm -rf line-history/data
+            cp -r /tmp/lh-out line-history/data
+            git add line-history/data
+            if git diff --cached --quiet; then
+              echo "unchanged — nothing to commit"; break; fi
+            git commit -m "data: line-history — שינויי מסלולים ותחנות יומיים"
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected ($BR moved) — retry $i"; sleep 10
+          done
