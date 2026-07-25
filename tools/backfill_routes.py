@@ -69,6 +69,18 @@ def add_version(rd, d, kind, info, note=''):
                    'op': info.get('op',''), 'ty': '', 'versions': []})
     if any(v.get('d') == d and v.get('k') == kind for v in lf['versions']):
         return
+    # קו שנעלם וחזר תוך עד 5 שבועות = הפסקת חג/פגרה, לא שינוי אמיתי —
+    # ממזגים לזוג אחד "הפסקה זמנית" במקום להציף את ציר הזמן (12,783 זוגות כאלה ב-2022-2026)
+    if kind == 'new' and lf['versions']:
+        last = lf['versions'][-1]
+        if last.get('k') == 'removed' and last.get('src') == 'ob':
+            gap = (datetime.date.fromisoformat(d) - datetime.date.fromisoformat(last['d'])).days
+            if gap <= 35:
+                w = round(gap / 7) or 1
+                last['k'] = 'pause'
+                last['note'] = f'הפסקת שירות זמנית של כ-{w} שבועות (כנראה חג/פגרה) — השירות חזר ב-{d}'
+                json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+                return
     v = {'d': d, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob'}
     if note: v['note'] = note
     lf['versions'].append(v)
@@ -119,3 +131,14 @@ while d <= d1:
     d += datetime.timedelta(days=STEP)
 
 print('סיום:', n_ev, 'אירועי-עבר נכתבו | נדגם עד', state.get('last_date'))
+
+# עדכון מוני הגרסאות באינדקס — שהכותרת "X עם שינויים" תשקף את המילוי
+idxp = f'{OUTDIR}/lines.json'
+idx = jload(idxp, None)
+if idx:
+    for l in idx.get('lines', []):
+        p = f"{OUTDIR}/lines/{fsafe(l['rd'])}.json"
+        if os.path.exists(p):
+            l['v'] = len(jload(p, {}).get('versions', []))
+    json.dump(idx, open(idxp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    print('אינדקס עודכן')

@@ -12,6 +12,7 @@ const KINDS = {
   removed:  { label: "הוסר מהרישום", color: "#dc2626" },
   dest:     { label: "שינוי יעד", color: "#9333ea" },
   renum:    { label: "שינוי מספר", color: "#be185d" },
+  pause:    { label: "הפסקה זמנית", color: "#94a3b8" },
 };
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
