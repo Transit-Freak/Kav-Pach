@@ -1,0 +1,56 @@
+name: backfill-history
+
+# "הקו בזמן" — מילוי-לאחור מארכיון אופן באס (הסדנא לידע ציבורי).
+# מופעל ידנית עם טווח תאריכים; ממשיך מהנקודה האחרונה שנדגמה (backfill-state).
+# קצב מנומס: ~2 קריאות בשנייה מול ה-API הציבורי שלהם.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'מתאריך (YYYY-MM-DD)'
+        required: true
+        default: '2022-01-01'
+      to:
+        description: 'עד תאריך (YYYY-MM-DD)'
+        required: true
+        default: '2022-12-31'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-history
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backfill route timeline from Stride API
+        run: |
+          set -euo pipefail
+          FROM="${{ github.event.inputs.from }}" TO="${{ github.event.inputs.to }}" \
+            OUTDIR=line-history/data python3 tools/backfill_routes.py
+
+      - name: Commit (לענף שהריץ)
+        run: |
+          set -euo pipefail
+          BR="${GITHUB_REF_NAME:-main}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp -r line-history/data /tmp/bf-out
+          for i in 1 2 3 4; do
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
+            # ממזגים: קובצי הקווים והמצב מהריצה גוברים, השאר נשאר מהענף
+            cp -r /tmp/bf-out/. line-history/data/
+            git add line-history/data
+            if git diff --cached --quiet; then
+              echo "unchanged"; break; fi
+            git commit -m "data: מילוי-לאחור מארכיון אופן באס (${{ github.event.inputs.from }} עד ${{ github.event.inputs.to }})"
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
