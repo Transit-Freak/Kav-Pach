@@ -14,7 +14,14 @@ on:
       to:
         description: 'עד תאריך (YYYY-MM-DD)'
         required: true
-        default: '2022-12-31'
+        default: '2026-07-24'
+  # דחיפה לקבצי המילוי מפעילה ריצה עם הטווח המלא — הסקריפט ממשיך לבד
+  # מהנקודה האחרונה שנדגמה (backfill-state), אז ריצות חוזרות בטוחות.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/backfill-history.yml'
+      - 'tools/backfill_routes.py'
 
 permissions:
   contents: write
@@ -33,7 +40,7 @@ jobs:
       - name: Backfill route timeline from Stride API
         run: |
           set -euo pipefail
-          FROM="${{ github.event.inputs.from }}" TO="${{ github.event.inputs.to }}" \
+          FROM="${{ github.event.inputs.from || '2022-01-01' }}" TO="${{ github.event.inputs.to || '2026-07-24' }}" \
             OUTDIR=line-history/data python3 tools/backfill_routes.py
 
       - name: Commit (לענף שהריץ)

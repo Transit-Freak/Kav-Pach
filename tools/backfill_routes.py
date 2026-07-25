@@ -34,8 +34,7 @@ def routes_on(date):
     offset = 0
     while True:
         rows = api('/gtfs_routes/list', date_from=date, date_to=date,
-                   limit=1000, offset=offset,
-                   get_count='false')
+                   limit=1000, offset=offset)
         if not isinstance(rows, list) or not rows:
             break
         for r in rows:
