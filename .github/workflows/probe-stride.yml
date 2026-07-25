@@ -43,9 +43,17 @@ jobs:
           echo "--- gtfs_stops (תחנה 20101 ב-2023) ---"
           curl -fsS --max-time 60 "https://open-bus-stride-api.hasadna.org.il/gtfs_stops/list?date_from=2023-06-01&date_to=2023-06-01&code=20101&limit=2" | head -c 1200; echo
 
+      - name: gtfs_ride_stops sample (רצף תחנות של נסיעה היסטורית)
+        run: |
+          set +e
+          curl -fsS --max-time 60 "https://open-bus-stride-api.hasadna.org.il/gtfs_ride_stops/list?gtfs_ride_ids=43802199&limit=3&order_by=stop_sequence%20asc" | head -c 2500; echo
+          echo "--- gtfs_stops לפי מק'ט אמיתי (23017) ---"
+          curl -fsS --max-time 60 "https://open-bus-stride-api.hasadna.org.il/gtfs_stops/list?date_from=2023-06-01&date_to=2023-06-01&code=23017&limit=2" | head -c 1500; echo
+          true
+
       - name: Raw daily GTFS archive — candidate URLs
         run: |
-          set -uo pipefail
+          set +e
           for u in \
             "https://open-bus-stride-public.s3.eu-west-1.amazonaws.com/gtfs_archive/2023/06/01/israel-public-transportation.zip" \
             "https://open-bus-stride-public.s3.amazonaws.com/gtfs_archive/2023/06/01/israel-public-transportation.zip" \
@@ -54,10 +62,13 @@ jobs:
           ; do
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 -I "$u")
             size=$(curl -s --max-time 30 -I "$u" | grep -i content-length | tr -d '\r' | awk '{print $2}')
-            echo "$code ${size:-?} $u"
+            echo "HTTP $code | size ${size:-?} | $u"
           done
           echo "--- bucket listing נסיון ---"
-          curl -fsS --max-time 30 "https://open-bus-stride-public.s3.eu-west-1.amazonaws.com/?list-type=2&prefix=gtfs_archive/2023/06/01/&max-keys=10" | head -c 2000 || echo "listing blocked"
+          curl -s --max-time 30 "https://open-bus-stride-public.s3.eu-west-1.amazonaws.com/?list-type=2&prefix=gtfs_archive/2023/06/01/&max-keys=10" | head -c 2000
+          echo
+          curl -s --max-time 30 "https://open-bus-stride-public.s3.eu-west-1.amazonaws.com/?list-type=2&max-keys=20&delimiter=/" | head -c 2000
+          true
 
       - name: Docs — where does the ETL store the archive
         run: |
