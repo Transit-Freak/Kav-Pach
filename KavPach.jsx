@@ -497,7 +497,7 @@ function ChoiceScreen({ onPick }) {
       <div className="max-w-7xl w-full">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
-          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שבעה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
+          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -609,24 +609,6 @@ function ChoiceScreen({ onPick }) {
               <h2 className="text-3xl font-[900] text-amber-200">הקו המדלג</h2>
               <p className="text-amber-100/80 font-bold mt-2 text-sm leading-relaxed">קווים שחולפים ליד תחנה פעילה — בלי לעצור בה</p>
               <span className="inline-flex items-center gap-2 mt-5 bg-amber-400 text-amber-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
-            </div>
-          </a>
-
-          {/* נגישות אזורי תעשייה — אפליקציה עצמאית בתיקיית parks/ */}
-          <a
-            href="parks/"
-            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-            style={{ background: 'linear-gradient(155deg,#042f2e 0%,#134e4a 52%,#0d9488 100%)' }}
-          >
-            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#2dd4bf' }} />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-teal-300 text-teal-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
-                <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🏭</span>
-              </div>
-              <h2 className="text-3xl font-[900] text-teal-200">נגישות אזורי תעשייה</h2>
-              <p className="text-teal-100/80 font-bold mt-2 text-sm leading-relaxed">אילו קווים באמת מגיעים לאזורי התעשייה — ואיפה החורים בשירות</p>
-              <span className="inline-flex items-center gap-2 mt-5 bg-teal-300 text-teal-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
             </div>
           </a>
 
