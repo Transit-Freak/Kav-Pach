@@ -10,6 +10,8 @@ const KINDS = {
   redraw:   { label: "תיקון שרטוט", color: "#0891b2" },
   stops:    { label: "שינוי תחנות", color: "#d97706" },
   removed:  { label: "הוסר מהרישום", color: "#dc2626" },
+  dest:     { label: "שינוי יעד", color: "#9333ea" },
+  renum:    { label: "שינוי מספר", color: "#be185d" },
 };
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
@@ -121,6 +123,7 @@ function LinePage({ rd, onBack }) {
               <div className="t">
                 <span className="k" style={{ background: (KINDS[x.k] || {}).color || "#64748b" }}>{(KINDS[x.k] || { label: x.k }).label}</span>
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
+                {x.note && <span className="evnote"> {x.note}</span>}
               </div>
               {(x.add || x.rem) && (
                 <div className="sub">
@@ -136,7 +139,14 @@ function LinePage({ rd, onBack }) {
         <div className="vhead">
           גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : " — הגרסה המתועדת הראשונה"}
         </div>
-        <DiffMap cur={cur} prev={prev} curStops={v.stops} prevStops={pv && v.k !== "baseline" ? pv.stops : null} />
+        {!v.shp ? (
+          <div className="nogeo">
+            🛈 {v.note || "אין פירוט לגרסה זו"}<br />
+            <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצפי התחנות יתווספו בשלב ב׳ של המילוי-לאחור.</span>
+          </div>
+        ) : (
+        <DiffMap cur={cur} prev={prev} curStops={v.stops} prevStops={pv && v.k !== "baseline" && pv.shp ? pv.stops : null} />
+        )}
         <div className="legend">
           {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם</span>}
           <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
