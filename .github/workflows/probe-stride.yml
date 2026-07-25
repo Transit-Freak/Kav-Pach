@@ -101,3 +101,14 @@ jobs:
           echo "=== שורש השרת ==="
           curl -s --max-time 20 "https://open-bus-gtfs-data.hasadna.org.il/" | head -c 1500
           true
+
+      - name: Browse the archive structure
+        run: |
+          set +e
+          B="https://open-bus-gtfs-data.hasadna.org.il"
+          for p in "gtfs_archive/" "gtfs_archive/2023/" "gtfs_archive/2023/06/" "gtfs_archive/2023/06/01/" "gtfs_archive/2022/" "gtfs_archive/2026/" "gtfs_archive/2026/07/"; do
+            echo "===== /$p ====="
+            curl -s --max-time 20 "$B/$p" | head -c 1200
+            echo
+          done
+          true
