@@ -89,6 +89,7 @@ function decodeShape(str) {
 
 function fsafe(rd) { return rd.replace(/#/g, "H").replace(/\//g, "_"); }
 function fmtD(d) { return (d || "").split("-").reverse().join("."); }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 /* ---------- איתור הקטעים ששונו בין שתי גאומטריות ----------
    לכל נקודה בגרסה אחת מחשבים את המרחק (במטרים) לקטע הקרוב ביותר בגרסה
@@ -203,17 +204,25 @@ function DiffMap({ cur, prev, curStops, prevStops }) {
     }
     const curCodes = new Set((curStops || []).map((s) => s[0]));
     const prevCodes = new Set((prevStops || []).map((s) => s[0]));
+    // שם התחנה נפתח בחלון קופץ (popup) — הוא מוצמד לעוגן של התחנה והמפה
+    // זזה אליו לבד, אז השם תמיד מוצג במקום הנכון גם בקצה המפה ובנייד.
+    const popHtml = (s, status) =>
+      `<b>${esc(s[1])}</b>${status ? `<br><span class="pst">${status}</span>` : ""}<br><span class="pcode">מק״ט תחנה ${esc(s[0])}</span>`;
     (curStops || []).forEach((s) => {
       const isNew = prevStops && !prevCodes.has(s[0]);
       L.circleMarker([s[2], s[3]], {
         radius: isNew ? 8 : 5, color: isNew ? "#fff" : "#4c1d95", weight: 2,
         fillColor: isNew ? "#16a34a" : "#fff", fillOpacity: 1, opacity: focused && !isNew ? 0.4 : 1,
-      }).addTo(map).bindTooltip((isNew ? "נוספה: " : "") + s[1], { direction: "top", className: "lh-tip" });
+      }).addTo(map)
+        .bindTooltip((isNew ? "נוספה: " : "") + s[1], { direction: "top", className: "lh-tip" })
+        .bindPopup(popHtml(s, isNew ? "🟢 תחנה שנוספה בגרסה זו" : ""), { className: "lh-pop", offset: [0, -4] });
     });
     (prevStops || []).forEach((s) => {
       if (curCodes.has(s[0])) return;
       L.circleMarker([s[2], s[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
-        .addTo(map).bindTooltip("ירדה: " + s[1], { direction: "top", className: "lh-tip" });
+        .addTo(map)
+        .bindTooltip("ירדה: " + s[1], { direction: "top", className: "lh-tip" })
+        .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
     });
     return () => { mapRef.current = null; map.remove(); };
   }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus]);
@@ -447,10 +456,16 @@ function App() {
   let list = [], total = 0;
   if (needle || kats.size) {
     list = idx.lines.filter((l) => inKats(l) &&
-      (!needle || l.line === needle || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)));
+      (!needle || l.line === needle || l.line.startsWith(needle) || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)));
     const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
-    if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
-    else if (kats.size) list.sort((a, b) => ((parseInt(a.line) || 1e9) - (parseInt(b.line) || 1e9)) || a.line.localeCompare(b.line));
+    // דירוג חיפוש: קודם מספר הקו המדויק, אחריו קווים שמתחילים בו, ורק
+    // בסוף התאמות מק"ט/יעד/מפעיל — ובתוך כל דרגה לפי סדר מספרי
+    const rank = (l) => l.line === needle ? 0 : l.line.startsWith(needle) ? 1
+      : l.rd.startsWith(needle) ? 2 : ((l.dest || "").includes(needle) ? 3 : 4);
+    const lnum = (l) => parseInt(l.line) || 1e9;
+    if (needle) list.sort((a, b) => rank(a) - rank(b) || lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
+    else if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
+    else list.sort((a, b) => lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
     total = list.length;
     list = list.slice(0, 200);
   }
