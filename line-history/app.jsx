@@ -292,8 +292,10 @@ function StopsTab() {
   const [months, setMonths] = useState(null);
   const [mon, setMon] = useState("");
   const [chs, setChs] = useState(null);
-  const [kind, setKind] = useState("");
+  const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
+  const [katOpen, setKatOpen] = useState(false);
   const [q, setQ] = useState("");
+  const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
@@ -311,7 +313,7 @@ function StopsTab() {
   if (months === null) return <div className="card">טוען…</div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
   const needle = q.trim();
-  const list = (chs || []).filter((c) => (!kind || c.k === kind) &&
+  const list = (chs || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
   const counts = {};
   (chs || []).forEach((c) => { counts[c.k] = (counts[c.k] || 0) + 1; });
@@ -322,12 +324,28 @@ function StopsTab() {
           <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
         ))}
       </div>
-      <div className="months">
-        <button className={"mchip" + (!kind ? " on" : "")} onClick={() => setKind("")}>הכול {(chs || []).length}</button>
-        {Object.entries(SKINDS).map(([k, v]) => (
-          <button key={k} className={"mchip" + (kind === k ? " on" : "")} onClick={() => setKind(k)}>{v.label} <b>{counts[k] || 0}</b></button>
-        ))}
-        <input className="search sm" type="search" placeholder="חיפוש תחנה / עיר / מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <input className="search" type="search" placeholder="חיפוש תחנה / עיר / מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="katbox">
+        <button className="kathead" onClick={() => setKatOpen(!katOpen)}>
+          <span className="katarrow">{katOpen ? "▼" : "◀"}</span>
+          🗂️ קטגוריות לבחירה
+          {kinds.size > 0 && <b className="katn">{kinds.size} מסומנות</b>}
+        </button>
+        {katOpen && (
+          <div className="katlist">
+            {Object.entries(SKINDS).map(([k, v]) => (
+              <label key={k} className="katrow">
+                <input type="checkbox" checked={kinds.has(k)} onChange={() => toggleKind(k)} />
+                <i className="katdot" style={{ background: v.color }} />
+                <span className="katlab">{v.label}</span>
+                <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
+              </label>
+            ))}
+            {kinds.size > 0 && (
+              <button className="katclear" onClick={() => setKinds(new Set())}>✖ נקה את הבחירה</button>
+            )}
+          </div>
+        )}
       </div>
       {chs === null ? "טוען…" : (
         <div className="slist">
