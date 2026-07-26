@@ -359,8 +359,10 @@ function App() {
   const [err, setErr] = useState(null);
   const [tab, setTab] = useState("lines");
   const [q, setQ] = useState("");
-  const [kat, setKat] = useState("");
+  const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
+  const [katOpen, setKatOpen] = useState(false);
   const [rd, setRd] = useState(null);
+  const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/lines.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -385,13 +387,20 @@ function App() {
   if (err) return <div className="boot">הנתונים עוד לא נוצרו — הריצה הראשונה של הצינור תיצור אותם. נסו לרענן מאוחר יותר.</div>;
   if (!idx) return <div className="boot">טוען נתונים…</div>;
   const needle = q.trim();
-  const inKat = (l) => !kat || (kat === "removed-year" ? isRemovedYear(l) : (l.ks || []).includes(kat));
+  const inKats = (l) => {
+    if (!kats.size) return true;
+    for (const k of kats) {
+      if (k === "removed-year" ? isRemovedYear(l) : (l.ks || []).includes(k)) return true;
+    }
+    return false;
+  };
   let list = [], total = 0;
-  if (needle || kat) {
-    list = idx.lines.filter((l) => inKat(l) &&
+  if (needle || kats.size) {
+    list = idx.lines.filter((l) => inKats(l) &&
       (!needle || l.line === needle || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)));
-    if (kat === "removed" || kat === "removed-year") list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
-    else if (kat) list.sort((a, b) => ((parseInt(a.line) || 1e9) - (parseInt(b.line) || 1e9)) || a.line.localeCompare(b.line));
+    const onlyRemoval = kats.size > 0 && [...kats].every((k) => k === "removed" || k === "removed-year");
+    if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
+    else if (kats.size) list.sort((a, b) => ((parseInt(a.line) || 1e9) - (parseInt(b.line) || 1e9)) || a.line.localeCompare(b.line));
     total = list.length;
     list = list.slice(0, 200);
   }
@@ -418,17 +427,29 @@ function App() {
           <input className="search" type="search" dir="rtl" autoFocus
             placeholder="חיפוש קו: מספר קו, מק״ט, יעד או מפעיל…"
             value={q} onChange={(e) => setQ(e.target.value)} />
-          <div className="months">
-            <button className={"mchip" + (!kat ? " on" : "")} onClick={() => setKat("")}>הכול</button>
-            {CATS.map((k) => (
-              <button key={k} className={"mchip" + (kat === k ? " on" : "")}
-                style={kat === k ? { background: KINDS[k].color, borderColor: KINDS[k].color } : {}}
-                onClick={() => setKat(kat === k ? "" : k)}>
-                {KINDS[k].label} <b>{counts[k] || 0}</b>
-              </button>
-            ))}
+          <div className="katbox">
+            <button className="kathead" onClick={() => setKatOpen(!katOpen)}>
+              <span className="katarrow">{katOpen ? "▼" : "◀"}</span>
+              🗂️ קטגוריות לבחירה
+              {kats.size > 0 && <b className="katn">{kats.size} מסומנות</b>}
+            </button>
+            {katOpen && (
+              <div className="katlist">
+                {CATS.map((k) => (
+                  <label key={k} className="katrow">
+                    <input type="checkbox" checked={kats.has(k)} onChange={() => toggleKat(k)} />
+                    <i className="katdot" style={{ background: KINDS[k].color }} />
+                    <span className="katlab">{KINDS[k].label}</span>
+                    <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
+                  </label>
+                ))}
+                {kats.size > 0 && (
+                  <button className="katclear" onClick={() => setKats(new Set())}>✖ נקה את הבחירה</button>
+                )}
+              </div>
+            )}
           </div>
-          {(needle || kat) ? (
+          {(needle || kats.size > 0) ? (
             <div className="llist">
               {list.map((l) => (
                 <button key={l.rd} className="lrow" onClick={() => setRd(l.rd)}>
@@ -448,14 +469,14 @@ function App() {
                 </button>
               ))}
               {list.length === 0 && (
-                <div className="empty">{kat && !needle
-                  ? "אין עדיין קווים בקטגוריה הזו — קטגוריות של מסלול ותחנות מצטברות מההשוואות היומיות מכאן והלאה."
+                <div className="empty">{kats.size > 0 && !needle
+                  ? "אין עדיין קווים בקטגוריות שסימנתם — קטגוריות של מסלול ותחנות מצטברות מההשוואות היומיות מכאן והלאה."
                   : "לא נמצא קו תואם."}</div>
               )}
               {total > list.length && <div className="empty">מוצגים 200 הראשונים מתוך {total.toLocaleString()}.</div>}
             </div>
           ) : (
-            <div className="empty">הקלידו מספר קו, או בחרו קטגוריה כדי לראות את כל הקווים שעברו שינוי כזה.<br />
+            <div className="empty">הקלידו מספר קו, או פתחו את "קטגוריות לבחירה" וסמנו אילו סוגי שינויים להציג.<br />
               <span className="mut">התיעוד המלא מתחיל מהריצה הראשונה של הצינור; היסטוריה מ-2022 תתווסף בהמשך ממאגר אופן באס.</span></div>
           )}
         </div>
