@@ -71,14 +71,18 @@ def add_version(rd, d, kind, info, note=''):
         return
     # קו שנעלם וחזר תוך עד ~חודש = הפסקת חג/פגרה — לא מעניין (בקשת המשתמש):
     # מוחקים את רשומת ה-removed בשקט ולא רושמים 'new'. ביטול של חודש+ נשאר.
-    if kind == 'new' and lf['versions']:
-        last = lf['versions'][-1]
-        if last.get('k') == 'removed' and last.get('src') == 'ob':
-            gap = (datetime.date.fromisoformat(d) - datetime.date.fromisoformat(last['d'])).days
-            if gap <= 35:
-                lf['versions'].pop()
-                json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-                return
+    # חשוב: בודקים את השכן הכרונולוגי (הגרסה האחרונה שלפני d), לא את סוף
+    # הרשימה — בקובץ יש גם גרסאות מאוחרות יותר (baseline של הצינור היומי).
+    if kind == 'new':
+        before = [v for v in lf['versions'] if v['d'] < d]
+        if before:
+            last = before[-1]
+            if last.get('k') == 'removed' and last.get('src') == 'ob':
+                gap = (datetime.date.fromisoformat(d) - datetime.date.fromisoformat(last['d'])).days
+                if gap <= 35:
+                    lf['versions'].remove(last)
+                    json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+                    return
     v = {'d': d, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob'}
     if note: v['note'] = note
     lf['versions'].append(v)
