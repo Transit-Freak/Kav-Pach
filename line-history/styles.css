@@ -66,3 +66,27 @@ footer { margin-top: 18px; text-align: center; color: #94a3b8; font-size: 12px; 
 footer a { color: #7c3aed; }
 .nogeo { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px; padding: 22px 16px; font-weight: 700; font-size: 14px; line-height: 2; color: #334155; }
 .evnote { font-weight: 700; font-size: 12px; color: #475569; }
+
+/* --- מובייל --- */
+@media (max-width: 640px) {
+  .wrap { padding: 10px 9px 24px; }
+  header h1 { font-size: 21px; margin: 4px 0 3px; }
+  .tag { font-size: 12.5px; line-height: 1.55; }
+  .stat { font-size: 11.5px; padding: 4px 9px; }
+  .card { padding: 12px 11px; border-radius: 12px; }
+  .search { font-size: 16px; }   /* מתחת ל-16px הדפדפן בנייד עושה זום אוטומטי */
+  /* שורות צ'יפים (קטגוריות/חודשים) — פס נגלל אופקית במקום ערימה גבוהה */
+  .months { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; padding-bottom: 3px; }
+  .months::-webkit-scrollbar { display: none; }
+  .mchip { flex: 0 0 auto; padding: 6px 13px; }
+  /* תוצאות חיפוש: מרשים לטקסט להישבר לשורות במקום להיחתך */
+  .lrow { flex-wrap: wrap; gap: 5px 8px; padding: 9px 10px; }
+  .ldest { flex: 1 1 100%; order: 2; white-space: normal; line-height: 1.5; }
+  .lmeta { flex: 1 1 100%; order: 3; white-space: normal; line-height: 1.6; }
+  .facts { font-size: 11.5px; line-height: 1.7; }
+  .vhead { font-size: 12.5px; }
+  .legend { gap: 9px 12px; font-size: 11px; }
+  .focusbtn { font-size: 12px; padding: 6px 11px; }
+  .srow { font-size: 12.5px; }
+}

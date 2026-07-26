@@ -198,7 +198,7 @@ function DiffMap({ cur, prev, curStops, prevStops }) {
 }
 
 /* ---------- עמוד קו ---------- */
-function LinePage({ rd, onBack }) {
+function LinePage({ rd, lineGone, onBack }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
@@ -227,8 +227,11 @@ function LinePage({ rd, onBack }) {
         <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
         {vs.length > 0 && vs[vs.length - 1].k === "removed" && (
-          <div className="facts" style={{ color: (KINDS[dispKind(vs[vs.length - 1], vs.length - 1, vs)] || {}).color, fontWeight: 700 }}>
-            ❌ הווריאנט מבוטל מאז {fmtD(vs[vs.length - 1].d)}{dispKind(vs[vs.length - 1], vs.length - 1, vs) === "removed-year" ? " — מעל שנה ולא חזר" : ""}
+          <div className="facts" style={{ color: lineGone ? (KINDS[dispKind(vs[vs.length - 1], vs.length - 1, vs)] || {}).color : "#c2410c", fontWeight: 700 }}>
+            {lineGone
+              ? <>❌ הקו בוטל — אין חלופות פעילות — מאז {fmtD(vs[vs.length - 1].d)}</>
+              : <>⚠️ החלופה הזו מבוטלת מאז {fmtD(vs[vs.length - 1].d)} (לקו יש חלופות פעילות)</>}
+            {dispKind(vs[vs.length - 1], vs.length - 1, vs) === "removed-year" ? " — מעל שנה ולא חזרה" : ""}
           </div>
         )}
         {months.length > 1 && (
@@ -372,6 +375,13 @@ function App() {
     });
     return c;
   }, [idx]);
+  // אילו מק"טים עדיין פעילים — כדי להבדיל חלופה מבוטלת מקו שבוטל כולו
+  const mktAlive = useMemo(() => {
+    const m = {};
+    if (idx) idx.lines.forEach((l) => { if (l.lk !== "removed") m[l.rd.split("-")[0]] = true; });
+    return m;
+  }, [idx]);
+  const isLineGone = (l) => l.lk === "removed" && !mktAlive[l.rd.split("-")[0]];
   if (err) return <div className="boot">הנתונים עוד לא נוצרו — הריצה הראשונה של הצינור תיצור אותם. נסו לרענן מאוחר יותר.</div>;
   if (!idx) return <div className="boot">טוען נתונים…</div>;
   const needle = q.trim();
@@ -402,7 +412,7 @@ function App() {
         <button className={"tab" + (tab === "stops" ? " on" : "")} onClick={() => { setTab("stops"); setRd(null); }}>🚏 תחנות</button>
       </div>
       {tab === "stops" ? <StopsTab /> : rd ? (
-        <LinePage rd={rd} onBack={() => setRd(null)} />
+        <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]} onBack={() => setRd(null)} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
@@ -423,11 +433,15 @@ function App() {
               {list.map((l) => (
                 <button key={l.rd} className="lrow" onClick={() => setRd(l.rd)}>
                   <span className="badge sm">{l.line}</span>
-                  {l.lk === "removed" && (
+                  {l.lk === "removed" && (isLineGone(l) ? (
                     <span className="k" style={{ background: isRemovedYear(l) ? "#7f1d1d" : "#dc2626" }}>
-                      {isRemovedYear(l) ? "מבוטל מעל שנה" : "מבוטל"}
+                      {isRemovedYear(l) ? "הקו בוטל — מעל שנה" : "הקו בוטל"}
                     </span>
-                  )}
+                  ) : (
+                    <span className="k" style={{ background: isRemovedYear(l) ? "#9a3412" : "#ea580c" }}>
+                      {isRemovedYear(l) ? "חלופה בוטלה — מעל שנה" : "חלופה בוטלה"}
+                    </span>
+                  ))}
                   <span className="ldest">{l.dest}</span>
                   <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}
                     {l.lk === "removed" && <> · מבוטל מאז {fmtD(l.ld)}</>}</span>
