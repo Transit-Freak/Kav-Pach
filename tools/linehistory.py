@@ -24,9 +24,13 @@ TRIPS=os.environ.get('TRIPS','trips.txt')
 ROUTES=os.environ.get('ROUTES','routes.txt')
 SHAPES=os.environ.get('SHAPES','shapes.txt')
 AGENCY=os.environ.get('AGENCY','agency.txt')
+CALENDAR=os.environ.get('CALENDAR','calendar.txt')
 MAIN=os.environ.get('MAIN','data-main.json')
 OUTDIR=os.environ.get('OUTDIR','line-history/data')
 TODAY=os.environ.get('TODAY') or datetime.date.today().isoformat()
+# מצב יישור חד-פעמי: מתקן גאומטריות שנבחרו מנציג לא-מסונן (תבנית עתידית)
+# בלי לרשום אירועי שינוי — ההבדל אינו שינוי אמיתי שנכנס לתוקף.
+REBASE=os.environ.get('REBASE')=='1'
 MOVE_M=25          # הזזת תחנה נספרת מעל מרחק זה
 MAX_LINES_LIST=12  # כמה קווים לשמור ברשומת תחנה שבוטלה
 
@@ -73,10 +77,27 @@ for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
                            'long':r.get('route_long_name',''),'ag':r.get('agency_id','')}
 print('וריאנטים (route_desc):',len({v['rd'] for v in routes.values()}))
 
-# ---- trips: נציג לכל route_id ----
+# ---- שירותים שבתוקף היום ----
+# ה-GTFS מכיל גם תבניות מסלול עתידיות (שירותים עם start_date קדימה). האתר
+# מציג רק שינויים שנכנסו לתוקף, אז הנציג חייב להיבחר מנסיעה שרצה בפועל.
+# מסננים לפי חלון התוקף בלבד (בלי דגלי ימי-השבוע — קו של שישי/שבת נשאר
+# קיים גם כשבודקים ביום ראשון).
+active=None
+if os.path.exists(CALENDAR):
+    ymd=TODAY.replace('-','')
+    active=set()
+    for r in csv.DictReader(open(CALENDAR,encoding='utf-8-sig')):
+        if (r.get('start_date') or '00000000')<=ymd<=(r.get('end_date') or '99999999'):
+            active.add(r['service_id'])
+    print('שירותים בתוקף היום:',len(active))
+else:
+    print('אזהרה: אין calendar.txt — בלי סינון תבניות עתידיות',file=sys.stderr)
+
+# ---- trips: נציג לכל route_id (רק מנסיעות שבתוקף) ----
 rep={}          # route_id -> (trip_id, shape_id)
 for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     rid=r['route_id']
+    if active is not None and r.get('service_id') not in active: continue
     if rid in routes and rid not in rep and r.get('shape_id'):
         rep[rid]=(r['trip_id'],r['shape_id'])
 rep_trips={t:(rid,sh) for rid,(t,sh) in rep.items()}
@@ -236,6 +257,24 @@ for rdesc,c in cur.items():
     rem=[x for x in old_codes if x not in c['codes']]
     name={x[0]:x[1] for x in c['stopinfo']}
     oldname=lambda x:(prev_stops.get(x) or [x])[0]   # שם תחנה שירדה — מהמצב הקודם
+    if REBASE:
+        # יישור: מעדכנים את הגרסה האחרונה-עם-גאומטריה במקומה, בלי אירוע —
+        # ההבדל נובע מבחירת נציג לא-מסוננת בריצה קודמת, לא משינוי בפועל
+        p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+        lf=jload(p,None)
+        if lf and lf.get('versions'):
+            lf['versions']=[v for v in lf['versions'] if v.get('d')!=TODAY or v.get('k')=='removed']
+            tgt=next((v for v in reversed(lf['versions']) if v.get('shp')),None)
+            if tgt is not None:
+                tgt['shp']=encode_shape(c['pts']); tgt['stops']=c['stopinfo']
+                tgt.pop('add',None); tgt.pop('rem',None)
+                lf['line'],lf['dest'],lf['op'],lf['ty']=c['line'],c['long'],c['op'],c['ty']
+                json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+                n_changed+=1
+                continue
+        write_line_version(rdesc,c,'baseline')
+        n_changed+=1
+        continue
     if not geo and not stp:
         kind='operator'
     else:
@@ -252,6 +291,15 @@ for rdesc,c in cur.items():
 gone=[rdesc for rdesc in prev if rdesc not in cur]
 for rdesc in gone:
     if first_run: break
+    if REBASE:
+        # וריאנט שכל התיעוד שלו הוא baseline מהנציג הלא-מסונן = תבנית עתידית
+        # שמעולם לא רצה — מוחקים את הקובץ; הוא יירשם כ'new' כשייכנס לתוקף.
+        p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+        lf=jload(p,None)
+        if lf is not None and all(v.get('k')=='baseline' for v in lf.get('versions',[])):
+            os.remove(p)
+            n_gone+=1
+            continue
     chm['changes'].append({'d':TODAY,'rd':rdesc,'line':prev[rdesc].get('line',''),'k':'removed'})
     # רושמים removed גם בקובץ הקו — אם יחזור תוך חודש הרשומה תימחק בשקט (למעלה)
     p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -271,7 +319,8 @@ for s in stops.values():
     cur_stops[s['c']]=[s['n'],s['la'],s['lo'],s['t'],lns]
 spath=f'{OUTDIR}/changes/stops-{month}.json'
 stm=jload(spath,{'month':month,'changes':[]})
-stm['changes']=[c for c in stm['changes'] if c.get('d')!=TODAY]
+if not REBASE:   # ביישור מצב-התחנות כבר עדכני — מחיקה הייתה מאבדת את אירועי היום
+    stm['changes']=[c for c in stm['changes'] if c.get('d')!=TODAY]
 shist=jload(f'{OUTDIR}/stops-hist.json',{})
 def sev(code,ev):
     stm['changes'].append({'d':TODAY,'c':code,**ev})

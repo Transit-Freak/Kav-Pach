@@ -33,20 +33,24 @@ jobs:
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
           curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
             -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
-          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt
+          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt calendar.txt
 
       - name: Diff line & stop history
         run: |
           set -euo pipefail
+          # קובץ סימון ליישור חד-פעמי (תיקון גאומטריות בלי רישום אירועים)
+          REBASE=0; [ -f line-history/data/.rebase ] && REBASE=1
+          echo "REBASE=$REBASE"
           STOPS=stops.txt STOP_TIMES=stop_times.txt TRIPS=trips.txt ROUTES=routes.txt \
-            SHAPES=shapes.txt AGENCY=agency.txt MAIN=data-main.json \
-            OUTDIR=line-history/data python3 tools/linehistory.py
+            SHAPES=shapes.txt AGENCY=agency.txt CALENDAR=calendar.txt MAIN=data-main.json \
+            OUTDIR=line-history/data REBASE=$REBASE python3 tools/linehistory.py
+          rm -f line-history/data/.rebase
 
       - name: Commit (לענף שהריץ — main בריצה המתוזמנת)
         run: |
           set -euo pipefail
           BR="${GITHUB_REF_NAME:-main}"
-          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt calendar.txt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp -r line-history/data /tmp/lh-out
