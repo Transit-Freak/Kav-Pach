@@ -69,16 +69,14 @@ def add_version(rd, d, kind, info, note=''):
                    'op': info.get('op',''), 'ty': '', 'versions': []})
     if any(v.get('d') == d and v.get('k') == kind for v in lf['versions']):
         return
-    # קו שנעלם וחזר תוך עד 5 שבועות = הפסקת חג/פגרה, לא שינוי אמיתי —
-    # ממזגים לזוג אחד "הפסקה זמנית" במקום להציף את ציר הזמן (12,783 זוגות כאלה ב-2022-2026)
+    # קו שנעלם וחזר תוך עד ~חודש = הפסקת חג/פגרה — לא מעניין (בקשת המשתמש):
+    # מוחקים את רשומת ה-removed בשקט ולא רושמים 'new'. ביטול של חודש+ נשאר.
     if kind == 'new' and lf['versions']:
         last = lf['versions'][-1]
         if last.get('k') == 'removed' and last.get('src') == 'ob':
             gap = (datetime.date.fromisoformat(d) - datetime.date.fromisoformat(last['d'])).days
             if gap <= 35:
-                w = round(gap / 7) or 1
-                last['k'] = 'pause'
-                last['note'] = f'הפסקת שירות זמנית של כ-{w} שבועות (כנראה חג/פגרה) — השירות חזר ב-{d}'
+                lf['versions'].pop()
                 json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
                 return
     v = {'d': d, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob'}
@@ -117,6 +115,9 @@ while d <= d1:
                     n_ev += 1
                 if pv['line'] != info['line']:
                     add_version(rd, ds, 'renum', info, f"מספר הקו שוּנה: {pv['line']} ← {info['line']}")
+                    n_ev += 1
+                if pv.get('op') and pv['op'] != info['op']:
+                    add_version(rd, ds, 'operator', info, f"המפעיל הוחלף: {pv['op']} ← {info['op']}")
                     n_ev += 1
         for rd, pv in prev.items():
             if rd not in cur:

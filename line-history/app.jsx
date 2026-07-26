@@ -4,15 +4,20 @@ const { useState, useEffect, useMemo, useRef } = React;
 const BUILD = window.LH_BUILD || "0";
 
 const KINDS = {
-  baseline: { label: "תיעוד ראשון", color: "#64748b" },
-  new:      { label: "וריאנט חדש", color: "#16a34a" },
-  route:    { label: "שינוי מסלול", color: "#7c3aed" },
-  redraw:   { label: "תיקון שרטוט", color: "#0891b2" },
-  stops:    { label: "שינוי תחנות", color: "#d97706" },
-  removed:  { label: "הוסר מהרישום", color: "#dc2626" },
-  dest:     { label: "שינוי יעד", color: "#9333ea" },
-  renum:    { label: "שינוי מספר", color: "#be185d" },
-  pause:    { label: "הפסקה זמנית", color: "#94a3b8" },
+  baseline:    { label: "תיעוד ראשון", color: "#64748b" },
+  new:         { label: "וריאנט חדש", color: "#16a34a" },
+  route:       { label: "שינוי מסלול", color: "#7c3aed" },
+  redraw:      { label: "תיקון שרטוט", color: "#0891b2" },
+  terminal:    { label: "שינוי קצה המסלול", color: "#c026d3" },
+  extend:      { label: "הארכת קו", color: "#15803d" },
+  shorten:     { label: "קיצור קו", color: "#ea580c" },
+  "stops-add": { label: "תחנות נוספו", color: "#65a30d" },
+  "stops-del": { label: "תחנות ירדו", color: "#e11d48" },
+  stops:       { label: "שינוי תחנות", color: "#d97706" },
+  operator:    { label: "החלפת מפעיל", color: "#0f766e" },
+  dest:        { label: "שינוי יעד", color: "#9333ea" },
+  renum:       { label: "שינוי מספר", color: "#be185d" },
+  removed:     { label: "בוטל (חודש ומעלה)", color: "#dc2626" },
 };
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },

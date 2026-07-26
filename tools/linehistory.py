@@ -175,39 +175,94 @@ def write_line_version(rdesc,c,kind,note='',extra=None):
     lf['versions'].append(v)
     json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 
-n_new=n_geo=n_stops=n_both=n_gone=0
+# סיווג עדין של שינוי (בקשת המשתמש: קטגוריות לכל סוגי השינויים):
+# redraw=שרטוט בלבד · terminal=שונה קצה המסלול · extend/shorten=הארכה/קיצור
+# stops-add/stops-del=רק נוספו/רק ירדו · route=מסלול+תחנות · stops=שינוי תחנות
+def classify(old_codes,new_codes,geo,stp):
+    if geo and not stp: return 'redraw'
+    add=[x for x in new_codes if x not in old_codes]
+    rem=[x for x in old_codes if x not in new_codes]
+    term=bool(old_codes and new_codes and (old_codes[0]!=new_codes[0] or old_codes[-1]!=new_codes[-1]))
+    d=len(new_codes)-len(old_codes)
+    if term and d>=3: return 'extend'
+    if term and d<=-3: return 'shorten'
+    if term: return 'terminal'
+    if add and rem: return 'route' if geo else 'stops'
+    if add: return 'stops-add'
+    if rem: return 'stops-del'
+    return 'route' if geo else 'stops'
+
+PAUSE_MAX_D=35   # ביטול שחזר תוך עד ~חודש = הפסקת חג/פגרה, לא מעניין (בקשת המשתמש)
+def days_between(a,b):
+    return (datetime.date.fromisoformat(b)-datetime.date.fromisoformat(a)).days
+
+n_new=n_changed=n_gone=n_resumed=0
+kinds_count={}
 for rdesc,c in cur.items():
     pv=prev.get(rdesc)
     if pv is None:
-        write_line_version(rdesc,c,'baseline' if first_run else 'new',
-                           '' if first_run else 'וריאנט חדש ברישום')
-        if not first_run:
-            chm['changes'].append({'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':'new'})
-        n_new+=1
-        continue
-    geo=pv['sh_h']!=c['sh_h']; stp=pv['st_h']!=c['st_h']
-    if not geo and not stp: continue
+        # אולי חזרה מהפסקה קצרה: אם הגרסה האחרונה בקובץ היא removed טרי — מוחקים
+        # אותה בשקט וממשיכים כאילו לא נעלם; שינוי אמיתי ביחס ללפני-ההפסקה עדיין מדווח
+        p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+        lf=jload(p,None)
+        if lf and lf.get('versions') and lf['versions'][-1].get('k')=='removed' \
+           and days_between(lf['versions'][-1]['d'],TODAY)<=PAUSE_MAX_D:
+            lf['versions'].pop()
+            json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+            n_resumed+=1
+            base=next((v for v in reversed(lf['versions']) if v.get('shp')),None)
+            if base is not None:
+                old_codes=[s[0] for s in base.get('stops',[])]
+                geo=base.get('shp')!=encode_shape(c['pts']); stp=old_codes!=c['codes']
+                if not geo and not stp:
+                    continue   # חזר בדיוק כמו שהיה — אין אירוע
+                pv={'codes':old_codes,'op':lf.get('op',''),'_resumed':True,'geo':geo,'stp':stp}
+            else:
+                continue
+        else:
+            write_line_version(rdesc,c,'baseline' if first_run else 'new',
+                               '' if first_run else 'וריאנט חדש ברישום')
+            if not first_run:
+                chm['changes'].append({'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':'new'})
+            n_new+=1
+            continue
+    if pv.get('_resumed'):
+        geo,stp=pv['geo'],pv['stp']
+    else:
+        geo=pv['sh_h']!=c['sh_h']; stp=pv['st_h']!=c['st_h']
+    op_changed=pv.get('op') is not None and pv.get('op')!=c['op']
+    if not geo and not stp and not op_changed: continue
     old_codes=pv['codes']; add=[x for x in c['codes'] if x not in old_codes]
     rem=[x for x in old_codes if x not in c['codes']]
     name={x[0]:x[1] for x in c['stopinfo']}
     oldname=lambda x:(prev_stops.get(x) or [x])[0]   # שם תחנה שירדה — מהמצב הקודם
-    if geo and stp:
-        kind='route'; n_both+=1
-    elif geo:
-        kind='redraw'; n_geo+=1   # גאומטריה בלבד — תיקון שרטוט/קידוד
+    if not geo and not stp:
+        kind='operator'
     else:
-        kind='stops'; n_stops+=1
+        kind=classify(old_codes,c['codes'],geo,stp)
+    kinds_count[kind]=kinds_count.get(kind,0)+1; n_changed+=1
+    note=''
+    if op_changed: note=f"המפעיל הוחלף: {pv.get('op','')} ← {c['op']}"
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
     if add: ch['add']=[name.get(x,x) for x in add][:15]
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
     chm['changes'].append(ch)
-    write_line_version(rdesc,c,kind,extra={'add':ch.get('add'),'rem':ch.get('rem')} if (add or rem) else None)
+    extra={'add':ch.get('add'),'rem':ch.get('rem')} if (add or rem) else None
+    write_line_version(rdesc,c,kind,note,extra)
 gone=[rdesc for rdesc in prev if rdesc not in cur]
 for rdesc in gone:
     if first_run: break
     chm['changes'].append({'d':TODAY,'rd':rdesc,'line':prev[rdesc].get('line',''),'k':'removed'})
+    # רושמים removed גם בקובץ הקו — אם יחזור תוך חודש הרשומה תימחק בשקט (למעלה)
+    p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+    lf=jload(p,None)
+    if lf is not None:
+        lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='removed')]
+        lf['versions'].append({'d':TODAY,'k':'removed','shp':'','stops':[],
+                               'note':'הווריאנט נעלם מהרישום'})
+        json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     n_gone+=1
-print(f'קווים: חדשים {n_new} | שרטוט-בלבד {n_geo} | תחנות-בלבד {n_stops} | שניהם {n_both} | הוסרו {n_gone}')
+print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed}')
 
 # ---- שינויי תחנות (רישום ארצי) ----
 cur_stops={}
@@ -251,7 +306,7 @@ json.dump({'gen':TODAY,'first':first_run,'lines':idx},
 json.dump(chm,open(chpath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-json.dump({rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line']} for rdesc,c in cur.items()},
+json.dump({rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],'op':c['op']} for rdesc,c in cur.items()},
           open(f'{OUTDIR}/state-routes.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(cur_stops,open(f'{OUTDIR}/stops-state.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 mons=sorted({f[8:15] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')})
