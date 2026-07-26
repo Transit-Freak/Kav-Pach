@@ -4,7 +4,7 @@
 # ומזהה: וריאנט הופיע / נעלם / שינה יעד (route_long_name) / שינה מספר קו.
 # אין ב-API גאומטריה — שלב ב' (רצפי תחנות) משלים בנפרד.
 #
-# קלט: FROM, TO (YYYY-MM-DD), OUTDIR (line-history/data), STEP_DAYS (ברירת מחדל 7)
+# קלט: FROM, TO (YYYY-MM-DD), OUTDIR (line-history/data), STEP_DAYS (ברירת מחדל 7).
 # פלט: עדכון lines/<rd>.json (גרסאות-עבר בלי גאומטריה, מסומנות src=ob),
 #       backfill-state.json (המצב האחרון שנדגם — להמשכיות בין ריצות)
 import json, os, re, sys, time, datetime, urllib.request, urllib.parse
