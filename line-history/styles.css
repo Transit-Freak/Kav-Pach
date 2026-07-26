@@ -81,6 +81,8 @@ footer a { color: #7c3aed; }
 .katlab { flex: 1; }
 .katc { color: #7c3aed; font-size: 12px; }
 .katclear { border: none; background: none; color: #b91c1c; font-family: inherit; font-weight: 800; font-size: 12.5px; cursor: pointer; padding: 8px 5px 3px; text-align: right; }
+.katgrp { color: #94a3b8; font-weight: 900; font-size: 11px; letter-spacing: .3px; padding: 9px 5px 2px; border-bottom: 1px dashed #eef2f7; margin-bottom: 2px; }
+.katgrp:first-child { padding-top: 3px; }
 
 /* --- מובייל --- */
 @media (max-width: 640px) {

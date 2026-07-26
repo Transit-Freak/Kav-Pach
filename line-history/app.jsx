@@ -30,9 +30,41 @@ function dispKind(x, i, vs) {
 function isRemovedYear(l) {
   return l.lk === "removed" && (Date.now() - new Date(l.ld)) / 864e5 >= 365;
 }
-// סדר הקטגוריות בתפריט הראשי
-const CATS = ["new", "removed-year", "removed", "operator", "dest", "renum",
-  "route", "redraw", "terminal", "extend", "shorten", "stops-add", "stops-del", "stops"];
+// קטגוריות הבחירה — מחולקות לקבוצות, בלי חפיפות: שלוש קטגוריות ביטול
+// נפרדות (מעל שנה / פחות משנה / חזר), ותוויות שמסבירות את ההבדל.
+const CAT_GROUPS = [
+  { title: "ביטולים", items: ["removed-year", "removed-now", "removed-past"] },
+  { title: "שינויי מסלול", items: ["route", "redraw", "extend", "shorten", "terminal"] },
+  { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
+  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum"] },
+];
+const CAT_LABELS = {
+  "removed-year": "מבוטל — מעל שנה לא חזר",
+  "removed-now": "מבוטל כרגע — פחות משנה",
+  "removed-past": "בוטל בעבר וחזר לפעול",
+  route: "שינוי מסלול (ציור וגם תחנות)",
+  redraw: "תיקון שרטוט (התחנות לא השתנו)",
+  extend: "הארכת קו",
+  shorten: "קיצור קו",
+  terminal: "שינוי תחנת קצה",
+  stops: "הוחלפו תחנות (נוספו וגם ירדו)",
+  "stops-add": "רק נוספו תחנות",
+  "stops-del": "רק ירדו תחנות",
+  new: "וריאנט חדש ברישום",
+  operator: "החלפת מפעיל",
+  dest: "שינוי יעד",
+  renum: "שינוי מספר קו",
+};
+const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b" };
+function catColor(k) { return CAT_COLORS[k] || (KINDS[k] || {}).color || "#64748b"; }
+// התאמת קו לקטגוריה (שלוש קטגוריות הביטול זרות זו לזו)
+function catMatch(l, k) {
+  if (k === "removed-year") return isRemovedYear(l);
+  if (k === "removed-now") return l.lk === "removed" && !isRemovedYear(l);
+  if (k === "removed-past") return l.lk !== "removed" && (l.ks || []).includes("removed");
+  return (l.ks || []).includes(k);
+}
+const REMOVAL_CATS = new Set(["removed-year", "removed-now", "removed-past"]);
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
   del:     { label: "בוטלה", color: "#dc2626" },
@@ -389,10 +421,12 @@ function App() {
   }, []);
   const counts = useMemo(() => {
     const c = {};
-    if (idx) idx.lines.forEach((l) => {
-      (l.ks || []).forEach((k) => { c[k] = (c[k] || 0) + 1; });
-      if (isRemovedYear(l)) c["removed-year"] = (c["removed-year"] || 0) + 1;
-    });
+    if (idx) {
+      const keys = CAT_GROUPS.flatMap((g) => g.items);
+      idx.lines.forEach((l) => {
+        keys.forEach((k) => { if (catMatch(l, k)) c[k] = (c[k] || 0) + 1; });
+      });
+    }
     return c;
   }, [idx]);
   // אילו מק"טים עדיין פעילים — כדי להבדיל חלופה מבוטלת מקו שבוטל כולו
@@ -407,16 +441,14 @@ function App() {
   const needle = q.trim();
   const inKats = (l) => {
     if (!kats.size) return true;
-    for (const k of kats) {
-      if (k === "removed-year" ? isRemovedYear(l) : (l.ks || []).includes(k)) return true;
-    }
+    for (const k of kats) { if (catMatch(l, k)) return true; }
     return false;
   };
   let list = [], total = 0;
   if (needle || kats.size) {
     list = idx.lines.filter((l) => inKats(l) &&
       (!needle || l.line === needle || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)));
-    const onlyRemoval = kats.size > 0 && [...kats].every((k) => k === "removed" || k === "removed-year");
+    const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
     if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
     else if (kats.size) list.sort((a, b) => ((parseInt(a.line) || 1e9) - (parseInt(b.line) || 1e9)) || a.line.localeCompare(b.line));
     total = list.length;
@@ -453,13 +485,18 @@ function App() {
             </button>
             {katOpen && (
               <div className="katlist">
-                {CATS.map((k) => (
-                  <label key={k} className="katrow">
-                    <input type="checkbox" checked={kats.has(k)} onChange={() => toggleKat(k)} />
-                    <i className="katdot" style={{ background: KINDS[k].color }} />
-                    <span className="katlab">{KINDS[k].label}</span>
-                    <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
-                  </label>
+                {CAT_GROUPS.map((g) => (
+                  <React.Fragment key={g.title}>
+                    <div className="katgrp">{g.title}</div>
+                    {g.items.map((k) => (
+                      <label key={k} className="katrow">
+                        <input type="checkbox" checked={kats.has(k)} onChange={() => toggleKat(k)} />
+                        <i className="katdot" style={{ background: catColor(k) }} />
+                        <span className="katlab">{CAT_LABELS[k]}</span>
+                        <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
+                      </label>
+                    ))}
+                  </React.Fragment>
                 ))}
                 {kats.size > 0 && (
                   <button className="katclear" onClick={() => setKats(new Set())}>✖ נקה את הבחירה</button>
