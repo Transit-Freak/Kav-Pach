@@ -26,6 +26,13 @@ function dispKind(x, i, vs) {
   if (x.k === "removed" && i === vs.length - 1 && (Date.now() - new Date(x.d)) / 864e5 >= 365) return "removed-year";
   return x.k;
 }
+// אותו כלל ברמת האינדקס (lk/ld = הרשומה האחרונה של הווריאנט)
+function isRemovedYear(l) {
+  return l.lk === "removed" && (Date.now() - new Date(l.ld)) / 864e5 >= 365;
+}
+// סדר הקטגוריות בתפריט הראשי
+const CATS = ["new", "removed-year", "removed", "operator", "dest", "renum",
+  "route", "redraw", "terminal", "extend", "shorten", "stops-add", "stops-del", "stops"];
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
   del:     { label: "בוטלה", color: "#dc2626" },
@@ -249,6 +256,7 @@ function App() {
   const [err, setErr] = useState(null);
   const [tab, setTab] = useState("lines");
   const [q, setQ] = useState("");
+  const [kat, setKat] = useState("");
   const [rd, setRd] = useState(null);
   useEffect(() => {
     fetch("data/lines.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -256,12 +264,27 @@ function App() {
       .then(setIdx)
       .catch(setErr);
   }, []);
+  const counts = useMemo(() => {
+    const c = {};
+    if (idx) idx.lines.forEach((l) => {
+      (l.ks || []).forEach((k) => { c[k] = (c[k] || 0) + 1; });
+      if (isRemovedYear(l)) c["removed-year"] = (c["removed-year"] || 0) + 1;
+    });
+    return c;
+  }, [idx]);
   if (err) return <div className="boot">הנתונים עוד לא נוצרו — הריצה הראשונה של הצינור תיצור אותם. נסו לרענן מאוחר יותר.</div>;
   if (!idx) return <div className="boot">טוען נתונים…</div>;
   const needle = q.trim();
-  const list = needle
-    ? idx.lines.filter((l) => l.line === needle || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)).slice(0, 60)
-    : [];
+  const inKat = (l) => !kat || (kat === "removed-year" ? isRemovedYear(l) : (l.ks || []).includes(kat));
+  let list = [], total = 0;
+  if (needle || kat) {
+    list = idx.lines.filter((l) => inKat(l) &&
+      (!needle || l.line === needle || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)));
+    if (kat === "removed" || kat === "removed-year") list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
+    else if (kat) list.sort((a, b) => ((parseInt(a.line) || 1e9) - (parseInt(b.line) || 1e9)) || a.line.localeCompare(b.line));
+    total = list.length;
+    list = list.slice(0, 200);
+  }
   const changed = idx.lines.filter((l) => l.v > 1).length;
   return (
     <div className="wrap">
@@ -285,19 +308,40 @@ function App() {
           <input className="search" type="search" dir="rtl" autoFocus
             placeholder="חיפוש קו: מספר קו, מק״ט, יעד או מפעיל…"
             value={q} onChange={(e) => setQ(e.target.value)} />
-          {needle ? (
+          <div className="months">
+            <button className={"mchip" + (!kat ? " on" : "")} onClick={() => setKat("")}>הכול</button>
+            {CATS.map((k) => (
+              <button key={k} className={"mchip" + (kat === k ? " on" : "")}
+                style={kat === k ? { background: KINDS[k].color, borderColor: KINDS[k].color } : {}}
+                onClick={() => setKat(kat === k ? "" : k)}>
+                {KINDS[k].label} <b>{counts[k] || 0}</b>
+              </button>
+            ))}
+          </div>
+          {(needle || kat) ? (
             <div className="llist">
               {list.map((l) => (
                 <button key={l.rd} className="lrow" onClick={() => setRd(l.rd)}>
                   <span className="badge sm">{l.line}</span>
+                  {l.lk === "removed" && (
+                    <span className="k" style={{ background: isRemovedYear(l) ? "#7f1d1d" : "#dc2626" }}>
+                      {isRemovedYear(l) ? "מבוטל מעל שנה" : "מבוטל"}
+                    </span>
+                  )}
                   <span className="ldest">{l.dest}</span>
-                  <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}</span>
+                  <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}
+                    {l.lk === "removed" && <> · מבוטל מאז {fmtD(l.ld)}</>}</span>
                 </button>
               ))}
-              {list.length === 0 && <div className="empty">לא נמצא קו תואם.</div>}
+              {list.length === 0 && (
+                <div className="empty">{kat && !needle
+                  ? "אין עדיין קווים בקטגוריה הזו — קטגוריות של מסלול ותחנות מצטברות מההשוואות היומיות מכאן והלאה."
+                  : "לא נמצא קו תואם."}</div>
+              )}
+              {total > list.length && <div className="empty">מוצגים 200 הראשונים מתוך {total.toLocaleString()}.</div>}
             </div>
           ) : (
-            <div className="empty">הקלידו מספר קו כדי לראות את ההיסטוריה שלו.<br />
+            <div className="empty">הקלידו מספר קו, או בחרו קטגוריה כדי לראות את כל הקווים שעברו שינוי כזה.<br />
               <span className="mut">התיעוד המלא מתחיל מהריצה הראשונה של הצינור; היסטוריה מ-2022 תתווסף בהמשך ממאגר אופן באס.</span></div>
           )}
         </div>

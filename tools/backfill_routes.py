@@ -137,13 +137,27 @@ while d <= d1:
 
 print('סיום:', n_ev, 'אירועי-עבר נכתבו | נדגם עד', state.get('last_date'))
 
-# עדכון מוני הגרסאות באינדקס — שהכותרת "X עם שינויים" תשקף את המילוי
+# עדכון האינדקס: מוני גרסאות, קטגוריות (ks) וסטטוס אחרון (lk/ld), כולל
+# הוספת וריאנטים שקיימים רק כקובץ (בוטלו לפני תחילת התיעוד היומי).
 idxp = f'{OUTDIR}/lines.json'
 idx = jload(idxp, None)
 if idx:
-    for l in idx.get('lines', []):
-        p = f"{OUTDIR}/lines/{fsafe(l['rd'])}.json"
-        if os.path.exists(p):
-            l['v'] = len(jload(p, {}).get('versions', []))
+    byrd = {l['rd']: l for l in idx.get('lines', [])}
+    for fn in os.listdir(f'{OUTDIR}/lines'):
+        if not fn.endswith('.json'): continue
+        lf = jload(f'{OUTDIR}/lines/{fn}', {})
+        rd0 = lf.get('rd')
+        if not rd0: continue
+        vs = lf.get('versions', [])
+        e = byrd.get(rd0)
+        if e is None:
+            e = {'rd': rd0, 'line': lf.get('line', ''), 'dest': (lf.get('dest') or '')[:80],
+                 'op': lf.get('op', ''), 'ty': lf.get('ty', '')}
+            idx['lines'].append(e); byrd[rd0] = e
+        e['v'] = len(vs)
+        ks = sorted({v['k'] for v in vs if v['k'] != 'baseline'})
+        if ks: e['ks'] = ks
+        if vs: e['lk'] = vs[-1]['k']; e['ld'] = vs[-1]['d']
+    idx['lines'].sort(key=lambda x: (x['line'], x['rd']))
     json.dump(idx, open(idxp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    print('אינדקס עודכן')
+    print('אינדקס עודכן:', len(idx['lines']), 'וריאנטים')

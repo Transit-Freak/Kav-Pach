@@ -295,11 +295,27 @@ if not first_run:
 print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {nm}')
 
 # ---- אינדקס + מצב ----
+# האינדקס כולל את כל הווריאנטים שיש להם קובץ — גם כאלה שכבר לא ברישום
+# (קווים מבוטלים חייבים להישאר ניתנים לחיפוש ולסינון לפי קטגוריה).
+# ks = סוגי השינויים שיש לקו, lk/ld = הרשומה האחרונה (לסטטוס "מבוטל").
+def idx_entry(rdesc, line, dest, op, ty):
+    vs = jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {}).get('versions', [])
+    e = {'rd': rdesc, 'line': line, 'dest': dest[:80], 'op': op, 'ty': ty, 'v': len(vs)}
+    ks = sorted({v['k'] for v in vs if v['k'] != 'baseline'})
+    if ks: e['ks'] = ks
+    if vs: e['lk'] = vs[-1]['k']; e['ld'] = vs[-1]['d']
+    return e
+
 idx=[]
 for rdesc,c in cur.items():
-    lfp=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
-    nv=len(jload(lfp,{}).get('versions',[]))
-    idx.append({'rd':rdesc,'line':c['line'],'dest':c['long'][:80],'op':c['op'],'ty':c['ty'],'v':nv})
+    idx.append(idx_entry(rdesc, c['line'], c['long'], c['op'], c['ty']))
+seen_rd={e['rd'] for e in idx}
+for fn in os.listdir(f'{OUTDIR}/lines'):
+    if not fn.endswith('.json'): continue
+    lf=jload(f'{OUTDIR}/lines/{fn}',{})
+    rdesc=lf.get('rd')
+    if not rdesc or rdesc in seen_rd: continue
+    idx.append(idx_entry(rdesc, lf.get('line',''), lf.get('dest') or '', lf.get('op',''), lf.get('ty','')))
 idx.sort(key=lambda x:(x['line'],x['rd']))
 json.dump({'gen':TODAY,'first':first_run,'lines':idx},
           open(f'{OUTDIR}/lines.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
