@@ -18,7 +18,14 @@ const KINDS = {
   dest:        { label: "שינוי יעד", color: "#9333ea" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
   removed:     { label: "בוטל (חודש ומעלה)", color: "#dc2626" },
+  "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
 };
+
+// ביטול שנשאר בתוקף מעל שנה (הגרסה האחרונה היא removed וישנה משנה) מקבל קטגוריה משלו
+function dispKind(x, i, vs) {
+  if (x.k === "removed" && i === vs.length - 1 && (Date.now() - new Date(x.d)) / 864e5 >= 365) return "removed-year";
+  return x.k;
+}
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
   del:     { label: "בוטלה", color: "#dc2626" },
@@ -112,6 +119,11 @@ function LinePage({ rd, onBack }) {
         <button className="back" onClick={onBack}>→ חזרה לחיפוש</button>
         <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {vs.length > 0 && vs[vs.length - 1].k === "removed" && (
+          <div className="facts" style={{ color: (KINDS[dispKind(vs[vs.length - 1], vs.length - 1, vs)] || {}).color, fontWeight: 700 }}>
+            ❌ הווריאנט מבוטל מאז {fmtD(vs[vs.length - 1].d)}{dispKind(vs[vs.length - 1], vs.length - 1, vs) === "removed-year" ? " — מעל שנה ולא חזר" : ""}
+          </div>
+        )}
         {months.length > 1 && (
           <div className="months">
             <button className={"mchip" + (!mon ? " on" : "")} onClick={() => setMon("")}>הכול</button>
@@ -127,7 +139,7 @@ function LinePage({ rd, onBack }) {
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
               <div className="d">{fmtD(x.d)}</div>
               <div className="t">
-                <span className="k" style={{ background: (KINDS[x.k] || {}).color || "#64748b" }}>{(KINDS[x.k] || { label: x.k }).label}</span>
+                <span className="k" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</span>
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
                 {x.note && <span className="evnote"> {x.note}</span>}
               </div>
