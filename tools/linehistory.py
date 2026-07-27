@@ -111,9 +111,13 @@ SN,SD,SC,LA,LO,SI=ix['stop_name'],ix['stop_desc'],ix['stop_code'],ix['stop_lat']
 LT=ix.get('location_type')
 for r in rows[1:]:
     if len(r)<=SD: continue
-    if LT is not None and len(r)>LT and r[LT] not in ('','0'): continue
+    # לא מדלגים על location_type!=0 — משרד התחבורה מסמן כך חלק מהמסופים
+    # למרות שנסיעות עוצרות בהם ישירות (למשל מסוף כרמי גת/הורדה), והסינון
+    # השמיט תחנות קצה מרצפי הקווים. הם רק מוחרגים מהרישום הארצי (בהמשך).
+    lt='0'
+    if LT is not None and len(r)>LT and r[LT] not in ('','0'): lt=r[LT]
     try: stops[r[SI]]={'c':r[SC],'n':' '.join(r[SN].split()),'t':city(r[SD]),
-                       'la':round(float(r[LA]),5),'lo':round(float(r[LO]),5)}
+                       'la':round(float(r[LA]),5),'lo':round(float(r[LO]),5),'lt':lt}
     except: pass
 print('תחנות:',len(stops))
 
@@ -313,6 +317,8 @@ for rdesc in gone:
 print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed}')
 
 # ---- שינויי תחנות (רישום ארצי) ----
+# כולל גם תחנות שמסומנות location_type!=0 — אלה תחנות אמיתיות עם קוד
+# ברישום (מסופים וכד'), ושינויים בהן מעניינים כמו בכל תחנה.
 cur_stops={}
 for s in stops.values():
     lns=sorted(stop_lines.get(s['c'],()))[:MAX_LINES_LIST]
@@ -328,7 +334,9 @@ def sev(code,ev):
     shist[code]=[e for e in shist[code] if not (e['d']==TODAY and e['k']==ev['k'])]
     shist[code].append({'d':TODAY,**ev})
 ns=nd=nr=nm=0
-if not first_run:
+# ביישור: מצב-התחנות רק מתרענן בשקט (למשל קליטת המסופים שסוננו בעבר) —
+# בלי לרשום אירועי "חדשה", כי אלה לא תחנות שבאמת נוספו היום.
+if not first_run and not REBASE:
     for c0,v in cur_stops.items():
         pv=prev_stops.get(c0)
         if pv is None:

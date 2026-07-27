@@ -210,19 +210,21 @@ function DiffMap({ cur, prev, curStops, prevStops }) {
       `<b>${esc(s[1])}</b>${status ? `<br><span class="pst">${status}</span>` : ""}<br><span class="pcode">מק״ט תחנה ${esc(s[0])}</span>`;
     (curStops || []).forEach((s) => {
       const isNew = prevStops && !prevCodes.has(s[0]);
-      L.circleMarker([s[2], s[3]], {
+      const m = L.circleMarker([s[2], s[3]], {
         radius: isNew ? 8 : 5, color: isNew ? "#fff" : "#4c1d95", weight: 2,
         fillColor: isNew ? "#16a34a" : "#fff", fillOpacity: 1, opacity: focused && !isNew ? 0.4 : 1,
       }).addTo(map)
-        .bindTooltip((isNew ? "נוספה: " : "") + s[1], { direction: "top", className: "lh-tip" })
         .bindPopup(popHtml(s, isNew ? "🟢 תחנה שנוספה בגרסה זו" : ""), { className: "lh-pop", offset: [0, -4] });
+      // tooltip של ריחוף רק בעכבר — במסך מגע הוא נפתח יחד עם ה-popup ונראה
+      // כמו שם כפול במקום לא נכון
+      if (!coarse) m.bindTooltip((isNew ? "נוספה: " : "") + s[1], { direction: "top", className: "lh-tip" });
     });
     (prevStops || []).forEach((s) => {
       if (curCodes.has(s[0])) return;
-      L.circleMarker([s[2], s[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+      const m = L.circleMarker([s[2], s[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
         .addTo(map)
-        .bindTooltip("ירדה: " + s[1], { direction: "top", className: "lh-tip" })
         .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
+      if (!coarse) m.bindTooltip("ירדה: " + s[1], { direction: "top", className: "lh-tip" });
     });
     return () => { mapRef.current = null; map.remove(); };
   }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus]);
@@ -239,7 +241,7 @@ function DiffMap({ cur, prev, curStops, prevStops }) {
 }
 
 /* ---------- עמוד קו ---------- */
-function LinePage({ rd, lineGone, onBack }) {
+function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
@@ -267,6 +269,22 @@ function LinePage({ rd, lineGone, onBack }) {
         <button className="back" onClick={onBack}>→ חזרה לחיפוש</button>
         <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {sibs && sibs.length > 1 && (
+          <div className="sibs">
+            <span className="sibt">חלופות וכיוונים:</span>
+            {sibs.map((s) => {
+              const parts = s.rd.split("-");
+              const dir = parts[1] || "", alt = parts.slice(2).join("-");
+              return (
+                <button key={s.rd} className={"sib" + (s.rd === rd ? " on" : "")} title={s.dest}
+                  onClick={() => { if (s.rd !== rd) onSwitch(s.rd); }}>
+                  כיוון {dir}{alt && alt !== "#" && alt !== "0" ? " · חלופה " + alt : ""}
+                  {s.lk === "removed" && <span className="sibx">✖</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {vs.length > 0 && vs[vs.length - 1].k === "removed" && (
           <div className="facts" style={{ color: lineGone ? (KINDS[dispKind(vs[vs.length - 1], vs.length - 1, vs)] || {}).color : "#c2410c", fontWeight: 700 }}>
             {lineGone
@@ -455,13 +473,17 @@ function App() {
   };
   let list = [], total = 0;
   if (needle || kats.size) {
-    list = idx.lines.filter((l) => inKats(l) &&
-      (!needle || l.line === needle || l.line.startsWith(needle) || l.rd.startsWith(needle) || (l.dest || "").includes(needle) || (l.op || "").includes(needle)));
+    // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות
+    const toks = needle.split(/\s+/).filter(Boolean);
+    const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
+      (l.dest || "").includes(t) || (l.op || "").includes(t);
+    list = idx.lines.filter((l) => inKats(l) && toks.every((t) => tokHit(l, t)));
     const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
-    // דירוג חיפוש: קודם מספר הקו המדויק, אחריו קווים שמתחילים בו, ורק
-    // בסוף התאמות מק"ט/יעד/מפעיל — ובתוך כל דרגה לפי סדר מספרי
-    const rank = (l) => l.line === needle ? 0 : l.line.startsWith(needle) ? 1
-      : l.rd.startsWith(needle) ? 2 : ((l.dest || "").includes(needle) ? 3 : 4);
+    // דירוג: קודם מספר הקו המדויק, אחריו קווים שמתחילים בו, ורק בסוף
+    // התאמות מק"ט/יעד/מפעיל — ובתוך כל דרגה לפי סדר מספרי
+    const numTok = toks.find((t) => /^\d/.test(t)) || toks[0] || "";
+    const rank = (l) => !numTok ? 0 : l.line === numTok ? 0 : l.line.startsWith(numTok) ? 1
+      : l.rd.startsWith(numTok) ? 2 : ((l.dest || "").includes(numTok) ? 3 : 4);
     const lnum = (l) => parseInt(l.line) || 1e9;
     if (needle) list.sort((a, b) => rank(a) - rank(b) || lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
     else if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
@@ -486,7 +508,9 @@ function App() {
         <button className={"tab" + (tab === "stops" ? " on" : "")} onClick={() => { setTab("stops"); setRd(null); }}>🚏 תחנות</button>
       </div>
       {tab === "stops" ? <StopsTab /> : rd ? (
-        <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]} onBack={() => setRd(null)} />
+        <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
+          sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
+          onSwitch={setRd} onBack={() => setRd(null)} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
