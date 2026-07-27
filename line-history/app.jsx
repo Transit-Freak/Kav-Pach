@@ -160,7 +160,7 @@ function segDiff(cur, prev) {
 }
 
 /* ---------- מפת לפני/אחרי ---------- */
-function DiffMap({ cur, prev, curStops, prevStops }) {
+function DiffMap({ cur, prev, approx, curStops, prevStops }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // הקטעים ששונו + התחנות ששונו — היעד של מצב "התמקדות" (בקשת המשתמש:
@@ -196,7 +196,9 @@ function DiffMap({ cur, prev, curStops, prevStops }) {
       L.polyline(prev, { color: "#dc2626", weight: focused ? 3 : 4, opacity: focused ? 0.25 : 0.75, dashArray: "8 7" }).addTo(map);
     }
     if (cur.length > 1) {
-      L.polyline(cur, { color: prev ? "#16a34a" : "#4c1d95", weight: focused ? 3 : 5, opacity: focused ? 0.3 : 0.9 }).addTo(map);
+      L.polyline(cur, approx
+        ? { color: "#7c3aed", weight: 4, opacity: 0.8, dashArray: "7 9" }   // קו מקורב בין תחנות
+        : { color: prev ? "#16a34a" : "#4c1d95", weight: focused ? 3 : 5, opacity: focused ? 0.3 : 0.9 }).addTo(map);
     }
     if (focused && diff) {
       diff.prevSegs.forEach((sg) => L.polyline(sg, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
@@ -261,8 +263,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const v = vs[sel] || vs[vs.length - 1];
   const pi = vs.indexOf(v) - 1;
   const pv = pi >= 0 ? vs[pi] : null;
-  const cur = decodeShape(v.shp);
-  const prev = pv && v.k !== "baseline" ? decodeShape(pv.shp) : null;
+  // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות
+  const approx = !v.shp && (v.stops || []).length > 1;
+  const cur = v.shp ? decodeShape(v.shp) : (approx ? v.stops.map((s) => [s[2], s[3]]) : []);
+  const prev = pv && v.k !== "baseline" && v.shp && pv.shp ? decodeShape(pv.shp) : null;
   return (
     <div className="linewrap">
       <div className="card side">
@@ -333,13 +337,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="vhead">
           גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : " — הגרסה המתועדת הראשונה"}
         </div>
-        {!v.shp ? (
+        {!v.shp && !approx ? (
           <div className="nogeo">
             🛈 {v.note || "אין פירוט לגרסה זו"}<br />
-            <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצפי התחנות יתווספו בשלב ב׳ של המילוי-לאחור.</span>
+            <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
         ) : (
-        <DiffMap key={v.d + v.k} cur={cur} prev={prev} curStops={v.stops} prevStops={pv && v.k !== "baseline" && pv.shp ? pv.stops : null} />
+        <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} curStops={v.stops}
+          prevStops={pv && v.k !== "baseline" && (pv.stops || []).length ? pv.stops : null} />
         )}
         <div className="legend">
           {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם</span>}
@@ -347,7 +352,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
         </div>
-        <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {v.stops.length} תחנות בגרסה זו.</div>
+        {approx
+          ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {v.stops.length} תחנות בגרסה זו.</div>
+          : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {v.stops.length} תחנות בגרסה זו.</div>}
       </div>
     </div>
   );

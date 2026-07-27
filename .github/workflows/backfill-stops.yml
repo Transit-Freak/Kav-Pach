@@ -1,0 +1,71 @@
+name: backfill-stops
+
+# "הקו בזמן" — שלב ב' של המילוי-לאחור: רצפי תחנות היסטוריים לגרסאות-עבר
+# מארכיון אופן באס (הסדנא לידע ציבורי). בטוח להרצה חוזרת — ממשיך מהנקודה
+# שבה עצר (גרסאות שמולאו מדולגות). רץ לילה-לילה עד שנגמרות המטרות.
+
+on:
+  schedule:
+    - cron: '15 0 * * *'   # 03:15 ישראל בקיץ — שעה שקטה מול ה-API שלהם
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/backfill-stops.yml'
+      - 'tools/backfill_stops.py'
+      - 'tools/backfill_stops_registry.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-stops
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 290
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Historical stops registry (weekly snapshots)
+        run: |
+          set -euo pipefail
+          # בקנרית מגבילים גם את הרישום הארצי לטעימה קצרה
+          MAXMIN=80
+          [ -f line-history/data/.stops-canary ] && MAXMIN=3
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=$MAXMIN \
+            python3 tools/backfill_stops_registry.py
+
+      - name: Fill historical stop sequences from Stride
+        run: |
+          set -euo pipefail
+          # קובץ קנרית: מספר מטרות מוגבל לבדיקה ראשונה, נמחק אחרי שימוש
+          MAXT=0
+          if [ -f line-history/data/.stops-canary ]; then
+            MAXT=$(cat line-history/data/.stops-canary)
+          fi
+          echo "MAX_TARGETS=$MAXT"
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=160 MAX_TARGETS=$MAXT \
+            python3 tools/backfill_stops.py
+          rm -f line-history/data/.stops-canary
+
+      - name: Commit (לענף שהריץ)
+        run: |
+          set -euo pipefail
+          BR="${GITHUB_REF_NAME:-main}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp -r line-history/data /tmp/bs-out
+          for i in 1 2 3 4; do
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
+            cp -r /tmp/bs-out/. line-history/data/
+            rm -f line-history/data/.stops-canary
+            git add line-history/data
+            if git diff --cached --quiet; then
+              echo "unchanged"; break; fi
+            git commit -m "data: שלב ב' — רצפי תחנות היסטוריים מארכיון אופן באס"
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
