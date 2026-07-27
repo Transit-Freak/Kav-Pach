@@ -17,7 +17,7 @@ const KINDS = {
   operator:    { label: "החלפת מפעיל", color: "#0f766e" },
   dest:        { label: "שינוי יעד", color: "#9333ea" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
-  removed:     { label: "בוטל (חודש ומעלה)", color: "#dc2626" },
+  removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
 };
 
