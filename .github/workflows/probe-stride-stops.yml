@@ -43,21 +43,27 @@ jobs:
 
           d='2023-09-30'; mkt='72001'; dr='3'; alt='2'
           r1=call('/gtfs_routes/list', date_from=d, date_to=d, route_mkt=mkt, route_direction=dr, route_alternative=alt, limit=5)
-          r1b=call('/gtfs_routes/list', date_from=d, date_to=d, route_mkt=mkt.zfill(5), route_direction=dr, route_alternative=alt, limit=5)
-          rows=r1 if r1 else r1b
-          if rows:
-              rid=rows[0]['id']
+          if r1:
+              rid=r1[0]['id']
               print('route id:', rid)
-              call('/gtfs_rides/list', gtfs_route_ids=rid, limit=1, start_time_from=f'{d}T00:00:00+02:00', start_time_to=f'{d}T23:59:00+02:00')
-              call('/gtfs_rides/list', gtfs_route_ids=rid, limit=1, start_time_from=f'{d}T00:00:00', start_time_to=f'{d}T23:59:00')
-              r2=call('/gtfs_rides/list', gtfs_route_ids=rid, limit=1, start_time_from=f'{d}T00:00:00Z', start_time_to=f'{d}T23:59:00Z')
+              # פרמטר יחיד gtfs_route_id — האם מסנן באמת?
+              r2=call('/gtfs_rides/list', gtfs_route_id=rid, limit=2, start_time_from=f'{d}T00:00:00+02:00', start_time_to=f'{d}T23:59:00+02:00')
               if r2:
-                  ride=r2[0]['id']
-                  print('ride id:', ride)
-                  r3=call('/gtfs_ride_stops/list', gtfs_ride_ids=ride, limit=200)
-                  if r3:
-                      ids=[x.get('gtfs_stop_id') for x in r3[:5]]
-                      print('stop ids sample:', ids)
-                      call('/gtfs_stops/list', gtfs_stop_ids=','.join(map(str,ids)), limit=10)
-                      call('/gtfs_stops/get', id=ids[0])
+                  ok=all(x.get('gtfs_route_id')==rid for x in r2)
+                  print('   gtfs_route_id filter honored?', ok, '| returned route ids:', [x.get('gtfs_route_id') for x in r2])
+                  if ok:
+                      ride=r2[0]['id']
+                      r3=call('/gtfs_ride_stops/list', gtfs_ride_ids=ride, limit=300)
+                      if r3:
+                          same=all(x.get('gtfs_ride_id')==ride for x in r3)
+                          print('   ride_stops all from ride?', same, '| count:', len(r3))
+                          rows=sorted(r3, key=lambda x: x.get('stop_sequence') or 0)
+                          seq=[[str(x.get('gtfs_stop__code')), x.get('gtfs_stop__name'), x.get('gtfs_stop__lat'), x.get('gtfs_stop__lon')] for x in rows]
+                          print('   seq head:', json.dumps(seq[:3], ensure_ascii=False))
+                          print('   seq tail:', json.dumps(seq[-2:], ensure_ascii=False))
+          # רישום ארצי: האם date_from/date_to מכובדים ב-gtfs_stops/list?
+          s22=call('/gtfs_stops/list', date_from='2022-01-08', date_to='2022-01-08', limit=3)
+          if s22: print('   dates returned:', [x.get('date') for x in s22])
+          s22b=call('/gtfs_stops/list', date_from='2022-01-08', date_to='2022-01-08', limit=3, offset=20000)
+          if s22b: print('   dates at offset 20000:', [x.get('date') for x in s22b])
           EOF
