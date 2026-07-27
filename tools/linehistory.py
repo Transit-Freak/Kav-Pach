@@ -95,13 +95,15 @@ else:
 
 # ---- trips: נציג לכל route_id (רק מנסיעות שבתוקף) ----
 rep={}          # route_id -> (trip_id, shape_id)
+registered=set()   # וריאנטים שקיימים ברישום (יש להם נסיעות בקובץ, גם אם לא בתוקף היום)
 for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     rid=r['route_id']
+    if rid in routes: registered.add(routes[rid]['rd'])
     if active is not None and r.get('service_id') not in active: continue
     if rid in routes and rid not in rep and r.get('shape_id'):
         rep[rid]=(r['trip_id'],r['shape_id'])
 rep_trips={t:(rid,sh) for rid,(t,sh) in rep.items()}
-print('נסיעות נציג:',len(rep))
+print('נסיעות נציג:',len(rep),'| וריאנטים רשומים:',len(registered))
 
 # ---- stops ----
 stops={}
@@ -293,8 +295,17 @@ for rdesc,c in cur.items():
     extra={'add':ch.get('add'),'rem':ch.get('rem')} if (add or rem) else None
     write_line_version(rdesc,c,kind,note,extra)
 gone=[rdesc for rdesc in prev if rdesc not in cur]
+carry={}     # וריאנטים רשומים בלי נסיעות פעילות כרגע — נשמרים במצב, לא "בוטלו"
+n_carry=0
 for rdesc in gone:
     if first_run: break
+    # ביטול = היעלמות מהרישום עצמו. וריאנט שעדיין רשום (למשל חלופת תגבור
+    # שתחזור בתאריך עתידי) נגרר קדימה במצב בלי אירוע — בקשת המשתמש: קו נב
+    # מראה שהחלופה קיימת, אז אצלנו היא לא "בוטלה".
+    if rdesc in registered:
+        carry[rdesc]=prev[rdesc]
+        n_carry+=1
+        continue
     if REBASE:
         # וריאנט שכל התיעוד שלו הוא baseline מהנציג הלא-מסונן = תבנית עתידית
         # שמעולם לא רצה — מוחקים את הקובץ; הוא יירשם כ'new' כשייכנס לתוקף.
@@ -314,7 +325,39 @@ for rdesc in gone:
                                'note':'הווריאנט נעלם מהרישום'})
         json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
     n_gone+=1
-print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed}')
+# ריפוי עצמי: וריאנט שעדיין רשום אבל נפלט מהמצב וסומן 'removed' בטעות
+# (גל סינון ה-calendar של 26-27.07) — רשומת הביטול נמחקת והוא חוזר למצב.
+def dec_shape(s):
+    pts=[];i=0;la=0;lo=0
+    while i<len(s):
+        for w in (0,1):
+            sh=0;res=0
+            while True:
+                b=ord(s[i])-63;i+=1;res|=(b&0x1f)<<sh;sh+=5
+                if b<0x20: break
+            d2=~(res>>1) if res&1 else res>>1
+            if w==0: la+=d2
+            else: lo+=d2
+        pts.append((la/1e5,lo/1e5))
+    return pts
+n_heal=0
+for rdesc in registered:
+    if rdesc in cur or rdesc in prev or rdesc in carry: continue
+    p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+    lf=jload(p,None)
+    if not lf or not lf.get('versions'): continue
+    if lf['versions'][-1].get('k')=='removed':
+        dd=lf['versions'][-1]['d']
+        lf['versions'].pop()
+        chm['changes']=[c for c in chm['changes'] if not (c.get('rd')==rdesc and c.get('k')=='removed' and c.get('d')==dd)]
+        json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+        n_heal+=1
+    base=next((v for v in reversed(lf.get('versions',[])) if v.get('shp')),None)
+    if base is not None:
+        codes=[s0[0] for s0 in base.get('stops',[])]
+        carry[rdesc]={'sh_h':h12(json.dumps(dec_shape(base['shp']))),'st_h':h12('|'.join(codes)),
+                      'codes':codes,'line':lf.get('line',''),'op':lf.get('op','')}
+print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed} | רשומים בהמתנה {n_carry} | רופאו {n_heal}')
 
 # ---- שינויי תחנות (רישום ארצי) ----
 # כולל גם תחנות שמסומנות location_type!=0 — אלה תחנות אמיתיות עם קוד
@@ -379,7 +422,9 @@ json.dump({'gen':TODAY,'first':first_run,'lines':idx},
 json.dump(chm,open(chpath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-json.dump({rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],'op':c['op']} for rdesc,c in cur.items()},
+state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],'op':c['op']} for rdesc,c in cur.items()}
+state_out.update(carry)   # רשומים ללא נסיעות פעילות — נגררים קדימה
+json.dump(state_out,
           open(f'{OUTDIR}/state-routes.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(cur_stops,open(f'{OUTDIR}/stops-state.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 mons=sorted({f[8:15] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')})

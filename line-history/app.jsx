@@ -273,12 +273,19 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <div className="sibs">
             <span className="sibt">חלופות וכיוונים:</span>
             {sibs.map((s) => {
-              const parts = s.rd.split("-");
-              const dir = parts[1] || "", alt = parts.slice(2).join("-");
+              const alt0 = (x) => x.rd.split("-").slice(2).join("-");
+              const dir0 = (x) => x.rd.split("-")[1] || "";
+              const dir = dir0(s), alt = alt0(s);
+              const isBase = alt === "" || alt === "#" || alt === "0";
+              const dupDir = sibs.filter((x) => dir0(x) === dir).length > 1;
+              const dupBase = dupDir && isBase && sibs.some((x) => x.rd !== s.rd && dir0(x) === dir && ["", "#", "0"].includes(alt0(x)));
+              const lbl = "כיוון " + dir + (isBase
+                ? (dupDir ? " · ראשית" + (dupBase ? " (" + (alt || "־") + ")" : "") : "")
+                : " · חלופה " + alt);
               return (
                 <button key={s.rd} className={"sib" + (s.rd === rd ? " on" : "")} title={s.dest}
                   onClick={() => { if (s.rd !== rd) onSwitch(s.rd); }}>
-                  כיוון {dir}{alt && alt !== "#" && alt !== "0" ? " · חלופה " + alt : ""}
+                  {lbl}
                   {s.lk === "removed" && <span className="sibx">✖</span>}
                 </button>
               );
