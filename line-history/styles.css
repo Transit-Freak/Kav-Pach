@@ -26,6 +26,9 @@ header h1 { font-size: 24px; font-weight: 900; margin: 6px 0 4px; }
 .lmeta { color: #64748b; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
 /* --- עמוד קו --- */
 .linewrap { display: grid; grid-template-columns: 360px 1fr; gap: 12px; }
+/* בלי זה, תוכן רחב (שורת חודשים ארוכה) מנפח את עמודת הגריד ואת כל הדף
+   במקום להיגלל בתוכה — והמובייל נראה "מוקטן" בקווים עם היסטוריה ארוכה */
+.linewrap > * { min-width: 0; }
 @media (max-width: 860px) { .linewrap { grid-template-columns: 1fr; } }
 .back { border: none; background: none; color: #7c3aed; font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; padding: 0 0 8px; }
 .linehead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
