@@ -25,8 +25,7 @@ jobs:
       - name: Cross-check zones vs CBS statistical areas
         run: |
           set -euo pipefail
-          sudo apt-get install -y -qq p7zip-full >/dev/null || true
-          python3 -m pip install --quiet pyshp pyproj
+          python3 -m pip install --quiet pyshp pyproj fiona
           python3 tools/crosscheck_cbs.py
       - name: Commit report
         run: |
