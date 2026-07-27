@@ -1,0 +1,98 @@
+name: probe-geo-layers
+
+# בדיקה חד-פעמית: אילו שכבות ממשלתיות זמינות פומבית —
+# (א) אזורים סטטיסטיים של הלמ"ס + שכבות תעסוקה/מסחר של מפ"י (לסעיף 0)
+# (ב) שכבות מדד תלתן / מדדי איכות תח"צ (לסעיף 4)
+# מדפיס ממצאים ללוג בלבד, בלי לשמור כלום.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-geo-layers.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Probe public geo layers
+        run: |
+          set -uo pipefail
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse
+
+          UA = {'User-Agent': 'Mozilla/5.0 (probe; public dataset availability check)'}
+          def get(url, timeout=40):
+              req = urllib.request.Request(url, headers=UA)
+              with urllib.request.urlopen(req, timeout=timeout) as r:
+                  return r.read()
+
+          def jget(url, timeout=40):
+              return json.loads(get(url, timeout))
+
+          print('====== 1. data.gov.il — חיפוש דאטהסטים ======')
+          for q in ['אזורים סטטיסטיים', 'תלתן', 'מדד תחבורה ציבורית', 'רמת שירות תחבורה',
+                    'איכות שירות תחבורה ציבורית', 'נגישות תחבורה ציבורית', 'תעסוקה מסחר']:
+              try:
+                  d = jget('https://data.gov.il/api/3/action/package_search?rows=6&q=' + urllib.parse.quote(q))
+                  res = d.get('result', {})
+                  print(f'--- "{q}": {res.get("count")} תוצאות')
+                  for pkg in res.get('results', [])[:6]:
+                      fmts = sorted({(r.get('format') or '?').upper() for r in pkg.get('resources', [])})
+                      print(f'    {pkg.get("title")} | org={pkg.get("organization",{}).get("title")} | '
+                            f'עודכן={pkg.get("metadata_modified","")[:10]} | פורמטים={",".join(fmts)} | id={pkg.get("name")}')
+              except Exception as e:
+                  print(f'--- "{q}": שגיאה: {e}')
+
+          print()
+          print('====== 2. שרתי ArcGIS של הלמ"ס ======')
+          for base in ['https://gisserver.cbs.gov.il/arcgis/rest/services?f=json',
+                       'https://gis.cbs.gov.il/arcgis/rest/services?f=json']:
+              try:
+                  d = jget(base)
+                  names = [s.get('name') for s in d.get('services', [])] + d.get('folders', [])
+                  print(base, '->', names[:40])
+              except Exception as e:
+                  print(base, '-> שגיאה:', e)
+
+          print()
+          print('====== 3. govmap (מפ"י) — חיפוש שכבות ======')
+          try:
+              raw = get('https://www.govmap.gov.il/api/layers/catalog', timeout=40)
+              try:
+                  d = json.loads(raw)
+                  txt = json.dumps(d, ensure_ascii=False)
+              except Exception:
+                  txt = raw[:400].decode('utf-8', 'replace')
+              for kw in ['תעסוקה', 'מסחר', 'תעשיה', 'תלתן', 'תחבורה ציבורית']:
+                  print(f'--- "{kw}" מופיע בקטלוג:', kw in txt)
+              print('אורך קטלוג:', len(txt))
+          except Exception as e:
+              print('govmap catalog: שגיאה:', e)
+          # נקודות קצה נפוצות נוספות של govmap
+          for u in ['https://ags.govmap.gov.il/arcgis/rest/services?f=json',
+                    'https://open.govmap.gov.il/geoserver/web/']:
+              try:
+                  raw = get(u, timeout=40)
+                  try:
+                      d = json.loads(raw)
+                      print(u, '-> folders:', d.get('folders', [])[:40], '| services:',
+                            [s.get('name') for s in d.get('services', [])][:20])
+                  except Exception:
+                      print(u, '-> HTTP OK,', len(raw), 'bytes (לא JSON)')
+              except Exception as e:
+                  print(u, '-> שגיאה:', e)
+
+          print()
+          print('====== 4. אתרי משרד התחבורה / נתיבי איילון — מדדי תח"צ ======')
+          for u in ['https://www.gov.il/he/api/DataGovProxy/GetDGResults?ds=מדד%20תחבורה',
+                    'https://matz.org.il/', 'https://www.ayalonhw.co.il/']:
+              try:
+                  raw = get(u, timeout=30)
+                  print(u, '-> HTTP OK,', len(raw), 'bytes')
+              except Exception as e:
+                  print(u, '-> שגיאה:', e)
+          PY
