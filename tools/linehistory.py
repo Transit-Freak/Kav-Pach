@@ -415,6 +415,14 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
     lf=jload(f'{OUTDIR}/lines/{fn}',{})
     rdesc=lf.get('rd')
     if not rdesc or rdesc in seen_rd: continue
+    # קובץ שאין לו מצב: אם הווריאנט נעלם מהרישום לגמרי ועוד לא סומן מבוטל —
+    # רושמים ביטול. אם הוא עדיין רשום (בלי נסיעות פעילות) הוא נשאר חי.
+    vs=lf.get('versions',[])
+    if not first_run and rdesc not in registered and rdesc not in carry \
+       and vs and vs[-1].get('k')!='removed':
+        vs.append({'d':TODAY,'k':'removed','shp':'','stops':[],'note':'הווריאנט נעלם מהרישום'})
+        json.dump(lf,open(f'{OUTDIR}/lines/{fn}','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+        chm['changes'].append({'d':TODAY,'rd':rdesc,'line':lf.get('line',''),'k':'removed'})
     idx.append(idx_entry(rdesc, lf.get('line',''), lf.get('dest') or '', lf.get('op',''), lf.get('ty','')))
 idx.sort(key=lambda x:(x['line'],x['rd']))
 json.dump({'gen':TODAY,'first':first_run,'lines':idx},
