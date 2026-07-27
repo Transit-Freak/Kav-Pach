@@ -317,7 +317,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="tl">
           {shown.map(({ v: x, i }) => (
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
-              <div className="d">{fmtD(x.d)}</div>
+              <div className="d">{fmtD(x.d)}{(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}</div>
               <div className="t">
                 <span className="k" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</span>
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
@@ -360,6 +360,31 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   );
 }
 
+/* ---------- מפת אירוע תחנה: מיקום ישן מול חדש ---------- */
+function StopEvMap({ ev }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const map = L.map(ref.current, { scrollWheelZoom: false });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
+    }).addTo(map);
+    const pts = [[ev.la, ev.lo]];
+    if (ev.k === "moved" && ev.ola != null) {
+      pts.push([ev.ola, ev.olo]);
+      L.polyline([[ev.ola, ev.olo], [ev.la, ev.lo]], { color: "#2563eb", weight: 3, dashArray: "5 7", opacity: 0.9 }).addTo(map);
+      L.circleMarker([ev.ola, ev.olo], { radius: 9, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+        .addTo(map).bindPopup(`<b>המיקום הישן</b><br><span class="pcode">(${ev.ola}, ${ev.olo})</span>`, { className: "lh-pop" });
+    }
+    L.circleMarker([ev.la, ev.lo], { radius: 9, color: "#fff", weight: 2,
+      fillColor: ev.k === "moved" ? "#16a34a" : ((SKINDS[ev.k] || {}).color || "#2563eb"), fillOpacity: 1 })
+      .addTo(map).bindPopup(`<b>${esc(ev.n || ev.nn || "")}</b>${ev.k === "moved" ? "<br>המיקום החדש" : ""}<br><span class="pcode">(${ev.la}, ${ev.lo})</span>`, { className: "lh-pop" });
+    map.fitBounds(L.latLngBounds(pts).pad(0.6), { maxZoom: 17 });
+    return () => map.remove();
+  }, [ev]);
+  return <div className="smap" ref={ref} />;
+}
+
 /* ---------- טאב תחנות ---------- */
 function StopsTab() {
   const [months, setMonths] = useState(null);
@@ -369,6 +394,7 @@ function StopsTab() {
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
   const [katOpen, setKatOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [openKey, setOpenKey] = useState(null);   // שורת תחנה פתוחה עם מפה
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -388,7 +414,7 @@ function StopsTab() {
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
-      .then((d) => { const ms = d.stopMonths || []; setMonths(ms); if (ms.length) setMon(ms[0]); })
+      .then((d) => { const ms = d.stopMonths || []; setMonths(ms); if (ms.length) setMon("all"); })
       .catch(() => setMonths([]));
   }, []);
   useEffect(() => {
@@ -403,9 +429,11 @@ function StopsTab() {
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
   const needle = q.trim();
   // "כל התקופה": כל האירועים מכל הזמנים מתוך קורות-החיים, עם תאריך ליד כל אחד
-  const source = mon === "all"
+  const raw = mon === "all"
     ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
     : chs;
+  // תחנה שפעילה כיום לא שייכת לרשימת המבוטלות (בקשת המשתמש) — יורדת לגמרי
+  const source = raw === null ? null : raw.filter((c) => !(c.k === "del" && backInfo(c.c, c.d)));
   const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
   const counts = {};
@@ -443,8 +471,12 @@ function StopsTab() {
       </div>
       {source === null ? "טוען…" : (
         <div className="slist">
-          {list.slice(0, 300).map((c, i) => (
-            <div className="srow" key={c.c + c.k + i}>
+          {list.slice(0, 300).map((c, i) => {
+            const k0 = c.c + c.k + c.d;
+            return (
+            <React.Fragment key={k0 + i}>
+            <div className={"srow" + (c.la != null ? " clk" : "")}
+              onClick={() => { if (c.la != null) setOpenKey(openKey === k0 ? null : k0); }}>
               <span className="k" style={{ background: (SKINDS[c.k] || {}).color }}>{(SKINDS[c.k] || { label: c.k }).label}</span>
               <span className="nm">
                 {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
@@ -452,12 +484,15 @@ function StopsTab() {
               </span>
               <span className="meta">
                 {c.t ? c.t + " · " : ""}{fmtD(c.d)}
-                {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b></>}
+                {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
                 {c.k === "del" && c.lines && c.lines.length > 0 && <> · שירתה: {c.lines.slice(0, 8).join(", ")}</>}
-                {c.k === "del" && backInfo(c.c, c.d) && <b style={{ color: "#15803d" }}> · ✓ {backInfo(c.c, c.d)}</b>}
+                {c.la != null && <> · 🗺️</>}
               </span>
             </div>
-          ))}
+            {openKey === k0 && c.la != null && <StopEvMap ev={c} />}
+            </React.Fragment>
+            );
+          })}
           {list.length === 0 && <div className="empty">אין שינויים תואמים בחודש הזה.</div>}
           {list.length > 300 && <div className="empty">מוצגים 300 הראשונים מתוך {list.length}.</div>}
         </div>
