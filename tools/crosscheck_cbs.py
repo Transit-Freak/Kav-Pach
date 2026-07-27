@@ -87,12 +87,14 @@ else:
 print('רשומות:', len(feats), '| שדות:', fields, '| EPSG:', crs_epsg)
 
 parks = json.load(open('parks/data/parks.json', encoding='utf-8'))
+# רשימה לפי סדר האזורים ולא מילון לפי שם — יש אזורים עם שם זהה בערים שונות
+# ("אזור תעשייה חדש" באילת וגם בראשון לציון), ומילון גורם להם להתמזג
 if crs_epsg and crs_epsg != 4326:
     from pyproj import Transformer
     tr = Transformer.from_crs(4326, crs_epsg, always_xy=True)
-    pts = {p['name']: tr.transform(p['lo'], p['la']) for p in parks}
+    pts = [tr.transform(p['lo'], p['la']) for p in parks]
 else:
-    pts = {p['name']: (p['lo'], p['la']) for p in parks}
+    pts = [(p['lo'], p['la']) for p in parks]
 
 def inside(pt, bbox, rings):
     x, y = pt
@@ -115,8 +117,8 @@ sem_f = pick('SEMEL')
 name_f = pick('SHEM_YISH', 'NAME')
 
 out, outside = [], []
-for p in parks:
-    pt = pts[p['name']]
+for i, p in enumerate(parks):
+    pt = pts[i]
     found = None
     for bbox, rings, attrs in feats:
         if inside(pt, bbox, rings):
