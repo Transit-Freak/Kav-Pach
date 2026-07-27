@@ -301,7 +301,8 @@ for r in csv.DictReader(open(ROUTES, encoding='utf-8-sig')):
     if not short:   # לרכבות אין מספר קו — מתייגים לפי הסוג
         rt = r.get('route_type', '3')
         short = 'רכבת' if rt == '2' else ('רק"ל' if rt in ('0', '1') else '?')
-    route_meta[r['route_id']] = (short, r.get('route_long_name', ''))
+    mkt = (r.get('route_desc') or '').split('-')[0].lstrip('0')   # מק"ט = זהות הקו
+    route_meta[r['route_id']] = (short, r.get('route_long_name', ''), mkt)
 
 # ---- stop_times: הגעות בתחנות הרלוונטיות בלבד ----
 deps = defaultdict(list)   # (stop_id, route_id, daygroup) -> [minutes]
@@ -514,9 +515,9 @@ def build_lines(stops_here, tk):
     lines = []
     for rid in seen_rids:
         _, s = best_stop[rid]
-        num, longnm = route_meta.get(rid, ('?', ''))
+        num, longnm, mkt = route_meta.get(rid, ('?', '', ''))
         dest = longnm.split('<->')[-1].split('-')[0].strip() if '<->' in longnm else longnm[:30]
-        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk]}
+        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk], 'mk': mkt or num}
         for gk, _ in DAYGROUPS:
             mins = sorted(set(deps.get((s['sid'], rid, gk), [])))
             rec[gk] = [hhmm(m) for m in mins]
@@ -533,9 +534,17 @@ def build_lines(stops_here, tk):
             lines.append(rec)
     lines.sort(key=lambda L: (TIER_RANK[L['t']],
                               int(re.match(r'\d+', L['num']).group(0)) if re.match(r'\d+', L['num']) else 999))
-    counts = (sum(1 for L in lines if L['t'] == 'in'),
-              sum(1 for L in lines if L['t'] == 'gate'),
-              sum(1 for L in lines if L['t'] == 'near'))
+    # ספירה לפי קו אמיתי (מק"ט) ולא לפי כיוון/חלופה — שני הכיוונים של אותו
+    # קו נספרים פעם אחת, בדרגה הטובה מביניהם (בקשת המשתמשים: בלי ניפוח)
+    best_line = {}
+    for L in lines:
+        r0 = TIER_RANK[L['t']]
+        k0 = L['mk']
+        if k0 not in best_line or r0 < best_line[k0]:
+            best_line[k0] = r0
+    counts = (sum(1 for v in best_line.values() if v == TIER_RANK['in']),
+              sum(1 for v in best_line.values() if v == TIER_RANK['gate']),
+              sum(1 for v in best_line.values() if v == TIER_RANK['near']))
     return lines, counts
 
 index = []

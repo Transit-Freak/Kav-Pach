@@ -13,8 +13,11 @@
   .tag{background:#5eead4;color:#134e4a;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
   .top input{font-family:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:12px;border:none;min-width:220px}
   .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
-  .top .sub{font-size:11.5px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
-  .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer}
+  .top .sub{font-size:14px;opacity:.95;font-weight:700;flex-basis:100%;margin-top:4px;line-height:1.6}
+  .top .credits{font-size:12px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
+  .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .btn svg{flex:0 0 auto}
+  .btn.big{font-size:16px;padding:10px 18px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
   /* ---- טבלה ---- */
   .tblwrap{max-width:1250px;margin:12px auto;padding:0 10px}
   .tblcard{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);overflow:auto}
@@ -67,12 +70,13 @@
     <h1>🏭 נגישות אזורי תעשייה</h1>
     <span class="tag">ניסוי</span>
     <button class="btn" id="backbtn" style="display:none">→ חזרה לרשימה</button>
-    <button class="btn" id="heatbtn" style="display:none">🗺 מפת חום</button>
+    <button class="btn big" id="heatbtn" style="display:none"><svg width="15" height="32" viewBox="0 0 20 44" aria-hidden="true"><path d="M6 1 L14 2 L15.5 7 L13 12 L15 19 L12 27 L10 34 L8 43 L6.5 34 L5 24 L4 15 L5 7 Z" fill="#134e4a" stroke="#0f766e" stroke-width="1"/><circle cx="10" cy="10" r="2.2" fill="#fca5a5"/><circle cx="9" cy="20" r="2.2" fill="#fde047"/><circle cx="8.5" cy="30" r="2.2" fill="#86efac"/></svg>מפת חום</button>
     <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…">
-    <button class="btn" id="csvbtn">⬇ הורדה לאקסל</button>
+    <button class="btn" id="csvbtn"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" rx="3.5" fill="#107c41"/><path d="M6.5 5.5 L13.5 14.5 M13.5 5.5 L6.5 14.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>הורדה לאקסל</button>
     <a href="../">→ הקו הבוחן</a>
-    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), תחנות ולו״ז מ-GTFS · מתעדכן שבועית</div>
+    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה · מתעדכן שבועית</div>
+    <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · © כל הזכויות שמורות למחלקת קידום תחבורה ציבורית בהסתדרות העובדים הכללית</div>
   </div>
 
   <div class="tblwrap" id="tblview" style="display:none">
