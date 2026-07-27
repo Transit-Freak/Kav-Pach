@@ -5,7 +5,7 @@ name: skiplines-experiment
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # כל לילה 03:00 UTC — רענון יומי כמו שאר האתר
+    - cron: '0 7 * * *'   # 10:00 ישראל בקיץ — אחרי חלון הפרסום של משרד התחבורה
   push:
     paths:
       - '.github/workflows/skiplines-experiment.yml'
