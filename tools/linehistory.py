@@ -383,6 +383,21 @@ if not first_run and not REBASE:
     for c0,v in cur_stops.items():
         pv=prev_stops.get(c0)
         if pv is None:
+            # תחנה שנעלמה וחזרה תוך עד ~חודש — מוחקים את הביטול בשקט
+            hc=shist.get(c0) or []
+            if hc and hc[-1].get('k')=='del' and days_between(hc[-1]['d'],TODAY)<=PAUSE_MAX_D:
+                dd=hc[-1]['d']
+                shist[c0]=hc[:-1]
+                if not shist[c0]: shist.pop(c0)
+                if dd[:7]==month:
+                    stm['changes']=[x for x in stm['changes'] if not (x.get('c')==c0 and x.get('k')=='del' and x.get('d')==dd)]
+                else:
+                    mp=f'{OUTDIR}/changes/stops-{dd[:7]}.json'
+                    mm=jload(mp,None)
+                    if mm:
+                        mm['changes']=[x for x in mm['changes'] if not (x.get('c')==c0 and x.get('k')=='del' and x.get('d')==dd)]
+                        json.dump(mm,open(mp,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+                continue
             sev(c0,{'k':'new','n':v[0],'t':v[3],'la':v[1],'lo':v[2]}); ns+=1; continue
         if pv[0]!=v[0]:
             sev(c0,{'k':'renamed','on':pv[0],'nn':v[0],'t':v[3],'la':v[1],'lo':v[2]}); nr+=1

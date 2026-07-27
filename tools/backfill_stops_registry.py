@@ -71,8 +71,31 @@ def sev(d, code, ev):
     shist[code] = [e for e in shist[code] if not (e['d'] == d and e['k'] == ev['k'])]
     shist[code].append({'d': d, **ev})
 
+def days_between(a, b):
+    return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
+
+def drop_recent_del(code, ds, max_d=35):
+    """תחנה שנעלמה וחזרה תוך עד ~חודש = חור בארכיון/הפסקה קצרה — מוחקים
+    את רשומת הביטול בשקט (כמו זוגות החג בקווים). מחזיר True אם מוזג."""
+    evs = shist.get(code) or []
+    if not (evs and evs[-1].get('k') == 'del' and days_between(evs[-1]['d'], ds) <= max_d):
+        return False
+    dd = evs[-1]['d']
+    shist[code] = evs[:-1]
+    if not shist[code]: shist.pop(code)
+    mm = mload(month_of(dd))
+    mm['changes'] = [x for x in mm['changes'] if not (x.get('c') == code and x.get('k') == 'del' and x.get('d') == dd)]
+    return True
+
 def flush():
     os.makedirs(f'{OUTDIR}/changes', exist_ok=True)
+    # סימון "פעילה כיום": ביטול היסטורי של תחנה שקיימת ברישום הנוכחי מקבל
+    # דגל now — האתר מציג אותה כ"פעילה כיום" ולא כמבוטלת (בקשת המשתמש)
+    cur_reg = jload(f'{OUTDIR}/stops-state.json', {})
+    for c, evs in shist.items():
+        if evs and evs[-1].get('k') == 'del':
+            if c in cur_reg: evs[-1]['now'] = 1
+            else: evs[-1].pop('now', None)
     for m, chm in months.items():
         json.dump(chm, open(f'{OUTDIR}/changes/stops-{m}.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     json.dump(shist, open(f'{OUTDIR}/stops-hist.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
@@ -106,6 +129,8 @@ while d <= d1:
         for c, v in cur.items():
             pv = prev.get(c)
             if pv is None:
+                if drop_recent_del(c, ds):
+                    continue
                 sev(ds, c, {'k': 'new', 'n': v[0], 't': '', 'la': v[1], 'lo': v[2]}); n_ev += 1
                 continue
             if pv[0] != v[0] and v[0]:

@@ -365,10 +365,26 @@ function StopsTab() {
   const [months, setMonths] = useState(null);
   const [mon, setMon] = useState("");
   const [chs, setChs] = useState(null);
+  const [hist, setHist] = useState(null);   // קורות-חיים מצטברים לכל תחנה
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
   const [katOpen, setKatOpen] = useState(false);
   const [q, setQ] = useState("");
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  useEffect(() => {
+    fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => (r.ok ? r.json() : {}))
+      .then(setHist)
+      .catch(() => setHist({}));
+  }, []);
+  // תחנה שסומנה כמבוטלת אבל חזרה/פעילה כיום — מציגים את זה במפורש
+  const backInfo = (c, d) => {
+    const evs = (hist || {})[c] || [];
+    const later = evs.find((e) => e.d > d && e.k === "new");
+    if (later) return "חזרה לפעול ב-" + fmtD(later.d);
+    const last = evs[evs.length - 1];
+    if (last && last.k === "del" && last.d === d && last.now) return "פעילה כיום";
+    return null;
+  };
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
@@ -386,13 +402,18 @@ function StopsTab() {
   if (months === null) return <div className="card">טוען…</div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
   const needle = q.trim();
-  const list = (chs || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
+  // "כל התקופה": כל האירועים מכל הזמנים מתוך קורות-החיים, עם תאריך ליד כל אחד
+  const source = mon === "all"
+    ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
+    : chs;
+  const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
   const counts = {};
-  (chs || []).forEach((c) => { counts[c.k] = (counts[c.k] || 0) + 1; });
+  (source || []).forEach((c) => { counts[c.k] = (counts[c.k] || 0) + 1; });
   return (
     <div className="card">
       <div className="months">
+        <button className={"mchip" + (mon === "all" ? " on" : "")} onClick={() => setMon("all")}>🗓️ כל התקופה</button>
         {months.slice(0, 18).map((m) => (
           <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
         ))}
@@ -420,7 +441,7 @@ function StopsTab() {
           </div>
         )}
       </div>
-      {chs === null ? "טוען…" : (
+      {source === null ? "טוען…" : (
         <div className="slist">
           {list.slice(0, 300).map((c, i) => (
             <div className="srow" key={c.c + c.k + i}>
@@ -430,9 +451,10 @@ function StopsTab() {
                 <span className="code"> ({c.c})</span>
               </span>
               <span className="meta">
-                {c.t} · {fmtD(c.d)}
+                {c.t ? c.t + " · " : ""}{fmtD(c.d)}
                 {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b></>}
                 {c.k === "del" && c.lines && c.lines.length > 0 && <> · שירתה: {c.lines.slice(0, 8).join(", ")}</>}
+                {c.k === "del" && backInfo(c.c, c.d) && <b style={{ color: "#15803d" }}> · ✓ {backInfo(c.c, c.d)}</b>}
               </span>
             </div>
           ))}
