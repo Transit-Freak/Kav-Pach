@@ -44,11 +44,25 @@ def stops_on(date):
             if not c: continue
             try:
                 out[c] = [' '.join((r.get('name') or '').split()),
-                          round(float(r.get('lat')), 5), round(float(r.get('lon')), 5)]
+                          round(float(r.get('lat')), 5), round(float(r.get('lon')), 5),
+                          r.get('id')]
             except Exception: pass
         if len(rows) < 1000: break
         offset += 1000
     return out
+
+# אילו קווים עצרו בתחנה — מרשומות הנסיעות של אותו יום בארכיון. עם אימות
+# שהתשובה באמת שייכת לתחנה (השרת מתעלם בשקט מפרמטרים לא מוכרים).
+rs_by_stop_fails = 0
+def lines_at_stop(sid):
+    global rs_by_stop_fails
+    if sid is None or rs_by_stop_fails >= 3: return []
+    rows = api('/gtfs_ride_stops/list', gtfs_stop_ids=sid, limit=60)
+    if not isinstance(rows, list) or not rows: return []
+    if any(r.get('gtfs_stop_id') != sid for r in rows):
+        rs_by_stop_fails += 1
+        return []
+    return sorted({str(r.get('gtfs_route__route_short_name') or '') for r in rows} - {''})[:12]
 
 def dist_m(a_la, a_lo, b_la, b_lo):
     cl = math.cos(math.radians((a_la + b_la) / 2))
@@ -140,7 +154,8 @@ while d <= d1:
                 sev(ds, c, {'k': 'moved', 'n': v[0], 't': '', 'dist': round(dm), 'ola': pv[1], 'olo': pv[2], 'la': v[1], 'lo': v[2]}); n_ev += 1
         for c, pv in prev.items():
             if c not in cur:
-                sev(ds, c, {'k': 'del', 'n': pv[0], 't': '', 'la': pv[1], 'lo': pv[2], 'lines': []}); n_ev += 1
+                lns = lines_at_stop(pv[3] if len(pv) > 3 else None)
+                sev(ds, c, {'k': 'del', 'n': pv[0], 't': '', 'la': pv[1], 'lo': pv[2], 'lines': lns}); n_ev += 1
     else:
         print(ds, '— נקודת עיגון ראשונה:', len(cur), 'תחנות')
     print(ds, '|', len(cur), 'תחנות | אירועים עד כה:', n_ev)
@@ -148,6 +163,30 @@ while d <= d1:
     state = {'last_date': ds, 'stops': prev}
     d += datetime.timedelta(days=STEP)
     if n_ev and n_ev % 2000 < 50: flush()
+
+# השלמה רטרואקטיבית: ביטולים קיימים בלי רשימת קווים מקבלים אותה —
+# מאתרים את מזהה התחנה בשבוע שלפני הביטול ושולפים מי עצר בה.
+cur_reg = jload(f'{OUTDIR}/stops-state.json', {})
+n_fix = 0
+for c, evs in list(shist.items()):
+    if (time.time() - T0) / 60 > MAX_MIN + 10: break
+    e = evs[-1]
+    if not (e.get('k') == 'del' and not e.get('lines')): continue
+    if c in cur_reg: continue   # פעילה כיום — ממילא מוסתרת מהרשימה
+    probe = (datetime.date.fromisoformat(e['d']) - datetime.timedelta(days=7)).isoformat()
+    rows = api('/gtfs_stops/list', date_from=probe, date_to=probe, code=c, limit=5)
+    if not isinstance(rows, list): continue
+    row = next((r for r in rows if str(r.get('code')) == c), None)
+    if row is None: continue   # פילטר code לא כובד / התחנה לא נמצאה בשבוע שלפני
+    lns = lines_at_stop(row.get('id'))
+    if lns:
+        e['lines'] = lns
+        mm = mload(month_of(e['d']))
+        for x in mm['changes']:
+            if x.get('c') == c and x.get('k') == 'del' and x.get('d') == e['d']:
+                x['lines'] = lns
+        n_fix += 1
+if n_fix: print('רשימות קווים הושלמו רטרואקטיבית:', n_fix)
 
 flush()
 print('סיום ריצה:', n_ev, 'אירועי תחנות | נדגם עד', state.get('last_date'))
