@@ -337,19 +337,13 @@
   }
  ],
  "best": {
-  "service": "PlanningPublic/entities_without_77_78",
+  "service": "PlanningPublic/Xplan",
   "type": "MapServer",
   "layer_id": 1,
-  "layer": "ישויות נקודתיות",
+  "layer": "קוים כחולים-תכניות מקוונות",
   "fields": [
    "pl_number"
   ],
   "hits": 7
- },
- "sample_geometry": {
-  "taba": "165/101/02/4",
-  "rings": 0,
-  "points": 0,
-  "first": null
  }
 }
