@@ -1,0 +1,45 @@
+name: probe-missing-zones
+
+# סריקת מועמדים לאזורי תעשייה חסרים: לפי שם ("תעשייה/מלאכה/תעסוקה") ולא רק
+# לפי תיוג landuse=industrial. הפלט דוח מועמדים לבדיקה — לא נכנס לאתר.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-missing-zones.yml'
+      - 'tools/find_missing_zones.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-missing-zones-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: סריקה לפי שם + השוואה לאזורים המוכרים
+        run: python3 tools/find_missing_zones.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/checks/osm-candidates.json /tmp/cand.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks/checks && cp /tmp/cand.json parks/checks/osm-candidates.json
+            git add parks/checks/osm-candidates.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: מועמדים לאזורי תעשייה חסרים (סריקה לפי שם)'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
