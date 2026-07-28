@@ -417,14 +417,24 @@ function StopsTab() {
       .then(setHist)
       .catch(() => setHist({}));
   }, []);
-  // תחנה שסומנה כמבוטלת אבל חזרה/פעילה כיום — מציגים את זה במפורש
-  const backInfo = (c, d) => {
-    const evs = (hist || {})[c] || [];
-    const later = evs.find((e) => e.d > d && e.k === "new");
-    if (later) return "חזרה לפעול ב-" + fmtD(later.d);
-    const last = evs[evs.length - 1];
-    if (last && last.k === "del" && last.d === d && last.now) return "פעילה כיום";
-    return null;
+  // כללי התצוגה (בקשת המשתמש, בעקבות תחנות עונתיות כמו תחנות ההתרעננות):
+  // "חדשה" — רק הרישום הראשון אי-פעם של התחנה; הרשמות חוזרות לא מוצגות.
+  // "בוטלה" — רק אם עברה שנה בלי שחזרה; ומי שמופיעה ברישום הנוכחי
+  // (גם בלי קווים שעוצרים בה) אינה מבוטלת.
+  const keepEvent = (c) => {
+    if (!hist) return true;
+    const evs = hist[c.c] || [];
+    if (c.k === "new") {
+      const first = evs.find((e) => e.k === "new");
+      return !first || first.d === c.d;
+    }
+    if (c.k === "del") {
+      if (evs.some((e) => e.d > c.d && e.k === "new")) return false;   // חזרה לפעול
+      const last = evs[evs.length - 1];
+      if (last && last.k === "del" && last.now) return false;          // עדיין ברישום
+      return Date.now() - new Date(c.d) >= 365 * 864e5;                // מבוטלת = מעל שנה
+    }
+    return true;
   };
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -447,8 +457,7 @@ function StopsTab() {
   const raw = mon === "all"
     ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
     : chs;
-  // תחנה שפעילה כיום לא שייכת לרשימת המבוטלות (בקשת המשתמש) — יורדת לגמרי
-  const source = raw === null ? null : raw.filter((c) => !(c.k === "del" && backInfo(c.c, c.d)));
+  const source = raw === null ? null : raw.filter(keepEvent);
   const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
   const counts = {};
