@@ -425,8 +425,10 @@ function StopsTab() {
     if (!hist) return true;
     const evs = hist[c.c] || [];
     if (c.k === "new") {
-      const first = evs.find((e) => e.k === "new");
-      return !first || first.d === c.d;
+      // "חדשה" = לידת התחנה: האירוע הראשון בכלל בקורות-החיים שלה. תחנה
+      // שההיסטוריה שלה מתחילה בביטול קיימת מלפני התיעוד — ה"חדשה" שאחריו
+      // היא חזרה לרישום, לא לידה
+      return !evs.length || (evs[0].k === "new" && evs[0].d === c.d);
     }
     if (c.k === "del") {
       if (evs.some((e) => e.d > c.d && e.k === "new")) return false;   // חזרה לפעול

@@ -62,15 +62,30 @@ def lines_at(code, d):
 
 # ---- העשרת האירועים: קורות-החיים + קובצי החודש ----
 shist = jload(f'{OUTDIR}/stops-hist.json', {})
+cur_reg = jload(f'{OUTDIR}/stops-state.json', {})   # [שם, lat, lon, עיר, קווים]
 months = {}
 def mload(m):
     if m not in months:
         months[m] = jload(f'{OUTDIR}/changes/stops-{m}.json', None)
     return months[m]
 
-n_set = 0
+def sync_month(c, e, fields):
+    mm = mload(e['d'][:7])
+    if mm:
+        for x in mm['changes']:
+            if x.get('c') == c and x.get('k') == e['k'] and x.get('d') == e['d']:
+                x.update(fields)
+
+n_set = n_city = 0
 for c, evs in shist.items():
+    # שדה העיר — מהרישום הנוכחי; בלעדיו אי-אפשר לחפש תחנות לפי עיר
+    # (תחנות קרית גת "נעלמו" מהחיפוש כי t היה ריק בכל האירועים)
+    city = cur_reg[c][3] if c in cur_reg and len(cur_reg[c]) > 3 else ''
     for e in evs:
+        if city and (e.get('t') or '') != city:
+            e['t'] = city
+            sync_month(c, e, {'t': city})
+            n_city += 1
         if e.get('k') not in ('del', 'renamed', 'moved'): continue
         q = day_before(e['d']) if e['k'] == 'del' else e['d']
         lns = lines_at(c, q)
@@ -78,14 +93,10 @@ for c, evs in shist.items():
         if not lns and not e.get('lines'): continue
         e['lines'] = lns
         n_set += 1
-        mm = mload(e['d'][:7])
-        if mm:
-            for x in mm['changes']:
-                if x.get('c') == c and x.get('k') == e['k'] and x.get('d') == e['d']:
-                    x['lines'] = lns
+        sync_month(c, e, {'lines': lns})
 
 json.dump(shist, open(f'{OUTDIR}/stops-hist.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 for m, mm in months.items():
     if mm is not None:
         json.dump(mm, open(f'{OUTDIR}/changes/stops-{m}.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-print(f'רשימות קווים עודכנו ל-{n_set} אירועי תחנות')
+print(f'רשימות קווים עודכנו ל-{n_set} אירועים | שדה עיר מולא ב-{n_city} אירועים')
