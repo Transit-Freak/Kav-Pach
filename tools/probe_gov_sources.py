@@ -220,7 +220,10 @@ try:
                                            'city': str(at.get('CITY') or '')[:30],
                                            'district': str(at.get('DISTRICT') or '')[:20],
                                            'bruto_dunam': at.get('BRUTOAREA')})
-                missing_nc.sort(key=lambda z: -(z['bruto_dunam'] or 0))
+                def _num(v):
+                    try: return float(v)
+                    except Exception: return 0.0
+                missing_nc.sort(key=lambda z: -_num(z['bruto_dunam']))
                 print(f'הותאמו לאתר: {matched} | ללא התאמה (חסרים כנראה): {len(missing_nc)}')
                 for z in missing_nc[:50]:
                     print(f"  {z['name'][:44]:46} | {z['city'][:20]:22} | {z['district']:10} | {z['bruto_dunam']} דונם")
