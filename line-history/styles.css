@@ -134,3 +134,7 @@ footer a { color: #7c3aed; }
 .sgroup .srow { border-bottom: none; }
 .sgroup .ghead { background: #faf5ff; font-size: 14px; padding: 8px 10px; }
 .srow.sub { padding-right: 22px; }
+
+/* כפתור "הצג עוד" בסוף רשימות */
+.morebtn { display: block; width: 100%; border: 1.5px dashed #c4b5fd; background: #faf5ff; color: #6d28d9; border-radius: 12px; padding: 10px; margin-top: 8px; font-family: inherit; font-weight: 800; font-size: 13.5px; cursor: pointer; }
+.morebtn:hover { background: #f3e8ff; }

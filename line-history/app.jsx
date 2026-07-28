@@ -410,6 +410,8 @@ function StopsTab() {
   const [katOpen, setKatOpen] = useState(false);
   const [q, setQ] = useState("");
   const [openKey, setOpenKey] = useState(null);   // שורת תחנה פתוחה עם מפה
+  const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
+  useEffect(() => setLim(250), [q, mon, kinds]);
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -512,7 +514,7 @@ function StopsTab() {
               if (!g) { g = { code: c.c, evs: [] }; byCode.set(c.c, g); groups.push(g); }
               g.evs.push(c);
             }
-            const shown = groups.slice(0, 250);
+            const shown = groups.slice(0, lim);
             const evRow = (c, one) => {
               const k0 = c.c + c.k + c.d;
               return (
@@ -537,7 +539,7 @@ function StopsTab() {
                 </React.Fragment>
               );
             };
-            return shown.map((g) => {
+            const rows = shown.map((g) => {
               if (g.evs.length === 1) return evRow(g.evs[0], true);
               const head = g.evs[0];
               const nm = head.nn || head.n || (g.evs.find((e) => e.n || e.nn) || {}).n || "";
@@ -551,6 +553,16 @@ function StopsTab() {
                 </div>
               );
             });
+            return (
+              <React.Fragment>
+                {rows}
+                {groups.length > lim && (
+                  <button className="morebtn" onClick={() => setLim(lim + 300)}>
+                    ⌄ הצג עוד — מוצגות {shown.length.toLocaleString()} מתוך {groups.length.toLocaleString()} תחנות
+                  </button>
+                )}
+              </React.Fragment>
+            );
           })()}
           {list.length === 0 && <div className="empty">אין שינויים תואמים בחודש הזה.</div>}
         </div>
@@ -568,6 +580,8 @@ function App() {
   const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
   const [katOpen, setKatOpen] = useState(false);
   const [rd, setRd] = useState(null);
+  const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
+  useEffect(() => setLim(200), [q, kats]);
   const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/lines.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -618,7 +632,7 @@ function App() {
     else if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
     else list.sort((a, b) => lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
     total = list.length;
-    list = list.slice(0, 200);
+    list = list.slice(0, lim);
   }
   const changed = idx.lines.filter((l) => l.v > 1).length;
   return (
@@ -701,7 +715,11 @@ function App() {
                   ? "אין עדיין קווים בקטגוריות שסימנתם — קטגוריות של מסלול ותחנות מצטברות מההשוואות היומיות מכאן והלאה."
                   : "לא נמצא קו תואם."}</div>
               )}
-              {total > list.length && <div className="empty">מוצגים 200 הראשונים מתוך {total.toLocaleString()}.</div>}
+              {total > list.length && (
+                <button className="morebtn" onClick={() => setLim(lim + 300)}>
+                  ⌄ הצג עוד — מוצגים {list.length.toLocaleString()} מתוך {total.toLocaleString()}
+                </button>
+              )}
             </div>
           ) : (
             <div className="empty">הקלידו מספר קו, או פתחו את "קטגוריות לבחירה" וסמנו אילו סוגי שינויים להציג.<br />
