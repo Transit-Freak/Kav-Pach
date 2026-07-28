@@ -1,0 +1,62 @@
+name: probe-fill-removed
+
+# ריצה ממוקדת חד-פעמית: רצף התחנות האחרון לקווים מבוטלים שאין להם שום
+# רשימת תחנות (סיפורי מכונת הדיוק החדשים) — 32001/94001 בראש התור.
+# קבוצת concurrency משלה כדי לא להמתין לריצת הלילה. נמחק אחרי שימוש.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-fill-removed.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-fill-removed-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: מילוי רצפים ממוקד — קווים מבוטלים בלי רשימת תחנות
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=25 MAX_TARGETS=350 \
+            python3 tools/backfill_stops.py
+
+      - name: Commit (מיזוג לפי קבצים)
+        run: |
+          set -euo pipefail
+          BR="${GITHUB_REF_NAME:-main}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BASE=$(git rev-parse HEAD)
+          git add -A line-history/data
+          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data > /tmp/pf-changed
+          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data > /tmp/pf-deleted
+          rm -rf /tmp/pf-out && mkdir -p /tmp/pf-out
+          xargs -0 -r -I{} cp --parents {} /tmp/pf-out/ < /tmp/pf-changed
+          for i in 1 2 3 4; do
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
+            cp -r /tmp/pf-out/. .
+            xargs -0 -r rm -f -- < /tmp/pf-deleted
+            git diff --name-only -z "$BASE" "origin/$BR" -- line-history/data > /tmp/pf-theirs
+            while IFS= read -r -d '' f; do
+              git checkout "origin/$BR" -- "$f" 2>/dev/null || rm -f -- "$f"
+            done < /tmp/pf-theirs
+            OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+            git add -A line-history/data
+            if git diff --cached --quiet; then
+              echo "unchanged"; break; fi
+            git commit -m "data: רצף תחנות אחרון לקווים מבוטלים (מילוי ממוקד)"
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done

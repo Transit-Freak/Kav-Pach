@@ -17,7 +17,10 @@ OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 PAUSE = float(os.environ.get('PAUSE', '0.35'))
 MAX_MIN = float(os.environ.get('MAX_MIN', '230'))
 MAX_TARGETS = int(os.environ.get('MAX_TARGETS', '0') or '0')
-FILL_KINDS = {'new', 'dest', 'renum', 'operator'}   # לגרסת removed אין רצף
+FILL_KINDS = {'new', 'dest', 'renum', 'operator'}
+# גרסת removed מתמלאת מהימים שלפני הביטול (בתאריך עצמו הווריאנט כבר איננו) —
+# רק כשאין בקובץ אף רשימת תחנות אחרת, אחרת לקו המבוטל אין שום רצף באתר
+# (סיפורי מכונת הדיוק יכולים להיות אירוע ביטול יחיד; קו 1 נס ציונה)
 T0 = time.time()
 
 def api(path, **params):
@@ -84,16 +87,38 @@ def seq_for(rd, d):
         return None, 'פרטי תחנות חסרים'
     return seq, ''
 
-# ---- איסוף מטרות: גרסאות ob בלי תחנות ----
+def seq_before(rd, d):
+    """לגרסת ביטול: מנסים ימים אחורה — מדלגים על שבתות/חגים בקווי ימי-חול."""
+    base = datetime.date.fromisoformat(d)
+    last_why = 'אין נסיעות לפני הביטול'
+    for back in (1, 2, 3, 5, 7):
+        dd = (base - datetime.timedelta(days=back)).isoformat()
+        seq, why = seq_for(rd, dd)
+        if seq is not None:
+            return seq, ''
+        last_why = why
+    return None, last_why
+
+# ---- איסוף מטרות: גרסאות ob בלי תחנות. סדר: קודם קווים מבוטלים בלי שום
+# רשימת תחנות (החור הבולט למשתמש), ובראשם 32001/94001 (בקשת שלמה) ----
 targets = []
 for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
     if not fn.endswith('.json'): continue
     lf = jload(f'{OUTDIR}/lines/{fn}', {})
-    for v in lf.get('versions', []):
-        if v.get('src') == 'ob' and v.get('k') in FILL_KINDS and not v.get('stops') and not v.get('shp'):
-            k = f"{lf.get('rd','')}|{v['d']}"
-            if k not in skip:
-                targets.append((fn, lf.get('rd', ''), v['d'], v['k']))
+    rd = lf.get('rd', '')
+    vs = lf.get('versions', [])
+    has_any = any(v.get('stops') or v.get('shp') for v in vs)
+    for v in vs:
+        if v.get('src') != 'ob' or v.get('stops') or v.get('shp'): continue
+        if v.get('k') in FILL_KINDS: pri = 1
+        elif v.get('k') == 'removed' and not has_any: pri = 0
+        else: continue
+        if rd.split('-')[0] in ('32001', '94001'): pri = -1
+        k = f"{rd}|{v['d']}"
+        if k not in skip:
+            targets.append((pri, fn, rd, v['d'], v['k']))
+targets.sort()
+targets = [t[1:] for t in targets]
 print('גרסאות-עבר שממתינות לרצף תחנות:', len(targets))
 if MAX_TARGETS: targets = targets[:MAX_TARGETS]
 
@@ -101,7 +126,7 @@ done = fails = 0
 for fn, rd, d, kind in targets:
     if (time.time() - T0) / 60 > MAX_MIN:
         print('הגעתי לתקרת הזמן — נמשיך בריצה הבאה'); break
-    seq, why = seq_for(rd, d)
+    seq, why = seq_before(rd, d) if kind == 'removed' else seq_for(rd, d)
     p = f'{OUTDIR}/lines/{fn}'
     if seq is None:
         skip[f'{rd}|{d}'] = why
