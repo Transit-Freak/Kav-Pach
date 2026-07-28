@@ -1,0 +1,55 @@
+name: backfill-exact
+
+# היסטוריה מדויקת לפי מק"ט (הרעיון של שלמה): שאילתת טווח אחת לכל מק"ט
+# מחזירה שורה-ליום לכל וריאנט — תאריכים מדויקים להופעה/ביטול/שינויים,
+# בלי הטיית ימי-שבוע. רץ לפני מילוי הרצפים הלילי (00:15) כדי שהרצפים
+# יתמלאו על התאריכים המדויקים. מסיים את כל הארץ בכ-3-4 לילות ואז מנמנם.
+
+on:
+  schedule:
+    - cron: '45 21 * * *'   # 00:45 ישראל בקיץ, לפני ריצת התחנות של 00:15 UTC
+  push:
+    paths:
+      - '.github/workflows/backfill-exact.yml'
+      - 'tools/backfill_routes_exact.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-exact
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Per-mkt exact history
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=100 \
+            python3 tools/backfill_routes_exact.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          cp -r line-history/data /tmp/be-out
+          for i in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            cp -r /tmp/be-out/. line-history/data/
+            OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            git add line-history/data
+            git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
+            git commit -m 'data: היסטוריה מדויקת לפי מק"ט (שורה-ליום מהארכיון)'
+            git push && exit 0
+            sleep 5
+          done
+          exit 1
