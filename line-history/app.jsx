@@ -503,30 +503,56 @@ function StopsTab() {
       </div>
       {source === null ? "טוען…" : (
         <div className="slist">
-          {list.slice(0, 300).map((c, i) => {
-            const k0 = c.c + c.k + c.d;
-            return (
-            <React.Fragment key={k0 + i}>
-            <div className={"srow" + (c.la != null ? " clk" : "")}
-              onClick={() => { if (c.la != null) setOpenKey(openKey === k0 ? null : k0); }}>
-              <span className="k" style={{ background: (SKINDS[c.k] || {}).color }}>{(SKINDS[c.k] || { label: c.k }).label}</span>
-              <span className="nm">
-                {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
-                <span className="code"> ({c.c})</span>
-              </span>
-              <span className="meta">
-                {c.t ? c.t + " · " : ""}{fmtD(c.d)}
-                {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
-                {c.lines && c.lines.length > 0 && <> · קווים שעצרו בה אז: {c.lines.slice(0, 10).join(", ")}</>}
-                {c.la != null && <> · 🗺️</>}
-              </span>
-            </div>
-            {openKey === k0 && c.la != null && <StopEvMap ev={c} />}
-            </React.Fragment>
-            );
-          })}
+          {(() => {
+            // כל השינויים של אותה תחנה מקובצים יחד (בקשת המשתמש)
+            const groups = [];
+            const byCode = new Map();
+            for (const c of list) {
+              let g = byCode.get(c.c);
+              if (!g) { g = { code: c.c, evs: [] }; byCode.set(c.c, g); groups.push(g); }
+              g.evs.push(c);
+            }
+            const shown = groups.slice(0, 250);
+            const evRow = (c, one) => {
+              const k0 = c.c + c.k + c.d;
+              return (
+                <React.Fragment key={k0}>
+                <div className={"srow" + (one ? "" : " sub") + (c.la != null ? " clk" : "")}
+                  onClick={() => { if (c.la != null) setOpenKey(openKey === k0 ? null : k0); }}>
+                  <span className="k" style={{ background: (SKINDS[c.k] || {}).color }}>{(SKINDS[c.k] || { label: c.k }).label}</span>
+                  {one ? (
+                    <span className="nm">
+                      {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
+                      <span className="code"> ({c.c})</span>
+                    </span>
+                  ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
+                  <span className="meta">
+                    {one && c.t ? c.t + " · " : ""}{fmtD(c.d)}
+                    {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
+                    {c.lines && c.lines.length > 0 && <> · קווים שעצרו בה אז: {c.lines.slice(0, 10).join(", ")}</>}
+                    {c.la != null && <> · 🗺️</>}
+                  </span>
+                </div>
+                {openKey === k0 && c.la != null && <StopEvMap ev={c} />}
+                </React.Fragment>
+              );
+            };
+            return shown.map((g) => {
+              if (g.evs.length === 1) return evRow(g.evs[0], true);
+              const head = g.evs[0];
+              const nm = head.nn || head.n || (g.evs.find((e) => e.n || e.nn) || {}).n || "";
+              return (
+                <div className="sgroup" key={g.code}>
+                  <div className="srow ghead">
+                    <span className="nm"><b>{nm}</b><span className="code"> ({g.code})</span></span>
+                    <span className="meta">{head.t ? head.t + " · " : ""}{g.evs.length} שינויים</span>
+                  </div>
+                  {g.evs.map((c) => evRow(c, false))}
+                </div>
+              );
+            });
+          })()}
           {list.length === 0 && <div className="empty">אין שינויים תואמים בחודש הזה.</div>}
-          {list.length > 300 && <div className="empty">מוצגים 300 הראשונים מתוך {list.length}.</div>}
         </div>
       )}
     </div>
