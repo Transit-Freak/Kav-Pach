@@ -1,0 +1,54 @@
+name: backfill-weekdays
+
+# ריצת תיקון חד-פעמית: הסריקה ההיסטורית המקורית דגמה רק שבתות (01.01.2022
+# היה שבת), וקווים של ימי חול בלבד — כמו 1א קרית מלאכי — לא נראו אף פעם.
+# כאן דוגמים את אותה תקופה על רשת ימי שני, ומטפלים אך ורק בוריאנטים
+# שאין להם קובץ (ONLY_MISSING) — ההיסטוריה הקיימת לא נגעת.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/backfill-weekdays.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-weekdays
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Weekday-grid repair backfill
+        run: |
+          set -euo pipefail
+          FROM=2022-01-03 TO=2026-07-20 STEP_DAYS=7 PAUSE=0.4 \
+            OUTDIR=line-history/data ONLY_MISSING=1 \
+            STATE=line-history/data/backfill-weekday-state.json \
+            python3 tools/backfill_routes.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          cp -r line-history/data /tmp/bw-out
+          for i in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            cp -r /tmp/bw-out/. line-history/data/
+            OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            git add line-history/data
+            git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
+            git commit -m 'data: השלמת קווי ימי-חול שהסריקה השבתית פספסה'
+            git push && exit 0
+            sleep 5
+          done
+          exit 1

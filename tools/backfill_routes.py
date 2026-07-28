@@ -15,6 +15,12 @@ TO = os.environ['TO']
 STEP = int(os.environ.get('STEP_DAYS', '7'))
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 PAUSE = float(os.environ.get('PAUSE', '0.4'))   # נימוס בין קריאות
+# ריצת תיקון על רשת ימי חול: הסריקה המקורית דגמה רק שבתות (01.01.2022 היה
+# שבת), וקווים/חלופות שלא רשומים בקובצי סוף השבוע (כמו 1א קרית מלאכי) לא
+# נראו אף פעם. ONLY_MISSING=1 מטפל אך ורק בוריאנטים שאין להם קובץ — בלי
+# לגעת בהיסטוריה של מה שכבר נסרק (מניעת אירועים כפולים בהפרשי כמה ימים).
+ONLY_MISSING = os.environ.get('ONLY_MISSING') == '1'
+STATEP_ENV = os.environ.get('STATE', '')
 
 def api(path, **params):
     url = f'{API}{path}?{urllib.parse.urlencode(params)}'
@@ -60,7 +66,7 @@ def jload(p, dflt):
     except Exception: return dflt
 
 os.makedirs(f'{OUTDIR}/lines', exist_ok=True)
-statep = f'{OUTDIR}/backfill-state.json'
+statep = STATEP_ENV or f'{OUTDIR}/backfill-state.json'
 state = jload(statep, {})   # {'last_date':..., 'routes': {rd: {...}}}
 
 def add_version(rd, d, kind, info, note=''):
@@ -107,6 +113,11 @@ while d <= d1:
         print(ds, '— אין נתונים (חור בארכיון?), מדלג')
         d += datetime.timedelta(days=STEP)
         continue
+    if ONLY_MISSING:
+        # רק וריאנטים חדשים לריצה הזו: בלי קובץ קיים, או כאלה שהיא כבר עוקבת
+        # אחריהם (נמצאים ב-prev שלה) — כדי להמשיך לתעד את המשך חייהם
+        cur = {rd: info for rd, info in cur.items()
+               if rd in prev or not os.path.exists(f'{OUTDIR}/lines/{fsafe(rd)}.json')}
     if prev:
         for rd, info in cur.items():
             pv = prev.get(rd)
