@@ -16,9 +16,9 @@ STEP = int(os.environ.get('STEP_DAYS', '7'))
 MOVE_M = 25
 T0 = time.time()
 
-def api(path, **params):
+def api(path, soft=False, **params):
     url = f'{API}{path}?{urllib.parse.urlencode(params)}'
-    for attempt in range(5):
+    for attempt in range(2 if soft else 5):
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan/line-history (stops registry backfill; polite)'})
             with urllib.request.urlopen(req, timeout=120) as r:
@@ -27,6 +27,9 @@ def api(path, **params):
         except Exception as e:
             print(f'  retry {attempt+1}: {e}', file=sys.stderr)
             time.sleep(10 * (attempt + 1))
+    # soft: שאילתות העשרה (רשימת קווים) — כשל בהן לא מפיל את כל הריצה.
+    # ריצת הלילה של 28.07 מתה על תחנה אחת שהחזירה 400 שוב ושוב.
+    if soft: return None
     raise SystemExit(f'API failed repeatedly: {url}')
 
 def jload(p, dflt):
@@ -57,7 +60,10 @@ rs_by_stop_fails = 0
 def lines_at_stop(sid):
     global rs_by_stop_fails
     if sid is None or rs_by_stop_fails >= 3: return []
-    rows = api('/gtfs_ride_stops/list', gtfs_stop_ids=sid, limit=60)
+    rows = api('/gtfs_ride_stops/list', soft=True, gtfs_stop_ids=sid, limit=60)
+    if rows is None:   # כשל HTTP עקבי (למשל 400 על מזהה ישן) — נספר למפסק
+        rs_by_stop_fails += 1
+        return []
     if not isinstance(rows, list) or not rows: return []
     if any(r.get('gtfs_stop_id') != sid for r in rows):
         rs_by_stop_fails += 1
@@ -174,7 +180,7 @@ for c, evs in list(shist.items()):
     if not (e.get('k') == 'del' and not e.get('lines')): continue
     if c in cur_reg: continue   # פעילה כיום — ממילא מוסתרת מהרשימה
     probe = (datetime.date.fromisoformat(e['d']) - datetime.timedelta(days=7)).isoformat()
-    rows = api('/gtfs_stops/list', date_from=probe, date_to=probe, code=c, limit=5)
+    rows = api('/gtfs_stops/list', soft=True, date_from=probe, date_to=probe, code=c, limit=5)
     if not isinstance(rows, list): continue
     row = next((r for r in rows if str(r.get('code')) == c), None)
     if row is None: continue   # פילטר code לא כובד / התחנה לא נמצאה בשבוע שלפני
