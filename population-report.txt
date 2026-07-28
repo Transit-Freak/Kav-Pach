@@ -1,0 +1,55 @@
+================ data.gov.il CKAN search ================
+q='אזורים סטטיסטיים' -> 6 packages
+   PKG stat_n-hoods_table-br7 | טבלת המרה שכונות - אזורים סטטיסטיים
+      RES טבלת המרה - שכונות - אזורים סטטיסטיים [XLSX] id=dac7a88f-d627-46be-93e8-4901ac8242fb
+   PKG data-dictionary-asset | ספריית מילוני נתונים - טרמינולוגיית נתוני נכס
+      RES רשומת נתונים מרכזית - נכס [CSV] id=8bbb94e0-0817-4b99-ac97-40093a192816
+      RES מילון סוגי נכסים [CSV] id=2c833c63-523e-4116-adf5-f57a1429fe87
+      RES מילון סוגי דיור [CSV] id=ae7c7ed6-28df-48f1-8cf7-68ccf7577675
+      RES מילון שימושים בנכס [CSV] id=f9cff5a3-1b32-457b-80e2-4ba9d697cec4
+   PKG data-dictionary-person | ספריית מילוני נתונים - טרמינולוגיית נתוני אדם
+      RES רשומת נתונים מרכזית - אדם [CSV] id=788ba412-6f07-4b00-98b8-c00d66ee07a8
+      RES מילון סוגי אמצעי זיהוי [CSV] id=d247b217-cd56-49e4-a975-5b8badbf6651
+      RES מילון ארצות [CSV] id=5ad06609-3712-4ad3-8d33-419281e30796
+      RES מילון מגדר [CSV] id=7125007d-a7aa-4634-b600-2df5c80a98af
+   PKG onboardbusta2022peima1 | סקר נוסעים באוטובוסים במטרופולין תל אביב 2020-2022– פעימה רא
+      RES onboard_tlvm_peima_1.zip [ZIP] id=c8159b9c-c450-40da-8bd8-e7b764084e4f
+      RES מטאדאטה.pdf [] id=b6fb8a2f-53e2-4292-9fa4-34a6c64683c0
+   PKG 944 | רחובות בחיפה לפי תתי רובע ואזורים סטטיסטיים
+      RES רחובות בחיפה לפי תתי רובע ואזורים סטטיסט [XLS] id=260b34b8-0b9d-4c64-99be-0f54634c5bff
+   PKG statistical-area-2008 | קובץ השכבה הארצית של האזורים הסטטיסטיים ממפקד 2008
+      RES קובץ השכבה הארצית של האזורים הסטטיסטיים  [ZIP] id=3b88cb58-62cd-43ea-9156-7b81ead557b1
+
+q='אוכלוסייה אזור סטטיסטי' -> 2 packages
+   PKG demographics-br7 | מרשם אוכלוסין
+      RES לפי סטטוס [CSV] id=b6ee8e0f-b16e-4b66-b258-7714bd40440f
+      RES לפי עולים וותיקים [CSV] id=31f17dc1-42ca-40cb-b4c1-f2d8fa28f222
+      RES לפי קבוצות גיל [CSV] id=feecb5bb-8554-491f-80d9-dae316837f80
+      RES לפי סטטוס - XLSX [XLSX] id=e85b0b1b-f3e0-400f-a19b-f14bbeb3bc90
+   PKG crime_records_data | נתוני פשיעה
+      RES רשימת העבירות עם קבוצת העבירה סוג העבירה [XLSX] id=b53b64f8-57ed-4213-9191-a7401c0cf436
+      RES פירוט של תיקי פשיעה לפי אזור, רבעון וסוג [CSV] id=e311b6a1-be5a-4a82-8298-f3afbee07b6b
+      RES פירוט של תיקי פשיעה לפי אזור רבעון וסוגי [CSV] id=5fc13c50-b6f3-4712-b831-a75e0f91a17e
+      RES פירוט של תיקי פשיעה לפי אזור רבעון וסוגי [CSV] id=32aacfc9-3524-4fba-a282-3af052380244
+
+q='אוכלוסייה ביישובים' -> 0 packages
+
+q='סטטיסטי' -> 4 packages
+   PKG demographics-br7 | מרשם אוכלוסין
+      RES לפי סטטוס [CSV] id=b6ee8e0f-b16e-4b66-b258-7714bd40440f
+      RES לפי עולים וותיקים [CSV] id=31f17dc1-42ca-40cb-b4c1-f2d8fa28f222
+      RES לפי קבוצות גיל [CSV] id=feecb5bb-8554-491f-80d9-dae316837f80
+      RES לפי סטטוס - XLSX [XLSX] id=e85b0b1b-f3e0-400f-a19b-f14bbeb3bc90
+   PKG bus_stops | תחנות תחבורה ציבורית
+      RES תחנות תחבורה ציבורית [CSV] id=e873e6a2-66c1-494f-a677-f5e77348edb0
+   PKG crime_records_data | נתוני פשיעה
+      RES רשימת העבירות עם קבוצת העבירה סוג העבירה [XLSX] id=b53b64f8-57ed-4213-9191-a7401c0cf436
+      RES פירוט של תיקי פשיעה לפי אזור, רבעון וסוג [CSV] id=e311b6a1-be5a-4a82-8298-f3afbee07b6b
+      RES פירוט של תיקי פשיעה לפי אזור רבעון וסוגי [CSV] id=5fc13c50-b6f3-4712-b831-a75e0f91a17e
+      RES פירוט של תיקי פשיעה לפי אזור רבעון וסוגי [CSV] id=32aacfc9-3524-4fba-a282-3af052380244
+   PKG monthly-statistics | ירחון סטטיסטי
+      RES ירחון סטטיסטי [PDF] id=0950e945-44b8-49ea-be77-b11c1ebfcc84
+
+q='population statistical' -> 0 packages
+
+================ try datastore on promising resources ================
