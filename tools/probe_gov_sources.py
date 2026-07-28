@@ -179,44 +179,78 @@ for m in uniq[:30]:
 # עם pyshp, ומדווחים כל אזור שמרכזו רחוק 700מ'+ מכל אזור שכבר באתר.
 print('===== משרד התחבורה: תחום אזורי תעשיה תעסוקה =====')
 try:
-    import shapefile   # pyshp
     meta = jget('https://data.gov.il/api/3/action/package_show?id=8db5effd-59ca-44ef-b561-86e0ce2911d1')
-    shp_url = next(r['url'] for r in meta['result']['resources']
-                   if (r.get('format') or '').upper() == 'SHP')
-    print('מוריד:', shp_url)
-    blob = get(shp_url, timeout=300, binary=True)
-    zf = zipfile.ZipFile(io.BytesIO(blob))
-    names = zf.namelist()
-    print('בקובץ:', names[:10])
-    base = next(n[:-4] for n in names if n.lower().endswith('.shp'))
-    sf = shapefile.Reader(shp=io.BytesIO(zf.read(base + '.shp')),
-                          dbf=io.BytesIO(zf.read(base + '.dbf')),
-                          shx=io.BytesIO(zf.read(base + '.shx')))
-    flds = [f[0] for f in sf.fields[1:]]
-    print('שדות:', flds, '| רשומות:', len(sf))
-    # המרת רשת ישראל (EPSG:2039) ל-WGS84 אם צריך — זיהוי לפי סדרי גודל
-    def itm_to_wgs(x, y):
-        # קירוב מספיק להשוואת מרחקים: פרמטרי ההיטל הרשמיים
-        import pyproj
-        return pyproj.Transformer.from_crs(2039, 4326, always_xy=True).transform(x, y)
-    tr = None
+    resources = meta['result']['resources']
+    for r in resources:
+        print('  משאב:', r.get('format'), '|', r.get('id'), '|', (r.get('url') or '')[:110])
     mot_zones = []
-    for rec, shp in zip(sf.records(), sf.shapes()):
-        at = dict(zip(flds, rec))
-        nm = next((str(v) for k, v in at.items() if isinstance(v, str) and re.search(r'[א-ת]', str(v))), '')
-        if not shp.points:
-            continue
-        xs = [p[0] for p in shp.points]; ys = [p[1] for p in shp.points]
-        cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
-        if cx > 1000:   # רשת ישראל — ממירים
+
+    # אסטרטגיה 1: datastore של ה-CSV (הכי אמין ב-data.gov.il)
+    csv_res = next((r for r in resources if (r.get('format') or '').upper() == 'CSV'), None)
+    if csv_res:
+        try:
+            ds = jget('https://data.gov.il/api/3/action/datastore_search?'
+                      + urllib.parse.urlencode({'resource_id': csv_res['id'], 'limit': 32000}), 180)
+            recs = ds.get('result', {}).get('records', [])
+            flds = [f['id'] for f in ds.get('result', {}).get('fields', [])]
+            print('datastore: רשומות:', len(recs), '| שדות:', flds)
             import pyproj
-            if tr is None:
-                tr = pyproj.Transformer.from_crs(2039, 4326, always_xy=True)
-            lo, la = tr.transform(cx, cy)
-        else:
-            lo, la = cx, cy
-        mot_zones.append({'name': ' '.join(nm.split())[:60], 'la': round(la, 5), 'lo': round(lo, 5),
-                          'attrs': {k: (str(v)[:40] if isinstance(v, str) else v) for k, v in list(at.items())[:6]}})
+            tr = pyproj.Transformer.from_crs(2039, 4326, always_xy=True)
+            for at in recs:
+                nm = next((str(v) for v in at.values() if isinstance(v, str) and re.search(r'[א-ת]', str(v))), '')
+                xy = [(k, v) for k, v in at.items() if isinstance(v, (int, float)) and v and abs(v) > 1]
+                la = lo = None
+                for k, v in xy:
+                    lk = k.lower()
+                    if lk in ('lat', 'y') or 'רוחב' in k: la = v
+                    if lk in ('lon', 'long', 'x') or 'אורך' in k: lo = v
+                wkt = next((str(v) for v in at.values() if isinstance(v, str) and str(v).startswith(('POLYGON', 'MULTIPOLYGON', 'POINT'))), None)
+                if wkt:
+                    ns = re.findall(r'(-?\d+\.?\d*) (-?\d+\.?\d*)', wkt)
+                    if ns:
+                        xs = [float(a) for a, b in ns]; ys = [float(b) for a, b in ns]
+                        lo, la = sum(xs) / len(xs), sum(ys) / len(ys)
+                if la is None or lo is None:
+                    continue
+                if abs(lo) > 1000:   # רשת ישראל
+                    lo, la = tr.transform(lo, la)
+                mot_zones.append({'name': ' '.join(nm.split())[:60], 'la': round(la, 5), 'lo': round(lo, 5)})
+        except Exception as e:
+            print('datastore נכשל:', e)
+
+    # אסטרטגיה 2: KMZ (KML דחוס)
+    if not mot_zones:
+        kmz_res = next((r for r in resources if (r.get('format') or '').upper() in ('KMZ', 'KML')), None)
+        if kmz_res:
+            try:
+                blob = get(kmz_res['url'], timeout=300, binary=True)
+                print('KMZ:', len(blob), 'בייטים | מתחיל ב:', blob[:20])
+                if blob[:2] == b'PK':
+                    zf = zipfile.ZipFile(io.BytesIO(blob))
+                    kml = next(n for n in zf.namelist() if n.lower().endswith('.kml'))
+                    xml = zf.read(kml).decode('utf-8', 'replace')
+                else:
+                    xml = blob.decode('utf-8', 'replace')
+                pms = re.findall(r'<Placemark>(.*?)</Placemark>', xml, re.S)
+                print('Placemarks:', len(pms))
+                for pm in pms:
+                    nmm = re.search(r'<name>(.*?)</name>', pm, re.S)
+                    nm = ' '.join((nmm.group(1) if nmm else '').split())
+                    cs = re.findall(r'([\d.]+),([\d.]+)', pm)
+                    if not cs:
+                        continue
+                    xs = [float(a) for a, b in cs]; ys = [float(b) for a, b in cs]
+                    mot_zones.append({'name': nm[:60], 'la': round(sum(ys) / len(ys), 5),
+                                      'lo': round(sum(xs) / len(xs), 5)})
+            except Exception as e:
+                print('KMZ נכשל:', e)
+
+    # אסטרטגיה 3: SHP עם אבחון
+    if not mot_zones:
+        shp_res = next((r for r in resources if (r.get('format') or '').upper() == 'SHP'), None)
+        if shp_res:
+            blob = get(shp_res['url'], timeout=300, binary=True)
+            print('SHP: הורדו', len(blob), 'בייטים | מתחיל ב:', blob[:60])
     print('אזורים בשכבה:', len(mot_zones))
     missing_mot = []
     for z in mot_zones:
