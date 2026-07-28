@@ -1,0 +1,39 @@
+{
+ "cbs": {
+  "layers_on_page": [
+   {
+    "href": "/he/Documents/statisticalareas_2020_demography.gdb.zip",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים 2020 – מספר קטלוגי 50502י – להורד"
+   },
+   {
+    "href": "/he/Documents/שכבות%20גיאוגרפיות/readme%20_demographic_project_2019.pdf",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים 2019 – מספר קטלוגי 50502ט&#160;–&"
+   },
+   {
+    "href": "/he/Documents/שכבות%20גיאוגרפיות/statisticalareas_demography2019.gdb.zip",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים 2019 – מספר קטלוגי 50502ט – להורד"
+   },
+   {
+    "href": "http&#58;//www.cbs.gov.il/he/Documents/%d7%a9%d7%9b%d7%91%d7%95%d7%aa%20%d7%92%d7%99%d7%90%d7%95%d7%92%d7%a8%d7%a4%d7%99%d7%95%d7%aa/readme%20_demographic_project_2018_29Mar_1414.pdf",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים משנת 2018 – מספר קטלוגי&#160;5050"
+   },
+   {
+    "href": "/he/Documents/שכבות%20גיאוגרפיות/yishuv_stat11_demografy_18_29Mar_1414.zip",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים משנת 2018 – מספר קטלוגי&#160;5050"
+   },
+   {
+    "href": "/he/Documents/שכבות%20גיאוגרפיות/readme%20_demographic_project_2017_30May_1337.pdf",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים משנת 2017 – מספר קטלוגי&#160; 505"
+   },
+   {
+    "href": "/he/Documents/שכבות%20גיאוגרפיות/statisticalareas_demography2017_30May_1336.zip",
+    "text": "שכבת אזורים סטטיסטיים 2011 עם נתונים דמוגרפיים משנת 2017 – מספר קטלוגי&#160;&#16"
+   }
+  ],
+  "employment_layers": []
+ },
+ "govmap": {
+  "root": null,
+  "missing_candidates": []
+ }
+}
