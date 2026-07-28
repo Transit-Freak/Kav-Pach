@@ -84,70 +84,92 @@ for p in plan_layers[:25]:
     print('  *', p['service'], p['type'], p['id'], '—', p['layer'])
 report['plan_layers'] = plan_layers[:40]
 
-# ---------- שליפת מדגם: 10 תב"עות מול כל שכבת-תוכניות מועמדת ----------
+# ---------- שליפת מדגם: שכבות פוליגונים בלבד (גבולות, לא נקודות) ----------
 sample = tabas[:10]
+CANDS = [
+    ('PlanningPublic/Xplan', 'MapServer', None),
+    ('PlanningPublic/XplanNoKanam', 'MapServer', None),
+    ('PlanningPublic/ttl_all_blue_lines', 'MapServer', None),
+    ('PlanningPublic/entities_without_77_78', 'MapServer', [3]),
+    ('PlanningPublic/entities', 'MapServer', [3]),
+    ('PlanningPublic/plan_index', 'MapServer', None),
+]
 best = None
-for p in plan_layers[:8]:
-    # אילו שדות יש בשכבה — מחפשים שדה מספר-תוכנית
+for svc_name, ty, only in CANDS:
     try:
-        meta = jget(f"{base}/{p['service']}/{p['type']}/{p['id']}?f=json")
-        fields = [fl['name'] for fl in meta.get('fields', [])]
+        svc = jget(f'{base}/{svc_name}/{ty}?f=json')
     except Exception as e:
-        print(p['service'], p['id'], 'שגיאת שדות:', str(e)[:60]); continue
-    numf = [fl for fl in fields if re.search(r'pl_?num|plan_?num|number|mispar', fl, re.I)]
-    print(f"{p['service']}/{p['id']} ({p['layer']}): שדות: {fields[:12]} | שדות מספר: {numf}")
-    if not numf:
-        continue
-    hits = 0
-    for t, nm in sample:
-        ok = False
-        # פורמטים: כמו-שהוא, הפוך (היפוך RTL בקובץ המקור), ו-LIKE על החלק המספרי
-        digits = re.sub(r'\D+', '', t)
-        wheres = [f"{{f}}='{t}'", f"{{f}}='{t[::-1]}'"]
-        if len(digits) >= 3:
-            wheres.append(f"{{f}} LIKE '%{digits}%'")
-        for fld in numf[:2]:
-            for w in wheres:
-                q = (f"{base}/{p['service']}/{p['type']}/{p['id']}/query?"
-                     + urllib.parse.urlencode({'where': w.format(f=fld), 'outFields': fld,
-                                               'returnGeometry': 'false', 'f': 'json'}))
-                try:
-                    r = jget(q, 60)
-                    if r.get('features'):
-                        ok = True
-                        print(f"      התאמה: {w.format(f=fld)} → {r['features'][0].get('attributes')}")
-                        break
-                except Exception:
-                    pass
-            if ok:
-                break
-        hits += ok
-        print(f"    {t} ({nm[:25]}): {'✓' if ok else '✗'}")
-    print(f"  ==> פגיעות: {hits}/10")
-    if best is None or hits > best['hits']:
-        best = {'service': p['service'], 'type': p['type'], 'layer_id': p['id'],
-                'layer': p['layer'], 'fields': numf, 'hits': hits}
-    if hits >= 8:
+        print(svc_name, 'לא נגיש:', str(e)[:60]); continue
+    for lyr in svc.get('layers', []) or []:
+        if only and lyr['id'] not in only:
+            continue
+        try:
+            meta = jget(f"{base}/{svc_name}/{ty}/{lyr['id']}?f=json")
+        except Exception:
+            continue
+        gt = meta.get('geometryType', '')
+        if gt != 'esriGeometryPolygon':
+            continue
+        fields = [fl['name'] for fl in meta.get('fields', [])]
+        numf = [fl for fl in fields if re.search(r'pl_?num|plan_?num|number|mispar', fl, re.I)]
+        print(f"{svc_name}/{lyr['id']} ({lyr.get('name','')}) {gt} | שדות מספר: {numf}")
+        if not numf:
+            continue
+        hits = 0
+        for t, nm in sample:
+            ok = False
+            digits = re.sub(r'\D+', '', t)
+            wheres = [f"{{f}}='{t}'", f"{{f}}='{t[::-1]}'"]
+            if len(digits) >= 3:
+                wheres.append(f"{{f}} LIKE '%{digits}%'")
+            for fld in numf[:2]:
+                for w in wheres:
+                    q = (f"{base}/{svc_name}/{ty}/{lyr['id']}/query?"
+                         + urllib.parse.urlencode({'where': w.format(f=fld), 'outFields': fld,
+                                                   'returnGeometry': 'false', 'f': 'json'}))
+                    try:
+                        r = jget(q, 60)
+                        if r.get('features'):
+                            ok = True; break
+                    except Exception:
+                        pass
+                if ok: break
+            hits += ok
+            print(f"    {t} ({nm[:22]}): {'V' if ok else 'X'}")
+        print(f"  ==> {hits}/10")
+        if best is None or hits > best['hits']:
+            best = {'service': svc_name, 'type': ty, 'layer_id': lyr['id'],
+                    'layer': lyr.get('name',''), 'fields': numf, 'hits': hits}
+        if hits >= 9:
+            break
+    if best and best['hits'] >= 9:
         break
 report['best'] = best
 print('הטוב ביותר:', best)
 
-# אם יש פגיעה טובה — שולפים גאומטריה אחת לדוגמה (אשקלון צפון אם אפשר)
 if best and best['hits'] > 0:
     t = next((t for t, n in tabas if 'אשקלון צפון' in n), sample[0][0])
-    q = (f"{base}/{best['service']}/{best['type']}/{best['layer_id']}/query?"
-         + urllib.parse.urlencode({'where': f"{best['fields'][0]}='{t}'", 'outFields': '*',
-                                   'returnGeometry': 'true', 'outSR': '4326', 'f': 'json'}))
-    try:
-        r = jget(q, 90)
-        ft = (r.get('features') or [{}])[0]
-        rings = (ft.get('geometry') or {}).get('rings') or []
-        pts = sum(len(rg) for rg in rings)
-        print(f'גאומטריה לדוגמה ({t}): טבעות={len(rings)} נקודות={pts}')
-        report['sample_geometry'] = {'taba': t, 'rings': len(rings), 'points': pts,
-                                     'first': rings[0][0] if rings and rings[0] else None}
-    except Exception as e:
-        print('שליפת גאומטריה נכשלה:', str(e)[:100])
+    fld = best['fields'][0]
+    for w in (f"{fld}='{t}'", f"{fld}='{t[::-1]}'", f"{fld} LIKE '%{re.sub(r'[^0-9]','',t)}%'"):
+        q = (f"{base}/{best['service']}/{best['type']}/{best['layer_id']}/query?"
+             + urllib.parse.urlencode({'where': w, 'outFields': '*',
+                                       'returnGeometry': 'true', 'outSR': '4326', 'f': 'json'}))
+        try:
+            r = jget(q, 90)
+            fts = r.get('features') or []
+            if not fts: continue
+            ft = fts[0]
+            rings = (ft.get('geometry') or {}).get('rings') or []
+            pts = sum(len(rg) for rg in rings)
+            at = ft.get('attributes', {})
+            print(f'גאומטריה ({t} via {w[:40]}): טבעות={len(rings)} נקודות={pts}')
+            keep = {k: str(v)[:60] for k, v in list(at.items())[:10]}
+            print('  תכונות:', keep)
+            report['sample_geometry'] = {'taba': t, 'where': w, 'rings': len(rings), 'points': pts,
+                                         'attrs': keep, 'first': rings[0][0] if rings and rings[0] else None}
+            break
+        except Exception as e:
+            print('נסיון גאומטריה נכשל:', str(e)[:80])
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump(report, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
