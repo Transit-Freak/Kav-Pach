@@ -90,6 +90,6 @@
   ]
  },
  "mot": {
-  "error": "File is not a zip file"
+  "error": "name 'shp_url' is not defined"
  }
 }
