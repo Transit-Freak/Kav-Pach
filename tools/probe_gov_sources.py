@@ -262,8 +262,7 @@ try:
     print('חסרים באתר (700מ׳+):', len(missing_mot))
     for z in missing_mot[:40]:
         print(f"  {z['name'] or '(בלי שם)':45} ({z['la']},{z['lo']}) {z['dist']}מ'")
-    report['mot'] = {'shp_url': shp_url, 'total': len(mot_zones),
-                     'fields': flds, 'missing': missing_mot}
+    report['mot'] = {'total': len(mot_zones), 'missing': missing_mot}
 except Exception as e:
     import traceback; traceback.print_exc()
     report['mot'] = {'error': str(e)}
