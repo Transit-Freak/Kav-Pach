@@ -90,6 +90,7 @@
           <th data-k="li" class="num">קווים בפנים <span class="arr"></span></th>
           <th data-k="lg" class="num">נגיש 🚶 <span class="arr"></span></th>
           <th data-k="ln" class="num">רחוק 🚶 <span class="arr"></span></th>
+          <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או בשערי הכניסה">שעות שיא ⏰ <span class="arr"></span></th>
           <th data-k="in" class="num">תחנות בפנים <span class="arr"></span></th>
           <th data-k="cov" class="num">כיסוי הליכה <span class="arr"></span></th>
         </tr></thead>
@@ -145,6 +146,9 @@ function sTier(s){return (WALKMODE=='c'?s.t:s.te)||s.t}
 function sWt(s){return WALKMODE=='c'?s.wt:s.wte}
 function sWm(s){return WALKMODE=='c'?s.wm:s.wme}
 function cnt(p,k){const m={li:'lie',lg:'lge',ln:'lne'};return (WALKMODE=='c'?p[k]:p[m[k]])||0}
+// קווים בשעות השיא (06–09, 15–19): בפנים + שערי כניסה, לפי מצב המדידה
+function pkc(p){return WALKMODE=='e'?((p.pkie||0)+(p.pkge||0)):((p.pki||0)+(p.pkg||0))}
+function hasPk(){return IDX.length>0 && ('pki' in IDX[0])}
 function walkTxt(s){
   const wt=sWt(s),wm=sWm(s);
   if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)`;
@@ -171,8 +175,10 @@ fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
 
 function renderTable(){
   const f=(q.value||'').trim();
+  const pk=hasPk();   // עמודת שעות השיא מופיעה רק אחרי שהנתונים חושבו מחדש
+  document.querySelector('#tbl th[data-k="pk"]').style.display=pk?'':'none';
   let rows=IDX.filter(p=>!f || (p.name+' '+(p.city||'')).includes(f));
-  const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(p[k]??'');
+  const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(p[k]??''));
   rows.sort((a,b)=>{
     const va=val(a,sortK), vb=val(b,sortK);
     const c=(typeof va==='number')? va-vb : String(va).localeCompare(String(vb),'he');
@@ -185,7 +191,8 @@ function renderTable(){
       <td class="num">${p.area}</td>
       <td class="num">${pill(cnt(p,'li'),'pi')}</td>
       <td class="num">${pill(cnt(p,'lg'),'pg')}</td>
-      <td class="num">${pill(cnt(p,'ln'),'pn')}</td>
+      <td class="num">${pill(cnt(p,'ln'),'pn')}</td>${pk?`
+      <td class="num">${pill(pkc(p),'pi')}</td>`:''}
       <td class="num">${pill(p.in??0,'pi')}</td>
       <td class="num">${Math.round((p.cov||0)*100)}%<span class="covmini"><i style="width:${Math.round((p.cov||0)*100)}%"></i></span></td>
     </tr>`}).join('');
@@ -326,8 +333,9 @@ wrap.addEventListener('touchend',e=>{
 },{passive:true});
 
 document.getElementById('csvbtn').onclick=()=>{
-  const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)','תחנות בפנים','כיסוי הליכה %'];
-  const rows=IDX.map(p=>[p.name,p.city||'',p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),p.in??0,Math.round((p.cov||0)*100)]);
+  const pk=hasPk();
+  const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),'תחנות בפנים','כיסוי הליכה %'];
+  const rows=IDX.map(p=>[p.name,p.city||'',p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),p.in??0,Math.round((p.cov||0)*100)]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
