@@ -31,19 +31,27 @@ while (y, m) <= (2026, 7):
         y, m = y + 1, 1
 print('חודשים לסריקה:', len(months))
 for d in months:
-    rows = api('/gtfs_routes/list', date_from=d, date_to=d, route_short_name='1א', limit=300)
-    time.sleep(PAUSE)
-    if not isinstance(rows, list):
-        continue
+    rows = []
+    # א. כל הווריאנטים של מק"ט 32001 (חלופה יכולה להירשם בשם "1" עם שדה חלופה)
+    for mk in ('32001', '032001'):
+        rr = api('/gtfs_routes/list', date_from=d, date_to=d, route_mkt=mk, limit=300)
+        time.sleep(PAUSE)
+        if isinstance(rr, list):
+            rows += rr
+    # ב. כל קו ששמו 1 או 1א עם יעד נס ציונה — גם תחת מק"טים אחרים
+    for sn in ('1', '1א'):
+        rr = api('/gtfs_routes/list', date_from=d, date_to=d, route_short_name=sn, limit=300)
+        time.sleep(PAUSE)
+        if isinstance(rr, list):
+            rows += [r for r in rr if 'נס ציונה' in str(r.get('route_long_name') or '')]
     for r in rows:
         ln = str(r.get('route_long_name') or '')
-        if 'נס ציונה' not in ln:
-            continue
         key = (str(r.get('route_mkt')), str(r.get('route_direction')), str(r.get('route_alternative')))
         e = found.setdefault(key, {'mkt': key[0], 'dir': key[1], 'alt': key[2],
                                    'long': ln[:90], 'first': d, 'last': d, 'hits': 0})
         e['last'] = d
         e['hits'] += 1
+        e['short'] = str(r.get('route_short_name') or '')
 print('וריאנטים 1א נס ציונה שנמצאו:', len(found))
 for e in found.values():
     print(f"  מק\"ט {e['mkt']} כיוון {e['dir']} חלופה {e['alt']} | {e['first']} → {e['last']} ({e['hits']} חודשים) | {e['long']}")
