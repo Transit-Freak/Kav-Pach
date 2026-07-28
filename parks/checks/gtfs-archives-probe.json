@@ -6,9 +6,61 @@
   "by_year": {},
   "download_pattern": "https://transitfeeds.com/p/ministry-of-transport-and-road-safety/820/YYYYMMDD/download"
  },
+ "s3": {
+  "https://openbus-stride-public.s3.eu-west-1.amazonaws.com/?gtfs_archive/": {
+   "prefixes": [
+    "gtfs_archive/",
+    "gtfs_archive/2022/",
+    "gtfs_archive/2023/",
+    "gtfs_archive/2024/",
+    "gtfs_archive/2025/",
+    "gtfs_archive/2026/"
+   ],
+   "keys": []
+  },
+  "https://openbus-stride-public.s3.eu-west-1.amazonaws.com/?": {
+   "prefixes": [
+    "artifacts/",
+    "gtfs_archive/",
+    "siri_etl_monitored_stop_visits_parse_failed/",
+    "stride-siri-requester/",
+    "stride_db_backups/",
+    "test/",
+    "tests/"
+   ],
+   "keys": [
+    "stride_db.sql.gz",
+    "stride_db.sql.zst",
+    "stride_db_20240908.sql.gz"
+   ]
+  },
+  "https://openbus-stride-public.s3.amazonaws.com/?": {
+   "prefixes": [
+    "artifacts/",
+    "gtfs_archive/",
+    "siri_etl_monitored_stop_visits_parse_failed/",
+    "stride-siri-requester/",
+    "stride_db_backups/",
+    "test/",
+    "tests/"
+   ],
+   "keys": [
+    "stride_db.sql.gz",
+    "stride_db.sql.zst",
+    "stride_db_20240908.sql.gz"
+   ]
+  },
+  "https://open-bus-gtfs-data.hasadna.org.il/?": {
+   "prefixes": [],
+   "keys": []
+  }
+ },
  "wayback": {
   "gtfs.mot.gov.il": {
-   "captures": 29,
+   "error": "HTTP Error 503: Service Unavailable"
+  },
+  "gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip": {
+   "captures": 6,
    "zips": 6,
    "by_year": {
     "2023": 1,
@@ -24,9 +76,6 @@
     "20250918074553 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
     "20260108235759 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
    ]
-  },
-  "gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip": {
-   "error": "HTTP Error 504: Gateway Time-out"
   }
  }
 }
