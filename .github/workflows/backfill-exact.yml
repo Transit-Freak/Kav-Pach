@@ -8,6 +8,7 @@ name: backfill-exact
 on:
   schedule:
     - cron: '45 21 * * *'   # 00:45 ישראל בקיץ, לפני ריצת התחנות של 00:15 UTC
+    - cron: '45 9 * * *'    # ריצה שנייה בצהריים — עד שהמעבר הראשוני על כל המק"טים יושלם
   push:
     paths:
       - '.github/workflows/backfill-exact.yml'
