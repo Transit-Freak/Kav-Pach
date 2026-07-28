@@ -1,0 +1,58 @@
+name: probe-malachi
+
+# בדיקה חד-פעמית: האם חלופת 1א של קרית מלאכי (מק"ט 94001?) קיימת בארכיון
+# אופן באס סביב 14.10.2024 — ולמה היא לא נקלטה אצלנו.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-malachi.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Query Stride archive
+        run: |
+          set -uo pipefail
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse
+
+          API = 'https://open-bus-stride-api.hasadna.org.il'
+          def api(path, **params):
+              url = f'{API}{path}?{urllib.parse.urlencode(params)}'
+              try:
+                  req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan probe (polite)'})
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      return json.load(r)
+              except Exception as e:
+                  return f'שגיאה: {e}'
+
+          for d in ['2024-10-14', '2024-06-01', '2024-12-01', '2025-03-01', '2023-06-01']:
+              print(f'====== {d}: כל הווריאנטים של מק"ט 94001 ======')
+              rows = api('/gtfs_routes/list', date_from=d, date_to=d, route_mkt='94001', limit=20)
+              if isinstance(rows, list):
+                  for r in rows:
+                      print(f"  {r.get('route_desc')} | {r.get('route_short_name')} | {r.get('route_long_name')} | agency={r.get('agency_name')}")
+                  if not rows: print('  (ריק)')
+              else:
+                  print(' ', rows)
+
+          print()
+          print('====== חיפוש קו בשם 1א בכל הארץ ב-2024-10-14 ======')
+          rows = api('/gtfs_routes/list', date_from='2024-10-14', date_to='2024-10-14',
+                     route_short_name='1א', limit=100)
+          if isinstance(rows, list):
+              print('סה"כ:', len(rows))
+              for r in rows:
+                  ln = r.get('route_long_name') or ''
+                  mark = ' ★' if 'מלאכי' in ln else ''
+                  print(f"  {r.get('route_desc')} | {ln[:70]} | {r.get('agency_name')}{mark}")
+          else:
+              print(rows)
+          PY
