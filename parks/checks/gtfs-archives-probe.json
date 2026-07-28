@@ -1,0 +1,32 @@
+{
+ "tf_error": "HTTP Error 403: Forbidden",
+ "transitfeeds": {
+  "feed": "https://transitfeeds.com/p/ministry-of-transport-and-road-safety/820",
+  "total": 0,
+  "by_year": {},
+  "download_pattern": "https://transitfeeds.com/p/ministry-of-transport-and-road-safety/820/YYYYMMDD/download"
+ },
+ "wayback": {
+  "gtfs.mot.gov.il": {
+   "captures": 29,
+   "zips": 6,
+   "by_year": {
+    "2023": 1,
+    "2024": 1,
+    "2025": 3,
+    "2026": 1
+   },
+   "samples": [
+    "20231202125940 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20240806121526 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20250111005709 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20250629125913 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20250918074553 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20260108235759 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+   ]
+  },
+  "gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip": {
+   "error": "HTTP Error 504: Gateway Time-out"
+  }
+ }
+}
