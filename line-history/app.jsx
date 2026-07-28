@@ -617,6 +617,11 @@ function App() {
                     ))}
                   </React.Fragment>
                 ))}
+                <div className="katnote">
+                  🛈 קטגוריות המסלול והתחנות מתמלאות מהמעקב היומי שהחל ביולי 2026 — לכן יש בהן
+                  עדיין מעט רשומות. הארכיון ההיסטורי (2022 ואילך) יודע לספר על רישום, יעד, מפעיל,
+                  מספר וביטולים בלבד.
+                </div>
                 {kats.size > 0 && (
                   <button className="katclear" onClick={() => setKats(new Set())}>✖ נקה את הבחירה</button>
                 )}
