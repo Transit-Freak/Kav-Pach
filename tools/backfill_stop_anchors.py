@@ -69,7 +69,7 @@ skip_p = f'{OUTDIR}/backfill-anchors-skip.json'
 try: skip = json.load(open(skip_p, encoding='utf-8'))
 except Exception: skip = {}
 
-targets = []
+targets = []   # (עדיפות, קובץ, תאריך-גבול לעוגן או None)
 for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
     if not fn.endswith('.json'): continue
     try: lf = json.load(open(f'{OUTDIR}/lines/{fn}', encoding='utf-8'))
@@ -77,20 +77,36 @@ for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
     rd = lf.get('rd', '')
     if not rd or rd in skip: continue
     vs = lf.get('versions', [])
-    if any(v.get('src') == 'ob' for v in vs): continue   # יש כבר רשומות ארכיון
     if not vs: continue
-    targets.append(fn)
-print('קווים שקטים שממתינים לעוגן:', len(targets))
+    if any(v.get('src') == 'ob' for v in vs):
+        # יש רשומות ארכיון — אבל אם הראשונה שבהן היא שינוי (יעד/מפעיל/מספר),
+        # הקו היה קיים עוד קודם וצריך עוגן מלפניה, אחרת השינויים בתחנות
+        # שבוצעו באירוע הראשון בלתי-נראים (קו 49010: שינוי יעד 12.2024)
+        f0 = vs[0]
+        if f0.get('src') == 'ob' and f0.get('k') in ('dest', 'operator', 'renum'):
+            targets.append((0, fn, f0['d']))
+    else:
+        targets.append((1, fn, None))   # קו שקט — עוגן מוקדם ככל האפשר
+targets.sort()
+n_pre = sum(1 for t in targets if t[0] == 0)
+print(f'ממתינים לעוגן: {len(targets)} (מהם {n_pre} עוגני לפני-אירוע-ראשון, {len(targets)-n_pre} קווים שקטים)')
 
 n_ok = n_absent = 0
-for fn in targets:
+for _, fn, limit in targets:
     if (time.time() - T0) / 60 > MAX_MIN:
         print('תקרת זמן — ממשיכים בריצה הבאה'); break
     p = f'{OUTDIR}/lines/{fn}'
     lf = json.load(open(p, encoding='utf-8'))
     rd = lf['rd']
+    if limit:
+        # העוגן חייב להיות מוקדם מהאירוע הראשון (עם שוליים לדגימות הסמוכות)
+        lim = datetime.date.fromisoformat(limit)
+        cands = [d for d in ANCHOR_DATES if datetime.date.fromisoformat(d) <= lim - datetime.timedelta(days=14)]
+        cands.append((lim - datetime.timedelta(days=45)).isoformat())
+    else:
+        cands = ANCHOR_DATES
     seq = found_d = None
-    for d in ANCHOR_DATES:
+    for d in cands:
         seq, found_d = seq_near(rd, d)
         if seq: break
     if not seq:

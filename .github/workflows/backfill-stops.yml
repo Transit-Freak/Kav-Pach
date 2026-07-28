@@ -13,6 +13,9 @@ on:
       - '.github/workflows/backfill-stops.yml'
       - 'tools/backfill_stops.py'
       - 'tools/backfill_stops_registry.py'
+      - 'tools/backfill_stop_anchors.py'
+      - 'tools/backfill_stop_dates.py'
+      - 'tools/enrich_stop_diffs.py'
   workflow_dispatch:
 
 permissions:
