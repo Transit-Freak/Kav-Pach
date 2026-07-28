@@ -49,6 +49,8 @@ def query(where):
 
 zones, misses = [], []
 n_exact = n_rev = n_like = 0
+from collections import Counter
+match_kinds = Counter()
 T0 = time.time()
 for i, at in enumerate(recs):
     t = str(at.get('TABA_NUM') or '').strip()
@@ -61,10 +63,14 @@ for i, at in enumerate(recs):
         misses.append({'name': nm, 'taba': t, 'why': 'אין מספר תב"ע'})
         continue
     esc = t.replace("'", "''")
-    tries = [(f"pl_number='{esc}'", 'exact'), (f"pl_number='{esc[::-1]}'", 'rev')]
-    digits = re.sub(r'\D+', '', t)
-    if len(digits) >= 5:
-        tries.append((f"pl_number LIKE '%{digits}%'", 'like'))
+    segrev = '/'.join(reversed(esc.split('/')))   # 165/101/02/4 → 4/02/101/165
+    tries = [(f"pl_number='{esc}'", 'exact'),
+             (f"pl_number='{segrev}'", 'segrev'),
+             (f"pl_number='{esc[::-1]}'", 'rev')]
+    parts = [p for p in re.split(r'[^0-9א-ת]+', esc) if p]
+    if len(parts) >= 2:
+        tries.append((f"pl_number LIKE '%{'%'.join(parts)}%'", 'like'))
+        tries.append((f"pl_number LIKE '%{'%'.join(reversed(parts))}%'", 'like-rev'))
     got = None
     for where, kind in tries:
         feats = query(where)
@@ -82,25 +88,24 @@ for i, at in enumerate(recs):
         rings = (best_ft.get('geometry') or {}).get('rings') or []
         if not rings:
             continue
-        # שפיות: שטח הפוליגון מול הרשום — יחס עד פי-4 (או שאין שטח רשום)
-        if bruto_km2 > 0.01 and not (bruto_km2 / 4 <= best_a <= bruto_km2 * 4):
-            continue
+        # שפיות רכה: מסמנים יחס חריג אבל לא פוסלים — הפאנל ישפוט אחר כך
         got = (best_ft, kind, best_a)
         break
     if got is None:
-        misses.append({'name': nm, 'taba': t, 'why': 'לא נמצא/נכשל בשפיות'})
+        misses.append({'name': nm, 'taba': t, 'why': 'לא נמצא באף פורמט'})
         continue
     ft, kind, a = got
-    n_exact += kind == 'exact'; n_rev += kind == 'rev'; n_like += kind == 'like'
+    match_kinds[kind] += 1
     zones.append({'name': nm, 'taba': t, 'city': str(at.get('CITY') or ''),
                   'district': str(at.get('DISTRICT') or ''), 'match': kind,
                   'pl_name': str(ft['attributes'].get('pl_name') or '')[:60],
                   'area_km2': round(a, 3), 'bruto_km2': round(bruto_km2, 3),
+                  'ratio_flag': bool(bruto_km2 > 0.01 and not (bruto_km2 / 6 <= a <= bruto_km2 * 6)),
                   'polys': [simplify(rg) for rg in (ft.get('geometry') or {}).get('rings', [])[:6]]})
     if (i + 1) % 50 == 0:
         print(f'{i + 1}/{len(recs)} | נמצאו {len(zones)} | {int(time.time() - T0)}s')
 
-print(f'סיכום: נמצאו {len(zones)}/{len(recs)} (מדויק {n_exact}, הפוך {n_rev}, ספרות {n_like}) | חסרים {len(misses)}')
+print(f'סיכום: נמצאו {len(zones)}/{len(recs)} | {dict(match_kinds)} | חסרים {len(misses)} | דגלי-יחס {sum(1 for z in zones if z.get(chr(114)+chr(97)+chr(116)+chr(105)+chr(111)+chr(95)+chr(102)+chr(108)+chr(97)+chr(103)))}')
 for m in misses[:25]:
     print('  חסר:', m['name'][:40], '|', m['taba'], '|', m['why'])
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
