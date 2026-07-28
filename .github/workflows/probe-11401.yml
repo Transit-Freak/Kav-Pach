@@ -1,0 +1,77 @@
+name: probe-11401
+
+# בדיקה חד-פעמית: למה שינוי קצה המסלול של מק"ט 11401 (חלופה 4) נרשם
+# ב-28.07 כשקבנ"ב מציג תוקף מ-2.8 — מה באמת כתוב בלוחות השנה של ה-GTFS.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-11401.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          for a in 1 2 3 4 5; do
+            curl -fSsL -A "$UA" -o gtfs.zip https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip && break
+            sleep 45
+          done
+          mkdir g && cd g && unzip -o -q ../gtfs.zip routes.txt trips.txt calendar.txt stop_times.txt stops.txt
+
+      - name: Inspect 11401 calendars and patterns
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import csv
+          csv.field_size_limit(10**9)
+
+          rids = {}
+          for r in csv.DictReader(open('g/routes.txt', encoding='utf-8-sig')):
+              if (r.get('route_desc') or '').startswith('11401-'):
+                  rids[r['route_id']] = r['route_desc']
+          print('וריאנטים של 11401:', sorted(rids.values()))
+
+          cal = {}
+          for r in csv.DictReader(open('g/calendar.txt', encoding='utf-8-sig')):
+              days = ''.join(str(i + 1) for i, d in enumerate(
+                  ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']) if r.get(d) == '1')
+              cal[r['service_id']] = (r.get('start_date'), r.get('end_date'), days)
+
+          # נסיעה מייצגת לכל (route, service) + ספירה
+          rep, cnt = {}, {}
+          for r in csv.DictReader(open('g/trips.txt', encoding='utf-8-sig')):
+              rid = r['route_id']
+              if rid not in rids: continue
+              key = (rid, r['service_id'])
+              cnt[key] = cnt.get(key, 0) + 1
+              rep.setdefault(key, r['trip_id'])
+
+          want = set(rep.values())
+          seq = {t: [] for t in want}
+          for r in csv.DictReader(open('g/stop_times.txt', encoding='utf-8-sig')):
+              t = r['trip_id']
+              if t in seq:
+                  seq[t].append((int(r['stop_sequence']), r['stop_id']))
+
+          sname = {}
+          for r in csv.DictReader(open('g/stops.txt', encoding='utf-8-sig')):
+              sname[r['stop_id']] = f"{r.get('stop_name')} ({r.get('stop_code')})"
+
+          print()
+          for (rid, sid), t in sorted(rep.items(), key=lambda x: (rids[x[0][0]], cal.get(x[0][1], ('',))[0] or '')):
+              st = sorted(seq[t])
+              first = sname.get(st[0][1], '?') if st else '?'
+              last = sname.get(st[-1][1], '?') if st else '?'
+              w = cal.get(sid, ('?', '?', '?'))
+              print(f"{rids[rid]} | service={sid} | {w[0]}–{w[1]} ימים={w[2]} | "
+                    f"{cnt[(rid,sid)]} נסיעות | {len(st)} תחנות | {first} ← {last}")
+          PY

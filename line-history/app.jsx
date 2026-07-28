@@ -260,6 +260,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const vs = lf.versions;
   const months = [...new Set(vs.map((v) => v.d.slice(0, 7)))].reverse();
   const shown = vs.map((v, i) => ({ v, i })).filter((x) => !mon || x.v.d.slice(0, 7) === mon).reverse();
+  // מס' תחנה לרשימות ➕/➖: בהוספה מחפשים בגרסה עצמה, בהורדה בגרסאות שלפניה
+  const codeOf = (name, i, isAdd) => {
+    const scan = (l) => { const h = (l || []).find((s) => s && s[1] === name); return h ? h[0] : null; };
+    if (isAdd) { const c = scan(vs[i].stops); if (c) return c; }
+    for (let j = i - (isAdd ? 0 : 1); j >= 0; j--) { const c = scan(vs[j].stops); if (c) return c; }
+    for (let j = i + 1; j < vs.length; j++) { const c = scan(vs[j].stops); if (c) return c; }
+    return null;
+  };
+  const withCode = (name, i, isAdd) => { const c = codeOf(name, i, isAdd); return c ? `${name} (${c})` : name; };
   const v = vs[sel] || vs[vs.length - 1];
   const pi = vs.indexOf(v) - 1;
   const pv = pi >= 0 ? vs[pi] : null;
@@ -325,8 +334,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               </div>
               {(x.add || x.rem) && (
                 <div className="sub">
-                  {x.add && <div>➕ נוספו: {x.add.join(", ")}</div>}
-                  {x.rem && <div>➖ ירדו: {x.rem.join(", ")}</div>}
+                  {x.add && <div>➕ נוספו: {x.add.map((n) => withCode(n, i, true)).join(", ")}</div>}
+                  {x.rem && <div>➖ ירדו: {x.rem.map((n) => withCode(n, i, false)).join(", ")}</div>}
                 </div>
               )}
             </div>
