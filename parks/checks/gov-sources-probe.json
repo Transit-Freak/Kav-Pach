@@ -88,5 +88,8 @@
     ]
    }
   ]
+ },
+ "mot": {
+  "error": "File is not a zip file"
  }
 }
