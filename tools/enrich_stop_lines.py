@@ -76,11 +76,36 @@ def sync_month(c, e, fields):
             if x.get('c') == c and x.get('k') == e['k'] and x.get('d') == e['d']:
                 x.update(fields)
 
+# עיר לתחנות שאינן ברישום הנוכחי (המבוטלות — שהכי חשוב למצוא בחיפוש):
+# לפי התחנה הקרובה ביותר ברישום, עד 300 מ' (תחנה תפעולית/כרמי גת 12741)
+import math
+grid = {}
+CELL = 0.005
+for c, v in cur_reg.items():
+    if len(v) > 3 and v[3]:
+        grid.setdefault((int(v[1] / CELL), int(v[2] / CELL)), []).append((v[1], v[2], v[3]))
+
+def city_near(la, lo):
+    if la is None or lo is None: return ''
+    gy, gx = int(la / CELL), int(lo / CELL)
+    best, bestd = '', 300.0
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            for (y, x, ct) in grid.get((gy + dy, gx + dx), []):
+                cl = math.cos(math.radians(la))
+                d = math.hypot((la - y) * 110540, (lo - x) * 111320 * cl)
+                if d < bestd: bestd, best = d, ct
+    return best
+
 n_set = n_city = 0
 for c, evs in shist.items():
     # שדה העיר — מהרישום הנוכחי; בלעדיו אי-אפשר לחפש תחנות לפי עיר
     # (תחנות קרית גת "נעלמו" מהחיפוש כי t היה ריק בכל האירועים)
-    city = cur_reg[c][3] if c in cur_reg and len(cur_reg[c]) > 3 else ''
+    if c in cur_reg and len(cur_reg[c]) > 3:
+        city = cur_reg[c][3]
+    else:
+        e0 = next((e for e in evs if e.get('la') is not None), None)
+        city = city_near(e0.get('la'), e0.get('lo')) if e0 else ''
     for e in evs:
         if city and (e.get('t') or '') != city:
             e['t'] = city
