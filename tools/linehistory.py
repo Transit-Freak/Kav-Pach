@@ -420,7 +420,7 @@ def idx_entry(rdesc, line, dest, op, ty):
     # גרסאות ארכיון שהועשרו בהפרשי תחנות (enrich_stop_diffs) נספרות גם
     # בקטגוריות התחנות — אחרת ההיסטוריה של 2022–2026 לא מופיעה שם בכלל
     for v in vs:
-        if v.get('src') == 'ob' and v.get('k') != 'removed':
+        if (v.get('src') == 'ob' or v.get('gd')) and v.get('k') != 'removed':
             a, r = v.get('add'), v.get('rem')
             if a and r: ks.add('stops')
             elif a: ks.add('stops-add')

@@ -19,11 +19,21 @@ for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
         continue
     changed = False
     prev = None
+    prev_d = None
+    prev_src = None
     for v in lf.get('versions', []):
         st = v.get('stops') or []
         if not st: continue
+        diff_here = None
         if prev is not None and v.get('src') == 'ob' and v.get('k') in KINDS \
            and 'add' not in v and 'rem' not in v:
+            diff_here = 'ob'
+        # גם "תיעוד ראשון" מושווה לרשומת הארכיון האחרונה — אחרת שינוי תחנות
+        # שקרה בפער שבין הארכיון לתחילת המעקב היומי נבלע (קו 595, תחנה 3405)
+        elif prev is not None and prev_src == 'ob' and v.get('k') == 'baseline' \
+                and 'add' not in v and 'rem' not in v and not v.get('gd'):
+            diff_here = 'gap'
+        if diff_here:
             pc = {str(s[0]) for s in prev}
             cc = {str(s[0]) for s in st}
             add = [s[1] for s in st if str(s[0]) not in pc]
@@ -32,7 +42,13 @@ for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
             if rem: v['rem'] = rem
             if add or rem:
                 changed = True; n_ev += 1
+                if diff_here == 'gap':
+                    v['gd'] = 1
+                    v['note'] = (f"התחנות השתנו מתישהו בין {prev_d[5:7]}.{prev_d[:4]} "
+                                 f"(הרשומה הקודמת בארכיון) לתחילת המעקב היומי — התאריך המדויק לא מתועד")
         prev = st
+        prev_d = v.get('d')
+        prev_src = v.get('src')
     if changed:
         json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         n_files += 1
