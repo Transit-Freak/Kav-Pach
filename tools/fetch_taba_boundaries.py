@@ -71,6 +71,16 @@ for i, at in enumerate(recs):
     if len(parts) >= 2:
         tries.append((f"pl_number LIKE '%{'%'.join(parts)}%'", 'like'))
         tries.append((f"pl_number LIKE '%{'%'.join(reversed(parts))}%'", 'like-rev'))
+        # חלקים ללא תלות בסדר — רק מקטעים באורך 2+ (מקטע בודד קצר תופס הכול)
+        big_parts = [p for p in parts if len(p) >= 2]
+        if len(big_parts) >= 2:
+            cond = ' AND '.join(f"pl_number LIKE '%{p}%'" for p in big_parts)
+            tries.append((cond, 'parts'))
+    # נפילה לאחור: לפי שם התוכנית — מילות שם האזור/העיר בתוך pl_name
+    toks = [w for w in re.split(r'[^א-ת]+', nm) if len(w) >= 3][:3]
+    if toks:
+        cond = ' AND '.join(f"pl_name LIKE '%{w}%'" for w in toks)
+        tries.append((cond, 'byname'))
     got = None
     for where, kind in tries:
         feats = query(where)
@@ -79,7 +89,7 @@ for i, at in enumerate(recs):
             continue
         # אם כמה תוצאות — בוחרים את זו ששטחה הכי קרוב לשטח הרשום
         best_ft, best_score = None, None
-        for ft in feats[:8]:
+        for ft in feats[:20]:
             rings = (ft.get('geometry') or {}).get('rings') or []
             a = sum(ring_area_km2(rg) for rg in rings)
             score = abs(math.log((a + 1e-4) / (bruto_km2 + 1e-4)))
