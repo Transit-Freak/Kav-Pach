@@ -161,12 +161,13 @@ function segDiff(cur, prev) {
 }
 
 /* ---------- מפת לפני/אחרי ---------- */
-function DiffMap({ cur, prev, approx, curStops, prevStops }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // הקטעים ששונו + התחנות ששונו — היעד של מצב "התמקדות" (בקשת המשתמש:
-  // בתיקון באג לראות רק את הקטע שהשתנה, לא את כל המסלול)
-  const diff = useMemo(() => (prev ? segDiff(cur, prev) : null), [cur, prev]);
+  // בתיקון באג לראות רק את הקטע שהשתנה, לא את כל המסלול).
+  // השוואת קטעים רק כששני הצדדים מדויקים — קו מקורב בין תחנות ייתן רעש
+  const diff = useMemo(() => (prev && !approx && !prevApprox ? segDiff(cur, prev) : null), [cur, prev, approx, prevApprox]);
   const chStops = useMemo(() => {
     if (!prevStops) return [];
     const curCodes = new Set((curStops || []).map((s) => s[0]));
@@ -273,10 +274,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const v = vs[sel] || vs[vs.length - 1];
   const pi = vs.indexOf(v) - 1;
   const pv = pi >= 0 ? vs[pi] : null;
-  // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות
+  // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות.
+  // גם המסלול הקודם מוצג כשיש לו לפחות רצף תחנות — כולל מול "תיעוד ראשון"
+  // (בעבר הושוו רק גרסאות עם גאומטריה מדויקת, והמסלול הישן לא הופיע במפה)
+  const toPts = (x) => (x.shp ? decodeShape(x.shp) : ((x.stops || []).length > 1 ? x.stops.map((s) => [s[2], s[3]]) : null));
   const approx = !v.shp && (v.stops || []).length > 1;
-  const cur = v.shp ? decodeShape(v.shp) : (approx ? v.stops.map((s) => [s[2], s[3]]) : []);
-  const prev = pv && v.k !== "baseline" && v.shp && pv.shp ? decodeShape(pv.shp) : null;
+  const cur = toPts(v) || [];
+  const prev = pv ? toPts(pv) : null;
+  const prevApprox = !!(pv && prev && !pv.shp);
   return (
     <div className="linewrap">
       <div className="card side">
@@ -353,11 +358,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
         ) : (
-        <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} curStops={v.stops}
-          prevStops={pv && v.k !== "baseline" && (pv.stops || []).length ? pv.stops : null} />
+        <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} prevApprox={prevApprox} curStops={v.stops}
+          prevStops={pv && (pv.stops || []).length ? pv.stops : null} />
         )}
         <div className="legend">
-          {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם</span>}
+          {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
           <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
