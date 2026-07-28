@@ -1,0 +1,57 @@
+name: probe-nz
+
+# בדיקה חד-פעמית: קו 1 נס ציונה (אגד, מעגלי מפאוור סנטר) — מה המק"ט שלו,
+# מתי היה קיים, ולמה לא נקלט אצלנו.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-nz.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Find NZ line 1
+        run: |
+          set -uo pipefail
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse
+
+          API = 'https://open-bus-stride-api.hasadna.org.il'
+          def api(path, **params):
+              url = f'{API}{path}?{urllib.parse.urlencode(params)}'
+              req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan probe (polite)'})
+              with urllib.request.urlopen(req, timeout=90) as r:
+                  return json.load(r)
+
+          found_mkt = None
+          for d in ['2026-07-20', '2026-01-05', '2025-06-02', '2024-06-03', '2023-06-05', '2022-06-01']:
+              rows = api('/gtfs_routes/list', date_from=d, date_to=d, route_short_name='1', limit=200)
+              hits = [r for r in rows if 'נס ציונה' in (r.get('route_long_name') or '')] if isinstance(rows, list) else []
+              print(f'{d}: קו 1 בכל הארץ: {len(rows) if isinstance(rows, list) else rows} | עם נס ציונה: {len(hits)}')
+              for r in hits:
+                  found_mkt = r.get('route_mkt')
+                  print(f"   mkt={r.get('route_mkt')} dir={r.get('route_direction')} alt={r.get('route_alternative')} | {r.get('route_long_name')} | {r.get('agency_name')}")
+
+          if found_mkt:
+              m = str(found_mkt).lstrip('0')
+              print(f'====== כל התקופה של מק"ט {m} ======')
+              total = 0; offset = 0
+              first = last = None
+              while True:
+                  rows = api('/gtfs_routes/list', route_mkt=m, date_from='2022-01-01', date_to='2026-07-20', limit=1000, offset=offset)
+                  if not isinstance(rows, list) or not rows: break
+                  total += len(rows)
+                  ds = sorted(r.get('date') or '' for r in rows)
+                  first = min(filter(None, [first, ds[0]])) if first else ds[0]
+                  last = max(last or '', ds[-1])
+                  if len(rows) < 1000: break
+                  offset += 1000
+              print(f'{total} שורות | {first} עד {last}')
+          PY
