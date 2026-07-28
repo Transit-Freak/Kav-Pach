@@ -13,9 +13,20 @@ SERVERS = [
 ]
 
 zones = json.load(open(APPROVED, encoding='utf-8'))['zones']
-way_ids = sorted(int(i[1:]) for z in zones for i in z['ids'] if i.startswith('w'))
-rel_ids = sorted(int(i[1:]) for z in zones for i in z['ids'] if i.startswith('r'))
-print(f'approved: {len(zones)} zones | {len(way_ids)} ways, {len(rel_ids)} relations')
+ids = {i for z in zones for i in z['ids']}
+# אזורים ידניים (דיווחי שטח): פוליגונים בלי שם ב-OSM או בתיוג אחר — נמשכים
+# לפי מזהה, והשם מהקובץ מוזרק לתגיות כדי שיוצגו בשמם האמיתי ולא "ללא שם"
+MANUAL = os.environ.get('MANUAL', 'parks/osm-check/manual-zones.json')
+manual = {}
+try:
+    for m in json.load(open(MANUAL, encoding='utf-8'))['zones']:
+        manual[m['id']] = m
+        ids.add(m['id'])
+except FileNotFoundError:
+    pass
+way_ids = sorted(int(i[1:]) for i in ids if i.startswith('w'))
+rel_ids = sorted(int(i[1:]) for i in ids if i.startswith('r'))
+print(f'approved: {len(zones)} zones + {len(manual)} ידניים | {len(way_ids)} ways, {len(rel_ids)} relations')
 
 parts = []
 if way_ids:
@@ -45,6 +56,11 @@ print(f'elements returned: {len(els)} / {want}')
 # מזהה שנמחק מ-OSM מאז האישור לא מפיל את הריצה, אבל חוסר גדול כן.
 if len(els) < want * 0.8:
     sys.exit('too many approved OSM ids missing — refusing to build partial data')
+
+for e in els:   # הזרקת שם לאזורים הידניים — גובר על היעדר שם ב-OSM
+    m = manual.get(f"{e['type'][0]}{e['id']}")
+    if m:
+        e.setdefault('tags', {})['name'] = m['name']
 
 json.dump({'elements': els}, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False)
 print('wrote', OUT, os.path.getsize(OUT), 'bytes')

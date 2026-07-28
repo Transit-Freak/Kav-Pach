@@ -1,0 +1,45 @@
+name: probe-gov-sources
+
+# בדיקת מקורות ממשלתיים לאזורים חסרים (בקשת ההסתדרות): שכבת אזורי
+# תעסוקה בלמ"ס + שכבת מוקדי עניין של מרכז מיפוי ישראל. דוח בלבד.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-gov-sources.yml'
+      - 'tools/probe_gov_sources.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-gov-sources-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: בדיקת למ"ס + מפ"י
+        run: python3 tools/probe_gov_sources.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/checks/gov-sources-probe.json /tmp/probe.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks/checks && cp /tmp/probe.json parks/checks/gov-sources-probe.json
+            git add parks/checks/gov-sources-probe.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: בדיקת מקורות למ"ס ומפ"י לאזורים חסרים'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
