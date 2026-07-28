@@ -57,7 +57,22 @@
  },
  "wayback": {
   "gtfs.mot.gov.il": {
-   "error": "HTTP Error 503: Service Unavailable"
+   "captures": 29,
+   "zips": 6,
+   "by_year": {
+    "2023": 1,
+    "2024": 1,
+    "2025": 3,
+    "2026": 1
+   },
+   "samples": [
+    "20231202125940 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20240806121526 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20250111005709 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20250629125913 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20250918074553 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+    "20260108235759 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+   ]
   },
   "gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip": {
    "captures": 6,
@@ -77,5 +92,69 @@
     "20260108235759 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
    ]
   }
+ },
+ "wayback_wide": [
+  "20260120043847 https://geo-api-p.mot.gov.il/GTFS_Bus_Num",
+  "20260120043844 https://geo-api-p.mot.gov.il/GTFS_Bus_Station_info",
+  "20230330230132 https://gtfs.mot.gov.il/",
+  "20221223195205 https://gtfs.mot.gov.il/favicon.ico",
+  "20221223195154 https://gtfs.mot.gov.il/gtfsfiles/",
+  "20231202125940 https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip",
+  "20260106121949 http://gtfs.mot.gov.il/robots.txt",
+  "20241215013143 https://gtfs.mot.gov.il/TSPD/08270b762dab20008764785390af5a0498500dfeec4d980303a05820aae2a899866cd2524ec4c3d4?",
+  "20241215013142 https://gtfs.mot.gov.il/TSPD/?type=18",
+  "20250517140227 https://gtfs.mot.gov.il/TSPD/?type=22",
+  "20141030210555 http://he.mot.gov.il/images/stories/100_GTFS.jpg",
+  "20131011063305 http://he.mot.gov.il/index.php?option=com_content&amp;view=article&amp;id=2244:pub-trn-gtfs&amp;catid=167:pub-",
+  "20140722162424 http://he.mot.gov.il/index.php?view=article&catid=167%3Apub-trn-dev-info&lang_ovrrde=ENG&id=2244%3Apub-trn-gtf",
+  "20131014205735 http://he.mot.gov.il/index.php?view=article&catid=167%3Apub-trn-dev-info&id=2244%3Apub-trn-gtfs&format=pdf&opt",
+  "20140722155023 http://he.mot.gov.il/index.php?view=article&catid=167%3Apub-trn-dev-info&lang_ovrrde=ENG&id=2244%3Apub-trn-gtf",
+  "20141120170104 http://he.mot.gov.il/index.php?lang_ovrrde=ENG&option=com_content&view=article&id=2244:pub-trn-gtfs&iotype=w&c",
+  "20150627004912 http://he.mot.gov.il/index.php?option=com_content&view=article&iotype=w&id=2244:pub-trn-gtfs&lang_ovrrde=ENG&c",
+  "20150627082524 http://he.mot.gov.il/index.php?option=com_content&view=article&iotype=w&id=2244:pub-trn-gtfs&lang_ovrrde=ENG&c",
+  "20150627023504 http://he.mot.gov.il/index.php?option=com_content&view=article&id=2244:pub-trn-gtfs&catid=167:pub-trn-dev-info",
+  "20150627082815 http://he.mot.gov.il/index.php?option=com_content&view=article&id=2244:pub-trn-gtfs&catid=167:pub-trn-dev-info",
+  "20150627082708 http://he.mot.gov.il/index.php?option=com_content&view=article&id=2244:pub-trn-gtfs&catid=167:pub-trn-dev-info",
+  "20140722151851 http://he.mot.gov.il/index.php?lang_ovrrde=ENG&option=com_content&view=article&id=2244:pub-trn-gtfs&iotype=w&c",
+  "20131014205747 http://he.mot.gov.il/index.php?view=article&catid=167%3Apub-trn-dev-info&id=2244%3Apub-trn-gtfs&tmpl=component",
+  "20120513202808 http://he.mot.gov.il:80/index.php?option=com_content&view=article&id=2244:pub-trn-gtfs&catid=167:pub-trn-dev-i",
+  "20170920135636 http://media.mot.gov.il/PDF/HE_TRAFFIC_PUBLIC/GTFS-example.zip",
+  "20151208012510 http://media.mot.gov.il/PDF/HE_TRAFFIC_PUBLIC/GTFS.pdf",
+  "20160829074436 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/contrast/highcontrast/lang/he-IL?contrast=highcontrast",
+  "20160829061901 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/contrast/highcontrast2/lang/he-IL?contrast=highcontrast2",
+  "20160829062004 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/contrast/highcontrast3/lang/he-IL?contrast=highcontrast3",
+  "20160829062127 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/contrast/night/lang/he-IL?contrast=night",
+  "20160829074356 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/contrast/normal/lang/he-IL?contrast=normal",
+  "20160829122814 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/fontsize/100/lang/he-IL?fontsize=100",
+  "20160829000819 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/fontsize/130/lang/he-IL?fontsize=130",
+  "20160829074622 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/fontsize/70/lang/he-IL?fontsize=70",
+  "20160714233220 https://motssl5.mot.gov.il/FORMS/he/gtfs-form/lang/he-IL",
+  "20150325051728 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form",
+  "20150405191013 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/he-IL",
+  "20151125091118 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/Microsoft.XMLHTTP",
+  "20151125091103 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/img",
+  "20151130142950 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/img/?system=jcemedi",
+  "20151130143044 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/Microsoft.XMLHTTP",
+  "20151130143026 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/plugins/system/jcem",
+  "20151130143038 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/plugins/system/jcem",
+  "20151125091112 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/themes",
+  "20151130143053 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/lang/plugins/system/jcemediabox/themes/?system=jcem",
+  "20150627061500 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/he-IL",
+  "20151130142107 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/Microsoft.XMLHTTP",
+  "20151130142055 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/img",
+  "20151213144706 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/img/?syst",
+  "20151213144727 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/Microsoft",
+  "20151213144713 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/plugins/s",
+  "20151213144719 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/plugins/s",
+  "20151130142102 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/themes",
+  "20151213144732 https://motssl5.mot.gov.il/FORMS/he/online-forms/gtfs-form/view/form/lang/plugins/system/jcemediabox/themes/?s",
+  "20150406175944 https://motssl5.mot.gov.il/FORMS/images/stories/100_GTFS.jpg"
+ ],
+ "zenodo_error": "HTTP Error 403: Forbidden",
+ "oldbus": {
+  "open-bus": [],
+  "open-bus-pipelines": [
+   "https://github.com/hasadna/open-bus-gtfs-etl"
+  ]
  }
 }
