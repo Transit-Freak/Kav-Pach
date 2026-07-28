@@ -1,0 +1,45 @@
+name: fetch-taba-boundaries
+
+# שליפה המונית של גבולות תב"ע ממנהל התכנון לאזורי משרד התחבורה (427).
+# דוח בלבד — הייבוא לאתר ייעשה בנפרד אחרי פאנל אימות.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fetch-taba-boundaries.yml'
+      - 'tools/fetch_taba_boundaries.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-taba-boundaries-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: שליפת גבולות לכל האזורים
+        run: python3 tools/fetch_taba_boundaries.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/checks/taba-boundaries.json /tmp/taba.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks/checks && cp /tmp/taba.json parks/checks/taba-boundaries.json
+            git add parks/checks/taba-boundaries.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: גבולות תב"ע לאזורי תעשייה-תעסוקה ממנהל התכנון'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
