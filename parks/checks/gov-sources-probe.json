@@ -90,6 +90,7 @@
   ]
  },
  "mot": {
-  "error": "name 'shp_url' is not defined"
+  "total": 0,
+  "missing": []
  }
 }
