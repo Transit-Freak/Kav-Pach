@@ -509,7 +509,7 @@ function StopsTab() {
               <span className="meta">
                 {c.t ? c.t + " · " : ""}{fmtD(c.d)}
                 {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
-                {c.k === "del" && c.lines && c.lines.length > 0 && <> · שירתה: {c.lines.slice(0, 8).join(", ")}</>}
+                {c.lines && c.lines.length > 0 && <> · קווים שעצרו בה אז: {c.lines.slice(0, 10).join(", ")}</>}
                 {c.la != null && <> · 🗺️</>}
               </span>
             </div>

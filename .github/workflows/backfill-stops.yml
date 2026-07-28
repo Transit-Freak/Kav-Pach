@@ -16,6 +16,7 @@ on:
       - 'tools/backfill_stop_anchors.py'
       - 'tools/backfill_stop_dates.py'
       - 'tools/enrich_stop_diffs.py'
+      - 'tools/enrich_stop_lines.py'
   workflow_dispatch:
 
 permissions:
@@ -62,6 +63,9 @@ jobs:
 
       - name: הפרשי תחנות בין גרסאות שמולאו (מקומי, בלי רשת)
         run: OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+
+      - name: אילו קווים עצרו בכל תחנה בתקופת האירוע (מקומי, בלי רשת)
+        run: OUTDIR=line-history/data python3 tools/enrich_stop_lines.py
 
       - name: איתור תאריך לשינויי תחנות — חיפוש בינארי בארכיון
         run: |

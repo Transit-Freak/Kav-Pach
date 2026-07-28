@@ -175,41 +175,10 @@ while d <= d1:
     d += datetime.timedelta(days=STEP)
     if n_ev and n_ev % 2000 < 50: flush()
 
-# השלמה רטרואקטיבית: ביטולים קיימים בלי רשימת קווים מקבלים אותה —
-# מאתרים את מזהה התחנה בשבוע שלפני הביטול ושולפים מי עצר בה.
-cur_reg = jload(f'{OUTDIR}/stops-state.json', {})
-n_fix = 0
-def mark_checked(e):
-    """אין ולא יהיו נתוני קווים לתחנה הזו בארכיון — לא מנסים שוב בלילות
-    הבאים (בלי זה תחנה בלי קווים הייתה נבדקת מחדש לנצח)."""
-    e['lc'] = 1
-
-for c, evs in list(shist.items()):
-    if (time.time() - T0) / 60 > MAX_MIN + 10: break
-    e = evs[-1]
-    if not (e.get('k') == 'del' and not e.get('lines') and not e.get('lc')): continue
-    if c in cur_reg: continue   # פעילה כיום — ממילא מוסתרת מהרשימה
-    probe = (datetime.date.fromisoformat(e['d']) - datetime.timedelta(days=7)).isoformat()
-    rows = api('/gtfs_stops/list', soft=True, date_from=probe, date_to=probe, code=c, limit=5)
-    if rows is None: continue   # כשל HTTP זמני — ננסה שוב בריצה הבאה
-    if not isinstance(rows, list): continue
-    row = next((r for r in rows if str(r.get('code')) == c), None)
-    if row is None:   # התחנה לא נמצאה בארכיון גם שבוע לפני הביטול — אין מה למצוא
-        mark_checked(e); n_fix += 1
-        continue
-    lns = lines_at_stop(row.get('id'))
-    if lns:
-        e['lines'] = lns
-        mm = mload(month_of(e['d']))
-        for x in mm['changes']:
-            if x.get('c') == c and x.get('k') == 'del' and x.get('d') == e['d']:
-                x['lines'] = lns
-        n_fix += 1
-    elif lns == []:
-        # תשובה סופית מהשרת: אין רשומות נסיעה לתחנה בארכיון
-        mark_checked(e); n_fix += 1
-    # lns is None: כשל זמני/מפסק — נשאיר לניסיון בלילה אחר
-if n_fix: print('הושלמו/סומנו רטרואקטיבית:', n_fix)
+# ההשלמה הרטרואקטיבית של רשימות הקווים הוסרה: השרת מתעלם בשקט מהפרמטר
+# gtfs_stop_ids, כך שהשאילתה "קווים לפי תחנה" לא באמת עבדה מעולם. את
+# הרשימות ממלא עכשיו tools/enrich_stop_lines.py — חישוב מקומי מהרצפים
+# שכבר נאספו, בלי אף קריאת רשת.
 
 flush()
 print('סיום ריצה:', n_ev, 'אירועי תחנות | נדגם עד', state.get('last_date'))
