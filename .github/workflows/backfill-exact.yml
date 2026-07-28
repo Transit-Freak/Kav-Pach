@@ -13,6 +13,8 @@ on:
     paths:
       - '.github/workflows/backfill-exact.yml'
       - 'tools/backfill_routes_exact.py'
+      - 'tools/rebuild_lines_index.py'
+      - 'tools/enrich_stop_diffs.py'
   workflow_dispatch:
 
 permissions:
@@ -43,13 +45,25 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          cp -r line-history/data /tmp/be-out
+          # מיזוג לפי קבצים במקום העתקת התיקייה כולה: נשמרים רק הקבצים
+          # שהריצה הזו שינתה ביחס לבסיס שלה — קבצים אחרים נשארים בגרסת
+          # origin העדכנית. כאן הריצה גוברת גם על שינויים מקבילים באותם
+          # קבצים: הסיפורים המדויקים מחליפים את הישנים בשלמותם, ומק"ט
+          # שסומן done לא ייבדק שוב — אסור שה-state יתעדכן בלי הקבצים.
+          BASE=$(git rev-parse HEAD)
+          git add -A line-history/data
+          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data > /tmp/be-changed
+          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data > /tmp/be-deleted
+          rm -rf /tmp/be-out && mkdir -p /tmp/be-out
+          xargs -0 -r -I{} cp --parents {} /tmp/be-out/ < /tmp/be-changed
           for i in 1 2 3; do
             git fetch origin main
             git reset --hard origin/main
-            cp -r /tmp/be-out/. line-history/data/
+            cp -r /tmp/be-out/. .
+            xargs -0 -r rm -f -- < /tmp/be-deleted
             OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
-            git add line-history/data
+            OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+            git add -A line-history/data
             git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
             git commit -m 'data: היסטוריה מדויקת לפי מק"ט (שורה-ליום מהארכיון)'
             git push && exit 0

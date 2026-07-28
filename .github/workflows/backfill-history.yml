@@ -22,6 +22,8 @@ on:
     paths:
       - '.github/workflows/backfill-history.yml'
       - 'tools/backfill_routes.py'
+      - 'tools/rebuild_lines_index.py'
+      - 'tools/enrich_stop_diffs.py'
 
 permissions:
   contents: write
@@ -52,12 +54,25 @@ jobs:
           BR="${GITHUB_REF_NAME:-main}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp -r line-history/data /tmp/bf-out
+          # מיזוג לפי קבצים במקום העתקת התיקייה כולה: רק הקבצים שהריצה הזו
+          # שינתה נשמרים; קובץ שהשתנה בינתיים גם ב-origin — origin גובר.
+          BASE=$(git rev-parse HEAD)
+          git add -A line-history/data
+          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data > /tmp/bf-changed
+          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data > /tmp/bf-deleted
+          rm -rf /tmp/bf-out && mkdir -p /tmp/bf-out
+          xargs -0 -r -I{} cp --parents {} /tmp/bf-out/ < /tmp/bf-changed
           for i in 1 2 3 4; do
             git fetch origin "$BR" && git reset --hard "origin/$BR"
-            # ממזגים: קובצי הקווים והמצב מהריצה גוברים, השאר נשאר מהענף
-            cp -r /tmp/bf-out/. line-history/data/
-            git add line-history/data
+            cp -r /tmp/bf-out/. .
+            xargs -0 -r rm -f -- < /tmp/bf-deleted
+            git diff --name-only -z "$BASE" "origin/$BR" -- line-history/data > /tmp/bf-theirs
+            while IFS= read -r -d '' f; do
+              git checkout "origin/$BR" -- "$f" 2>/dev/null || rm -f -- "$f"
+            done < /tmp/bf-theirs
+            OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+            git add -A line-history/data
             if git diff --cached --quiet; then
               echo "unchanged"; break; fi
             git commit -m "data: מילוי-לאחור מארכיון אופן באס (${{ github.event.inputs.from }} עד ${{ github.event.inputs.to }})"

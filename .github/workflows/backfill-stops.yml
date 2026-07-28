@@ -17,6 +17,7 @@ on:
       - 'tools/backfill_stop_dates.py'
       - 'tools/enrich_stop_diffs.py'
       - 'tools/enrich_stop_lines.py'
+      - 'tools/rebuild_lines_index.py'
   workflow_dispatch:
 
 permissions:
@@ -80,12 +81,28 @@ jobs:
           BR="${GITHUB_REF_NAME:-main}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp -r line-history/data /tmp/bs-out
+          rm -f line-history/data/.stops-canary
+          # מיזוג לפי קבצים במקום העתקת התיקייה כולה: נשמרים רק הקבצים
+          # שהריצה הזו שינתה ביחס לבסיס שלה; קובץ שהשתנה בינתיים גם ב-origin
+          # — origin גובר (המידע החדש יותר) והריצה הבאה תשלים מחדש.
+          # העתקת-הכל דרסה קומיטים שנחתו בזמן שהריצה רצה (28.07 — פעמיים).
+          BASE=$(git rev-parse HEAD)
+          git add -A line-history/data
+          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data > /tmp/bs-changed
+          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data > /tmp/bs-deleted
+          rm -rf /tmp/bs-out && mkdir -p /tmp/bs-out
+          xargs -0 -r -I{} cp --parents {} /tmp/bs-out/ < /tmp/bs-changed
           for i in 1 2 3 4; do
             git fetch origin "$BR" && git reset --hard "origin/$BR"
-            cp -r /tmp/bs-out/. line-history/data/
-            rm -f line-history/data/.stops-canary
-            git add line-history/data
+            cp -r /tmp/bs-out/. .
+            xargs -0 -r rm -f -- < /tmp/bs-deleted
+            git diff --name-only -z "$BASE" "origin/$BR" -- line-history/data > /tmp/bs-theirs
+            while IFS= read -r -d '' f; do
+              git checkout "origin/$BR" -- "$f" 2>/dev/null || rm -f -- "$f"
+            done < /tmp/bs-theirs
+            OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+            git add -A line-history/data
             if git diff --cached --quiet; then
               echo "unchanged"; break; fi
             git commit -m "data: שלב ב' — רצפי תחנות היסטוריים מארכיון אופן באס"
