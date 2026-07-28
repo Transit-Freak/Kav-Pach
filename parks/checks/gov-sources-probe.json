@@ -89,6 +89,2238 @@
    }
   ]
  },
+ "mot_by_name": {
+  "total": 427,
+  "matched": 56,
+  "missing": [
+   {
+    "name": "אשקלון צפון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "22786000"
+   },
+   {
+    "name": "מישור רותם",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "16757886"
+   },
+   {
+    "name": "רמת בקע",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "14330500"
+   },
+   {
+    "name": "נמל אשדוד",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "8686800"
+   },
+   {
+    "name": "קיסריה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "8277790"
+   },
+   {
+    "name": "קרית גת",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "6155530"
+   },
+   {
+    "name": "מכרות תמנע",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "5289700"
+   },
+   {
+    "name": "ערד",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "4897000"
+   },
+   {
+    "name": "חולון",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "3608430"
+   },
+   {
+    "name": "נשר רמלה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "3084880"
+   },
+   {
+    "name": "מודיעים",
+    "city": "מבוא מודיעים",
+    "district": "מרכז",
+    "bruto_dunam": "3019750"
+   },
+   {
+    "name": "לוד צפון",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "3011490"
+   },
+   {
+    "name": "אשדוד צפון חדש",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2918940"
+   },
+   {
+    "name": "קריית שמונה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "2717430"
+   },
+   {
+    "name": "דימונה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2697610"
+   },
+   {
+    "name": "כרמיאל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "2661960"
+   },
+   {
+    "name": "שדה תעופה עובדה",
+    "city": "עובדה",
+    "district": "דרום",
+    "bruto_dunam": "2501490"
+   },
+   {
+    "name": "תפן",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "2448613"
+   },
+   {
+    "name": "עידן הנגב דרום",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2351492"
+   },
+   {
+    "name": "עידן הנגב צפון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2235192"
+   },
+   {
+    "name": "מודיעין צפוני",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "2183600"
+   },
+   {
+    "name": "קרית אריה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "2158630"
+   },
+   {
+    "name": "אשקלון דרום",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2154330"
+   },
+   {
+    "name": "אתר לסילוק פסולת דודאים",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2097960"
+   },
+   {
+    "name": "ממ״ג שורק",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "2058860"
+   },
+   {
+    "name": "ירוחם",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "2009109"
+   },
+   {
+    "name": "חדרה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "1970490"
+   },
+   {
+    "name": "יהוד מונוסון",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "1940490"
+   },
+   {
+    "name": "ברלב",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1936300"
+   },
+   {
+    "name": "נשר",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "1867620"
+   },
+   {
+    "name": "אשדוד צפוני",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1837430"
+   },
+   {
+    "name": "פארק המאה מערב - תעשיה כבדה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1820140"
+   },
+   {
+    "name": "פארק עסקים וטכנולוגיות ע״ש פנחס ספיר",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "1773960"
+   },
+   {
+    "name": "ציפורית",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1723000"
+   },
+   {
+    "name": "קרית אתא - פארק תעשיה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "1671930"
+   },
+   {
+    "name": "י-ם עטרות",
+    "city": " ",
+    "district": "ירושלים",
+    "bruto_dunam": "1478350"
+   },
+   {
+    "name": "קרית יהלום פארק תעשיות",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "1460090"
+   },
+   {
+    "name": "מ.א. גלבוע",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1457290"
+   },
+   {
+    "name": "קצרין",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1361420"
+   },
+   {
+    "name": "אופקים מזרחי / נח",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1360633"
+   },
+   {
+    "name": "גן רווה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "1360440"
+   },
+   {
+    "name": "ברקן",
+    "city": "ברקן",
+    "district": "יוש",
+    "bruto_dunam": "1339520"
+   },
+   {
+    "name": "מעלה-ירושלים",
+    "city": " ",
+    "district": "ירושלים",
+    "bruto_dunam": "1326390"
+   },
+   {
+    "name": "סגולה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "1260960"
+   },
+   {
+    "name": "בראון",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "1258220"
+   },
+   {
+    "name": "עכו ותיק",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1215324"
+   },
+   {
+    "name": "מתחם מ-7 - אשקלון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1176000"
+   },
+   {
+    "name": "נעם",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1150630"
+   },
+   {
+    "name": "פארק-צבאים",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1126030"
+   },
+   {
+    "name": "אילת",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1088670"
+   },
+   {
+    "name": "שדרות",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1058430"
+   },
+   {
+    "name": "גליל מערבי - שייח דנון",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1057130"
+   },
+   {
+    "name": "עפולה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "1055120"
+   },
+   {
+    "name": "ארק תעשיות - קרית מלאכי - מתחם מזרחי",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1021602"
+   },
+   {
+    "name": "מפעל פוספטים- נחל צין",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1010180"
+   },
+   {
+    "name": "מפעל כרייה אורון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "1002740"
+   },
+   {
+    "name": "חחן",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "1000950"
+   },
+   {
+    "name": "מב״ת צפון",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "949411"
+   },
+   {
+    "name": "מעגן מיכאל",
+    "city": "מעגן מיכאל",
+    "district": "חיפה",
+    "bruto_dunam": "938908"
+   },
+   {
+    "name": "רהט - אזור תעסוקה צפוני",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "925973"
+   },
+   {
+    "name": "רעננה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "922715"
+   },
+   {
+    "name": "צומת ראם (מסמיה)",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "912904"
+   },
+   {
+    "name": "פארק תעשיות אפריקה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "907507"
+   },
+   {
+    "name": "תרדיון",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "881157"
+   },
+   {
+    "name": "צחר",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "866847"
+   },
+   {
+    "name": "גלבוע מר.תע - חבר",
+    "city": "חבר",
+    "district": "צפון",
+    "bruto_dunam": "854284"
+   },
+   {
+    "name": "פרדס חנה-כרכור",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "850784"
+   },
+   {
+    "name": "שמעה/מיתרים",
+    "city": "שמעה",
+    "district": "יוש",
+    "bruto_dunam": "845469"
+   },
+   {
+    "name": "נתיבות",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "842741"
+   },
+   {
+    "name": "עומר",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "832427"
+   },
+   {
+    "name": "בת ים",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "829526"
+   },
+   {
+    "name": "צומת קישון",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "818118"
+   },
+   {
+    "name": "הרצליה",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "816728"
+   },
+   {
+    "name": "עפולה עלית",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "808672"
+   },
+   {
+    "name": "בני ברק - אזור תעסוקה",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "795498"
+   },
+   {
+    "name": "קרית ביאליק",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "790326"
+   },
+   {
+    "name": "גבעת חיים מאוחד",
+    "city": "גבעת חיים מאוחד",
+    "district": "מרכז",
+    "bruto_dunam": "790047"
+   },
+   {
+    "name": "משהד",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "767710"
+   },
+   {
+    "name": "מעלה אפריים",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "754038"
+   },
+   {
+    "name": "קרית אתא - מתאר כ/150",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "745437"
+   },
+   {
+    "name": "עברונה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "742359"
+   },
+   {
+    "name": "מג''דל שמס",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "708637"
+   },
+   {
+    "name": "רמלא א",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "708409"
+   },
+   {
+    "name": "בנימינה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "698372"
+   },
+   {
+    "name": "עפולה ותמל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "673141"
+   },
+   {
+    "name": "דלתון",
+    "city": "דלתון",
+    "district": "צפון",
+    "bruto_dunam": "667534"
+   },
+   {
+    "name": "פארק המאה מזרח - תעשיה קלה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "658736"
+   },
+   {
+    "name": "קרית התעופה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "651533"
+   },
+   {
+    "name": "כפר סבא - אזור תעשיה ישן",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "633043"
+   },
+   {
+    "name": "מעוין שורק",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "632016"
+   },
+   {
+    "name": "תימורים - מלאכי 2000",
+    "city": "תימורים",
+    "district": "דרום",
+    "bruto_dunam": "624017"
+   },
+   {
+    "name": "קרית יהודית",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "617032"
+   },
+   {
+    "name": "שלומי",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "614353"
+   },
+   {
+    "name": "אזור אליאנס - נצרת עילית",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "613203"
+   },
+   {
+    "name": "תעשיון צפירין",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "600760"
+   },
+   {
+    "name": "יקנעם",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "586647"
+   },
+   {
+    "name": "אילת נ.שחורת",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "583110"
+   },
+   {
+    "name": "חוף שמן",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "581507"
+   },
+   {
+    "name": "נעמן - מילואות דרום",
+    "city": "כפר מסריק",
+    "district": "צפון",
+    "bruto_dunam": "568677"
+   },
+   {
+    "name": "פארק המדע",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "564914"
+   },
+   {
+    "name": "מעלה-עמוס",
+    "city": "מעלה עמוס",
+    "district": "יוש",
+    "bruto_dunam": "562311"
+   },
+   {
+    "name": "חצרים",
+    "city": "חצרים",
+    "district": "דרום",
+    "bruto_dunam": "561573"
+   },
+   {
+    "name": "אדמות ק.ק.ל וחברת גב - ים - אזור תעשיה א",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "554024"
+   },
+   {
+    "name": "עקרון 2000",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "549116"
+   },
+   {
+    "name": "מודיעין דרומי",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "545685"
+   },
+   {
+    "name": "צומת קאסם",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "544657"
+   },
+   {
+    "name": "כנות",
+    "city": "כנות",
+    "district": "דרום",
+    "bruto_dunam": "543914"
+   },
+   {
+    "name": "פארק עסקים - יער חדרה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "543782"
+   },
+   {
+    "name": "טייבה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "534990"
+   },
+   {
+    "name": "עכו מזרח - ותמל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "532280"
+   },
+   {
+    "name": "קריית מלאכי",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "530939"
+   },
+   {
+    "name": "מגדל עוז",
+    "city": "מגדל עוז",
+    "district": "יוש",
+    "bruto_dunam": "526492"
+   },
+   {
+    "name": "י-ם ג.שאול",
+    "city": " ",
+    "district": "ירושלים",
+    "bruto_dunam": "525968"
+   },
+   {
+    "name": "פארק ת.מ.ר עש יצחק רבין",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "501905"
+   },
+   {
+    "name": "שגב-שלום",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "497998"
+   },
+   {
+    "name": "טירה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "490213"
+   },
+   {
+    "name": "חיפה - את על צומת הקריות",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "486228"
+   },
+   {
+    "name": "טירת הכרמל",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "481771"
+   },
+   {
+    "name": "טבריה אגוז",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "475267"
+   },
+   {
+    "name": "יואב פארק תעסוקה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "474228"
+   },
+   {
+    "name": "אופקים חדשים ותמל",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "472991"
+   },
+   {
+    "name": "שילה",
+    "city": "שילה",
+    "district": "יוש",
+    "bruto_dunam": "461008"
+   },
+   {
+    "name": "קרית טבעון",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "457595"
+   },
+   {
+    "name": "פארק טכנולוגי ליד מתמ",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "456624"
+   },
+   {
+    "name": "אנווה נאמן",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "447377"
+   },
+   {
+    "name": "צפת",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "444763"
+   },
+   {
+    "name": "יזרעאלם",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "441538"
+   },
+   {
+    "name": "לוטן",
+    "city": "לוטן",
+    "district": "דרום",
+    "bruto_dunam": "441219"
+   },
+   {
+    "name": "תמל שפרעם מחצבה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "440609"
+   },
+   {
+    "name": "מי עמי",
+    "city": "מי עמי",
+    "district": "חיפה",
+    "bruto_dunam": "436680"
+   },
+   {
+    "name": "עבר הירקון - רמת החייל",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "436113"
+   },
+   {
+    "name": "קלנסווה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "431535"
+   },
+   {
+    "name": "כפר סבא - אבו סנינא",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "429963"
+   },
+   {
+    "name": "אדמירלטי",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "421715"
+   },
+   {
+    "name": "מתם",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "414299"
+   },
+   {
+    "name": "תל שבע",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "409813"
+   },
+   {
+    "name": "קבוצת יבנה",
+    "city": "קבוצת יבנה",
+    "district": "מרכז",
+    "bruto_dunam": "408982"
+   },
+   {
+    "name": "אור-עקיבא",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "406912"
+   },
+   {
+    "name": "רהט - בואבית אל נאקב (קדנת הנגב)",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "405631"
+   },
+   {
+    "name": "ריינה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "401503"
+   },
+   {
+    "name": "מחצבות ורד",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "397846"
+   },
+   {
+    "name": "אום בטין",
+    "city": "אום בטין",
+    "district": "דרום",
+    "bruto_dunam": "396006"
+   },
+   {
+    "name": "בארות יצחק",
+    "city": "בארות יצחק",
+    "district": "מרכז",
+    "bruto_dunam": "393566"
+   },
+   {
+    "name": "סכנין",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "385246"
+   },
+   {
+    "name": "טמרה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "381345"
+   },
+   {
+    "name": "תמל 1046",
+    "city": " ",
+    "district": "תל-אביב",
+    "bruto_dunam": "379367"
+   },
+   {
+    "name": "י-ם ה.חוצבים",
+    "city": " ",
+    "district": "ירושלים",
+    "bruto_dunam": "377848"
+   },
+   {
+    "name": "אורים",
+    "city": "אורים",
+    "district": "דרום",
+    "bruto_dunam": "373605"
+   },
+   {
+    "name": "קריית ארבע",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "370903"
+   },
+   {
+    "name": "אריאל ע.ידע",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "367842"
+   },
+   {
+    "name": "כפר עזה",
+    "city": "כפר עזה",
+    "district": "דרום",
+    "bruto_dunam": "367699"
+   },
+   {
+    "name": "מרכז אזורי בני שמעון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "362443"
+   },
+   {
+    "name": "גב ים  -  קרקעות תעשיה  ג  עמק זבולון",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "353773"
+   },
+   {
+    "name": "מחלף אשדוד",
+    "city": "בני דרום",
+    "district": "מרכז",
+    "bruto_dunam": "348989"
+   },
+   {
+    "name": "אבשלום",
+    "city": "אבשלום",
+    "district": "דרום",
+    "bruto_dunam": "343283"
+   },
+   {
+    "name": "יהלום",
+    "city": " ",
+    "district": "תל-אביב",
+    "bruto_dunam": "339114"
+   },
+   {
+    "name": "בחן",
+    "city": "בחן",
+    "district": "מרכז",
+    "bruto_dunam": "335962"
+   },
+   {
+    "name": "נווה ימין",
+    "city": "נווה ימין",
+    "district": "מרכז",
+    "bruto_dunam": "334554"
+   },
+   {
+    "name": "פלמחים",
+    "city": "פלמחים",
+    "district": "מרכז",
+    "bruto_dunam": "328654"
+   },
+   {
+    "name": "כפר כנא",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "314824"
+   },
+   {
+    "name": "גן שמואל",
+    "city": "גן שמואל",
+    "district": "חיפה",
+    "bruto_dunam": "313251"
+   },
+   {
+    "name": "אבן יהודה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "311644"
+   },
+   {
+    "name": "חפץ חיים",
+    "city": "חפץ חיים",
+    "district": "מרכז",
+    "bruto_dunam": "305977"
+   },
+   {
+    "name": "גדרה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "303642"
+   },
+   {
+    "name": "כסרא-סמיע",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "300781"
+   },
+   {
+    "name": "מגן",
+    "city": "מגן",
+    "district": "דרום",
+    "bruto_dunam": "298302"
+   },
+   {
+    "name": "ג'דידה מכר",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "298171"
+   },
+   {
+    "name": "חיפה - תכנית מאוחדת",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "293114"
+   },
+   {
+    "name": "טללים",
+    "city": "טללים",
+    "district": "דרום",
+    "bruto_dunam": "292737"
+   },
+   {
+    "name": "יפיע - אזור תעסוקה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "288499"
+   },
+   {
+    "name": "גורן",
+    "city": "גורן",
+    "district": "צופן",
+    "bruto_dunam": "287018"
+   },
+   {
+    "name": "נצרת צפוני - נצרת ריינה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "286733"
+   },
+   {
+    "name": "גבעת ברנר",
+    "city": "גבעת ברנר",
+    "district": "מרכז",
+    "bruto_dunam": "282575"
+   },
+   {
+    "name": "כסייפה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "279135"
+   },
+   {
+    "name": "ברקאי",
+    "city": "ברקאי",
+    "district": "חיפה",
+    "bruto_dunam": "276322"
+   },
+   {
+    "name": "שטח תעשיה על-יד בלו-בנד",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "272535"
+   },
+   {
+    "name": "אכזיב",
+    "city": "לימן",
+    "district": "צפון",
+    "bruto_dunam": "269292"
+   },
+   {
+    "name": "גברעם",
+    "city": "גברעם",
+    "district": "דרום",
+    "bruto_dunam": "268349"
+   },
+   {
+    "name": "עין שמר",
+    "city": "עין שמר",
+    "district": "חיפה",
+    "bruto_dunam": "267663"
+   },
+   {
+    "name": "רביבים",
+    "city": "רביבים",
+    "district": "דרום",
+    "bruto_dunam": "262122"
+   },
+   {
+    "name": "מחלף גלילות מערב",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "261583"
+   },
+   {
+    "name": "אדמות החולה - מבואות חרמון",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "261305"
+   },
+   {
+    "name": "שער העמקים",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "258178"
+   },
+   {
+    "name": "רמת הכובש",
+    "city": "רמת הכובש",
+    "district": "מרכז",
+    "bruto_dunam": "246970"
+   },
+   {
+    "name": "יסודות",
+    "city": "יסודות",
+    "district": "מרכז",
+    "bruto_dunam": "243028"
+   },
+   {
+    "name": "תוכנית קקל באזור התעשיה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "240777"
+   },
+   {
+    "name": "שדרות - מתחם 9",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "237163"
+   },
+   {
+    "name": "סעווה",
+    "city": "מולדה",
+    "district": "דרום",
+    "bruto_dunam": "236688"
+   },
+   {
+    "name": "יבנה מזרח - שכונת שורק",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "233142"
+   },
+   {
+    "name": "מרכז אזורי חבל אילות",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "232840"
+   },
+   {
+    "name": "רעים",
+    "city": "רעים",
+    "district": "דרום",
+    "bruto_dunam": "230623"
+   },
+   {
+    "name": "פארק תעשיתי לב השרון",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "227807"
+   },
+   {
+    "name": "תנובות",
+    "city": "תנובות",
+    "district": "מרכז",
+    "bruto_dunam": "227186"
+   },
+   {
+    "name": "יגור 1",
+    "city": "יגור",
+    "district": "חיפה",
+    "bruto_dunam": "227163"
+   },
+   {
+    "name": "פארק תעשיות רותם",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "225087"
+   },
+   {
+    "name": "ארז",
+    "city": "ארז",
+    "district": "דרום",
+    "bruto_dunam": "219133"
+   },
+   {
+    "name": "גן יבנה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "217180"
+   },
+   {
+    "name": "בית יהושע",
+    "city": "בית יהושע",
+    "district": "מרכז",
+    "bruto_dunam": "216593"
+   },
+   {
+    "name": "טול כרם",
+    "city": "טול כרם",
+    "district": "יוש",
+    "bruto_dunam": "215492"
+   },
+   {
+    "name": "ביר הדאג",
+    "city": "ביר הדאג",
+    "district": "דרום",
+    "bruto_dunam": "212644"
+   },
+   {
+    "name": "ניר אליהו",
+    "city": "ניר אליהו",
+    "district": "מרכז",
+    "bruto_dunam": "211565"
+   },
+   {
+    "name": "משמרות",
+    "city": "משמרות",
+    "district": "חיפה",
+    "bruto_dunam": "211377"
+   },
+   {
+    "name": "נצרת",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "210028"
+   },
+   {
+    "name": "נחשונים",
+    "city": "נחשונים",
+    "district": "מרכז",
+    "bruto_dunam": "209332"
+   },
+   {
+    "name": "עתלית",
+    "city": "עתלית",
+    "district": "חיפה",
+    "bruto_dunam": "207314"
+   },
+   {
+    "name": "כפר המכבי",
+    "city": "כפר המכבי",
+    "district": "חיפה",
+    "bruto_dunam": "206850"
+   },
+   {
+    "name": "זכרון יעקב מזרח",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "205206"
+   },
+   {
+    "name": "מעברות",
+    "city": "מעברות",
+    "district": "מרכז",
+    "bruto_dunam": "203913"
+   },
+   {
+    "name": "כפר יונה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "199734"
+   },
+   {
+    "name": "מחלף עתלית - אזור תעסוקה",
+    "city": "עתלית",
+    "district": "חיפה",
+    "bruto_dunam": "199703"
+   },
+   {
+    "name": "יד חנה",
+    "city": "יד חנה",
+    "district": "מרכז",
+    "bruto_dunam": "199376"
+   },
+   {
+    "name": "גזר",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "197747"
+   },
+   {
+    "name": "שפיים",
+    "city": "שפיים",
+    "district": "מרכז",
+    "bruto_dunam": "197104"
+   },
+   {
+    "name": "עפולה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "192946"
+   },
+   {
+    "name": "חולדה",
+    "city": "חולדה",
+    "district": "מרכז",
+    "bruto_dunam": "192696"
+   },
+   {
+    "name": "גרנות",
+    "city": "גן שמואל",
+    "district": "צפון",
+    "bruto_dunam": "192381"
+   },
+   {
+    "name": "צמח מפעלים",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "189311"
+   },
+   {
+    "name": "בוקעתה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "186949"
+   },
+   {
+    "name": "פארק  מחזור  חירייה",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "185958"
+   },
+   {
+    "name": "שדות ים",
+    "city": "שדות ים",
+    "district": "חיפה",
+    "bruto_dunam": "185766"
+   },
+   {
+    "name": "נען",
+    "city": "נען",
+    "district": "מרכז",
+    "bruto_dunam": "178419"
+   },
+   {
+    "name": "מילס כימקלים ישראלים בעמ",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "178353"
+   },
+   {
+    "name": "מפעלי חמוצים בית השיטה",
+    "city": "בית השיטה",
+    "district": "צפון",
+    "bruto_dunam": "177793"
+   },
+   {
+    "name": "קטורה",
+    "city": "קטורה",
+    "district": "דרום",
+    "bruto_dunam": "176259"
+   },
+   {
+    "name": "עמנואל",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "175840"
+   },
+   {
+    "name": "לקיה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "174715"
+   },
+   {
+    "name": "מענית",
+    "city": "מענית",
+    "district": "חיפה",
+    "bruto_dunam": "174189"
+   },
+   {
+    "name": "יגור 2",
+    "city": "יגור",
+    "district": "חיפה",
+    "bruto_dunam": "173473"
+   },
+   {
+    "name": "מבקיעים",
+    "city": "מבקיעים",
+    "district": "דרום",
+    "bruto_dunam": "172917"
+   },
+   {
+    "name": "עין כרמל",
+    "city": "עין כרמל",
+    "district": "חיפה",
+    "bruto_dunam": "170763"
+   },
+   {
+    "name": "ניר עציון",
+    "city": "ניר עציון",
+    "district": "חיפה",
+    "bruto_dunam": "170255"
+   },
+   {
+    "name": "עינת",
+    "city": "עינת",
+    "district": "מרכז",
+    "bruto_dunam": "168430"
+   },
+   {
+    "name": "באקה אל גרביה -  אזור תעסוקה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "167961"
+   },
+   {
+    "name": "משמר הנגב",
+    "city": "משמר הנגב",
+    "district": "דרום",
+    "bruto_dunam": "167930"
+   },
+   {
+    "name": "לאה גולדברג - לוד",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "167147"
+   },
+   {
+    "name": "רמת יוחנן",
+    "city": "רמת יוחנן",
+    "district": "חיפה",
+    "bruto_dunam": "165843"
+   },
+   {
+    "name": "עין המפרץ",
+    "city": "עין המפרץ",
+    "district": "צפון",
+    "bruto_dunam": "165447"
+   },
+   {
+    "name": "כפר ברא",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "164664"
+   },
+   {
+    "name": "פארק תעסוקה כרמון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "163518"
+   },
+   {
+    "name": "מג'אר",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "161584"
+   },
+   {
+    "name": "טירת הכרמל - מתחם החותרים",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "160472"
+   },
+   {
+    "name": "מצר",
+    "city": "מצר",
+    "district": "חיפה",
+    "bruto_dunam": "159538"
+   },
+   {
+    "name": "נהריה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "154323"
+   },
+   {
+    "name": "דאלית אל כרמל",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "153668"
+   },
+   {
+    "name": "ג'וליס",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "153532"
+   },
+   {
+    "name": "נווה זוהר",
+    "city": "נווה זוהר",
+    "district": "דרום",
+    "bruto_dunam": "152732"
+   },
+   {
+    "name": "מכחול",
+    "city": "מכחול",
+    "district": "דרום",
+    "bruto_dunam": "152650"
+   },
+   {
+    "name": "נצר סרני דרום",
+    "city": "נצר סרני",
+    "district": "מרכז",
+    "bruto_dunam": "150078"
+   },
+   {
+    "name": "יקום",
+    "city": "יקום",
+    "district": "מרכז",
+    "bruto_dunam": "148401"
+   },
+   {
+    "name": "דביר",
+    "city": "דבירה",
+    "district": "דרום",
+    "bruto_dunam": "147000"
+   },
+   {
+    "name": "בני ברק - א״ת דרומי",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "146756"
+   },
+   {
+    "name": "רגבים",
+    "city": "רגבים",
+    "district": "חיפה",
+    "bruto_dunam": "144682"
+   },
+   {
+    "name": "אושה",
+    "city": "אושה",
+    "district": "חיפה",
+    "bruto_dunam": "143931"
+   },
+   {
+    "name": "חורה",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "143272"
+   },
+   {
+    "name": "מגל",
+    "city": "מגל",
+    "district": "חיפה",
+    "bruto_dunam": "143111"
+   },
+   {
+    "name": "חורשים",
+    "city": "חורשים",
+    "district": "מרכז",
+    "bruto_dunam": "142160"
+   },
+   {
+    "name": "כפר גליקסון",
+    "city": "כפר גליקסון",
+    "district": "חיפה",
+    "bruto_dunam": "141150"
+   },
+   {
+    "name": "מסעדה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "140603"
+   },
+   {
+    "name": "קצר א-סר",
+    "city": "קצר א-סר",
+    "district": "דרום",
+    "bruto_dunam": "139089"
+   },
+   {
+    "name": "אשדות יעקב (מאוחד)",
+    "city": "אשדות יעקב",
+    "district": "צפון",
+    "bruto_dunam": "137349"
+   },
+   {
+    "name": "צוקים",
+    "city": "צוקים",
+    "district": "דרום",
+    "bruto_dunam": "136370"
+   },
+   {
+    "name": "יד בנימינה",
+    "city": "יד בנימינה",
+    "district": "מרכז",
+    "bruto_dunam": "135967"
+   },
+   {
+    "name": "בני דרור",
+    "city": "בני דרור",
+    "district": "מרכז",
+    "bruto_dunam": "135880"
+   },
+   {
+    "name": "שילת",
+    "city": "שילת",
+    "district": "מרכז",
+    "bruto_dunam": "132780"
+   },
+   {
+    "name": "עין חרוד",
+    "city": "עין חרוד",
+    "district": "צפון",
+    "bruto_dunam": "132660"
+   },
+   {
+    "name": "נצר סרני צפון",
+    "city": "נצר סרני",
+    "district": "מרכז",
+    "bruto_dunam": "131986"
+   },
+   {
+    "name": "נווה צוף",
+    "city": "נווה צוף",
+    "district": "יוש",
+    "bruto_dunam": "129799"
+   },
+   {
+    "name": "ברור חיל",
+    "city": "ברור חיל",
+    "district": "דרום",
+    "bruto_dunam": "129525"
+   },
+   {
+    "name": "מזכרת בתיה - אזור תעסוקה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "126657"
+   },
+   {
+    "name": "מבועים",
+    "city": "מבועים",
+    "district": "דרום",
+    "bruto_dunam": "125835"
+   },
+   {
+    "name": "המעפיל",
+    "city": "המעפיל",
+    "district": "מרכז",
+    "bruto_dunam": "125624"
+   },
+   {
+    "name": "נחשולים",
+    "city": "נחשולים",
+    "district": "חיפה",
+    "bruto_dunam": "124697"
+   },
+   {
+    "name": "קרית עתידים",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "124460"
+   },
+   {
+    "name": "מחצבת הגליל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "124249"
+   },
+   {
+    "name": "אגיס",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "123809"
+   },
+   {
+    "name": "יפתח",
+    "city": "יפתח",
+    "district": "צפון",
+    "bruto_dunam": "123163"
+   },
+   {
+    "name": "כברי",
+    "city": "כברי",
+    "district": "צפון",
+    "bruto_dunam": "122407"
+   },
+   {
+    "name": "עלומים",
+    "city": "עלומים",
+    "district": "דרום",
+    "bruto_dunam": "121850"
+   },
+   {
+    "name": "איכסאל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "121664"
+   },
+   {
+    "name": "ספיר",
+    "city": " ",
+    "district": "תל-אביב",
+    "bruto_dunam": "120247"
+   },
+   {
+    "name": "דליה",
+    "city": "דליה",
+    "district": "דרום",
+    "bruto_dunam": "119589"
+   },
+   {
+    "name": "נורדיה",
+    "city": "נורדיה",
+    "district": "מרכז",
+    "bruto_dunam": "119027"
+   },
+   {
+    "name": "שער הירדן",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "117827"
+   },
+   {
+    "name": "אילת ע.ידע",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "115924"
+   },
+   {
+    "name": "אזור מכונים ימיים - אילת מזרח",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "115365"
+   },
+   {
+    "name": "ערערה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "112923"
+   },
+   {
+    "name": "שדה נחמיה",
+    "city": "שדה נחמיה",
+    "district": "צפון",
+    "bruto_dunam": "112686"
+   },
+   {
+    "name": "י-ם פסגת-זאב",
+    "city": " ",
+    "district": "ירשולים",
+    "bruto_dunam": "112207"
+   },
+   {
+    "name": "שמיר",
+    "city": "שמיר",
+    "district": "צפון",
+    "bruto_dunam": "112023"
+   },
+   {
+    "name": "אזור תעשיה ומלאכה עי גשר - פז",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "110983"
+   },
+   {
+    "name": "הבונים",
+    "city": "הבונים",
+    "district": "חיפה",
+    "bruto_dunam": "109533"
+   },
+   {
+    "name": "אדמות ק.ק.ל וחברת גב - ים - אזור תעשיה ב",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "109073"
+   },
+   {
+    "name": "דרום בנימינה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "108135"
+   },
+   {
+    "name": "בני דרום",
+    "city": "בני דרום",
+    "district": "מרכז",
+    "bruto_dunam": "107782"
+   },
+   {
+    "name": "ראמה-סאג'ור",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "104572"
+   },
+   {
+    "name": "החותרים",
+    "city": "החותרים",
+    "district": "חיפה",
+    "bruto_dunam": "104447"
+   },
+   {
+    "name": "באקה אל גרביה -  תעשיה ומלאכה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "102774"
+   },
+   {
+    "name": "רכסים",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "102612"
+   },
+   {
+    "name": "להבות חביבה",
+    "city": "להבות חביבה",
+    "district": "חיפה",
+    "bruto_dunam": "101844"
+   },
+   {
+    "name": "גבעת ציון",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "99653"
+   },
+   {
+    "name": "גוש חלב",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "99638"
+   },
+   {
+    "name": "תל יצחק",
+    "city": "תל יצחק",
+    "district": "מרכז",
+    "bruto_dunam": "97980"
+   },
+   {
+    "name": "מפעלי סיד",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "97732"
+   },
+   {
+    "name": "כרמיה",
+    "city": "כרמיה",
+    "district": "דרום",
+    "bruto_dunam": "96616"
+   },
+   {
+    "name": "פארק אדיסון (ספן)",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "94995"
+   },
+   {
+    "name": "דן",
+    "city": "דן",
+    "district": "צפון",
+    "bruto_dunam": "94569"
+   },
+   {
+    "name": "מרום גולן",
+    "city": "מרום גולן",
+    "district": "צפון",
+    "bruto_dunam": "92794"
+   },
+   {
+    "name": "מפעל גלעמ",
+    "city": "מענית",
+    "district": "מרכז",
+    "bruto_dunam": "90550"
+   },
+   {
+    "name": "זכרון יעקב",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "90085"
+   },
+   {
+    "name": "עשרת",
+    "city": "עשרת",
+    "district": "מרכז",
+    "bruto_dunam": "90080"
+   },
+   {
+    "name": "בני ברק - אזור תעשיה ישן אהרונוביץ",
+    "city": " ",
+    "district": "תל אביב",
+    "bruto_dunam": "88867"
+   },
+   {
+    "name": "מעיליא",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "88312"
+   },
+   {
+    "name": "גרופית",
+    "city": "גרופית",
+    "district": "דרום",
+    "bruto_dunam": "88274"
+   },
+   {
+    "name": "עידן",
+    "city": "עידן",
+    "district": "דרום",
+    "bruto_dunam": "88087"
+   },
+   {
+    "name": "עין חצבה",
+    "city": "עין חצבה",
+    "district": "דרום",
+    "bruto_dunam": "88064"
+   },
+   {
+    "name": "בת תפר",
+    "city": "בת תפר",
+    "district": "מרכז",
+    "bruto_dunam": "86821"
+   },
+   {
+    "name": "ג'ת",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "86478"
+   },
+   {
+    "name": "גזית",
+    "city": "גזית",
+    "district": "צפון",
+    "bruto_dunam": "84937"
+   },
+   {
+    "name": "עילוט",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "84405"
+   },
+   {
+    "name": "לבון",
+    "city": "לבון",
+    "district": "צפון",
+    "bruto_dunam": "83797"
+   },
+   {
+    "name": "יזרעאל",
+    "city": "יזרעאל",
+    "district": "צפון",
+    "bruto_dunam": "83016"
+   },
+   {
+    "name": "הזורע",
+    "city": "הזורע",
+    "district": "צפון",
+    "bruto_dunam": "82922"
+   },
+   {
+    "name": "ביר אל מכסור",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "82659"
+   },
+   {
+    "name": "מנחמיה",
+    "city": "מנחמיה",
+    "district": "צפון",
+    "bruto_dunam": "82428"
+   },
+   {
+    "name": "קדרים",
+    "city": "קדרים",
+    "district": "צפון",
+    "bruto_dunam": "81408"
+   },
+   {
+    "name": "ערוער",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "81255"
+   },
+   {
+    "name": "ביתר עילית",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "76535"
+   },
+   {
+    "name": "רמות מנשה",
+    "city": "רמות מנשה",
+    "district": "דרום",
+    "bruto_dunam": "75026"
+   },
+   {
+    "name": "גיל-עמל - אזור תעסוקה",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "74170"
+   },
+   {
+    "name": "מחניים",
+    "city": "מחניים",
+    "district": "צפון",
+    "bruto_dunam": "74063"
+   },
+   {
+    "name": "תראבין א צאנע",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "72383"
+   },
+   {
+    "name": "עמיר",
+    "city": "עמיר",
+    "district": "צפון",
+    "bruto_dunam": "71024"
+   },
+   {
+    "name": "אבו סנאן",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "70269"
+   },
+   {
+    "name": "מירון",
+    "city": "מירון",
+    "district": "צפון",
+    "bruto_dunam": "68481"
+   },
+   {
+    "name": "מפלסים",
+    "city": "מפלסים",
+    "district": "דרום",
+    "bruto_dunam": "67996"
+   },
+   {
+    "name": "כדורי",
+    "city": "כדורי",
+    "district": "צפון",
+    "bruto_dunam": "67540"
+   },
+   {
+    "name": "זרזיר",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "66876"
+   },
+   {
+    "name": "עיילבון",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "65957"
+   },
+   {
+    "name": "גניר",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "64351"
+   },
+   {
+    "name": "מחצבות פטיש",
+    "city": "איבים",
+    "district": "דרום",
+    "bruto_dunam": "63719"
+   },
+   {
+    "name": "אריאל מלאכה",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "63241"
+   },
+   {
+    "name": "פוריידיס צפון -אזור תעסוקה",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "62529"
+   },
+   {
+    "name": "אל סייד",
+    "city": "אל סייד",
+    "district": "דרום",
+    "bruto_dunam": "60542"
+   },
+   {
+    "name": "שכונת אל-סייד",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "59516"
+   },
+   {
+    "name": "כפר הנוער הדתי",
+    "city": "כפר הנוער הדתי",
+    "district": "חיפה",
+    "bruto_dunam": "59457"
+   },
+   {
+    "name": "קרית ים ד",
+    "city": " ",
+    "district": "חיפה",
+    "bruto_dunam": "57119"
+   },
+   {
+    "name": "ניר צבי",
+    "city": "ניר צבי",
+    "district": "מרכז",
+    "bruto_dunam": "56280"
+   },
+   {
+    "name": "חומש",
+    "city": "חומש",
+    "district": "יוש",
+    "bruto_dunam": "55477"
+   },
+   {
+    "name": "לוד - מתחם הרכבת",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "53603"
+   },
+   {
+    "name": "בועינה-נוג'ידת",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "53534"
+   },
+   {
+    "name": "משמר דוד",
+    "city": "משמר דוד",
+    "district": "מרכז",
+    "bruto_dunam": "51398"
+   },
+   {
+    "name": "עין מאהל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "45489"
+   },
+   {
+    "name": "דיר חנא",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "45036"
+   },
+   {
+    "name": "עראבה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "44145"
+   },
+   {
+    "name": "חצבה",
+    "city": "חצבה",
+    "district": "דרום",
+    "bruto_dunam": "43410"
+   },
+   {
+    "name": "פורייה - נווה עובד",
+    "city": "פורייה - נווה עובד",
+    "district": "צפון",
+    "bruto_dunam": "40277"
+   },
+   {
+    "name": "גן-נר",
+    "city": "גן נר",
+    "district": "צפון",
+    "bruto_dunam": "39037"
+   },
+   {
+    "name": "יבנאל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "38825"
+   },
+   {
+    "name": "שפרעם",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "34709"
+   },
+   {
+    "name": "יסוד-המעלה",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "29752"
+   },
+   {
+    "name": "קריית ענבים",
+    "city": "קריית ענבים",
+    "district": "ירושלים",
+    "bruto_dunam": "28314"
+   },
+   {
+    "name": "זמר",
+    "city": " ",
+    "district": "מרכז",
+    "bruto_dunam": "28219"
+   },
+   {
+    "name": "אפרת",
+    "city": "אפרת",
+    "district": "יוש",
+    "bruto_dunam": "28216"
+   },
+   {
+    "name": "ירכא",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "27319"
+   },
+   {
+    "name": "שתולה",
+    "city": "שתולה",
+    "district": "צפון",
+    "bruto_dunam": "22153"
+   },
+   {
+    "name": "אלקנה",
+    "city": " ",
+    "district": "יוש",
+    "bruto_dunam": "13997"
+   },
+   {
+    "name": "ערב-שבלי",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "11035"
+   },
+   {
+    "name": "מרחבים",
+    "city": " ",
+    "district": "דרום",
+    "bruto_dunam": "10617"
+   },
+   {
+    "name": "אלון שבות",
+    "city": "אלון שבות",
+    "district": "יוש",
+    "bruto_dunam": "9820"
+   },
+   {
+    "name": "אור הגנוז",
+    "city": "אור הגנוז",
+    "district": "צפון",
+    "bruto_dunam": "9711"
+   },
+   {
+    "name": "הרחבה כרמיאל",
+    "city": " ",
+    "district": "צפון",
+    "bruto_dunam": "0"
+   }
+  ]
+ },
  "mot": {
   "total": 0,
   "missing": []
