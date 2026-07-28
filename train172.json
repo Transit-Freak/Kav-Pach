@@ -1,0 +1,327 @@
+{
+ "trainNumber": 172,
+ "orignStation": 4600,
+ "destinationStation": 700,
+ "originPlatform": 1,
+ "predictedPctLoad": 47,
+ "destPlatform": 2,
+ "freeSeats": 0,
+ "arrivalTime": "2026-07-28T17:52:00",
+ "departureTime": "2026-07-28T16:21:00",
+ "handicap": 1,
+ "carriagetype": null,
+ "isSamePlatformIsland": "No",
+ "trainPosition": {
+  "currentLastStation": 3600,
+  "nextStation": 2800,
+  "calcDiffMinutes": 3
+ },
+ "stopStations": [
+  {
+   "stationId": 3700,
+   "arrivalTime": "2026-07-28T16:26:00",
+   "departureTime": "2026-07-28T16:28:00",
+   "platform": 1,
+   "predictedPctLoad": 64
+  },
+  {
+   "stationId": 3600,
+   "arrivalTime": "2026-07-28T16:31:00",
+   "departureTime": "2026-07-28T16:31:00",
+   "platform": 1,
+   "predictedPctLoad": 81
+  },
+  {
+   "stationId": 2800,
+   "arrivalTime": "2026-07-28T17:01:00",
+   "departureTime": "2026-07-28T17:01:00",
+   "platform": 2,
+   "predictedPctLoad": 60
+  },
+  {
+   "stationId": 2500,
+   "arrivalTime": "2026-07-28T17:14:00",
+   "departureTime": "2026-07-28T17:14:00",
+   "platform": 2,
+   "predictedPctLoad": 53
+  },
+  {
+   "stationId": 2300,
+   "arrivalTime": "2026-07-28T17:24:00",
+   "departureTime": "2026-07-28T17:24:00",
+   "platform": 1,
+   "predictedPctLoad": 39
+  },
+  {
+   "stationId": 2200,
+   "arrivalTime": "2026-07-28T17:31:00",
+   "departureTime": "2026-07-28T17:31:00",
+   "platform": 1,
+   "predictedPctLoad": 38
+  },
+  {
+   "stationId": 2100,
+   "arrivalTime": "2026-07-28T17:35:00",
+   "departureTime": "2026-07-28T17:35:00",
+   "platform": 2,
+   "predictedPctLoad": 35
+  },
+  {
+   "stationId": 1220,
+   "arrivalTime": "2026-07-28T17:43:00",
+   "departureTime": "2026-07-28T17:43:00",
+   "platform": 2,
+   "predictedPctLoad": 31
+  },
+  {
+   "stationId": 1300,
+   "arrivalTime": "2026-07-28T17:48:00",
+   "departureTime": "2026-07-28T17:48:00",
+   "platform": 2,
+   "predictedPctLoad": 29
+  }
+ ],
+ "routeStations": [
+  {
+   "stationId": 400,
+   "arrivalTime": "15:48",
+   "predictedPctLoad": 10,
+   "platform": 4
+  },
+  {
+   "stationId": 300,
+   "arrivalTime": "15:54",
+   "predictedPctLoad": 14,
+   "platform": 2
+  },
+  {
+   "stationId": 8600,
+   "arrivalTime": "16:05",
+   "predictedPctLoad": 27,
+   "platform": 2
+  },
+  {
+   "stationId": 4900,
+   "arrivalTime": "16:16",
+   "predictedPctLoad": 29,
+   "platform": 1
+  },
+  {
+   "stationId": 4600,
+   "arrivalTime": "16:21",
+   "predictedPctLoad": 47,
+   "platform": 1
+  },
+  {
+   "stationId": 3700,
+   "arrivalTime": "16:28",
+   "predictedPctLoad": 64,
+   "platform": 1
+  },
+  {
+   "stationId": 3600,
+   "arrivalTime": "16:31",
+   "predictedPctLoad": 81,
+   "platform": 1
+  },
+  {
+   "stationId": 2800,
+   "arrivalTime": "17:01",
+   "predictedPctLoad": 60,
+   "platform": 2
+  },
+  {
+   "stationId": 2500,
+   "arrivalTime": "17:14",
+   "predictedPctLoad": 53,
+   "platform": 2
+  },
+  {
+   "stationId": 2300,
+   "arrivalTime": "17:24",
+   "predictedPctLoad": 39,
+   "platform": 1
+  },
+  {
+   "stationId": 2200,
+   "arrivalTime": "17:31",
+   "predictedPctLoad": 38,
+   "platform": 1
+  },
+  {
+   "stationId": 2100,
+   "arrivalTime": "17:35",
+   "predictedPctLoad": 35,
+   "platform": 2
+  },
+  {
+   "stationId": 1220,
+   "arrivalTime": "17:43",
+   "predictedPctLoad": 31,
+   "platform": 2
+  },
+  {
+   "stationId": 1300,
+   "arrivalTime": "17:48",
+   "predictedPctLoad": 29,
+   "platform": 2
+  },
+  {
+   "stationId": 700,
+   "arrivalTime": "17:52",
+   "predictedPctLoad": 26,
+   "platform": 2
+  },
+  {
+   "stationId": 1400,
+   "arrivalTime": "17:55",
+   "predictedPctLoad": 22,
+   "platform": 2
+  },
+  {
+   "stationId": 1500,
+   "arrivalTime": "18:04",
+   "predictedPctLoad": 16,
+   "platform": 1
+  },
+  {
+   "stationId": 1600,
+   "arrivalTime": "18:13",
+   "predictedPctLoad": 1,
+   "platform": 3
+  }
+ ],
+ "etaDiffTimes": [
+  {
+   "stationId": 2800,
+   "difMin": 2
+  },
+  {
+   "stationId": 1220,
+   "difMin": 0
+  },
+  {
+   "stationId": 1300,
+   "difMin": 0
+  },
+  {
+   "stationId": 700,
+   "difMin": 0
+  },
+  {
+   "stationId": 1400,
+   "difMin": 0
+  }
+ ],
+ "visaWagonData": {
+  "totkr": 9,
+  "kvsgkR_MOVIL": "NS80",
+  "kvsgkR_LAST": "KT14",
+  "seatplaces": 1158,
+  "updateDate": "2026-07-28",
+  "updateTime": "16:41:49",
+  "wagons": [
+   {
+    "krsid": 48,
+    "shurA2": 1,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי כח+ניהוג",
+    "kvsgkr": "NS80",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": false,
+    "driving": true
+   },
+   {
+    "krsid": 140,
+    "shurA2": 6,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי נכים",
+    "kvsgkr": "NS82",
+    "handicapped": true,
+    "bicycle": false,
+    "urban": false,
+    "driving": false
+   },
+   {
+    "krsid": 201,
+    "shurA2": 4,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי",
+    "kvsgkr": "NS81",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": false,
+    "driving": false
+   },
+   {
+    "krsid": 211,
+    "shurA2": 5,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי",
+    "kvsgkr": "NS81",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": false,
+    "driving": false
+   },
+   {
+    "krsid": 251,
+    "shurA2": 2,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי",
+    "kvsgkr": "NS81",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": false,
+    "driving": false
+   },
+   {
+    "krsid": 473,
+    "shurA2": 3,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי",
+    "kvsgkr": "NS81",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": false,
+    "driving": false
+   },
+   {
+    "krsid": 486,
+    "shurA2": 8,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי אורבני",
+    "kvsgkr": "NS83",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": true,
+    "driving": false
+   },
+   {
+    "krsid": 488,
+    "shurA2": 7,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי אורבני",
+    "kvsgkr": "NS83",
+    "handicapped": false,
+    "bicycle": false,
+    "urban": true,
+    "driving": false
+   },
+   {
+    "krsid": 802,
+    "shurA2": 9,
+    "krsG3": "DD",
+    "wagoN_TEUR_DISPLAY": "דו קומתי אופניים",
+    "kvsgkr": "NS84",
+    "handicapped": false,
+    "bicycle": true,
+    "urban": false,
+    "driving": false
+   }
+  ]
+ },
+ "isDestinationLimited": false,
+ "availableSeats": null
+}

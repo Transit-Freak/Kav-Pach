@@ -1,0 +1,15 @@
+stations https://rail-api.rail.co.il/common/api/v1/stations -> <HTTPError 404: 'Not Found'>
+stations https://rail-api.rail.co.il/rjpa/api/v1/stations -> <HTTPError 404: 'Not Found'>
+query 4600->700 @15:00 : 33 travels
+  >>> found train 172 via 4600->700
+
+=== רכבת 172 — נתון חי מ-rail.co.il ===
+orign=4600 dest=700 dep=2026-07-28T16:21:00 arr=2026-07-28T17:52:00
+etaDiffTimes (5 ערכים):
+   תחנה 2800 (?): איחור 2 דק'
+   תחנה 1220 (?): איחור 0 דק'
+   תחנה 1300 (?): איחור 0 דק'
+   תחנה 700 (?): איחור 0 דק'
+   תחנה 1400 (?): איחור 0 דק'
+
+** האיחור הנוכחי של רכבת 172: 2 דקות **
