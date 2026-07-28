@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   compute:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
