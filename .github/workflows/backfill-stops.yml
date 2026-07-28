@@ -52,6 +52,9 @@ jobs:
             python3 tools/backfill_stops.py
           rm -f line-history/data/.stops-canary
 
+      - name: הפרשי תחנות בין גרסאות שמולאו (מקומי, בלי רשת)
+        run: OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+
       - name: Commit (לענף שהריץ)
         run: |
           set -euo pipefail

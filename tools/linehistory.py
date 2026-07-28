@@ -416,7 +416,16 @@ print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {
 def idx_entry(rdesc, line, dest, op, ty):
     vs = jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {}).get('versions', [])
     e = {'rd': rdesc, 'line': line, 'dest': dest[:80], 'op': op, 'ty': ty, 'v': len(vs)}
-    ks = sorted({v['k'] for v in vs if v['k'] != 'baseline'})
+    ks = {v['k'] for v in vs if v['k'] != 'baseline'}
+    # גרסאות ארכיון שהועשרו בהפרשי תחנות (enrich_stop_diffs) נספרות גם
+    # בקטגוריות התחנות — אחרת ההיסטוריה של 2022–2026 לא מופיעה שם בכלל
+    for v in vs:
+        if v.get('src') == 'ob' and v.get('k') != 'removed':
+            a, r = v.get('add'), v.get('rem')
+            if a and r: ks.add('stops')
+            elif a: ks.add('stops-add')
+            elif r: ks.add('stops-del')
+    ks = sorted(ks)
     if ks: e['ks'] = ks
     if vs: e['lk'] = vs[-1]['k']; e['ld'] = vs[-1]['d']
     return e
