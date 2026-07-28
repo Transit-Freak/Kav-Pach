@@ -35,5 +35,58 @@
  "govmap": {
   "root": null,
   "missing_candidates": []
+ },
+ "datagov": {
+  "hits": [
+   {
+    "title": "תחום אזורי תעשיה תעסוקה",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "name": "industrial",
+    "resources": [
+     {
+      "format": "SHP",
+      "url": "https://data.gov.il/dataset/8db5effd-59ca-44ef-b561-86e0ce2911d1/resource/c9447ab4-f167-4194-92e4-a5718915004c/download/industrial.zip"
+     },
+     {
+      "format": "KMZ",
+      "url": "https://data.gov.il/dataset/8db5effd-59ca-44ef-b561-86e0ce2911d1/resource/a7b34e8a-fb46-448c-ad3a-244bae6d137c/download/industrial_kmz.zip"
+     },
+     {
+      "format": "CSV",
+      "url": "https://data.gov.il/dataset/8db5effd-59ca-44ef-b561-86e0ce2911d1/resource/71799e72-7a1f-45cf-9d81-5cd1d5f3b201/download/industrial.csv"
+     },
+     {
+      "format": "PDF",
+      "url": "https://data.gov.il/dataset/8db5effd-59ca-44ef-b561-86e0ce2911d1/resource/f1e63314-8f5e-472a-8733-6496973deaeb/download/industrial.pdf"
+     }
+    ]
+   },
+   {
+    "title": "רשימת איזורי תעשייה",
+    "org": "משרד הכלכלה והתעשייה",
+    "name": "industrial-zones-info",
+    "resources": [
+     {
+      "format": "CSV",
+      "url": "https://data.gov.il/dataset/4acf8b98-776e-4c36-8f98-73cc73fed623/resource/30af8da4-7586-4b00-ac88-c5ee75251632/download/30af8da4-7586-4b00-ac88-c5ee75251632.csv"
+     }
+    ]
+   },
+   {
+    "title": "אזורי תעשייה הנדרשים בביצוע סקר קרקע",
+    "org": "המשרד להגנת הסביבה",
+    "name": "industrialareas",
+    "resources": [
+     {
+      "format": "XML",
+      "url": "https://ims.data.gov.il/sites/default/files/INDUSTRIALAREAS.XML"
+     },
+     {
+      "format": "",
+      "url": "https://data.gov.il/dataset/76518902-7002-4fa2-8b55-8a97e2570437/resource/9cf4dbf5-19cc-448b-8d89-2b858e3fbcf4/download/industrial_areas.zip"
+     }
+    ]
+   }
+  ]
  }
 }
