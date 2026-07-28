@@ -55,6 +55,11 @@ jobs:
       - name: הפרשי תחנות בין גרסאות שמולאו (מקומי, בלי רשת)
         run: OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
 
+      - name: איתור תאריך לשינויי תחנות — חיפוש בינארי בארכיון
+        run: |
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=45 \
+            python3 tools/backfill_stop_dates.py
+
       - name: Commit (לענף שהריץ)
         run: |
           set -euo pipefail
