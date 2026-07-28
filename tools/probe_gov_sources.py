@@ -194,6 +194,37 @@ try:
             recs = ds.get('result', {}).get('records', [])
             flds = [f['id'] for f in ds.get('result', {}).get('fields', [])]
             print('datastore: רשומות:', len(recs), '| שדות:', flds)
+            # אין קואורדינטות ב-CSV (הגאומטריה ב-SHP חסום) — מצליבים לפי שם+עיר
+            if recs and 'NAME' in flds:
+                def norm(s):
+                    s = str(s or '')
+                    for w in ('אזור התעשייה', 'אזור תעשייה', 'אזור תעשיה', 'אזה"ת', 'א.ת.', 'א.ת',
+                              'פארק תעשיות', 'פארק תעשייה', 'פארק תעשיה', 'אזור תעסוקה', 'פארק תעסוקה',
+                              'קרית', 'קריית', '"', "'", '-', '(', ')'):
+                        s = s.replace(w, ' ')
+                    return set(t for t in s.split() if len(t) > 1)
+                site = [(norm(p['name']) | norm(p.get('city')), p['name'], p.get('city', '')) for p in parks]
+                matched = 0
+                missing_nc = []
+                for at in recs:
+                    toks = norm(at.get('NAME')) | norm(at.get('CITY'))
+                    best = 0
+                    for stoks, snm, scity in site:
+                        ov = len(toks & stoks)
+                        if ov > best:
+                            best = ov
+                    if best >= 2:
+                        matched += 1
+                    else:
+                        missing_nc.append({'name': str(at.get('NAME') or '')[:60],
+                                           'city': str(at.get('CITY') or '')[:30],
+                                           'district': str(at.get('DISTRICT') or '')[:20],
+                                           'bruto_dunam': at.get('BRUTOAREA')})
+                missing_nc.sort(key=lambda z: -(z['bruto_dunam'] or 0))
+                print(f'הותאמו לאתר: {matched} | ללא התאמה (חסרים כנראה): {len(missing_nc)}')
+                for z in missing_nc[:50]:
+                    print(f"  {z['name'][:44]:46} | {z['city'][:20]:22} | {z['district']:10} | {z['bruto_dunam']} דונם")
+                report['mot_by_name'] = {'total': len(recs), 'matched': matched, 'missing': missing_nc}
             import pyproj
             tr = pyproj.Transformer.from_crs(2039, 4326, always_xy=True)
             for at in recs:
