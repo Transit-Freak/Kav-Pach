@@ -275,12 +275,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const pi = vs.indexOf(v) - 1;
   const pv = pi >= 0 ? vs[pi] : null;
   // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות.
-  // גם המסלול הקודם מוצג כשיש לו לפחות רצף תחנות — כולל מול "תיעוד ראשון"
-  // (בעבר הושוו רק גרסאות עם גאומטריה מדויקת, והמסלול הישן לא הופיע במפה)
   const toPts = (x) => (x.shp ? decodeShape(x.shp) : ((x.stops || []).length > 1 ? x.stops.map((s) => [s[2], s[3]]) : null));
   const approx = !v.shp && (v.stops || []).length > 1;
   const cur = toPts(v) || [];
-  const prev = pv ? toPts(pv) : null;
+  // המסלול הקודם מוצג רק כשיש באמת מה להשוות: הגרסה מתעדת שינוי תחנות
+  // (כולל הפרש-פער מול "תיעוד ראשון") או שינוי מסלול, או ששתי הגרסאות
+  // מדויקות. בלי זה, קירוב-לפי-תחנות מול גאומטריה מלאה מצייר "מסלול ישן"
+  // אדום שנראה כמו שינוי אמיתי כשהמסלול בכלל לא השתנה (בקשת שלמה).
+  const ROUTE_KINDS = new Set(["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"]);
+  const comparable = !!pv && (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
+  const prev = comparable ? toPts(pv) : null;
   const prevApprox = !!(pv && prev && !pv.shp);
   return (
     <div className="linewrap">
@@ -350,7 +354,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       </div>
       <div className="card main">
         <div className="vhead">
-          גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : " — הגרסה המתועדת הראשונה"}
+          גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}
         </div>
         {!v.shp && !approx ? (
           <div className="nogeo">
