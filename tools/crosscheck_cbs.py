@@ -3,11 +3,12 @@
 # בעמוד השכבות של הלמ"ס: העדכנית ביותר היא 2020 בפורמט GDB (נקראת עם fiona),
 # והעדכנית בפורמט SHP היא 2017 (גיבוי, נקראת עם pyshp). ממפה כל אזור תעשייה
 # לאזור הסטטיסטי שמכיל את מרכזו ומדגל אזורים שמחוץ לכל פוליגון.
-# הפלט: parks/data/cbs-crosscheck.json + סיכום ללוג. רץ ב-CI.
+# הפלט: parks/checks/cbs-crosscheck.json (מחוץ ל-parks/data — הריצה השבועית
+# בונה את data מחדש ומוחקת קבצים זרים). רץ ב-CI.
 import io, json, os, re, urllib.parse, urllib.request, zipfile
 
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-OUT = os.environ.get('OUT', 'parks/data/cbs-crosscheck.json')
+OUT = os.environ.get('OUT', 'parks/checks/cbs-crosscheck.json')
 CBS = 'https://www.cbs.gov.il'
 
 def get(url, timeout=300):
