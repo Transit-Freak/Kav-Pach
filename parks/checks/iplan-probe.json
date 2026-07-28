@@ -1,0 +1,229 @@
+{
+ "taba_count": 427,
+ "taba_samples": [
+  [
+   "5207/ג",
+   "גוש חלב"
+  ],
+  [
+   "31/ג/במ",
+   "גן-נר"
+  ],
+  [
+   ".ש/490-ב.ת",
+   "אור-עקיבא"
+  ],
+  [
+   "405/2",
+   "אלון שבות"
+  ],
+  [
+   "94/101/02/4",
+   "אשקלון דרום"
+  ],
+  [
+   "ג/2443",
+   "בית-שאן"
+  ],
+  [
+   "5/32/51/ת",
+   "בית-שמש"
+  ],
+  [
+   "310/3/ת",
+   "מעלה אפריים"
+  ],
+  [
+   "2738",
+   "מנחמיה"
+  ],
+  [
+   "413/ת",
+   "מעלה-עמוס"
+  ]
+ ],
+ "root": "https://ags.iplan.gov.il/arcgisiplan/rest/services",
+ "plan_layers": [
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "קומפילציה הנחיות סביבה"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "שמות_ישובים"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "גבול_התכנית"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "גבול שינוי תממ"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 4,
+   "layer": "שטח בעל חדירות גבוהה למשקעים"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 5,
+   "layer": "שטח חשוף למטרדים"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 6,
+   "layer": "שטח למניעת זיהום מים"
+  },
+  {
+   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "type": "MapServer",
+   "id": 7,
+   "layer": "רגישויות"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "קומפילצית תממ דרום"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "גבול שינויי תממ"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "גבול מחוז"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "אזור לבירור"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 4,
+   "layer": "נקודתי"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 5,
+   "layer": "קווים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 6,
+   "layer": "מגבלות"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 7,
+   "layer": "יערות שמורות וסימונים נוספים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_darom",
+   "type": "MapServer",
+   "id": 8,
+   "layer": "יעודי קרקע"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "קומפילצית תממ חיפה"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "אזורים לבירור"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "גבול שינויי תמ\"מים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "גבול מחוז"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 4,
+   "layer": "סימבולים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 5,
+   "layer": "קווים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 6,
+   "layer": "מגבלות"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_haifa",
+   "type": "MapServer",
+   "id": 7,
+   "layer": "יעודי קרקע"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_jerusalem",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "קומפילצית תממ ירושלים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_jerusalem",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "גבול שינויי תמ\"מים"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_jerusalem",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "גבול מחוז"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_jerusalem",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "נקודה"
+  },
+  {
+   "service": "PlanningPublic/compilation_tmm_jerusalem",
+   "type": "MapServer",
+   "id": 4,
+   "layer": "קווים"
+  }
+ ],
+ "best": null
+}
