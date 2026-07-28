@@ -52,14 +52,45 @@ except Exception as e:
     print('למ"ס: שגיאה —', e)
     report['cbs']['error'] = str(e)
 
-# ---------- 2. govmap / מפ"י ----------
-print('===== מרכז מיפוי ישראל (govmap) =====')
+# ---------- 1ב. data.gov.il — מאגר המידע הממשלתי הפתוח (CKAN) ----------
+# מפ"י והלמ"ס מפרסמות שם שכבות; חיפוש דאטהסטים של תעסוקה/מוקדי עניין
+print('===== data.gov.il =====')
+ckan_hits = []
+try:
+    for q in ('אזורי תעסוקה', 'מוקדי עניין', 'נקודות עניין', 'אזורי תעשייה'):
+        u = ('https://data.gov.il/api/3/action/package_search?'
+             + urllib.parse.urlencode({'q': q, 'rows': 20}))
+        d = jget(u)
+        res = d.get('result', {}).get('results', [])
+        print(f'חיפוש "{q}": {len(res)} דאטהסטים')
+        for pkg in res:
+            org = (pkg.get('organization') or {}).get('title', '')
+            title = pkg.get('title', '')
+            if not re.search(r'תעסוק|תעשי|עניין', title):
+                continue
+            fmts = [(r.get('format', ''), r.get('url', '')) for r in pkg.get('resources', [])]
+            print(f"  * {title} | {org}")
+            for fm, ur in fmts[:4]:
+                print(f"      {fm}: {ur[:110]}")
+            ckan_hits.append({'title': title, 'org': org, 'name': pkg.get('name'),
+                              'resources': [{'format': f, 'url': u2} for f, u2 in fmts]})
+except Exception as e:
+    print('data.gov.il שגיאה:', e)
+# ייחוד לפי שם הדאטהסט
+seen_pkg = set()
+ckan_hits = [h for h in ckan_hits if not (h['name'] in seen_pkg or seen_pkg.add(h['name']))]
+report['datagov'] = {'hits': ckan_hits}
+
+# ---------- 2. govmap / מפ"י + פורטל המפות של הלמ"ס ----------
+print('===== מרכז מיפוי ישראל (govmap) + gis.cbs =====')
 ENDPOINTS = [
-    'https://ags.govmap.gov.il/arcgis/rest/services?f=json',
-    'https://ags.govmap.gov.il/arcgis/rest/services?f=pjson',
-    'https://open.govmap.gov.il/arcgis/rest/services?f=json',
-    'https://gisserver.govmap.gov.il/arcgis/rest/services?f=json',
-    'https://www.govmap.gov.il/arcgis/rest/services?f=json',
+    'https://gis.cbs.gov.il/arcgis/rest/services?f=json',
+    'https://gis.cbs.gov.il/server/rest/services?f=json',
+    'https://ags.govmap.gov.il/arcgis02/rest/services?f=json',
+    'https://ags.govmap.gov.il/proxy/proxy.ashx?https://ags.govmap.gov.il/arcgis/rest/services?f=json',
+    'https://api.govmap.gov.il/arcgis/rest/services?f=json',
+    'https://mapi.gov.il/arcgis/rest/services?f=json',
+    'https://ags.mapi.gov.il/arcgis/rest/services?f=json',
 ]
 root = None
 for url in ENDPOINTS:
@@ -84,9 +115,12 @@ if root:
             fd = jget(f'{base}/{f}?f=json' if f else f'{base}?f=json')
         except Exception as e:
             print('  תיקייה', f, 'שגיאה:', str(e)[:60]); continue
-        for s in fd.get('services', []):
+        svcs = fd.get('services', [])
+        if svcs:
+            print(f'  תיקייה "{f or "/"}": {len(svcs)} שירותים —', ', '.join(s.get('name','')[:40] for s in svcs[:12]))
+        for s in svcs:
             nm = s.get('name', '')
-            if re.search(r'poi|interest|moked|מוקד', nm, re.I):
+            if re.search(r'poi|interest|moked|מוקד|taasuk|employ|תעסוק|תעשי|mifkad|census|landuse', nm, re.I):
                 poi_hits.append({'service': nm, 'type': s.get('type')})
     print('שירותי מוקדי-עניין שאותרו:', len(poi_hits))
     for s in poi_hits:
