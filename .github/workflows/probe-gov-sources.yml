@@ -26,7 +26,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: בדיקת למ"ס + מפ"י
-        run: python3 tools/probe_gov_sources.py
+        run: |
+          python3 -m pip install --quiet pyshp pyproj
+          python3 tools/probe_gov_sources.py
 
       - name: Commit
         run: |

@@ -174,6 +174,66 @@ print('מועמדים חסרים ממוקדי-עניין (700מ׳+ מכל אזו
 for m in uniq[:30]:
     print('  ', m['name'], f"({m['la']},{m['lo']})", f"{m['dist']}מ'")
 
+# ---------- 3. שכבת "תחום אזורי תעשיה תעסוקה" של משרד התחבורה ----------
+# נמצאה ב-data.gov.il (סיבוב ב') — גבולות מדויקים ב-SHP. מורידים, קוראים
+# עם pyshp, ומדווחים כל אזור שמרכזו רחוק 700מ'+ מכל אזור שכבר באתר.
+print('===== משרד התחבורה: תחום אזורי תעשיה תעסוקה =====')
+try:
+    import shapefile   # pyshp
+    meta = jget('https://data.gov.il/api/3/action/package_show?id=8db5effd-59ca-44ef-b561-86e0ce2911d1')
+    shp_url = next(r['url'] for r in meta['result']['resources']
+                   if (r.get('format') or '').upper() == 'SHP')
+    print('מוריד:', shp_url)
+    blob = get(shp_url, timeout=300, binary=True)
+    zf = zipfile.ZipFile(io.BytesIO(blob))
+    names = zf.namelist()
+    print('בקובץ:', names[:10])
+    base = next(n[:-4] for n in names if n.lower().endswith('.shp'))
+    sf = shapefile.Reader(shp=io.BytesIO(zf.read(base + '.shp')),
+                          dbf=io.BytesIO(zf.read(base + '.dbf')),
+                          shx=io.BytesIO(zf.read(base + '.shx')))
+    flds = [f[0] for f in sf.fields[1:]]
+    print('שדות:', flds, '| רשומות:', len(sf))
+    # המרת רשת ישראל (EPSG:2039) ל-WGS84 אם צריך — זיהוי לפי סדרי גודל
+    def itm_to_wgs(x, y):
+        # קירוב מספיק להשוואת מרחקים: פרמטרי ההיטל הרשמיים
+        import pyproj
+        return pyproj.Transformer.from_crs(2039, 4326, always_xy=True).transform(x, y)
+    tr = None
+    mot_zones = []
+    for rec, shp in zip(sf.records(), sf.shapes()):
+        at = dict(zip(flds, rec))
+        nm = next((str(v) for k, v in at.items() if isinstance(v, str) and re.search(r'[א-ת]', str(v))), '')
+        if not shp.points:
+            continue
+        xs = [p[0] for p in shp.points]; ys = [p[1] for p in shp.points]
+        cx, cy = sum(xs) / len(xs), sum(ys) / len(ys)
+        if cx > 1000:   # רשת ישראל — ממירים
+            import pyproj
+            if tr is None:
+                tr = pyproj.Transformer.from_crs(2039, 4326, always_xy=True)
+            lo, la = tr.transform(cx, cy)
+        else:
+            lo, la = cx, cy
+        mot_zones.append({'name': ' '.join(nm.split())[:60], 'la': round(la, 5), 'lo': round(lo, 5),
+                          'attrs': {k: (str(v)[:40] if isinstance(v, str) else v) for k, v in list(at.items())[:6]}})
+    print('אזורים בשכבה:', len(mot_zones))
+    missing_mot = []
+    for z in mot_zones:
+        d0 = known_dist(z['la'], z['lo'])
+        if d0 >= 700:
+            z['dist'] = int(d0)
+            missing_mot.append(z)
+    missing_mot.sort(key=lambda z: -z['dist'])
+    print('חסרים באתר (700מ׳+):', len(missing_mot))
+    for z in missing_mot[:40]:
+        print(f"  {z['name'] or '(בלי שם)':45} ({z['la']},{z['lo']}) {z['dist']}מ'")
+    report['mot'] = {'shp_url': shp_url, 'total': len(mot_zones),
+                     'fields': flds, 'missing': missing_mot}
+except Exception as e:
+    import traceback; traceback.print_exc()
+    report['mot'] = {'error': str(e)}
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump(report, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('wrote', OUT)
