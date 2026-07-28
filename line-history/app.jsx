@@ -357,10 +357,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             🛈 {v.note || "אין פירוט לגרסה זו"}<br />
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
-        ) : (
+        ) : (<>
         <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} prevApprox={prevApprox} curStops={v.stops}
           prevStops={pv && (pv.stops || []).length ? pv.stops : null} />
-        )}
         <div className="legend">
           {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
@@ -368,8 +367,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
         </div>
         {approx
-          ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {v.stops.length} תחנות בגרסה זו.</div>
-          : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {v.stops.length} תחנות בגרסה זו.</div>}
+          ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(v.stops || []).length} תחנות בגרסה זו.</div>
+          : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(v.stops || []).length} תחנות בגרסה זו.</div>}
+        </>)}
       </div>
     </div>
   );
@@ -579,9 +579,22 @@ function App() {
   const [q, setQ] = useState("");
   const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
   const [katOpen, setKatOpen] = useState(false);
-  const [rd, setRd] = useState(null);
+  // דף קו נכנס להיסטוריית הדפדפן (וגם לקישור, אחרי ה-#) — כפתור "אחורה"
+  // בטלפון חוזר לרשימה במקום לצאת מהאתר, וקישור לקו נפתח ישירות עליו
+  const [rd, setRd] = useState(() => decodeURIComponent((location.hash || "").slice(1)) || null);
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
+  useEffect(() => {
+    const onPop = (e) => setRd((e.state && e.state.rd) || null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const openLine = (r) => { history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
+  const switchLine = (r) => { history.replaceState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
+  const backToList = () => {
+    setRd(null);
+    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+  };
   const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/lines.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -647,13 +660,13 @@ function App() {
         </div>
       </header>
       <div className="tabs">
-        <button className={"tab" + (tab === "lines" ? " on" : "")} onClick={() => { setTab("lines"); setRd(null); }}>🚌 קווים</button>
-        <button className={"tab" + (tab === "stops" ? " on" : "")} onClick={() => { setTab("stops"); setRd(null); }}>🚏 תחנות</button>
+        <button className={"tab" + (tab === "lines" ? " on" : "")} onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
+        <button className={"tab" + (tab === "stops" ? " on" : "")} onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
       </div>
       {tab === "stops" ? <StopsTab /> : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
-          onSwitch={setRd} onBack={() => setRd(null)} />
+          onSwitch={switchLine} onBack={backToList} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
@@ -694,7 +707,7 @@ function App() {
           {(needle || kats.size > 0) ? (
             <div className="llist">
               {list.map((l) => (
-                <button key={l.rd} className="lrow" onClick={() => setRd(l.rd)}>
+                <button key={l.rd} className="lrow" onClick={() => openLine(l.rd)}>
                   <span className="badge sm">{l.line}</span>
                   {l.lk === "removed" && (isLineGone(l) ? (
                     <span className="k" style={{ background: isRemovedYear(l) ? "#7f1d1d" : "#dc2626" }}>
