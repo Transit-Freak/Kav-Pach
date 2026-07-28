@@ -112,6 +112,67 @@ for target in ('gtfs.mot.gov.il', 'gtfs.mot.gov.il/gtfsfiles/israel-public-trans
     time.sleep(1)
 report['wayback'] = wb
 
+# ---------- 3. סריקה רחבה: כל תת-הדומיינים של mot.gov.il בווייבק ----------
+print('===== Wayback רחב =====')
+try:
+    u = ('http://web.archive.org/cdx/search/cdx?'
+         + urllib.parse.urlencode({'url': 'mot.gov.il', 'matchType': 'domain',
+                                   'filter': 'urlkey:.*gtfs.*', 'output': 'json',
+                                   'collapse': 'urlkey', 'limit': '500'}))
+    rows = json.loads(get(u, 150))
+    caps = rows[1:] if rows else []
+    print('כתובות GTFS בכל mot.gov.il:', len(caps))
+    for c in caps[:20]:
+        print('  ', c[1], c[2][:100])
+    report['wayback_wide'] = [c[1] + ' ' + c[2][:110] for c in caps[:60]]
+except Exception as e:
+    print('שגיאה:', str(e)[:100]); report['wayback_wide_error'] = str(e)[:150]
+
+# ---------- 4. Zenodo — מאגרי מחקר ----------
+print('===== Zenodo =====')
+try:
+    z = json.loads(get('https://zenodo.org/api/records?' + urllib.parse.urlencode({'q': 'GTFS Israel', 'size': 15}), 90))
+    hits = z.get('hits', {}).get('hits', [])
+    print('תוצאות:', len(hits))
+    zn = []
+    for h in hits:
+        md = h.get('metadata', {})
+        t = md.get('title', '')
+        print('  *', t[:90], '|', md.get('publication_date'), '|', h.get('links', {}).get('self_html', ''))
+        zn.append({'title': t[:100], 'date': md.get('publication_date'), 'url': h.get('links', {}).get('self_html', '')})
+    report['zenodo'] = zn
+except Exception as e:
+    print('שגיאה:', str(e)[:100]); report['zenodo_error'] = str(e)[:150]
+
+# ---------- 5. transit.land — גרסאות פיד היסטוריות ----------
+print('===== transit.land =====')
+for u in ('https://transit.land/api/v2/rest/feeds?search=israel',
+          'https://transit.land/api/v2/rest/feeds?onestop_id=f-sv8y~israelministryoftransport'):
+    try:
+        r = json.loads(get(u, 60))
+        feeds = r.get('feeds', [])
+        print(u[-40:], '→', len(feeds), 'פידים')
+        for f in feeds[:5]:
+            print('  *', f.get('onestop_id'), '|', (f.get('name') or '')[:50])
+        if feeds:
+            report['transitland'] = [{'id': f.get('onestop_id'), 'name': f.get('name')} for f in feeds[:10]]
+            break
+    except Exception as e:
+        print(u[-40:], '→', str(e)[:80])
+
+# ---------- 6. הפרויקט הישן של הסדנא (2017-2021) — איפה הארכיון שלו ----------
+print('===== open-bus הישן =====')
+for u in ('https://raw.githubusercontent.com/hasadna/open-bus/master/README.md',
+          'https://raw.githubusercontent.com/hasadna/open-bus-pipelines/main/README.md'):
+    try:
+        md = get(u, 60)
+        urls = sorted(set(re.findall(r'https?://[^\s\)\]"\'>]+', md)))
+        cand = [x for x in urls if re.search(r's3|minio|archive|gtfs|data', x, re.I)][:15]
+        print(u.split('/')[4], '→ קישורי דאטה:', cand)
+        report.setdefault('oldbus', {})[u.split('/')[4]] = cand
+    except Exception as e:
+        print(u.split('/')[4], '→', str(e)[:80])
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump(report, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('wrote', OUT)
