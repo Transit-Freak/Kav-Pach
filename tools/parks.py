@@ -537,15 +537,22 @@ def build_lines(stops_here, tk):
     # ספירה לפי קו אמיתי (מק"ט) ולא לפי כיוון/חלופה — שני הכיוונים של אותו
     # קו נספרים פעם אחת, בדרגה הטובה מביניהם (בקשת המשתמשים: בלי ניפוח)
     best_line = {}
+    peak_best = {}   # רק קווים עם יציאה בשעות שיא של יום עבודה (06–09, 15–19)
+    is_peak = lambda t: ('06:00' <= t < '09:00') or ('15:00' <= t < '19:00')
     for L in lines:
         r0 = TIER_RANK[L['t']]
         k0 = L['mk']
         if k0 not in best_line or r0 < best_line[k0]:
             best_line[k0] = r0
+        if any(is_peak(t) for t in (L.get('wd') or [])):
+            if k0 not in peak_best or r0 < peak_best[k0]:
+                peak_best[k0] = r0
     counts = (sum(1 for v in best_line.values() if v == TIER_RANK['in']),
               sum(1 for v in best_line.values() if v == TIER_RANK['gate']),
               sum(1 for v in best_line.values() if v == TIER_RANK['near']))
-    return lines, counts
+    peaks = (sum(1 for v in peak_best.values() if v == TIER_RANK['in']),
+             sum(1 for v in peak_best.values() if v == TIER_RANK['gate']))
+    return lines, counts, peaks
 
 index = []
 out_i = 0
@@ -562,8 +569,8 @@ for pi, pk in enumerate(parks):
                 stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo, 'd': d, 'city': city,
                                    'tc': tc, 'te': te, 'wmc': cm, 'wtc': cmin, 'wme': em, 'wte': emin})
     # קווים+ספירות פעמיים: מרכז (ברירת-מחדל) וקצה (כניסה)
-    lines_c, (lic, lgc, lnc) = build_lines(stops_here, 'tc')
-    lines_e, (lie, lge, lne) = build_lines(stops_here, 'te')
+    lines_c, (lic, lgc, lnc), (pki, pkg) = build_lines(stops_here, 'tc')
+    lines_e, (lie, lge, lne), (pkie, pkge) = build_lines(stops_here, 'te')
     # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'. נספרים רק
     # שבילים ש**נקודה מהם בתוך אזור התעשייה** — לא מדרכות של כבישים גובלים בחוץ.
     # כל שביל נשמר עם תיבת-גבול מטרית לדחייה-מהירה.
@@ -650,6 +657,8 @@ for pi, pk in enumerate(parks):
                   'lines': len(lines_c),
                   'li': lic, 'lg': lgc, 'ln': lnc,             # מרכז (ברירת-מחדל)
                   'lie': lie, 'lge': lge, 'lne': lne,          # קצה (כניסה)
+                  'pki': pki, 'pkg': pkg,                      # קווים בשעות שיא (בפנים/שער)
+                  'pkie': pkie, 'pkge': pkge,
                   'in': sum(1 for s in stops_here if s['tc'] == 'in'),
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
                   'off': 1 if off else 0})

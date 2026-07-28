@@ -106,19 +106,20 @@
         <span><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>
         <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל בתוך האזור</span>
       </div>
+      <div class="legend" style="align-items:center;gap:9px">
+        <span>🚶 מציג תחנות עד <b id="walkval">10</b> דק׳ הליכה</span>
+        <input type="range" id="walkrng" min="0" max="20" value="10" style="flex:1;min-width:120px;max-width:280px;accent-color:#0f766e">
+      </div>
       <div id="map"></div>
     </div>
     <div class="panel" id="panel"></div>
   </div>
 
   <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
-    <div class="legend" style="margin:0">
-      <span>קווים נגישים ברגל לפי המדידה שבחרת (מרכז/כניסה):</span>
-      <span><i style="background:#dc2626"></i> ללא קווים</span>
-      <span><i style="background:#fde047"></i> 1–5</span>
-      <span><i style="background:#84cc16"></i> 6–15</span>
-      <span><i style="background:#16a34a"></i> 16–40</span>
-      <span><i style="background:#065f46"></i> 40+</span>
+    <div class="legend" style="margin:0;align-items:center">
+      <button class="btn" id="hmode">⏰ שעות שיא (06–09, 15–19)</button>
+      <button class="btn" id="hscope">🚪 כולל שערי כניסה</button>
+      <span id="hleg"></span>
     </div>
     <div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);flex:1;min-height:0"></div>
   </div>
@@ -134,6 +135,9 @@ const tblview=document.getElementById('tblview'), wrap=document.getElementById('
       tbody=document.querySelector('#tbl tbody');
 let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sortDir=-1;
 let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מחדל) · 'e'=עד הכניסה/קצה
+let HEATMODE='peak';   // מפת חום: 'peak'=שעות שיא של יום עבודה (ברירת-מחדל) · 'day'=כל היום
+let HEATSCOPE='all';   // 'all'=בפנים+שערי כניסה · 'in'=נכנסים פנימה בלבד
+let curPark=null;      // האזור הפתוח — לרענון תחנות עם מחוון ההליכה
 const TIER={in:'בתוך האזור',gate:'נגיש · עד ~5 דק׳ הליכה',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
 const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
 // לפי המצב: tier, זמן ומרחק הליכה, וספירת-קווים לאזור
@@ -212,18 +216,41 @@ function openHeatmap(fit=true){
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
-  // גודל+צבע = מספר הקווים שאפשר להגיע אליהם ברגל לפי המדידה שבחרת (מרכז/כניסה):
-  // בתוך + עד מרחק-ההליכה שקבענו. יותר קווים => גדול וירוק יותר. אפס = אדום —
-  // חור בשירות, הנתון שהאתר בא לחשוף.
-  const hcol=(tot)=>{if(!tot)return'#dc2626';if(tot<=5)return'#fde047';if(tot<=15)return'#84cc16';if(tot<=40)return'#16a34a';return'#065f46'};
-  const hsiz=(tot)=>{if(!tot)return 8;if(tot<=5)return 9;if(tot<=15)return 13;if(tot<=40)return 18;return 24};
+  // גודל+צבע = מספר הקווים לפי המצב שנבחר: שעות שיא של יום עבודה (ברירת
+  // המחדל — מה שחשוב לעובדים) או כל היום; בפנים בלבד או כולל שערי כניסה.
+  // אפס = אדום — חור בשירות, הנתון שהאתר בא לחשוף.
+  const hasPeak='pki' in (IDX[0]||{});
+  if(!hasPeak) HEATMODE='day';   // הנתונים טרם חושבו מחדש — נציג כל היום
+  document.getElementById('hmode').style.display=hasPeak?'':'none';
+  const zcount=(p)=>{
+    const e=WALKMODE=='e';
+    if(HEATMODE=='peak'){
+      const i=e?(p.pkie||0):(p.pki||0), g=e?(p.pkge||0):(p.pkg||0);
+      return HEATSCOPE=='in'? i : i+g;
+    }
+    const i=cnt(p,'li'), g=cnt(p,'lg'), n=cnt(p,'ln');
+    return HEATSCOPE=='in'? i : i+g+n;
+  };
+  const TH=HEATMODE=='peak'?[3,8,20]:[5,15,40];
+  const hcol=(tot)=>{if(!tot)return'#dc2626';if(tot<=TH[0])return'#fde047';if(tot<=TH[1])return'#84cc16';if(tot<=TH[2])return'#16a34a';return'#065f46'};
+  const hsiz=(tot)=>{if(!tot)return 8;if(tot<=TH[0])return 9;if(tot<=TH[1])return 13;if(tot<=TH[2])return 18;return 24};
+  document.getElementById('hleg').innerHTML=
+    `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${TH[0]} · `+
+    `<i style="background:#84cc16"></i> ${TH[0]+1}–${TH[1]} · <i style="background:#16a34a"></i> ${TH[1]+1}–${TH[2]} · `+
+    `<i style="background:#065f46"></i> ${TH[2]}+`;
   for(const p of IDX){
     if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
-    const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln'), tot=li+lg+ln;
+    const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln');
+    const tot=zcount(p);
+    const modeTxt=WALKMODE=='c'?'עד מרכז':'עד כניסה';
+    const pkI=WALKMODE=='e'?(p.pkie||0):(p.pki||0), pkG=WALKMODE=='e'?(p.pkge||0):(p.pkg||0);
+    const body=HEATMODE=='peak'
+      ?(tot?`קווים בשעות השיא (${modeTxt}): <b>${tot}</b><br>נכנסים פנימה: ${pkI} · בשערי הכניסה: ${pkG}<br><span style="color:#64748b">בכל היום: ${li+lg+ln}</span>`
+           :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
+      :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
+           :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
     const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:.85})
-      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>`+(tot
-        ?`נגישים ברגל (${WALKMODE=='c'?'עד מרכז':'עד כניסה'}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
-        :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${WALKMODE=='c'?'עד מרכז':'עד כניסה'})`))
+      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>`+body)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
@@ -234,6 +261,35 @@ function openHeatmap(fit=true){
   if(bounds && (fit || f)) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
 }
 heatbtn.onclick=()=>openHeatmap(true);
+document.getElementById('hmode').onclick=()=>{
+  HEATMODE=HEATMODE=='peak'?'day':'peak';
+  document.getElementById('hmode').textContent=HEATMODE=='peak'?'⏰ שעות שיא (06–09, 15–19)':'🗓️ כל היום';
+  openHeatmap(false);
+};
+document.getElementById('hscope').onclick=()=>{
+  HEATSCOPE=HEATSCOPE=='all'?'in':'all';
+  document.getElementById('hscope').textContent=HEATSCOPE=='all'?'🚪 כולל שערי כניסה':'🏭 נכנסים פנימה בלבד';
+  openHeatmap(false);
+};
+// מחוון ההליכה (0–20 דק') — מציג/מסתיר תחנות בדף האזור לפי זמן ההליכה
+const walkrng=document.getElementById('walkrng'), walkval=document.getElementById('walkval');
+walkrng.oninput=()=>{ walkval.textContent=walkrng.value; if(curPark) drawStops(curPark); };
+function drawStops(d){
+  if(window._stopsLayer) window._stopsLayer.remove();
+  const sl=window._stopsLayer=L.layerGroup().addTo(map);
+  const lim=+walkrng.value;
+  const cen=polyCentroid(d.polys);
+  for(const s of d.stops){
+    const t=sTier(s);
+    // סינון לפי דקות הליכה אמיתיות (wt): המחוון חושף גם תחנות "חסומות"
+    // (10–20 דק') כשמזיזים אותו מעל 10
+    const mins=t=='in'?0:(sWt(s)==null?99:sWt(s));
+    if(mins>lim) continue;
+    const dir=`https://www.google.com/maps/dir/?api=1&origin=${s.la},${s.lo}&destination=${cen[0]},${cen[1]}&travelmode=walking`;
+    L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[t]||'#94a3b8',fillOpacity:1})
+      .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[t]||t}<br>${walkTxt(s)}<br><a href="${dir}" target="_blank" rel="noopener">מסלול הליכה ›</a>`).addTo(sl);
+  }
+}
 // מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
 document.getElementById('modebtn').onclick=()=>{
   WALKMODE = WALKMODE=='c'?'e':'c';
@@ -295,13 +351,8 @@ function openPark(f,push=true){
       bounds=bounds?bounds.extend(pg.getBounds()):pg.getBounds();
     }
     for(const seg of d.foot) L.polyline(seg,{color:'#14b8a6',weight:2,opacity:.8}).addTo(layer);
-    const cen=polyCentroid(d.polys);
-    for(const s of d.stops){
-      if(sTier(s)=='blocked') continue;   // מעל 10 דק' במצב הנוכחי — לא מוצגת
-      const dir=`https://www.google.com/maps/dir/?api=1&origin=${s.la},${s.lo}&destination=${cen[0]},${cen[1]}&travelmode=walking`;
-      L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[sTier(s)]||'#94a3b8',fillOpacity:1})
-        .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[sTier(s)]||sTier(s)}<br>${walkTxt(s)}<br><a href="${dir}" target="_blank" rel="noopener">מסלול הליכה ›</a>`).addTo(layer);
-    }
+    curPark=d;
+    drawStops(d);   // התחנות בשכבה נפרדת — מסוננות לפי מחוון ההליכה
     if(bounds){ setTimeout(()=>map.fitBounds(bounds.pad(0.25)),80); }
     const lines=(WALKMODE=='c'?d.lines:(d.linesE||d.lines));
     const nin=d.stops.filter(s=>sTier(s)=='in').length, ngate=d.stops.filter(s=>sTier(s)=='gate').length,
