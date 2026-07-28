@@ -452,18 +452,24 @@ function StopsTab() {
       .then((d) => setChs(d.changes || []))
       .catch(() => setChs([]));
   }, [mon]);
+  // ממואם: בלי זה כל הקלדה בחיפוש בנתה ומיינה מחדש את כל האירועים (לאגים).
+  // "כל התקופה": כל האירועים מכל הזמנים מתוך קורות-החיים, עם תאריך ליד כל אחד
+  const source = useMemo(() => {
+    const raw = mon === "all"
+      ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
+      : chs;
+    return raw === null ? null : raw.filter(keepEvent);
+  }, [mon, hist, chs]);
+  const counts = useMemo(() => {
+    const cn = {};
+    (source || []).forEach((c) => { cn[c.k] = (cn[c.k] || 0) + 1; });
+    return cn;
+  }, [source]);
   if (months === null) return <div className="card">טוען…</div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
   const needle = q.trim();
-  // "כל התקופה": כל האירועים מכל הזמנים מתוך קורות-החיים, עם תאריך ליד כל אחד
-  const raw = mon === "all"
-    ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
-    : chs;
-  const source = raw === null ? null : raw.filter(keepEvent);
   const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
-  const counts = {};
-  (source || []).forEach((c) => { counts[c.k] = (counts[c.k] || 0) + 1; });
   return (
     <div className="card">
       <div className="months">
