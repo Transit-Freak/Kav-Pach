@@ -5,6 +5,7 @@ const BUILD = window.LH_BUILD || "0";
 
 const KINDS = {
   baseline:    { label: "תיעוד ראשון", color: "#64748b" },
+  snapshot:    { label: "צילום מהארכיון", color: "#94a3b8" },
   new:         { label: "וריאנט חדש", color: "#16a34a" },
   route:       { label: "שינוי מסלול", color: "#7c3aed" },
   redraw:      { label: "תיקון שרטוט", color: "#0891b2" },

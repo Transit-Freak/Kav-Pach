@@ -26,7 +26,7 @@ jobs:
   run:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 290
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
 
@@ -51,6 +51,11 @@ jobs:
           OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=160 MAX_TARGETS=$MAXT \
             python3 tools/backfill_stops.py
           rm -f line-history/data/.stops-canary
+
+      - name: עוגני ארכיון לקווים שקטים (בלי אף אירוע רישום מאז 2022)
+        run: |
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=35 \
+            python3 tools/backfill_stop_anchors.py
 
       - name: הפרשי תחנות בין גרסאות שמולאו (מקומי, בלי רשת)
         run: OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py

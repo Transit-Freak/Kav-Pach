@@ -26,12 +26,12 @@ for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
         if not st: continue
         diff_here = None
         if prev is not None and v.get('src') == 'ob' and v.get('k') in KINDS \
-           and 'add' not in v and 'rem' not in v:
+           and 'add' not in v and 'rem' not in v and not v.get('dated'):
             diff_here = 'ob'
         # גם "תיעוד ראשון" מושווה לרשומת הארכיון האחרונה — אחרת שינוי תחנות
         # שקרה בפער שבין הארכיון לתחילת המעקב היומי נבלע (קו 595, תחנה 3405)
         elif prev is not None and prev_src == 'ob' and v.get('k') == 'baseline' \
-                and 'add' not in v and 'rem' not in v and not v.get('gd'):
+                and 'add' not in v and 'rem' not in v and not v.get('gd') and not v.get('dated'):
             diff_here = 'gap'
         if diff_here:
             pc = {str(s[0]) for s in prev}
