@@ -43,187 +43,313 @@
   ]
  ],
  "root": "https://ags.iplan.gov.il/arcgisiplan/rest/services",
+ "services": [
+  "SampleWorldCities|MapServer",
+  "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn|MapServer",
+  "PlanningPublic/compilation_tmm_darom|MapServer",
+  "PlanningPublic/compilation_tmm_haifa|MapServer",
+  "PlanningPublic/compilation_tmm_jerusalem|MapServer",
+  "PlanningPublic/compilation_tmm_merkaz|MapServer",
+  "PlanningPublic/compilation_tmm_tel_aviv|MapServer",
+  "PlanningPublic/compilation_tmm_tzafonn|MapServer",
+  "PlanningPublic/entities_77_78|MapServer",
+  "PlanningPublic/entities_without_77_78|MapServer",
+  "PlanningPublic/entities|MapServer",
+  "PlanningPublic/functional_area_ezoriyut_str|MapServer",
+  "PlanningPublic/gaz_compilation|MapServer",
+  "PlanningPublic/gvulot_retzef|MapServer",
+  "PlanningPublic/mirbatzei_chomrei_gelem|MapServer",
+  "PlanningPublic/nationalcanopytrees|MapServer",
+  "PlanningPublic/plan_index|MapServer",
+  "PlanningPublic/reka|MapServer",
+  "PlanningPublic/retzef_tamamim_ikari_raster|MapServer",
+  "PlanningPublic/road_compilation|MapServer",
+  "PlanningPublic/Shimour|MapServer",
+  "PlanningPublic/tama35_hanchayot_svivatiot|MapServer",
+  "PlanningPublic/tama47N|MapServer",
+  "PlanningPublic/TAMA_1|MapServer",
+  "PlanningPublic/Tama_35_1|MapServer",
+  "PlanningPublic/tma_13_13_kineret|MapServer",
+  "PlanningPublic/tma_14_b|MapServer",
+  "PlanningPublic/tma_34_b_3|MapServer",
+  "PlanningPublic/tma_35_compilation_tasrit_mirkamim|MapServer",
+  "PlanningPublic/tma_70|MapServer",
+  "PlanningPublic/tmm_2_9|MapServer",
+  "PlanningPublic/tmm_3_21|MapServer",
+  "PlanningPublic/tmm_4_14|MapServer",
+  "PlanningPublic/tmm_6|MapServer",
+  "PlanningPublic/tochniot_mifalei_nikuz_hok_hanikuz|MapServer",
+  "PlanningPublic/Tochnit_sharon|MapServer",
+  "PlanningPublic/train_compilation|MapServer",
+  "PlanningPublic/ttl_all_blue_lines|MapServer",
+  "PlanningPublic/vatmal_mitchamim_muchrazim|MapServer",
+  "PlanningPublic/Xplan_6991|MapServer",
+  "PlanningPublic/Xplan_77_78|MapServer",
+  "PlanningPublic/xplan_background_77_78|MapServer",
+  "PlanningPublic/xplan_background_without_77_78|MapServer",
+  "PlanningPublic/xplan_background|MapServer",
+  "PlanningPublic/xplan_without_77_78|MapServer",
+  "PlanningPublic/Xplan|MapServer",
+  "PlanningPublic/XplanNoKanam|MapServer",
+  "Utilities/Geometry|GeometryServer",
+  "Utilities/RasterUtilities|GPServer"
+ ],
  "plan_layers": [
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/entities_77_78",
    "type": "MapServer",
    "id": 0,
-   "layer": "קומפילציה הנחיות סביבה"
+   "layer": "ישויות נוספות 77-78"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/entities_77_78",
    "type": "MapServer",
    "id": 1,
-   "layer": "שמות_ישובים"
+   "layer": "ישויות נקודתיות 77-78"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/entities_77_78",
    "type": "MapServer",
    "id": 2,
-   "layer": "גבול_התכנית"
+   "layer": "ישויות קוויות 77-78"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/entities_77_78",
    "type": "MapServer",
    "id": 3,
-   "layer": "גבול שינוי תממ"
+   "layer": "ישויות פוליגונליות 77-78"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/entities_without_77_78",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "ישויות נוספות"
+  },
+  {
+   "service": "PlanningPublic/entities_without_77_78",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "ישויות נקודתיות"
+  },
+  {
+   "service": "PlanningPublic/entities_without_77_78",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "ישויות קוויות"
+  },
+  {
+   "service": "PlanningPublic/entities_without_77_78",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "ישויות פוליגונליות"
+  },
+  {
+   "service": "PlanningPublic/entities",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "ישויות נוספות"
+  },
+  {
+   "service": "PlanningPublic/entities",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "ישויות נקודתיות"
+  },
+  {
+   "service": "PlanningPublic/entities",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "ישויות קוויות"
+  },
+  {
+   "service": "PlanningPublic/entities",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "ישויות פוליגונליות"
+  },
+  {
+   "service": "PlanningPublic/functional_area_ezoriyut_str",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "אזורי תפקוד - התכנית האסטרטגית המרחבית "
+  },
+  {
+   "service": "PlanningPublic/gvulot_retzef",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "מחוז"
+  },
+  {
+   "service": "PlanningPublic/gvulot_retzef",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "גבולות שיפוט"
+  },
+  {
+   "service": "PlanningPublic/gvulot_retzef",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "ועדים מקומיים"
+  },
+  {
+   "service": "PlanningPublic/gvulot_retzef",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "מרחבי תכנון"
+  },
+  {
+   "service": "PlanningPublic/gvulot_retzef",
    "type": "MapServer",
    "id": 4,
-   "layer": "שטח בעל חדירות גבוהה למשקעים"
+   "layer": "נפות"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/mirbatzei_chomrei_gelem",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "מרבצי חומרי גלם"
+  },
+  {
+   "service": "PlanningPublic/nationalcanopytrees",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "מיפוי חופות עצים"
+  },
+  {
+   "service": "PlanningPublic/plan_index",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "מפות מפתח תמ\"א"
+  },
+  {
+   "service": "PlanningPublic/plan_index",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "tma_all_kav_kahol_140216"
+  },
+  {
+   "service": "PlanningPublic/plan_index",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "tma_all_misgarot_140216"
+  },
+  {
+   "service": "PlanningPublic/plan_index",
+   "type": "MapServer",
+   "id": 3,
+   "layer": "מפות מפתח תמ\"מ"
+  },
+  {
+   "service": "PlanningPublic/plan_index",
+   "type": "MapServer",
+   "id": 4,
+   "layer": "tmm_all_kav_kahol_140216"
+  },
+  {
+   "service": "PlanningPublic/plan_index",
    "type": "MapServer",
    "id": 5,
-   "layer": "שטח חשוף למטרדים"
+   "layer": "tmm_all_misgarot_140216"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/plan_index",
    "type": "MapServer",
    "id": 6,
-   "layer": "שטח למניעת זיהום מים"
+   "layer": "מפות מפתח תת\"ל"
   },
   {
-   "service": "PlanningPublic/compilation_hanhayot_sviva_tmm_tzafonn",
+   "service": "PlanningPublic/plan_index",
    "type": "MapServer",
    "id": 7,
-   "layer": "רגישויות"
+   "layer": "ttl_all_kav_kahol_140216"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/reka",
    "type": "MapServer",
    "id": 0,
-   "layer": "קומפילצית תממ דרום"
+   "layer": "שכבת רקע המזרח התיכון"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/retzef_tamamim_ikari_raster",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "רצף תממים רסטר"
+  },
+  {
+   "service": "PlanningPublic/Shimour",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "שימור"
+  },
+  {
+   "service": "PlanningPublic/Shimour",
    "type": "MapServer",
    "id": 1,
-   "layer": "גבול שינויי תממ"
+   "layer": "ישויות נקודתיות"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/Shimour",
    "type": "MapServer",
    "id": 2,
-   "layer": "גבול מחוז"
+   "layer": "ישויות פוליגונליות"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
+   "type": "MapServer",
+   "id": 0,
+   "layer": "גבול ישראל"
+  },
+  {
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
+   "type": "MapServer",
+   "id": 1,
+   "layer": "גבול תכנית1"
+  },
+  {
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
+   "type": "MapServer",
+   "id": 2,
+   "layer": "גבול תכנית2"
+  },
+  {
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
    "type": "MapServer",
    "id": 3,
-   "layer": "אזור לבירור"
+   "layer": "שמות ישובים"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
    "type": "MapServer",
    "id": 4,
-   "layer": "נקודתי"
+   "layer": "תחנות כוח"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
    "type": "MapServer",
    "id": 5,
-   "layer": "קווים"
+   "layer": "שדה תעופה"
   },
   {
-   "service": "PlanningPublic/compilation_tmm_darom",
+   "service": "PlanningPublic/tama35_hanchayot_svivatiot",
    "type": "MapServer",
    "id": 6,
-   "layer": "מגבלות"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_darom",
-   "type": "MapServer",
-   "id": 7,
-   "layer": "יערות שמורות וסימונים נוספים"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_darom",
-   "type": "MapServer",
-   "id": 8,
-   "layer": "יעודי קרקע"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 0,
-   "layer": "קומפילצית תממ חיפה"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 1,
-   "layer": "אזורים לבירור"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 2,
-   "layer": "גבול שינויי תמ\"מים"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 3,
-   "layer": "גבול מחוז"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 4,
-   "layer": "סימבולים"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 5,
-   "layer": "קווים"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 6,
-   "layer": "מגבלות"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_haifa",
-   "type": "MapServer",
-   "id": 7,
-   "layer": "יעודי קרקע"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_jerusalem",
-   "type": "MapServer",
-   "id": 0,
-   "layer": "קומפילצית תממ ירושלים"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_jerusalem",
-   "type": "MapServer",
-   "id": 1,
-   "layer": "גבול שינויי תמ\"מים"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_jerusalem",
-   "type": "MapServer",
-   "id": 2,
-   "layer": "גבול מחוז"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_jerusalem",
-   "type": "MapServer",
-   "id": 3,
-   "layer": "נקודה"
-  },
-  {
-   "service": "PlanningPublic/compilation_tmm_jerusalem",
-   "type": "MapServer",
-   "id": 4,
-   "layer": "קווים"
+   "layer": "קו צנרת גז טבעי"
   }
  ],
- "best": null
+ "best": {
+  "service": "PlanningPublic/entities_without_77_78",
+  "type": "MapServer",
+  "layer_id": 1,
+  "layer": "ישויות נקודתיות",
+  "fields": [
+   "pl_number"
+  ],
+  "hits": 7
+ },
+ "sample_geometry": {
+  "taba": "165/101/02/4",
+  "rings": 0,
+  "points": 0,
+  "first": null
+ }
 }
