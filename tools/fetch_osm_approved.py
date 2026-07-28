@@ -57,10 +57,11 @@ print(f'elements returned: {len(els)} / {want}')
 if len(els) < want * 0.8:
     sys.exit('too many approved OSM ids missing — refusing to build partial data')
 
-for e in els:   # הזרקת שם לאזורים הידניים — גובר על היעדר שם ב-OSM
-    m = manual.get(f"{e['type'][0]}{e['id']}")
-    if m:
+for e in els:   # הזרקת שם ותיוג לאזורים הידניים — גובר על היעדר שם ב-OSM,
+    m = manual.get(f"{e['type'][0]}{e['id']}")   # וגם על תיוג כמו construction
+    if m:                                        # (אחרת parks.py לא יזהה כאזור)
         e.setdefault('tags', {})['name'] = m['name']
+        e['tags']['landuse'] = 'industrial'
 
 json.dump({'elements': els}, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False)
 print('wrote', OUT, os.path.getsize(OUT), 'bytes')
