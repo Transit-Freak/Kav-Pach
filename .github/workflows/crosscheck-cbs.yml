@@ -13,7 +13,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: crosscheck-cbs
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: crosscheck-cbs-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

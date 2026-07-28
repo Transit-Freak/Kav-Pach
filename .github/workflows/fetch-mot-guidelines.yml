@@ -14,7 +14,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: fetch-mot-guidelines
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: fetch-mot-guidelines-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

@@ -16,7 +16,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: update-monthly
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: update-monthly-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

@@ -27,7 +27,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: backfill-history
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) לא תתפוס את מקומה של ריצת main שממתינה בתור
+  group: backfill-history-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:

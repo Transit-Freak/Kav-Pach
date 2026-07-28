@@ -14,7 +14,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: fetch-cbs-localities
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: fetch-cbs-localities-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

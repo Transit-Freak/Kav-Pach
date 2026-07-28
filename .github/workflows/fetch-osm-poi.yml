@@ -10,7 +10,9 @@ permissions:
   contents: write
 
 concurrency:
-  group: fetch-osm-poi
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: fetch-osm-poi-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
