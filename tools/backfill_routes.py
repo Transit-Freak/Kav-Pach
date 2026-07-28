@@ -114,10 +114,15 @@ while d <= d1:
         d += datetime.timedelta(days=STEP)
         continue
     if ONLY_MISSING:
-        # רק וריאנטים חדשים לריצה הזו: בלי קובץ קיים, או כאלה שהיא כבר עוקבת
-        # אחריהם (נמצאים ב-prev שלה) — כדי להמשיך לתעד את המשך חייהם
+        # רק וריאנטים חדשים לריצה הזו: בלי קובץ קיים, או כאלה שהיא מטפלת בהם
+        # (owned נשמר ב-state — קובץ שהריצה עצמה יצרה אסור שיחסום את המשך
+        # המעקב, אחרת חזרה-לרישום אחרי ביטול לא נקלטת; קרה עם 1א קרית מלאכי)
+        owned = set(state.get('owned') or [])
         cur = {rd: info for rd, info in cur.items()
-               if rd in prev or not os.path.exists(f'{OUTDIR}/lines/{fsafe(rd)}.json')}
+               if rd in owned or rd in prev
+               or not os.path.exists(f'{OUTDIR}/lines/{fsafe(rd)}.json')}
+        owned |= set(cur)
+        state['owned'] = sorted(owned)
     if prev:
         for rd, info in cur.items():
             pv = prev.get(rd)
