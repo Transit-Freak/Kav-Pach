@@ -1,0 +1,44 @@
+name: probe-gtfs-archives
+
+# חיפוש קובצי GTFS היסטוריים של ישראל (לפני 2022) ב-TransitFeeds וב-Wayback. דוח בלבד.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-gtfs-archives.yml'
+      - 'tools/probe_gtfs_archives.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-gtfs-archives-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: חיפוש בארכיונים
+        run: python3 tools/probe_gtfs_archives.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/checks/gtfs-archives-probe.json /tmp/ga.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks/checks && cp /tmp/ga.json parks/checks/gtfs-archives-probe.json
+            git add parks/checks/gtfs-archives-probe.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: חיפוש קובצי GTFS היסטוריים בארכיונים'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
