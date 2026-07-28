@@ -52,6 +52,41 @@ report['transitfeeds'] = {'feed': FEED, 'total': len(versions),
                           'by_year': {y: {'count': len(v), 'first': v[0], 'last': v[-1]} for y, v in sorted(years.items())},
                           'download_pattern': FEED + '/YYYYMMDD/download'}
 
+# ---------- 1ב. TransitFeeds — עקיפות: openmobilitydata + כותרות דפדפן ----------
+print('===== TransitFeeds עקיפות =====')
+BHDR = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,he;q=0.8', 'Referer': 'https://transitfeeds.com/'}
+for host in ('https://openmobilitydata.org', 'https://transitfeeds.com'):
+    try:
+        req = urllib.request.Request(f'{host}/p/ministry-of-transport-and-road-safety/820', headers=BHDR)
+        with urllib.request.urlopen(req, timeout=60) as r:
+            html = r.read().decode('utf-8', 'replace')
+        ds = sorted(set(re.findall(r'/820/(\d{8})', html)))
+        print(host, '→ הצלחה | תאריכים בעמוד הראשון:', ds[:10], '...' if len(ds) > 10 else '')
+        report.setdefault('tf_bypass', {})[host] = ds
+        break
+    except Exception as e:
+        print(host, '→', str(e)[:80])
+
+# ---------- 1ג. דלי ה-S3 הציבורי של אופן באס — ארכיון GTFS גולמי ----------
+print('===== אופן באס S3 =====')
+S3S = [
+    'https://openbus-stride-public.s3.eu-west-1.amazonaws.com/?list-type=2&prefix=gtfs_archive/&delimiter=/&max-keys=100',
+    'https://openbus-stride-public.s3.eu-west-1.amazonaws.com/?list-type=2&delimiter=/&max-keys=100',
+    'https://openbus-stride-public.s3.amazonaws.com/?list-type=2&delimiter=/&max-keys=100',
+    'https://open-bus-gtfs-data.hasadna.org.il/?list-type=2&delimiter=/&max-keys=100',
+]
+for u in S3S:
+    try:
+        xml = get(u, 60)
+        pres = re.findall(r'<Prefix>([^<]+)</Prefix>', xml)
+        keys = re.findall(r'<Key>([^<]+)</Key>', xml)
+        print(u.split('?')[0], '→ תיקיות:', pres[:20], '| קבצים:', keys[:10])
+        report.setdefault('s3', {})[u.split('?')[0] + '?' + (u.split('prefix=')[1].split('&')[0] if 'prefix=' in u else '')] = {'prefixes': pres[:40], 'keys': keys[:20]}
+    except Exception as e:
+        print(u.split('?')[0], '→', str(e)[:80])
+
 # ---------- 2. Wayback Machine (CDX) ----------
 print('===== Wayback Machine =====')
 wb = {}
