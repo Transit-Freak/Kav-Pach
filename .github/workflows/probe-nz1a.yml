@@ -1,0 +1,44 @@
+name: probe-nz1a
+
+# בדיקה חד-פעמית: קו 1א נס ציונה בארכיון — כל התקופה, חודש-חודש. נמחק אחרי שימוש.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-nz1a.yml'
+      - 'tools/probe_nz1a.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-nz1a-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: חיפוש 1א נס ציונה בארכיון
+        run: python3 tools/probe_nz1a.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/checks/nz1a-probe.json /tmp/nz.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks/checks && cp /tmp/nz.json parks/checks/nz1a-probe.json
+            git add parks/checks/nz1a-probe.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: בדיקת 1א נס ציונה בארכיון'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
