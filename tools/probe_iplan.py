@@ -51,30 +51,38 @@ if not root:
     sys.exit('אף שורש לא נגיש')
 
 base, d0 = root
-# מיפוי כל השירותים בכל התיקיות + איתור שכבות תוכניות
-plan_layers = []
+# כל שמות השירותים בכל התיקיות — קודם רואים מה יש, בלי סינון מוקדם
+all_services = []
 folders = [''] + d0.get('folders', [])
-for f in folders[:30]:
+for f in folders[:40]:
     try:
         fd = jget(f'{base}/{f}?f=json' if f else f'{base}?f=json')
     except Exception as e:
         print('תיקייה', f, 'שגיאה:', str(e)[:60]); continue
     for s in fd.get('services', []):
-        nm, ty = s.get('name', ''), s.get('type', '')
-        if ty not in ('MapServer', 'FeatureServer'):
-            continue
-        try:
-            svc = jget(f'{base}/{nm}/{ty}?f=json')
-        except Exception:
-            continue
-        for lyr in svc.get('layers', []) or []:
-            lname = lyr.get('name', '')
-            if re.search(r'plan|תכנית|תוכנית|xplan|taba|תב', lname, re.I) or re.search(r'plan|xplan', nm, re.I):
-                plan_layers.append({'service': nm, 'type': ty, 'id': lyr['id'], 'layer': lname})
+        all_services.append((s.get('name', ''), s.get('type', '')))
+print('סה"כ שירותים:', len(all_services))
+for nm, ty in all_services:
+    print('  ', nm, ty)
+report['services'] = [f'{nm}|{ty}' for nm, ty in all_services]
+
+# שכבות תוכניות: רק שירותים ששמם מרמז על תוכניות (xplan/plan/mavat)
+plan_layers = []
+for nm, ty in all_services:
+    if ty not in ('MapServer', 'FeatureServer'):
+        continue
+    if not re.search(r'xplan|plan|mavat|taba', nm, re.I) or 'compilation' in nm.lower():
+        continue
+    try:
+        svc = jget(f'{base}/{nm}/{ty}?f=json')
+    except Exception as e:
+        print(nm, 'שגיאה:', str(e)[:60]); continue
+    for lyr in svc.get('layers', []) or []:
+        plan_layers.append({'service': nm, 'type': ty, 'id': lyr['id'], 'layer': lyr.get('name', '')})
 print('שכבות תוכניות שאותרו:', len(plan_layers))
-for p in plan_layers[:15]:
+for p in plan_layers[:25]:
     print('  *', p['service'], p['type'], p['id'], '—', p['layer'])
-report['plan_layers'] = plan_layers[:30]
+report['plan_layers'] = plan_layers[:40]
 
 # ---------- שליפת מדגם: 10 תב"עות מול כל שכבת-תוכניות מועמדת ----------
 sample = tabas[:10]
@@ -87,22 +95,32 @@ for p in plan_layers[:8]:
     except Exception as e:
         print(p['service'], p['id'], 'שגיאת שדות:', str(e)[:60]); continue
     numf = [fl for fl in fields if re.search(r'pl_?num|plan_?num|number|mispar', fl, re.I)]
-    print(f"{p['service']}/{p['id']} ({p['layer']}): שדות מספר: {numf}")
+    print(f"{p['service']}/{p['id']} ({p['layer']}): שדות: {fields[:12]} | שדות מספר: {numf}")
     if not numf:
         continue
     hits = 0
     for t, nm in sample:
         ok = False
+        # פורמטים: כמו-שהוא, הפוך (היפוך RTL בקובץ המקור), ו-LIKE על החלק המספרי
+        digits = re.sub(r'\D+', '', t)
+        wheres = [f"{{f}}='{t}'", f"{{f}}='{t[::-1]}'"]
+        if len(digits) >= 3:
+            wheres.append(f"{{f}} LIKE '%{digits}%'")
         for fld in numf[:2]:
-            q = (f"{base}/{p['service']}/{p['type']}/{p['id']}/query?"
-                 + urllib.parse.urlencode({'where': f"{fld}='{t}'", 'outFields': fld,
-                                           'returnGeometry': 'false', 'f': 'json'}))
-            try:
-                r = jget(q, 60)
-                if r.get('features'):
-                    ok = True; break
-            except Exception:
-                pass
+            for w in wheres:
+                q = (f"{base}/{p['service']}/{p['type']}/{p['id']}/query?"
+                     + urllib.parse.urlencode({'where': w.format(f=fld), 'outFields': fld,
+                                               'returnGeometry': 'false', 'f': 'json'}))
+                try:
+                    r = jget(q, 60)
+                    if r.get('features'):
+                        ok = True
+                        print(f"      התאמה: {w.format(f=fld)} → {r['features'][0].get('attributes')}")
+                        break
+                except Exception:
+                    pass
+            if ok:
+                break
         hits += ok
         print(f"    {t} ({nm[:25]}): {'✓' if ok else '✗'}")
     print(f"  ==> פגיעות: {hits}/10")
