@@ -17,6 +17,7 @@ on:
       - 'tools/fetch_official.py'
       - 'tools/fetch_osm_approved.py'
       - 'parks/osm-check/manual-zones.json'
+      - 'parks/osm-check/mot-zones.json'
   workflow_dispatch:
 
 permissions:

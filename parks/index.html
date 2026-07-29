@@ -75,10 +75,12 @@
     <button class="btn big" id="heatbtn" style="display:none"><!-- צילום אמיתי של מפת החום (אריחי OSM + עיגולי האזורים), נוצר ב-CI ע"י
          tools/make_heatbtn.py --><img src="heatbtn-map.png" alt="" aria-hidden="true" style="height:40px;width:auto;border-radius:5px;box-shadow:0 0 0 1.5px #0f766e">מפת חום</button>
     <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
+    <button class="btn" id="lyind" style="display:none" title="אזורי תעשייה קלאסיים">🏭 אזורי תעשייה</button>
+    <button class="btn" id="lyhub" style="display:none" title="מוקדי תעסוקה גדולים: מחצבות, נמלים, קמפוסים ועוד">🏢 מוקדי תעסוקה</button>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…">
     <button class="btn" id="csvbtn"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" rx="3.5" fill="#107c41"/><path d="M6.5 5.5 L13.5 14.5 M13.5 5.5 L6.5 14.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>הורדה לאקסל</button>
     <a href="../">→ הקו הבוחן</a>
-    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה · מתעדכן שבועית</div>
+    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), אזורים נוספים מרשימת אזורי התעשייה-תעסוקה של משרד התחבורה עם גבולות תב״ע ממנהל התכנון (📐), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה · מתעדכן שבועית</div>
     <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · © כל הזכויות שמורות למחלקת קידום תחבורה ציבורית בהסתדרות העובדים הכללית</div>
   </div>
 
@@ -151,6 +153,10 @@ function cnt(p,k){const m={li:'lie',lg:'lge',ln:'lne'};return (WALKMODE=='c'?p[k
 // קווים בשעות השיא (06–09, 15–19): בפנים + שערי כניסה, לפי מצב המדידה
 function pkc(p){return WALKMODE=='e'?((p.pkie||0)+(p.pkge||0)):((p.pki||0)+(p.pkg||0))}
 function hasPk(){return IDX.length>0 && ('pki' in IDX[0])}
+// שכבות תצוגה (בקשת ההסתדרות): אזורי תעשייה + מוקדי תעסוקה, יחד או לחוד
+let LAYERS={ind:true,hub:true};
+function lyOf(p){return p.ly||'ind'}
+function hasLy(){return IDX.length>0 && ('ly' in IDX[0]) && IDX.some(p=>p.ly=='hub')}
 function walkTxt(s){
   const wt=sWt(s),wm=sWm(s);
   if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)`;
@@ -179,7 +185,13 @@ function renderTable(){
   const f=(q.value||'').trim();
   const pk=hasPk();   // עמודת שעות השיא מופיעה רק אחרי שהנתונים חושבו מחדש
   document.querySelector('#tbl th[data-k="pk"]').style.display=pk?'':'none';
-  let rows=IDX.filter(p=>!f || (p.name+' '+(p.city||'')).includes(f));
+  const ly=hasLy();   // כפתורי השכבות מופיעים רק כשיש מוקדי תעסוקה בנתונים
+  for(const id of ['lyind','lyhub']){
+    const b=document.getElementById(id);
+    b.style.display=ly?'inline-block':'none';
+    b.style.opacity=LAYERS[id.slice(2)]?'1':'.4';
+  }
+  let rows=IDX.filter(p=>LAYERS[lyOf(p)]&&(!f || (p.name+' '+(p.city||'')).includes(f)));
   const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(p[k]??''));
   rows.sort((a,b)=>{
     const va=val(a,sortK), vb=val(b,sortK);
@@ -188,7 +200,7 @@ function renderTable(){
   });
   tbody.innerHTML=rows.map(p=>{const svc=cnt(p,'li')+cnt(p,'lg')+cnt(p,'ln');return `
     <tr class="${svc? '':'nosvc'}" data-f="${p.f}">
-      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':' <span class="offbadge" title="מקור: OpenStreetMap — אומת בבדיקת קיום">🗺️</span>'}${svc? '':' ⚠'}</td>
+      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':p.mt?' <span class="offbadge" title="מקור: משרד התחבורה, גבול תב&quot;ע ממנהל התכנון">📐</span>':' <span class="offbadge" title="מקור: OpenStreetMap — אומת בבדיקת קיום">🗺️</span>'}${lyOf(p)=='hub'?' <span class="offbadge" title="מוקד תעסוקה — לא אזור תעשייה קלאסי">🏢</span>':''}${svc? '':' ⚠'}</td>
       <td>${esc(p.city||'—')}</td>
       <td class="num">${p.area}</td>
       <td class="num">${pill(cnt(p,'li'),'pi')}</td>
@@ -248,6 +260,7 @@ function openHeatmap(fit=true){
     `<i style="background:#84cc16"></i> ${TH[0]+1}–${TH[1]} · <i style="background:#16a34a"></i> ${TH[1]+1}–${TH[2]} · `+
     `<i style="background:#065f46"></i> ${TH[2]}+`;
   for(const p of IDX){
+    if(!LAYERS[lyOf(p)]) continue;
     if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
     const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln');
     const tot=zcount(p);
@@ -258,7 +271,7 @@ function openHeatmap(fit=true){
            :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
       :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
            :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:.85})
+    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:lyOf(p)=='hub'?'#7c3aed':'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:.85})
       .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>`+body)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
@@ -279,6 +292,13 @@ document.getElementById('hscope').onclick=()=>{
   HEATSCOPE=HEATSCOPE=='all'?'in':'all';
   document.getElementById('hscope').textContent=HEATSCOPE=='all'?'🚪 כולל שערי כניסה':'🏭 נכנסים פנימה בלבד';
   openHeatmap(false);
+};
+// כפתורי השכבות: מציגים/מסתירים כל שכבה בטבלה ובמפת החום
+for(const k of ['ind','hub']) document.getElementById('ly'+k).onclick=()=>{
+  LAYERS[k]=!LAYERS[k];
+  if(!LAYERS.ind&&!LAYERS.hub) LAYERS[k]=true;   // לפחות שכבה אחת דולקת
+  renderTable();
+  if(heatview.style.display!=='none') openHeatmap(false);
 };
 // מחוון ההליכה (0–20 דק') — מציג/מסתיר תחנות בדף האזור לפי זמן ההליכה
 const walkrng=document.getElementById('walkrng'), walkval=document.getElementById('walkval');
@@ -336,8 +356,9 @@ wrap.addEventListener('touchend',e=>{
 
 document.getElementById('csvbtn').onclick=()=>{
   const pk=hasPk();
-  const head=['אזור תעשייה','יישוב','שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),'תחנות בפנים','כיסוי הליכה %'];
-  const rows=IDX.map(p=>[p.name,p.city||'',p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),p.in??0,Math.round((p.cov||0)*100)]);
+  const ly=hasLy();
+  const head=['אזור תעשייה','יישוב',...(ly?['שכבה']:[]),'שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),'תחנות בפנים','כיסוי הליכה %'];
+  const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[lyOf(p)=='hub'?'מוקד תעסוקה':'אזור תעשייה']:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),p.in??0,Math.round((p.cov||0)*100)]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));

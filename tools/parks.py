@@ -132,6 +132,27 @@ if OFFICIAL_ONLY:
     parks = []   # מתעלמים מ-OSM; כל האזורים ייווצרו מהדאטהסט הרשמי בהמשך
 print('פארקים אחרי קיבוץ וסינון שטח:', len(parks), '(ממשלתי-בלבד)' if OFFICIAL_ONLY else '')
 
+# ---- מקור שלישי: אזורי תעשייה-תעסוקה של משרד התחבורה, גבולות תב"ע ----
+# ממנהל התכנון שאומתו בפאנל (parks/osm-check/mot-zones.json). ly='hub'
+# מסמן מוקד תעסוקה (מחצבה, נמל, קמפוס...) — שכבת תצוגה נפרדת באתר.
+MOT = os.environ.get('MOT_ZONES', 'parks/osm-check/mot-zones.json')
+if os.path.exists(MOT):
+    _mot = json.load(open(MOT, encoding='utf-8'))['zones']
+    for z in _mot:
+        mpolys = [[(a, b) for a, b in rg] for rg in z['polys'] if len(rg) >= 4]
+        if not mpolys:
+            continue
+        cla, clo = _cen([p for rg in mpolys for p in rg])
+        cl = math.cos(math.radians(cla))
+        pk = {'name': z['name'], 'noname': False, 'polys': mpolys, 'cen': (cla, clo), 'cl': cl,
+              'area': sum(poly_area_km2(p, cl) for p in mpolys), 'mot': 1}
+        if z.get('ly') == 'hub':
+            pk['hub'] = 1
+        if z.get('city'):
+            pk['mot_city'] = z['city']
+        parks.append(pk)
+    print('אזורי משרד התחבורה שנוספו:', len(_mot))
+
 # ---- מקור רשמי (משרד הכלכלה): השלמת חסרים + העשרה ----
 # כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
 # עם הפוליגון הרשמי. כך משלימים אזורים (בעיקר בפריפריה) ש-OSM לא מיפה, ומצרפים
@@ -627,6 +648,8 @@ for pi, pk in enumerate(parks):
                 cc[s['city']] += 1
         if cc:
             city = max(cc, key=cc.get)
+    if not city:
+        city = pk.get('mot_city', '')   # אזורי משרד התחבורה בלי תחנות — העיר מהרשימה
     # מחוץ לישראל: ה-bbox של Overpass תופס גם ירדן/לבנון/סיני. אזור נשאר רק
     # אם שמו עברי או שיש לו תחנת GTFS ישראלית בטווח.
     if not re.search(r'[א-ת]', pk['name']) and not stops_here:
@@ -661,7 +684,9 @@ for pi, pk in enumerate(parks):
                   'pkie': pkie, 'pkge': pkge,
                   'in': sum(1 for s in stops_here if s['tc'] == 'in'),
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
-                  'off': 1 if off else 0})
+                  'off': 1 if off else 0,
+                  'ly': 'hub' if pk.get('hub') else 'ind',
+                  'mt': 1 if pk.get('mot') else 0})
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
