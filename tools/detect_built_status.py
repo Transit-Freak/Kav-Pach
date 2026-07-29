@@ -165,43 +165,46 @@ for i in range(0, len(cands), CHUNK):
 out = []
 from collections import Counter
 cnt = Counter()
+# ---- ההכרעה: "טרם נבנה" רק כשכל הראיות מצביעות לשם ----
+# ספירת מבנים לבדה שגויה בשני הכיוונים (מתקן תעשייתי בלי "מבנים", יישוב עם
+# מיפוי חלקי), לכן כל סימן-חיים בודד — תחנות, רשת כבישים צפופה, מתקנים,
+# עסקים — מוריד ל"בנוי חלקית". עדיף לטעות לכיוון "בנוי": סיווג שגוי כ"טרם
+# נבנה" מסתיר אזור אמיתי מהמשתמש, ההפך רק מוסיף רעש קטן.
 for z in zones:
     bld = z['bld']
-    area = max(z['area'], 0.01)
+    area = max(z['area'], 0.02)
     if bld is None:
-        st = 'unknown'; bpk = None
+        st, alive, bpk = 'unknown', '', None
     else:
         bpk = round(bld / area, 1)
-        if bld < MIN_BLD_BUILT or bpk < PLANNED_BPK:
-            st = 'planned'
-        elif bpk < PARTIAL_BPK:
+        rpk = (z.get('roads') or 0) / area
+        alive = []
+        if z['in'] >= 2:
+            alive.append(f"{z['in']} תחנות בפנים")
+        if (z.get('works') or 0) >= 2:
+            alive.append(f"{z.get('works')} מתקני תעשייה")
+        if (z.get('biz') or 0) >= 3:
+            alive.append(f"{z.get('biz')} עסקים")
+        if rpk >= 8:
+            alive.append(f'רשת כבישים צפופה ({rpk:.0f}/קמ"ר)')
+        if bld >= 15:
+            alive.append(f'{bld} מבנים')
+        if bpk >= PARTIAL_BPK:
+            st = 'built'; alive = []
+        elif bpk >= PLANNED_BPK or alive:
             st = 'partial'
         else:
-            st = 'built'
-        # שטח מתויג כאתר בנייה בתוך אזור כמעט ריק מחזק את ההכרעה
-        if st == 'partial' and z['constr'] and bpk < 25:
             st = 'planned'
-        # אימות נגדי: סימן חיים אחד מבטל את "טרם נבנה" ומוריד ל"בנוי חלקית"
-        if st == 'planned':
-            alive = []
-            if z['in'] >= 3:
-                alive.append(f"{z['in']} תחנות בפנים")
-            if (z.get('roads') or 0) >= 8:
-                alive.append(f"{z['roads']} כבישים פנימיים")
-            if (z.get('works') or 0) >= 2:
-                alive.append(f"{z['works']} מתקני תעשייה")
-            if (z.get('biz') or 0) >= 3:
-                alive.append(f"{z['biz']} עסקים")
-            if alive:
-                st = 'partial'
-                z['alive'] = ', '.join(alive)
+        alive = ', '.join(alive) if st == 'partial' else ''
     cnt[st] += 1
     rec = {'name': z['name'], 'city': z['city'], 'la': z['la'], 'lo': z['lo'],
            'area': z['area'], 'bld': bld, 'bpk': bpk, 'constr': z['constr'],
            'stops_in': z['in'], 'st': st}
-    for k in ('roads', 'works', 'biz', 'alive'):
+    for k in ('roads', 'works', 'biz'):
         if z.get(k):
             rec[k] = z[k]
+    if alive:
+        rec['alive'] = alive
     out.append(rec)
 
 print('סיכום:', dict(cnt), '| מנות שנכשלו:', fails)
@@ -214,6 +217,7 @@ for z in sorted([o for o in out if o['st'] == 'planned'], key=lambda o: -o['area
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump({'checked': time.strftime('%Y-%m-%d %H:%M'), 'thresholds': {'planned': PLANNED_BPK, 'partial': PARTIAL_BPK},
+           'rule': 'טרם נבנה רק כשאין מבנים, אין רשת כבישים צפופה, אין תחנות/מתקנים/עסקים — כל ספק מסווג כבנוי חלקית',
            'summary': dict(cnt), 'zones': out},
           open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('wrote', OUT)
