@@ -132,6 +132,28 @@ if OFFICIAL_ONLY:
     parks = []   # מתעלמים מ-OSM; כל האזורים ייווצרו מהדאטהסט הרשמי בהמשך
 print('פארקים אחרי קיבוץ וסינון שטח:', len(parks), '(ממשלתי-בלבד)' if OFFICIAL_ONLY else '')
 
+# ---- סטטוס בנוי/מתוכנן (tools/detect_built_status.py) ----
+# נמדד לפי צפיפות מבנים בתוך הפוליגון; ההתאמה לפי מרכז האזור (עד 300מ'),
+# כדי שגם שינוי קל בגבול בין ריצות לא ינתק את האזור מהסטטוס שלו.
+BUILT = os.environ.get('BUILT_STATUS', 'parks/checks/built-status.json')
+_built = []
+if os.path.exists(BUILT):
+    try:
+        _built = [z for z in json.load(open(BUILT, encoding='utf-8'))['zones']
+                  if z.get('st') in ('planned', 'partial')]
+        print('סטטוס בנייה נטען:', len(_built), 'אזורים לא-בנויים-במלואם')
+    except Exception as e:
+        print('טעינת סטטוס בנייה נכשלה:', e)
+
+def built_status(cen):
+    best = None
+    cl = math.cos(math.radians(cen[0]))
+    for z in _built:
+        d = math.hypot((z['lo'] - cen[1]) * 111320 * cl, (z['la'] - cen[0]) * 110540)
+        if d <= 300 and (best is None or d < best[1]):
+            best = (z['st'], d)
+    return best[0] if best else ''
+
 # ---- מקור שלישי: אזורי תעשייה-תעסוקה של משרד התחבורה, גבולות תב"ע ----
 # ממנהל התכנון שאומתו בפאנל (parks/osm-check/mot-zones.json). ly='hub'
 # מסמן מוקד תעסוקה (מחצבה, נמל, קמפוס...) — שכבת תצוגה נפרדת באתר.
@@ -686,7 +708,8 @@ for pi, pk in enumerate(parks):
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
                   'off': 1 if off else 0,
                   'ly': 'hub' if pk.get('hub') else 'ind',
-                  'mt': 1 if pk.get('mot') else 0})
+                  'mt': 1 if pk.get('mot') else 0,
+                  'st': built_status(pk['cen'])})
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
