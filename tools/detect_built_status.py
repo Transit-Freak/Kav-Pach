@@ -104,6 +104,64 @@ for i in range(0, len(zones), CHUNK):
     print(f'{min(i + CHUNK, len(zones))}/{len(zones)} | {int(time.time() - T0)}s')
     time.sleep(2)
 
+# ---- שלב ב': אימות נגדי למועמדי "טרם נבנה" ----
+# ספירת מבנים לבדה מטעה: במתקן תעשייתי כבד (בית זיקוק, מפעל כימי, מחצבה)
+# יש מכלים וסככות ולא "מבנים", ובחלק מהיישובים כיסוי המיפוי חלש. לכן כל
+# מועמד נבדק שוב מול סימני-חיים נוספים: רשת כבישים פנימית, מתקנים
+# תעשייתיים (מכלים/ממגורות/מפעלים), עסקים — ותחנות אוטובוס בתוכו.
+# אזור שטרם נבנה ריק מכולם; מספיק סימן חיים אחד כדי לפסול את הסיווג.
+def alive_signals(grp):
+    parts = []
+    for z in grp:
+        la1, lo1, la2, lo2 = z['bbox']
+        b = f'{la1:.5f},{lo1:.5f},{la2:.5f},{lo2:.5f}'
+        parts.append(f'way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|service|living_street)$"]({b});')
+        parts.append(f'nwr["man_made"~"works|storage_tank|silo|chimney|gasometer|pipeline|water_tower"]({b});')
+        parts.append(f'nwr["landuse"="quarry"]({b});')
+        parts.append(f'nwr["shop"]({b});nwr["office"]({b});nwr["amenity"~"fuel|restaurant|bank|school"]({b});')
+    q = f'[out:json][timeout:300];({"".join(parts)});out center tags;'
+    for attempt in range(5):
+        url = SERVERS[attempt % len(SERVERS)]
+        try:
+            req = urllib.request.Request(url, data=q.encode(),
+                                         headers={'User-Agent': 'kav-bochan/parks (built-status v2; polite)'})
+            with urllib.request.urlopen(req, timeout=330) as r:
+                return json.load(r).get('elements', [])
+        except Exception as e:
+            print(f'  אימות ניסיון {attempt + 1}: {str(e)[:60]}', file=sys.stderr)
+            time.sleep(25)
+    return None
+
+cands = [z for z in zones if z['bld'] is not None and z['area'] > 0
+         and (z['bld'] < MIN_BLD_BUILT or z['bld'] / max(z['area'], 0.01) < PLANNED_BPK)]
+print(f'--- אימות נגדי ל-{len(cands)} מועמדי "טרם נבנה" ---')
+for z in cands:
+    z['roads'] = 0; z['works'] = 0; z['biz'] = 0
+for i in range(0, len(cands), CHUNK):
+    grp = cands[i:i + CHUNK]
+    els = alive_signals(grp)
+    if els is None:
+        for z in grp:
+            z['roads'] = None
+        continue
+    for e in els:
+        t = e.get('tags') or {}
+        c = e.get('center') or ({'lat': e.get('lat'), 'lon': e.get('lon')} if e.get('lat') else None)
+        if not c or c.get('lat') is None:
+            continue
+        la, lo = c['lat'], c['lon']
+        key = 'roads' if t.get('highway') else ('works' if (t.get('man_made') or t.get('landuse')) else 'biz')
+        for z in grp:
+            b = z['bbox']
+            if not (b[0] <= la <= b[2] and b[1] <= lo <= b[3]):
+                continue
+            if any(in_poly(la, lo, rg) for rg in z['polys']):
+                if z.get(key) is not None:
+                    z[key] += 1
+                break
+    print(f'  אימות {min(i + CHUNK, len(cands))}/{len(cands)} | {int(time.time() - T0)}s')
+    time.sleep(2)
+
 out = []
 from collections import Counter
 cnt = Counter()
@@ -123,13 +181,34 @@ for z in zones:
         # שטח מתויג כאתר בנייה בתוך אזור כמעט ריק מחזק את ההכרעה
         if st == 'partial' and z['constr'] and bpk < 25:
             st = 'planned'
+        # אימות נגדי: סימן חיים אחד מבטל את "טרם נבנה" ומוריד ל"בנוי חלקית"
+        if st == 'planned':
+            alive = []
+            if z['in'] >= 3:
+                alive.append(f"{z['in']} תחנות בפנים")
+            if (z.get('roads') or 0) >= 8:
+                alive.append(f"{z['roads']} כבישים פנימיים")
+            if (z.get('works') or 0) >= 2:
+                alive.append(f"{z['works']} מתקני תעשייה")
+            if (z.get('biz') or 0) >= 3:
+                alive.append(f"{z['biz']} עסקים")
+            if alive:
+                st = 'partial'
+                z['alive'] = ', '.join(alive)
     cnt[st] += 1
-    out.append({'name': z['name'], 'city': z['city'], 'la': z['la'], 'lo': z['lo'],
-                'area': z['area'], 'bld': bld, 'bpk': bpk, 'constr': z['constr'],
-                'stops_in': z['in'], 'st': st})
+    rec = {'name': z['name'], 'city': z['city'], 'la': z['la'], 'lo': z['lo'],
+           'area': z['area'], 'bld': bld, 'bpk': bpk, 'constr': z['constr'],
+           'stops_in': z['in'], 'st': st}
+    for k in ('roads', 'works', 'biz', 'alive'):
+        if z.get(k):
+            rec[k] = z[k]
+    out.append(rec)
 
 print('סיכום:', dict(cnt), '| מנות שנכשלו:', fails)
-print('--- מועמדים ל"טרם נבנה" (הגדולים ראשונים) ---')
+print('--- נפסלו באימות (יש בהם סימני חיים) ---')
+for z in [o for o in out if o.get('alive')][:25]:
+    print(f"  {z['name'][:38]:40} | {z['alive']}")
+print('--- טרם נבנה, אחרי אימות (הגדולים ראשונים) ---')
 for z in sorted([o for o in out if o['st'] == 'planned'], key=lambda o: -o['area'])[:30]:
     print(f"  {z['name'][:40]:42} | {str(z['city'])[:14]:16} | {z['area']} קמ\"ר | מבנים: {z['bld']} ({z['bpk']}/קמ\"ר) | תחנות: {z['stops_in']}")
 
