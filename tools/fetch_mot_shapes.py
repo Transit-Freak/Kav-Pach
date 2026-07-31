@@ -51,6 +51,56 @@ def is_zip(path):
         return f.read(2) == b'PK'
 
 
+def fetch_via_browser(urls, dest):
+    """הורדה בדפדפן אמיתי.
+
+    שרת ההורדות של data.gov.il (e.data.gov.il) מגיש לכל בקשה שאינה דפדפן דף
+    JavaScript של הגנת-בוטים במקום הקובץ. הקובץ עצמו ציבורי ופתוח — אין סיסמה
+    ואין הרשאה — אלא שצריך להריץ את ה-JS כדי לקבל את ה-cookie. לכן נכנסים
+    לעמוד הדאטהסט בכרומיום, מחכים שהאתגר ייפתר, ומורידים עם אותו הקשר.
+    """
+    from playwright.sync_api import sync_playwright
+    with sync_playwright() as p:
+        br = p.chromium.launch(args=['--no-sandbox'])
+        ctx = br.new_context(accept_downloads=True, locale='he-IL',
+                             user_agent=UA['User-Agent'])
+        pg = ctx.new_page()
+        try:
+            pg.goto(f'https://data.gov.il/dataset/{DS}',
+                    wait_until='domcontentloaded', timeout=120000)
+            pg.wait_for_timeout(8000)
+            print('  עמוד הדאטהסט נטען:', (pg.title() or '')[:60])
+        except Exception as e:
+            print('  טעינת עמוד הדאטהסט נכשלה:', e)
+        for url in urls:
+            try:
+                r = ctx.request.get(url, timeout=180000)
+                body = r.body()
+                if body[:2] == b'PK':
+                    open(dest, 'wb').write(body)
+                    print('  ירד בדפדפן:', len(body), 'bytes |', url)
+                    br.close()
+                    return url
+                print('  עדיין לא ארכיון (', len(body), 'bytes ) |', url)
+            except Exception as e:
+                print('  בקשה בדפדפן נכשלה:', e)
+            try:   # נפילה לאחור: ניווט שמפעיל הורדת-קובץ בדפדפן
+                with pg.expect_download(timeout=120000) as dl:
+                    try:
+                        pg.goto(url, timeout=120000)
+                    except Exception:
+                        pass
+                dl.value.save_as(dest)
+                if is_zip(dest):
+                    print('  ירד כהורדת-דפדפן:', os.path.getsize(dest), 'bytes')
+                    br.close()
+                    return url
+            except Exception as e:
+                print('  הורדת-דפדפן נכשלה:', e)
+        br.close()
+    return None
+
+
 def candidates():
     """כתובות ההורדה של השכבה, לפי סדר עדיפות: SHP ואז KMZ.
 
@@ -234,35 +284,27 @@ def load_kml(path):
 
 
 tmp = tempfile.mkdtemp(prefix='motshp')
-records, src_used = None, None
-for url, kind in candidates():
-    zp = os.path.join(tmp, 'dl.bin')
-    print(f'מוריד ({kind}):', url)
-    try:
-        n = fetch(url, zp)
-    except Exception as e:
-        print('  הורדה נכשלה:', e); continue
-    print('  גודל:', n, 'bytes')
-    if not is_zip(zp):
-        head = open(zp, 'rb').read(300).decode('utf-8', 'replace').replace('\n', ' ')
+_seq = [0]
+
+
+def read_layer(path, tag):
+    """קריאת שכבה מקובץ שהורד — ZIP עם shapefile/KML, או KML גלוי."""
+    if not is_zip(path):
+        head = open(path, 'rb').read(300).decode('utf-8', 'replace').replace('\n', ' ')
         print('  לא ארכיון ZIP. תחילת התשובה:', head[:200])
-        # KML גלוי (לא ארוז) — עדיין שמיש
-        if '<kml' in head or '<?xml' in head:
-            kp = os.path.join(tmp, 'layer.kml')
-            os.replace(zp, kp)
-            try:
-                records, src_used = load_kml(kp), url
-                break
-            except Exception as e:
-                print('  קריאת KML נכשלה:', e)
-        continue
-    d = os.path.join(tmp, kind.lower())
+        if '<kml' not in head and '<?xml' not in head:
+            return None
+        kp = os.path.join(tmp, 'layer.kml')
+        shutil.copy(path, kp)
+        return load_kml(kp)
+    _seq[0] += 1
+    d = os.path.join(tmp, f'{tag}{_seq[0]}')
     os.makedirs(d, exist_ok=True)
     try:
-        with zipfile.ZipFile(zp) as z:
+        with zipfile.ZipFile(path) as z:
             z.extractall(d)
     except Exception as e:
-        print('  פתיחת ה-ZIP נכשלה:', e); continue
+        print('  פתיחת ה-ZIP נכשלה:', e); return None
     shp = kml = None
     for root_d, _dirs, files in os.walk(d):
         for fn in files:
@@ -270,21 +312,57 @@ for url, kind in candidates():
                 shp = os.path.join(root_d, fn)
             elif fn.lower().endswith(('.kml', '.kmz')):
                 kml = os.path.join(root_d, fn)
+    if shp:
+        print('  shapefile:', os.path.basename(shp))
+        return load_shp(shp[:-4])
+    if kml:
+        print('  kml:', os.path.basename(kml))
+        return load_kml(kml)
+    print('  אין שכבה מוכרת בארכיון:',
+          sorted(f for _r, _d, fs in os.walk(d) for f in fs)[:12])
+    return None
+
+
+# מועמדים + גרסת-מארח חלופית (הפורטל מגיש הורדות מ-e.data.gov.il, אבל לפעמים
+# גם מהמארח הראשי — שווה לנסות את שניהם לפני שמפעילים דפדפן)
+cands = []
+for url, kind in candidates():
+    for u in (url, url.replace('://e.data.gov.il', '://data.gov.il'),
+              url.replace('://data.gov.il', '://e.data.gov.il')):
+        if (u, kind) not in cands:
+            cands.append((u, kind))
+
+records, src_used = None, None
+for url, kind in cands:
+    zp = os.path.join(tmp, 'dl.bin')
+    print(f'מוריד ({kind}):', url)
     try:
-        if shp:
-            print('  shapefile:', os.path.basename(shp))
-            records, src_used = load_shp(shp[:-4]), url
-            break
-        if kml:
-            print('  kml:', os.path.basename(kml))
-            records, src_used = load_kml(kml), url
-            break
+        print('  גודל:', fetch(url, zp), 'bytes')
+    except Exception as e:
+        print('  הורדה נכשלה:', e); continue
+    try:
+        r = read_layer(zp, kind.lower())
     except SystemExit as e:
         print(' ', e); continue
     except Exception as e:
         print('  קריאת השכבה נכשלה:', e); continue
-    print('  אין שכבה מוכרת בארכיון:',
-          sorted(f for _r, _d, fs in os.walk(d) for f in fs)[:12])
+    if r:
+        records, src_used = r, url
+        break
+
+if not records:
+    print('הורדה רגילה לא הצליחה — מנסים בדפדפן')
+    zp = os.path.join(tmp, 'browser.bin')
+    try:
+        got = fetch_via_browser([u for u, _k in cands], zp)
+    except Exception as e:
+        print('  הפעלת הדפדפן נכשלה:', e); got = None
+    if got:
+        try:
+            records, src_used = read_layer(zp, 'br'), got
+        except Exception as e:
+            print('  קריאת השכבה שירדה בדפדפן נכשלה:', e)
+
 if not records:
     print('אף אחד ממקורות השכבה לא נקרא בהצלחה')
     sys.exit(1)

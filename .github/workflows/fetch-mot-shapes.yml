@@ -31,7 +31,11 @@ jobs:
       - name: שליפת השכבה והמרה ל-WGS84
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet pyshp pyproj
+          # שרת ההורדות של data.gov.il מגיש דף JavaScript של הגנת-בוטים לכל
+          # בקשה שאינה דפדפן. הקובץ ציבורי לחלוטין — צריך רק להריץ את ה-JS —
+          # ולכן כרומיום מותקן כאן כנפילה-לאחור להורדה הרגילה.
+          python3 -m pip install --quiet pyshp pyproj playwright
+          python3 -m playwright install --with-deps chromium
           python3 tools/fetch_mot_shapes.py
 
       - name: Commit
