@@ -17,6 +17,10 @@
   .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
   .top .sub{font-size:14px;opacity:.95;font-weight:700;flex-basis:100%;margin-top:4px;line-height:1.6}
   .top .credits{font-size:12px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
+  /* באנר המחלקה — רקע לבן כדי שהלוגו הכהה ייראה על הכותרת הירוקה */
+  .logorow{flex-basis:100%;margin-top:6px}
+  .logorow img{height:96px;width:auto;max-width:100%;background:#fff;border-radius:10px;padding:7px 12px;display:block}
+  @media (max-width:600px){.logorow img{height:auto;width:100%;padding:6px 9px}}
   .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .btn svg{flex:0 0 auto}
   .btn.big{font-size:16px;padding:10px 18px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -77,10 +81,14 @@
     <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
     <button class="btn" id="lyind" style="display:none" title="אזורי תעשייה קלאסיים">🏭 אזורי תעשייה</button>
     <button class="btn" id="lyhub" style="display:none" title="מוקדי תעסוקה גדולים: מחצבות, נמלים, קמפוסים ועוד">🏢 מוקדי תעסוקה</button>
+    <button class="btn" id="stplan" style="display:none" title="אזורים שעדיין לא נבנו — לפי ספירת מבנים במיפוי">🏗️ כולל אזורים בהקמה</button>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…">
     <button class="btn" id="csvbtn"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" rx="3.5" fill="#107c41"/><path d="M6.5 5.5 L13.5 14.5 M13.5 5.5 L6.5 14.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>הורדה לאקסל</button>
     <a href="../">→ הקו הבוחן</a>
-    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), אזורים נוספים מרשימת אזורי התעשייה-תעסוקה של משרד התחבורה עם גבולות תב״ע ממנהל התכנון (📐), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה · מתעדכן שבועית</div>
+    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), אזורי התעשייה-תעסוקה של משרד התחבורה עם הגבולות מהשכבה הרשמית שלו (📐), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה, ציוני מדדי השירות (זמינות, נגישות, תחרותיות, אמינות) ממדדי השירות של משרד התחבורה (📈) · מתעדכן שבועית</div>
+    <!-- באנר המחלקה: מופיע רק אם הקובץ קיים (parks/histadrut-logo.png).
+         עד שהוא יועלה — onerror מסתיר את השורה ולא נשאר חלל ריק. -->
+    <div class="logorow"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"></div>
     <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · © כל הזכויות שמורות למחלקת קידום תחבורה ציבורית בהסתדרות העובדים הכללית</div>
   </div>
 
@@ -95,6 +103,7 @@
           <th data-k="lg" class="num">נגיש 🚶 <span class="arr"></span></th>
           <th data-k="ln" class="num">רחוק 🚶 <span class="arr"></span></th>
           <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או בשערי הכניסה">שעות שיא ⏰ <span class="arr"></span></th>
+          <th data-k="sf" class="num" style="display:none" title="הציון המשוקלל של משרד התחבורה לאזור הסטטיסטי (זמינות, נגישות, תחרותיות, אמינות)">ציון משרד התחבורה 📈 <span class="arr"></span></th>
           <th data-k="in" class="num">תחנות בפנים <span class="arr"></span></th>
           <th data-k="cov" class="num">כיסוי הליכה <span class="arr"></span></th>
         </tr></thead>
@@ -157,6 +166,15 @@ function hasPk(){return IDX.length>0 && ('pki' in IDX[0])}
 let LAYERS={ind:true,hub:true};
 function lyOf(p){return p.ly||'ind'}
 function hasLy(){return IDX.length>0 && ('ly' in IDX[0]) && IDX.some(p=>p.ly=='hub')}
+// אזורים שטרם נבנו: st='planned' (כמעט בלי מבנים) / 'partial' (בנוי חלקית).
+// מוצגים כברירת מחדל עם תגית 🏗️, וניתן להסתירם בלחיצה — מתכננים ירצו
+// לראות אותם, מי שבודק את המצב היום לא.
+let SHOWPLAN=true;
+function isPlan(p){return (p.st||'')=='planned'}
+function hasPlan(){return IDX.some(isPlan)}
+// ציוני משרד התחבורה — מופיעים רק כשהנתונים באינדקס
+function hasSv(){return IDX.some(p=>p.sf!=null)}
+const STLBL={planned:'טרם נבנה — אזור מתוכנן/בהקמה',partial:'בנוי חלקית'};
 function walkTxt(s){
   const wt=sWt(s),wm=sWm(s);
   if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)`;
@@ -173,7 +191,12 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
 function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 
-fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
+// רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
+// עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
+// מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
+const PK_BUILD='5';
+const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
+fetch('data/parks.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
   renderTable();
   const h=decodeURIComponent((location.hash||'').slice(1));
@@ -191,22 +214,35 @@ function renderTable(){
     b.style.display=ly?'inline-block':'none';
     b.style.opacity=LAYERS[id.slice(2)]?'1':'.4';
   }
-  let rows=IDX.filter(p=>LAYERS[lyOf(p)]&&(!f || (p.name+' '+(p.city||'')).includes(f)));
-  const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(p[k]??''));
+  const sv=hasSv();
+  document.querySelector('#tbl th[data-k="sf"]').style.display=sv?'':'none';
+  const pl=hasPlan();
+  const pb=document.getElementById('stplan');
+  pb.style.display=pl?'inline-block':'none';
+  pb.textContent=SHOWPLAN?'🏗️ כולל אזורים בהקמה':'🏭 רק אזורים פעילים';
+  let rows=IDX.filter(p=>LAYERS[lyOf(p)]&&(SHOWPLAN||!isPlan(p))&&(!f || (p.name+' '+(p.city||'')).includes(f)));
+  const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(k=='sf'?(p.sf??-1):(p[k]??'')));
+  // אזור בלי נתון במדד שממיינים לפיו יורד לסוף בשני הכיוונים — כדי שמיון
+  // עולה יראה את הגרועים באמת ולא את חסרי-הנתון
+  const miss=(p,k)=>k=='sf'?(p.sf==null):false;
   rows.sort((a,b)=>{
+    const ma=miss(a,sortK), mb=miss(b,sortK);
+    if(ma!==mb) return ma?1:-1;
     const va=val(a,sortK), vb=val(b,sortK);
     const c=(typeof va==='number')? va-vb : String(va).localeCompare(String(vb),'he');
     return c*sortDir || String(a.name).localeCompare(String(b.name),'he');
   });
   tbody.innerHTML=rows.map(p=>{const svc=cnt(p,'li')+cnt(p,'lg')+cnt(p,'ln');return `
     <tr class="${svc? '':'nosvc'}" data-f="${p.f}">
-      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':p.mt?' <span class="offbadge" title="מקור: משרד התחבורה, גבול תב&quot;ע ממנהל התכנון">📐</span>':' <span class="offbadge" title="מקור: OpenStreetMap — אומת בבדיקת קיום">🗺️</span>'}${lyOf(p)=='hub'?' <span class="offbadge" title="מוקד תעסוקה — לא אזור תעשייה קלאסי">🏢</span>':''}${svc? '':' ⚠'}</td>
+      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':p.mt?' <span class="offbadge" title="מקור: משרד התחבורה — הגבול מהשכבה הרשמית שלו">📐</span>':' <span class="offbadge" title="מקור: OpenStreetMap — אומת בבדיקת קיום">🗺️</span>'}${lyOf(p)=='hub'?' <span class="offbadge" title="מוקד תעסוקה — לא אזור תעשייה קלאסי">🏢</span>':''}${p.st?` <span class="offbadge" title="${STLBL[p.st]||''}">${p.st=='planned'?'🏗️':'🚧'}</span>`:''}${svc? '':' ⚠'}</td>
       <td>${esc(p.city||'—')}</td>
       <td class="num">${p.area}</td>
       <td class="num">${pill(cnt(p,'li'),'pi')}</td>
       <td class="num">${pill(cnt(p,'lg'),'pg')}</td>
       <td class="num">${pill(cnt(p,'ln'),'pn')}</td>${pk?`
       <td class="num">${pill(pkc(p),'pi')}</td>`:''}
+${sv?`
+      <td class="num">${p.sf==null?'<span class="pill p0">—</span>':`<span class="pill" style="background:${p.sf<30?'#fee2e2':(p.sf<55?'#fef9c3':'#dcfce7')};color:${p.sf<30?'#7f1d1d':(p.sf<55?'#713f12':'#14532d')}">${p.sf}</span>`}</td>`:''}
       <td class="num">${pill(p.in??0,'pi')}</td>
       <td class="num">${Math.round((p.cov||0)*100)}%<span class="covmini"><i style="width:${Math.round((p.cov||0)*100)}%"></i></span></td>
     </tr>`}).join('');
@@ -261,6 +297,7 @@ function openHeatmap(fit=true){
     `<i style="background:#065f46"></i> ${TH[2]}+`;
   for(const p of IDX){
     if(!LAYERS[lyOf(p)]) continue;
+    if(!SHOWPLAN&&isPlan(p)) continue;
     if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
     const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln');
     const tot=zcount(p);
@@ -271,8 +308,8 @@ function openHeatmap(fit=true){
            :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
       :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
            :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:lyOf(p)=='hub'?'#7c3aed':'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:.85})
-      .bindPopup(`<b>${esc(p.name)}</b>${p.city?'<br>'+esc(p.city):''}<br>`+body)
+    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:lyOf(p)=='hub'?'#7c3aed':'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
+      .bindPopup(`<b>${esc(p.name)}</b>${isPlan(p)?' <span style="color:#b45309">🏗️ טרם נבנה</span>':''}${p.city?'<br>'+esc(p.city):''}<br>`+body)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
@@ -294,6 +331,11 @@ document.getElementById('hscope').onclick=()=>{
   openHeatmap(false);
 };
 // כפתורי השכבות: מציגים/מסתירים כל שכבה בטבלה ובמפת החום
+document.getElementById('stplan').onclick=()=>{
+  SHOWPLAN=!SHOWPLAN;
+  renderTable();
+  if(heatview.style.display!=='none') openHeatmap(false);
+};
 for(const k of ['ind','hub']) document.getElementById('ly'+k).onclick=()=>{
   LAYERS[k]=!LAYERS[k];
   if(!LAYERS.ind&&!LAYERS.hub) LAYERS[k]=true;   // לפחות שכבה אחת דולקת
@@ -357,8 +399,8 @@ wrap.addEventListener('touchend',e=>{
 document.getElementById('csvbtn').onclick=()=>{
   const pk=hasPk();
   const ly=hasLy();
-  const head=['אזור תעשייה','יישוב',...(ly?['שכבה']:[]),'שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),'תחנות בפנים','כיסוי הליכה %'];
-  const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[lyOf(p)=='hub'?'מוקד תעסוקה':'אזור תעשייה']:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),p.in??0,Math.round((p.cov||0)*100)]);
+  const head=['אזור תעשייה','יישוב',...(ly?['שכבה']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים','כיסוי הליכה %'];
+  const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[lyOf(p)=='hub'?'מוקד תעסוקה':'אזור תעשייה']:[]),...(hasPlan()?[p.st=='planned'?'טרם נבנה':(p.st=='partial'?'בנוי חלקית':'פעיל')]:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),...(hasSv()?[p.sf??'',p.sa??'',p.sr??'']:[]),p.in??0,Math.round((p.cov||0)*100)]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
@@ -367,7 +409,7 @@ document.getElementById('csvbtn').onclick=()=>{
 
 function openPark(f,push=true){
   if(push) history.pushState({park:f},'','#'+encodeURIComponent(f));
-  fetch('data/'+f).then(r=>r.json()).then(d=>{
+  fetch('data/'+f+DV).then(r=>r.json()).then(d=>{
     tblview.style.display='none'; wrap.style.display='grid'; backbtn.style.display='inline-block';
     heatview.style.display='none'; heatbtn.style.display='none';
     msg.style.display='none';
@@ -409,6 +451,23 @@ function openPark(f,push=true){
       h+=`<div class="offbox">
         <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${(o.oname&&o.oname!==d.name)?` · שם רשמי: ${esc(o.oname)}`:''}${o.district?` · מחוז ${esc(o.district)}`:''}</div>
         ${ostats?`<div class="stats" style="margin:6px 0 0">${ostats}</div>`:'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>'}
+      </div>`;
+    }
+    if(d.svc){
+      const v=d.svc, sc=x=>(x==null?'—':x);
+      // צביעה לפי סולם 0-100 של המשרד: אדום עד 30, כתום עד 55, ירוק מעל
+      const col=x=>x==null?'#94a3b8':(x<30?'#b91c1c':(x<55?'#b45309':'#15803d'));
+      const cell=(lbl,x,t)=>`<span class="stat" title="${t}">${lbl} <b style="color:${col(x)}">${sc(x)}</b></span>`;
+      h+=`<div class="offbox" style="background:#f5f3ff;border-color:#ddd6fe">
+        <div class="offh" style="color:#5b21b6">📈 מדדי השירות הרשמיים · משרד התחבורה${d.svcmeta&&d.svcmeta.updated?` · עדכון ${esc(d.svcmeta.updated)}`:''}</div>
+        <div class="stats" style="margin:6px 0 0">
+          ${cell('ציון משוקלל',v.fs,'הציון הכולל של המשרד לאזור הסטטיסטי, 0–100')}
+          ${cell('זמינות',v.av,'תדירות ופריסת שעות השירות')}
+          ${cell('נגישות',v.ac,'לאן אפשר להגיע בזמן נסיעה נתון')}
+          ${cell('תחרותיות',v.co,'זמן הנסיעה בתחבורה ציבורית מול רכב פרטי')}
+          ${cell('אמינות',v.re,'עמידה בלוח הזמנים')}
+        </div>
+        <div class="note" style="margin:6px 0 0">הציונים הם של האזור${v.n>1?`ים הסטטיסטיים (${v.n}) שהאזור חופף`:' הסטטיסטי שבו האזור נמצא'}${v.sa_city?` · ${esc(v.sa_city)}`:''} — לא של האזור עצמו, אך מייצגים את איכות השירות בסביבתו לפי המשרד.</div>
       </div>`;
     }
     if(!lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;

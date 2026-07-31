@@ -18,6 +18,9 @@ on:
       - 'tools/fetch_osm_approved.py'
       - 'parks/osm-check/manual-zones.json'
       - 'parks/osm-check/mot-zones.json'
+      - 'parks/checks/built-status.json'
+      - 'parks/checks/service-indices.json'
+      - 'tools/convert_service_indices.py'
   workflow_dispatch:
 
 permissions:

@@ -1,13 +1,12 @@
 name: fetch-taba-boundaries
 
 # שליפה המונית של גבולות תב"ע ממנהל התכנון לאזורי משרד התחבורה (427).
-# דוח בלבד — הייבוא לאתר ייעשה בנפרד אחרי פאנל אימות.
+#
+# הוחלף: משרד התחבורה מפרסם את הגבולות שלו עצמו (fetch-mot-shapes), ולכן אין
+# יותר צורך לנחש את הגבול לפי מספר התב"ע. נשאר כאן להרצה לפי דרישה בלבד —
+# שימושי כשרוצים להשוות את הגבול הרשמי לגבול התוכנית במנהל התכנון.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/fetch-taba-boundaries.yml'
-      - 'tools/fetch_taba_boundaries.py'
   workflow_dispatch:
 
 permissions:
