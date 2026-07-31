@@ -408,6 +408,7 @@ function StopEvMap({ ev }) {
 function StopsTab() {
   const [months, setMonths] = useState(null);
   const [mon, setMon] = useState("");
+  const [yr, setYr] = useState("");   // שנה נבחרת בבוחר החודשים
   const [chs, setChs] = useState(null);
   const [hist, setHist] = useState(null);   // קורות-חיים מצטברים לכל תחנה
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
@@ -478,12 +479,22 @@ function StopsTab() {
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
   return (
     <div className="card">
+      {/* בוחר לפי שנה: slice(0,18) הישן הסתיר את כל מה שלפני 02.2025 —
+          עכשיו כל שנה נגישה בלחיצה, והחודשים שלה נפתחים מתחתיה */}
       <div className="months">
-        <button className={"mchip" + (mon === "all" ? " on" : "")} onClick={() => setMon("all")}>🗓️ כל התקופה</button>
-        {months.slice(0, 18).map((m) => (
-          <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+        <button className={"mchip" + (mon === "all" ? " on" : "")} onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
+        {[...new Set(months.map((m) => m.slice(0, 4)))].map((y) => (
+          <button key={y} className={"mchip" + (yr === y ? " on" : "")}
+            onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
       </div>
+      {yr && (
+        <div className="months">
+          {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
+            <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+          ))}
+        </div>
+      )}
       <input className="search" type="search" placeholder="חיפוש תחנה / עיר / מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="katbox">
         <button className="kathead" onClick={() => setKatOpen(!katOpen)}>
