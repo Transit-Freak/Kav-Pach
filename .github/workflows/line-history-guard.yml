@@ -1,0 +1,36 @@
+name: line-history-guard
+
+# בדיקת שמירה ל"הקו בזמן": כל חודש שקיים בנתונים חייב להיות נגיש מהממשק.
+# נולדה מבאג אמיתי (07.2026) שבו slice(0,18) בבוחר החודשים הסתיר בשקט את
+# כל האירועים שלפני 02.2025. רצה על כל שינוי בקוד או בנתונים של האתר —
+# כולל הדחיפות הליליות של הצינור — ונכשלת ברעש אם היסטוריה נהיית בלתי-נגישה.
+
+on:
+  push:
+    paths:
+      - 'line-history/**'
+      - 'tools/check_line_history_ui.mjs'
+      - '.github/workflows/line-history-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: line-history-guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: ההיסטוריה הכי ישנה נגישה מהממשק
+        run: |
+          set -euo pipefail
+          npm i --no-save playwright-core
+          CHROMIUM_PATH="$(which google-chrome)" node tools/check_line_history_ui.mjs
