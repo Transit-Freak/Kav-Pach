@@ -7,7 +7,7 @@
 #
 # הפלט: parks/checks/built-status.json — לכל אזור מספר מבנים, צפיפות
 # והכרעה (built / partial / planned). נקרא ע"י tools/parks.py בריצה הבאה.
-import json, math, os, sys, time, urllib.request
+import json, math, os, re, sys, time, urllib.request
 
 IDX = os.environ.get('PARKS_IDX', 'parks/data/parks.json')
 DATA = os.environ.get('PARKS_DATA', 'parks/data')
@@ -165,38 +165,43 @@ for i in range(0, len(cands), CHUNK):
 out = []
 from collections import Counter
 cnt = Counter()
-# ---- ההכרעה: "טרם נבנה" רק כשכל הראיות מצביעות לשם ----
-# ספירת מבנים לבדה שגויה בשני הכיוונים (מתקן תעשייתי בלי "מבנים", יישוב עם
-# מיפוי חלקי), לכן כל סימן-חיים בודד — תחנות, רשת כבישים צפופה, מתקנים,
-# עסקים — מוריד ל"בנוי חלקית". עדיף לטעות לכיוון "בנוי": סיווג שגוי כ"טרם
-# נבנה" מסתיר אזור אמיתי מהמשתמש, ההפך רק מוסיף רעש קטן.
+# ---- ההכרעה: מסמנים רק כשיש די ראיות ----
+# שני לקחים מהסבב הראשון: (א) חלק מגבולות התב"ע הם רק פיסה זעירה מהתוכנית,
+# ובשטח כזה "אין מבנים" אינו ראיה לכלום; (ב) במחצבה, בית זיקוק או מכרה אין
+# "מבנים" מעצם טבעם. בשני המקרים לא מסמנים סטטוס בכלל — עדיף להשתוק מלטעות.
+NOBLD = re.compile(r'מחצב|מכר[הות]|זיקוק|פוספט|תחנת כו?ח|נמל|מלח')
+MIN_JUDGE_KM2 = 0.3
+
 for z in zones:
     bld = z['bld']
     area = max(z['area'], 0.02)
+    note = ''
     if bld is None:
-        st, alive, bpk = 'unknown', '', None
+        st, alive, bpk = '', '', None
     else:
         bpk = round(bld / area, 1)
         rpk = (z.get('roads') or 0) / area
         alive = []
-        if z['in'] >= 2:
-            alive.append(f"{z['in']} תחנות בפנים")
-        if (z.get('works') or 0) >= 2:
-            alive.append(f"{z.get('works')} מתקני תעשייה")
-        if (z.get('biz') or 0) >= 3:
-            alive.append(f"{z.get('biz')} עסקים")
-        if rpk >= 8:
-            alive.append(f'רשת כבישים צפופה ({rpk:.0f}/קמ"ר)')
-        if bld >= 15:
-            alive.append(f'{bld} מבנים')
         if bpk >= PARTIAL_BPK:
-            st = 'built'; alive = []
-        elif bpk >= PLANNED_BPK or alive:
-            st = 'partial'
+            st = 'built'
+        elif z['area'] < MIN_JUDGE_KM2:
+            st = ''; note = 'שטח קטן מדי להכרעה'
+        elif NOBLD.search(z['name']):
+            st = ''; note = 'מתקן שאין בו מבנים מעצם טבעו'
         else:
-            st = 'planned'
+            if z['in'] >= 2:
+                alive.append(f"{z['in']} תחנות בפנים")
+            if (z.get('works') or 0) >= 2:
+                alive.append(f"{z.get('works')} מתקני תעשייה")
+            if (z.get('biz') or 0) >= 3:
+                alive.append(f"{z.get('biz')} עסקים")
+            if rpk >= 4:
+                alive.append(f'רשת כבישים ({rpk:.0f}/קמ"ר)')
+            if bld >= 15:
+                alive.append(f'{bld} מבנים')
+            st = 'partial' if (bpk >= PLANNED_BPK or alive) else 'planned'
         alive = ', '.join(alive) if st == 'partial' else ''
-    cnt[st] += 1
+    cnt[st or 'לא-מסומן'] += 1
     rec = {'name': z['name'], 'city': z['city'], 'la': z['la'], 'lo': z['lo'],
            'area': z['area'], 'bld': bld, 'bpk': bpk, 'constr': z['constr'],
            'stops_in': z['in'], 'st': st}
@@ -205,6 +210,8 @@ for z in zones:
             rec[k] = z[k]
     if alive:
         rec['alive'] = alive
+    if note:
+        rec['note'] = note
     out.append(rec)
 
 print('סיכום:', dict(cnt), '| מנות שנכשלו:', fails)
@@ -217,7 +224,9 @@ for z in sorted([o for o in out if o['st'] == 'planned'], key=lambda o: -o['area
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump({'checked': time.strftime('%Y-%m-%d %H:%M'), 'thresholds': {'planned': PLANNED_BPK, 'partial': PARTIAL_BPK},
-           'rule': 'טרם נבנה רק כשאין מבנים, אין רשת כבישים צפופה, אין תחנות/מתקנים/עסקים — כל ספק מסווג כבנוי חלקית',
+           'rule': ('טרם נבנה: שטח 0.3 קמ"ר ומעלה, בלי מבנים, בלי רשת כבישים פנימית, בלי תחנות/מתקנים/עסקים. '
+                    'שטח קטן יותר (לרוב רק פיסה מהתב"ע) או מתקן שאין בו מבנים מטבעו (מחצבה, בית זיקוק) — '
+                    'אינו מסומן בכלל, כי אין די ראיות להכרעה.'),
            'summary': dict(cnt), 'zones': out},
           open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('wrote', OUT)
