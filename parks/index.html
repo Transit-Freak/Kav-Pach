@@ -82,12 +82,11 @@
     <button class="btn" id="ztind" style="display:none" title="אזורי תעשייה קלאסיים">🏭 תעשייה</button>
     <button class="btn" id="ztemp" style="display:none" title="פארקי הייטק, מתחמי משרדים ומסחר, מע&quot;ר">🏢 תעסוקה</button>
     <button class="btn" id="ztinfra" style="display:none" title="נמלים, שדות תעופה, בתי זיקוק, מחזור — מקומות עבודה גדולים שאינם אזור תעשייה">⚙️ תשתית</button>
-    <button class="btn" id="ztmine" style="display:none" title="מכרות ומחצבות">⛏️ כרייה</button>
     <button class="btn" id="stplan" style="display:none" title="אזורים שעדיין לא נבנו — לפי ספירת מבנים במיפוי">🏗️ כולל אזורים בהקמה</button>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…">
     <button class="btn" id="csvbtn"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" rx="3.5" fill="#107c41"/><path d="M6.5 5.5 L13.5 14.5 M13.5 5.5 L6.5 14.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>הורדה לאקסל</button>
     <a href="../">→ הקו הבוחן</a>
-    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), אזורי התעשייה-תעסוקה של משרד התחבורה עם הגבולות מהשכבה הרשמית שלו (📐), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה, ציוני מדדי השירות (זמינות, נגישות, תחרותיות, אמינות) ממדדי השירות של משרד התחבורה (📈) · כל אזור מתויג לפי סוג — תעשייה 🏭, תעסוקה 🏢, תשתית ⚙️, כרייה ⛏️ — ומהרשימה הוסרו מתחמים שאינם יעד נסיעה לעבודה · מתעדכן שבועית</div>
+    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), אזורי התעשייה-תעסוקה של משרד התחבורה עם הגבולות מהשכבה הרשמית שלו (📐), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה, ציוני מדדי השירות (זמינות, נגישות, תחרותיות, אמינות) ממדדי השירות של משרד התחבורה (📈) · כל אזור מתויג לפי סוג — תעשייה 🏭, תעסוקה 🏢, תשתית ⚙️ — ומהרשימה הוסרו מתחמים שאינם יעד נסיעה לעבודה ואתרי כרייה · מתעדכן שבועית</div>
     <!-- באנר המחלקה: מופיע רק אם הקובץ קיים (parks/histadrut-logo.png).
          עד שהוא יועלה — onerror מסתיר את השורה ולא נשאר חלל ריק. -->
     <div class="logorow"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"></div>
@@ -165,11 +164,11 @@ function cnt(p,k){const m={li:'lie',lg:'lge',ln:'lne'};return (WALKMODE=='c'?p[k
 function pkc(p){return WALKMODE=='e'?((p.pkie||0)+(p.pkge||0)):((p.pki||0)+(p.pkg||0))}
 function hasPk(){return IDX.length>0 && ('pki' in IDX[0])}
 // שכבות תצוגה (בקשת ההסתדרות): אזורי תעשייה + מוקדי תעסוקה, יחד או לחוד
-let ZTYPES={ind:true,emp:true,infra:true,mine:true};
+let ZTYPES={ind:true,emp:true,infra:true};
 function ztOf(p){return p.zt||((p.ly||'ind')=='hub'?'emp':'ind')}
-const ZTLBL={ind:'תעשייה',emp:'תעסוקה',infra:'תשתית',mine:'כרייה'};
-const ZTI={emp:'🏢',infra:'⚙️',mine:'⛏️'};
-const ZTT={emp:'אזור תעסוקה — משרדים, מסחר, הייטק',infra:'מתקן תשתית — נמל, תעופה, זיקוק, מחזור',mine:'כרייה וחציבה'};
+const ZTLBL={ind:'תעשייה',emp:'תעסוקה',infra:'תשתית'};
+const ZTI={emp:'🏢',infra:'⚙️'};
+const ZTT={emp:'אזור תעסוקה — משרדים, מסחר, הייטק',infra:'מתקן תשתית — נמל, תעופה, זיקוק, מחזור'};
 function hasLy(){return IDX.length>0 && IDX.some(p=>ztOf(p)!='ind')}
 // אזורים שטרם נבנו: st='planned' (כמעט בלי מבנים) / 'partial' (בנוי חלקית).
 // מוצגים כברירת מחדל עם תגית 🏗️, וניתן להסתירם בלחיצה — מתכננים ירצו
@@ -199,7 +198,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='6';
+const PK_BUILD='7';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 fetch('data/parks.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
@@ -214,7 +213,7 @@ function renderTable(){
   const pk=hasPk();   // עמודת שעות השיא מופיעה רק אחרי שהנתונים חושבו מחדש
   document.querySelector('#tbl th[data-k="pk"]').style.display=pk?'':'none';
   const ly=hasLy();   // כפתורי הסוגים מופיעים רק כשהנתונים כבר מסווגים
-  for(const id of ['ztind','ztemp','ztinfra','ztmine']){
+  for(const id of ['ztind','ztemp','ztinfra']){
     const b=document.getElementById(id);
     b.style.display=ly?'inline-block':'none';
     b.style.opacity=ZTYPES[id.slice(2)]?'1':'.4';
@@ -313,7 +312,7 @@ function openHeatmap(fit=true){
            :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
       :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
            :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:({emp:'#7c3aed',infra:'#334155',mine:'#b45309'})[ztOf(p)]||'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
+    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
       .bindPopup(`<b>${esc(p.name)}</b>${isPlan(p)?' <span style="color:#b45309">🏗️ טרם נבנה</span>':''}${p.city?'<br>'+esc(p.city):''}<br>`+body)
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
@@ -341,7 +340,7 @@ document.getElementById('stplan').onclick=()=>{
   renderTable();
   if(heatview.style.display!=='none') openHeatmap(false);
 };
-for(const k of ['ind','emp','infra','mine']) document.getElementById('zt'+k).onclick=()=>{
+for(const k of ['ind','emp','infra']) document.getElementById('zt'+k).onclick=()=>{
   ZTYPES[k]=!ZTYPES[k];
   if(!Object.values(ZTYPES).some(Boolean)) ZTYPES[k]=true;   // לפחות סוג אחד דולק
   renderTable();
