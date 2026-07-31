@@ -11,6 +11,7 @@ on:
     paths:
       - 'tools/fetch_mot_shapes.py'
       - '.github/workflows/fetch-mot-shapes.yml'
+      - 'parks/sources/**'     # העלאה ידנית של industrial.zip מפעילה המרה מיד
   workflow_dispatch:
 
 permissions:
