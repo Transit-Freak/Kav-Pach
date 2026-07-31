@@ -12,9 +12,10 @@
 #   parks/checks/mot-shapes.json    — דוח בקרה: תכונות בלבד, בלי גאומטריה
 #
 # הרצה: python3 tools/fetch_mot_shapes.py
-import json, math, os, re, shutil, subprocess, sys, tempfile, urllib.request, zipfile
+import json, math, os, re, shutil, sys, tempfile, urllib.parse, urllib.request, zipfile
 
 DS = '8db5effd-59ca-44ef-b561-86e0ce2911d1'
+CSV_RES = '71799e72-7a1f-45cf-9d81-5cd1d5f3b201'   # אותה טבלה ב-API הפתוח
 SHP_URL = os.environ.get('MOT_SHP_URL', '')   # ריק = מאתרים דרך ה-API של data.gov.il
 OUT_ZONES = os.environ.get('OUT_ZONES', 'parks/osm-check/mot-zones.json')
 OUT_REPORT = os.environ.get('OUT_REPORT', 'parks/checks/mot-shapes.json')
@@ -333,7 +334,20 @@ for url, kind in candidates():
             cands.append((u, kind))
 
 records, src_used = None, None
-for url, kind in cands:
+
+# קובץ מקומי קודם לכול: אם השכבה הועלתה ידנית ל-parks/sources (למשל אחרי
+# הורדה מהדפדפן), משתמשים בה ולא פונים לרשת בכלל.
+import glob as _glob
+for lp in sorted(_glob.glob('parks/sources/industrial*.zip'), reverse=True):
+    print('שכבה מקומית:', lp)
+    try:
+        records, src_used = read_layer(lp, 'local'), lp
+    except Exception as e:
+        print('  קריאה נכשלה:', e)
+    if records:
+        break
+
+for url, kind in ([] if records else cands):
     zp = os.path.join(tmp, 'dl.bin')
     print(f'מוריד ({kind}):', url)
     try:
@@ -365,6 +379,23 @@ if not records:
 
 if not records:
     print('אף אחד ממקורות השכבה לא נקרא בהצלחה')
+    # אבחון: מה בכלל יש ב-API הפתוח של הדאטהסט? אם יש שם עמודת גאומטריה,
+    # אפשר לקבל את הגבולות בלי להוריד קובץ בכלל.
+    try:
+        ds = json.loads(fetch_bytes(
+            'https://data.gov.il/api/3/action/datastore_search?'
+            + urllib.parse.urlencode({'resource_id': CSV_RES, 'limit': 1})
+        ).decode('utf-8', 'replace'))
+        print('עמודות בטבלה הפתוחה:',
+              [f.get('id') for f in ds['result'].get('fields', [])])
+    except Exception as e:
+        print('בדיקת הטבלה הפתוחה נכשלה:', e)
+    print('')
+    print('מה שנשאר לעשות ידנית (פעם אחת): להיכנס לעמוד הדאטהסט בדפדפן,')
+    print(f'  https://data.gov.il/dataset/{DS}')
+    print('להוריד את הקובץ בפורמט SHP, ולהעלות אותו כמו-שהוא לתיקייה')
+    print('  parks/sources/industrial.zip')
+    print('התהליך הזה מזהה קובץ מקומי כזה ומעדיף אותו על הרשת.')
     sys.exit(1)
 
 zones, report, skipped = [], [], []
