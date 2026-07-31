@@ -191,7 +191,12 @@ function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
 function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 
-fetch('data/parks.json').then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
+// רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
+// עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
+// מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
+const PK_BUILD='4';
+const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
+fetch('data/parks.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
   renderTable();
   const h=decodeURIComponent((location.hash||'').slice(1));
@@ -217,7 +222,12 @@ function renderTable(){
   pb.textContent=SHOWPLAN?'🏗️ כולל אזורים בהקמה':'🏭 רק אזורים פעילים';
   let rows=IDX.filter(p=>LAYERS[lyOf(p)]&&(SHOWPLAN||!isPlan(p))&&(!f || (p.name+' '+(p.city||'')).includes(f)));
   const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(k=='sf'?(p.sf??-1):(p[k]??'')));
+  // אזור בלי נתון במדד שממיינים לפיו יורד לסוף בשני הכיוונים — כדי שמיון
+  // עולה יראה את הגרועים באמת ולא את חסרי-הנתון
+  const miss=(p,k)=>k=='sf'?(p.sf==null):false;
   rows.sort((a,b)=>{
+    const ma=miss(a,sortK), mb=miss(b,sortK);
+    if(ma!==mb) return ma?1:-1;
     const va=val(a,sortK), vb=val(b,sortK);
     const c=(typeof va==='number')? va-vb : String(va).localeCompare(String(vb),'he');
     return c*sortDir || String(a.name).localeCompare(String(b.name),'he');
@@ -399,7 +409,7 @@ document.getElementById('csvbtn').onclick=()=>{
 
 function openPark(f,push=true){
   if(push) history.pushState({park:f},'','#'+encodeURIComponent(f));
-  fetch('data/'+f).then(r=>r.json()).then(d=>{
+  fetch('data/'+f+DV).then(r=>r.json()).then(d=>{
     tblview.style.display='none'; wrap.style.display='grid'; backbtn.style.display='inline-block';
     heatview.style.display='none'; heatbtn.style.display='none';
     msg.style.display='none';
