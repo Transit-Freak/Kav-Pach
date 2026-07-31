@@ -15,9 +15,7 @@
 import json, math, os, re, shutil, subprocess, sys, tempfile, urllib.request, zipfile
 
 DS = '8db5effd-59ca-44ef-b561-86e0ce2911d1'
-SHP_URL = os.environ.get(
-    'MOT_SHP_URL',
-    f'https://data.gov.il/dataset/{DS}/resource/c9447ab4-f167-4194-92e4-a5718915004c/download/industrial.zip')
+SHP_URL = os.environ.get('MOT_SHP_URL', '')   # ריק = מאתרים דרך ה-API של data.gov.il
 OUT_ZONES = os.environ.get('OUT_ZONES', 'parks/osm-check/mot-zones.json')
 OUT_REPORT = os.environ.get('OUT_REPORT', 'parks/checks/mot-shapes.json')
 MAXPTS = int(os.environ.get('MAXPTS', '200'))
@@ -46,6 +44,45 @@ def fetch(url, dest):
     with urllib.request.urlopen(req, timeout=300) as r, open(dest, 'wb') as f:
         shutil.copyfileobj(r, f)
     return os.path.getsize(dest)
+
+
+def is_zip(path):
+    with open(path, 'rb') as f:
+        return f.read(2) == b'PK'
+
+
+def candidates():
+    """כתובות ההורדה של השכבה, לפי סדר עדיפות: SHP ואז KMZ.
+
+    הכתובות לא מקובעות בקוד — נשלפות מה-API של data.gov.il, כי מזהי המשאבים
+    מתחלפים כשמתפרסמת גרסה חדשה של השכבה.
+    """
+    if SHP_URL:
+        return [(SHP_URL, 'SHP')]
+    out = []
+    try:
+        pkg = json.loads(fetch_bytes(
+            f'https://data.gov.il/api/3/action/package_show?id={DS}').decode('utf-8', 'replace'))
+        res = pkg['result']['resources']
+        print('משאבים בדאטהסט:', [(r.get('format'), r.get('name')) for r in res])
+        for want in ('SHP', 'KMZ', 'KML'):
+            for r in res:
+                if (r.get('format') or '').upper().startswith(want) and r.get('url'):
+                    out.append((r['url'], want))
+    except Exception as e:
+        print('שליפת רשימת המשאבים נכשלה:', e)
+    if not out:   # נפילה לאחור: המזהים שהיו בתוקף בזמן הכתיבה
+        out = [(f'https://data.gov.il/dataset/{DS}/resource/'
+                'c9447ab4-f167-4194-92e4-a5718915004c/download/industrial.zip', 'SHP'),
+               (f'https://data.gov.il/dataset/{DS}/resource/'
+                'a7b34e8a-fb46-448c-ad3a-244bae6d137c/download/industrial_kmz.zip', 'KMZ')]
+    return out
+
+
+def fetch_bytes(url):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=180) as r:
+        return r.read()
 
 
 def read_prj(base):
@@ -108,71 +145,169 @@ def simplify(pts):
     return out
 
 
+def load_shp(base):
+    """(תכונות, טבעות ב-WGS84) לכל רשומה בשכבת ה-shapefile."""
+    crs = read_prj(base)
+    print('CRS:', (crs.to_epsg() or crs.name))
+    tr = Transformer.from_crs(crs, CRS.from_epsg(4326), always_xy=True)
+    sf, recs = open_shp(base)
+    flds = [f[0] for f in sf.fields[1:]]
+    print('שדות:', flds)
+    f_name = pick(flds, 'NAME', 'SHEM', 'SHEM_EZOR')
+    f_city = pick(flds, 'CITY', 'YISHUV', 'SHEM_YISHUV')
+    f_dist = pick(flds, 'DISTRICT', 'MAHOZ')
+    f_taba = pick(flds, 'TABA_NUM', 'TABA')
+    f_bruto = pick(flds, 'BRUTOAREA', 'BRUTO')
+    print('מיפוי שדות:', dict(name=f_name, city=f_city, district=f_dist,
+                              taba=f_taba, bruto=f_bruto))
+    if not f_name:
+        raise SystemExit('אין שדה שם בשכבה — לא ממשיכים')
+    shapes = sf.shapes()
+    print('רשומות:', len(recs), '| גאומטריות:', len(shapes),
+          '| סוג:', getattr(sf, 'shapeTypeName', sf.shapeType))
+    out = []
+    for rec, sh in zip(recs, shapes):
+        d = dict(zip(flds, rec))
+        at = {'name': str(d.get(f_name) or ''),
+              'city': str(d.get(f_city) or '') if f_city else '',
+              'district': str(d.get(f_dist) or '') if f_dist else '',
+              'taba': str(d.get(f_taba) or '') if f_taba else '',
+              'bruto': d.get(f_bruto) if f_bruto else 0}
+        rings = []
+        if sh.points:
+            parts = list(sh.parts) + [len(sh.points)]
+            for a, b in zip(parts, parts[1:]):
+                seg = sh.points[a:b]
+                if len(seg) < 4:
+                    continue
+                rings.append([[la, lo] for lo, la in
+                              (tr.transform(x, y) for x, y in simplify(seg))])
+        out.append((at, rings))
+    return out
+
+
+def load_kml(path):
+    """(תכונות, טבעות) מקובץ KML — הקואורדינטות שם ממילא ב-WGS84."""
+    import xml.etree.ElementTree as ET
+    root = ET.parse(path).getroot()
+    ns = {'k': root.tag.split('}')[0].strip('{')} if '}' in root.tag else {}
+    def fa(el, tag):
+        return el.findall(f'.//k:{tag}', ns) if ns else el.findall(f'.//{tag}')
+    def keyof(k):
+        k = (k or '').strip().upper()
+        for want, key in (('NAME', 'name'), ('SHEM', 'name'), ('CITY', 'city'),
+                          ('YISHUV', 'city'), ('DISTRICT', 'district'), ('MAHOZ', 'district'),
+                          ('TABA', 'taba'), ('BRUTO', 'bruto')):
+            if k.startswith(want):
+                return key
+        return None
+    out = []
+    for pm in fa(root, 'Placemark'):
+        at = {'name': '', 'city': '', 'district': '', 'taba': '', 'bruto': 0}
+        for sd in fa(pm, 'SimpleData') + fa(pm, 'Data'):
+            k = keyof(sd.get('name'))
+            if not k:
+                continue
+            v = sd.text
+            if v is None:                      # <Data><value>...</value></Data>
+                vv = fa(sd, 'value')
+                v = vv[0].text if vv else ''
+            at[k] = (v or '').strip()
+        if not at['name']:
+            nm = fa(pm, 'name')
+            at['name'] = (nm[0].text or '').strip() if nm else ''
+        rings = []
+        for c in fa(pm, 'coordinates'):
+            pts = []
+            for tok in (c.text or '').split():
+                bits = tok.split(',')
+                if len(bits) >= 2:
+                    try:
+                        pts.append((float(bits[0]), float(bits[1])))
+                    except ValueError:
+                        pass
+            if len(pts) >= 4:
+                rings.append([[la, lo] for lo, la in simplify(pts)])
+        out.append((at, rings))
+    print('Placemarks ב-KML:', len(out))
+    return out
+
+
 tmp = tempfile.mkdtemp(prefix='motshp')
-zp = os.path.join(tmp, 'industrial.zip')
-print('מוריד:', SHP_URL)
-print('גודל:', fetch(SHP_URL, zp), 'bytes')
-with zipfile.ZipFile(zp) as z:
-    z.extractall(tmp)
-shp = None
-for root, _dirs, files in os.walk(tmp):
-    for fn in files:
-        if fn.lower().endswith('.shp'):
-            shp = os.path.join(root, fn)
-if not shp:
-    print('לא נמצא shapefile בתוך ה-ZIP:', sorted(os.listdir(tmp)))
+records, src_used = None, None
+for url, kind in candidates():
+    zp = os.path.join(tmp, 'dl.bin')
+    print(f'מוריד ({kind}):', url)
+    try:
+        n = fetch(url, zp)
+    except Exception as e:
+        print('  הורדה נכשלה:', e); continue
+    print('  גודל:', n, 'bytes')
+    if not is_zip(zp):
+        head = open(zp, 'rb').read(300).decode('utf-8', 'replace').replace('\n', ' ')
+        print('  לא ארכיון ZIP. תחילת התשובה:', head[:200])
+        # KML גלוי (לא ארוז) — עדיין שמיש
+        if '<kml' in head or '<?xml' in head:
+            kp = os.path.join(tmp, 'layer.kml')
+            os.replace(zp, kp)
+            try:
+                records, src_used = load_kml(kp), url
+                break
+            except Exception as e:
+                print('  קריאת KML נכשלה:', e)
+        continue
+    d = os.path.join(tmp, kind.lower())
+    os.makedirs(d, exist_ok=True)
+    try:
+        with zipfile.ZipFile(zp) as z:
+            z.extractall(d)
+    except Exception as e:
+        print('  פתיחת ה-ZIP נכשלה:', e); continue
+    shp = kml = None
+    for root_d, _dirs, files in os.walk(d):
+        for fn in files:
+            if fn.lower().endswith('.shp'):
+                shp = os.path.join(root_d, fn)
+            elif fn.lower().endswith(('.kml', '.kmz')):
+                kml = os.path.join(root_d, fn)
+    try:
+        if shp:
+            print('  shapefile:', os.path.basename(shp))
+            records, src_used = load_shp(shp[:-4]), url
+            break
+        if kml:
+            print('  kml:', os.path.basename(kml))
+            records, src_used = load_kml(kml), url
+            break
+    except SystemExit as e:
+        print(' ', e); continue
+    except Exception as e:
+        print('  קריאת השכבה נכשלה:', e); continue
+    print('  אין שכבה מוכרת בארכיון:',
+          sorted(f for _r, _d, fs in os.walk(d) for f in fs)[:12])
+if not records:
+    print('אף אחד ממקורות השכבה לא נקרא בהצלחה')
     sys.exit(1)
-base = shp[:-4]
-print('shapefile:', os.path.basename(shp))
-
-crs = read_prj(base)
-print('CRS:', (crs.to_epsg() or crs.name))
-tr = Transformer.from_crs(crs, CRS.from_epsg(4326), always_xy=True)
-
-sf, recs = open_shp(base)
-flds = [f[0] for f in sf.fields[1:]]
-print('שדות:', flds)
-f_name = pick(flds, 'NAME', 'SHEM', 'SHEM_EZOR')
-f_city = pick(flds, 'CITY', 'YISHUV', 'SHEM_YISHUV')
-f_dist = pick(flds, 'DISTRICT', 'MAHOZ')
-f_taba = pick(flds, 'TABA_NUM', 'TABA')
-f_bruto = pick(flds, 'BRUTOAREA', 'BRUTO')
-print('מיפוי שדות:', dict(name=f_name, city=f_city, district=f_dist,
-                          taba=f_taba, bruto=f_bruto))
-if not f_name:
-    print('אין שדה שם — לא ממשיכים'); sys.exit(1)
-
-shapes = sf.shapes()
-print('רשומות:', len(recs), '| גאומטריות:', len(shapes),
-      '| סוג:', getattr(sf, 'shapeTypeName', sf.shapeType))
 
 zones, report, skipped = [], [], []
-for rec, sh in zip(recs, shapes):
-    d = dict(zip(flds, rec))
-    nm = ' '.join(str(d.get(f_name) or '').split())
-    city = ' '.join(str(d.get(f_city) or '').split()) if f_city else ''
-    dist = ' '.join(str(d.get(f_dist) or '').split()) if f_dist else ''
-    taba = str(d.get(f_taba) or '').strip() if f_taba else ''
+for at, raw_rings in records:
+    nm = ' '.join(str(at.get('name') or '').split())
+    city = ' '.join(str(at.get('city') or '').split())
+    dist = ' '.join(str(at.get('district') or '').split())
+    taba = str(at.get('taba') or '').strip()
     try:
-        bruto = float(str(d.get(f_bruto) or 0).replace(',', '')) / 1e6
+        bruto = float(str(at.get('bruto') or 0).replace(',', '')) / 1e6
     except Exception:
         bruto = 0.0
-    if not sh.points:
-        skipped.append({'name': nm, 'why': 'אין גאומטריה'}); continue
-    parts = list(sh.parts) + [len(sh.points)]
     rings = []
-    for a, b in zip(parts, parts[1:]):
-        seg = sh.points[a:b]
-        if len(seg) < 4:
-            continue
-        wgs = [tr.transform(x, y) for x, y in simplify(seg)]
-        rg = [[round(la, 5), round(lo, 5)] for lo, la in wgs]
+    for rg0 in raw_rings:
+        rg = [[round(p[0], 5), round(p[1], 5)] for p in rg0]
         # שפיות גאוגרפית: הכול חייב ליפול בתוך תיבת ישראל
         if not all(29.0 <= p[0] <= 33.6 and 33.9 <= p[1] <= 36.0 for p in rg):
             continue
         rings.append(rg)
     if not rings:
-        skipped.append({'name': nm, 'why': 'גאומטריה מחוץ לישראל או ריקה'}); continue
+        skipped.append({'name': nm, 'why': 'אין גאומטריה או שהיא מחוץ לישראל'}); continue
     rings.sort(key=lambda rg: -ring_area_km2(rg))
     rings = rings[:8]
     area = round(sum(ring_area_km2(rg) for rg in rings), 3)
@@ -188,6 +323,7 @@ for rec, sh in zip(recs, shapes):
 
 ok = sum(1 for r in report if r['ratio_ok'])
 hub = sum(1 for z in zones if z['ly'] == 'hub')
+recs = records
 print(f'אזורים עם גבול: {len(zones)}/{len(recs)} | מוקדי תעסוקה: {hub} | '
       f'שטח מתאים לרשום: {ok}/{len(report)} | דולגו: {len(skipped)}')
 for s in skipped[:20]:
@@ -214,7 +350,7 @@ if len(zones) < _floor:
 for path, data in (
     (OUT_ZONES, {'src': 'משרד התחבורה — תחום אזורי תעשיה תעסוקה (גבולות מהשכבה הרשמית)',
                  'url': f'https://data.gov.il/dataset/{DS}', 'zones': zones}),
-    (OUT_REPORT, {'src': SHP_URL, 'fields': flds, 'records': len(recs),
+    (OUT_REPORT, {'src': src_used, 'records': len(recs),
                   'with_boundary': len(zones), 'skipped': skipped, 'zones': report}),
 ):
     os.makedirs(os.path.dirname(path), exist_ok=True)
