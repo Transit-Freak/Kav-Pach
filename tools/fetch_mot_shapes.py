@@ -66,13 +66,21 @@ def fetch_via_browser(urls, dest):
         ctx = br.new_context(accept_downloads=True, locale='he-IL',
                              user_agent=UA['User-Agent'])
         pg = ctx.new_page()
+        title = ''
         try:
             pg.goto(f'https://data.gov.il/dataset/{DS}',
                     wait_until='domcontentloaded', timeout=120000)
             pg.wait_for_timeout(8000)
-            print('  עמוד הדאטהסט נטען:', (pg.title() or '')[:60])
+            title = (pg.title() or '').strip()
+            print('  עמוד הדאטהסט נטען:', title[:60] or '(בלי כותרת)')
         except Exception as e:
             print('  טעינת עמוד הדאטהסט נכשלה:', e)
+        if not title:
+            # דף בלי כותרת = אתגר הגנת-הבוטים לא נפתר, גם האתר עצמו לא נטען.
+            # אין טעם לנסות להוריד — זה רק ייתקע עד ה-timeout על כל כתובת.
+            print('  האתר לא נטען בדפדפן — לא ממשיכים לניסיונות הורדה')
+            br.close()
+            return None
         for url in urls:
             try:
                 r = ctx.request.get(url, timeout=180000)
@@ -86,9 +94,9 @@ def fetch_via_browser(urls, dest):
             except Exception as e:
                 print('  בקשה בדפדפן נכשלה:', e)
             try:   # נפילה לאחור: ניווט שמפעיל הורדת-קובץ בדפדפן
-                with pg.expect_download(timeout=120000) as dl:
+                with pg.expect_download(timeout=30000) as dl:
                     try:
-                        pg.goto(url, timeout=120000)
+                        pg.goto(url, timeout=30000)
                     except Exception:
                         pass
                 dl.value.save_as(dest)
