@@ -1,0 +1,63 @@
+name: convert-service-indices
+
+# עדכון מדדי השירות של משרד התחבורה: מעלים את קובץ ה-ZIP שהורד מתלתן
+# לתיקייה parks/sources/ (בכל שם שמתחיל ב-madadey), והתהליך הזה ממיר אותו
+# לקובץ שהאתר קורא — בלי שצריך לעשות שום דבר נוסף. תאריך העדכון נלקח
+# מהמספר בשם הקובץ (למשל madadey_shirut_shape_202511.zip → 2025-11).
+
+on:
+  push:
+    paths:
+      - 'parks/sources/**'
+      - 'tools/convert_service_indices.py'
+      - '.github/workflows/convert-service-indices.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: convert-service-indices-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: המרת השכבה שהועלתה
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyshp pyproj
+          ZIP=$(ls -t parks/sources/madadey*.zip 2>/dev/null | head -1 || true)
+          if [ -z "$ZIP" ]; then echo "אין קובץ מדדי שירות בתיקייה — אין מה להמיר"; exit 0; fi
+          echo "ממיר: $ZIP"
+          rm -rf /tmp/svc && mkdir -p /tmp/svc
+          unzip -o -q "$ZIP" -d /tmp/svc
+          SHPFILE=$(find /tmp/svc -name '*.shp' | head -1)
+          [ -n "$SHPFILE" ] || { echo "לא נמצא shapefile בתוך ה-ZIP"; exit 1; }
+          # תאריך העדכון מתוך שם הקובץ: ...202511.zip → 2025-11
+          YM=$(echo "$ZIP" | grep -oE '20[0-9]{4}' | tail -1 || true)
+          UPD=$([ -n "$YM" ] && echo "${YM:0:4}-${YM:4:2}" || date +%Y-%m)
+          echo "תאריך עדכון: $UPD"
+          SHP="${SHPFILE%.shp}" MAXPTS=30 UPDATED="$UPD" \
+            python3 tools/convert_service_indices.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/checks/service-indices.json /tmp/svcidx.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p parks/checks && cp /tmp/svcidx.json parks/checks/service-indices.json
+            git add parks/checks/service-indices.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: מדדי השירות של משרד התחבורה — המרה מהשכבה שהועלתה'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
