@@ -20,7 +20,10 @@ SHP_URL = os.environ.get('MOT_SHP_URL', '')   # ריק = מאתרים דרך ה-
 OUT_ZONES = os.environ.get('OUT_ZONES', 'parks/osm-check/mot-zones.json')
 OUT_REPORT = os.environ.get('OUT_REPORT', 'parks/checks/mot-shapes.json')
 MAXPTS = int(os.environ.get('MAXPTS', '200'))
-MIN_KM2 = float(os.environ.get('MIN_KM2', '0.02'))
+MIN_KM2 = float(os.environ.get('MIN_KM2', '0.005'))
+
+# שמות מחוז משובשים בשכבה המקורית
+DIST_FIX = {'תל-אביב': 'תל אביב', 'ירשולים': 'ירושלים', 'צופן': 'צפון'}
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
 import shapefile                      # pyshp
@@ -407,10 +410,12 @@ if not records:
     sys.exit(1)
 
 zones, report, skipped = [], [], []
+_seen = []
 for at, raw_rings in records:
     nm = ' '.join(str(at.get('name') or '').split())
     city = ' '.join(str(at.get('city') or '').split())
     dist = ' '.join(str(at.get('district') or '').split())
+    dist = DIST_FIX.get(dist, dist)
     taba = str(at.get('taba') or '').strip()
     try:
         bruto = float(str(at.get('bruto') or 0).replace(',', '')) / 1e6
@@ -430,6 +435,14 @@ for at, raw_rings in records:
     area = round(sum(ring_area_km2(rg) for rg in rings), 3)
     if area < MIN_KM2:
         skipped.append({'name': nm, 'why': f'שטח זעיר ({area} קמ"ר)'}); continue
+    # כמה רשומות מופיעות פעמיים בשכבה המקורית (אותו שם, אותו מקום)
+    pts = [p for rg in rings for p in rg]
+    cla = sum(p[0] for p in pts) / len(pts); clo = sum(p[1] for p in pts) / len(pts)
+    cl = math.cos(math.radians(cla))
+    if any(n == nm and math.hypot((a - cla) * 110540, (b - clo) * 111320 * cl) < 300
+           for n, a, b in _seen):
+        skipped.append({'name': nm, 'why': 'רשומה כפולה בשכבה'}); continue
+    _seen.append((nm, cla, clo))
     ly = 'hub' if HUB_RE.search(nm) else 'ind'
     zones.append({'name': nm, 'city': city, 'district': dist, 'taba': taba,
                   'ly': ly, 'polys': rings})
