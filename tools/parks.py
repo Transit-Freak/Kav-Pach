@@ -154,6 +154,56 @@ def built_status(cen):
             best = (z['st'], d)
     return best[0] if best else ''
 
+# ---- מדדי השירות של משרד התחבורה (זמינות/נגישות/תחרותיות/אמינות) ----
+# ציונים רשמיים לכל אזור סטטיסטי. לכל אזור תעשייה מחפשים את האזורים
+# הסטטיסטיים שהוא נמצא בהם; כשיש כמה — ממוצע משוקלל לפי שטח האזור
+# הסטטיסטי, והציון של האזור שבו יושב המרכז מקבל משקל כפול.
+SVCIDX = os.environ.get('SERVICE_INDICES', 'parks/checks/service-indices.json')
+_svc = []
+_svc_meta = {}
+if os.path.exists(SVCIDX):
+    try:
+        _sj = json.load(open(SVCIDX, encoding='utf-8'))
+        _svc_meta = {'updated': _sj.get('updated'), 'src': _sj.get('src')}
+        for a in _sj['areas']:
+            pts = [p for rg in a['polys'] for p in rg]
+            la1 = min(p[0] for p in pts); la2 = max(p[0] for p in pts)
+            lo1 = min(p[1] for p in pts); lo2 = max(p[1] for p in pts)
+            a['bb'] = (la1, lo1, la2, lo2)
+            _svc.append(a)
+        print('מדדי שירות נטענו:', len(_svc), 'אזורים סטטיסטיים | עדכון', _svc_meta.get('updated'))
+    except Exception as e:
+        print('טעינת מדדי שירות נכשלה:', e)
+
+def service_scores(pk):
+    """ציוני מדדי השירות לאזור: ממוצע משוקלל של האזורים הסטטיסטיים שהוא חופף."""
+    if not _svc:
+        return None
+    cen = pk['cen']
+    # דוגמים את הפוליגון: המרכז + קודקודי הגבול, ובודקים בכל אזור סטטיסטי
+    sample = [cen] + [p for rg in pk['polys'] for p in rg[::max(1, len(rg) // 12)]][:24]
+    hits = {}
+    for i, a in enumerate(_svc):
+        bb = a['bb']
+        for (la, lo) in sample:
+            if not (bb[0] <= la <= bb[2] and bb[1] <= lo <= bb[3]):
+                continue
+            if any(in_poly(la, lo, rg) for rg in a['polys']):
+                w = 2.0 if (la, lo) == cen else 1.0
+                hits[i] = hits.get(i, 0) + w
+                break
+    if not hits:
+        return None
+    tot = sum(hits.values())
+    def wavg(k):
+        vals = [(_svc[i].get(k), w) for i, w in hits.items() if isinstance(_svc[i].get(k), (int, float))]
+        if not vals:
+            return None
+        return round(sum(v * w for v, w in vals) / sum(w for _, w in vals), 1)
+    return {'av': wavg('av'), 'ac': wavg('ac'), 'co': wavg('co'),
+            're': wavg('re'), 'fs': wavg('fs'), 'n': len(hits),
+            'sa_city': _svc[max(hits, key=hits.get)].get('city', '')}
+
 # ---- מקור שלישי: אזורי תעשייה-תעסוקה של משרד התחבורה, גבולות תב"ע ----
 # ממנהל התכנון שאומתו בפאנל (parks/osm-check/mot-zones.json). ly='hub'
 # מסמן מוקד תעסוקה (מחצבה, נמל, קמפוס...) — שכבת תצוגה נפרדת באתר.
@@ -686,12 +736,16 @@ for pi, pk in enumerate(parks):
                  't': s['tc'], 'te': s['te'], 'wt': s['wtc'], 'wm': s['wmc'],
                  'wte': s['wte'], 'wme': s['wme']}
                 for s in stops_here if not (s['tc'] == 'blocked' and s['te'] == 'blocked')]
+    svc_sc = service_scores(pk)
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
            'stops': outstops,
            'lines': lines_c, 'linesE': lines_e, 'cov400': cov,
            'foot': fw, 'footlen': int(flen),
            'gen': today.isoformat()}
+    if svc_sc:
+        rec['svc'] = svc_sc          # מדדי משרד התחבורה לאזור הסטטיסטי
+        rec['svcmeta'] = _svc_meta
     off = pk.get('official')
     if off:
         rec['official'] = {k: off.get(k) for k in ('oname', 'district', 'avail', 'occ', 'cur_emp', 'fut_emp')}
@@ -709,7 +763,10 @@ for pi, pk in enumerate(parks):
                   'off': 1 if off else 0,
                   'ly': 'hub' if pk.get('hub') else 'ind',
                   'mt': 1 if pk.get('mot') else 0,
-                  'st': built_status(pk['cen'])})
+                  'st': built_status(pk['cen']),
+                  'sf': (svc_sc or {}).get('fs'),     # ציון משוקלל רשמי
+                  'sr': (svc_sc or {}).get('re'),     # אמינות רשמית
+                  'sa': (svc_sc or {}).get('av')})    # זמינות רשמית
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
