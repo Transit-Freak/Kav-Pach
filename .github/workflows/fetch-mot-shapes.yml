@@ -1,0 +1,55 @@
+name: fetch-mot-shapes
+
+# גבולות אזורי התעשייה-תעסוקה של משרד התחבורה — מהשכבה הרשמית שלו עצמו
+# (data.gov.il, פורמט SHP). מחליף את ההתאמה לפי מספר תב"ע במנהל התכנון
+# (fetch-taba-boundaries), שהצליחה בחלק מהמקרים בלבד. רץ חודשי + לפי דרישה.
+
+on:
+  schedule:
+    - cron: '0 4 5 * *'   # ה-5 בכל חודש, 04:00 UTC
+  push:
+    paths:
+      - 'tools/fetch_mot_shapes.py'
+      - '.github/workflows/fetch-mot-shapes.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fetch-mot-shapes-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: שליפת השכבה והמרה ל-WGS84
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyshp pyproj
+          python3 tools/fetch_mot_shapes.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          BR="${GITHUB_REF_NAME:-main}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp parks/osm-check/mot-zones.json /tmp/motz.json
+          cp parks/checks/mot-shapes.json /tmp/motr.json
+          for i in 1 2 3; do
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
+            mkdir -p parks/osm-check parks/checks
+            cp /tmp/motz.json parks/osm-check/mot-zones.json
+            cp /tmp/motr.json parks/checks/mot-shapes.json
+            git add parks/osm-check/mot-zones.json parks/checks/mot-shapes.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: גבולות אזורי התעשייה של משרד התחבורה — מהשכבה הרשמית'
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done

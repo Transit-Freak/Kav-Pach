@@ -204,18 +204,39 @@ def service_scores(pk):
             're': wavg('re'), 'fs': wavg('fs'), 'n': len(hits),
             'sa_city': _svc[max(hits, key=hits.get)].get('city', '')}
 
-# ---- מקור שלישי: אזורי תעשייה-תעסוקה של משרד התחבורה, גבולות תב"ע ----
-# ממנהל התכנון שאומתו בפאנל (parks/osm-check/mot-zones.json). ly='hub'
-# מסמן מוקד תעסוקה (מחצבה, נמל, קמפוס...) — שכבת תצוגה נפרדת באתר.
+# ---- מקור שלישי: אזורי תעשייה-תעסוקה של משרד התחבורה ----
+# הגבולות מהשכבה הרשמית של משרד התחבורה עצמו (parks/osm-check/mot-zones.json,
+# נבנה ב-tools/fetch_mot_shapes.py). ly='hub' מסמן מוקד תעסוקה שאינו אזור
+# תעשייה קלאסי (נמל, מחצבה, קמפוס...) — שכבת תצוגה נפרדת באתר.
 MOT = os.environ.get('MOT_ZONES', 'parks/osm-check/mot-zones.json')
 if os.path.exists(MOT):
     _mot = json.load(open(MOT, encoding='utf-8'))['zones']
+    _mnew = _mdup = 0
     for z in _mot:
         mpolys = [[(a, b) for a, b in rg] for rg in z['polys'] if len(rg) >= 4]
         if not mpolys:
             continue
         cla, clo = _cen([p for rg in mpolys for p in rg])
         cl = math.cos(math.radians(cla))
+        # כפילות מול אזור שכבר קיים (OSM מאומת / הוספה ידנית): אם המרכז של אחד
+        # נמצא בתוך הפוליגון של השני — זה אותו אזור. מסמנים אותו כמאושר ע"י
+        # משרד התחבורה ולא מוסיפים אזור שני באותו מקום.
+        dup = None
+        for pk in parks:
+            if math.hypot((pk['cen'][0] - cla) * 110540,
+                          (pk['cen'][1] - clo) * 111320 * cl) > 3000:
+                continue
+            if (any(in_poly(cla, clo, q) for q in pk['polys'])
+                    or any(in_poly(pk['cen'][0], pk['cen'][1], q) for q in mpolys)):
+                dup = pk; break
+        if dup is not None:
+            dup['mot'] = 1
+            if not dup.get('name'):
+                dup['name'] = z['name']; dup['noname'] = False
+            if z.get('city') and not dup.get('mot_city'):
+                dup['mot_city'] = z['city']
+            _mdup += 1
+            continue
         pk = {'name': z['name'], 'noname': False, 'polys': mpolys, 'cen': (cla, clo), 'cl': cl,
               'area': sum(poly_area_km2(p, cl) for p in mpolys), 'mot': 1}
         if z.get('ly') == 'hub':
@@ -223,7 +244,9 @@ if os.path.exists(MOT):
         if z.get('city'):
             pk['mot_city'] = z['city']
         parks.append(pk)
-    print('אזורי משרד התחבורה שנוספו:', len(_mot))
+        _mnew += 1
+    print('משרד התחבורה: נוספו', _mnew, '| זוהו כאזור שכבר קיים', _mdup,
+          '| בקובץ', len(_mot))
 
 # ---- מקור רשמי (משרד הכלכלה): השלמת חסרים + העשרה ----
 # כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
