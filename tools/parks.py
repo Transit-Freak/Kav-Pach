@@ -7,8 +7,10 @@
 # העיקרון המרכזי (בקשת המשתמש): להבדיל בין תחנה שבאמת בתוך הפארק לתחנת
 # צומת/כניסה — השיוך גאומטרי (בתוך הפוליגון / עד 150מ' / עד 450מ'), ושמות
 # צומת/מחלף/כביש לעולם לא נספרים כ"בתוך".
-import csv, json, math, os, re, datetime, time, urllib.request
+import csv, json, math, os, re, datetime, time, urllib.request, sys
 from collections import defaultdict
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from zone_type import classify as _classify_zone   # תיוג סוג + סינון לא-מקום-עבודה
 
 RAW = os.environ.get('PARKS_RAW', 'parks-raw.json')
 OFFICIAL = os.environ.get('OFFICIAL', '')   # official.json (משרד הכלכלה); ריק = לדלג
@@ -211,13 +213,32 @@ def service_scores(pk):
 MOT = os.environ.get('MOT_ZONES', 'parks/osm-check/mot-zones.json')
 if os.path.exists(MOT):
     _mot = json.load(open(MOT, encoding='utf-8'))['zones']
-    _mnew = _mdup = 0
+    _mnew = _mdup = _mexc = 0
     for z in _mot:
         mpolys = [[(a, b) for a, b in rg] for rg in z['polys'] if len(rg) >= 4]
         if not mpolys:
             continue
+        zc = _classify_zone(z['name'])
+        if zc.get('exclude'):   # שכונת מגורים, מוסד חינוכי... — לא מקום עבודה
+            _mexc += 1
+            continue
+        if zc.get('rename'):
+            z = dict(z, name=zc['rename'])
         cla, clo = _cen([p for rg in mpolys for p in rg])
         cl = math.cos(math.radians(cla))
+        # אותו שם עד 3 ק"מ = שתי תוכניות תב"ע של אותו אזור (כמו אדמות ק.ק.ל
+        # חפ/598 + חפ/604 במפרץ חיפה) — מאוחדות לאזור אחד מרובה-פוליגונים
+        same = None
+        for pk in parks:
+            if pk['name'] == z['name'] and math.hypot((pk['cen'][0] - cla) * 110540,
+                                                      (pk['cen'][1] - clo) * 111320 * cl) < 3000:
+                same = pk; break
+        if same is not None:
+            same['polys'].extend(mpolys)
+            same['area'] = sum(poly_area_km2(p, same['cl']) for p in same['polys'])
+            same['mot'] = 1
+            _mdup += 1
+            continue
         # כפילות מול אזור שכבר קיים (OSM מאומת / הוספה ידנית): אם המרכז של אחד
         # נמצא בתוך הפוליגון של השני — זה אותו אזור. מסמנים אותו כמאושר ע"י
         # משרד התחבורה ולא מוסיפים אזור שני באותו מקום.
@@ -246,7 +267,7 @@ if os.path.exists(MOT):
         parks.append(pk)
         _mnew += 1
     print('משרד התחבורה: נוספו', _mnew, '| זוהו כאזור שכבר קיים', _mdup,
-          '| בקובץ', len(_mot))
+          '| סוננו (לא מקום עבודה)', _mexc, '| בקובץ', len(_mot))
 
 # ---- מקור רשמי (משרד הכלכלה): השלמת חסרים + העשרה ----
 # כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
@@ -753,6 +774,16 @@ for pi, pk in enumerate(parks):
         base = ('אזור תעשייה — ' + city) if city else 'אזור תעשייה ללא שם'
         _noname_ser[base] = _noname_ser.get(base, 0) + 1
         pk['name'] = base + (f" ({_noname_ser[base]})" if _noname_ser[base] > 1 else '')
+    # תיוג סוג + סינון (tools/zone_type.py) — גם לאזורים שהגיעו מ-OSM,
+    # למשל השמות הערביים של רהט ועידן הנגב שמקבלים כאן שם עברי
+    zc = _classify_zone(pk['name'])
+    if zc.get('exclude'):
+        continue
+    if zc.get('rename'):
+        pk['name'] = zc['rename']
+    zt = zc['zt']
+    if zt == 'ind' and pk.get('hub'):
+        zt = 'emp'   # מוקד מהשכבה בלי כלל-שם משלו — תעסוקה, לא תעשייה
     # תחנה שחסומה בשני המצבים (מרכז וקצה) לא תוצג כלל; אחרת נשמרת עם שני
     # ה-tiers (t=מרכז ברירת-מחדל, te=קצה) ושני הזמנים, וה-frontend מחליף לפי המתג.
     outstops = [{'n': s['n'], 'c': s['c'], 'la': s['la'], 'lo': s['lo'], 'd': s['d'],
@@ -764,7 +795,7 @@ for pi, pk in enumerate(parks):
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
            'stops': outstops,
            'lines': lines_c, 'linesE': lines_e, 'cov400': cov,
-           'foot': fw, 'footlen': int(flen),
+           'foot': fw, 'footlen': int(flen), 'zt': zt,
            'gen': today.isoformat()}
     if svc_sc:
         rec['svc'] = svc_sc          # מדדי משרד התחבורה לאזור הסטטיסטי
@@ -785,6 +816,7 @@ for pi, pk in enumerate(parks):
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
                   'off': 1 if off else 0,
                   'ly': 'hub' if pk.get('hub') else 'ind',
+                  'zt': zt,
                   'mt': 1 if pk.get('mot') else 0,
                   'st': built_status(pk['cen']),
                   'sf': (svc_sc or {}).get('fs'),     # ציון משוקלל רשמי
