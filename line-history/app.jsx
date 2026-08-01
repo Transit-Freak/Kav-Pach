@@ -256,6 +256,11 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
   );
 }
 
+/* שורת קו כקישור אמיתי: קליק רגיל נשאר בתוך האפליקציה, Ctrl/קליק־אמצעי
+   פותחים את דף הקו בכרטיסייה חדשה (לכל קו יש כתובת משלו אחרי ה-#) */
+const lineHref = (r) => "#" + encodeURIComponent(r);
+const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
+
 /* ---------- עמוד קו ---------- */
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [lf, setLf] = useState(null);
@@ -318,11 +323,12 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                 ? (dupDir ? " · ראשית" + (dupBase ? " (" + (alt || "־") + ")" : "") : "")
                 : " · חלופה " + alt);
               return (
-                <button key={s.rd} className={"sib" + (s.rd === rd ? " on" : "")} title={s.dest}
-                  onClick={() => { if (s.rd !== rd) onSwitch(s.rd); }}>
+                <a key={s.rd} className={"sib" + (s.rd === rd ? " on" : "")} title={s.dest}
+                  href={lineHref(s.rd)}
+                  onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); if (s.rd !== rd) onSwitch(s.rd); }}>
                   {lbl}
                   {s.lk === "removed" && <span className="sibx">✖</span>}
-                </button>
+                </a>
               );
             })}
           </div>
@@ -476,12 +482,13 @@ function DayFeed({ idx, openLine, onBack }) {
                 shown++;
                 const m = meta[c.rd] || {};
                 return (
-                  <button key={c.rd + c.k + i} className="lrow" onClick={() => openLine(c.rd)}>
+                  <a key={c.rd + c.k + i} className="lrow" href={lineHref(c.rd)}
+                    onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(c.rd); }}>
                     <span className="badge sm">{c.line}</span>
                     <span className="k" style={{ background: (KINDS[c.k] || {}).color || "#64748b" }}>{(KINDS[c.k] || { label: c.k }).label}</span>
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
-                  </button>
+                  </a>
                 );
               })}
             </React.Fragment>
@@ -823,7 +830,8 @@ function App() {
           {(needle || kats.size > 0) ? (
             <div className="llist">
               {list.map((l) => (
-                <button key={l.rd} className="lrow" onClick={() => openLine(l.rd)}>
+                <a key={l.rd} className="lrow" href={lineHref(l.rd)}
+                  onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(l.rd); }}>
                   <span className="badge sm">{l.line}</span>
                   {l.lk === "removed" && (isLineGone(l) ? (
                     <span className="k" style={{ background: isRemovedYear(l) ? "#7f1d1d" : "#dc2626" }}>
@@ -837,7 +845,7 @@ function App() {
                   <span className="ldest">{l.dest}</span>
                   <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}
                     {l.lk === "removed" && <> · מבוטל מאז {fmtD(l.ld)}</>}</span>
-                </button>
+                </a>
               ))}
               {list.length === 0 && (
                 <div className="empty">{kats.size > 0 && !needle
