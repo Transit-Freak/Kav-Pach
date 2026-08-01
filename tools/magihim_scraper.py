@@ -196,7 +196,7 @@ def crawl_times(rid):
         if out_of_time():
             return False
         body = urllib.parse.urlencode(
-            {'get_info': '', 'day': d, 'times': '', 'station_from': '',
+            {'get_info': '', 'day': d, 'times': '0', 'station_from': '',
              'station_to': '', 'routes_from': rid}).encode()
         b = fetch(BASE + 'ajax_f3.php', data=body)
         times_done.add(key)
@@ -248,7 +248,7 @@ def discover_lines(a, meta):
         for href in re.findall(r'href="([^"]*\?pts[^"]*)"', h):
             q = '?' + href.split('?', 1)[1] if '?' in href else ''
             q = html.unescape(q)
-            if q and f'agency={a}' in q and 'line=' not in q and q not in seen_pages:
+            if q and re.search(rf'agency={a}(?!\d)', q) and 'line=' not in q and q not in seen_pages:
                 queue.append(q)
     meta['lines'] = sorted(lines, key=int)
     save_state()
