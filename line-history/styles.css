@@ -139,3 +139,5 @@ footer a { color: #7c3aed; }
 /* כפתור "הצג עוד" בסוף רשימות */
 .morebtn { display: block; width: 100%; border: 1.5px dashed #c4b5fd; background: #faf5ff; color: #6d28d9; border-radius: 12px; padding: 10px; margin-top: 8px; font-family: inherit; font-weight: 800; font-size: 13.5px; cursor: pointer; }
 .morebtn:hover { background: #f3e8ff; }
+/* שורות הקווים וצ'יפי הווריאנטים הם עכשיו קישורים אמיתיים (פתיחה בכרטיסייה חדשה) */
+a.lrow, a.sib { text-decoration: none; color: inherit; }
