@@ -349,13 +349,22 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const rel12 = (() => {
     const routes = (d12 && d12.routes) || [];
     if (routes.length <= 1) return routes.map((_, i) => i);
-    const tokset = new Set();
-    const add = (x) => String(x || "").split(/[^א-ת0-9]+/).forEach((w) => { if (w.length >= 3) tokset.add(w); });
-    ((vs[vs.length - 1] || {}).stops || []).forEach((s) => add(s[1]));
-    add(lf.dest);
-    const sc = (r) => String((r.f || "") + " " + (r.l || "")).split(/[^א-ת0-9]+/)
-      .filter((w) => w.length >= 3 && tokset.has(w)).length;
-    const rel = routes.map((r, i) => [sc(r), i]).filter((x) => x[0] > 0).map((x) => x[1]);
+    // התאמת עיר: וריאנט 2012 רלוונטי רק אם עיר של תחנת קצה שלו ("שם - עיר")
+    // מופיעה ביעד או בתחנות של הקו הפתוח. מילים גנריות ("תחנה מרכזית",
+    // "הרצל") הטעו את הסינון הקודם והכניסו וריאנטים מערים אחרות.
+    const hay = String(lf.dest || "") + " " +
+      ((vs[vs.length - 1] || {}).stops || []).map((s) => s[1]).join(" ");
+    const cityOf = (x) => { const p = String(x || "").split(" - "); return p.length > 1 ? p[p.length - 1].trim() : null; };
+    const passCity = (r) => { const a = cityOf(r.f), b = cityOf(r.l); return !!((a && hay.includes(a)) || (b && hay.includes(b))); };
+    let rel = routes.map((r, i) => [r, i]).filter((x) => passCity(x[0])).map((x) => x[1]);
+    if (!rel.length) {
+      const GEN = new Set(["תחנה", "תחנת", "מרכזית", "רכבת", "צומת", "מסוף", "מרכז",
+        "קניון", "שוק", "בית", "שדרות", "כביש", "כיכר", "ככר", "דרך", "רחוב"]);
+      const tokset = new Set(hay.split(/[^א-ת0-9]+/).filter((w) => w.length >= 3 && !GEN.has(w)));
+      const sc = (r) => String((r.f || "") + " " + (r.l || "")).split(/[^א-ת0-9]+/)
+        .filter((w) => w.length >= 3 && tokset.has(w)).length;
+      rel = routes.map((r, i) => [sc(r), i]).filter((x) => x[0] > 0).map((x) => x[1]);
+    }
     return rel.length ? rel : routes.map((_, i) => i);
   })();
   const vis12 = showAll12 ? ((d12 && d12.routes) || []).map((_, i) => i) : rel12;
