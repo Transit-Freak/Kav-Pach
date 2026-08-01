@@ -569,12 +569,12 @@ function DayFeed({ idx, openLine, onBack }) {
     <div className="card">
       <button className="back" onClick={onBack}>→ חזרה לחיפוש הקווים</button>
       <div className="months">
-        <button className={"mchip" + (yr === "2012" ? " on" : "")}
-          onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
         {[...new Set(months.map((m) => m.slice(0, 4)))].map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
             onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
+        <button className={"mchip" + (yr === "2012" ? " on" : "")}
+          onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
       </div>
       {yr && yr !== "2012" && (
         <div className="months">
