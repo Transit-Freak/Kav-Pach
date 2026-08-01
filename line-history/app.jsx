@@ -273,11 +273,12 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [mon, setMon] = useState("");
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
+  const [showAll12, setShowAll12] = useState(false);   // חשיפת כל הווריאנטים הארציים
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
   useEffect(() => {
     let ok = true;
-    setAnc(null); setShow12(false); setD12(null); setR12(0);
+    setAnc(null); setShow12(false); setD12(null); setR12(0); setShowAll12(false);
     getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
     return () => { ok = false; };
   }, [rd]);
@@ -343,9 +344,25 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const comparable = !!pv && (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
   const prev = comparable ? toPts(pv) : null;
   const prevApprox = !!(pv && prev && !pv.shp);
+  // קובץ 2012 מקבץ את כל הווריאנטים הארציים של המספר — מציגים רק את
+  // הרלוונטיים לקו הפתוח (חפיפת מילים עם התחנות/היעד), עם אפשרות לחשוף הכל
+  const rel12 = (() => {
+    const routes = (d12 && d12.routes) || [];
+    if (routes.length <= 1) return routes.map((_, i) => i);
+    const tokset = new Set();
+    const add = (x) => String(x || "").split(/[^א-ת0-9]+/).forEach((w) => { if (w.length >= 3) tokset.add(w); });
+    ((vs[vs.length - 1] || {}).stops || []).forEach((s) => add(s[1]));
+    add(lf.dest);
+    const sc = (r) => String((r.f || "") + " " + (r.l || "")).split(/[^א-ת0-9]+/)
+      .filter((w) => w.length >= 3 && tokset.has(w)).length;
+    const rel = routes.map((r, i) => [sc(r), i]).filter((x) => x[0] > 0).map((x) => x[1]);
+    return rel.length ? rel : routes.map((_, i) => i);
+  })();
+  const vis12 = showAll12 ? ((d12 && d12.routes) || []).map((_, i) => i) : rel12;
+  const sel12 = vis12.includes(r12) ? r12 : (vis12[0] ?? 0);
   // מסלול 2012 למפה: רק כשהפאנל פתוח, ורק תחנות שהוצלבו (יש להן קואורדינטות)
   const stops12 = (show12 && d12 && (d12.routes || []).length)
-    ? ((d12.routes[r12] || d12.routes[0]).stops || []).filter((s) => s.length >= 7).map((s) => [s[1], s[5], s[6]])
+    ? ((d12.routes[sel12] || d12.routes[0]).stops || []).filter((s) => s.length >= 7).map((s) => [s[1], s[5], s[6]])
     : null;
   return (
     <div className="linewrap">
@@ -361,14 +378,19 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             </button>
             {show12 && (d12 ? (d12.routes || []).length ? (
               <div>
-                {d12.routes.length > 1 && (
-                  <div className="s12chips">{d12.routes.map((x, i) => (
-                    <button key={i} className={"rchip12" + (i === r12 ? " on" : "")}
-                      onClick={() => setR12(i)}>{x.f} ← {x.l} ({x.n})</button>
+                {vis12.length > 1 && (
+                  <div className="s12chips">{vis12.map((i) => (
+                    <button key={i} className={"rchip12" + (i === sel12 ? " on" : "")}
+                      onClick={() => setR12(i)}>{d12.routes[i].f} ← {d12.routes[i].l} ({d12.routes[i].n})</button>
                   ))}</div>
                 )}
+                {!showAll12 && rel12.length < d12.routes.length && (
+                  <button className="a2012btn" onClick={() => setShowAll12(true)}>
+                    הצג את כל {d12.routes.length} הווריאנטים הארציים של המספר
+                  </button>
+                )}
                 <ol className="s12">
-                  {((d12.routes[r12] || d12.routes[0]).stops || []).map((s) => (
+                  {((d12.routes[sel12] || d12.routes[0]).stops || []).map((s) => (
                     <li key={s[0]}>{s[1]}{" "}
                       {s[4] && s[4].length === 1 ? <span className="pcode">מק״ט {s[4][0]}</span>
                         : s[4] && s[4].length > 1 ? <span className="pcode">{s[4].length} מק״טים אפשריים</span>
