@@ -284,8 +284,29 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   useEffect(() => {
     if (!show12 || d12 || !anc) return;
     fetch("../magihim-2012/data/l" + anc.k + ".json?v=" + BUILD)
-      .then((r) => r.json()).then(setD12).catch(() => setD12({ routes: [] }));
-  }, [show12, anc, d12]);
+      .then((r) => r.json())
+      .then((d) => {
+        // בחירת וריאנט 2012 שתואם את כיוון הווריאנט הפתוח — לפי דמיון
+        // תחנות הקצה (ולא סתם הווריאנט הראשון בקובץ)
+        const routes = d.routes || [];
+        const cur = ((lf || {}).versions || []).slice(-1)[0] || {};
+        const st = cur.stops || [];
+        let best = 0;
+        if (st.length && routes.length > 1) {
+          const tok = (x) => new Set(String(x || "").split(/[^א-ת0-9]+/).filter((w) => w.length >= 3));
+          const f0 = tok(st[0][1]), l0 = tok(st[st.length - 1][1]);
+          let bs = -1;
+          routes.forEach((r, i) => {
+            const sc = [...tok(r.f)].filter((w) => f0.has(w)).length * 2 +
+              [...tok(r.l)].filter((w) => l0.has(w)).length * 2 + (r.n || 0) / 1000;
+            if (sc > bs) { bs = sc; best = i; }
+          });
+        }
+        setR12(best);
+        setD12(d);
+      })
+      .catch(() => setD12({ routes: [] }));
+  }, [show12, anc, d12, lf]);
   useEffect(() => {
     setLf(null); setErr(null); setSel(null); setMon("");
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
