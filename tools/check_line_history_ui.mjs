@@ -31,7 +31,13 @@ for (const m of onDisk) if (!listed.has(m)) fail(`חודש ${m} קיים על ה
 for (const m of listed) if (!onDisk.has(m)) fail(`חודש ${m} רשום ב-months.json אבל אין לו קובץ`);
 const oldest = [...listed].sort()[0];
 if (!oldest) fail('אין חודשי תחנות בכלל');
-console.log(`✓ נתונים: ${listed.size} חודשים, מ-${oldest} עד ${[...listed].sort().at(-1)}`);
+const listedL = new Set(months.months || []);
+const onDiskL = new Set(fs.readdirSync(path.join(LH, 'data/changes'))
+  .filter((f) => /^\d{4}-\d{2}\.json$/.test(f)).map((f) => f.slice(0, 7)));
+for (const m of onDiskL) if (!listedL.has(m)) fail(`חודש קווים ${m} קיים על הדיסק אבל חסר ב-months.json`);
+for (const m of listedL) if (!onDiskL.has(m)) fail(`חודש קווים ${m} רשום ב-months.json אבל אין לו קובץ`);
+const oldestL = [...listedL].sort()[0];
+console.log(`✓ נתונים: ${listed.size} חודשי תחנות (מ-${oldest}) + ${listedL.size} חודשי קווים (מ-${oldestL})`);
 
 // ---- שלב ב': הממשק באמת מציג את החודש הכי ישן ----
 const require_ = createRequire(path.join(process.env.PW_MODULES || ROOT, 'noop.js'));
@@ -90,6 +96,24 @@ await page.waitForSelector('.slist .srow', { timeout: 30000 })
   .catch(() => fail(`נבחר ${om}.${oy} ולא הופיעה אף שורת אירוע`));
 const rows = await page.locator('.slist .srow').count();
 console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומציג ${rows} שורות`);
+
+// ---- שלב ג': פיד "שינויים לפי יום" של הקווים — החודש הכי ישן נגיש ----
+if (oldestL) {
+  await page.click('button.tab:has-text("קווים")');
+  await page.click('button.kathead:has-text("שינויים לפי יום")', { timeout: 30000 });
+  await page.waitForSelector('.months .mchip', { timeout: 30000 })
+    .catch(() => fail('פיד הקווים: בוחר החודשים לא הופיע'));
+  const [ly, lm] = oldestL.split('-');
+  const yChip = page.locator('.months .mchip', { hasText: new RegExp(`^${ly}$`) }).first();
+  if (!(await yChip.count())) fail(`פיד הקווים: אין כפתור לשנה ${ly} — ${oldestL} לא נגיש`);
+  await yChip.click();
+  const mChip = page.locator('.months .mchip', { hasText: `${lm}.${ly}` }).first();
+  if (!(await mChip.count())) fail(`פיד הקווים: אין כפתור לחודש ${lm}.${ly}`);
+  await mChip.click();
+  await page.waitForSelector('.dayhead', { timeout: 30000 })
+    .catch(() => fail(`פיד הקווים: נבחר ${lm}.${ly} ולא הופיע אף יום`));
+  console.log(`✓ פיד קווים: החודש הכי ישן (${lm}.${ly}) נגיש ומציג ימים`);
+}
 
 await browser.close();
 srv.close();
