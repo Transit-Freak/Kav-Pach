@@ -35,7 +35,10 @@ BASE = 'http://www.magihim.co.il/'
 OUT = pathlib.Path(os.environ.get('OUT', 'magihim-out'))
 MAX_MIN = float(os.environ.get('MAX_MIN', '330'))
 DELAY = float(os.environ.get('DELAY', '1.1'))
-UA = 'kav-bochan-archive-bot/1.0 (+https://github.com/transit-freak/kav-bochan; historical transit archive; 1 req/s)'
+UA_BOT = 'kav-bochan-archive-bot/1.0 (+https://github.com/transit-freak/kav-bochan; historical transit archive; 1 req/s)'
+UA_BROWSER = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+              '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+ua_current = {'v': UA_BOT}
 
 START = time.time()
 
@@ -48,7 +51,10 @@ def fetch(url, data=None, tries=4):
     last = None
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, data=data, headers={'User-Agent': UA})
+            req = urllib.request.Request(url, data=data, headers={
+                'User-Agent': ua_current['v'],
+                'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
+                'Accept-Language': 'he,en;q=0.8'})
             with urllib.request.urlopen(req, timeout=40) as r:
                 b = r.read()
             time.sleep(DELAY)
@@ -216,12 +222,33 @@ def crawl_times(rid):
     return True
 
 
+def parse_agencies(h):
+    return sorted(set(re.findall(r'[?&](?:amp;)?agency=(\d+)', h)), key=int)
+
+
 def discover_agencies():
     h = get('?pts')
     if h is None:
         sys.exit('לא ניתן להביא את רשימת החברות — עוצר')
     save_raw('pts.html', h.encode())
-    ags = sorted(set(re.findall(r'[?&](?:amp;)?agency=(\d+)', h)), key=int)
+    ags = parse_agencies(h)
+    if not ags:
+        # אבחון: האתר מחזיר דף בלי קישורי חברות ל-UA של הבוט — מדפיסים
+        # את תחילת הדף ללוג ומנסים עם UA של דפדפן
+        print(f'אזהרה: 0 חברות עם UA של בוט (אורך דף: {len(h)}). תחילת הדף:', flush=True)
+        print(h[:1200], flush=True)
+        print('--- ניסיון חוזר עם UA של דפדפן ---', flush=True)
+        ua_current['v'] = UA_BROWSER
+        h = get('?pts')
+        if h is None:
+            sys.exit('אין תשובה גם עם UA של דפדפן — עוצר')
+        save_raw('pts-browser.html', h.encode())
+        ags = parse_agencies(h)
+        if not ags:
+            print(f'עדיין 0 חברות (אורך דף: {len(h)}). תחילת הדף:', flush=True)
+            print(h[:1200], flush=True)
+            sys.exit('האתר לא מגיש את רשימת החברות ל-runner — נדרש אבחון נוסף')
+        print('UA של דפדפן עבד — ממשיכים איתו לכל הסריקה', flush=True)
     names = {}
     for m in re.finditer(r'agency=(\d+)[^>]*>(?:<font[^>]*>)?([^<]{1,60})<', h):
         names.setdefault(m.group(1), m.group(2).strip())
