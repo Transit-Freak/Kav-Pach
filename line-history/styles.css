@@ -141,3 +141,7 @@ footer a { color: #7c3aed; }
 .morebtn:hover { background: #f3e8ff; }
 /* שורות הקווים וצ'יפי הווריאנטים הם עכשיו קישורים אמיתיים (פתיחה בכרטיסייה חדשה) */
 a.lrow, a.sib { text-decoration: none; color: inherit; }
+/* עוגן 2012 בעמוד קו */
+.a2012 { background: #fafaf9; border: 1px solid #e7e5e4; border-radius: 10px; padding: 7px 10px; font-size: 12.5px; margin: 8px 0; line-height: 1.6; }
+.a2012 b { color: #78350f; }
+.a2012 a { margin-inline-start: 8px; font-weight: 800; color: #78350f; }

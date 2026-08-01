@@ -247,12 +247,26 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
 const lineHref = (r) => "#" + encodeURIComponent(r);
 const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
 
+/* עוגן 2012: rd -> תקציר המסלול דאז (נטען פעם אחת לכל הדפדוף) */
+let ANC2012 = null;
+const getAnchors2012 = () =>
+  ANC2012 || (ANC2012 = fetch("data/anchor-2012.json?v=" + BUILD)
+    .then((r) => (r.ok ? r.json() : { anchors: {} }))
+    .catch(() => ({ anchors: {} })));
+
 /* ---------- עמוד קו ---------- */
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
   const [mon, setMon] = useState("");
+  const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
+  useEffect(() => {
+    let ok = true;
+    setAnc(null);
+    getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
+    return () => { ok = false; };
+  }, [rd]);
   useEffect(() => {
     setLf(null); setErr(null); setSel(null); setMon("");
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -295,6 +309,12 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <button className="back" onClick={onBack}>→ חזרה לחיפוש</button>
         <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {anc && (
+          <div className="a2012">
+            <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
+            <a href={"../magihim-2012/#" + encodeURIComponent(anc.k)} target="_blank" rel="noopener">המסלול המלא ↗</a>
+          </div>
+        )}
         {sibs && sibs.length > 1 && (
           <div className="sibs">
             <span className="sibt">חלופות וכיוונים:</span>
