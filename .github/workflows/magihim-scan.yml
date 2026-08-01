@@ -1,0 +1,75 @@
+# סריקה ארכיונית של magihim.co.il מתוך GitHub Actions
+# (לסביבת הפיתוח המרוחקת אין גישת רשת לאתר; ל-runners של GitHub יש.)
+# התוצאות נדחפות לענף magihim-data; ה-HTML הגולמי נשמר כ-artifact.
+name: magihim-scan
+on:
+  workflow_dispatch:
+    inputs:
+      max_minutes:
+        description: 'משך סריקה מקסימלי בדקות'
+        default: '330'
+        required: false
+      do_times:
+        description: 'איסוף לוחות זמנים (1 להדלקה)'
+        default: '0'
+        required: false
+  push:
+    branches: [magihim-go]
+permissions:
+  contents: write
+concurrency:
+  group: magihim-scan
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 356
+    steps:
+      - uses: actions/checkout@v4
+      - name: שחזור נתונים מריצות קודמות (ענף magihim-data)
+        run: |
+          set -e
+          REPO="https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          if git ls-remote --exit-code --heads "$REPO" magihim-data > /dev/null 2>&1; then
+            git clone --depth 1 --branch magihim-data "$REPO" magihim-out
+          else
+            mkdir magihim-out
+            git -C magihim-out init -b magihim-data
+            git -C magihim-out remote add origin "$REPO"
+          fi
+          printf 'raw/\n' > magihim-out/.gitignore
+      - name: סריקה (עם checkpoint כל 10 דקות)
+        env:
+          OUT: magihim-out
+          MAX_MIN: ${{ github.event.inputs.max_minutes || '330' }}
+          DO_TIMES: ${{ github.event.inputs.do_times || '0' }}
+        run: |
+          set -e
+          git config --global user.name magihim-archive-bot
+          git config --global user.email actions@users.noreply.github.com
+          (
+            while true; do
+              sleep 600
+              ( cd "$GITHUB_WORKSPACE/magihim-out" \
+                && git add -A . \
+                && git commit -qm "checkpoint $(date -u +%FT%TZ)" \
+                && git push -q origin magihim-data ) || true
+            done
+          ) &
+          PUSHER=$!
+          python3 tools/magihim_scraper.py
+          kill "$PUSHER" || true
+      - name: דחיפה סופית
+        if: always()
+        run: |
+          cd magihim-out
+          git add -A .
+          git commit -qm "checkpoint סופי $(date -u +%FT%TZ)" || true
+          git push -q origin magihim-data || true
+      - name: העלאת ה-HTML הגולמי כ-artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: magihim-raw-${{ github.run_id }}
+          path: magihim-out/raw
+          if-no-files-found: ignore
+          compression-level: 0

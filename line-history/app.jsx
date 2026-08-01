@@ -189,7 +189,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
     const map = L.map(ref.current, { scrollWheelZoom: !coarse });
     mapRef.current = map;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>', maxZoom: 19,
     }).addTo(map);
     const focused = canFocus && focus;
     const all = focused ? focusPts : cur.concat(prev || []);
@@ -221,14 +221,26 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
         .bindPopup(popHtml(s, isNew ? "🟢 תחנה שנוספה בגרסה זו" : ""), { className: "lh-pop", offset: [0, -4] });
       // tooltip של ריחוף רק בעכבר — במסך מגע הוא נפתח יחד עם ה-popup ונראה
       // כמו שם כפול במקום לא נכון
-      if (!coarse) m.bindTooltip((isNew ? "נוספה: " : "") + s[1], { direction: "top", className: "lh-tip" });
+      // בלחיצה נפתח ה-popup — מסירים את תווית הריחוף עד לסגירתו, אחרת השם
+      // מופיע פעמיים (תווית + חלון) באותה נקודה
+      if (!coarse) {
+        const tip = (isNew ? "נוספה: " : "") + s[1];
+        m.bindTooltip(tip, { direction: "top", className: "lh-tip" });
+        m.on("popupopen", () => { m.closeTooltip(); m.unbindTooltip(); });
+        m.on("popupclose", () => m.bindTooltip(tip, { direction: "top", className: "lh-tip" }));
+      }
     });
     (prevStops || []).forEach((s) => {
       if (curCodes.has(s[0])) return;
       const m = L.circleMarker([s[2], s[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
         .addTo(map)
         .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
-      if (!coarse) m.bindTooltip("ירדה: " + s[1], { direction: "top", className: "lh-tip" });
+      if (!coarse) {
+        const tip = "ירדה: " + s[1];
+        m.bindTooltip(tip, { direction: "top", className: "lh-tip" });
+        m.on("popupopen", () => { m.closeTooltip(); m.unbindTooltip(); });
+        m.on("popupclose", () => m.bindTooltip(tip, { direction: "top", className: "lh-tip" }));
+      }
     });
     return () => { mapRef.current = null; map.remove(); };
   }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus]);
@@ -386,7 +398,7 @@ function StopEvMap({ ev }) {
     if (!ref.current) return;
     const map = L.map(ref.current, { scrollWheelZoom: false });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>', maxZoom: 19,
     }).addTo(map);
     const pts = [[ev.la, ev.lo]];
     if (ev.k === "moved" && ev.ola != null) {
@@ -845,7 +857,7 @@ function App() {
         </div>
       )}
       <footer>
-        ניסוי במסגרת <a href="../">הקו הבוחן</a> · הנתונים: GTFS משרד התחבורה · היסטוריה: אופן באס, הסדנא לידע ציבורי
+        ניסוי במסגרת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · הנתונים: GTFS משרד התחבורה · היסטוריה: אופן באס, הסדנא לידע ציבורי
       </footer>
     </div>
   );
