@@ -236,7 +236,9 @@ if os.path.exists(MOT):
         if same is not None:
             same['polys'].extend(mpolys)
             same['area'] = sum(poly_area_km2(p, same['cl']) for p in same['polys'])
-            same['mot'] = 1
+            # אותו שם: אם האזור עצמו מהשכבה — הגבול כולו רשמי (1); אם המקור
+            # OSM — הגאומטריה מעורבת ולכן רק אימות (2)
+            same['mot'] = same.get('mot') or 2
             _mdup += 1
             continue
         # כפילות מול אזור שכבר קיים (OSM מאומת / הוספה ידנית): אם המרכז של אחד
@@ -251,7 +253,11 @@ if os.path.exists(MOT):
                     or any(in_poly(pk['cen'][0], pk['cen'][1], q) for q in mpolys)):
                 dup = pk; break
         if dup is not None:
-            dup['mot'] = 1
+            # חפיפה גאוגרפית לאזור שכבר קיים (OSM/מאגר רשמי): האזור מאומת
+            # מול השכבה, אבל השם והגבול נשארים של המקור — mot=2, לא 1,
+            # כדי שהאתר לא יציג "הגבול מהשכבה הרשמית" על גבול שאינו משם
+            if not dup.get('mot'):
+                dup['mot'] = 2
             if not dup.get('name'):
                 dup['name'] = z['name']; dup['noname'] = False
             if z.get('city') and not dup.get('mot_city'):
@@ -817,7 +823,7 @@ for pi, pk in enumerate(parks):
                   'off': 1 if off else 0,
                   'ly': 'hub' if pk.get('hub') else 'ind',
                   'zt': zt,
-                  'mt': 1 if pk.get('mot') else 0,
+                  'mt': pk.get('mot') or 0,   # 1=הגבול מהשכבה הרשמית · 2=אומת מולה, הגבול מ-OSM
                   'st': built_status(pk['cen']),
                   'sf': (svc_sc or {}).get('fs'),     # ציון משוקלל רשמי
                   'sr': (svc_sc or {}).get('re'),     # אמינות רשמית
