@@ -9,6 +9,10 @@ on:
         description: 'משך סריקה מקסימלי בדקות'
         default: '330'
         required: false
+      do_times:
+        description: 'איסוף לוחות זמנים (1 להדלקה)'
+        default: '0'
+        required: false
   push:
     branches: [magihim-go]
 permissions:
@@ -37,6 +41,7 @@ jobs:
         env:
           OUT: magihim-out
           MAX_MIN: ${{ github.event.inputs.max_minutes || '330' }}
+          DO_TIMES: ${{ github.event.inputs.do_times || '0' }}
         run: |
           set -e
           git config --global user.name magihim-archive-bot

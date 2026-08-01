@@ -35,6 +35,8 @@ BASE = 'http://www.magihim.co.il/'
 OUT = pathlib.Path(os.environ.get('OUT', 'magihim-out'))
 MAX_MIN = float(os.environ.get('MAX_MIN', '330'))
 DELAY = float(os.environ.get('DELAY', '1.1'))
+# לוחות זמנים: כבוי כברירת מחדל (איסוף המבנה בלבד). DO_TIMES=1 מדליק.
+DO_TIMES = os.environ.get('DO_TIMES', '0') == '1'
 UA_BOT = 'kav-bochan-archive-bot/1.0 (+https://github.com/transit-freak/kav-bochan; historical transit archive; 1 req/s)'
 UA_BROWSER = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
               '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
@@ -301,10 +303,14 @@ def main():
             if not crawl_line(a, l):
                 break
 
-    # שלב 2: לוחות זמנים לכל מסלול שנאסף
-    for rid in sorted(state['route_meta'], key=int):
-        if not crawl_times(rid):
-            break
+    # שלב 2: לוחות זמנים לכל מסלול שנאסף (רק אם הודלק במפורש)
+    if DO_TIMES:
+        for rid in sorted(state['route_meta'], key=int):
+            if not crawl_times(rid):
+                break
+    else:
+        print('לוחות זמנים: מושהה (DO_TIMES=0). מה שכבר נאסף שמור ב-parsed/times.jsonl.',
+              flush=True)
 
     save_state()
     n_ag = len(state['agencies'])
@@ -314,8 +320,8 @@ def main():
     done_struct = all(m['lines'] is not None for m in state['agencies'].values()) and \
         all(f'{a}:{l}' in lines_done
             for a, m in state['agencies'].items() for l in m['lines'] or [])
-    done_times = all(f'{r}:{d}' in times_done
-                     for r in state['route_meta'] for d in range(1, 8))
+    done_times = (not DO_TIMES) or all(f'{r}:{d}' in times_done
+                                       for r in state['route_meta'] for d in range(1, 8))
     print('הסריקה הושלמה במלואה!' if done_struct and done_times
           else 'נותרה עבודה — הרץ שוב להמשך מה-checkpoint.', flush=True)
 
