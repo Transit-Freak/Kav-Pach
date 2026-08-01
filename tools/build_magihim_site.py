@@ -51,6 +51,7 @@ def build_stop_lookup():
     lk = collections.defaultdict(set)          # norm(שם עיר) / norm(שם) -> מק"טים
     by_city = collections.defaultdict(list)    # norm(עיר) -> [(norm(שם), מק"ט)]
     cities = set()
+    coords = {}                                # מק"ט -> (lat, lon)
 
     def add(n, city, mk):
         nn, nc = norm(n), norm(city)
@@ -64,6 +65,8 @@ def build_stop_lookup():
         state = json.load(open('line-history/data/stops-state.json', encoding='utf-8'))
         for mk, row in state.items():
             add(row[0], row[3] if len(row) > 3 else '', mk)
+            if len(row) > 2 and row[1] and row[2]:
+                coords[mk] = (row[1], row[2])
     except Exception:
         pass
     try:
@@ -73,9 +76,11 @@ def build_stop_lookup():
                 for n in (e.get('n'), e.get('nn')):
                     if n:
                         add(n, e.get('t', ''), mk)
+                if mk not in coords and e.get('la') and e.get('lo'):
+                    coords[mk] = (e['la'], e['lo'])
     except Exception:
         pass
-    return lk, by_city, cities
+    return lk, by_city, cities, coords
 
 
 def main():
@@ -107,7 +112,7 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, by_city, cities = build_stop_lookup()
+    lookup, by_city, cities, coords = build_stop_lookup()
     m_hit = m_tot = 0
 
     def mks_of(name):
@@ -148,7 +153,8 @@ def main():
             {'rid': str(r.get('route')), 'n': len(r.get('stops', [])),
              'f': (r['stops'][0]['name'] if r.get('stops') else ''),
              'l': (r['stops'][-1]['name'] if r.get('stops') else ''),
-             'stops': [[s['seq'], s['name'], s['t'], s['type'], mks_of(s['name'])]
+             'stops': [(lambda mks: [s['seq'], s['name'], s['t'], s['type'], mks]
+                        + (list(coords.get(mks[0], ())) if mks else []))(mks_of(s['name']))
                        for s in r.get('stops', [])]}
             for r in rows]}
         (OUT / f'l{key}.json').write_text(
