@@ -266,12 +266,20 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
   const [mon, setMon] = useState("");
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
+  const [show12, setShow12] = useState(false);
+  const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
+  const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
   useEffect(() => {
     let ok = true;
-    setAnc(null);
+    setAnc(null); setShow12(false); setD12(null); setR12(0);
     getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
     return () => { ok = false; };
   }, [rd]);
+  useEffect(() => {
+    if (!show12 || d12 || !anc) return;
+    fetch("../magihim-2012/data/l" + anc.k + ".json?v=" + BUILD)
+      .then((r) => r.json()).then(setD12).catch(() => setD12({ routes: [] }));
+  }, [show12, anc, d12]);
   useEffect(() => {
     setLf(null); setErr(null); setSel(null); setMon("");
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -317,7 +325,29 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         {anc && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
-            <a href={"../magihim-2012/#" + encodeURIComponent(anc.k)} target="_blank" rel="noopener">המסלול המלא ↗</a>
+            <button className="a2012btn" onClick={() => setShow12(!show12)}>
+              {show12 ? "הסתר ▲" : "רצף התחנות ▼"}
+            </button>
+            {show12 && (d12 ? (d12.routes || []).length ? (
+              <div>
+                {d12.routes.length > 1 && (
+                  <div className="s12chips">{d12.routes.map((x, i) => (
+                    <button key={i} className={"rchip12" + (i === r12 ? " on" : "")}
+                      onClick={() => setR12(i)}>{x.f} ← {x.l} ({x.n})</button>
+                  ))}</div>
+                )}
+                <ol className="s12">
+                  {((d12.routes[r12] || d12.routes[0]).stops || []).map((s) => (
+                    <li key={s[0]}>{s[1]}{" "}
+                      {s[4] && s[4].length === 1 ? <span className="pcode">מק״ט {s[4][0]}</span>
+                        : s[4] && s[4].length > 1 ? <span className="pcode">{s[4].length} מק״טים אפשריים</span>
+                          : <span className="pcode">לא הוצלבה</span>}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : <div className="mut">הנתונים לא נטענו — נסו לרענן.</div>
+              : <div className="mut">טוען…</div>)}
           </div>
         )}
         {sibs && sibs.length > 1 && (
