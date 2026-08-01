@@ -219,28 +219,14 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
         fillColor: isNew ? "#16a34a" : "#fff", fillOpacity: 1, opacity: focused && !isNew ? 0.4 : 1,
       }).addTo(map)
         .bindPopup(popHtml(s, isNew ? "🟢 תחנה שנוספה בגרסה זו" : ""), { className: "lh-pop", offset: [0, -4] });
-      // tooltip של ריחוף רק בעכבר — במסך מגע הוא נפתח יחד עם ה-popup ונראה
-      // כמו שם כפול במקום לא נכון
-      // בלחיצה נפתח ה-popup — מסירים את תווית הריחוף עד לסגירתו, אחרת השם
-      // מופיע פעמיים (תווית + חלון) באותה נקודה
-      if (!coarse) {
-        const tip = (isNew ? "נוספה: " : "") + s[1];
-        m.bindTooltip(tip, { direction: "top", className: "lh-tip" });
-        m.on("popupopen", () => { m.closeTooltip(); m.unbindTooltip(); });
-        m.on("popupclose", () => m.bindTooltip(tip, { direction: "top", className: "lh-tip" }));
-      }
+      // שם התחנה מוצג רק בלחיצה (popup צמוד לתחנה) — תוויות ריחוף בוטלו
+      // לגמרי: הן נתקעו פתוחות והציגו שם כפול/ישן במקום אחר על המפה
     });
     (prevStops || []).forEach((s) => {
       if (curCodes.has(s[0])) return;
       const m = L.circleMarker([s[2], s[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
         .addTo(map)
         .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
-      if (!coarse) {
-        const tip = "ירדה: " + s[1];
-        m.bindTooltip(tip, { direction: "top", className: "lh-tip" });
-        m.on("popupopen", () => { m.closeTooltip(); m.unbindTooltip(); });
-        m.on("popupclose", () => m.bindTooltip(tip, { direction: "top", className: "lh-tip" }));
-      }
     });
     return () => { mapRef.current = null; map.remove(); };
   }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus]);
