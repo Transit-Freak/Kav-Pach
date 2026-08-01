@@ -192,12 +192,14 @@ def days(a, b):
 filled = 0
 for code, evs in shist.items():
     for e in evs:
-        if e['k'] not in ('del', 'moved', 'renamed') or e.get('lines'): continue
+        if e['k'] not in ('del', 'moved', 'renamed', 'new') or e.get('lines'): continue
         best = None
         for ds in sdates:
             lns = snaps[ds].get(code)
             if not lns: continue
             d = days(ds, e['d'])
+            # תחנה חדשה לא קיימת בעוגנים שלפניה — עדיפות לעוגן שאחרי הפתיחה
+            if e['k'] == 'new' and ds < e['d']: d += 100000
             if best is None or d < best[0]: best = (d, lns)
         if not best: continue
         e['lines'] = best[1]

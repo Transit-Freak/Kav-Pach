@@ -115,7 +115,10 @@ for c, evs in shist.items():
         q = day_before(e['d']) if e['k'] == 'del' else e['d']
         lns = lines_at(c, q)
         if lns == (e.get('lines') or []): continue
-        if not lns and not e.get('lines'): continue
+        # אין כיסוי-רצפים לתקופה — לא דורסים רשימה קיימת: היא מולאה מעוגני
+        # הארכיון (enrich_stop_lines_archive.py). הלילה של 01.08 מחק ככה
+        # 3,437 רשימות שמולאו יום קודם.
+        if not lns: continue
         e['lines'] = lns
         n_set += 1
         sync_month(c, e, {'lines': lns})
