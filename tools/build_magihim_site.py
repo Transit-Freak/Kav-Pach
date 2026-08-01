@@ -26,6 +26,58 @@ def show(path):
     return r.stdout.decode('utf-8') if r.returncode == 0 else None
 
 
+# קיצורים נפוצים בשמות של 2012 מול הכתיב של המאגר — מוחל על שני הצדדים
+EXPAND = [('ת.מרכזית', 'תחנה מרכזית'), ('ת. מרכזית', 'תחנה מרכזית'),
+          ('ת.רכבת', 'תחנת רכבת'), ('ת. רכבת', 'תחנת רכבת'),
+          ('שד. ', 'שדרות '), ('שד.', 'שדרות '), ('רח. ', ''), ('רח.', ''),
+          ("בי''ס", 'בית ספר'), ('בי"ס', 'בית ספר'),
+          ('ביה"ח', 'בית חולים'), ("ביה''ח", 'בית חולים'),
+          ('תחנה מרכזית', 'מרכזית')]
+
+
+def norm(s):
+    """נרמול שם תחנה להצלבה: קיצורים, גרשיים, מקפים, לוכסנים ורווחים."""
+    for a, b in EXPAND:
+        s = s.replace(a, b)
+    for ch in ('"', "''", "'", '״', '׳'):
+        s = s.replace(ch, '')
+    s = s.replace(' - ', ' ').replace('-', ' ').replace('/', ' ')
+    return ' '.join(s.split())
+
+
+def build_stop_lookup():
+    """שני מפתחות: שם מלא מנורמל -> מק"טים, ולפי-עיר לשמות קטועים.
+    המקורות: המאגר הנוכחי + שמות היסטוריים מהארכיון."""
+    lk = collections.defaultdict(set)          # norm(שם עיר) / norm(שם) -> מק"טים
+    by_city = collections.defaultdict(list)    # norm(עיר) -> [(norm(שם), מק"ט)]
+    cities = set()
+
+    def add(n, city, mk):
+        nn, nc = norm(n), norm(city)
+        lk[norm(f'{n} {city}')].add(mk)
+        lk[nn].add(mk)
+        if nc:
+            cities.add(nc)
+            by_city[nc].append((nn, mk))
+
+    try:
+        state = json.load(open('line-history/data/stops-state.json', encoding='utf-8'))
+        for mk, row in state.items():
+            add(row[0], row[3] if len(row) > 3 else '', mk)
+    except Exception:
+        pass
+    try:
+        hist = json.load(open('line-history/data/stops-hist.json', encoding='utf-8'))
+        for mk, evs in hist.items():
+            for e in evs:
+                for n in (e.get('n'), e.get('nn')):
+                    if n:
+                        add(n, e.get('t', ''), mk)
+    except Exception:
+        pass
+    return lk, by_city, cities
+
+
 def main():
     state = json.loads(show('state.json') or '{}')
     ag_names = {a: (m.get('name') or f'חברה {a}')
@@ -55,6 +107,35 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
+    lookup, by_city, cities = build_stop_lookup()
+    m_hit = m_tot = 0
+
+    def mks_of(name):
+        nonlocal m_hit, m_tot
+        m_tot += 1
+        mks = sorted(lookup.get(norm(name), []))
+        if 0 < len(mks) <= 3:
+            m_hit += 1
+            return mks
+        # שמות קטועים/מקוצרים: מפרקים "שם - עיר", ואז התאמת-רישא בתוך העיר
+        parts = name.split(' - ')
+        for take in (2, 1):
+            if len(parts) <= take:
+                continue
+            city = norm(' '.join(parts[-take:]))
+            if city not in cities:
+                continue
+            street = norm(' '.join(parts[:-take]))
+            if len(street) < 6:
+                break
+            found = {mk for nn, mk in by_city[city]
+                     if nn == street or nn.startswith(street) or street.startswith(nn)}
+            if 0 < len(found) <= 3:
+                m_hit += 1
+                return sorted(found)
+            break
+        return []
+
     idx = []
     for (a, lid), rows in lines.items():
         rows.sort(key=lambda r: -len(r.get('stops', [])))
@@ -67,7 +148,8 @@ def main():
             {'rid': str(r.get('route')), 'n': len(r.get('stops', [])),
              'f': (r['stops'][0]['name'] if r.get('stops') else ''),
              'l': (r['stops'][-1]['name'] if r.get('stops') else ''),
-             'stops': [[s['seq'], s['name'], s['t'], s['type']] for s in r.get('stops', [])]}
+             'stops': [[s['seq'], s['name'], s['t'], s['type'], mks_of(s['name'])]
+                       for s in r.get('stops', [])]}
             for r in rows]}
         (OUT / f'l{key}.json').write_text(
             json.dumps(payload, ensure_ascii=False), encoding='utf-8')
@@ -91,7 +173,8 @@ def main():
         'lines': idx,
     }, ensure_ascii=False), encoding='utf-8')
     print(f'נבנו {len(idx)} קווים | {len(routes)} מסלולים | '
-          f'{sum(1 for _ in OUT.glob("l*.json"))} קבצים')
+          f'{sum(1 for _ in OUT.glob("l*.json"))} קבצים | '
+          f'הצלבת תחנות: {m_hit}/{m_tot} ({m_hit * 100 // max(m_tot, 1)}%)')
 
 
 if __name__ == '__main__':
