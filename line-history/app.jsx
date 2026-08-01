@@ -273,12 +273,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [mon, setMon] = useState("");
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
-  const [showAll12, setShowAll12] = useState(false);   // חשיפת כל הווריאנטים הארציים
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
   useEffect(() => {
     let ok = true;
-    setAnc(null); setShow12(false); setD12(null); setR12(0); setShowAll12(false);
+    setAnc(null); setShow12(false); setD12(null); setR12(0);
     getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
     return () => { ok = false; };
   }, [rd]);
@@ -367,7 +366,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
     }
     return rel.length ? rel : routes.map((_, i) => i);
   })();
-  const vis12 = showAll12 ? ((d12 && d12.routes) || []).map((_, i) => i) : rel12;
+  const vis12 = rel12;
   const sel12 = vis12.includes(r12) ? r12 : (vis12[0] ?? 0);
   // מסלול 2012 למפה: רק כשהפאנל פתוח, ורק תחנות שהוצלבו (יש להן קואורדינטות)
   const stops12 = (show12 && d12 && (d12.routes || []).length)
@@ -392,11 +391,6 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                     <button key={i} className={"rchip12" + (i === sel12 ? " on" : "")}
                       onClick={() => setR12(i)}>{d12.routes[i].f} ← {d12.routes[i].l} ({d12.routes[i].n})</button>
                   ))}</div>
-                )}
-                {!showAll12 && rel12.length < d12.routes.length && (
-                  <button className="a2012btn" onClick={() => setShowAll12(true)}>
-                    הצג את כל {d12.routes.length} הווריאנטים הארציים של המספר
-                  </button>
                 )}
                 <ol className="s12">
                   {((d12.routes[sel12] || d12.routes[0]).stops || []).map((s) => (
