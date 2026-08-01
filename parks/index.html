@@ -69,6 +69,7 @@
   .legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:4px;vertical-align:-1px}
   .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
   h2{font-size:15px;margin:12px 0 8px}
+.zlink{color:inherit;text-decoration:none}.zlink:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -238,7 +239,7 @@ function renderTable(){
   });
   tbody.innerHTML=rows.map(p=>{const svc=cnt(p,'li')+cnt(p,'lg')+cnt(p,'ln');return `
     <tr class="${svc? '':'nosvc'}" data-f="${p.f}">
-      <td>${esc(p.name)}${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':p.mt==1?' <span class="offbadge" title="מקור: משרד התחבורה — הגבול מהשכבה הרשמית שלו">📐</span>':p.mt==2?' <span class="offbadge" title="מקור: OpenStreetMap — קיים גם בשכבת משרד התחבורה, אבל השם והגבול מ-OSM">🗺️</span>':' <span class="offbadge" title="מקור: OpenStreetMap — אומת בבדיקת קיום">🗺️</span>'}${ztOf(p)!='ind'?` <span class="offbadge" title="${ZTT[ztOf(p)]}">${ZTI[ztOf(p)]}</span>`:''}${p.st?` <span class="offbadge" title="${STLBL[p.st]||''}">${p.st=='planned'?'🏗️':'🚧'}</span>`:''}${svc? '':' ⚠'}</td>
+      <td><a class="zlink" href="#${encodeURIComponent(p.f)}">${esc(p.name)}</a>${p.off?' <span class="offbadge" title="נתונים רשמיים ממשרד הכלכלה">🏛️</span>':p.mt==1?' <span class="offbadge" title="מקור: משרד התחבורה — הגבול מהשכבה הרשמית שלו">📐</span>':p.mt==2?' <span class="offbadge" title="מקור: OpenStreetMap — קיים גם בשכבת משרד התחבורה, אבל השם והגבול מ-OSM">🗺️</span>':' <span class="offbadge" title="מקור: OpenStreetMap — אומת בבדיקת קיום">🗺️</span>'}${ztOf(p)!='ind'?` <span class="offbadge" title="${ZTT[ztOf(p)]}">${ZTI[ztOf(p)]}</span>`:''}${p.st?` <span class="offbadge" title="${STLBL[p.st]||''}">${p.st=='planned'?'🏗️':'🚧'}</span>`:''}${svc? '':' ⚠'}</td>
       <td>${esc(p.city||'—')}</td>
       <td class="num">${p.area}</td>
       <td class="num">${pill(cnt(p,'li'),'pi')}</td>
@@ -261,6 +262,10 @@ document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{
 });
 q.oninput=()=>{renderTable(); if(heatview.style.display!=='none') openHeatmap(false);};
 tbody.onclick=e=>{
+  // Ctrl/Shift+קליק על שם האזור — הדפדפן פותח כרטיסייה חדשה, לא מתערבים
+  const a=e.target.closest('a.zlink');
+  if(a && (e.ctrlKey||e.metaKey||e.shiftKey)) return;
+  if(a) e.preventDefault();
   const tr=e.target.closest('tr');
   if(tr) openPark(tr.dataset.f);
 };
