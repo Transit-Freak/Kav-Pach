@@ -404,6 +404,87 @@ function StopEvMap({ ev }) {
   return <div className="smap" ref={ref} />;
 }
 
+/* ---------- שינויים לפי יום (כל הקווים) ---------- */
+function DayFeed({ idx, openLine, onBack }) {
+  const [months, setMonths] = useState(null);
+  const [yr, setYr] = useState("");
+  const [mon, setMon] = useState("");
+  const [chs, setChs] = useState(null);
+  const [q, setQ] = useState("");
+  const [lim, setLim] = useState(300);
+  useEffect(() => setLim(300), [q, mon]);
+  // יעד ומפעיל לא משוכפלים בקובצי החודש — נשלפים מהאינדקס לפי מק"ט
+  const meta = useMemo(() => { const m = {}; ((idx && idx.lines) || []).forEach((l) => { m[l.rd] = l; }); return m; }, [idx]);
+  useEffect(() => {
+    fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => r.json())
+      .then((d) => { const ms = d.months || []; setMonths(ms); if (ms.length) { setMon(ms[0]); setYr(ms[0].slice(0, 4)); } })
+      .catch(() => setMonths([]));
+  }, []);
+  useEffect(() => {
+    if (!mon) return;
+    setChs(null);
+    fetch("data/changes/" + mon + ".json?v=" + BUILD)
+      .then((r) => (r.ok ? r.json() : { changes: [] }))
+      .then((d) => setChs(d.changes || []))
+      .catch(() => setChs([]));
+  }, [mon]);
+  if (months === null) return <div className="card">טוען…</div>;
+  const needle = q.trim();
+  const list = (chs || []).filter((c) => { const m = meta[c.rd] || {}; return !needle || c.line.includes(needle) || (m.dest || "").includes(needle) || (m.op || "").includes(needle) || c.rd.includes(needle); });
+  const days = []; const byd = new Map();
+  for (const c of list) { let g = byd.get(c.d); if (!g) { g = []; byd.set(c.d, g); days.push(c.d); } g.push(c); }
+  days.sort().reverse();
+  const WD = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  let shown = 0;
+  return (
+    <div className="card">
+      <button className="back" onClick={onBack}>→ חזרה לחיפוש הקווים</button>
+      <div className="months">
+        {[...new Set(months.map((m) => m.slice(0, 4)))].map((y) => (
+          <button key={y} className={"mchip" + (yr === y ? " on" : "")}
+            onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
+        ))}
+      </div>
+      {yr && (
+        <div className="months">
+          {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
+            <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+          ))}
+        </div>
+      )}
+      <input className="search" type="search" placeholder="סינון: מספר קו, יעד, מפעיל או מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
+      {chs === null ? "טוען…" : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
+        <div>
+          {days.map((d) => shown >= lim ? null : (
+            <React.Fragment key={d}>
+              <div className="dayhead">{fmtD(d)} · יום {WD[new Date(d).getDay()]} · {byd.get(d).length.toLocaleString()} שינויים</div>
+              {byd.get(d).map((c, i) => {
+                if (shown >= lim) return null;
+                shown++;
+                const m = meta[c.rd] || {};
+                return (
+                  <button key={c.rd + c.k + i} className="lrow" onClick={() => openLine(c.rd)}>
+                    <span className="badge sm">{c.line}</span>
+                    <span className="k" style={{ background: (KINDS[c.k] || {}).color || "#64748b" }}>{(KINDS[c.k] || { label: c.k }).label}</span>
+                    <span className="ldest">{m.dest || c.rd}</span>
+                    <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
+                  </button>
+                );
+              })}
+            </React.Fragment>
+          ))}
+          {list.length > lim && (
+            <button className="morebtn" onClick={() => setLim(lim + 500)}>
+              ⌄ הצג עוד — מוצגים {Math.min(lim, list.length).toLocaleString()} מתוך {list.length.toLocaleString()}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ---------- טאב תחנות ---------- */
 function StopsTab() {
   const [months, setMonths] = useState(null);
@@ -597,6 +678,7 @@ function App() {
   // דף קו נכנס להיסטוריית הדפדפן (וגם לקישור, אחרי ה-#) — כפתור "אחורה"
   // בטלפון חוזר לרשימה במקום לצאת מהאתר, וקישור לקו נפתח ישירות עליו
   const [rd, setRd] = useState(() => decodeURIComponent((location.hash || "").slice(1)) || null);
+  const [byDay, setByDay] = useState(false);   // תצוגת "שינויים לפי יום"
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
@@ -682,11 +764,18 @@ function App() {
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
+      ) : byDay ? (
+        <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
             placeholder="חיפוש קו: מספר קו, מק״ט, יעד או מפעיל…"
             value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="katbox">
+            <button className="kathead" onClick={() => setByDay(true)}>
+              🗓️ שינויים לפי יום — מה השתנה בכל תאריך, בכל הקווים
+            </button>
+          </div>
           <div className="katbox">
             <button className="kathead" onClick={() => setKatOpen(!katOpen)}>
               <span className="katarrow">{katOpen ? "▼" : "◀"}</span>
