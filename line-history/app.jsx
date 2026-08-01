@@ -38,6 +38,7 @@ const CAT_GROUPS = [
   { title: "שינויי מסלול", items: ["route", "redraw", "extend", "shorten", "terminal"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum"] },
+  { title: "היסטוריה", items: ["y2012"] },
 ];
 const CAT_LABELS = {
   "removed-year": "מבוטל — מעל שנה לא חזר",
@@ -55,11 +56,13 @@ const CAT_LABELS = {
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
+  y2012: "קיים בצילום 2012",
 };
-const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b" };
+const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b", y2012: "#78350f" };
 function catColor(k) { return CAT_COLORS[k] || (KINDS[k] || {}).color || "#64748b"; }
 // התאמת קו לקטגוריה (שלוש קטגוריות הביטול זרות זו לזו)
 function catMatch(l, k) {
+  if (k === "y2012") return ANC_SET.has(l.rd);
   if (k === "removed-year") return isRemovedYear(l);
   if (k === "removed-now") return l.lk === "removed" && !isRemovedYear(l);
   if (k === "removed-past") return l.lk !== "removed" && (l.ks || []).includes("removed");
@@ -249,9 +252,11 @@ const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
 
 /* עוגן 2012: rd -> תקציר המסלול דאז (נטען פעם אחת לכל הדפדוף) */
 let ANC2012 = null;
+let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "2012" בחיפוש
 const getAnchors2012 = () =>
   ANC2012 || (ANC2012 = fetch("data/anchor-2012.json?v=" + BUILD)
     .then((r) => (r.ok ? r.json() : { anchors: {} }))
+    .then((d) => { ANC_SET = new Set(Object.keys(d.anchors || {})); return d; })
     .catch(() => ({ anchors: {} })));
 
 /* ---------- עמוד קו ---------- */
@@ -724,6 +729,8 @@ function App() {
       .then(setIdx)
       .catch(setErr);
   }, []);
+  const [ancN, setAncN] = useState(0);   // טריגר רינדור אחרי טעינת עוגני 2012
+  useEffect(() => { getAnchors2012().then(() => setAncN(ANC_SET.size)); }, []);
   const counts = useMemo(() => {
     const c = {};
     if (idx) {
@@ -733,7 +740,7 @@ function App() {
       });
     }
     return c;
-  }, [idx]);
+  }, [idx, ancN]);
   // אילו מק"טים עדיין פעילים — כדי להבדיל חלופה מבוטלת מקו שבוטל כולו
   const mktAlive = useMemo(() => {
     const m = {};
@@ -753,7 +760,8 @@ function App() {
   if (needle || kats.size) {
     // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות
     const toks = needle.split(/\s+/).filter(Boolean);
-    const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
+    const tokHit = (l, t) => (t === "2012" && ANC_SET.has(l.rd)) ||
+      l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
       (l.dest || "").includes(t) || (l.op || "").includes(t);
     list = idx.lines.filter((l) => inKats(l) && toks.every((t) => tokHit(l, t)));
     const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
@@ -848,6 +856,7 @@ function App() {
                       {isRemovedYear(l) ? "חלופה בוטלה — מעל שנה" : "חלופה בוטלה"}
                     </span>
                   ))}
+                  {ANC_SET.has(l.rd) && <span className="k" title="לקו יש תיעוד מצילום 2012" style={{ background: "#78350f" }}>2012</span>}
                   <span className="ldest">{l.dest}</span>
                   <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}
                     {l.lk === "removed" && <> · מבוטל מאז {fmtD(l.ld)}</>}</span>
