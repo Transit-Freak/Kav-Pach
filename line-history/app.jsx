@@ -164,7 +164,7 @@ function segDiff(cur, prev) {
 }
 
 /* ---------- מפת לפני/אחרי ---------- */
-function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // הקטעים ששונו + התחנות ששונו — היעד של מצב "התמקדות" (בקשת המשתמש:
@@ -195,7 +195,8 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>', maxZoom: 19,
     }).addTo(map);
     const focused = canFocus && focus;
-    const all = focused ? focusPts : cur.concat(prev || []);
+    const pts12 = (stops12 || []).map((s) => [s[1], s[2]]);
+    const all = focused ? focusPts : cur.concat(prev || []).concat(pts12);
     map.fitBounds(L.latLngBounds(all.length ? all : [[32.08, 34.78]]).pad(focused ? 0.35 : 0.1), { maxZoom: 16 });
     if (prev && prev.length > 1) {
       L.polyline(prev, { color: "#dc2626", weight: focused ? 3 : 4, opacity: focused ? 0.25 : 0.75, dashArray: "8 7" }).addTo(map);
@@ -208,6 +209,14 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
     if (focused && diff) {
       diff.prevSegs.forEach((sg) => L.polyline(sg, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
       diff.curSegs.forEach((sg) => L.polyline(sg, { color: "#16a34a", weight: 7, opacity: 0.95 }).addTo(map));
+    }
+    // מסלול 2012 — קו חום מקווקו דרך התחנות שהוצלבו למק"ט (מיקום לפי המאגר של היום)
+    if (pts12.length > 1) {
+      L.polyline(pts12, { color: "#78350f", weight: 3, opacity: 0.75, dashArray: "3 7" }).addTo(map);
+      stops12.forEach((s) => {
+        L.circleMarker([s[1], s[2]], { radius: 4, color: "#78350f", weight: 2, fillColor: "#fff", fillOpacity: 1 })
+          .addTo(map).bindPopup(`<b>${esc(s[0])}</b><br><span class="pst">מסלול 2012</span>`, { className: "lh-pop", offset: [0, -4] });
+      });
     }
     const curCodes = new Set((curStops || []).map((s) => s[0]));
     const prevCodes = new Set((prevStops || []).map((s) => s[0]));
@@ -232,7 +241,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops }) {
         .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
     });
     return () => { mapRef.current = null; map.remove(); };
-  }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus]);
+  }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus, stops12]);
   return (
     <div className="mapwrap">
       <div className="map" ref={ref} />
@@ -316,6 +325,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const comparable = !!pv && (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
   const prev = comparable ? toPts(pv) : null;
   const prevApprox = !!(pv && prev && !pv.shp);
+  // מסלול 2012 למפה: רק כשהפאנל פתוח, ורק תחנות שהוצלבו (יש להן קואורדינטות)
+  const stops12 = (show12 && d12 && (d12.routes || []).length)
+    ? ((d12.routes[r12] || d12.routes[0]).stops || []).filter((s) => s.length >= 7).map((s) => [s[1], s[5], s[6]])
+    : null;
   return (
     <div className="linewrap">
       <div className="card side">
@@ -422,12 +435,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           </div>
         ) : (<>
         <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} prevApprox={prevApprox} curStops={v.stops}
-          prevStops={pv && (pv.stops || []).length ? pv.stops : null} />
+          prevStops={pv && (pv.stops || []).length ? pv.stops : null} stops12={stops12} />
         <div className="legend">
           {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
           <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
+          {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>}
         </div>
         {approx
           ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(v.stops || []).length} תחנות בגרסה זו.</div>
@@ -474,6 +488,21 @@ function DayFeed({ idx, openLine, onBack }) {
   useEffect(() => setLim(300), [q, mon]);
   // יעד ומפעיל לא משוכפלים בקובצי החודש — נשלפים מהאינדקס לפי מק"ט
   const meta = useMemo(() => { const m = {}; ((idx && idx.lines) || []).forEach((l) => { m[l.rd] = l; }); return m; }, [idx]);
+  // לשונית 2012: הקווים מצילום המצב, אחד לכל קו של אז (מוצלב לקו של היום)
+  const [a12, setA12] = useState(null);
+  useEffect(() => { getAnchors2012().then((d) => setA12(d.anchors || {})); }, []);
+  const rows12 = useMemo(() => {
+    if (!a12) return [];
+    const seen = new Set(); const out = [];
+    for (const [rd, v] of Object.entries(a12)) {
+      if (seen.has(v.k)) continue;
+      seen.add(v.k);
+      out.push({ rd, ...v });
+    }
+    out.sort((x, y) => (parseInt(x.no) || 9999) - (parseInt(y.no) || 9999) ||
+      String(x.no).localeCompare(String(y.no)));
+    return out;
+  }, [a12]);
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
@@ -500,12 +529,14 @@ function DayFeed({ idx, openLine, onBack }) {
     <div className="card">
       <button className="back" onClick={onBack}>→ חזרה לחיפוש הקווים</button>
       <div className="months">
+        <button className={"mchip" + (yr === "2012" ? " on" : "")}
+          onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
         {[...new Set(months.map((m) => m.slice(0, 4)))].map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
             onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
       </div>
-      {yr && (
+      {yr && yr !== "2012" && (
         <div className="months">
           {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
             <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
@@ -513,7 +544,39 @@ function DayFeed({ idx, openLine, onBack }) {
         </div>
       )}
       <input className="search" type="search" placeholder="סינון: מספר קו, יעד, מפעיל או מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
-      {chs === null ? "טוען…" : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
+      {yr === "2012" ? (() => {
+        if (!a12) return "טוען…";
+        const list12 = rows12.filter((v) => {
+          const m = meta[v.rd] || {};
+          return !needle || String(v.no).includes(needle) || (v.f || "").includes(needle) ||
+            (v.l || "").includes(needle) || (m.dest || "").includes(needle) || (m.op || "").includes(needle);
+        });
+        if (!list12.length) return <div className="empty">אין קווי 2012 תואמים.</div>;
+        return (
+          <div>
+            <div className="dayhead">צילום מצב 2012 · {list12.length.toLocaleString()} קווים שהוצלבו לקווי היום</div>
+            {list12.slice(0, lim).map((v) => {
+              const m = meta[v.rd] || {};
+              return (
+                <a key={v.k} className="lrow" href={lineHref(v.rd)}
+                  onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(v.rd); }}>
+                  <span className="badge sm">{v.no}</span>
+                  <span className="k" style={{ background: "#78350f" }}>2012</span>
+                  <span className="ldest">{v.f} ← {v.l}</span>
+                  <span className="lmeta">{m.op || ""} · {v.n} תחנות{v.nr > 1 ? ` · ${v.nr} מסלולים` : ""}</span>
+                </a>
+              );
+            })}
+            {list12.length > lim && (
+              <button className="morebtn" onClick={() => setLim(lim + 500)}>
+                ⌄ הצג עוד — מוצגים {Math.min(lim, list12.length).toLocaleString()} מתוך {list12.length.toLocaleString()}
+              </button>
+            )}
+            <div className="katnote">🛈 מוצגים קווי 2012 שהוצלבו בביטחון לקווים של היום — לחיצה פותחת את עמוד הקו,
+              ושם "רצף התחנות ▼" מציג את מסלול 2012 גם על המפה. הרשימה גדלה ככל שהסריקה מתקדמת.</div>
+          </div>
+        );
+      })() : chs === null ? "טוען…" : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
         <div>
           {days.map((d) => shown >= lim ? null : (
             <React.Fragment key={d}>
