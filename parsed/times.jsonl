@@ -3015,3 +3015,416 @@
 {"route": "431", "day": 5, "departures": [{"rid": "﻿431", "label": "7:25", "exit": "445"}]}
 {"route": "431", "day": 6, "departures": [{"rid": "﻿431", "label": "7:25", "exit": "445"}]}
 {"route": "431", "day": 7, "departures": []}
+{"route": "432", "day": 1, "departures": [{"rid": "﻿432", "label": "13:00", "exit": "780"}, {"rid": "432", "label": "13:45", "exit": "825"}]}
+{"route": "432", "day": 2, "departures": [{"rid": "﻿432", "label": "13:00", "exit": "780"}, {"rid": "432", "label": "13:45", "exit": "825"}]}
+{"route": "432", "day": 3, "departures": [{"rid": "﻿432", "label": "13:00", "exit": "780"}, {"rid": "432", "label": "13:45", "exit": "825"}]}
+{"route": "432", "day": 4, "departures": [{"rid": "﻿432", "label": "13:00", "exit": "780"}, {"rid": "432", "label": "13:45", "exit": "825"}]}
+{"route": "432", "day": 5, "departures": [{"rid": "﻿432", "label": "13:00", "exit": "780"}, {"rid": "432", "label": "13:45", "exit": "825"}]}
+{"route": "432", "day": 6, "departures": [{"rid": "﻿432", "label": "12:05", "exit": "725"}, {"rid": "432", "label": "13:00", "exit": "780"}]}
+{"route": "432", "day": 7, "departures": []}
+{"route": "433", "day": 1, "departures": [{"rid": "﻿433", "label": "7:45", "exit": "465"}]}
+{"route": "433", "day": 2, "departures": [{"rid": "﻿433", "label": "7:45", "exit": "465"}]}
+{"route": "433", "day": 3, "departures": [{"rid": "﻿433", "label": "7:45", "exit": "465"}]}
+{"route": "433", "day": 4, "departures": [{"rid": "﻿433", "label": "7:45", "exit": "465"}]}
+{"route": "433", "day": 5, "departures": [{"rid": "﻿433", "label": "7:45", "exit": "465"}]}
+{"route": "433", "day": 6, "departures": [{"rid": "﻿433", "label": "7:45", "exit": "465"}]}
+{"route": "433", "day": 7, "departures": []}
+{"route": "434", "day": 1, "departures": [{"rid": "﻿434", "label": "7:35", "exit": "455"}, {"rid": "434", "label": "7:50", "exit": "470"}]}
+{"route": "434", "day": 2, "departures": [{"rid": "﻿434", "label": "7:35", "exit": "455"}, {"rid": "434", "label": "7:50", "exit": "470"}]}
+{"route": "434", "day": 3, "departures": [{"rid": "﻿434", "label": "7:35", "exit": "455"}, {"rid": "434", "label": "7:50", "exit": "470"}]}
+{"route": "434", "day": 4, "departures": [{"rid": "﻿434", "label": "7:35", "exit": "455"}, {"rid": "434", "label": "7:50", "exit": "470"}]}
+{"route": "434", "day": 5, "departures": [{"rid": "﻿434", "label": "7:35", "exit": "455"}, {"rid": "434", "label": "7:50", "exit": "470"}]}
+{"route": "434", "day": 6, "departures": [{"rid": "﻿434", "label": "7:40", "exit": "460"}, {"rid": "434", "label": "7:50", "exit": "470"}]}
+{"route": "434", "day": 7, "departures": []}
+{"route": "435", "day": 1, "departures": [{"rid": "﻿435", "label": "13:30", "exit": "810"}]}
+{"route": "435", "day": 2, "departures": [{"rid": "﻿435", "label": "14:25", "exit": "865"}]}
+{"route": "435", "day": 3, "departures": [{"rid": "﻿435", "label": "14:25", "exit": "865"}]}
+{"route": "435", "day": 4, "departures": [{"rid": "﻿435", "label": "14:25", "exit": "865"}]}
+{"route": "435", "day": 5, "departures": []}
+{"route": "435", "day": 6, "departures": []}
+{"route": "435", "day": 7, "departures": []}
+{"route": "436", "day": 1, "departures": [{"rid": "﻿436", "label": "7:54", "exit": "474"}]}
+{"route": "436", "day": 2, "departures": [{"rid": "﻿436", "label": "7:54", "exit": "474"}]}
+{"route": "436", "day": 3, "departures": [{"rid": "﻿436", "label": "7:54", "exit": "474"}]}
+{"route": "436", "day": 4, "departures": [{"rid": "﻿436", "label": "7:54", "exit": "474"}]}
+{"route": "436", "day": 5, "departures": [{"rid": "﻿436", "label": "7:54", "exit": "474"}]}
+{"route": "436", "day": 6, "departures": [{"rid": "﻿436", "label": "7:55", "exit": "475"}]}
+{"route": "436", "day": 7, "departures": []}
+{"route": "437", "day": 1, "departures": [{"rid": "﻿437", "label": "13:45", "exit": "825"}, {"rid": "437", "label": "14:35", "exit": "875"}]}
+{"route": "437", "day": 2, "departures": [{"rid": "﻿437", "label": "12:50", "exit": "770"}, {"rid": "437", "label": "13:45", "exit": "825"}]}
+{"route": "437", "day": 3, "departures": [{"rid": "﻿437", "label": "13:45", "exit": "825"}, {"rid": "437", "label": "14:35", "exit": "875"}]}
+{"route": "437", "day": 4, "departures": [{"rid": "﻿437", "label": "12:50", "exit": "770"}, {"rid": "437", "label": "14:35", "exit": "875"}]}
+{"route": "437", "day": 5, "departures": [{"rid": "﻿437", "label": "13:45", "exit": "825"}, {"rid": "437", "label": "14:35", "exit": "875"}]}
+{"route": "437", "day": 6, "departures": [{"rid": "﻿437", "label": "12:00", "exit": "720"}, {"rid": "437", "label": "12:50", "exit": "770"}]}
+{"route": "437", "day": 7, "departures": []}
+{"route": "438", "day": 1, "departures": [{"rid": "﻿438", "label": "8:00", "exit": "480"}]}
+{"route": "438", "day": 2, "departures": [{"rid": "﻿438", "label": "8:00", "exit": "480"}]}
+{"route": "438", "day": 3, "departures": [{"rid": "﻿438", "label": "8:00", "exit": "480"}]}
+{"route": "438", "day": 4, "departures": [{"rid": "﻿438", "label": "8:00", "exit": "480"}]}
+{"route": "438", "day": 5, "departures": [{"rid": "﻿438", "label": "8:00", "exit": "480"}]}
+{"route": "438", "day": 6, "departures": [{"rid": "﻿438", "label": "8:00", "exit": "480"}, {"rid": "438", "label": "8:40", "exit": "520"}]}
+{"route": "438", "day": 7, "departures": []}
+{"route": "439", "day": 1, "departures": [{"rid": "﻿439", "label": "13:25", "exit": "805"}]}
+{"route": "439", "day": 2, "departures": [{"rid": "﻿439", "label": "14:05", "exit": "845"}]}
+{"route": "439", "day": 3, "departures": [{"rid": "﻿439", "label": "13:25", "exit": "805"}]}
+{"route": "439", "day": 4, "departures": [{"rid": "﻿439", "label": "14:05", "exit": "845"}]}
+{"route": "439", "day": 5, "departures": [{"rid": "﻿439", "label": "14:05", "exit": "845"}]}
+{"route": "439", "day": 6, "departures": [{"rid": "﻿439", "label": "11:40", "exit": "700"}]}
+{"route": "439", "day": 7, "departures": []}
+{"route": "440", "day": 1, "departures": [{"rid": "﻿440", "label": "7:35", "exit": "455"}]}
+{"route": "440", "day": 2, "departures": [{"rid": "﻿440", "label": "7:35", "exit": "455"}]}
+{"route": "440", "day": 3, "departures": [{"rid": "﻿440", "label": "7:35", "exit": "455"}]}
+{"route": "440", "day": 4, "departures": [{"rid": "﻿440", "label": "7:35", "exit": "455"}]}
+{"route": "440", "day": 5, "departures": [{"rid": "﻿440", "label": "7:35", "exit": "455"}]}
+{"route": "440", "day": 6, "departures": [{"rid": "﻿440", "label": "7:35", "exit": "455"}]}
+{"route": "440", "day": 7, "departures": []}
+{"route": "441", "day": 1, "departures": []}
+{"route": "441", "day": 2, "departures": [{"rid": "﻿441", "label": "14:40", "exit": "880"}]}
+{"route": "441", "day": 3, "departures": [{"rid": "﻿441", "label": "14:40", "exit": "880"}]}
+{"route": "441", "day": 4, "departures": [{"rid": "﻿441", "label": "14:40", "exit": "880"}]}
+{"route": "441", "day": 5, "departures": [{"rid": "﻿441", "label": "14:40", "exit": "880"}]}
+{"route": "441", "day": 6, "departures": []}
+{"route": "441", "day": 7, "departures": []}
+{"route": "442", "day": 1, "departures": []}
+{"route": "442", "day": 2, "departures": [{"rid": "﻿442", "label": "7:20", "exit": "440"}]}
+{"route": "442", "day": 3, "departures": [{"rid": "﻿442", "label": "7:20", "exit": "440"}]}
+{"route": "442", "day": 4, "departures": [{"rid": "﻿442", "label": "7:20", "exit": "440"}]}
+{"route": "442", "day": 5, "departures": [{"rid": "﻿442", "label": "7:20", "exit": "440"}]}
+{"route": "442", "day": 6, "departures": []}
+{"route": "442", "day": 7, "departures": []}
+{"route": "443", "day": 1, "departures": [{"rid": "﻿443", "label": "15:20", "exit": "920"}]}
+{"route": "443", "day": 2, "departures": [{"rid": "﻿443", "label": "14:40", "exit": "880"}]}
+{"route": "443", "day": 3, "departures": [{"rid": "﻿443", "label": "13:30", "exit": "810"}]}
+{"route": "443", "day": 4, "departures": [{"rid": "﻿443", "label": "14:40", "exit": "880"}]}
+{"route": "443", "day": 5, "departures": [{"rid": "﻿443", "label": "14:40", "exit": "880"}]}
+{"route": "443", "day": 6, "departures": [{"rid": "﻿443", "label": "11:55", "exit": "715"}]}
+{"route": "443", "day": 7, "departures": []}
+{"route": "444", "day": 1, "departures": [{"rid": "﻿444", "label": "13:00", "exit": "780"}]}
+{"route": "444", "day": 2, "departures": [{"rid": "﻿444", "label": "13:00", "exit": "780"}]}
+{"route": "444", "day": 3, "departures": [{"rid": "﻿444", "label": "13:00", "exit": "780"}]}
+{"route": "444", "day": 4, "departures": [{"rid": "﻿444", "label": "13:00", "exit": "780"}]}
+{"route": "444", "day": 5, "departures": [{"rid": "﻿444", "label": "13:00", "exit": "780"}]}
+{"route": "444", "day": 6, "departures": [{"rid": "﻿444", "label": "12:05", "exit": "725"}]}
+{"route": "444", "day": 7, "departures": []}
+{"route": "445", "day": 1, "departures": [{"rid": "﻿445", "label": "7:37", "exit": "457"}]}
+{"route": "445", "day": 2, "departures": [{"rid": "﻿445", "label": "7:37", "exit": "457"}]}
+{"route": "445", "day": 3, "departures": [{"rid": "﻿445", "label": "7:37", "exit": "457"}]}
+{"route": "445", "day": 4, "departures": [{"rid": "﻿445", "label": "7:37", "exit": "457"}]}
+{"route": "445", "day": 5, "departures": [{"rid": "﻿445", "label": "7:37", "exit": "457"}]}
+{"route": "445", "day": 6, "departures": [{"rid": "﻿445", "label": "7:37", "exit": "457"}]}
+{"route": "445", "day": 7, "departures": []}
+{"route": "446", "day": 1, "departures": []}
+{"route": "446", "day": 2, "departures": []}
+{"route": "446", "day": 3, "departures": [{"rid": "﻿446", "label": "13:50", "exit": "830"}]}
+{"route": "446", "day": 4, "departures": [{"rid": "﻿446", "label": "13:50", "exit": "830"}]}
+{"route": "446", "day": 5, "departures": []}
+{"route": "446", "day": 6, "departures": [{"rid": "﻿446", "label": "13:00", "exit": "780"}]}
+{"route": "446", "day": 7, "departures": []}
+{"route": "447", "day": 1, "departures": [{"rid": "﻿447", "label": "8:10", "exit": "490"}]}
+{"route": "447", "day": 2, "departures": [{"rid": "﻿447", "label": "8:10", "exit": "490"}]}
+{"route": "447", "day": 3, "departures": [{"rid": "﻿447", "label": "8:10", "exit": "490"}]}
+{"route": "447", "day": 4, "departures": [{"rid": "﻿447", "label": "8:10", "exit": "490"}]}
+{"route": "447", "day": 5, "departures": [{"rid": "﻿447", "label": "8:10", "exit": "490"}]}
+{"route": "447", "day": 6, "departures": [{"rid": "﻿447", "label": "8:10", "exit": "490"}]}
+{"route": "447", "day": 7, "departures": []}
+{"route": "448", "day": 1, "departures": [{"rid": "﻿448", "label": "7:55", "exit": "475"}]}
+{"route": "448", "day": 2, "departures": [{"rid": "﻿448", "label": "7:55", "exit": "475"}]}
+{"route": "448", "day": 3, "departures": [{"rid": "﻿448", "label": "7:55", "exit": "475"}]}
+{"route": "448", "day": 4, "departures": [{"rid": "﻿448", "label": "7:55", "exit": "475"}]}
+{"route": "448", "day": 5, "departures": [{"rid": "﻿448", "label": "7:55", "exit": "475"}]}
+{"route": "448", "day": 6, "departures": [{"rid": "﻿448", "label": "7:55", "exit": "475"}]}
+{"route": "448", "day": 7, "departures": []}
+{"route": "449", "day": 1, "departures": [{"rid": "﻿449", "label": "14:05", "exit": "845"}]}
+{"route": "449", "day": 2, "departures": [{"rid": "﻿449", "label": "14:05", "exit": "845"}]}
+{"route": "449", "day": 3, "departures": [{"rid": "﻿449", "label": "14:05", "exit": "845"}]}
+{"route": "449", "day": 4, "departures": [{"rid": "﻿449", "label": "14:05", "exit": "845"}]}
+{"route": "449", "day": 5, "departures": [{"rid": "﻿449", "label": "14:05", "exit": "845"}]}
+{"route": "449", "day": 6, "departures": [{"rid": "﻿449", "label": "12:10", "exit": "730"}]}
+{"route": "449", "day": 7, "departures": []}
+{"route": "450", "day": 1, "departures": [{"rid": "﻿450", "label": "8:10", "exit": "490"}]}
+{"route": "450", "day": 2, "departures": [{"rid": "﻿450", "label": "8:10", "exit": "490"}]}
+{"route": "450", "day": 3, "departures": [{"rid": "﻿450", "label": "8:10", "exit": "490"}]}
+{"route": "450", "day": 4, "departures": [{"rid": "﻿450", "label": "8:10", "exit": "490"}]}
+{"route": "450", "day": 5, "departures": [{"rid": "﻿450", "label": "8:10", "exit": "490"}]}
+{"route": "450", "day": 6, "departures": [{"rid": "﻿450", "label": "8:10", "exit": "490"}]}
+{"route": "450", "day": 7, "departures": []}
+{"route": "451", "day": 1, "departures": []}
+{"route": "451", "day": 2, "departures": []}
+{"route": "451", "day": 3, "departures": []}
+{"route": "451", "day": 4, "departures": []}
+{"route": "451", "day": 5, "departures": []}
+{"route": "451", "day": 6, "departures": [{"rid": "﻿451", "label": "11:30", "exit": "690"}]}
+{"route": "451", "day": 7, "departures": []}
+{"route": "452", "day": 1, "departures": [{"rid": "﻿452", "label": "7:05", "exit": "425"}, {"rid": "452", "label": "8:00", "exit": "480"}]}
+{"route": "452", "day": 2, "departures": [{"rid": "﻿452", "label": "7:05", "exit": "425"}, {"rid": "452", "label": "8:00", "exit": "480"}]}
+{"route": "452", "day": 3, "departures": [{"rid": "﻿452", "label": "7:05", "exit": "425"}, {"rid": "452", "label": "8:00", "exit": "480"}]}
+{"route": "452", "day": 4, "departures": [{"rid": "﻿452", "label": "7:05", "exit": "425"}, {"rid": "452", "label": "8:00", "exit": "480"}]}
+{"route": "452", "day": 5, "departures": [{"rid": "﻿452", "label": "7:05", "exit": "425"}, {"rid": "452", "label": "8:00", "exit": "480"}]}
+{"route": "452", "day": 6, "departures": [{"rid": "﻿452", "label": "7:05", "exit": "425"}, {"rid": "452", "label": "8:04", "exit": "484"}]}
+{"route": "452", "day": 7, "departures": []}
+{"route": "453", "day": 1, "departures": [{"rid": "﻿453", "label": "13:15", "exit": "795"}, {"rid": "453", "label": "14:00", "exit": "840"}, {"rid": "453", "label": "14:05", "exit": "845"}]}
+{"route": "453", "day": 2, "departures": [{"rid": "﻿453", "label": "13:15", "exit": "795"}, {"rid": "453", "label": "14:00", "exit": "840"}, {"rid": "453", "label": "14:05", "exit": "845"}]}
+{"route": "453", "day": 3, "departures": [{"rid": "﻿453", "label": "13:15", "exit": "795"}, {"rid": "453", "label": "14:00", "exit": "840"}, {"rid": "453", "label": "14:05", "exit": "845"}]}
+{"route": "453", "day": 4, "departures": [{"rid": "﻿453", "label": "13:15", "exit": "795"}, {"rid": "453", "label": "14:00", "exit": "840"}, {"rid": "453", "label": "14:05", "exit": "845"}]}
+{"route": "453", "day": 5, "departures": [{"rid": "﻿453", "label": "13:15", "exit": "795"}, {"rid": "453", "label": "14:00", "exit": "840"}, {"rid": "453", "label": "14:05", "exit": "845"}]}
+{"route": "453", "day": 6, "departures": [{"rid": "﻿453", "label": "11:25", "exit": "685"}, {"rid": "453", "label": "12:15", "exit": "735"}]}
+{"route": "453", "day": 7, "departures": []}
+{"route": "454", "day": 1, "departures": [{"rid": "﻿454", "label": "5:55", "exit": "355"}, {"rid": "454", "label": "6:15", "exit": "375"}, {"rid": "454", "label": "6:45", "exit": "405"}]}
+{"route": "454", "day": 2, "departures": [{"rid": "﻿454", "label": "5:55", "exit": "355"}, {"rid": "454", "label": "6:15", "exit": "375"}, {"rid": "454", "label": "6:45", "exit": "405"}]}
+{"route": "454", "day": 3, "departures": [{"rid": "﻿454", "label": "5:55", "exit": "355"}, {"rid": "454", "label": "6:15", "exit": "375"}, {"rid": "454", "label": "6:45", "exit": "405"}]}
+{"route": "454", "day": 4, "departures": [{"rid": "﻿454", "label": "5:55", "exit": "355"}, {"rid": "454", "label": "6:15", "exit": "375"}, {"rid": "454", "label": "6:45", "exit": "405"}]}
+{"route": "454", "day": 5, "departures": [{"rid": "﻿454", "label": "5:55", "exit": "355"}, {"rid": "454", "label": "6:15", "exit": "375"}, {"rid": "454", "label": "6:45", "exit": "405"}]}
+{"route": "454", "day": 6, "departures": []}
+{"route": "454", "day": 7, "departures": []}
+{"route": "455", "day": 1, "departures": [{"rid": "﻿455", "label": "7:20", "exit": "440"}, {"rid": "455", "label": "7:40", "exit": "460"}, {"rid": "455", "label": "8:00", "exit": "480"}, {"rid": "455", "label": "8:20", "exit": "500"}, {"rid": "455", "label": "8:40", "exit": "520"}, {"rid": "455", "label": "9:00", "exit": "540"}, {"rid": "455", "label": "9:30", "exit": "570"}, {"rid": "455", "label": "10:00", "exit": "600"}, {"rid": "455", "label": "10:30", "exit": "630"}, {"rid": "455", "label": "11:00", "exit": "660"}, {"rid": "455", "label": "11:30", "exit": "690"}, {"rid": "455", "label": "12:00", "exit": "720"}, {"rid": "455", "label": "12:20", "exit": "740"}, {"rid": "455", "label": "12:40", "exit": "760"}, {"rid": "455", "label": "13:00", "exit": "780"}, {"rid": "455", "label": "13:20", "exit": "800"}, {"rid": "455", "label": "13:40", "exit": "820"}, {"rid": "455", "label": "14:00", "exit": "840"}, {"rid": "455", "label": "14:30", "exit": "870"}, {"rid": "455", "label": "15:00", "exit": "900"}, {"rid": "455", "label": "15:30", "exit": "930"}, {"rid": "455", "label": "16:00", "exit": "960"}, {"rid": "455", "label": "16:30", "exit": "990"}, {"rid": "455", "label": "17:00", "exit": "1020"}, {"rid": "455", "label": "17:30", "exit": "1050"}, {"rid": "455", "label": "18:00", "exit": "1080"}, {"rid": "455", "label": "18:30", "exit": "1110"}, {"rid": "455", "label": "19:00", "exit": "1140"}]}
+{"route": "455", "day": 2, "departures": [{"rid": "﻿455", "label": "7:20", "exit": "440"}, {"rid": "455", "label": "7:40", "exit": "460"}, {"rid": "455", "label": "8:00", "exit": "480"}, {"rid": "455", "label": "8:20", "exit": "500"}, {"rid": "455", "label": "8:40", "exit": "520"}, {"rid": "455", "label": "9:00", "exit": "540"}, {"rid": "455", "label": "9:30", "exit": "570"}, {"rid": "455", "label": "10:00", "exit": "600"}, {"rid": "455", "label": "10:30", "exit": "630"}, {"rid": "455", "label": "11:00", "exit": "660"}, {"rid": "455", "label": "11:30", "exit": "690"}, {"rid": "455", "label": "12:00", "exit": "720"}, {"rid": "455", "label": "12:20", "exit": "740"}, {"rid": "455", "label": "12:40", "exit": "760"}, {"rid": "455", "label": "13:00", "exit": "780"}, {"rid": "455", "label": "13:20", "exit": "800"}, {"rid": "455", "label": "13:40", "exit": "820"}, {"rid": "455", "label": "14:00", "exit": "840"}, {"rid": "455", "label": "14:30", "exit": "870"}, {"rid": "455", "label": "15:00", "exit": "900"}, {"rid": "455", "label": "15:30", "exit": "930"}, {"rid": "455", "label": "16:00", "exit": "960"}, {"rid": "455", "label": "16:30", "exit": "990"}, {"rid": "455", "label": "17:00", "exit": "1020"}, {"rid": "455", "label": "17:30", "exit": "1050"}, {"rid": "455", "label": "18:00", "exit": "1080"}, {"rid": "455", "label": "18:30", "exit": "1110"}, {"rid": "455", "label": "19:00", "exit": "1140"}]}
+{"route": "455", "day": 3, "departures": [{"rid": "﻿455", "label": "7:20", "exit": "440"}, {"rid": "455", "label": "7:40", "exit": "460"}, {"rid": "455", "label": "8:00", "exit": "480"}, {"rid": "455", "label": "8:20", "exit": "500"}, {"rid": "455", "label": "8:40", "exit": "520"}, {"rid": "455", "label": "9:00", "exit": "540"}, {"rid": "455", "label": "9:30", "exit": "570"}, {"rid": "455", "label": "10:00", "exit": "600"}, {"rid": "455", "label": "10:30", "exit": "630"}, {"rid": "455", "label": "11:00", "exit": "660"}, {"rid": "455", "label": "11:30", "exit": "690"}, {"rid": "455", "label": "12:00", "exit": "720"}, {"rid": "455", "label": "12:20", "exit": "740"}, {"rid": "455", "label": "12:40", "exit": "760"}, {"rid": "455", "label": "13:00", "exit": "780"}, {"rid": "455", "label": "13:20", "exit": "800"}, {"rid": "455", "label": "13:40", "exit": "820"}, {"rid": "455", "label": "14:00", "exit": "840"}, {"rid": "455", "label": "14:30", "exit": "870"}, {"rid": "455", "label": "15:00", "exit": "900"}, {"rid": "455", "label": "15:30", "exit": "930"}, {"rid": "455", "label": "16:00", "exit": "960"}, {"rid": "455", "label": "16:30", "exit": "990"}, {"rid": "455", "label": "17:00", "exit": "1020"}, {"rid": "455", "label": "17:30", "exit": "1050"}, {"rid": "455", "label": "18:00", "exit": "1080"}, {"rid": "455", "label": "18:30", "exit": "1110"}, {"rid": "455", "label": "19:00", "exit": "1140"}]}
+{"route": "455", "day": 4, "departures": [{"rid": "﻿455", "label": "7:20", "exit": "440"}, {"rid": "455", "label": "7:40", "exit": "460"}, {"rid": "455", "label": "8:00", "exit": "480"}, {"rid": "455", "label": "8:20", "exit": "500"}, {"rid": "455", "label": "8:40", "exit": "520"}, {"rid": "455", "label": "9:00", "exit": "540"}, {"rid": "455", "label": "9:30", "exit": "570"}, {"rid": "455", "label": "10:00", "exit": "600"}, {"rid": "455", "label": "10:30", "exit": "630"}, {"rid": "455", "label": "11:00", "exit": "660"}, {"rid": "455", "label": "11:30", "exit": "690"}, {"rid": "455", "label": "12:00", "exit": "720"}, {"rid": "455", "label": "12:20", "exit": "740"}, {"rid": "455", "label": "12:40", "exit": "760"}, {"rid": "455", "label": "13:00", "exit": "780"}, {"rid": "455", "label": "13:20", "exit": "800"}, {"rid": "455", "label": "13:40", "exit": "820"}, {"rid": "455", "label": "14:00", "exit": "840"}, {"rid": "455", "label": "14:30", "exit": "870"}, {"rid": "455", "label": "15:00", "exit": "900"}, {"rid": "455", "label": "15:30", "exit": "930"}, {"rid": "455", "label": "16:00", "exit": "960"}, {"rid": "455", "label": "16:30", "exit": "990"}, {"rid": "455", "label": "17:00", "exit": "1020"}, {"rid": "455", "label": "17:30", "exit": "1050"}, {"rid": "455", "label": "18:00", "exit": "1080"}, {"rid": "455", "label": "18:30", "exit": "1110"}, {"rid": "455", "label": "19:00", "exit": "1140"}]}
+{"route": "455", "day": 5, "departures": [{"rid": "﻿455", "label": "7:20", "exit": "440"}, {"rid": "455", "label": "7:40", "exit": "460"}, {"rid": "455", "label": "8:00", "exit": "480"}, {"rid": "455", "label": "8:20", "exit": "500"}, {"rid": "455", "label": "8:40", "exit": "520"}, {"rid": "455", "label": "9:00", "exit": "540"}, {"rid": "455", "label": "9:30", "exit": "570"}, {"rid": "455", "label": "10:00", "exit": "600"}, {"rid": "455", "label": "10:30", "exit": "630"}, {"rid": "455", "label": "11:00", "exit": "660"}, {"rid": "455", "label": "11:30", "exit": "690"}, {"rid": "455", "label": "12:00", "exit": "720"}, {"rid": "455", "label": "12:20", "exit": "740"}, {"rid": "455", "label": "12:40", "exit": "760"}, {"rid": "455", "label": "13:00", "exit": "780"}, {"rid": "455", "label": "13:20", "exit": "800"}, {"rid": "455", "label": "13:40", "exit": "820"}, {"rid": "455", "label": "14:00", "exit": "840"}, {"rid": "455", "label": "14:30", "exit": "870"}, {"rid": "455", "label": "15:00", "exit": "900"}, {"rid": "455", "label": "15:30", "exit": "930"}, {"rid": "455", "label": "16:00", "exit": "960"}, {"rid": "455", "label": "16:30", "exit": "990"}, {"rid": "455", "label": "17:00", "exit": "1020"}, {"rid": "455", "label": "17:30", "exit": "1050"}, {"rid": "455", "label": "18:00", "exit": "1080"}, {"rid": "455", "label": "18:30", "exit": "1110"}, {"rid": "455", "label": "19:00", "exit": "1140"}]}
+{"route": "455", "day": 6, "departures": [{"rid": "﻿455", "label": "6:00", "exit": "360"}, {"rid": "455", "label": "6:20", "exit": "380"}, {"rid": "455", "label": "6:50", "exit": "410"}, {"rid": "455", "label": "7:20", "exit": "440"}, {"rid": "455", "label": "7:40", "exit": "460"}, {"rid": "455", "label": "8:00", "exit": "480"}, {"rid": "455", "label": "8:30", "exit": "510"}, {"rid": "455", "label": "9:00", "exit": "540"}, {"rid": "455", "label": "9:30", "exit": "570"}, {"rid": "455", "label": "10:00", "exit": "600"}, {"rid": "455", "label": "10:30", "exit": "630"}, {"rid": "455", "label": "11:00", "exit": "660"}, {"rid": "455", "label": "11:30", "exit": "690"}, {"rid": "455", "label": "12:00", "exit": "720"}, {"rid": "455", "label": "12:30", "exit": "750"}, {"rid": "455", "label": "13:00", "exit": "780"}, {"rid": "455", "label": "13:30", "exit": "810"}, {"rid": "455", "label": "14:00", "exit": "840"}, {"rid": "455", "label": "14:30", "exit": "870"}, {"rid": "455", "label": "15:00", "exit": "900"}, {"rid": "455", "label": "15:30", "exit": "930"}]}
+{"route": "455", "day": 7, "departures": []}
+{"route": "456", "day": 1, "departures": [{"rid": "﻿456", "label": "19:30", "exit": "1170"}, {"rid": "456", "label": "20:00", "exit": "1200"}, {"rid": "456", "label": "20:30", "exit": "1230"}, {"rid": "456", "label": "21:00", "exit": "1260"}, {"rid": "456", "label": "21:30", "exit": "1290"}, {"rid": "456", "label": "22:00", "exit": "1320"}, {"rid": "456", "label": "22:30", "exit": "1350"}, {"rid": "456", "label": "23:00", "exit": "1380"}]}
+{"route": "456", "day": 2, "departures": [{"rid": "﻿456", "label": "19:30", "exit": "1170"}, {"rid": "456", "label": "20:00", "exit": "1200"}, {"rid": "456", "label": "20:30", "exit": "1230"}, {"rid": "456", "label": "21:00", "exit": "1260"}, {"rid": "456", "label": "21:30", "exit": "1290"}, {"rid": "456", "label": "22:00", "exit": "1320"}, {"rid": "456", "label": "22:30", "exit": "1350"}, {"rid": "456", "label": "23:00", "exit": "1380"}]}
+{"route": "456", "day": 3, "departures": [{"rid": "﻿456", "label": "19:30", "exit": "1170"}, {"rid": "456", "label": "20:00", "exit": "1200"}, {"rid": "456", "label": "20:30", "exit": "1230"}, {"rid": "456", "label": "21:00", "exit": "1260"}, {"rid": "456", "label": "21:30", "exit": "1290"}, {"rid": "456", "label": "22:00", "exit": "1320"}, {"rid": "456", "label": "22:30", "exit": "1350"}, {"rid": "456", "label": "23:00", "exit": "1380"}]}
+{"route": "456", "day": 4, "departures": [{"rid": "﻿456", "label": "19:30", "exit": "1170"}, {"rid": "456", "label": "20:00", "exit": "1200"}, {"rid": "456", "label": "20:30", "exit": "1230"}, {"rid": "456", "label": "21:00", "exit": "1260"}, {"rid": "456", "label": "21:30", "exit": "1290"}, {"rid": "456", "label": "22:00", "exit": "1320"}, {"rid": "456", "label": "22:30", "exit": "1350"}, {"rid": "456", "label": "23:00", "exit": "1380"}]}
+{"route": "456", "day": 5, "departures": [{"rid": "﻿456", "label": "19:30", "exit": "1170"}, {"rid": "456", "label": "20:00", "exit": "1200"}, {"rid": "456", "label": "20:30", "exit": "1230"}, {"rid": "456", "label": "21:00", "exit": "1260"}, {"rid": "456", "label": "21:30", "exit": "1290"}, {"rid": "456", "label": "22:00", "exit": "1320"}, {"rid": "456", "label": "22:30", "exit": "1350"}, {"rid": "456", "label": "23:00", "exit": "1380"}]}
+{"route": "456", "day": 6, "departures": []}
+{"route": "456", "day": 7, "departures": []}
+{"route": "457", "day": 1, "departures": [{"rid": "﻿457", "label": "18:00", "exit": "1080"}, {"rid": "457", "label": "18:30", "exit": "1110"}, {"rid": "457", "label": "19:00", "exit": "1140"}]}
+{"route": "457", "day": 2, "departures": [{"rid": "﻿457", "label": "18:00", "exit": "1080"}, {"rid": "457", "label": "18:30", "exit": "1110"}, {"rid": "457", "label": "19:00", "exit": "1140"}]}
+{"route": "457", "day": 3, "departures": [{"rid": "﻿457", "label": "18:00", "exit": "1080"}, {"rid": "457", "label": "18:30", "exit": "1110"}, {"rid": "457", "label": "19:00", "exit": "1140"}]}
+{"route": "457", "day": 4, "departures": [{"rid": "﻿457", "label": "18:00", "exit": "1080"}, {"rid": "457", "label": "18:30", "exit": "1110"}, {"rid": "457", "label": "19:00", "exit": "1140"}]}
+{"route": "457", "day": 5, "departures": [{"rid": "﻿457", "label": "18:00", "exit": "1080"}, {"rid": "457", "label": "18:30", "exit": "1110"}, {"rid": "457", "label": "19:00", "exit": "1140"}]}
+{"route": "457", "day": 6, "departures": []}
+{"route": "457", "day": 7, "departures": []}
+{"route": "458", "day": 1, "departures": [{"rid": "﻿458", "label": "7:00", "exit": "420"}, {"rid": "458", "label": "7:20", "exit": "440"}, {"rid": "458", "label": "7:40", "exit": "460"}, {"rid": "458", "label": "8:00", "exit": "480"}, {"rid": "458", "label": "8:30", "exit": "510"}, {"rid": "458", "label": "9:00", "exit": "540"}, {"rid": "458", "label": "9:30", "exit": "570"}, {"rid": "458", "label": "10:00", "exit": "600"}, {"rid": "458", "label": "10:30", "exit": "630"}, {"rid": "458", "label": "11:00", "exit": "660"}, {"rid": "458", "label": "11:30", "exit": "690"}, {"rid": "458", "label": "12:00", "exit": "720"}, {"rid": "458", "label": "12:30", "exit": "750"}, {"rid": "458", "label": "13:00", "exit": "780"}, {"rid": "458", "label": "13:30", "exit": "810"}, {"rid": "458", "label": "14:00", "exit": "840"}, {"rid": "458", "label": "14:30", "exit": "870"}, {"rid": "458", "label": "15:00", "exit": "900"}, {"rid": "458", "label": "15:30", "exit": "930"}, {"rid": "458", "label": "16:00", "exit": "960"}, {"rid": "458", "label": "16:30", "exit": "990"}, {"rid": "458", "label": "17:00", "exit": "1020"}, {"rid": "458", "label": "17:30", "exit": "1050"}]}
+{"route": "458", "day": 2, "departures": [{"rid": "﻿458", "label": "7:00", "exit": "420"}, {"rid": "458", "label": "7:20", "exit": "440"}, {"rid": "458", "label": "7:40", "exit": "460"}, {"rid": "458", "label": "8:00", "exit": "480"}, {"rid": "458", "label": "8:30", "exit": "510"}, {"rid": "458", "label": "9:00", "exit": "540"}, {"rid": "458", "label": "9:30", "exit": "570"}, {"rid": "458", "label": "10:00", "exit": "600"}, {"rid": "458", "label": "10:30", "exit": "630"}, {"rid": "458", "label": "11:00", "exit": "660"}, {"rid": "458", "label": "11:30", "exit": "690"}, {"rid": "458", "label": "12:00", "exit": "720"}, {"rid": "458", "label": "12:30", "exit": "750"}, {"rid": "458", "label": "13:00", "exit": "780"}, {"rid": "458", "label": "13:30", "exit": "810"}, {"rid": "458", "label": "14:00", "exit": "840"}, {"rid": "458", "label": "14:30", "exit": "870"}, {"rid": "458", "label": "15:00", "exit": "900"}, {"rid": "458", "label": "15:30", "exit": "930"}, {"rid": "458", "label": "16:00", "exit": "960"}, {"rid": "458", "label": "16:30", "exit": "990"}, {"rid": "458", "label": "17:00", "exit": "1020"}, {"rid": "458", "label": "17:30", "exit": "1050"}]}
+{"route": "458", "day": 3, "departures": [{"rid": "﻿458", "label": "7:00", "exit": "420"}, {"rid": "458", "label": "7:20", "exit": "440"}, {"rid": "458", "label": "7:40", "exit": "460"}, {"rid": "458", "label": "8:00", "exit": "480"}, {"rid": "458", "label": "8:30", "exit": "510"}, {"rid": "458", "label": "9:00", "exit": "540"}, {"rid": "458", "label": "9:30", "exit": "570"}, {"rid": "458", "label": "10:00", "exit": "600"}, {"rid": "458", "label": "10:30", "exit": "630"}, {"rid": "458", "label": "11:00", "exit": "660"}, {"rid": "458", "label": "11:30", "exit": "690"}, {"rid": "458", "label": "12:00", "exit": "720"}, {"rid": "458", "label": "12:30", "exit": "750"}, {"rid": "458", "label": "13:00", "exit": "780"}, {"rid": "458", "label": "13:30", "exit": "810"}, {"rid": "458", "label": "14:00", "exit": "840"}, {"rid": "458", "label": "14:30", "exit": "870"}, {"rid": "458", "label": "15:00", "exit": "900"}, {"rid": "458", "label": "15:30", "exit": "930"}, {"rid": "458", "label": "16:00", "exit": "960"}, {"rid": "458", "label": "16:30", "exit": "990"}, {"rid": "458", "label": "17:00", "exit": "1020"}, {"rid": "458", "label": "17:30", "exit": "1050"}]}
+{"route": "458", "day": 4, "departures": [{"rid": "﻿458", "label": "7:00", "exit": "420"}, {"rid": "458", "label": "7:20", "exit": "440"}, {"rid": "458", "label": "7:40", "exit": "460"}, {"rid": "458", "label": "8:00", "exit": "480"}, {"rid": "458", "label": "8:30", "exit": "510"}, {"rid": "458", "label": "9:00", "exit": "540"}, {"rid": "458", "label": "9:30", "exit": "570"}, {"rid": "458", "label": "10:00", "exit": "600"}, {"rid": "458", "label": "10:30", "exit": "630"}, {"rid": "458", "label": "11:00", "exit": "660"}, {"rid": "458", "label": "11:30", "exit": "690"}, {"rid": "458", "label": "12:00", "exit": "720"}, {"rid": "458", "label": "12:30", "exit": "750"}, {"rid": "458", "label": "13:00", "exit": "780"}, {"rid": "458", "label": "13:30", "exit": "810"}, {"rid": "458", "label": "14:00", "exit": "840"}, {"rid": "458", "label": "14:30", "exit": "870"}, {"rid": "458", "label": "15:00", "exit": "900"}, {"rid": "458", "label": "15:30", "exit": "930"}, {"rid": "458", "label": "16:00", "exit": "960"}, {"rid": "458", "label": "16:30", "exit": "990"}, {"rid": "458", "label": "17:00", "exit": "1020"}, {"rid": "458", "label": "17:30", "exit": "1050"}]}
+{"route": "458", "day": 5, "departures": [{"rid": "﻿458", "label": "7:00", "exit": "420"}, {"rid": "458", "label": "7:20", "exit": "440"}, {"rid": "458", "label": "7:40", "exit": "460"}, {"rid": "458", "label": "8:00", "exit": "480"}, {"rid": "458", "label": "8:30", "exit": "510"}, {"rid": "458", "label": "9:00", "exit": "540"}, {"rid": "458", "label": "9:30", "exit": "570"}, {"rid": "458", "label": "10:00", "exit": "600"}, {"rid": "458", "label": "10:30", "exit": "630"}, {"rid": "458", "label": "11:00", "exit": "660"}, {"rid": "458", "label": "11:30", "exit": "690"}, {"rid": "458", "label": "12:00", "exit": "720"}, {"rid": "458", "label": "12:30", "exit": "750"}, {"rid": "458", "label": "13:00", "exit": "780"}, {"rid": "458", "label": "13:30", "exit": "810"}, {"rid": "458", "label": "14:00", "exit": "840"}, {"rid": "458", "label": "14:30", "exit": "870"}, {"rid": "458", "label": "15:00", "exit": "900"}, {"rid": "458", "label": "15:30", "exit": "930"}, {"rid": "458", "label": "16:00", "exit": "960"}, {"rid": "458", "label": "16:30", "exit": "990"}, {"rid": "458", "label": "17:00", "exit": "1020"}, {"rid": "458", "label": "17:30", "exit": "1050"}]}
+{"route": "458", "day": 6, "departures": [{"rid": "﻿458", "label": "7:05", "exit": "425"}, {"rid": "458", "label": "7:25", "exit": "445"}, {"rid": "458", "label": "7:45", "exit": "465"}, {"rid": "458", "label": "8:05", "exit": "485"}, {"rid": "458", "label": "8:30", "exit": "510"}, {"rid": "458", "label": "9:00", "exit": "540"}, {"rid": "458", "label": "9:30", "exit": "570"}, {"rid": "458", "label": "10:00", "exit": "600"}, {"rid": "458", "label": "10:30", "exit": "630"}, {"rid": "458", "label": "11:00", "exit": "660"}, {"rid": "458", "label": "11:30", "exit": "690"}, {"rid": "458", "label": "12:00", "exit": "720"}, {"rid": "458", "label": "12:30", "exit": "750"}, {"rid": "458", "label": "13:00", "exit": "780"}, {"rid": "458", "label": "13:40", "exit": "820"}, {"rid": "458", "label": "14:20", "exit": "860"}, {"rid": "458", "label": "15:10", "exit": "910"}]}
+{"route": "458", "day": 7, "departures": []}
+{"route": "459", "day": 1, "departures": [{"rid": "﻿459", "label": "6:00", "exit": "360"}, {"rid": "459", "label": "6:25", "exit": "385"}, {"rid": "459", "label": "6:40", "exit": "400"}]}
+{"route": "459", "day": 2, "departures": [{"rid": "﻿459", "label": "6:00", "exit": "360"}, {"rid": "459", "label": "6:25", "exit": "385"}, {"rid": "459", "label": "6:40", "exit": "400"}]}
+{"route": "459", "day": 3, "departures": [{"rid": "﻿459", "label": "6:00", "exit": "360"}, {"rid": "459", "label": "6:25", "exit": "385"}, {"rid": "459", "label": "6:40", "exit": "400"}]}
+{"route": "459", "day": 4, "departures": [{"rid": "﻿459", "label": "6:00", "exit": "360"}, {"rid": "459", "label": "6:25", "exit": "385"}, {"rid": "459", "label": "6:40", "exit": "400"}]}
+{"route": "459", "day": 5, "departures": [{"rid": "﻿459", "label": "6:00", "exit": "360"}, {"rid": "459", "label": "6:25", "exit": "385"}, {"rid": "459", "label": "6:40", "exit": "400"}]}
+{"route": "459", "day": 6, "departures": [{"rid": "﻿459", "label": "6:00", "exit": "360"}, {"rid": "459", "label": "6:25", "exit": "385"}, {"rid": "459", "label": "6:45", "exit": "405"}]}
+{"route": "459", "day": 7, "departures": []}
+{"route": "460", "day": 1, "departures": [{"rid": "﻿460", "label": "19:30", "exit": "1170"}, {"rid": "460", "label": "20:00", "exit": "1200"}, {"rid": "460", "label": "20:30", "exit": "1230"}, {"rid": "460", "label": "21:00", "exit": "1260"}, {"rid": "460", "label": "21:30", "exit": "1290"}, {"rid": "460", "label": "22:00", "exit": "1320"}]}
+{"route": "460", "day": 2, "departures": [{"rid": "﻿460", "label": "19:30", "exit": "1170"}, {"rid": "460", "label": "20:00", "exit": "1200"}, {"rid": "460", "label": "20:30", "exit": "1230"}, {"rid": "460", "label": "21:00", "exit": "1260"}, {"rid": "460", "label": "21:30", "exit": "1290"}, {"rid": "460", "label": "22:00", "exit": "1320"}]}
+{"route": "460", "day": 3, "departures": [{"rid": "﻿460", "label": "19:30", "exit": "1170"}, {"rid": "460", "label": "20:00", "exit": "1200"}, {"rid": "460", "label": "20:30", "exit": "1230"}, {"rid": "460", "label": "21:00", "exit": "1260"}, {"rid": "460", "label": "21:30", "exit": "1290"}, {"rid": "460", "label": "22:00", "exit": "1320"}]}
+{"route": "460", "day": 4, "departures": [{"rid": "﻿460", "label": "19:30", "exit": "1170"}, {"rid": "460", "label": "20:00", "exit": "1200"}, {"rid": "460", "label": "20:30", "exit": "1230"}, {"rid": "460", "label": "21:00", "exit": "1260"}, {"rid": "460", "label": "21:30", "exit": "1290"}, {"rid": "460", "label": "22:00", "exit": "1320"}]}
+{"route": "460", "day": 5, "departures": [{"rid": "﻿460", "label": "19:30", "exit": "1170"}, {"rid": "460", "label": "20:00", "exit": "1200"}, {"rid": "460", "label": "20:30", "exit": "1230"}, {"rid": "460", "label": "21:00", "exit": "1260"}, {"rid": "460", "label": "21:30", "exit": "1290"}, {"rid": "460", "label": "22:00", "exit": "1320"}]}
+{"route": "460", "day": 6, "departures": []}
+{"route": "460", "day": 7, "departures": []}
+{"route": "461", "day": 1, "departures": [{"rid": "﻿461", "label": "13:57", "exit": "837"}]}
+{"route": "461", "day": 2, "departures": [{"rid": "﻿461", "label": "13:57", "exit": "837"}]}
+{"route": "461", "day": 3, "departures": [{"rid": "﻿461", "label": "12:57", "exit": "777"}]}
+{"route": "461", "day": 4, "departures": [{"rid": "﻿461", "label": "13:57", "exit": "837"}]}
+{"route": "461", "day": 5, "departures": [{"rid": "﻿461", "label": "13:57", "exit": "837"}]}
+{"route": "461", "day": 6, "departures": [{"rid": "﻿461", "label": "11:57", "exit": "717"}]}
+{"route": "461", "day": 7, "departures": []}
+{"route": "462", "day": 1, "departures": []}
+{"route": "462", "day": 2, "departures": []}
+{"route": "462", "day": 3, "departures": []}
+{"route": "462", "day": 4, "departures": []}
+{"route": "462", "day": 5, "departures": []}
+{"route": "462", "day": 6, "departures": [{"rid": "﻿462", "label": "12:37", "exit": "757"}]}
+{"route": "462", "day": 7, "departures": []}
+{"route": "463", "day": 1, "departures": [{"rid": "﻿463", "label": "7:25", "exit": "445"}]}
+{"route": "463", "day": 2, "departures": [{"rid": "﻿463", "label": "7:25", "exit": "445"}]}
+{"route": "463", "day": 3, "departures": [{"rid": "﻿463", "label": "7:25", "exit": "445"}]}
+{"route": "463", "day": 4, "departures": [{"rid": "﻿463", "label": "7:25", "exit": "445"}]}
+{"route": "463", "day": 5, "departures": [{"rid": "﻿463", "label": "7:25", "exit": "445"}]}
+{"route": "463", "day": 6, "departures": [{"rid": "﻿463", "label": "7:25", "exit": "445"}]}
+{"route": "463", "day": 7, "departures": []}
+{"route": "464", "day": 1, "departures": [{"rid": "﻿464", "label": "13:25", "exit": "805"}]}
+{"route": "464", "day": 2, "departures": [{"rid": "﻿464", "label": "14:05", "exit": "845"}]}
+{"route": "464", "day": 3, "departures": [{"rid": "﻿464", "label": "13:25", "exit": "805"}]}
+{"route": "464", "day": 4, "departures": [{"rid": "﻿464", "label": "14:05", "exit": "845"}]}
+{"route": "464", "day": 5, "departures": [{"rid": "﻿464", "label": "14:05", "exit": "845"}]}
+{"route": "464", "day": 6, "departures": [{"rid": "﻿464", "label": "11:40", "exit": "700"}]}
+{"route": "464", "day": 7, "departures": []}
+{"route": "465", "day": 1, "departures": [{"rid": "﻿465", "label": "7:35", "exit": "455"}]}
+{"route": "465", "day": 2, "departures": [{"rid": "﻿465", "label": "7:35", "exit": "455"}]}
+{"route": "465", "day": 3, "departures": [{"rid": "﻿465", "label": "7:35", "exit": "455"}]}
+{"route": "465", "day": 4, "departures": [{"rid": "﻿465", "label": "7:35", "exit": "455"}]}
+{"route": "465", "day": 5, "departures": [{"rid": "﻿465", "label": "7:35", "exit": "455"}]}
+{"route": "465", "day": 6, "departures": [{"rid": "﻿465", "label": "7:35", "exit": "455"}]}
+{"route": "465", "day": 7, "departures": []}
+{"route": "466", "day": 1, "departures": []}
+{"route": "466", "day": 2, "departures": []}
+{"route": "466", "day": 3, "departures": []}
+{"route": "466", "day": 4, "departures": []}
+{"route": "466", "day": 5, "departures": []}
+{"route": "466", "day": 6, "departures": [{"rid": "﻿466", "label": "13:40", "exit": "820"}]}
+{"route": "466", "day": 7, "departures": []}
+{"route": "467", "day": 1, "departures": []}
+{"route": "467", "day": 2, "departures": []}
+{"route": "467", "day": 3, "departures": []}
+{"route": "467", "day": 4, "departures": []}
+{"route": "467", "day": 5, "departures": []}
+{"route": "467", "day": 6, "departures": [{"rid": "﻿467", "label": "7:20", "exit": "440"}]}
+{"route": "467", "day": 7, "departures": [{"rid": "﻿467", "label": "7:25", "exit": "445"}]}
+{"route": "468", "day": 1, "departures": []}
+{"route": "468", "day": 2, "departures": [{"rid": "﻿468", "label": "7:25", "exit": "445"}]}
+{"route": "468", "day": 3, "departures": [{"rid": "﻿468", "label": "7:25", "exit": "445"}]}
+{"route": "468", "day": 4, "departures": [{"rid": "﻿468", "label": "7:25", "exit": "445"}]}
+{"route": "468", "day": 5, "departures": [{"rid": "﻿468", "label": "7:25", "exit": "445"}]}
+{"route": "468", "day": 6, "departures": []}
+{"route": "468", "day": 7, "departures": [{"rid": "﻿468", "label": "14:40", "exit": "880"}]}
+{"route": "469", "day": 1, "departures": [{"rid": "﻿469", "label": "13:05", "exit": "785"}, {"rid": "469", "label": "13:55", "exit": "835"}]}
+{"route": "469", "day": 2, "departures": [{"rid": "﻿469", "label": "13:05", "exit": "785"}, {"rid": "469", "label": "13:55", "exit": "835"}]}
+{"route": "469", "day": 3, "departures": [{"rid": "﻿469", "label": "13:05", "exit": "785"}, {"rid": "469", "label": "13:55", "exit": "835"}]}
+{"route": "469", "day": 4, "departures": [{"rid": "﻿469", "label": "13:05", "exit": "785"}, {"rid": "469", "label": "13:55", "exit": "835"}]}
+{"route": "469", "day": 5, "departures": [{"rid": "﻿469", "label": "13:05", "exit": "785"}, {"rid": "469", "label": "13:55", "exit": "835"}]}
+{"route": "469", "day": 6, "departures": [{"rid": "﻿469", "label": "12:00", "exit": "720"}]}
+{"route": "469", "day": 7, "departures": []}
+{"route": "470", "day": 1, "departures": [{"rid": "﻿470", "label": "7:38", "exit": "458"}]}
+{"route": "470", "day": 2, "departures": [{"rid": "﻿470", "label": "7:38", "exit": "458"}]}
+{"route": "470", "day": 3, "departures": [{"rid": "﻿470", "label": "7:38", "exit": "458"}]}
+{"route": "470", "day": 4, "departures": [{"rid": "﻿470", "label": "7:38", "exit": "458"}]}
+{"route": "470", "day": 5, "departures": [{"rid": "﻿470", "label": "7:38", "exit": "458"}]}
+{"route": "470", "day": 6, "departures": [{"rid": "﻿470", "label": "7:38", "exit": "458"}]}
+{"route": "470", "day": 7, "departures": []}
+{"route": "471", "day": 1, "departures": [{"rid": "﻿471", "label": "13:50", "exit": "830"}, {"rid": "471", "label": "14:45", "exit": "885"}, {"rid": "471", "label": "15:30", "exit": "930"}]}
+{"route": "471", "day": 2, "departures": [{"rid": "﻿471", "label": "13:50", "exit": "830"}, {"rid": "471", "label": "14:45", "exit": "885"}, {"rid": "471", "label": "15:30", "exit": "930"}]}
+{"route": "471", "day": 3, "departures": [{"rid": "﻿471", "label": "13:50", "exit": "830"}, {"rid": "471", "label": "14:45", "exit": "885"}]}
+{"route": "471", "day": 4, "departures": [{"rid": "﻿471", "label": "13:00", "exit": "780"}, {"rid": "471", "label": "13:50", "exit": "830"}, {"rid": "471", "label": "14:45", "exit": "885"}, {"rid": "471", "label": "15:30", "exit": "930"}]}
+{"route": "471", "day": 5, "departures": [{"rid": "﻿471", "label": "13:50", "exit": "830"}, {"rid": "471", "label": "14:45", "exit": "885"}, {"rid": "471", "label": "15:30", "exit": "930"}]}
+{"route": "471", "day": 6, "departures": [{"rid": "﻿471", "label": "13:00", "exit": "780"}]}
+{"route": "471", "day": 7, "departures": []}
+{"route": "472", "day": 1, "departures": [{"rid": "﻿472", "label": "8:05", "exit": "485"}]}
+{"route": "472", "day": 2, "departures": [{"rid": "﻿472", "label": "8:05", "exit": "485"}]}
+{"route": "472", "day": 3, "departures": [{"rid": "﻿472", "label": "8:05", "exit": "485"}]}
+{"route": "472", "day": 4, "departures": [{"rid": "﻿472", "label": "8:05", "exit": "485"}]}
+{"route": "472", "day": 5, "departures": [{"rid": "﻿472", "label": "8:05", "exit": "485"}]}
+{"route": "472", "day": 6, "departures": [{"rid": "﻿472", "label": "8:05", "exit": "485"}]}
+{"route": "472", "day": 7, "departures": []}
+{"route": "473", "day": 1, "departures": [{"rid": "﻿473", "label": "7:23", "exit": "443"}]}
+{"route": "473", "day": 2, "departures": [{"rid": "﻿473", "label": "7:23", "exit": "443"}]}
+{"route": "473", "day": 3, "departures": [{"rid": "﻿473", "label": "7:23", "exit": "443"}]}
+{"route": "473", "day": 4, "departures": [{"rid": "﻿473", "label": "7:23", "exit": "443"}]}
+{"route": "473", "day": 5, "departures": [{"rid": "﻿473", "label": "7:23", "exit": "443"}]}
+{"route": "473", "day": 6, "departures": [{"rid": "﻿473", "label": "7:23", "exit": "443"}]}
+{"route": "473", "day": 7, "departures": []}
+{"route": "474", "day": 1, "departures": [{"rid": "﻿474", "label": "13:50", "exit": "830"}]}
+{"route": "474", "day": 2, "departures": [{"rid": "﻿474", "label": "13:51", "exit": "831"}]}
+{"route": "474", "day": 3, "departures": [{"rid": "﻿474", "label": "13:50", "exit": "830"}]}
+{"route": "474", "day": 4, "departures": [{"rid": "﻿474", "label": "13:50", "exit": "830"}]}
+{"route": "474", "day": 5, "departures": [{"rid": "﻿474", "label": "13:51", "exit": "831"}]}
+{"route": "474", "day": 6, "departures": [{"rid": "﻿474", "label": "12:05", "exit": "725"}]}
+{"route": "474", "day": 7, "departures": []}
+{"route": "475", "day": 1, "departures": [{"rid": "﻿475", "label": "8:00", "exit": "480"}]}
+{"route": "475", "day": 2, "departures": [{"rid": "﻿475", "label": "8:00", "exit": "480"}]}
+{"route": "475", "day": 3, "departures": [{"rid": "﻿475", "label": "8:00", "exit": "480"}]}
+{"route": "475", "day": 4, "departures": [{"rid": "﻿475", "label": "8:00", "exit": "480"}]}
+{"route": "475", "day": 5, "departures": [{"rid": "﻿475", "label": "8:00", "exit": "480"}]}
+{"route": "475", "day": 6, "departures": [{"rid": "﻿475", "label": "8:00", "exit": "480"}]}
+{"route": "475", "day": 7, "departures": []}
+{"route": "476", "day": 1, "departures": [{"rid": "﻿476", "label": "15:05", "exit": "905"}]}
+{"route": "476", "day": 2, "departures": [{"rid": "﻿476", "label": "15:05", "exit": "905"}]}
+{"route": "476", "day": 3, "departures": [{"rid": "﻿476", "label": "15:05", "exit": "905"}]}
+{"route": "476", "day": 4, "departures": [{"rid": "﻿476", "label": "15:05", "exit": "905"}]}
+{"route": "476", "day": 5, "departures": [{"rid": "﻿476", "label": "15:05", "exit": "905"}]}
+{"route": "476", "day": 6, "departures": [{"rid": "﻿476", "label": "11:30", "exit": "690"}]}
+{"route": "476", "day": 7, "departures": []}
+{"route": "477", "day": 1, "departures": [{"rid": "﻿477", "label": "7:10", "exit": "430"}, {"rid": "477", "label": "8:00", "exit": "480"}]}
+{"route": "477", "day": 2, "departures": [{"rid": "﻿477", "label": "7:10", "exit": "430"}, {"rid": "477", "label": "8:00", "exit": "480"}]}
+{"route": "477", "day": 3, "departures": [{"rid": "﻿477", "label": "7:10", "exit": "430"}, {"rid": "477", "label": "8:00", "exit": "480"}]}
+{"route": "477", "day": 4, "departures": [{"rid": "﻿477", "label": "7:10", "exit": "430"}, {"rid": "477", "label": "8:00", "exit": "480"}]}
+{"route": "477", "day": 5, "departures": [{"rid": "﻿477", "label": "7:10", "exit": "430"}, {"rid": "477", "label": "8:00", "exit": "480"}]}
+{"route": "477", "day": 6, "departures": [{"rid": "﻿477", "label": "7:10", "exit": "430"}, {"rid": "477", "label": "8:05", "exit": "485"}]}
+{"route": "477", "day": 7, "departures": []}
+{"route": "478", "day": 1, "departures": [{"rid": "﻿478", "label": "13:15", "exit": "795"}, {"rid": "478", "label": "14:00", "exit": "840"}]}
+{"route": "478", "day": 2, "departures": [{"rid": "﻿478", "label": "13:15", "exit": "795"}, {"rid": "478", "label": "14:00", "exit": "840"}]}
+{"route": "478", "day": 3, "departures": [{"rid": "﻿478", "label": "13:15", "exit": "795"}, {"rid": "478", "label": "14:00", "exit": "840"}]}
+{"route": "478", "day": 4, "departures": [{"rid": "﻿478", "label": "13:15", "exit": "795"}, {"rid": "478", "label": "14:00", "exit": "840"}]}
+{"route": "478", "day": 5, "departures": [{"rid": "﻿478", "label": "13:15", "exit": "795"}, {"rid": "478", "label": "14:00", "exit": "840"}]}
+{"route": "478", "day": 6, "departures": [{"rid": "﻿478", "label": "11:25", "exit": "685"}, {"rid": "478", "label": "12:15", "exit": "735"}]}
+{"route": "478", "day": 7, "departures": []}
+{"route": "479", "day": 1, "departures": [{"rid": "﻿479", "label": "8:05", "exit": "485"}]}
+{"route": "479", "day": 2, "departures": [{"rid": "﻿479", "label": "8:05", "exit": "485"}]}
+{"route": "479", "day": 3, "departures": [{"rid": "﻿479", "label": "8:05", "exit": "485"}]}
+{"route": "479", "day": 4, "departures": [{"rid": "﻿479", "label": "8:05", "exit": "485"}]}
+{"route": "479", "day": 5, "departures": [{"rid": "﻿479", "label": "8:05", "exit": "485"}]}
+{"route": "479", "day": 6, "departures": [{"rid": "﻿479", "label": "8:05", "exit": "485"}]}
+{"route": "479", "day": 7, "departures": []}
+{"route": "480", "day": 1, "departures": [{"rid": "﻿480", "label": "8:04", "exit": "484"}]}
+{"route": "480", "day": 2, "departures": [{"rid": "﻿480", "label": "8:04", "exit": "484"}]}
+{"route": "480", "day": 3, "departures": [{"rid": "﻿480", "label": "8:04", "exit": "484"}]}
+{"route": "480", "day": 4, "departures": [{"rid": "﻿480", "label": "8:04", "exit": "484"}]}
+{"route": "480", "day": 5, "departures": [{"rid": "﻿480", "label": "8:04", "exit": "484"}]}
+{"route": "480", "day": 6, "departures": [{"rid": "﻿480", "label": "8:04", "exit": "484"}]}
+{"route": "480", "day": 7, "departures": []}
+{"route": "481", "day": 1, "departures": [{"rid": "﻿481", "label": "7:50", "exit": "470"}]}
+{"route": "481", "day": 2, "departures": [{"rid": "﻿481", "label": "7:50", "exit": "470"}]}
+{"route": "481", "day": 3, "departures": [{"rid": "﻿481", "label": "7:50", "exit": "470"}]}
+{"route": "481", "day": 4, "departures": [{"rid": "﻿481", "label": "7:50", "exit": "470"}]}
+{"route": "481", "day": 5, "departures": [{"rid": "﻿481", "label": "7:50", "exit": "470"}]}
+{"route": "481", "day": 6, "departures": [{"rid": "﻿481", "label": "7:50", "exit": "470"}]}
+{"route": "481", "day": 7, "departures": []}
+{"route": "482", "day": 1, "departures": [{"rid": "﻿482", "label": "8:10", "exit": "490"}]}
+{"route": "482", "day": 2, "departures": [{"rid": "﻿482", "label": "8:10", "exit": "490"}]}
+{"route": "482", "day": 3, "departures": [{"rid": "﻿482", "label": "8:10", "exit": "490"}]}
+{"route": "482", "day": 4, "departures": [{"rid": "﻿482", "label": "8:10", "exit": "490"}]}
+{"route": "482", "day": 5, "departures": [{"rid": "﻿482", "label": "8:10", "exit": "490"}]}
+{"route": "482", "day": 6, "departures": [{"rid": "﻿482", "label": "8:10", "exit": "490"}]}
+{"route": "482", "day": 7, "departures": []}
+{"route": "483", "day": 1, "departures": [{"rid": "﻿483", "label": "16:25", "exit": "985"}]}
+{"route": "483", "day": 2, "departures": [{"rid": "﻿483", "label": "16:25", "exit": "985"}]}
+{"route": "483", "day": 3, "departures": [{"rid": "﻿483", "label": "15:40", "exit": "940"}]}
+{"route": "483", "day": 4, "departures": [{"rid": "﻿483", "label": "16:25", "exit": "985"}]}
+{"route": "483", "day": 5, "departures": [{"rid": "﻿483", "label": "16:25", "exit": "985"}]}
+{"route": "483", "day": 6, "departures": [{"rid": "﻿483", "label": "11:50", "exit": "710"}]}
+{"route": "483", "day": 7, "departures": []}
+{"route": "484", "day": 1, "departures": [{"rid": "﻿484", "label": "16:25", "exit": "985"}]}
+{"route": "484", "day": 2, "departures": [{"rid": "﻿484", "label": "16:25", "exit": "985"}]}
+{"route": "484", "day": 3, "departures": [{"rid": "﻿484", "label": "15:40", "exit": "940"}]}
+{"route": "484", "day": 4, "departures": [{"rid": "﻿484", "label": "16:25", "exit": "985"}]}
+{"route": "484", "day": 5, "departures": [{"rid": "﻿484", "label": "16:25", "exit": "985"}]}
+{"route": "484", "day": 6, "departures": [{"rid": "﻿484", "label": "11:50", "exit": "710"}]}
+{"route": "484", "day": 7, "departures": []}
+{"route": "485", "day": 1, "departures": []}
+{"route": "485", "day": 2, "departures": []}
+{"route": "485", "day": 3, "departures": []}
+{"route": "485", "day": 4, "departures": []}
+{"route": "485", "day": 5, "departures": []}
+{"route": "485", "day": 6, "departures": [{"rid": "﻿485", "label": "11:50", "exit": "710"}]}
+{"route": "485", "day": 7, "departures": []}
+{"route": "486", "day": 1, "departures": [{"rid": "﻿486", "label": "16:25", "exit": "985"}]}
+{"route": "486", "day": 2, "departures": [{"rid": "﻿486", "label": "16:25", "exit": "985"}]}
+{"route": "486", "day": 3, "departures": [{"rid": "﻿486", "label": "15:40", "exit": "940"}]}
+{"route": "486", "day": 4, "departures": [{"rid": "﻿486", "label": "16:25", "exit": "985"}]}
+{"route": "486", "day": 5, "departures": [{"rid": "﻿486", "label": "16:25", "exit": "985"}]}
+{"route": "486", "day": 6, "departures": [{"rid": "﻿486", "label": "11:50", "exit": "710"}]}
+{"route": "486", "day": 7, "departures": []}
+{"route": "487", "day": 1, "departures": []}
+{"route": "487", "day": 2, "departures": []}
+{"route": "487", "day": 3, "departures": [{"rid": "﻿487", "label": "13:30", "exit": "810"}]}
+{"route": "487", "day": 4, "departures": []}
+{"route": "487", "day": 5, "departures": []}
+{"route": "487", "day": 6, "departures": []}
+{"route": "487", "day": 7, "departures": []}
+{"route": "488", "day": 1, "departures": [{"rid": "﻿488", "label": "5:30", "exit": "330"}, {"rid": "488", "label": "6:10", "exit": "370"}, {"rid": "488", "label": "6:40", "exit": "400"}, {"rid": "488", "label": "7:10", "exit": "430"}, {"rid": "488", "label": "7:40", "exit": "460"}, {"rid": "488", "label": "8:10", "exit": "490"}, {"rid": "488", "label": "8:40", "exit": "520"}, {"rid": "488", "label": "9:10", "exit": "550"}, {"rid": "488", "label": "9:40", "exit": "580"}, {"rid": "488", "label": "10:10", "exit": "610"}, {"rid": "488", "label": "10:40", "exit": "640"}, {"rid": "488", "label": "11:10", "exit": "670"}, {"rid": "488", "label": "11:40", "exit": "700"}, {"rid": "488", "label": "12:10", "exit": "730"}, {"rid": "488", "label": "12:40", "exit": "760"}, {"rid": "488", "label": "13:10", "exit": "790"}, {"rid": "488", "label": "13:40", "exit": "820"}, {"rid": "488", "label": "14:10", "exit": "850"}, {"rid": "488", "label": "14:40", "exit": "880"}, {"rid": "488", "label": "15:10", "exit": "910"}, {"rid": "488", "label": "15:40", "exit": "940"}, {"rid": "488", "label": "16:10", "exit": "970"}, {"rid": "488", "label": "16:40", "exit": "1000"}, {"rid": "488", "label": "17:10", "exit": "1030"}, {"rid": "488", "label": "17:40", "exit": "1060"}, {"rid": "488", "label": "18:10", "exit": "1090"}, {"rid": "488", "label": "19:00", "exit": "1140"}, {"rid": "488", "label": "20:00", "exit": "1200"}, {"rid": "488", "label": "21:00", "exit": "1260"}, {"rid": "488", "label": "22:00", "exit": "1320"}]}
+{"route": "488", "day": 2, "departures": [{"rid": "﻿488", "label": "5:30", "exit": "330"}, {"rid": "488", "label": "6:10", "exit": "370"}, {"rid": "488", "label": "6:40", "exit": "400"}, {"rid": "488", "label": "7:10", "exit": "430"}, {"rid": "488", "label": "7:40", "exit": "460"}, {"rid": "488", "label": "8:10", "exit": "490"}, {"rid": "488", "label": "8:40", "exit": "520"}, {"rid": "488", "label": "9:10", "exit": "550"}, {"rid": "488", "label": "9:40", "exit": "580"}, {"rid": "488", "label": "10:10", "exit": "610"}, {"rid": "488", "label": "10:40", "exit": "640"}, {"rid": "488", "label": "11:10", "exit": "670"}, {"rid": "488", "label": "11:40", "exit": "700"}, {"rid": "488", "label": "12:10", "exit": "730"}, {"rid": "488", "label": "12:40", "exit": "760"}, {"rid": "488", "label": "13:10", "exit": "790"}, {"rid": "488", "label": "13:40", "exit": "820"}, {"rid": "488", "label": "14:10", "exit": "850"}, {"rid": "488", "label": "14:40", "exit": "880"}, {"rid": "488", "label": "15:10", "exit": "910"}, {"rid": "488", "label": "15:40", "exit": "940"}, {"rid": "488", "label": "16:10", "exit": "970"}, {"rid": "488", "label": "16:40", "exit": "1000"}, {"rid": "488", "label": "17:10", "exit": "1030"}, {"rid": "488", "label": "17:40", "exit": "1060"}, {"rid": "488", "label": "18:10", "exit": "1090"}, {"rid": "488", "label": "19:00", "exit": "1140"}, {"rid": "488", "label": "20:00", "exit": "1200"}, {"rid": "488", "label": "21:00", "exit": "1260"}, {"rid": "488", "label": "22:00", "exit": "1320"}]}
+{"route": "488", "day": 3, "departures": [{"rid": "﻿488", "label": "5:30", "exit": "330"}, {"rid": "488", "label": "6:10", "exit": "370"}, {"rid": "488", "label": "6:40", "exit": "400"}, {"rid": "488", "label": "7:10", "exit": "430"}, {"rid": "488", "label": "7:40", "exit": "460"}, {"rid": "488", "label": "8:10", "exit": "490"}, {"rid": "488", "label": "8:40", "exit": "520"}, {"rid": "488", "label": "9:10", "exit": "550"}, {"rid": "488", "label": "9:40", "exit": "580"}, {"rid": "488", "label": "10:10", "exit": "610"}, {"rid": "488", "label": "10:40", "exit": "640"}, {"rid": "488", "label": "11:10", "exit": "670"}, {"rid": "488", "label": "11:40", "exit": "700"}, {"rid": "488", "label": "12:10", "exit": "730"}, {"rid": "488", "label": "12:40", "exit": "760"}, {"rid": "488", "label": "13:10", "exit": "790"}, {"rid": "488", "label": "13:40", "exit": "820"}, {"rid": "488", "label": "14:10", "exit": "850"}, {"rid": "488", "label": "14:40", "exit": "880"}, {"rid": "488", "label": "15:10", "exit": "910"}, {"rid": "488", "label": "15:40", "exit": "940"}, {"rid": "488", "label": "16:10", "exit": "970"}, {"rid": "488", "label": "16:40", "exit": "1000"}, {"rid": "488", "label": "17:10", "exit": "1030"}, {"rid": "488", "label": "17:40", "exit": "1060"}, {"rid": "488", "label": "18:10", "exit": "1090"}, {"rid": "488", "label": "19:00", "exit": "1140"}, {"rid": "488", "label": "20:00", "exit": "1200"}, {"rid": "488", "label": "21:00", "exit": "1260"}, {"rid": "488", "label": "22:00", "exit": "1320"}]}
+{"route": "488", "day": 4, "departures": [{"rid": "﻿488", "label": "5:30", "exit": "330"}, {"rid": "488", "label": "6:10", "exit": "370"}, {"rid": "488", "label": "6:40", "exit": "400"}, {"rid": "488", "label": "7:10", "exit": "430"}, {"rid": "488", "label": "7:40", "exit": "460"}, {"rid": "488", "label": "8:10", "exit": "490"}, {"rid": "488", "label": "8:40", "exit": "520"}, {"rid": "488", "label": "9:10", "exit": "550"}, {"rid": "488", "label": "9:40", "exit": "580"}, {"rid": "488", "label": "10:10", "exit": "610"}, {"rid": "488", "label": "10:40", "exit": "640"}, {"rid": "488", "label": "11:10", "exit": "670"}, {"rid": "488", "label": "11:40", "exit": "700"}, {"rid": "488", "label": "12:10", "exit": "730"}, {"rid": "488", "label": "12:40", "exit": "760"}, {"rid": "488", "label": "13:10", "exit": "790"}, {"rid": "488", "label": "13:40", "exit": "820"}, {"rid": "488", "label": "14:10", "exit": "850"}, {"rid": "488", "label": "14:40", "exit": "880"}, {"rid": "488", "label": "15:10", "exit": "910"}, {"rid": "488", "label": "15:40", "exit": "940"}, {"rid": "488", "label": "16:10", "exit": "970"}, {"rid": "488", "label": "16:40", "exit": "1000"}, {"rid": "488", "label": "17:10", "exit": "1030"}, {"rid": "488", "label": "17:40", "exit": "1060"}, {"rid": "488", "label": "18:10", "exit": "1090"}, {"rid": "488", "label": "19:00", "exit": "1140"}, {"rid": "488", "label": "20:00", "exit": "1200"}, {"rid": "488", "label": "21:00", "exit": "1260"}, {"rid": "488", "label": "22:00", "exit": "1320"}]}
+{"route": "488", "day": 5, "departures": [{"rid": "﻿488", "label": "5:30", "exit": "330"}, {"rid": "488", "label": "6:10", "exit": "370"}, {"rid": "488", "label": "6:40", "exit": "400"}, {"rid": "488", "label": "7:10", "exit": "430"}, {"rid": "488", "label": "7:40", "exit": "460"}, {"rid": "488", "label": "8:10", "exit": "490"}, {"rid": "488", "label": "8:40", "exit": "520"}, {"rid": "488", "label": "9:10", "exit": "550"}, {"rid": "488", "label": "9:40", "exit": "580"}, {"rid": "488", "label": "10:10", "exit": "610"}, {"rid": "488", "label": "10:40", "exit": "640"}, {"rid": "488", "label": "11:10", "exit": "670"}, {"rid": "488", "label": "11:40", "exit": "700"}, {"rid": "488", "label": "12:10", "exit": "730"}, {"rid": "488", "label": "12:40", "exit": "760"}, {"rid": "488", "label": "13:10", "exit": "790"}, {"rid": "488", "label": "13:40", "exit": "820"}, {"rid": "488", "label": "14:10", "exit": "850"}, {"rid": "488", "label": "14:40", "exit": "880"}, {"rid": "488", "label": "15:10", "exit": "910"}, {"rid": "488", "label": "15:40", "exit": "940"}, {"rid": "488", "label": "16:10", "exit": "970"}, {"rid": "488", "label": "16:40", "exit": "1000"}, {"rid": "488", "label": "17:10", "exit": "1030"}, {"rid": "488", "label": "17:40", "exit": "1060"}, {"rid": "488", "label": "18:10", "exit": "1090"}, {"rid": "488", "label": "19:00", "exit": "1140"}, {"rid": "488", "label": "20:00", "exit": "1200"}, {"rid": "488", "label": "21:00", "exit": "1260"}, {"rid": "488", "label": "22:00", "exit": "1320"}]}
+{"route": "488", "day": 6, "departures": [{"rid": "﻿488", "label": "5:30", "exit": "330"}, {"rid": "488", "label": "6:10", "exit": "370"}, {"rid": "488", "label": "6:40", "exit": "400"}, {"rid": "488", "label": "7:10", "exit": "430"}, {"rid": "488", "label": "7:45", "exit": "465"}, {"rid": "488", "label": "8:40", "exit": "520"}, {"rid": "488", "label": "9:40", "exit": "580"}, {"rid": "488", "label": "10:40", "exit": "640"}, {"rid": "488", "label": "11:40", "exit": "700"}, {"rid": "488", "label": "12:40", "exit": "760"}, {"rid": "488", "label": "13:15", "exit": "795"}, {"rid": "488", "label": "14:10", "exit": "850"}, {"rid": "488", "label": "15:00", "exit": "900"}]}
+{"route": "488", "day": 7, "departures": []}
+{"route": "489", "day": 1, "departures": [{"rid": "﻿489", "label": "5:55", "exit": "355"}, {"rid": "489", "label": "7:00", "exit": "420"}, {"rid": "489", "label": "7:30", "exit": "450"}, {"rid": "489", "label": "8:00", "exit": "480"}, {"rid": "489", "label": "8:30", "exit": "510"}, {"rid": "489", "label": "9:00", "exit": "540"}, {"rid": "489", "label": "9:30", "exit": "570"}, {"rid": "489", "label": "10:00", "exit": "600"}, {"rid": "489", "label": "10:30", "exit": "630"}, {"rid": "489", "label": "11:00", "exit": "660"}, {"rid": "489", "label": "11:30", "exit": "690"}, {"rid": "489", "label": "12:00", "exit": "720"}, {"rid": "489", "label": "12:30", "exit": "750"}, {"rid": "489", "label": "13:00", "exit": "780"}, {"rid": "489", "label": "13:30", "exit": "810"}, {"rid": "489", "label": "14:00", "exit": "840"}, {"rid": "489", "label": "14:30", "exit": "870"}, {"rid": "489", "label": "15:00", "exit": "900"}, {"rid": "489", "label": "15:30", "exit": "930"}, {"rid": "489", "label": "16:00", "exit": "960"}, {"rid": "489", "label": "16:30", "exit": "990"}, {"rid": "489", "label": "17:00", "exit": "1020"}, {"rid": "489", "label": "17:30", "exit": "1050"}, {"rid": "489", "label": "18:00", "exit": "1080"}, {"rid": "489", "label": "18:30", "exit": "1110"}, {"rid": "489", "label": "19:00", "exit": "1140"}, {"rid": "489", "label": "20:00", "exit": "1200"}, {"rid": "489", "label": "21:00", "exit": "1260"}, {"rid": "489", "label": "22:00", "exit": "1320"}]}
+{"route": "489", "day": 2, "departures": [{"rid": "﻿489", "label": "5:55", "exit": "355"}, {"rid": "489", "label": "7:00", "exit": "420"}, {"rid": "489", "label": "7:30", "exit": "450"}, {"rid": "489", "label": "8:00", "exit": "480"}, {"rid": "489", "label": "8:30", "exit": "510"}, {"rid": "489", "label": "9:00", "exit": "540"}, {"rid": "489", "label": "9:30", "exit": "570"}, {"rid": "489", "label": "10:00", "exit": "600"}, {"rid": "489", "label": "10:30", "exit": "630"}, {"rid": "489", "label": "11:00", "exit": "660"}, {"rid": "489", "label": "11:30", "exit": "690"}, {"rid": "489", "label": "12:00", "exit": "720"}, {"rid": "489", "label": "12:30", "exit": "750"}, {"rid": "489", "label": "13:00", "exit": "780"}, {"rid": "489", "label": "13:30", "exit": "810"}, {"rid": "489", "label": "14:00", "exit": "840"}, {"rid": "489", "label": "14:30", "exit": "870"}, {"rid": "489", "label": "15:00", "exit": "900"}, {"rid": "489", "label": "15:30", "exit": "930"}, {"rid": "489", "label": "16:00", "exit": "960"}, {"rid": "489", "label": "16:30", "exit": "990"}, {"rid": "489", "label": "17:00", "exit": "1020"}, {"rid": "489", "label": "17:30", "exit": "1050"}, {"rid": "489", "label": "18:00", "exit": "1080"}, {"rid": "489", "label": "18:30", "exit": "1110"}, {"rid": "489", "label": "19:00", "exit": "1140"}, {"rid": "489", "label": "20:00", "exit": "1200"}, {"rid": "489", "label": "21:00", "exit": "1260"}, {"rid": "489", "label": "22:00", "exit": "1320"}]}
+{"route": "489", "day": 3, "departures": [{"rid": "﻿489", "label": "5:55", "exit": "355"}, {"rid": "489", "label": "7:00", "exit": "420"}, {"rid": "489", "label": "7:30", "exit": "450"}, {"rid": "489", "label": "8:00", "exit": "480"}, {"rid": "489", "label": "8:30", "exit": "510"}, {"rid": "489", "label": "9:00", "exit": "540"}, {"rid": "489", "label": "9:30", "exit": "570"}, {"rid": "489", "label": "10:00", "exit": "600"}, {"rid": "489", "label": "10:30", "exit": "630"}, {"rid": "489", "label": "11:00", "exit": "660"}, {"rid": "489", "label": "11:30", "exit": "690"}, {"rid": "489", "label": "12:00", "exit": "720"}, {"rid": "489", "label": "12:30", "exit": "750"}, {"rid": "489", "label": "13:00", "exit": "780"}, {"rid": "489", "label": "13:30", "exit": "810"}, {"rid": "489", "label": "14:00", "exit": "840"}, {"rid": "489", "label": "14:30", "exit": "870"}, {"rid": "489", "label": "15:00", "exit": "900"}, {"rid": "489", "label": "15:30", "exit": "930"}, {"rid": "489", "label": "16:00", "exit": "960"}, {"rid": "489", "label": "16:30", "exit": "990"}, {"rid": "489", "label": "17:00", "exit": "1020"}, {"rid": "489", "label": "17:30", "exit": "1050"}, {"rid": "489", "label": "18:00", "exit": "1080"}, {"rid": "489", "label": "18:30", "exit": "1110"}, {"rid": "489", "label": "19:00", "exit": "1140"}, {"rid": "489", "label": "20:00", "exit": "1200"}, {"rid": "489", "label": "21:00", "exit": "1260"}, {"rid": "489", "label": "22:00", "exit": "1320"}]}
+{"route": "489", "day": 4, "departures": [{"rid": "﻿489", "label": "5:55", "exit": "355"}, {"rid": "489", "label": "7:00", "exit": "420"}, {"rid": "489", "label": "7:30", "exit": "450"}, {"rid": "489", "label": "8:00", "exit": "480"}, {"rid": "489", "label": "8:30", "exit": "510"}, {"rid": "489", "label": "9:00", "exit": "540"}, {"rid": "489", "label": "9:30", "exit": "570"}, {"rid": "489", "label": "10:00", "exit": "600"}, {"rid": "489", "label": "10:30", "exit": "630"}, {"rid": "489", "label": "11:00", "exit": "660"}, {"rid": "489", "label": "11:30", "exit": "690"}, {"rid": "489", "label": "12:00", "exit": "720"}, {"rid": "489", "label": "12:30", "exit": "750"}, {"rid": "489", "label": "13:00", "exit": "780"}, {"rid": "489", "label": "13:30", "exit": "810"}, {"rid": "489", "label": "14:00", "exit": "840"}, {"rid": "489", "label": "14:30", "exit": "870"}, {"rid": "489", "label": "15:00", "exit": "900"}, {"rid": "489", "label": "15:30", "exit": "930"}, {"rid": "489", "label": "16:00", "exit": "960"}, {"rid": "489", "label": "16:30", "exit": "990"}, {"rid": "489", "label": "17:00", "exit": "1020"}, {"rid": "489", "label": "17:30", "exit": "1050"}, {"rid": "489", "label": "18:00", "exit": "1080"}, {"rid": "489", "label": "18:30", "exit": "1110"}, {"rid": "489", "label": "19:00", "exit": "1140"}, {"rid": "489", "label": "20:00", "exit": "1200"}, {"rid": "489", "label": "21:00", "exit": "1260"}, {"rid": "489", "label": "22:00", "exit": "1320"}]}
+{"route": "489", "day": 5, "departures": [{"rid": "﻿489", "label": "5:55", "exit": "355"}, {"rid": "489", "label": "7:00", "exit": "420"}, {"rid": "489", "label": "7:30", "exit": "450"}, {"rid": "489", "label": "8:00", "exit": "480"}, {"rid": "489", "label": "8:30", "exit": "510"}, {"rid": "489", "label": "9:00", "exit": "540"}, {"rid": "489", "label": "9:30", "exit": "570"}, {"rid": "489", "label": "10:00", "exit": "600"}, {"rid": "489", "label": "10:30", "exit": "630"}, {"rid": "489", "label": "11:00", "exit": "660"}, {"rid": "489", "label": "11:30", "exit": "690"}, {"rid": "489", "label": "12:00", "exit": "720"}, {"rid": "489", "label": "12:30", "exit": "750"}, {"rid": "489", "label": "13:00", "exit": "780"}, {"rid": "489", "label": "13:30", "exit": "810"}, {"rid": "489", "label": "14:00", "exit": "840"}, {"rid": "489", "label": "14:30", "exit": "870"}, {"rid": "489", "label": "15:00", "exit": "900"}, {"rid": "489", "label": "15:30", "exit": "930"}, {"rid": "489", "label": "16:00", "exit": "960"}, {"rid": "489", "label": "16:30", "exit": "990"}, {"rid": "489", "label": "17:00", "exit": "1020"}, {"rid": "489", "label": "17:30", "exit": "1050"}, {"rid": "489", "label": "18:00", "exit": "1080"}, {"rid": "489", "label": "18:30", "exit": "1110"}, {"rid": "489", "label": "19:00", "exit": "1140"}, {"rid": "489", "label": "20:00", "exit": "1200"}, {"rid": "489", "label": "21:00", "exit": "1260"}, {"rid": "489", "label": "22:00", "exit": "1320"}]}
+{"route": "489", "day": 6, "departures": [{"rid": "﻿489", "label": "6:30", "exit": "390"}, {"rid": "489", "label": "7:15", "exit": "435"}, {"rid": "489", "label": "8:00", "exit": "480"}, {"rid": "489", "label": "9:00", "exit": "540"}, {"rid": "489", "label": "10:00", "exit": "600"}, {"rid": "489", "label": "11:00", "exit": "660"}, {"rid": "489", "label": "12:00", "exit": "720"}, {"rid": "489", "label": "12:30", "exit": "750"}, {"rid": "489", "label": "13:00", "exit": "780"}, {"rid": "489", "label": "13:30", "exit": "810"}, {"rid": "489", "label": "14:00", "exit": "840"}, {"rid": "489", "label": "14:30", "exit": "870"}, {"rid": "489", "label": "15:15", "exit": "915"}, {"rid": "489", "label": "16:00", "exit": "960"}]}
+{"route": "489", "day": 7, "departures": []}
+{"route": "490", "day": 1, "departures": [{"rid": "﻿490", "label": "12:35", "exit": "755"}, {"rid": "490", "label": "13:20", "exit": "800"}, {"rid": "490", "label": "14:10", "exit": "850"}]}
+{"route": "490", "day": 2, "departures": [{"rid": "﻿490", "label": "12:35", "exit": "755"}, {"rid": "490", "label": "13:20", "exit": "800"}, {"rid": "490", "label": "14:10", "exit": "850"}]}
+{"route": "490", "day": 3, "departures": [{"rid": "﻿490", "label": "12:35", "exit": "755"}, {"rid": "490", "label": "13:20", "exit": "800"}, {"rid": "490", "label": "14:10", "exit": "850"}]}
+{"route": "490", "day": 4, "departures": [{"rid": "﻿490", "label": "12:35", "exit": "755"}, {"rid": "490", "label": "13:20", "exit": "800"}, {"rid": "490", "label": "14:10", "exit": "850"}]}
+{"route": "490", "day": 5, "departures": [{"rid": "﻿490", "label": "12:35", "exit": "755"}, {"rid": "490", "label": "13:20", "exit": "800"}, {"rid": "490", "label": "14:10", "exit": "850"}]}
+{"route": "490", "day": 6, "departures": [{"rid": "﻿490", "label": "12:35", "exit": "755"}, {"rid": "490", "label": "13:25", "exit": "805"}]}
+{"route": "490", "day": 7, "departures": []}
