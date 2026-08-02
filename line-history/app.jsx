@@ -256,6 +256,13 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }
 const lineHref = (r) => "#" + encodeURIComponent(r);
 const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
 
+/* חיפוש שנשמר בין ניווטים: חזרה מעמוד קו לא מוחקת את מה שהוקלד */
+function usePersistedQ(key) {
+  const [q, setQ] = useState(() => { try { return sessionStorage.getItem(key) || ""; } catch (e) { return ""; } });
+  useEffect(() => { try { sessionStorage.setItem(key, q); } catch (e) { /* דפדפן חוסם אחסון */ } }, [key, q]);
+  return [q, setQ];
+}
+
 /* עוגן 2012: rd -> תקציר המסלול דאז (נטען פעם אחת לכל הדפדוף) */
 let ANC2012 = null;
 let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "2012" בחיפוש
@@ -526,7 +533,7 @@ function DayFeed({ idx, openLine, onBack }) {
   const [yr, setYr] = useState("");
   const [mon, setMon] = useState("");
   const [chs, setChs] = useState(null);
-  const [q, setQ] = useState("");
+  const [q, setQ] = usePersistedQ("lh-q-day");
   const [lim, setLim] = useState(300);
   useEffect(() => setLim(300), [q, mon]);
   // יעד ומפעיל לא משוכפלים בקובצי החודש — נשלפים מהאינדקס לפי מק"ט
@@ -619,13 +626,13 @@ function DayFeed({ idx, openLine, onBack }) {
                     <span className="lmeta">{v.an} · {v.nr} מסלולים</span>
                   </a>
                 ) : (
-                  <a className="lrow" href="#2012"
-                    onClick={(e) => { e.preventDefault(); setExp12(exp12 === v.k ? null : v.k); }}>
+                  // כפתור ולא קישור: אין לזה עמוד להיפתח בכרטיסייה חדשה
+                  <button className="lrow" onClick={() => setExp12(exp12 === v.k ? null : v.k)}>
                     <span className="badge sm">{v.no}</span>
                     <span className="k" style={{ background: "#57534e" }}>לא קיים היום</span>
                     <span className="ldest">{v.dest || "—"}</span>
                     <span className="lmeta">{v.an} · {v.nr} מסלולים · {exp12 === v.k ? "סגור ▲" : "רצף התחנות ▼"}</span>
-                  </a>
+                  </button>
                 )}
                 {exp12 === v.k && !v.rd && (
                   <div className="a2012">
@@ -691,7 +698,7 @@ function StopsTab() {
   const [hist, setHist] = useState(null);   // קורות-חיים מצטברים לכל תחנה
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
   const [katOpen, setKatOpen] = useState(false);
-  const [q, setQ] = useState("");
+  const [q, setQ] = usePersistedQ("lh-q-stops");
   const [openKey, setOpenKey] = useState(null);   // שורת תחנה פתוחה עם מפה
   const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
   useEffect(() => setLim(250), [q, mon, kinds]);
@@ -869,7 +876,7 @@ function App() {
   const [idx, setIdx] = useState(null);
   const [err, setErr] = useState(null);
   const [tab, setTab] = useState("lines");
-  const [q, setQ] = useState("");
+  const [q, setQ] = usePersistedQ("lh-q-main");
   const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
   const [katOpen, setKatOpen] = useState(false);
   // דף קו נכנס להיסטוריית הדפדפן (וגם לקישור, אחרי ה-#) — כפתור "אחורה"

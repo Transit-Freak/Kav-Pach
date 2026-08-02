@@ -102,11 +102,20 @@ def main():
             if rid not in routes or len(row.get('stops', [])) > len(routes[rid].get('stops', [])):
                 routes[rid] = row
 
-    # קיבוץ לפי מזהה הקו הפנימי של מגיעים — לא לפי המספר המוצג: "קו 1" של
-    # ירושלים ו"קו 1" של קרית שמונה הם ישויות שונות עם אותו מספר
-    lines = collections.defaultdict(list)   # (agency, line_id) -> [row]
+    # מגיעים קיבץ במסד שלו את כל המסלולים הארציים של אותו מספר תחת מזהה
+    # קו אחד — "קו 1" מכיל את קרית שמונה, אילת, ירושלים ועוד. מפצלים לפי
+    # חתימת הערים שבכותרת של כל מסלול, כדי שכל עיר תקבל שורה משלה.
+    def citysig(dest):
+        mm = re.match(r'מ(.+?) ל(.+)$', dest or '')
+        if mm:
+            return ' ↔ '.join(sorted((mm.group(1).strip(), mm.group(2).strip())))
+        return (dest or '').strip() or '?'
+
+    lines = collections.defaultdict(list)   # (agency, line_id, citysig) -> [row]
     for row in routes.values():
-        lines[(str(row['agency']), str(row.get('line')))].append(row)
+        title = row.get('title', '')
+        dest = title.split(' - ', 1)[1] if ' - ' in title else ''
+        lines[(str(row['agency']), str(row.get('line')), citysig(dest))].append(row)
 
     OUT.mkdir(parents=True, exist_ok=True)
     for old in OUT.glob('l*.json'):
@@ -141,14 +150,23 @@ def main():
             break
         return []
 
+    by_al = collections.defaultdict(list)    # (agency, line_id) -> [(sig, rows)]
+    for (a, lid, sig), rows in lines.items():
+        by_al[(a, lid)].append((sig, rows))
+
     idx = []
-    for (a, lid), rows in lines.items():
+    flat = []
+    for (a, lid), groups in by_al.items():
+        groups.sort(key=lambda g: (-len(g[1]), g[0]))
+        for gi, (sig, rows) in enumerate(groups):
+            flat.append((a, lid, gi, rows))
+    for a, lid, gi, rows in flat:
         rows.sort(key=lambda r: -len(r.get('stops', [])))
         title = rows[0].get('title', '')
         m = re.match(r'קו\s+(\S+)', title)
         no = m.group(1) if m else '?'
         dest = title.split(' - ', 1)[1] if ' - ' in title else ''
-        key = f'{a}-{lid}'
+        key = f'{a}-{lid}' if gi == 0 else f'{a}-{lid}x{gi}'
         payload = {'a': a, 'an': ag_names.get(a, ''), 'no': no, 'dest': dest, 'routes': [
             {'rid': str(r.get('route')), 'n': len(r.get('stops', [])),
              'f': (r['stops'][0]['name'] if r.get('stops') else ''),
