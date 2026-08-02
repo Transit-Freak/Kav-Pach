@@ -54,16 +54,29 @@ def main():
         if not r0 or not r0.get('stops'):
             continue
         t12 = tokens(d.get('dest', '')) | tokens(r0.get('f', '')) | tokens(r0.get('l', ''))
+        # ערי הקצה של קו 2012: מהיעד ("מX לY") ומסיומות שמות תחנות הקצה.
+        # מפעילים התחלפו במכרזים מאז 2012 (548 עבר מאגד לאלקטרה אפיקים) —
+        # לכן ההתאמה לפי עיר, ומפעיל זהה הוא רק בונוס לניקוד.
+        cities = set()
+        mm = re.match(r'מ(.+?) ל(.+)$', d.get('dest', '') or '')
+        if mm:
+            cities.update((mm.group(1).strip(), mm.group(2).strip()))
+        for x in (r0.get('f', ''), r0.get('l', '')):
+            p = str(x).split(' - ')
+            if len(p) > 1:
+                cities.add(p[-1].strip())
+        cities = {c for c in cities if len(c) >= 3}
         no = d.get('no', '')
         no_alt = no.lstrip('0') or no
-        cands = [l for l in today
-                 if l.get('line') in (no, no_alt) and op_match(d.get('a', ''), l.get('op') or '')]
+        cands = [l for l in today if l.get('line') in (no, no_alt)]
         for l in cands:
-            common = t12 & tokens(l.get('dest', ''))
-            if not common:
+            dest = l.get('dest', '')
+            city_hits = [c for c in cities if c in dest]
+            if not city_hits:
                 continue
             rd = l['rd']
-            score = len(common)
+            score = len(city_hits) * 2 + len(t12 & tokens(dest)) \
+                + (3 if op_match(d.get('a', ''), l.get('op') or '') else 0)
             if rd in anchors and anchors[rd]['_s'] >= score:
                 continue
             anchors[rd] = {'_s': score, 'k': d['a'] + '-' + f.rsplit('l' + d['a'] + '-', 1)[-1][:-5],
