@@ -573,7 +573,12 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
-      .then((d) => { const ms = d.months || []; setMonths(ms); if (ms.length) { setMon(ms[0]); setYr(ms[0].slice(0, 4)); } })
+      .then((d) => {
+        const ms = d.months || []; setMonths(ms);
+        // לא דורסים בחירה שכבר נעשתה — כניסה מכתובת ‎#2012/<k>‎ קובעת
+        // את השנה לפני שהחודשים נטענים
+        if (ms.length) { setYr((cur) => cur || ms[0].slice(0, 4)); if (!init12) setMon((cur) => cur || ms[0]); }
+      })
       .catch(() => setMonths([]));
   }, []);
   useEffect(() => {
