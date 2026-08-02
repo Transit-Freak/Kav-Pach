@@ -1,0 +1,66 @@
+# הסריקה היומית של ארכיון ה-GTFS ‏2022–2026 — על GitHub Actions
+# (הקונטיינר המקומי מאותחל תדיר והורג ריצות ארוכות; ה-runner יציב.)
+# הנתונים וה-checkpoint חיים בענף routes-backfill; הריצה ממשיכה את עצמה
+# אוטומטית (עד 10 חוליות) עד שהסריקה מגיעה להיום.
+name: routes-scan
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה בשרשרת ההמשכה'
+        default: '1'
+        required: false
+  push:
+    branches: [routes-go]
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: routes-scan
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 356
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: routes-backfill
+      - name: סריקה (עם checkpoint כל 10 דקות)
+        env:
+          MAX_MIN: '330'
+        run: |
+          set -e
+          git config user.name routes-scan-bot
+          git config user.email actions@users.noreply.github.com
+          (
+            while true; do
+              sleep 600
+              ( git add line-history/data \
+                && git commit -qm "checkpoint סריקה $(date -u +%FT%TZ)" \
+                && git push -q origin HEAD:routes-backfill ) || true
+            done
+          ) &
+          PUSHER=$!
+          python3 tools/backfill_routes_daily.py || true
+          kill "$PUSHER" || true
+      - name: דחיפה סופית
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "checkpoint סריקה (סוף ריצה) $(date -u +%FT%TZ)" || true
+          git push -q origin HEAD:routes-backfill || true
+      - name: המשכה אוטומטית אם נותרה עבודה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LAST=$(python3 -c "import json;print(json.load(open('line-history/data/routes-daily-state.json')).get('last_date',''))" 2>/dev/null || echo '')
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          echo "התקדמות: $LAST | חוליה: $CHAIN"
+          if [ -n "$LAST" ] && [ "$LAST" \< "2026-07" ] && [ "$CHAIN" -lt 10 ]; then
+            echo "נותרה עבודה — משגר חוליה $((CHAIN+1))"
+            gh workflow run routes-scan.yml --repo "$GITHUB_REPOSITORY" --ref routes-go -f chain=$((CHAIN+1)) || true
+          else
+            echo "הסריקה הגיעה ליעד (או הגבלת שרשרת) — לא משגר המשך"
+          fi
