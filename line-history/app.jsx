@@ -528,7 +528,7 @@ function StopEvMap({ ev }) {
 }
 
 /* ---------- שינויים לפי יום (כל הקווים) ---------- */
-function DayFeed({ idx, openLine, onBack }) {
+function DayFeed({ idx, openLine, onBack, init12 }) {
   const [months, setMonths] = useState(null);
   const [yr, setYr] = useState("");
   const [mon, setMon] = useState("");
@@ -556,6 +556,12 @@ function DayFeed({ idx, openLine, onBack }) {
     fetch("../magihim-2012/data/l" + exp12 + ".json?v=" + BUILD)
       .then((r) => r.json()).then(setExpd).catch(() => setExpd({ routes: [] }));
   }, [exp12]);
+  // כניסה מכתובת ‎#2012/<k>‎ (כרטיסייה חדשה): פותחים את הפיד על 2012
+  // עם הקו המבוקש פתוח, ומגדילים את הרשימה כדי שהשורה תופיע
+  useEffect(() => {
+    if (!init12) return;
+    setYr("2012"); setMon(""); setExp12(init12); setLim(100000);
+  }, [init12]);
   const k2rd = useMemo(() => {
     const m = {};
     for (const [rd, v] of Object.entries(a12 || {})) if (!(v.k in m)) m[v.k] = rd;
@@ -626,13 +632,13 @@ function DayFeed({ idx, openLine, onBack }) {
                     <span className="lmeta">{v.an} · {v.nr} מסלולים</span>
                   </a>
                 ) : (
-                  // כפתור ולא קישור: אין לזה עמוד להיפתח בכרטיסייה חדשה
-                  <button className="lrow" onClick={() => setExp12(exp12 === v.k ? null : v.k)}>
+                  <a className="lrow" href={"#2012/" + encodeURIComponent(v.k)}
+                    onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); setExp12(exp12 === v.k ? null : v.k); }}>
                     <span className="badge sm">{v.no}</span>
                     <span className="k" style={{ background: "#57534e" }}>לא קיים היום</span>
                     <span className="ldest">{v.dest || "—"}</span>
                     <span className="lmeta">{v.an} · {v.nr} מסלולים · {exp12 === v.k ? "סגור ▲" : "רצף התחנות ▼"}</span>
-                  </button>
+                  </a>
                 )}
                 {exp12 === v.k && !v.rd && (
                   <div className="a2012">
@@ -880,9 +886,11 @@ function App() {
   const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
   const [katOpen, setKatOpen] = useState(false);
   // דף קו נכנס להיסטוריית הדפדפן (וגם לקישור, אחרי ה-#) — כפתור "אחורה"
-  // בטלפון חוזר לרשימה במקום לצאת מהאתר, וקישור לקו נפתח ישירות עליו
-  const [rd, setRd] = useState(() => decodeURIComponent((location.hash || "").slice(1)) || null);
-  const [byDay, setByDay] = useState(false);   // תצוגת "שינויים לפי יום"
+  // בטלפון חוזר לרשימה במקום לצאת מהאתר, וקישור לקו נפתח ישירות עליו.
+  // ‎#2012/<k>‎ הוא כתובת של קו 2012 בלי מקבילה של היום — נפתח בפיד.
+  const H0 = decodeURIComponent((location.hash || "").slice(1));
+  const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") ? H0 : null));
+  const [byDay, setByDay] = useState(() => H0.startsWith("2012/"));   // תצוגת "שינויים לפי יום"
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
@@ -969,7 +977,8 @@ function App() {
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
       ) : byDay ? (
-        <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)} />
+        <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)}
+          init12={H0.startsWith("2012/") ? H0.slice(5) : null} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
