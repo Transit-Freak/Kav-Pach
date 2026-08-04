@@ -42,6 +42,74 @@ def find_field(fields, *words):
     return None
 
 
+def fetch_bytes(url):
+    req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-data/1.0'})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return r.read()
+
+
+def parse_tabular(content, fmt):
+    """קובץ CSV/XLSX → רשימת שורות טקסט (לקבצים שלא נטענו ל-datastore)."""
+    import io
+    rows = []
+    if fmt == 'CSV':
+        import csv
+        for enc in ('utf-8-sig', 'cp1255', 'utf-8'):
+            try:
+                rows = list(csv.reader(io.StringIO(content.decode(enc))))
+                break
+            except Exception:
+                continue
+    elif fmt == 'XLS':
+        try:
+            import xlrd
+            wb = xlrd.open_workbook(file_contents=content)
+            for ws in wb.sheets():
+                for i in range(ws.nrows):
+                    rows.append([str(c.value).strip() for c in ws.row(i)])
+        except Exception as e:
+            print('  פענוח xls נכשל:', e)
+    else:
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+            for ws in wb.worksheets:
+                for r in ws.iter_rows(values_only=True):
+                    rows.append(['' if c is None else str(c).strip() for c in r])
+        except Exception as e:
+            print('  פענוח xlsx נכשל:', e)
+    return rows
+
+
+def harvest_rows(rows, by_city):
+    """מאתר שורת כותרת עם עמודת אשכול ועמודת שם, וקוטף את הערכים."""
+    added = 0
+    ci = ni = None
+    for i, row in enumerate(rows):
+        cand_c = [j for j, c in enumerate(row) if 'אשכול' in c and 'דירוג' not in c]
+        cand_n = [j for j, c in enumerate(row)
+                  if any(w in c for w in ('שם הרשות', 'שם רשות', 'שם היישוב', 'שם יישוב', 'שם הישוב', 'רשות מקומית'))
+                  or c.strip() == 'שם']
+        if cand_c and cand_n:
+            ci, ni, start = cand_c[0], cand_n[0], i + 1
+            break
+    if ci is None:
+        return 0
+    for row in rows[start:]:
+        if len(row) <= max(ci, ni):
+            continue
+        name = str(row[ni]).strip()
+        try:
+            c = int(float(str(row[ci]).strip()))
+        except (TypeError, ValueError):
+            continue
+        if name and 1 <= c <= 10:
+            if name not in by_city:
+                added += 1
+            by_city.setdefault(name, {'c': c})
+    return added
+
+
 def main():
     pkgs = []
     for q in ('מדד חברתי-כלכלי', 'מדד חברתי כלכלי', 'socio-economic',
@@ -54,9 +122,16 @@ def main():
         except Exception as e:
             print('חיפוש נכשל:', q, e)
     # מאגר העיריות הוא "אח" של מאגר המועצות — אצל אותו מפרסם; סורקים את כל
-    # המאגרים של כל ארגון שפרסם מאגר "אשכול" כלשהו
+    # המאגרים של כל ארגון שפרסם מאגר "אשכול" כלשהו, ואת ארגון הלמ"ס עצמו
     orgs = {(p.get('organization') or {}).get('name')
             for p in pkgs if 'אשכול' in (p.get('title') or '')}
+    try:
+        for o in call('organization_list', all_fields='true', limit=400):
+            hay = (o.get('name', '') + ' ' + o.get('display_name', '') + ' ' + o.get('title', '')).lower()
+            if any(w in hay for w in ('cbs', 'statist', 'סטטיסטיקה', 'למ"ס')):
+                orgs.add(o['name'])
+    except Exception as e:
+        print('רשימת ארגונים נכשלה:', e)
     for o in sorted(o for o in orgs if o):
         try:
             more = call('package_search', fq=f'organization:{o}', rows=100).get('results', [])
@@ -147,6 +222,29 @@ def main():
                 print(f'מוזג: {title[:60]} | {res.get("name","")[:40]} | +{added} (שדות {f_name}/{f_cluster})')
                 srcs.append(title[:70])
                 best_year = max(best_year, year)
+    # מסלול ב': קבצים שמצורפים למאגרים אך לא נטענו ל-datastore (שם מסתתר
+    # בדרך כלל קובץ העיריות) — מורידים ומפענחים ידנית
+    big_missing = not any(c in by_city for c in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים'))
+    if big_missing:
+        for year, title, p in cands:
+            if 'אשכול' not in title and not ('חברתי' in title and 'כלכלי' in title):
+                continue
+            for res in p.get('resources', []):
+                fmt = (res.get('format') or '').upper()
+                if fmt not in ('CSV', 'XLSX', 'XLS') or res.get('datastore_active'):
+                    continue
+                rname = res.get('name') or res.get('url', '').rsplit('/', 1)[-1]
+                try:
+                    content = fetch_bytes(res['url'])
+                except Exception as e:
+                    print('  הורדה נכשלה:', rname[:50], e)
+                    continue
+                added = harvest_rows(parse_tabular(content, fmt), by_city)
+                print(f'  קובץ {rname[:60]} ({fmt}): +{added}')
+                if added:
+                    srcs.append(f'{title[:60]} ({rname[:40]})')
+                    best_year = max(best_year, year)
+
     for probe_city in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים', 'דימונה', 'קרית גת', 'קריית גת'):
         if probe_city in by_city:
             print('בדיקה:', probe_city, '→ אשכול', by_city[probe_city]['c'])
