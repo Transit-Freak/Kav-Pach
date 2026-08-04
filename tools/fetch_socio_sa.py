@@ -1,0 +1,213 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""אשכול חברתי-כלכלי לפי אזור סטטיסטי — לכל אזור תעשייה.
+
+הנתון העירוני מטעה לפעמים (אזור תעשייה יכול לשבת באזור סטטיסטי חזק בעיר
+חלשה, ולהפך — קרית מלאכי אשכול 3, אך האזור הסטטיסטי של אזור התעשייה
+שלה אשכול 6). המקורות:
+  1. לוח האזורים הסטטיסטיים של פרסום המדד 2021 (למ"ס, הודעה 230/2024)
+  2. שכבת הגבולות של האזורים הסטטיסטיים מעמוד השכבות של הלמ"ס (GDB,
+     מומר עם ogr2ogr ל-GeoJSON ב-WGS84)
+לכל אזור תעשייה: נקודת המרכז ← האזור הסטטיסטי המכיל ← האשכול.
+פלט: parks/data/socio-sa.json {"zones": {pNNN.json: {"c":…, "code":…}}}
+רץ על runner של GitHub (דורש gdal-bin; לסביבה המקומית אין רשת לדומיינים).
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import urllib.parse
+import urllib.request
+
+UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+
+def fetch(url, timeout=300):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+# ---------- 1. לוח האשכולות לפי אזור סטטיסטי ----------
+def load_sa_clusters():
+    from openpyxl import load_workbook
+    import io
+    for tno in ('t3', 't4', 't2'):
+        url = f'https://www.cbs.gov.il/he/mediarelease/DocLib/2024/230/24_24_230{tno}.xlsx'
+        try:
+            content = fetch(url)
+        except Exception as e:
+            print(f'  {tno}: הורדה נכשלה — {e}')
+            continue
+        if not content.startswith(b'PK'):
+            print(f'  {tno}: לא אקסל')
+            continue
+        wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+        rows = []
+        for ws in wb.worksheets:
+            for r in ws.iter_rows(values_only=True):
+                rows.append(['' if c is None else str(c).strip() for c in r])
+        # שורת הכותרת: יש בה גם "אשכול" וגם "סטטיסטי"
+        hdr_i = ci = None
+        for i, row in enumerate(rows):
+            has_c = [j for j, c in enumerate(row) if 'אשכול' in c]
+            has_sa = any('סטטיסטי' in c for c in row)
+            if has_c and has_sa:
+                hdr_i, ci = i, has_c[0]
+                break
+        if hdr_i is None:
+            print(f'  {tno}: אין לוח אזורים סטטיסטיים')
+            continue
+        hdr = rows[hdr_i]
+        # קוד משולב (סמל יישוב+אזור, 8 ספרות) או שני שדות נפרדים
+        c_comb = next((j for j, c in enumerate(hdr) if 'סטטיסטי' in c and 'סמל' in c), None)
+        c_sym = next((j for j, c in enumerate(hdr) if 'סמל' in c and 'סטטיסטי' not in c), None)
+        c_sa = next((j for j, c in enumerate(hdr) if 'סטטיסטי' in c and 'סמל' not in c), None)
+        print(f'  {tno}: כותרת בשורה {hdr_i}: {[h[:20] for h in hdr if h][:8]}')
+        out = {}
+        for row in rows[hdr_i + 1:]:
+            try:
+                cl = int(float(row[ci]))
+                if not 1 <= cl <= 10:
+                    continue
+                if c_comb is not None and row[c_comb]:
+                    code = int(float(row[c_comb]))
+                elif c_sym is not None and c_sa is not None:
+                    code = int(float(row[c_sym])) * 10000 + int(float(row[c_sa]))
+                else:
+                    continue
+                out[code] = cl
+            except (ValueError, TypeError, IndexError):
+                continue
+        if len(out) > 500:
+            print(f'  {tno}: {len(out)} אזורים סטטיסטיים עם אשכול')
+            return out
+        print(f'  {tno}: רק {len(out)} שורות — ממשיך לנסות')
+    return None
+
+
+# ---------- 2. שכבת הגבולות ----------
+def load_sa_polygons(tmp):
+    page = fetch('https://www.cbs.gov.il/he/Pages/geo-layers.aspx').decode('utf-8', 'replace')
+    cands = [h for h in re.findall(r'href="([^"]+\.zip)"', page, re.I)
+             if 'statistical' in h.lower() or 'סטטיסטי' in urllib.parse.unquote(h)]
+    print('שכבות מועמדות:', [c[-60:] for c in cands])
+    if not cands:
+        return None
+    url = cands[0] if cands[0].startswith('http') else 'https://www.cbs.gov.il' + cands[0]
+    zp = os.path.join(tmp, 'sa.zip')
+    open(zp, 'wb').write(fetch(url, timeout=600))
+    print(f'שכבה הורדה: {os.path.getsize(zp)/1e6:.0f}MB')
+    import zipfile
+    ex = os.path.join(tmp, 'sa')
+    zipfile.ZipFile(zp).extractall(ex)
+    # מאתרים gdb או shp
+    src = None
+    for root, dirs, files in os.walk(ex):
+        for d in dirs:
+            if d.lower().endswith('.gdb'):
+                src = os.path.join(root, d)
+        for fl in files:
+            if fl.lower().endswith('.shp') and src is None:
+                src = os.path.join(root, fl)
+    if not src:
+        print('אין gdb/shp בארכיון')
+        return None
+    print('מקור:', src)
+    gj = os.path.join(tmp, 'sa.json')
+    r = subprocess.run(['ogr2ogr', '-f', 'GeoJSON', '-t_srs', 'EPSG:4326', gj, src],
+                       capture_output=True, text=True)
+    if r.returncode:
+        print('ogr2ogr נכשל:', r.stderr[:400])
+        return None
+    return json.load(open(gj, encoding='utf-8'))
+
+
+def ring_contains(ring, x, y):
+    inside = False
+    n = len(ring)
+    j = n - 1
+    for i in range(n):
+        xi, yi = ring[i][0], ring[i][1]
+        xj, yj = ring[j][0], ring[j][1]
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def poly_contains(geom, x, y):
+    polys = geom['coordinates'] if geom['type'] == 'MultiPolygon' else [geom['coordinates']]
+    for poly in polys:
+        if not poly:
+            continue
+        if ring_contains(poly[0], x, y):
+            if all(not ring_contains(h, x, y) for h in poly[1:]):
+                return True
+    return False
+
+
+def main():
+    clusters = load_sa_clusters()
+    if not clusters:
+        sys.exit('אין לוח אשכולות לאזורים סטטיסטיים — לא ממשיך')
+    with tempfile.TemporaryDirectory() as tmp:
+        gj = load_sa_polygons(tmp)
+        if not gj:
+            sys.exit('אין שכבת גבולות')
+        feats = gj.get('features', [])
+        print(f'{len(feats)} אזורים סטטיסטיים בשכבה')
+        # שדה הקוד המשולב: מחפשים מפתח עם STAT ששוויו בסדר גודל של 8 ספרות
+        key = None
+        p0 = feats[0].get('properties', {})
+        for k, v in p0.items():
+            if 'STAT' in k.upper():
+                try:
+                    if int(float(v)) > 100000:
+                        key = k
+                        break
+                except (TypeError, ValueError):
+                    continue
+        if key is None:
+            sys.exit(f'לא זוהה שדה קוד: {list(p0.keys())[:12]}')
+        print('שדה הקוד:', key)
+        # אינדקס bbox גס להאצה
+        items = []
+        for f in feats:
+            g = f.get('geometry')
+            if not g:
+                continue
+            try:
+                code = int(float(f['properties'][key]))
+            except (TypeError, ValueError, KeyError):
+                continue
+            xs, ys = [], []
+            polys = g['coordinates'] if g['type'] == 'MultiPolygon' else [g['coordinates']]
+            for poly in polys:
+                for pt in poly[0]:
+                    xs.append(pt[0]); ys.append(pt[1])
+            if xs:
+                items.append((min(xs), min(ys), max(xs), max(ys), g, code))
+
+        parks = json.load(open('parks/data/parks.json', encoding='utf-8'))
+        zones = {}
+        for p in parks:
+            x, y = p['lo'], p['la']
+            for x0, y0, x1, y1, g, code in items:
+                if x0 <= x <= x1 and y0 <= y <= y1 and poly_contains(g, x, y):
+                    cl = clusters.get(code)
+                    if cl:
+                        zones[p['f']] = {'c': cl, 'code': code}
+                    break
+        print(f'{len(zones)} מתוך {len(parks)} אזורי תעשייה שויכו לאזור סטטיסטי עם אשכול')
+        if len(zones) < 50:
+            sys.exit('מעט מדי שיוכים — לא שומר')
+        json.dump({'year': 2021, 'source': 'למ"ס — המדד החברתי-כלכלי 2021 לאזורים סטטיסטיים (הודעה 230/2024) + שכבת הגבולות', 'n': len(zones), 'zones': zones},
+                  open('parks/data/socio-sa.json', 'w', encoding='utf-8'), ensure_ascii=False)
+        print('נשמר parks/data/socio-sa.json')
+
+
+if __name__ == '__main__':
+    main()

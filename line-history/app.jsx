@@ -245,7 +245,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }
     <div className="mapwrap">
       <div className="map" ref={ref} />
       {canFocus && (
-        <button className="focusbtn" onClick={() => setFocus(!focus)}>
+        <button className="focusbtn" title="החלפה בין תצוגת כל המסלול לבין התקרבות רק לקטע שבו היה השינוי" onClick={() => setFocus(!focus)}>
           {focus ? "🗺️ כל המסלול" : "🔍 רק הקטע ששונה"}
         </button>
       )}
@@ -384,20 +384,20 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   return (
     <div className="linewrap">
       <div className="card side">
-        <button className="back" onClick={onBack}>→ חזרה לחיפוש</button>
+        <button className="back" title="חזרה למסך החיפוש — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש</button>
         <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
         {anc && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
-            <button className="a2012btn" onClick={() => setShow12(!show12)}>
+            <button className="a2012btn" title="הצגת רשימת התחנות של הקו כפי שהייתה ב-2012 — כולל המסלול על המפה בקו מקווקו חום" onClick={() => setShow12(!show12)}>
               {show12 ? "הסתר ▲" : "רצף התחנות ▼"}
             </button>
             {show12 && (d12 ? (d12.routes || []).length ? (
               <div>
                 {vis12.length > 1 && (
                   <div className="s12chips">{vis12.map((i) => (
-                    <button key={i} className={"rchip12" + (i === sel12 ? " on" : "")}
+                    <button key={i} className={"rchip12" + (i === sel12 ? " on" : "")} title="מסלול 2012 נוסף של אותו קו — לחיצה מציגה אותו"
                       onClick={() => setR12(i)}>{d12.routes[i].f} ← {d12.routes[i].l} ({d12.routes[i].n})</button>
                   ))}</div>
                 )}
@@ -449,7 +449,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         )}
         {months.length > 1 && (
           <div className="months">
-            <button className={"mchip" + (!mon ? " on" : "")} onClick={() => setMon("")}>הכול</button>
+            <button className={"mchip" + (!mon ? " on" : "")} title="כל התקופה — בלי סינון לחודש" onClick={() => setMon("")}>הכול</button>
             {months.map((m) => (
               <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>
                 {m.split("-").reverse().join(".")} <b>{vs.filter((x) => x.d.slice(0, 7) === m).length}</b>
@@ -601,19 +601,19 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
   let shown = 0;
   return (
     <div className="card">
-      <button className="back" onClick={onBack}>→ חזרה לחיפוש הקווים</button>
+      <button className="back" title="חזרה למסך החיפוש הראשי — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש הקווים</button>
       <div className="months">
         {[...new Set(months.map((m) => m.slice(0, 4)))].map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
-            onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
+            title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
-        <button className={"mchip" + (yr === "2012" ? " on" : "")}
+        <button className={"mchip" + (yr === "2012" ? " on" : "")} title="רשת הקווים המלאה כפי שצולמה ב-2012 — 3,214 קווים מאתר מגיעים"
           onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
       </div>
       {yr && yr !== "2012" && (
         <div className="months">
           {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
-            <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+            <button key={m} className={"mchip" + (mon === m ? " on" : "")} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
           ))}
         </div>
       )}
@@ -780,16 +780,16 @@ function StopsTab() {
       {/* בוחר לפי שנה: slice(0,18) הישן הסתיר את כל מה שלפני 02.2025 —
           עכשיו כל שנה נגישה בלחיצה, והחודשים שלה נפתחים מתחתיה */}
       <div className="months">
-        <button className={"mchip" + (mon === "all" ? " on" : "")} onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
+        <button className={"mchip" + (mon === "all" ? " on" : "")} title="כל האירועים מכל השנים ברצף אחד" onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
         {[...new Set(months.map((m) => m.slice(0, 4)))].map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
-            onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
+            title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
       </div>
       {yr && (
         <div className="months">
           {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
-            <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+            <button key={m} className={"mchip" + (mon === m ? " on" : "")} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
           ))}
         </div>
       )}
@@ -976,8 +976,8 @@ function App() {
         </div>
       </header>
       <div className="tabs">
-        <button className={"tab" + (tab === "lines" ? " on" : "")} onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
-        <button className={"tab" + (tab === "stops" ? " on" : "")} onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
+        <button className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
+        <button className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
       </div>
       {tab === "stops" ? <StopsTab /> : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
@@ -992,7 +992,7 @@ function App() {
             placeholder="חיפוש קו: מספר קו, מק״ט, יעד או מפעיל…"
             value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="katbox">
-            <button className="kathead" onClick={() => setByDay(true)}>
+            <button className="kathead" title="פיד כרונולוגי: בחירת שנה וחודש ורואים כל שינוי שקרה, בכל קו בארץ, לפי תאריך" onClick={() => setByDay(true)}>
               🗓️ שינויים לפי יום — מה השתנה בכל תאריך, בכל הקווים
             </button>
           </div>
