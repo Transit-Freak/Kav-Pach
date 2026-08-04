@@ -29,6 +29,8 @@ ARCGIS_ITEM = '5814e892a6494b3488f9bccf67e36687'
 
 
 def fetch(url, timeout=300):
+    # כתובות עם עברית (שם השכבה ב-ArcGIS) חייבות קידוד אחוזים
+    url = urllib.parse.quote(url, safe=':/?&=%')
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read()
@@ -38,13 +40,27 @@ def load_sa_from_arcgis():
     """השכבה כ-GeoJSON ישירות משירות ה-FeatureServer — בלי GDB בכלל."""
     meta = json.loads(fetch(f'https://www.arcgis.com/sharing/rest/content/items/{ARCGIS_ITEM}?f=json'))
     url = meta.get('url')
-    print('פריט ArcGIS:', meta.get('title', '')[:60], '| שירות:', url)
+    print('פריט ArcGIS:', meta.get('title', '')[:60], '| סוג:', meta.get('type'), '| שירות:', url)
     if not url:
-        return None
+        # פריט מסוג Web Map — כתובות השכבות בתוך נתוני הפריט (operationalLayers)
+        data = json.loads(fetch(f'https://www.arcgis.com/sharing/rest/content/items/{ARCGIS_ITEM}/data?f=json'))
+        for ly in data.get('operationalLayers', []):
+            u = ly.get('url') or ''
+            print('  שכבה במפה:', ly.get('title', '')[:50], '→', u[:100])
+            if 'Server' in u:
+                url = u
+                break
+        if not url:
+            return None
+    if not re.search(r'/\d+$', url):
+        url += '/0'
+    url = url.rstrip('/')
+    # מפרידים את אינדקס השכבה מהשירות לצורך שאילתות
+    print('שכבת המקור:', url)
     feats = []
     offset = 0
     while True:
-        q = (f'{url}/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson'
+        q = (f'{url}/query?where=1%3D1&outFields=*&outSR=4326&f=geojson'
              f'&resultOffset={offset}&resultRecordCount=1000')
         d = json.loads(fetch(q))
         if 'error' in d:
