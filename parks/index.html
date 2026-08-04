@@ -21,6 +21,7 @@
   .logorow{flex-basis:100%;margin-top:6px}
   .logorow img{height:96px;width:auto;max-width:100%;background:#fff;border-radius:10px;padding:7px 12px;display:block}
   @media (max-width:600px){.logorow img{height:auto;width:100%;padding:6px 9px}}
+  .btn.on{background:#0f766e;color:#fff}
   .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .btn svg{flex:0 0 auto}
   .btn.big{font-size:16px;padding:10px 18px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -77,7 +78,7 @@
     <h1>🏭 נגישות אזורי תעשייה</h1>
     <span class="tag">ניסוי</span>
     <button class="btn" id="backbtn" style="display:none">→ חזרה לרשימה</button>
-    <button class="btn big" id="heatbtn" style="display:none"><!-- צילום אמיתי של מפת החום (אריחי OSM + עיגולי האזורים), נוצר ב-CI ע"י
+    <button class="btn big" id="heatbtn" style="display:none" title="מפת מצב ארצית: כל אזור כעיגול — הצבע והגודל לפי מספר הקווים שמשרתים אותו; אדום = אין שירות"><!-- צילום אמיתי של מפת החום (אריחי OSM + עיגולי האזורים), נוצר ב-CI ע"י
          tools/make_heatbtn.py --><img src="heatbtn-map.png" alt="" aria-hidden="true" style="height:40px;width:auto;border-radius:5px;box-shadow:0 0 0 1.5px #0f766e">מפת חום</button>
     <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
     <button class="btn" id="ztind" style="display:none" title="אזורי תעשייה קלאסיים">🏭 תעשייה</button>
@@ -133,8 +134,9 @@
 
   <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
     <div class="legend" style="margin:0;align-items:center">
-      <button class="btn" id="hmode">⏰ שעות שיא (06–09, 15–19)</button>
-      <button class="btn" id="hscope">🚪 כולל שערי כניסה</button>
+      <button class="btn on" id="hpeak" title="רק הגעות בשעות ההגעה והחזרה מהעבודה: 06:00–09:00 ו-15:00–19:00 ביום חול">⏰ שעות שיא</button>
+      <button class="btn" id="hday" title="כל ההגעות לאורך היום כולו">🗓️ כל היום</button>
+      <button class="btn" id="hscope" title="לספור גם קווים שעוצרים בשערי הכניסה (עד 5 דק׳ הליכה), או רק קווים שנכנסים פנימה">🚪 כולל שערי כניסה</button>
       <span id="hleg"></span>
     </div>
     <div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);flex:1;min-height:0"></div>
@@ -193,6 +195,16 @@ function polyCentroid(polys){
 }
 
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function medHead(wd){
+  // מרווח חציוני בין נסיעות ביום חול 06:00–20:00 — "כל כמה זמן יש אוטובוס"
+  if(!wd||wd.length<2) return null;
+  const mins=wd.map(t=>{const p=t.split(':');return (+p[0])*60+(+p[1])}).filter(m=>m>=360&&m<=1200).sort((a,b)=>a-b);
+  if(mins.length<2) return null;
+  const gaps=[];for(let i=1;i<mins.length;i++)gaps.push(mins[i]-mins[i-1]);
+  gaps.sort((a,b)=>a-b);
+  return gaps[Math.floor(gaps.length/2)];
+}
+function headCol(h){if(h==null)return'#334155';if(h<=20)return'#16a34a';if(h<=35)return'#4d7c0f';if(h<=50)return'#ca8a04';if(h<=70)return'#ea580c';return'#dc2626'}
 function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
 function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 
@@ -206,7 +218,7 @@ fetch('data/parks.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx
   renderTable();
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(h && idx.some(p=>p.f===h)) openPark(h,false);
-  else showTable();   // מציג את הטבלה + חושף את כפתור מפת-החום
+  else openHeatmap(true);   // מפת החום היא מסך הפתיחה; "חזרה לרשימה" מוביל לטבלה
 }).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
 
 function renderTable(){
@@ -261,13 +273,14 @@ document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{
   renderTable();
 });
 q.oninput=()=>{renderTable(); if(heatview.style.display!=='none') openHeatmap(false);};
+let FROM='heat';   // מאיפה נפתח האזור: 'heat' (מפה) או 'table'
 tbody.onclick=e=>{
   // Ctrl/Shift+קליק על שם האזור — הדפדפן פותח כרטיסייה חדשה, לא מתערבים
   const a=e.target.closest('a.zlink');
   if(a && (e.ctrlKey||e.metaKey||e.shiftKey)) return;
   if(a) e.preventDefault();
   const tr=e.target.closest('tr');
-  if(tr) openPark(tr.dataset.f);
+  if(tr){FROM='table';openPark(tr.dataset.f);}
 };
 function showTable(){wrap.style.display='none';heatview.style.display='none';backbtn.style.display='none';heatbtn.style.display='inline-block';tblview.style.display='block'}
 function openHeatmap(fit=true){
@@ -287,7 +300,9 @@ function openHeatmap(fit=true){
   // אפס = אדום — חור בשירות, הנתון שהאתר בא לחשוף.
   const hasPeak='pki' in (IDX[0]||{});
   if(!hasPeak) HEATMODE='day';   // הנתונים טרם חושבו מחדש — נציג כל היום
-  document.getElementById('hmode').style.display=hasPeak?'':'none';
+  document.getElementById('hpeak').style.display=hasPeak?'':'none';
+  document.getElementById('hpeak').classList.toggle('on',HEATMODE=='peak');
+  document.getElementById('hday').classList.toggle('on',HEATMODE=='day');
   const zcount=(p)=>{
     const e=WALKMODE=='e';
     if(HEATMODE=='peak'){
@@ -322,18 +337,15 @@ function openHeatmap(fit=true){
       .addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
-    marker.on('click',()=>openPark(p.f,true));
+    marker.on('click',()=>{FROM='heat';openPark(p.f,true);});
     shown++;
   }
   // fitBounds בפתיחה ראשונה או כשמחפשים (זום למיקום שחיפשת); בהחלפת מרכז↔כניסה שומרים תצוגה
   if(bounds && (fit || f)) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
 }
 heatbtn.onclick=()=>openHeatmap(true);
-document.getElementById('hmode').onclick=()=>{
-  HEATMODE=HEATMODE=='peak'?'day':'peak';
-  document.getElementById('hmode').textContent=HEATMODE=='peak'?'⏰ שעות שיא (06–09, 15–19)':'🗓️ כל היום';
-  openHeatmap(false);
-};
+document.getElementById('hpeak').onclick=()=>{HEATMODE='peak';openHeatmap(false);};
+document.getElementById('hday').onclick=()=>{HEATMODE='day';openHeatmap(false);};
 document.getElementById('hscope').onclick=()=>{
   HEATSCOPE=HEATSCOPE=='all'?'in':'all';
   document.getElementById('hscope').textContent=HEATSCOPE=='all'?'🚪 כולל שערי כניסה':'🏭 נכנסים פנימה בלבד';
@@ -382,13 +394,18 @@ document.getElementById('modebtn').onclick=()=>{
 // "חזרה לרשימה" מציג את הרשימה עצמה תמיד. history.back() היה נכון רק למי
 // שהגיע מהרשימה — מי שנכנס ישירות לקישור של אזור נזרק לדף הקודם בדפדפן.
 function goList(){
-  showTable();
+  // מתוך מפת החום — לרשימה; מתוך אזור — חוזרים לאן שממנו נכנסו
+  const inHeat=heatview.style.display==='flex';
+  if(inHeat) showTable();
+  else if(FROM=='heat') openHeatmap(false);
+  else showTable();
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
 }
 backbtn.onclick=goList;
 // כפתור "אחורה" של הטלפון/דפדפן מחזיר לרשימה במקום לעזוב את העמוד
 window.addEventListener('popstate',e=>{
   if(e.state&&e.state.park) openPark(e.state.park,false);
+  else if(FROM=='heat') openHeatmap(false);
   else showTable();
 });
 // החלקה צידית בתצוגת אזור מחזירה לרשימה (בנוסף למחוות הקצה של הטלפון).
@@ -443,8 +460,8 @@ function openPark(f,push=true){
     <div class="stats">
       <span class="stat">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat">תחנות בפנים <b>${nin}</b></span>
-      <span class="stat">נגיש 🚶 <b>${ngate}</b></span>
-      <span class="stat">רחוק 🚶 <b>${nnear}</b></span>
+      <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">נגיש 🚶 <b>${ngate}</b></span>
+      <span class="stat" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
       <span class="stat">שבילים באזור <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
     </div>
     <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
@@ -484,12 +501,13 @@ function openPark(f,push=true){
     if(lines.length) h+=`<h2>קווים (${lines.length}) — לחצו לשעות המלאות</h2>`;
     for(const L2 of lines){
       const wd=L2.wd||[];
+      const mh=medHead(wd);
       h+=`<div class="line" onclick="this.classList.toggle('open')">
-        <div class="lhead"><span class="lnum">${esc(L2.num)}</span>
+        <div class="lhead"><span class="lnum" style="background:${headCol(mh)}" title="${mh!=null?`תדירות אופיינית ביום חול (06–20): אוטובוס כל ~${mh} דק׳`:'אין מספיק נסיעות ביום חול לחישוב תדירות'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
-          <span class="tier ${L2.t}">${TIER[L2.t]}</span></div>
+          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span></div>
         <div class="lsub">תחנה: ${esc(L2.stop)} · יום חול: ${wd.length? wd.length+' הגעות · ראשונה '+wd[0]+' · אחרונה '+wd[wd.length-1] : 'אין שירות'}</div>
-        ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap">${fmtGap(g)}</span>`).join('')}</div>`:''}
+        ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap" title="בין ${g[0]} ל-${g[1]} אין אף הגעה של הקו — המתנה של ${fmtGap(g).split('(')[1].replace(')','')} בלי אוטובוס (נחשב חור: 90 דק׳ ומעלה ביום חול 05:30–20:00)">⛔ חור בשירות ${fmtGap(g)}</span>`).join('')}</div>`:''}
         <div class="times">
           ${wd.length?`<div><b>יום חול:</b> ${wd.join(' · ')}</div>`:''}
           ${L2.fr&&L2.fr.length?`<div><b>שישי:</b> ${L2.fr.join(' · ')}</div>`:''}
@@ -497,7 +515,7 @@ function openPark(f,push=true){
         </div>
       </div>`;
     }
-    h+=`<div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. הכפתור <b>"מדידה"</b> למעלה מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות</b> (מרווח חציוני בין נסיעות ביום חול): ירוק ≤20 דק׳ · ירוק-כהה ≤35 · צהוב ≤50 · כתום ≤70 · אדום מעל · אפור = מעט נסיעות מדי.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. הכפתור <b>"מדידה"</b> למעלה מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
 }
