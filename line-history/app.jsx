@@ -689,6 +689,7 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
                     <span className="k" style={{ background: (KINDS[c.k] || {}).color || "#64748b" }}>{(KINDS[c.k] || { label: c.k }).label}</span>
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
+                    {c.note ? <span className="lnote">{c.note}</span> : null}
                   </a>
                 );
               })}
