@@ -23,11 +23,40 @@ import urllib.request
 
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
+# שכבת "מדד חברתי כלכלי 2021 לאזורים סטטיסטיים 2011" — אותה שכבה שמוצגת
+# ב-govmap — מפורסמת גם כפריט ArcGIS ציבורי עם האשכול בתוך המאפיינים
+ARCGIS_ITEM = '5814e892a6494b3488f9bccf67e36687'
+
 
 def fetch(url, timeout=300):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read()
+
+
+def load_sa_from_arcgis():
+    """השכבה כ-GeoJSON ישירות משירות ה-FeatureServer — בלי GDB בכלל."""
+    meta = json.loads(fetch(f'https://www.arcgis.com/sharing/rest/content/items/{ARCGIS_ITEM}?f=json'))
+    url = meta.get('url')
+    print('פריט ArcGIS:', meta.get('title', '')[:60], '| שירות:', url)
+    if not url:
+        return None
+    feats = []
+    offset = 0
+    while True:
+        q = (f'{url}/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson'
+             f'&resultOffset={offset}&resultRecordCount=1000')
+        d = json.loads(fetch(q))
+        if 'error' in d:
+            print('שגיאת שירות:', str(d["error"])[:150])
+            return None
+        fs = d.get('features', [])
+        feats += fs
+        if len(fs) < 1000:
+            break
+        offset += 1000
+    print(f'{len(feats)} אזורים סטטיסטיים מהשירות')
+    return feats or None
 
 
 # ---------- 1. לוח האשכולות לפי אזור סטטיסטי ----------
@@ -149,64 +178,112 @@ def poly_contains(geom, x, y):
     return False
 
 
-def main():
-    clusters = load_sa_clusters()
-    if not clusters:
-        sys.exit('אין לוח אשכולות לאזורים סטטיסטיים — לא ממשיך')
-    with tempfile.TemporaryDirectory() as tmp:
-        gj = load_sa_polygons(tmp)
-        if not gj:
-            sys.exit('אין שכבת גבולות')
-        feats = gj.get('features', [])
-        print(f'{len(feats)} אזורים סטטיסטיים בשכבה')
-        # שדה הקוד המשולב: מחפשים מפתח עם STAT ששוויו בסדר גודל של 8 ספרות
-        key = None
-        p0 = feats[0].get('properties', {})
-        for k, v in p0.items():
-            if 'STAT' in k.upper():
-                try:
-                    if int(float(v)) > 100000:
-                        key = k
-                        break
-                except (TypeError, ValueError):
-                    continue
-        if key is None:
-            sys.exit(f'לא זוהה שדה קוד: {list(p0.keys())[:12]}')
-        print('שדה הקוד:', key)
-        # אינדקס bbox גס להאצה
-        items = []
-        for f in feats:
-            g = f.get('geometry')
-            if not g:
-                continue
+def find_code_key(p0):
+    for k, v in p0.items():
+        if 'STAT' in k.upper():
             try:
-                code = int(float(f['properties'][key]))
-            except (TypeError, ValueError, KeyError):
+                if int(float(v)) > 100000:
+                    return k
+            except (TypeError, ValueError):
                 continue
-            xs, ys = [], []
-            polys = g['coordinates'] if g['type'] == 'MultiPolygon' else [g['coordinates']]
-            for poly in polys:
-                for pt in poly[0]:
-                    xs.append(pt[0]); ys.append(pt[1])
-            if xs:
-                items.append((min(xs), min(ys), max(xs), max(ys), g, code))
+    return None
 
-        parks = json.load(open('parks/data/parks.json', encoding='utf-8'))
-        zones = {}
-        for p in parks:
-            x, y = p['lo'], p['la']
-            for x0, y0, x1, y1, g, code in items:
-                if x0 <= x <= x1 and y0 <= y <= y1 and poly_contains(g, x, y):
-                    cl = clusters.get(code)
-                    if cl:
-                        zones[p['f']] = {'c': cl, 'code': code}
+
+def build_items(feats, cluster_of):
+    """[(bbox, geometry, cluster, code)] עם סינון מה שאין לו אשכול."""
+    items = []
+    for f in feats:
+        g = f.get('geometry')
+        if not g or g.get('type') not in ('Polygon', 'MultiPolygon'):
+            continue
+        cl, code = cluster_of(f.get('properties', {}))
+        if not cl:
+            continue
+        xs, ys = [], []
+        polys = g['coordinates'] if g['type'] == 'MultiPolygon' else [g['coordinates']]
+        for poly in polys:
+            for pt in poly[0]:
+                xs.append(pt[0]); ys.append(pt[1])
+        if xs:
+            items.append((min(xs), min(ys), max(xs), max(ys), g, cl, code))
+    return items
+
+
+def main():
+    items = None
+    # מסלול א': שירות ה-ArcGIS — האשכול כבר במאפיינים
+    try:
+        feats = load_sa_from_arcgis()
+    except Exception as e:
+        print('ArcGIS נכשל:', e)
+        feats = None
+    if feats:
+        p0 = feats[0].get('properties', {})
+        print('שדות השכבה:', list(p0.keys())[:15])
+        ckey = next((k for k in p0 if 'אשכול' in k or any(w in k.lower() for w in ('eshkol', 'cluster', 'madad'))), None)
+        if ckey is None:   # זיהוי לפי טווח הערכים 1–10
+            for k in p0:
+                vals = [f['properties'].get(k) for f in feats[:300]]
+                good = [v for v in vals if isinstance(v, (int, float)) and float(v).is_integer() and 1 <= v <= 10]
+                if len(good) > 200:
+                    ckey = k
                     break
-        print(f'{len(zones)} מתוך {len(parks)} אזורי תעשייה שויכו לאזור סטטיסטי עם אשכול')
-        if len(zones) < 50:
-            sys.exit('מעט מדי שיוכים — לא שומר')
-        json.dump({'year': 2021, 'source': 'למ"ס — המדד החברתי-כלכלי 2021 לאזורים סטטיסטיים (הודעה 230/2024) + שכבת הגבולות', 'n': len(zones), 'zones': zones},
-                  open('parks/data/socio-sa.json', 'w', encoding='utf-8'), ensure_ascii=False)
-        print('נשמר parks/data/socio-sa.json')
+        code_key = find_code_key(p0)
+        print('שדה האשכול:', ckey, '| שדה הקוד:', code_key)
+        if ckey:
+            def cluster_of(props):
+                try:
+                    cl = int(float(props.get(ckey)))
+                except (TypeError, ValueError):
+                    return None, None
+                code = None
+                if code_key:
+                    try:
+                        code = int(float(props.get(code_key)))
+                    except (TypeError, ValueError):
+                        pass
+                return (cl if 1 <= cl <= 10 else None), code
+            items = build_items(feats, cluster_of)
+            print(f'{len(items)} אזורים עם אשכול מהשירות')
+
+    # מסלול ב' (נפילה): לוח אקסל + שכבת GDB מאתר הלמ"ס
+    if not items:
+        clusters = load_sa_clusters()
+        if not clusters:
+            sys.exit('אין לוח אשכולות לאזורים סטטיסטיים — לא ממשיך')
+        with tempfile.TemporaryDirectory() as tmp:
+            gj = load_sa_polygons(tmp)
+            if not gj:
+                sys.exit('אין שכבת גבולות')
+            feats = gj.get('features', [])
+            key = find_code_key(feats[0].get('properties', {}))
+            if key is None:
+                sys.exit(f'לא זוהה שדה קוד: {list(feats[0].get("properties", {}).keys())[:12]}')
+
+            def cluster_of(props):
+                try:
+                    code = int(float(props.get(key)))
+                except (TypeError, ValueError):
+                    return None, None
+                return clusters.get(code), code
+            items = build_items(feats, cluster_of)
+
+    parks = json.load(open('parks/data/parks.json', encoding='utf-8'))
+    zones = {}
+    for p in parks:
+        x, y = p['lo'], p['la']
+        for x0, y0, x1, y1, g, cl, code in items:
+            if x0 <= x <= x1 and y0 <= y <= y1 and poly_contains(g, x, y):
+                zones[p['f']] = {'c': cl}
+                if code:
+                    zones[p['f']]['code'] = code
+                break
+    print(f'{len(zones)} מתוך {len(parks)} אזורי תעשייה שויכו לאזור סטטיסטי עם אשכול')
+    if len(zones) < 50:
+        sys.exit('מעט מדי שיוכים — לא שומר')
+    json.dump({'year': 2021, 'source': 'למ"ס — המדד החברתי-כלכלי 2021 לאזורים סטטיסטיים (שכבת ה-GIS הרשמית)', 'n': len(zones), 'zones': zones},
+              open('parks/data/socio-sa.json', 'w', encoding='utf-8'), ensure_ascii=False)
+    print('נשמר parks/data/socio-sa.json')
 
 
 if __name__ == '__main__':

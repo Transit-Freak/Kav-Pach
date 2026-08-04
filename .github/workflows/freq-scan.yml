@@ -1,7 +1,8 @@
 # סריקת התדירות ולוח הזמנים מארכיון ה-GTFS ‏2022–2026 — על GitHub Actions
 # (אותו דפוס כמו routes-scan: הקונטיינר המקומי לא שורד ריצות ארוכות.)
 # הנתונים וה-checkpoint חיים בענף freq-backfill; הריצה ממשיכה את עצמה
-# אוטומטית (עד 10 חוליות) עד שהסריקה מגיעה ליעד.
+# אוטומטית (עד 80 חוליות) עד שהסריקה מגיעה ליעד. חוליות קצרות (30 יום,
+# ~2GB) כי ה-runner מאט את התעבורה אחרי ~3GB הורדה.
 name: freq-scan
 on:
   workflow_dispatch:
@@ -16,18 +17,19 @@ permissions:
   contents: write
   actions: write
 concurrency:
-  group: freq-scan
+  group: freq-scan-2
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 356
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
           ref: freq-backfill
       - name: סריקה (עם checkpoint כל 10 דקות)
         env:
-          MAX_MIN: '330'
+          MAX_MIN: '25'
+          MAX_DAYS: '30'
         run: |
           set -e
           git config user.name freq-scan-bot
@@ -58,7 +60,7 @@ jobs:
           CHAIN='${{ github.event.inputs.chain }}'
           CHAIN=${CHAIN:-1}
           echo "התקדמות: $LAST | חוליה: $CHAIN"
-          if [ -n "$LAST" ] && [ "$LAST" \< "2026-07" ] && [ "$CHAIN" -lt 10 ]; then
+          if [ -n "$LAST" ] && [ "$LAST" \< "2026-07" ] && [ "$CHAIN" -lt 80 ]; then
             echo "נותרה עבודה — משגר חוליה $((CHAIN+1))"
             gh workflow run freq-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
           else

@@ -32,6 +32,10 @@ OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 FROM = os.environ.get('FROM', '2022-01-16')
 TO = os.environ.get('TO', '2026-07-24')   # משם ואילך ימשיך הצינור היומי
 MAX_MIN = float(os.environ.get('MAX_MIN', '330'))
+# ה-runner של GitHub מאט את התעבורה דרסטית אחרי ~2-3GB הורדה, והסריקה
+# מורידה ~70MB ליום — לכן חוליות קצרות: כל ריצה מעבדת עד MAX_DAYS ימים
+# ומפנה את מקומה לחוליה הבאה עם runner (וכתובת) טריים
+MAX_DAYS = int(os.environ.get('MAX_DAYS', '0'))
 PAUSE = float(os.environ.get('PAUSE', '0.03'))
 PERSIST_DAYS = 14   # שינוי חייב להחזיק שבועיים כדי להירשם
 PERSIST_OBS = 2     # ובלפחות שתי תצפיות באותו דלי
@@ -300,6 +304,9 @@ done = 0
 for ds in dates:
     if (time.time() - T0) / 60 > MAX_MIN:
         print('הגעתי למגבלת הזמן — checkpoint ויציאה')
+        break
+    if MAX_DAYS and done >= MAX_DAYS:
+        print(f'הגעתי למכסת הימים לחוליה ({MAX_DAYS}) — החוליה הבאה תמשיך')
         break
     deps = day_departures(ds)
     if deps is None:
