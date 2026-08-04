@@ -36,6 +36,10 @@ MAX_MIN = float(os.environ.get('MAX_MIN', '330'))
 # מורידה ~70MB ליום — לכן חוליות קצרות: כל ריצה מעבדת עד MAX_DAYS ימים
 # ומפנה את מקומה לחוליה הבאה עם runner (וכתובת) טריים
 MAX_DAYS = int(os.environ.get('MAX_DAYS', '0'))
+# מצב העשרה: ריצה חוזרת על תקופה שכבר נסרקה, שמוסיפה לאירועים הקיימים
+# את לוחות הלפני/אחרי המלאים (tl/tn) שלא נשמרו בגרסה הראשונה של הסורק —
+# בלי ליצור אירועים כפולים. state נפרד כדי לא לגעת בסריקה הראשית.
+ENRICH = os.environ.get('ENRICH') == '1'
 PAUSE = float(os.environ.get('PAUSE', '0.03'))
 PERSIST_DAYS = 14   # שינוי חייב להחזיק שבועיים כדי להירשם
 PERSIST_OBS = 2     # ובלפחות שתי תצפיות באותו דלי
@@ -254,12 +258,19 @@ def write_event(rd2, ds, kind, note, tl='', tn=''):
         return False   # וריאנט בלי קובץ (לא בסריקה הראשית) — לא יוצרים חלקי
     for v in lf['versions']:
         if v.get('k') == kind and abs(days_between(v['d'], ds)) <= MERGE_WIN:
+            if ENRICH and not v.get('tl') and tl and len(tl) <= 1600 and len(tn) <= 1600:
+                v['tl'], v['tn'], v['note'] = tl, tn, note   # השלמה + רענון הנוסח (תגבורים)
+                json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+                n_ev += 1
+                return True
             return False
     v = {'d': ds, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob', 'note': note}
     if tl and len(tl) <= 1600:
         v['tl'] = tl
     if tn and len(tn) <= 1600:
         v['tn'] = tn
+    if ENRICH:
+        return False   # במצב העשרה לא יוצרים אירועים חדשים — רק משלימים קיימים
     lf['versions'].append(v)
     lf['versions'].sort(key=lambda x: x['d'])
     json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
@@ -295,7 +306,7 @@ def diff_note(bucket, old_ts, new_ts):
     return 'sched', note
 
 
-statep = f'{OUTDIR}/freq-state.json'
+statep = f'{OUTDIR}/freq-enrich-state.json' if ENRICH else f'{OUTDIR}/freq-state.json'
 state = jload(statep, {})
 committed = state.get('committed') or {}   # rd -> {bucket: "05:20,06:10,..."}
 pending = state.get('pending') or {}       # rd -> {bucket: {d, sig, n}}
