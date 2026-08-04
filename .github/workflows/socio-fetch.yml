@@ -1,0 +1,25 @@
+# שליפה חד-פעמית של המדד החברתי-כלכלי (למ"ס, דרך data.gov.il) —
+# רץ על runner כי לסביבת הפיתוח אין גישת רשת לדומיין.
+# הפלט נדחף לענף socio-data.
+name: socio-fetch
+on:
+  workflow_dispatch:
+  push:
+    branches: [socio-go]
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: שליפה ודחיפה
+        run: |
+          set -e
+          python3 tools/fetch_socio.py
+          git config user.name socio-bot
+          git config user.email actions@users.noreply.github.com
+          git add parks/data/socio.json
+          git commit -m "נתוני המדד החברתי-כלכלי (למ\"ס / data.gov.il)"
+          git push -f origin HEAD:socio-data
