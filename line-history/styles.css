@@ -153,3 +153,17 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .rchip12.on { background: #78350f; color: #fff; border-color: #78350f; }
 .s12 { max-height: 260px; overflow-y: auto; margin: 6px 0 2px; padding-inline-start: 20px; font-size: 12.5px; line-height: 1.75; }
 .s12 .pcode { color: #a8a29e; font-size: 11px; }
+
+/* טבלת לפני/אחרי של לוח היציאות (אירועי תדירות/לו"ז) */
+.tdiff { margin: 10px 0 4px; }
+.tdiff-btn { font-family: inherit; font-weight: 700; font-size: 13px; background: #f5f3ff; color: #4c1d95; border: 1px solid #ddd6fe; border-radius: 10px; padding: 7px 12px; cursor: pointer; }
+.tdiff-btn:hover { background: #ede9fe; }
+.tdiff-wrap { margin-top: 8px; max-height: 340px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 10px; }
+.tdiff-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tdiff-tbl th { position: sticky; top: 0; background: #f8fafc; padding: 6px 10px; text-align: center; border-bottom: 2px solid #e2e8f0; }
+.tdiff-tbl td { padding: 3px 10px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+.tdiff-tbl .num { font-weight: 800; direction: ltr; }
+.td-added { background: #f0fdf4; } .td-added .num { color: #15803d; }
+.td-removed { background: #fef2f2; } .td-removed .num { color: #b91c1c; text-decoration: line-through; }
+.td-changed { background: #fffbeb; } .td-changed .num { color: #b45309; }
+.tdiff-leg { font-size: 11.5px; color: #64748b; font-weight: 700; padding: 7px 10px; background: #f8fafc; }

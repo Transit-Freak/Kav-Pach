@@ -243,9 +243,10 @@ def fmt_times(ts, cap=5):
 n_ev = 0
 
 
-def write_event(rd2, ds, kind, note):
+def write_event(rd2, ds, kind, note, tl='', tn=''):
     """מוסיף אירוע לקובץ הווריאנט. שינוי אמיתי נוגע בכמה ימי שבוע —
-    אירוע מאותו סוג בתוך חלון האיחוד מייצג את כולם, ולא נכפל."""
+    אירוע מאותו סוג בתוך חלון האיחוד מייצג את כולם, ולא נכפל.
+    tl/tn: לוח הזמנים המלא לפני/אחרי — לטבלת ההשוואה באתר."""
     global n_ev
     p = f'{OUTDIR}/lines/{fsafe(rd2)}.json'
     lf = jload(p, None)
@@ -254,7 +255,12 @@ def write_event(rd2, ds, kind, note):
     for v in lf['versions']:
         if v.get('k') == kind and abs(days_between(v['d'], ds)) <= MERGE_WIN:
             return False
-    lf['versions'].append({'d': ds, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob', 'note': note})
+    v = {'d': ds, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob', 'note': note}
+    if tl and len(tl) <= 1600:
+        v['tl'] = tl
+    if tn and len(tn) <= 1600:
+        v['tn'] = tn
+    lf['versions'].append(v)
     lf['versions'].sort(key=lambda x: x['d'])
     json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     n_ev += 1
@@ -266,19 +272,23 @@ BUCKET_HE = {'א': 'ימי ראשון', 'ב': 'ימי שני', 'ג': 'ימי ש�
 
 
 def diff_note(bucket, old_ts, new_ts):
-    """בונה את טקסט האירוע ומחזיר (kind, note)."""
+    """בונה את טקסט האירוע ומחזיר (kind, note).
+
+    ההשוואה בריבוי (Counter) ולא בקבוצות — כדי שגם נסיעות תגבור (שני
+    אוטובוסים באותה שעה בדיוק) ייתפסו: ביטול אחד מהם מדווח עם השעה
+    והסימון "(תגבור)", במקום להיעלם מהפירוט."""
+    from collections import Counter
     bh = BUCKET_HE[bucket]
+    co, cn = Counter(old_ts), Counter(new_ts)
+    added = [t + (' (תגבור)' if co[t] else '') for t in sorted((cn - co).elements())]
+    removed = [t + (' (תגבור)' if cn[t] else '') for t in sorted((co - cn).elements())]
     if len(old_ts) != len(new_ts):
         note = f'מספר היציאות ({bh}) השתנה מ-{len(old_ts)} ל-{len(new_ts)}'
-        added = sorted(set(new_ts) - set(old_ts))
-        removed = sorted(set(old_ts) - set(new_ts))
         if added:
             note += f' · נוספו: {fmt_times(added)}'
         if removed:
             note += f' · ירדו: {fmt_times(removed)}'
         return 'freq', note
-    added = sorted(set(new_ts) - set(old_ts))
-    removed = sorted(set(old_ts) - set(new_ts))
     note = f'לוח הזמנים ({bh}, {len(new_ts)} יציאות) השתנה'
     if added and removed:
         note += f' · שעות חדשות: {fmt_times(added)} · במקום: {fmt_times(removed)}'
@@ -331,7 +341,7 @@ for ds in dates:
         if pd['n'] >= PERSIST_OBS and days_between(pd['d'], ds) >= PERSIST_DAYS:
             old_ts = cm[b].split(',') if cm[b] else []
             kind, note = diff_note(b, old_ts, sig.split(','))
-            write_event(rd2, pd['d'], kind, note)
+            write_event(rd2, pd['d'], kind, note, tl=cm[b], tn=sig)
             cm[b] = sig
             pending[rd2].pop(b, None)
     done += 1
