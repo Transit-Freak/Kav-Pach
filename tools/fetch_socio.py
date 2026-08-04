@@ -17,13 +17,21 @@ API = 'https://data.gov.il/api/3/action/'
 
 
 def call(action, **params):
+    import time
     url = API + action + '?' + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-data/1.0'})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        d = json.load(r)
-    if not d.get('success'):
-        raise RuntimeError(f'{action} נכשל')
-    return d['result']
+    last = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                d = json.load(r)
+            if not d.get('success'):
+                raise RuntimeError(f'{action} נכשל')
+            return d['result']
+        except Exception as e:
+            last = e
+            time.sleep(3 * (attempt + 1))
+    raise last
 
 
 def find_field(fields, *words):
@@ -86,13 +94,17 @@ def main():
                 continue
             rows = []
             offset = 0
-            while True:
-                chunk = call('datastore_search', resource_id=rid, limit=5000, offset=offset)
-                rec = chunk.get('records', [])
-                rows += rec
-                if len(rec) < 5000:
-                    break
-                offset += 5000
+            try:
+                while True:
+                    chunk = call('datastore_search', resource_id=rid, limit=5000, offset=offset)
+                    rec = chunk.get('records', [])
+                    rows += rec
+                    if len(rec) < 5000:
+                        break
+                    offset += 5000
+            except Exception as e:
+                print('  משיכת שורות נקטעה:', title[:40], e)
+                continue
             added = 0
             for r in rows:
                 name = str(r.get(f_name) or '').strip()
