@@ -232,7 +232,8 @@ for di, ds in enumerate(dates):
             ov = old['info']
             if ov['dest'] != info['dest']:
                 apply_event(rd2, ds, 'dest', info, f"היעד שוּנה: {ov['dest'][:60]} ← {info['dest'][:60]}")
-            if ov['line'] != info['line']:
+            # "0" או ריק = גליץ' רישום ב-GTFS (פברואר 2022 למשל), לא מספור אמיתי
+            if ov['line'] != info['line'] and all(x not in ('', '0') for x in (ov['line'], info['line'])):
                 apply_event(rd2, ds, 'renum', info, f"מספר הקו שוּנה: {ov['line']} ← {info['line']}")
             if ov.get('op') and ov['op'] != info['op']:
                 apply_event(rd2, ds, 'operator', info, f"המפעיל הוחלף: {ov['op']} ← {info['op']}")
