@@ -1,0 +1,54 @@
+# השלמת מסלולים ותחנות לקווים היסטוריים (backfill_geo) — חוליות קצרות
+# עם המשכה עצמית, על ענף freq-backfill. משוגר אוטומטית כששרשרת התדירות
+# מגיעה ליעד; בסיומו משגר את סבב ההעשרה.
+name: geo-scan
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה'
+        default: '1'
+        required: false
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: freq-scan-2
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: freq-backfill
+      - name: השלמת גאומטריה (חוליה קצרה)
+        id: geo
+        env:
+          MAX_MIN: '25'
+        run: |
+          set -e
+          git config user.name geo-scan-bot
+          git config user.email actions@users.noreply.github.com
+          python3 tools/backfill_geo.py | tee /tmp/geo.log
+          if grep -q 'נותרו 0 ימים' /tmp/geo.log; then echo "done=1" >> "$GITHUB_OUTPUT"; else echo "done=0" >> "$GITHUB_OUTPUT"; fi
+      - name: דחיפה
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "checkpoint גאומטריה $(date -u +%FT%TZ)" || true
+          git fetch origin freq-backfill && git rebase origin/freq-backfill || true
+          git push -q origin HEAD:freq-backfill || true
+      - name: המשכה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          if [ "${{ steps.geo.outputs.done }}" = "1" ]; then
+            echo "הגאומטריה הושלמה — משגר את סבב ההעשרה"
+            gh workflow run enrich-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=1 || true
+          elif [ "$CHAIN" -lt 120 ]; then
+            gh workflow run geo-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
+          fi

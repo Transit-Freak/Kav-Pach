@@ -63,6 +63,9 @@ jobs:
           if [ -n "$LAST" ] && [ "$LAST" \< "2026-07" ] && [ "$CHAIN" -lt 80 ]; then
             echo "נותרה עבודה — משגר חוליה $((CHAIN+1))"
             gh workflow run freq-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
+          elif [ -n "$LAST" ] && [ ! "$LAST" \< "2026-07" ]; then
+            echo "סריקת התדירות הגיעה ליעד — משגר את השלב הבא: השלמת המסלולים"
+            gh workflow run geo-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=1 || true
           else
-            echo "הסריקה הגיעה ליעד (או הגבלת שרשרת) — לא משגר המשך"
+            echo "הגבלת שרשרת — לא משגר המשך"
           fi
