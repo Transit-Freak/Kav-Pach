@@ -266,19 +266,23 @@ BUCKET_HE = {'א': 'ימי ראשון', 'ב': 'ימי שני', 'ג': 'ימי ש�
 
 
 def diff_note(bucket, old_ts, new_ts):
-    """בונה את טקסט האירוע ומחזיר (kind, note)."""
+    """בונה את טקסט האירוע ומחזיר (kind, note).
+
+    ההשוואה בריבוי (Counter) ולא בקבוצות — כדי שגם נסיעות תגבור (שני
+    אוטובוסים באותה שעה בדיוק) ייתפסו: ביטול אחד מהם מדווח עם השעה
+    והסימון "(תגבור)", במקום להיעלם מהפירוט."""
+    from collections import Counter
     bh = BUCKET_HE[bucket]
+    co, cn = Counter(old_ts), Counter(new_ts)
+    added = [t + (' (תגבור)' if co[t] else '') for t in sorted((cn - co).elements())]
+    removed = [t + (' (תגבור)' if cn[t] else '') for t in sorted((co - cn).elements())]
     if len(old_ts) != len(new_ts):
         note = f'מספר היציאות ({bh}) השתנה מ-{len(old_ts)} ל-{len(new_ts)}'
-        added = sorted(set(new_ts) - set(old_ts))
-        removed = sorted(set(old_ts) - set(new_ts))
         if added:
             note += f' · נוספו: {fmt_times(added)}'
         if removed:
             note += f' · ירדו: {fmt_times(removed)}'
         return 'freq', note
-    added = sorted(set(new_ts) - set(old_ts))
-    removed = sorted(set(old_ts) - set(new_ts))
     note = f'לוח הזמנים ({bh}, {len(new_ts)} יציאות) השתנה'
     if added and removed:
         note += f' · שעות חדשות: {fmt_times(added)} · במקום: {fmt_times(removed)}'
