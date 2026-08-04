@@ -17,6 +17,7 @@ jobs:
       - name: שליפה ודחיפה
         run: |
           set -e
+          pip -q install openpyxl xlrd
           python3 tools/fetch_socio.py
           git config user.name socio-bot
           git config user.email actions@users.noreply.github.com

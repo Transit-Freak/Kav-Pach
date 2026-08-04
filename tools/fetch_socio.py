@@ -42,6 +42,87 @@ def find_field(fields, *words):
     return None
 
 
+def fetch_bytes(url):
+    # UA דפדפני — אתר הלמ"ס חוסם לקוחות אוטומטיים אנונימיים
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return r.read()
+
+
+def parse_tabular(content, fmt):
+    """קובץ CSV/XLSX → רשימת שורות טקסט (לקבצים שלא נטענו ל-datastore)."""
+    import io
+    rows = []
+    if fmt == 'CSV':
+        import csv
+        for enc in ('utf-8-sig', 'cp1255', 'utf-8'):
+            try:
+                rows = list(csv.reader(io.StringIO(content.decode(enc))))
+                break
+            except Exception:
+                continue
+    elif fmt == 'XLS':
+        try:
+            import xlrd
+            wb = xlrd.open_workbook(file_contents=content)
+            for ws in wb.sheets():
+                for i in range(ws.nrows):
+                    rows.append([str(c.value).strip() for c in ws.row(i)])
+        except Exception as e:
+            print('  פענוח xls נכשל:', e)
+    else:
+        try:
+            from openpyxl import load_workbook
+            wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+            for ws in wb.worksheets:
+                for r in ws.iter_rows(values_only=True):
+                    rows.append(['' if c is None else str(c).strip() for c in r])
+        except Exception as e:
+            print('  פענוח xlsx נכשל:', e)
+    return rows
+
+
+def harvest_rows(rows, by_city):
+    """מאתר שורת כותרת עם עמודת אשכול ועמודת שם, וקוטף את הערכים.
+    בקובצי הלמ"ס הכותרת לפעמים מפוצלת לשתי שורות — מנסים גם צירוף זוגות."""
+    added = 0
+    ci = ni = None
+
+    def find_cols(row):
+        cc = [j for j, c in enumerate(row) if 'אשכול' in c and 'דירוג' not in c]
+        cn = [j for j, c in enumerate(row)
+              if any(w in c for w in ('שם הרשות', 'שם רשות', 'שם היישוב', 'שם יישוב', 'שם הישוב', 'רשות מקומית'))
+              or c.strip() == 'שם']
+        return cc, cn
+
+    for i, row in enumerate(rows):
+        cand_c, cand_n = find_cols(row)
+        if cand_c and cand_n:
+            ci, ni, start = cand_c[0], cand_n[0], i + 1
+            break
+        if cand_c and i + 1 < len(rows):     # כותרת דו-שורתית
+            _, cn2 = find_cols(rows[i + 1])
+            if cn2:
+                ci, ni, start = cand_c[0], cn2[0], i + 2
+                break
+    if ci is None:
+        return 0
+    for row in rows[start:]:
+        if len(row) <= max(ci, ni):
+            continue
+        name = str(row[ni]).strip()
+        try:
+            c = int(float(str(row[ci]).strip()))
+        except (TypeError, ValueError):
+            continue
+        if name and 1 <= c <= 10:
+            if name not in by_city:
+                added += 1
+            by_city.setdefault(name, {'c': c})
+    return added
+
+
 def main():
     pkgs = []
     for q in ('מדד חברתי-כלכלי', 'מדד חברתי כלכלי', 'socio-economic',
@@ -54,9 +135,16 @@ def main():
         except Exception as e:
             print('חיפוש נכשל:', q, e)
     # מאגר העיריות הוא "אח" של מאגר המועצות — אצל אותו מפרסם; סורקים את כל
-    # המאגרים של כל ארגון שפרסם מאגר "אשכול" כלשהו
+    # המאגרים של כל ארגון שפרסם מאגר "אשכול" כלשהו, ואת ארגון הלמ"ס עצמו
     orgs = {(p.get('organization') or {}).get('name')
             for p in pkgs if 'אשכול' in (p.get('title') or '')}
+    try:
+        for o in call('organization_list', all_fields='true', limit=400):
+            hay = (o.get('name', '') + ' ' + o.get('display_name', '') + ' ' + o.get('title', '')).lower()
+            if any(w in hay for w in ('cbs', 'statist', 'סטטיסטיקה', 'למ"ס')):
+                orgs.add(o['name'])
+    except Exception as e:
+        print('רשימת ארגונים נכשלה:', e)
     for o in sorted(o for o in orgs if o):
         try:
             more = call('package_search', fq=f'organization:{o}', rows=100).get('results', [])
@@ -147,6 +235,75 @@ def main():
                 print(f'מוזג: {title[:60]} | {res.get("name","")[:40]} | +{added} (שדות {f_name}/{f_cluster})')
                 srcs.append(title[:70])
                 best_year = max(best_year, year)
+    # מסלול ב': קבצים שמצורפים למאגרים אך לא נטענו ל-datastore (שם מסתתר
+    # בדרך כלל קובץ העיריות) — מורידים ומפענחים ידנית
+    big_missing = not any(c in by_city for c in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים'))
+    if big_missing:
+        for year, title, p in cands:
+            if 'אשכול' not in title and not ('חברתי' in title and 'כלכלי' in title):
+                continue
+            for res in p.get('resources', []):
+                fmt = (res.get('format') or '').upper()
+                if fmt not in ('CSV', 'XLSX', 'XLS') or res.get('datastore_active'):
+                    continue
+                rname = res.get('name') or res.get('url', '').rsplit('/', 1)[-1]
+                try:
+                    content = fetch_bytes(res['url'])
+                except Exception as e:
+                    print('  הורדה נכשלה:', rname[:50], e)
+                    continue
+                added = harvest_rows(parse_tabular(content, fmt), by_city)
+                print(f'  קובץ {rname[:60]} ({fmt}): +{added}')
+                if added:
+                    srcs.append(f'{title[:60]} ({rname[:40]})')
+                    best_year = max(best_year, year)
+
+    # מסלול ג': אתר הלמ"ס עצמו — ב-data.gov.il אין את אשכולות העיריות בכלל
+    # (נבדק: גם ארגון lamas וגם חיפושים ישירים). קובצי הפרסום הרשמי של
+    # "אפיון רשויות מקומיות לפי הרמה החברתית-כלכלית" יושבים ב-doclib.
+    big_missing = not any(c in by_city for c in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים'))
+    if big_missing:
+        # נתיבים מאומתים (החיפוש איתר את ה-PDF-ים המקבילים בדיוק בנתיבים אלה):
+        # הודעה 230/2024 = המדד לשנת 2021; פרסום socio_eco19_1903 = מדד 2019
+        cbs_files = [
+            ('https://www.cbs.gov.il/he/mediarelease/DocLib/2024/230/24_24_230t1.xlsx', 2021),
+            ('https://www.cbs.gov.il/he/mediarelease/DocLib/2024/230/24_24_230t2.xlsx', 2021),
+            ('https://www.cbs.gov.il/he/publications/doclib/2023/socio_eco19_1903/t01.xlsx', 2019),
+            ('https://www.cbs.gov.il/he/publications/doclib/2023/socio_eco19_1903/t02.xlsx', 2019),
+        ]
+        for page in ('https://www.cbs.gov.il/he/subjects/Pages/%D7%9E%D7%93%D7%93-%D7%97%D7%91%D7%A8%D7%AA%D7%99-%D7%9B%D7%9C%D7%9B%D7%9C%D7%99-%D7%A9%D7%9C-%D7%94%D7%A8%D7%A9%D7%95%D7%99%D7%95%D7%AA-%D7%94%D7%9E%D7%A7%D7%95%D7%9E%D7%99%D7%95%D7%AA.aspx',):
+            try:
+                html = fetch_bytes(page).decode('utf-8', 'ignore')
+                hrefs = re.findall(r'href="([^"]+)"', html)
+                xl = [h for h in hrefs if re.search(r'\.xlsx?($|\?)', h, re.I)]
+                print(f'עמוד למ"ס: {len(hrefs)} קישורים, {len(xl)} אקסל')
+                for h in xl[:15]:
+                    u = h if h.startswith('http') else 'https://www.cbs.gov.il' + h
+                    if u not in [c[0] for c in cbs_files]:
+                        yr = 2021 if '2021' in u or '/230/' in u else 2019
+                        cbs_files.append((u, yr))
+                        print('  קישור מהעמוד:', u[-70:])
+            except Exception as e:
+                print('עמוד למ"ס נכשל:', page[:60], e)
+        for u, yr in cbs_files[:14]:
+            fname = u.rsplit('/', 1)[-1]
+            fmt = 'XLS' if u.lower().endswith('.xls') else 'XLSX'
+            try:
+                content = fetch_bytes(u)
+            except Exception as e:
+                print('  למ"ס הורדה נכשלה:', fname, e)
+                continue
+            if not content.startswith(b'PK') and fmt == 'XLSX':
+                print(f'  למ"ס {fname}: לא אקסל ({content[:60]!r})')
+                continue
+            added = harvest_rows(parse_tabular(content, fmt), by_city)
+            print(f'  למ"ס {fname}: +{added}')
+            if added:
+                srcs.append(f'למ"ס — המדד החברתי-כלכלי {yr} ({fname})')
+                best_year = max(best_year, yr)
+            if any(c in by_city for c in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים')):
+                break
+
     for probe_city in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים', 'דימונה', 'קרית גת', 'קריית גת'):
         if probe_city in by_city:
             print('בדיקה:', probe_city, '→ אשכול', by_city[probe_city]['c'])
