@@ -39,6 +39,7 @@ const CAT_GROUPS = [
   { title: "ביטולים", items: ["removed-year", "removed-now", "removed-past"] },
   { title: "שינויי מסלול", items: ["route", "redraw", "extend", "shorten", "terminal"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
+  { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum"] },
 ];
 const CAT_LABELS = {
@@ -57,6 +58,8 @@ const CAT_LABELS = {
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
+  freq: "שינוי מספר היציאות (תדירות)",
+  sched: "שינוי שעות היציאה (לו\"ז)",
 };
 const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b" };
 function catColor(k) { return CAT_COLORS[k] || (KINDS[k] || {}).color || "#64748b"; }
