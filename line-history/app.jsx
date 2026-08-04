@@ -746,7 +746,11 @@ function StopsTab() {
   useEffect(() => {
     fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => r.json())
-      .then((d) => { const ms = d.stopMonths || []; setMonths(ms); if (ms.length) setMon("all"); })
+      .then((d) => { const ms = d.stopMonths || [];
+        setMonths(ms);
+        // ברירת המחדל: החודש האחרון — נטען מיידית. "כל התקופה" (פירוק
+        // ומיון של כל קורות-החיים, מאות אלפי אירועים) רק בבחירה מפורשת
+        if (ms.length) { setMon(ms[0]); setYr(ms[0].slice(0, 4)); } })
       .catch(() => setMonths([]));
   }, []);
   useEffect(() => {
