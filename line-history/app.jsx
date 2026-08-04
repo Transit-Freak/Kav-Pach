@@ -169,7 +169,7 @@ function segDiff(cur, prev) {
 /* טבלת "לפני / אחרי" ללוח היציאות — לאירועי תדירות/לו"ז שנשמרו עם
    הרשימות המלאות (tl/tn). ריבוי באותה שעה = תגבור, ומוצג כמונה. */
 function TimesDiff({ tl, tn }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);   // נפתחת מיד עם הלחיצה על האירוע
   const rows = useMemo(() => {
     const cnt = (s) => {
       const c = new Map();
@@ -530,7 +530,6 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="vhead">
           גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}
         </div>
-        {(v.tl || v.tn) && <TimesDiff tl={v.tl} tn={v.tn} />}
         {!v.shp && !approx ? (
           <div className="nogeo">
             🛈 {v.note || "אין פירוט לגרסה זו"}<br />
@@ -550,6 +549,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(v.stops || []).length} תחנות בגרסה זו.</div>
           : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(v.stops || []).length} תחנות בגרסה זו.</div>}
         </>)}
+        {(v.tl || v.tn) && <TimesDiff tl={v.tl} tn={v.tn} />}
       </div>
     </div>
   );
