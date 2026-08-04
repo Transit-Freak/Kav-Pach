@@ -45,11 +45,25 @@ def find_field(fields, *words):
 def main():
     pkgs = []
     for q in ('מדד חברתי-כלכלי', 'מדד חברתי כלכלי', 'socio-economic',
-              'אשכול חברתי', 'אשכול כלכלי רשויות', 'רשויות מקומיות', 'נתוני רשויות'):
+              'אשכול חברתי', 'אשכול כלכלי רשויות', 'רשויות מקומיות', 'נתוני רשויות',
+              'אשכול', 'עיריות', 'אשכול כלכלי'):
         try:
-            pkgs += call('package_search', q=q, rows=20).get('results', [])
+            res = call('package_search', q=q, rows=32).get('results', [])
+            print(f'חיפוש "{q}": {len(res)}')
+            pkgs += res
         except Exception as e:
             print('חיפוש נכשל:', q, e)
+    # מאגר העיריות הוא "אח" של מאגר המועצות — אצל אותו מפרסם; סורקים את כל
+    # המאגרים של כל ארגון שפרסם מאגר "אשכול" כלשהו
+    orgs = {(p.get('organization') or {}).get('name')
+            for p in pkgs if 'אשכול' in (p.get('title') or '')}
+    for o in sorted(o for o in orgs if o):
+        try:
+            more = call('package_search', fq=f'organization:{o}', rows=100).get('results', [])
+            print(f'ארגון {o}: {len(more)} מאגרים')
+            pkgs += more
+        except Exception as e:
+            print('סריקת ארגון נכשלה:', o, e)
     seen = set()
     cands = []
     for p in pkgs:
@@ -59,7 +73,8 @@ def main():
         title = p.get('title', '')
         # האשכול של הערים חי במאגרי "נתוני רשויות מקומיות" שאין בכותרתם
         # "חברתי-כלכלי" — הסינון האמיתי הוא קיום שדה אשכול במשאב עצמו
-        rel = (('חברתי' in title and 'כלכלי' in title)
+        rel = (('חברתי' in title and 'כלכלי' in title) or 'אשכול' in title
+               or 'עיריות' in title
                or 'רשויות מקומיות' in title or 'ישובים' in title or 'יישובים' in title)
         if not rel:
             continue
@@ -67,8 +82,8 @@ def main():
         year = max(map(int, ym)) if ym else 0
         cands.append((year, title, p))
     cands.sort(key=lambda x: -x[0])
-    cands = cands[:40]
-    print('מועמדים:', [(y, t[:60]) for y, t, _ in cands[:12]])
+    cands = cands[:60]
+    print('מועמדים:', [(y, t[:60]) for y, t, _ in cands[:25]])
 
     # ממזגים את כל המשאבים המתאימים: הערים (רשויות מקומיות) והיישובים
     # שבתוך מועצות אזוריות יושבים במשאבים/מאגרים נפרדים
