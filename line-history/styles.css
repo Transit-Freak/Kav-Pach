@@ -167,3 +167,6 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .td-removed { background: #fef2f2; } .td-removed .num { color: #b91c1c; text-decoration: line-through; }
 .td-changed { background: #fffbeb; } .td-changed .num { color: #b45309; }
 .tdiff-leg { font-size: 11.5px; color: #64748b; font-weight: 700; padding: 7px 10px; background: #f8fafc; }
+.vdetails { margin: 10px 0 6px; display: flex; flex-direction: column; gap: 8px; }
+.tdiff-tbl .lbl { font-weight: 900; white-space: nowrap; }
+.tdiff-tbl .val { text-align: right; direction: rtl; font-weight: 700; }
