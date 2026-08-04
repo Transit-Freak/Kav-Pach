@@ -20,6 +20,8 @@ const KINDS = {
   renum:       { label: "שינוי מספר", color: "#be185d" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
+  freq:        { label: "שינוי מספר יציאות", color: "#b45309" },
+  sched:       { label: "שינוי לו\"ז", color: "#4338ca" },
 };
 
 // ביטול שנשאר בתוקף מעל שנה (הגרסה האחרונה היא removed וישנה משנה) מקבל קטגוריה משלו
