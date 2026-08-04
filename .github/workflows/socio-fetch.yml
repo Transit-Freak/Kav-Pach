@@ -18,9 +18,13 @@ jobs:
         run: |
           set -e
           pip -q install openpyxl xlrd
+          sudo apt-get -qq install -y gdal-bin >/dev/null
           python3 tools/fetch_socio.py
+          # האשכול לפי אזור סטטיסטי — תוספת; כישלון שלה לא מפיל את היישובי
+          python3 tools/fetch_socio_sa.py || echo "שליפת האזורים הסטטיסטיים נכשלה"
           git config user.name socio-bot
           git config user.email actions@users.noreply.github.com
           git add parks/data/socio.json
+          if [ -f parks/data/socio-sa.json ]; then git add parks/data/socio-sa.json; fi
           git commit -m "נתוני המדד החברתי-כלכלי (למ\"ס / data.gov.il)"
           git push -f origin HEAD:socio-data
