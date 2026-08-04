@@ -45,7 +45,7 @@ def find_field(fields, *words):
 def main():
     pkgs = []
     for q in ('מדד חברתי-כלכלי', 'מדד חברתי כלכלי', 'socio-economic',
-              'אשכול חברתי', 'אשכול כלכלי רשויות'):
+              'אשכול חברתי', 'אשכול כלכלי רשויות', 'רשויות מקומיות', 'נתוני רשויות'):
         try:
             pkgs += call('package_search', q=q, rows=20).get('results', [])
         except Exception as e:
@@ -57,13 +57,18 @@ def main():
             continue
         seen.add(p['id'])
         title = p.get('title', '')
-        if 'חברתי' not in title or 'כלכלי' not in title:
+        # האשכול של הערים חי במאגרי "נתוני רשויות מקומיות" שאין בכותרתם
+        # "חברתי-כלכלי" — הסינון האמיתי הוא קיום שדה אשכול במשאב עצמו
+        rel = (('חברתי' in title and 'כלכלי' in title)
+               or 'רשויות מקומיות' in title or 'ישובים' in title or 'יישובים' in title)
+        if not rel:
             continue
         ym = re.findall(r'(20\d\d)', title + ' ' + (p.get('notes') or '')[:200])
         year = max(map(int, ym)) if ym else 0
         cands.append((year, title, p))
     cands.sort(key=lambda x: -x[0])
-    print('מועמדים:', [(y, t[:60]) for y, t, _ in cands[:6]])
+    cands = cands[:40]
+    print('מועמדים:', [(y, t[:60]) for y, t, _ in cands[:12]])
 
     # ממזגים את כל המשאבים המתאימים: הערים (רשויות מקומיות) והיישובים
     # שבתוך מועצות אזוריות יושבים במשאבים/מאגרים נפרדים
