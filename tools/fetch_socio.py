@@ -36,7 +36,8 @@ def find_field(fields, *words):
 
 def main():
     pkgs = []
-    for q in ('מדד חברתי-כלכלי', 'מדד חברתי כלכלי', 'socio-economic'):
+    for q in ('מדד חברתי-כלכלי', 'מדד חברתי כלכלי', 'socio-economic',
+              'אשכול חברתי', 'אשכול כלכלי רשויות'):
         try:
             pkgs += call('package_search', q=q, rows=20).get('results', [])
         except Exception as e:
@@ -56,6 +57,11 @@ def main():
     cands.sort(key=lambda x: -x[0])
     print('מועמדים:', [(y, t[:60]) for y, t, _ in cands[:6]])
 
+    # ממזגים את כל המשאבים המתאימים: הערים (רשויות מקומיות) והיישובים
+    # שבתוך מועצות אזוריות יושבים במשאבים/מאגרים נפרדים
+    by_city = {}
+    srcs = []
+    best_year = 0
     for year, title, p in cands:
         for res in p.get('resources', []):
             if not res.get('datastore_active'):
@@ -70,13 +76,14 @@ def main():
             # חלק מהמאגרים עם שדות בעברית וחלק באנגלית (ESHKOL / LOCALITY)
             f_cluster = find_field(fields, 'אשכול') or find_field(fields, 'ESHKOL')
             f_name = (find_field(fields, 'HEBREW', 'LOCALITY')
+                      or find_field(fields, 'HEBREW', 'MUNICIP')
+                      or find_field(fields, 'HEBREW', 'NAME')
                       or find_field(fields, 'שם', 'ישוב') or find_field(fields, 'שם', 'יישוב')
                       or find_field(fields, 'שם', 'רשות') or find_field(fields, 'שם'))
             f_rank = find_field(fields, 'דירוג') or find_field(fields, 'RANK')
             if not (f_cluster and f_name):
-                print('  אין שדות מתאימים:', title[:40], [f.get('id') for f in fields][:8])
+                print('  אין שדות מתאימים:', title[:45], [f.get('id') for f in fields][:9])
                 continue
-            print(f'נבחר: {title[:70]} | שנה {year} | שדות: {f_name} / {f_cluster}')
             rows = []
             offset = 0
             while True:
@@ -86,7 +93,7 @@ def main():
                 if len(rec) < 5000:
                     break
                 offset += 5000
-            by_city = {}
+            added = 0
             for r in rows:
                 name = str(r.get(f_name) or '').strip()
                 try:
@@ -101,17 +108,23 @@ def main():
                         ent['r'] = int(float(r.get(f_rank)))
                     except (TypeError, ValueError):
                         pass
-                by_city[name] = ent
-            if len(by_city) < 200:
-                print('  מעט מדי יישובים:', len(by_city))
-                continue
-            out = {'year': year or None, 'source': title,
-                   'n': len(by_city), 'by_city': by_city}
-            with open('parks/data/socio.json', 'w', encoding='utf-8') as fh:
-                json.dump(out, fh, ensure_ascii=False)
-            print(f'נשמרו {len(by_city)} יישובים (שנת {year})')
-            return
-    sys.exit('לא נמצא מאגר מתאים עם datastore פעיל')
+                if name not in by_city:
+                    added += 1
+                by_city.setdefault(name, ent)
+            if added:
+                print(f'מוזג: {title[:60]} | {res.get("name","")[:40]} | +{added} (שדות {f_name}/{f_cluster})')
+                srcs.append(title[:70])
+                best_year = max(best_year, year)
+    for probe_city in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים', 'דימונה', 'קרית גת', 'קריית גת'):
+        if probe_city in by_city:
+            print('בדיקה:', probe_city, '→ אשכול', by_city[probe_city]['c'])
+    if len(by_city) < 200:
+        sys.exit(f'מעט מדי יישובים ({len(by_city)}) — לא שומר')
+    out = {'year': best_year or None, 'source': ' + '.join(dict.fromkeys(srcs)),
+           'n': len(by_city), 'by_city': by_city}
+    with open('parks/data/socio.json', 'w', encoding='utf-8') as fh:
+        json.dump(out, fh, ensure_ascii=False)
+    print(f'נשמרו {len(by_city)} יישובים ורשויות (שנת {best_year})')
 
 
 if __name__ == '__main__':
