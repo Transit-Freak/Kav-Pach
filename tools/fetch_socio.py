@@ -67,10 +67,12 @@ def main():
                 print('  דילוג על משאב:', rid, e)
                 continue
             fields = probe.get('fields', [])
-            f_cluster = find_field(fields, 'אשכול')
-            f_name = (find_field(fields, 'שם', 'ישוב') or find_field(fields, 'שם', 'יישוב')
+            # חלק מהמאגרים עם שדות בעברית וחלק באנגלית (ESHKOL / LOCALITY)
+            f_cluster = find_field(fields, 'אשכול') or find_field(fields, 'ESHKOL')
+            f_name = (find_field(fields, 'HEBREW', 'LOCALITY')
+                      or find_field(fields, 'שם', 'ישוב') or find_field(fields, 'שם', 'יישוב')
                       or find_field(fields, 'שם', 'רשות') or find_field(fields, 'שם'))
-            f_rank = find_field(fields, 'דירוג')
+            f_rank = find_field(fields, 'דירוג') or find_field(fields, 'RANK')
             if not (f_cluster and f_name):
                 print('  אין שדות מתאימים:', title[:40], [f.get('id') for f in fields][:8])
                 continue
