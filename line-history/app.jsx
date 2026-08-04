@@ -213,54 +213,6 @@ function TimesDiff({ tl, tn }) {
   );
 }
 
-/* טבלת פירוט אחידה לכל שינוי שיש עליו נתונים (בקשת המשתמש):
-   1. לוח יציאות לפני/אחרי (tl/tn) — TimesDiff
-   2. תחנות שנוספו/ירדו (add/rem)
-   3. ערך שהשתנה — יעד/מפעיל/מספר (מפוענח מנוסח ההערה "… ← …") */
-const ATTR_KINDS = { dest: "יעד הקו", operator: "מפעיל", renum: "מספר הקו" };
-function VersionDetails({ v }) {
-  const attr = useMemo(() => {
-    if (!ATTR_KINDS[v.k] || !v.note) return null;
-    const i = v.note.indexOf(": ");
-    const j = v.note.indexOf(" ← ");
-    if (i < 0 || j < i) return null;
-    return { what: ATTR_KINDS[v.k], before: v.note.slice(i + 2, j), after: v.note.slice(j + 3) };
-  }, [v]);
-  const hasStops = (v.add && v.add.length) || (v.rem && v.rem.length);
-  if (!v.tl && !v.tn && !hasStops && !attr) return null;
-  return (
-    <div className="vdetails">
-      {attr && (
-        <div className="tdiff-wrap" style={{ maxHeight: "none" }}>
-          <table className="tdiff-tbl">
-            <thead><tr><th>{attr.what}</th><th>הערך</th></tr></thead>
-            <tbody>
-              <tr className="td-removed"><td className="lbl">לפני</td><td className="val">{attr.before}</td></tr>
-              <tr className="td-added"><td className="lbl">אחרי</td><td className="val">{attr.after}</td></tr>
-            </tbody>
-          </table>
-        </div>
-      )}
-      {hasStops ? (
-        <div className="tdiff-wrap" style={{ maxHeight: 300 }}>
-          <table className="tdiff-tbl">
-            <thead><tr><th>תחנה</th><th>מה קרה</th></tr></thead>
-            <tbody>
-              {(v.add || []).map((s, i) => (
-                <tr key={"a" + i} className="td-added"><td className="val">{s}</td><td>נוספה ✚</td></tr>
-              ))}
-              {(v.rem || []).map((s, i) => (
-                <tr key={"r" + i} className="td-removed"><td className="val">{s}</td><td>ירדה ✖</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-      {(v.tl || v.tn) && <TimesDiff tl={v.tl} tn={v.tn} />}
-    </div>
-  );
-}
-
 function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -578,7 +530,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="vhead">
           גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}
         </div>
-        <VersionDetails v={v} />
+        {(v.tl || v.tn) && <TimesDiff tl={v.tl} tn={v.tn} />}
         {!v.shp && !approx ? (
           <div className="nogeo">
             🛈 {v.note || "אין פירוט לגרסה זו"}<br />
