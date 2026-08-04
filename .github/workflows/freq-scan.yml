@@ -1,0 +1,66 @@
+# סריקת התדירות ולוח הזמנים מארכיון ה-GTFS ‏2022–2026 — על GitHub Actions
+# (אותו דפוס כמו routes-scan: הקונטיינר המקומי לא שורד ריצות ארוכות.)
+# הנתונים וה-checkpoint חיים בענף freq-backfill; הריצה ממשיכה את עצמה
+# אוטומטית (עד 10 חוליות) עד שהסריקה מגיעה ליעד.
+name: freq-scan
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה בשרשרת ההמשכה'
+        default: '1'
+        required: false
+  push:
+    branches: [freq-go]
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: freq-scan
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 356
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: freq-backfill
+      - name: סריקה (עם checkpoint כל 10 דקות)
+        env:
+          MAX_MIN: '330'
+        run: |
+          set -e
+          git config user.name freq-scan-bot
+          git config user.email actions@users.noreply.github.com
+          (
+            while true; do
+              sleep 600
+              ( git add line-history/data \
+                && git commit -qm "checkpoint תדירות $(date -u +%FT%TZ)" \
+                && git push -q origin HEAD:freq-backfill ) || true
+            done
+          ) &
+          PUSHER=$!
+          python3 tools/backfill_freq_daily.py || true
+          kill "$PUSHER" || true
+      - name: דחיפה סופית
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "checkpoint תדירות (סוף ריצה) $(date -u +%FT%TZ)" || true
+          git push -q origin HEAD:freq-backfill || true
+      - name: המשכה אוטומטית אם נותרה עבודה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LAST=$(python3 -c "import json;print(json.load(open('line-history/data/freq-state.json')).get('last_date',''))" 2>/dev/null || echo '')
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          echo "התקדמות: $LAST | חוליה: $CHAIN"
+          if [ -n "$LAST" ] && [ "$LAST" \< "2026-07" ] && [ "$CHAIN" -lt 10 ]; then
+            echo "נותרה עבודה — משגר חוליה $((CHAIN+1))"
+            gh workflow run freq-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
+          else
+            echo "הסריקה הגיעה ליעד (או הגבלת שרשרת) — לא משגר המשך"
+          fi

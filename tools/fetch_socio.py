@@ -43,7 +43,9 @@ def find_field(fields, *words):
 
 
 def fetch_bytes(url):
-    req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-data/1.0'})
+    # UA דפדפני — אתר הלמ"ס חוסם לקוחות אוטומטיים אנונימיים
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
     with urllib.request.urlopen(req, timeout=120) as r:
         return r.read()
 
@@ -82,17 +84,28 @@ def parse_tabular(content, fmt):
 
 
 def harvest_rows(rows, by_city):
-    """מאתר שורת כותרת עם עמודת אשכול ועמודת שם, וקוטף את הערכים."""
+    """מאתר שורת כותרת עם עמודת אשכול ועמודת שם, וקוטף את הערכים.
+    בקובצי הלמ"ס הכותרת לפעמים מפוצלת לשתי שורות — מנסים גם צירוף זוגות."""
     added = 0
     ci = ni = None
+
+    def find_cols(row):
+        cc = [j for j, c in enumerate(row) if 'אשכול' in c and 'דירוג' not in c]
+        cn = [j for j, c in enumerate(row)
+              if any(w in c for w in ('שם הרשות', 'שם רשות', 'שם היישוב', 'שם יישוב', 'שם הישוב', 'רשות מקומית'))
+              or c.strip() == 'שם']
+        return cc, cn
+
     for i, row in enumerate(rows):
-        cand_c = [j for j, c in enumerate(row) if 'אשכול' in c and 'דירוג' not in c]
-        cand_n = [j for j, c in enumerate(row)
-                  if any(w in c for w in ('שם הרשות', 'שם רשות', 'שם היישוב', 'שם יישוב', 'שם הישוב', 'רשות מקומית'))
-                  or c.strip() == 'שם']
+        cand_c, cand_n = find_cols(row)
         if cand_c and cand_n:
             ci, ni, start = cand_c[0], cand_n[0], i + 1
             break
+        if cand_c and i + 1 < len(rows):     # כותרת דו-שורתית
+            _, cn2 = find_cols(rows[i + 1])
+            if cn2:
+                ci, ni, start = cand_c[0], cn2[0], i + 2
+                break
     if ci is None:
         return 0
     for row in rows[start:]:
@@ -244,6 +257,40 @@ def main():
                 if added:
                     srcs.append(f'{title[:60]} ({rname[:40]})')
                     best_year = max(best_year, year)
+
+    # מסלול ג': אתר הלמ"ס עצמו — ב-data.gov.il אין את אשכולות העיריות בכלל
+    # (נבדק: גם ארגון lamas וגם חיפושים ישירים). קובצי הפרסום הרשמי של
+    # "אפיון רשויות מקומיות לפי הרמה החברתית-כלכלית" יושבים ב-doclib.
+    big_missing = not any(c in by_city for c in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים'))
+    if big_missing:
+        tried = []
+        cbs_files = ['https://www.cbs.gov.il/he/mediarelease/doclib/2022/259/24_22_259t2.xlsx',
+                     'https://www.cbs.gov.il/he/mediarelease/doclib/2022/259/24_22_259t1.xlsx']
+        for page in ('https://www.cbs.gov.il/he/mediarelease/Pages/2022/%D7%90%D7%A4%D7%99%D7%95%D7%9F-%D7%A8%D7%A9%D7%95%D7%99%D7%95%D7%AA-%D7%9E%D7%A7%D7%95%D7%9E%D7%99%D7%95%D7%AA-%D7%95%D7%A1%D7%99%D7%95%D7%95%D7%92%D7%9F-%D7%9C%D7%A4%D7%99-%D7%94%D7%A8%D7%9E%D7%94-%D7%94%D7%97%D7%91%D7%A8%D7%AA%D7%99%D7%AA-%D7%9B%D7%9C%D7%9B%D7%9C%D7%99%D7%AA-%D7%A9%D7%9C-%D7%94%D7%90%D7%95%D7%9B%D7%9C%D7%95%D7%A1%D7%99%D7%99%D7%94-%D7%91%D7%A9%D7%A0%D7%AA-2019.aspx',
+                     'https://www.cbs.gov.il/he/subjects/Pages/%D7%9E%D7%93%D7%93-%D7%97%D7%91%D7%A8%D7%AA%D7%99-%D7%9B%D7%9C%D7%9B%D7%9C%D7%99.aspx'):
+            try:
+                html = fetch_bytes(page).decode('utf-8', 'ignore')
+                for m in re.findall(r'href="([^"]+\.xlsx?)"', html):
+                    u = m if m.startswith('http') else 'https://www.cbs.gov.il' + m
+                    if u not in cbs_files:
+                        cbs_files.append(u)
+                print(f'עמוד למ"ס: נמצאו {len(cbs_files)} קובצי אקסל')
+            except Exception as e:
+                print('עמוד למ"ס נכשל:', page[:70], e)
+        for u in cbs_files[:12]:
+            fname = u.rsplit('/', 1)[-1]
+            fmt = 'XLS' if u.endswith('.xls') else 'XLSX'
+            try:
+                added = harvest_rows(parse_tabular(fetch_bytes(u), fmt), by_city)
+            except Exception as e:
+                print('  למ"ס הורדה נכשלה:', fname, e)
+                continue
+            print(f'  למ"ס {fname}: +{added}')
+            if added:
+                srcs.append(f'למ"ס — המדד החברתי-כלכלי ({fname})')
+                best_year = max(best_year, 2019)
+            if any(c in by_city for c in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים')):
+                break
 
     for probe_city in ('תל אביב - יפו', 'תל אביב-יפו', 'ירושלים', 'דימונה', 'קרית גת', 'קריית גת'):
         if probe_city in by_city:
