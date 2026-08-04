@@ -213,13 +213,22 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
 const PK_BUILD='8';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
+let SOCIO=null;
+function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,'-').replace(/\s+/g,' ').trim()}
+function socioOf(city){
+  if(!SOCIO||!SOCIO.by_city) return null;
+  if(!SOCIO._n){SOCIO._n={};for(const k in SOCIO.by_city)SOCIO._n[normCity(k)]=SOCIO.by_city[k];}
+  return SOCIO._n[normCity(city)]||null;
+}
+fetch('data/socio.json'+DV).then(r=>r.ok?r.json():null).catch(()=>null).then(sd=>{SOCIO=sd})
+  .finally(()=>
 fetch('data/parks.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
   renderTable();
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(h && idx.some(p=>p.f===h)) openPark(h,false);
   else openHeatmap(true);   // מפת החום היא מסך הפתיחה; "חזרה לרשימה" מוביל לטבלה
-}).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
+}).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'}));
 
 function renderTable(){
   const f=(q.value||'').trim();
@@ -494,6 +503,18 @@ function openPark(f,push=true){
           ${cell('אמינות',v.re,'עמידה בלוח הזמנים')}
         </div>
         <div class="note" style="margin:6px 0 0">הציונים הם של האזור${v.n>1?`ים הסטטיסטיים (${v.n}) שהאזור חופף`:' הסטטיסטי שבו האזור נמצא'}${v.sa_city?` · ${esc(v.sa_city)}`:''} — לא של האזור עצמו, אך מייצגים את איכות השירות בסביבתו לפי המשרד.</div>
+      </div>`;
+    }
+    const se=socioOf(d.city);
+    if(se){
+      const c=se.c, col=c<=3?'#b91c1c':(c<=6?'#b45309':'#15803d');
+      h+=`<div class="offbox" style="background:#fefce8;border-color:#fde68a">
+        <div class="offh" style="color:#854d0e">🏘️ מדד חברתי-כלכלי · הלמ"ס${SOCIO.year?` · ${SOCIO.year}`:''}</div>
+        <div class="stats" style="margin:6px 0 0">
+          <span class="stat" title="אשכול 1–10 של הלמ״ס ליישוב — 1 הנמוך ביותר, 10 הגבוה ביותר. נגישות תחבורתית חלשה באשכול נמוך פוגעת במי שתלויים בתחבורה ציבורית">אשכול <b style="color:${col};font-size:15px">${c}</b> / 10</span>
+          ${se.r?`<span class="stat" title="דירוג היישוב מתוך כלל היישובים בישראל">דירוג ארצי <b>${se.r}</b></span>`:''}
+        </div>
+        <div class="note" style="margin:6px 0 0">המדד של היישוב ${esc(d.city)} — ההקשר החברתי-כלכלי של הנגישות: באשכולות נמוכים התלות בתחבורה הציבורית גבוהה יותר.</div>
       </div>`;
     }
     if(!lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
