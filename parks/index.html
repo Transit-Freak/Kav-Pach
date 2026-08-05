@@ -91,6 +91,8 @@
   .gc-t{font-size:12px;color:#475569}
   .gc-n{font-size:21px;color:#0f172a;line-height:1.15}
   .gc-n small{font-size:11.5px;font-weight:800;color:#64748b}
+  .gc-n2{font-size:15px;color:#0f172a;line-height:1.2;margin-top:2px}
+  .gc-n2 small{font-size:11px;font-weight:800;color:#64748b}
   .gc-bar{height:7px;border-radius:4px;background:#e2e8f0;margin:4px 0;overflow:hidden}
   .gc-bar i{display:block;height:100%;border-radius:4px;width:0;margin:0}
   .gc-c .gc-bar i{background:#0d9488}.gc-p .gc-bar i{background:#d97706}
@@ -248,7 +250,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='15';
+const PK_BUILD='16';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -341,13 +343,18 @@ function openHeatmap(fit=true){
   tblview.style.display='none';wrap.style.display='none';heatview.style.display='flex';backbtn.style.display='inline-block';heatbtn.style.display='none';
   setTimeout(()=>heatmap.invalidateSize(),50);
   try{const g=gapStats();const ratio=g.pAvg>0?g.cAvg/g.pAvg:0;const mx=Math.max(g.cAvg,g.pAvg)||1;
+    const dRatio=g.hasDep&&g.pDep>0?g.cDep/g.pDep:0;const dmx=Math.max(g.cDep||0,g.pDep||0)||1;
+    const card=(cls,ico,ttl,n)=>{
+      let h='<div class="gapcard '+cls+'"><div class="gc-t">'+ico+' '+ttl+' — '+n+' אזורי תעשייה</div>';
+      const a=cls=='gc-c'?g.cAvg:g.pAvg, d=cls=='gc-c'?g.cDep:g.pDep, nn=cls=='gc-c'?g.cNo:g.pNo;
+      h+='<div class="gc-n">'+a.toFixed(1)+' <small>קווים לאזור בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*a/mx)+'%"></i></div>';
+      if(g.hasDep) h+='<div class="gc-n2">🕐 '+Math.round(d)+' <small>יציאות אוטובוס ביום חול בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*d/dmx)+'%"></i></div>';
+      h+='<div class="gc-no">'+nn+'% מהאזורים בלי אף קו</div></div>';
+      return h;};
     document.getElementById('gapbox').innerHTML=
-    '<div class="gapsum">📊 <b>פער מרכז–פריפריה:</b> '+(ratio>1.05?'לאזור תעשייה במרכז הארץ יש בממוצע <b>פי '+ratio.toFixed(1)+'</b> יותר קווי אוטובוס מאשר לאזור בפריפריה':'רמת השירות דומה במרכז ובפריפריה')+'</div>'
-    +'<div class="gapcards">'
-    +'<div class="gapcard gc-c"><div class="gc-t">🏙️ מרכז — '+g.cN+' אזורי תעשייה</div><div class="gc-n">'+g.cAvg.toFixed(1)+' <small>קווים לאזור בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*g.cAvg/mx)+'%"></i></div><div class="gc-no">'+g.cNo+'% מהאזורים בלי אף קו</div></div>'
-    +'<div class="gapcard gc-p"><div class="gc-t">🌄 פריפריה — '+g.pN+' אזורי תעשייה</div><div class="gc-n">'+g.pAvg.toFixed(1)+' <small>קווים לאזור בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*g.pAvg/mx)+'%"></i></div><div class="gc-no">'+g.pNo+'% מהאזורים בלי אף קו</div></div>'
-    +'</div>'
-    +'<details class="gapwhy"><summary>❓ איך ההשוואה מחושבת</summary> ״מרכז״ = אזורי תעשייה פעילים במרחק עד 45 ק״מ מתל אביב; כל השאר — ״פריפריה״. לכל אזור נספרים קווי האוטובוס שנכנסים לתוכו'+(HEATSCOPE=='in'?'':' או עוצרים בשערי הכניסה (עד 5 דק׳ הליכה)')+', לאורך כל היום. ״בלי אף קו״ = אף קו לא מגיע לאזור. ההשוואה מתעדכנת לפי כפתור הספירה (נכנסים בלבד / כולל שערי כניסה).</details>';}catch(e){}
+    '<div class="gapsum">📊 <b>פער מרכז–פריפריה:</b> '+(ratio>1.05?'לאזור תעשייה במרכז הארץ יש בממוצע <b>פי '+ratio.toFixed(1)+'</b> יותר קווי אוטובוס'+(dRatio>1.05?' ו<b>פי '+dRatio.toFixed(1)+'</b> יותר יציאות ביום (לו״ז)':'')+' מאשר לאזור בפריפריה':'רמת השירות דומה במרכז ובפריפריה')+'</div>'
+    +'<div class="gapcards">'+card('gc-c','🏙️','מרכז',g.cN)+card('gc-p','🌄','פריפריה',g.pN)+'</div>'
+    +'<details class="gapwhy"><summary>❓ איך ההשוואה מחושבת</summary> ״מרכז״ = אזורי תעשייה פעילים במרחק עד 45 ק״מ מתל אביב; כל השאר — ״פריפריה״. לכל אזור נספרים קווי האוטובוס שנכנסים לתוכו'+(HEATSCOPE=='in'?'':' או עוצרים בשערי הכניסה (עד 5 דק׳ הליכה)')+', לאורך כל היום. ״יציאות ביום״ = סך כל היציאות ביום חול רגיל של הקווים האלה — מדד הלו״ז: כמה שירות מקבל האזור בפועל. ״בלי אף קו״ = אף קו לא מגיע לאזור. ההשוואה מתעדכנת לפי כפתור הספירה (נכנסים בלבד / כולל שערי כניסה).</details>';}catch(e){}
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
@@ -446,7 +453,12 @@ function gapStats(){
   const svc=p=>HEATSCOPE=='in'?cnt(p,'li'):cnt(p,'li')+cnt(p,'lg');   // מכבד את מצב הספירה שנבחר
   const avg=a=>a.length?(a.reduce((s,p)=>s+svc(p),0)/a.length):0;
   const no=a=>a.length?Math.round(100*a.filter(p=>svc(p)===0).length/a.length):0;
-  return {cN:C.length,pN:P.length,cAvg:avg(C),pAvg:avg(P),cNo:no(C),pNo:no(P)};
+  // פער הלו"ז: סך יציאות אוטובוס ביום חול לאזור (אם המדד כבר חושב בנתונים)
+  const hasDep='dwi' in (IDX[0]||{});
+  const dep=p=>{const e=WALKMODE=='e';const i=e?(p.dwie||0):(p.dwi||0),g=e?(p.dwge||0):(p.dwg||0);return HEATSCOPE=='in'?i:i+g;};
+  const davg=a=>a.length?(a.reduce((s,p)=>s+dep(p),0)/a.length):0;
+  return {cN:C.length,pN:P.length,cAvg:avg(C),pAvg:avg(P),cNo:no(C),pNo:no(P),
+          hasDep,cDep:davg(C),pDep:davg(P)};
 }
 document.getElementById('hpeak').onclick=()=>{HEATMODE='peak';openHeatmap(false);};
 document.getElementById('hday').onclick=()=>{HEATMODE='day';openHeatmap(false);};
