@@ -105,11 +105,12 @@
   .gapwhy summary{cursor:pointer;font-weight:800;color:#0d9488;display:inline}
   .gapwhy .gw-l{margin-top:5px;line-height:1.55;background:#fff;border-radius:8px;padding:6px 10px}
   .gapwhy .gw-l b{color:#0f172a}
-  /* בטלפון המפה היא העיקר: הכרטיסים מוסתרים עד לחיצת "הצג פירוט" */
-  .gapmore{display:none;cursor:pointer;color:#0d9488;font-weight:800;white-space:nowrap}
+  /* בטלפון הדף פשוט מתארך: המפה בגובה קבוע וההשוואה המלאה מתחתיה, בגלילה */
+  .gapmore{display:none}
   @media(max-width:760px){
-    .gapmore{display:inline}
-    #gapbox:not(.open) .gapcards,#gapbox:not(.open) .gapwhy{display:none}
+    #heatview{height:auto !important}
+    #heatmap{flex:none !important;height:66vh;min-height:380px;order:2}
+    #gapbox{order:3}   /* ההשוואה המלאה מתחת למפה — הדף מתארך וגוללים אליה */
   }
 </style>
 </head>
@@ -270,7 +271,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='20';
+const PK_BUILD='21';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -375,7 +376,7 @@ function openHeatmap(fit=true){
       return h;};
     const gb=document.getElementById('gapbox');
     gb.innerHTML=
-    '<div class="gapsum">📊 <b>פער מרכז–פריפריה:</b> '+(ratio>1.05?'לאזור תעשייה במרכז הארץ יש בממוצע <b>פי '+ratio.toFixed(1)+'</b> יותר קווי אוטובוס'+(dRatio>1.05?' ו<b>פי '+dRatio.toFixed(1)+'</b> יותר יציאות ביום (לו״ז)':'')+' מאשר לאזור בפריפריה':'רמת השירות דומה במרכז ובפריפריה')+' <span class="gapmore">'+(gb.classList.contains('open')?'הסתר פירוט ▴':'הצג פירוט ▾')+'</span></div>'
+    '<div class="gapsum">📊 <b>פער מרכז–פריפריה:</b> '+(ratio>1.05?'לאזור תעשייה במרכז הארץ יש בממוצע <b>פי '+ratio.toFixed(1)+'</b> יותר קווי אוטובוס'+(dRatio>1.05?' ו<b>פי '+dRatio.toFixed(1)+'</b> יותר יציאות ביום (לו״ז)':'')+' מאשר לאזור בפריפריה':'רמת השירות דומה במרכז ובפריפריה')+'</div>'
     +'<div class="gapcards">'+card('gc-c','🏙️','מרכז',g.cN)+card('gc-p','🌄','פריפריה',g.pN)+'</div>'
     +'<details class="gapwhy"><summary>❓ איך ההשוואה מחושבת</summary>'
     +'<div class="gw-l"><b>① מחלקים את הארץ לשתיים:</b> כל אזורי התעשייה הפעילים ('+(g.cN+g.pN)+') מחולקים לפי המרחק מתל אביב — עד 45 ק״מ נחשב ״מרכז״ ('+g.cN+' אזורים), רחוק יותר נחשב ״פריפריה״ ('+g.pN+' אזורים).</div>'
@@ -384,9 +385,7 @@ function openHeatmap(fit=true){
     +'<div class="gw-l"><b>'+(g.hasDep?'④':'③')+' משווים ממוצעים:</b> לכל קבוצה מחשבים ממוצע קווים לאזור'+(g.hasDep?', ממוצע יציאות ביום':'')+', ואת אחוז האזורים שאף קו לא מגיע אליהם בכלל. ״פי X״ = הממוצע במרכז חלקי הממוצע בפריפריה, ופסי הצבע מציירים את היחס הזה בעין.</div>'
     +(g.cSf!=null&&g.pSf!=null?'<div class="gw-l"><b>⭐ ציון השירות הכולל:</b> הציון המשוקלל הרשמי שמשרד התחבורה נותן לרמת השירות בכל אזור סטטיסטי (0–100, משקלל זמינות ואמינות). כאן מוצג הממוצע שלו בכל קבוצה — מדד חיצוני ובלתי תלוי שמאשש את אותה תמונה.</div>':'')
     +'<div class="gw-l">ההשוואה מחושבת מחדש בכל שינוי של כפתורי הספירה למעלה ושל מצב המדידה (מרכז/כניסה) בפאנל השכבות.</div>'
-    +'</details>';
-    const more=gb.querySelector('.gapmore');
-    if(more) more.onclick=()=>{gb.classList.toggle('open');more.textContent=gb.classList.contains('open')?'הסתר פירוט ▴':'הצג פירוט ▾';setTimeout(()=>heatmap&&heatmap.invalidateSize(),60);};}catch(e){}
+    +'</details>';}catch(e){}
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
