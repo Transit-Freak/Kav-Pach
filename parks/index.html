@@ -109,8 +109,7 @@
   .gapmore{display:none}
   @media(max-width:760px){
     #heatview{height:auto !important}
-    #heatmap{flex:none !important;height:66vh;min-height:380px;order:2}
-    #gapbox{order:3}   /* ההשוואה המלאה מתחת למפה — הדף מתארך וגוללים אליה */
+    #heatmap{flex:none !important;height:66vh;min-height:380px}
   }
 </style>
 </head>
@@ -271,7 +270,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='21';
+const PK_BUILD='22';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
