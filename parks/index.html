@@ -252,7 +252,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='17';
+const PK_BUILD='18';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -351,6 +351,8 @@ function openHeatmap(fit=true){
       const a=cls=='gc-c'?g.cAvg:g.pAvg, d=cls=='gc-c'?g.cDep:g.pDep, nn=cls=='gc-c'?g.cNo:g.pNo;
       h+='<div class="gc-n">'+a.toFixed(1)+' <small>קווים לאזור בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*a/mx)+'%"></i></div>';
       if(g.hasDep) h+='<div class="gc-n2">🕐 '+Math.round(d)+' <small>יציאות אוטובוס ביום חול בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*d/dmx)+'%"></i></div>';
+      const sf=cls=='gc-c'?g.cSf:g.pSf, smx=Math.max(g.cSf||0,g.pSf||0)||1;
+      if(g.cSf!=null&&g.pSf!=null) h+='<div class="gc-n2">⭐ '+sf.toFixed(0)+' <small>ציון שירות כולל בממוצע (משרד התחבורה, 0–100)</small></div><div class="gc-bar"><i style="width:'+Math.round(100*sf/smx)+'%"></i></div>';
       h+='<div class="gc-no">'+nn+'% מהאזורים בלי אף קו</div></div>';
       return h;};
     document.getElementById('gapbox').innerHTML=
@@ -361,6 +363,7 @@ function openHeatmap(fit=true){
     +'<div class="gw-l"><b>② סופרים קווים לכל אזור:</b> '+(HEATSCOPE=='in'?'קו אוטובוס נספר רק אם הוא נכנס לתוך האזור עצמו (המצב שנבחר: ״נכנסים פנימה בלבד״)':'קו אוטובוס נספר אם הוא נכנס לתוך האזור או עוצר עד 5 דקות הליכה משער הכניסה (המצב שנבחר: ״כולל שערי כניסה״)')+'. קו עם שני כיוונים נספר פעם אחת — בלי ניפוח.</div>'
     +(g.hasDep?'<div class="gw-l"><b>③ סופרים גם את הלו״ז:</b> לכל הקווים האלה סופרים את כל היציאות ביום חול רגיל. למה זה חשוב? אזור עם 3 קווים שיוצאים כל רבע שעה מקבל הרבה יותר שירות מאזור עם 3 קווים שיוצאים פעמיים ביום — מספר הקווים לבד לא מגלה את זה.</div>':'')
     +'<div class="gw-l"><b>'+(g.hasDep?'④':'③')+' משווים ממוצעים:</b> לכל קבוצה מחשבים ממוצע קווים לאזור'+(g.hasDep?', ממוצע יציאות ביום':'')+', ואת אחוז האזורים שאף קו לא מגיע אליהם בכלל. ״פי X״ = הממוצע במרכז חלקי הממוצע בפריפריה, ופסי הצבע מציירים את היחס הזה בעין.</div>'
+    +(g.cSf!=null&&g.pSf!=null?'<div class="gw-l"><b>⭐ ציון השירות הכולל:</b> הציון המשוקלל הרשמי שמשרד התחבורה נותן לרמת השירות בכל אזור סטטיסטי (0–100, משקלל זמינות ואמינות). כאן מוצג הממוצע שלו בכל קבוצה — מדד חיצוני ובלתי תלוי שמאשש את אותה תמונה.</div>':'')
     +'<div class="gw-l">ההשוואה מחושבת מחדש בכל שינוי של כפתורי הספירה למעלה ושל מצב המדידה (מרכז/כניסה) בפאנל השכבות.</div>'
     +'</details>';}catch(e){}
   if(heatLayer) heatLayer.clearLayers();
@@ -465,8 +468,10 @@ function gapStats(){
   const hasDep='dwi' in (IDX[0]||{});
   const dep=p=>{const e=WALKMODE=='e';const i=e?(p.dwie||0):(p.dwi||0),g=e?(p.dwge||0):(p.dwg||0);return HEATSCOPE=='in'?i:i+g;};
   const davg=a=>a.length?(a.reduce((s,p)=>s+dep(p),0)/a.length):0;
+  // ציון השירות הרשמי (משרד התחבורה, 0–100) — ממוצע על האזורים שיש להם ציון
+  const sfv=a=>{const v=a.filter(p=>p.sf!=null);return v.length?(v.reduce((s,p)=>s+p.sf,0)/v.length):null;};
   return {cN:C.length,pN:P.length,cAvg:avg(C),pAvg:avg(P),cNo:no(C),pNo:no(P),
-          hasDep,cDep:davg(C),pDep:davg(P)};
+          hasDep,cDep:davg(C),pDep:davg(P),cSf:sfv(C),pSf:sfv(P)};
 }
 document.getElementById('hpeak').onclick=()=>{HEATMODE='peak';openHeatmap(false);};
 document.getElementById('hday').onclick=()=>{HEATMODE='day';openHeatmap(false);};
