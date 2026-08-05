@@ -23,10 +23,15 @@
   @media (max-width:600px){.logorow img{height:auto;width:100%;padding:6px 9px}}
   .btn.on{background:#0f766e;color:#fff}
   .top{position:relative}
-  .layers-panel{position:absolute;top:100%;right:14px;z-index:1200;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:12px;display:flex;flex-direction:column;gap:7px;min-width:250px}
-  .layers-panel .btn{width:100%;justify-content:flex-start}
-  .lp-title{font-weight:900;color:#134e4a;font-size:14px}
-  .lp-sec{font-size:11px;font-weight:900;color:#64748b;margin-top:3px}
+  .layers-panel{position:absolute;top:100%;right:14px;z-index:1200;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:265px}
+  /* שורות שכבה בסגנון GIS: תיבת סימון ☑/☐ + שם השכבה */
+  .layers-panel .btn{width:100%;justify-content:flex-start;background:none;color:#0f172a;border-radius:8px;padding:6px 6px;font-size:13.5px;box-shadow:none}
+  .layers-panel .btn:hover{background:#f0fdfa}
+  .layers-panel .btn:not(#modebtn)::before{content:'☐';font-size:17px;line-height:1;color:#94a3b8;font-weight:400}
+  .layers-panel .btn.on:not(#modebtn)::before{content:'☑';color:#0f766e}
+  .layers-panel .btn.on{background:#f0fdfa;color:#0f172a}
+  .lp-title{font-weight:900;color:#134e4a;font-size:14px;margin-bottom:4px}
+  .lp-sec{font-size:11px;font-weight:900;color:#64748b;margin-top:6px;border-top:1px solid #f1f5f9;padding-top:6px}
   .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .btn svg{flex:0 0 auto}
   .btn.big{font-size:16px;padding:10px 18px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -225,7 +230,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='11';
+const PK_BUILD='12';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -252,15 +257,16 @@ function renderTable(){
   const ly=hasLy();   // כפתורי הסוגים מופיעים רק כשהנתונים כבר מסווגים
   for(const id of ['ztind','ztemp','ztinfra']){
     const b=document.getElementById(id);
-    b.style.display=ly?'inline-block':'none';
-    b.style.opacity=ZTYPES[id.slice(2)]?'1':'.4';
+    b.style.display=ly?'flex':'none';
+    b.classList.toggle('on',!!ZTYPES[id.slice(2)]);
   }
   const sv=hasSv();
   document.querySelector('#tbl th[data-k="sf"]').style.display=sv?'':'none';
   const pl=hasPlan();
   const pb=document.getElementById('stplan');
-  pb.style.display=pl?'inline-block':'none';
-  pb.textContent=SHOWPLAN?'🏗️ כולל אזורים בהקמה':'🏭 רק אזורים פעילים';
+  pb.style.display=pl?'flex':'none';
+  pb.textContent='🏗️ אזורים בהקמה';
+  pb.classList.toggle('on',!!SHOWPLAN);
   let rows=IDX.filter(p=>ZTYPES[ztOf(p)]&&(SHOWPLAN||!isPlan(p))&&(!f || (p.name+' '+(p.city||'')).includes(f)));
   const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(k=='sf'?(p.sf??-1):(p[k]??'')));
   // אזור בלי נתון במדד שממיינים לפיו יורד לסוף בשני הכיוונים — כדי שמיון
