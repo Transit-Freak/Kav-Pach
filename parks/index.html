@@ -24,7 +24,7 @@
   .btn.on{background:#0f766e;color:#fff}
   .top{position:relative}
   .lp-wrap{position:relative;display:inline-flex}
-  .layers-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:1200;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:265px}
+  .layers-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:1200;max-width:calc(100vw - 16px);max-height:calc(100vh - 130px);overflow-y:auto;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:265px}
   /* שורות שכבה בסגנון GIS: תיבת סימון ☑/☐ + שם השכבה */
   .layers-panel .btn{width:100%;justify-content:flex-start;background:none;color:#0f172a;border-radius:8px;padding:6px 6px;font-size:13.5px;box-shadow:none}
   .layers-panel .btn:hover{background:#f0fdfa}
@@ -233,7 +233,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='13';
+const PK_BUILD='14';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -381,7 +381,20 @@ function openHeatmap(fit=true){
 }
 heatbtn.onclick=()=>openHeatmap(true);
 const layerspanel=document.getElementById('layerspanel');
-document.getElementById('layersbtn').onclick=(e)=>{e.stopPropagation();layerspanel.style.display=layerspanel.style.display==='none'?'flex':'none'};
+document.getElementById('layersbtn').onclick=(e)=>{
+  e.stopPropagation();
+  const open=layerspanel.style.display==='none';
+  layerspanel.style.display=open?'flex':'none';
+  if(open){   // צמוד לכפתור אך לעולם לא חורג מהמסך (מובייל)
+    const r=e.currentTarget.getBoundingClientRect();
+    layerspanel.style.position='fixed';
+    layerspanel.style.top=Math.min(r.bottom+8,window.innerHeight-80)+'px';
+    const w=layerspanel.offsetWidth;
+    let right=window.innerWidth-r.right;
+    if(right+w>window.innerWidth-8)right=Math.max(8,window.innerWidth-w-8);
+    layerspanel.style.right=right+'px';
+  }
+};
 document.addEventListener('click',(e)=>{if(!layerspanel.contains(e.target)&&e.target.id!=='layersbtn')layerspanel.style.display='none'});
 // שכבת האשכולות: פוליגוני האזורים הסטטיסטיים צבועים לפי המדד (למ"ס 2021)
 let SALAYER=null,SAON=false;
