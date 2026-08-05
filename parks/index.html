@@ -82,6 +82,21 @@
   .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
   h2{font-size:15px;margin:12px 0 8px}
 .zlink{color:inherit;text-decoration:none}.zlink:hover{text-decoration:underline}
+  /* תיבת השוואת מרכז–פריפריה — כרטיס לכל צד + שורת מסקנה + הסבר נפתח */
+  #gapbox{display:flex;flex-direction:column;gap:5px;align-items:stretch}
+  .gapsum{font-size:13px;color:#0f172a}
+  .gapcards{display:flex;gap:8px;flex-wrap:wrap}
+  .gapcard{flex:1;min-width:215px;background:#fff;border-radius:10px;padding:7px 12px;border-right:5px solid;box-shadow:0 2px 10px rgba(0,0,0,.06);font-weight:800}
+  .gc-c{border-color:#0d9488}.gc-p{border-color:#d97706}
+  .gc-t{font-size:12px;color:#475569}
+  .gc-n{font-size:21px;color:#0f172a;line-height:1.15}
+  .gc-n small{font-size:11.5px;font-weight:800;color:#64748b}
+  .gc-bar{height:7px;border-radius:4px;background:#e2e8f0;margin:4px 0;overflow:hidden}
+  .gc-bar i{display:block;height:100%;border-radius:4px;width:0;margin:0}
+  .gc-c .gc-bar i{background:#0d9488}.gc-p .gc-bar i{background:#d97706}
+  .gc-no{font-size:11.5px;color:#b91c1c}
+  .gapwhy{font-size:11.5px;color:#475569;font-weight:700}
+  .gapwhy summary{cursor:pointer;font-weight:800;color:#0d9488;display:inline}
 </style>
 </head>
 <body>
@@ -157,10 +172,10 @@
     <div class="legend" style="margin:0;align-items:center">
       <button class="btn on" id="hpeak" title="רק הגעות בשעות ההגעה והחזרה מהעבודה: 06:00–09:00 ו-15:00–19:00 ביום חול">⏰ שעות שיא</button>
       <button class="btn" id="hday" title="כל ההגעות לאורך היום כולו">🗓️ כל היום</button>
-      <button class="btn" id="hscope" title="לספור גם קווים שעוצרים בשערי הכניסה (עד 5 דק׳ הליכה), או רק קווים שנכנסים פנימה">🚪 כולל שערי כניסה</button>
+      <button class="btn" id="hscope" title="לספור רק קווים שנכנסים פנימה (ברירת המחדל), או גם קווים שעוצרים בשערי הכניסה (עד 5 דק׳ הליכה)">🏭 נכנסים פנימה בלבד</button>
       <span id="hleg"></span>
     </div>
-    <div class="legend" id="gapbox" style="margin:0" title="ההשוואה: אזורי תעשייה פעילים עד 45 ק&quot;מ מתל אביב (מרכז) מול השאר (פריפריה). קווים = שנכנסים לאזור או עוצרים עד 5 דק׳ הליכה ממנו"></div>
+    <div class="legend" id="gapbox" style="margin:0"></div>
     <div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);flex:1;min-height:0"></div>
   </div>
 
@@ -176,7 +191,7 @@ const tblview=document.getElementById('tblview'), wrap=document.getElementById('
 let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sortDir=-1;
 let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מחדל) · 'e'=עד הכניסה/קצה
 let HEATMODE='peak';   // מפת חום: 'peak'=שעות שיא של יום עבודה (ברירת-מחדל) · 'day'=כל היום
-let HEATSCOPE='all';   // 'all'=בפנים+שערי כניסה · 'in'=נכנסים פנימה בלבד
+let HEATSCOPE='in';   // 'in'=נכנסים פנימה בלבד (ברירת-מחדל) · 'all'=בפנים+שערי כניסה
 let curPark=null;      // האזור הפתוח — לרענון תחנות עם מחוון ההליכה
 const TIER={in:'בתוך האזור',gate:'נגיש · עד ~5 דק׳ הליכה',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
 const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
@@ -233,7 +248,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='14';
+const PK_BUILD='15';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -325,9 +340,14 @@ function openHeatmap(fit=true){
   }
   tblview.style.display='none';wrap.style.display='none';heatview.style.display='flex';backbtn.style.display='inline-block';heatbtn.style.display='none';
   setTimeout(()=>heatmap.invalidateSize(),50);
-  try{const g=gapStats();document.getElementById('gapbox').innerHTML=
-    '📊 <b>פער מרכז–פריפריה:</b> במרכז ('+g.cN+' אזורים) ממוצע <b>'+g.cAvg.toFixed(1)+'</b> קווים לאזור ו-<b>'+g.cNo+'%</b> בלי שירות · בפריפריה ('+g.pN+') <b>'+g.pAvg.toFixed(1)+'</b> קווים ו-<b>'+g.pNo+'%</b> בלי שירות'+
-    (g.pAvg>0?' — פי <b>'+(g.cAvg/g.pAvg).toFixed(1)+'</b> יותר קווים במרכז':'');}catch(e){}
+  try{const g=gapStats();const ratio=g.pAvg>0?g.cAvg/g.pAvg:0;const mx=Math.max(g.cAvg,g.pAvg)||1;
+    document.getElementById('gapbox').innerHTML=
+    '<div class="gapsum">📊 <b>פער מרכז–פריפריה:</b> '+(ratio>1.05?'לאזור תעשייה במרכז הארץ יש בממוצע <b>פי '+ratio.toFixed(1)+'</b> יותר קווי אוטובוס מאשר לאזור בפריפריה':'רמת השירות דומה במרכז ובפריפריה')+'</div>'
+    +'<div class="gapcards">'
+    +'<div class="gapcard gc-c"><div class="gc-t">🏙️ מרכז — '+g.cN+' אזורי תעשייה</div><div class="gc-n">'+g.cAvg.toFixed(1)+' <small>קווים לאזור בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*g.cAvg/mx)+'%"></i></div><div class="gc-no">'+g.cNo+'% מהאזורים בלי אף קו</div></div>'
+    +'<div class="gapcard gc-p"><div class="gc-t">🌄 פריפריה — '+g.pN+' אזורי תעשייה</div><div class="gc-n">'+g.pAvg.toFixed(1)+' <small>קווים לאזור בממוצע</small></div><div class="gc-bar"><i style="width:'+Math.round(100*g.pAvg/mx)+'%"></i></div><div class="gc-no">'+g.pNo+'% מהאזורים בלי אף קו</div></div>'
+    +'</div>'
+    +'<details class="gapwhy"><summary>❓ איך ההשוואה מחושבת</summary> ״מרכז״ = אזורי תעשייה פעילים במרחק עד 45 ק״מ מתל אביב; כל השאר — ״פריפריה״. לכל אזור נספרים קווי האוטובוס שנכנסים לתוכו'+(HEATSCOPE=='in'?'':' או עוצרים בשערי הכניסה (עד 5 דק׳ הליכה)')+', לאורך כל היום. ״בלי אף קו״ = אף קו לא מגיע לאזור. ההשוואה מתעדכנת לפי כפתור הספירה (נכנסים בלבד / כולל שערי כניסה).</details>';}catch(e){}
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
@@ -423,7 +443,7 @@ function gapStats(){
   const dKm=p=>{const dy=(p.la-32.08)*110.5,dx=(p.lo-34.78)*93.0;return Math.hypot(dx,dy)};
   const act=IDX.filter(p=>!isPlan(p));
   const C=act.filter(p=>dKm(p)<=45),P=act.filter(p=>dKm(p)>45);
-  const svc=p=>cnt(p,'li')+cnt(p,'lg');
+  const svc=p=>HEATSCOPE=='in'?cnt(p,'li'):cnt(p,'li')+cnt(p,'lg');   // מכבד את מצב הספירה שנבחר
   const avg=a=>a.length?(a.reduce((s,p)=>s+svc(p),0)/a.length):0;
   const no=a=>a.length?Math.round(100*a.filter(p=>svc(p)===0).length/a.length):0;
   return {cN:C.length,pN:P.length,cAvg:avg(C),pAvg:avg(P),cNo:no(C),pNo:no(P)};
