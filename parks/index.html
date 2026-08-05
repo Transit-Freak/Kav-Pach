@@ -23,7 +23,8 @@
   @media (max-width:600px){.logorow img{height:auto;width:100%;padding:6px 9px}}
   .btn.on{background:#0f766e;color:#fff}
   .top{position:relative}
-  .layers-panel{position:absolute;top:100%;right:14px;z-index:1200;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:265px}
+  .lp-wrap{position:relative;display:inline-flex}
+  .layers-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:1200;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:265px}
   /* שורות שכבה בסגנון GIS: תיבת סימון ☑/☐ + שם השכבה */
   .layers-panel .btn{width:100%;justify-content:flex-start;background:none;color:#0f172a;border-radius:8px;padding:6px 6px;font-size:13.5px;box-shadow:none}
   .layers-panel .btn:hover{background:#f0fdfa}
@@ -90,6 +91,7 @@
     <button class="btn" id="backbtn" style="display:none" title="חזרה למסך שממנו הגעתם — מפת החום או רשימת האזורים">→ חזרה לרשימה</button>
     <button class="btn big" id="heatbtn" style="display:none" title="מפת מצב ארצית: כל אזור כעיגול — הצבע והגודל לפי מספר הקווים שמשרתים אותו; אדום = אין שירות"><!-- צילום אמיתי של מפת החום (אריחי OSM + עיגולי האזורים), נוצר ב-CI ע"י
          tools/make_heatbtn.py --><img src="heatbtn-map.png" alt="" aria-hidden="true" style="height:40px;width:auto;border-radius:5px;box-shadow:0 0 0 1.5px #0f766e">מפת חום</button>
+    <span class="lp-wrap">
     <button class="btn" id="layersbtn" title="כל שכבות ומצבי התצוגה במקום אחד — כמו במערכות GIS">🗂️ שכבות</button>
     <div id="layerspanel" class="layers-panel" style="display:none">
       <div class="lp-title">🗂️ שכבות ותצוגה</div>
@@ -103,6 +105,7 @@
       <div class="lp-sec">שכבות מפה</div>
       <button class="btn" id="sabtn" title="צביעת המפה הארצית לפי אשכול המדד החברתי-כלכלי של כל אזור סטטיסטי (למ״ס 2021) — אדום=חלש, ירוק=מבוסס">🗺️ אשכולות חברתי-כלכלי</button>
     </div>
+    </span>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…" title="הקלידו שם אזור תעשייה או יישוב — הרשימה מסתננת תוך כדי הקלדה">
     <button class="btn" id="csvbtn" title="הורדת כל הטבלה כקובץ CSV שנפתח באקסל — עם כל העמודות, גם המוסתרות"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" rx="3.5" fill="#107c41"/><path d="M6.5 5.5 L13.5 14.5 M13.5 5.5 L6.5 14.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>הורדה לאקסל</button>
     <a href="../" target="_blank" rel="noopener" title="לעמוד הראשי של כל הכלים (נפתח בכרטיסייה חדשה)">→ הקו הבוחן</a>
@@ -230,7 +233,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='12';
+const PK_BUILD='13';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
