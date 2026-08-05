@@ -1,0 +1,55 @@
+# סבב העשרת לוחות הלפני/אחרי (tl/tn) לאירועי 2022–2023 — חוליות קצרות
+# עם המשכה עצמית, על ענף freq-backfill. משוגר אוטומטית בסיום הגאומטריה.
+name: enrich-scan
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה'
+        default: '1'
+        required: false
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: freq-scan-2
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: freq-backfill
+      - name: העשרה (חוליה קצרה)
+        env:
+          ENRICH: '1'
+          TO: '2023-11-30'
+          MAX_MIN: '25'
+          MAX_DAYS: '30'
+        run: |
+          set -e
+          git config user.name enrich-bot
+          git config user.email actions@users.noreply.github.com
+          python3 tools/backfill_freq_daily.py || true
+      - name: דחיפה
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "checkpoint העשרה $(date -u +%FT%TZ)" || true
+          git fetch origin freq-backfill && git rebase origin/freq-backfill || true
+          git push -q origin HEAD:freq-backfill || true
+      - name: המשכה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LAST=$(python3 -c "import json;print(json.load(open('line-history/data/freq-enrich-state.json')).get('last_date',''))" 2>/dev/null || echo '')
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          echo "העשרה עד: $LAST | חוליה: $CHAIN"
+          if [ -n "$LAST" ] && [ ! "$LAST" \< "2023-11-30" ]; then
+            echo "ההעשרה הושלמה — סוף השרשרת"
+          elif [ "$CHAIN" -lt 80 ]; then
+            gh workflow run enrich-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
+          fi
