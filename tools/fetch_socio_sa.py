@@ -170,6 +170,34 @@ def load_sa_polygons(tmp):
     return json.load(open(gj, encoding='utf-8'))
 
 
+def enc_polyline(coords):
+    out = []
+    plat = plon = 0
+    for la, lo in coords:
+        ila, ilo = round(la * 1e5), round(lo * 1e5)
+        for v in (ila - plat, ilo - plon):
+            v = ~(v << 1) if v < 0 else (v << 1)
+            while v >= 0x20:
+                out.append(chr((0x20 | (v & 0x1f)) + 63))
+                v >>= 5
+            out.append(chr(v + 63))
+        plat, plon = ila, ilo
+    return ''.join(out)
+
+
+def thin_ring(coords, min_m=45):
+    if len(coords) < 4:
+        return coords
+    out = [coords[0]]
+    for c in coords[1:-1]:
+        dy = (c[0] - out[-1][0]) * 111000
+        dx = (c[1] - out[-1][1]) * 89000
+        if dy * dy + dx * dx >= min_m * min_m:
+            out.append(c)
+    out.append(coords[-1])
+    return out
+
+
 def ring_contains(ring, x, y):
     inside = False
     n = len(ring)
@@ -300,6 +328,21 @@ def main():
     json.dump({'year': 2021, 'source': 'למ"ס — המדד החברתי-כלכלי 2021 לאזורים סטטיסטיים (שכבת ה-GIS הרשמית)', 'n': len(zones), 'zones': zones},
               open('parks/data/socio-sa.json', 'w', encoding='utf-8'), ensure_ascii=False)
     print('נשמר parks/data/socio-sa.json')
+
+    # שכבת המפה: כל האזורים הסטטיסטיים עם אשכול, כטבעות מדוללות מקודדות
+    feats = []
+    for x0, y0, x1, y1, g, cl, code in items:
+        polys = g['coordinates'] if g['type'] == 'MultiPolygon' else [g['coordinates']]
+        for poly in polys:
+            if not poly:
+                continue
+            ring = [(p[1], p[0]) for p in poly[0]]   # lon,lat -> lat,lon
+            ring = thin_ring(ring)
+            if len(ring) >= 4:
+                feats.append([cl, enc_polyline(ring)])
+    json.dump({'year': 2021, 'n': len(feats), 'feats': feats},
+              open('parks/data/socio-sa-polys.json', 'w', encoding='utf-8'))
+    print(f'נשמרו {len(feats)} טבעות לשכבת המפה')
 
 
 if __name__ == '__main__':
