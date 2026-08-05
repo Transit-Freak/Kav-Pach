@@ -695,7 +695,10 @@ def build_lines(stops_here, tk):
               sum(1 for v in best_line.values() if v == TIER_RANK['near']))
     peaks = (sum(1 for v in peak_best.values() if v == TIER_RANK['in']),
              sum(1 for v in peak_best.values() if v == TIER_RANK['gate']))
-    return lines, counts, peaks
+    # סך יציאות ביום חול (לו"ז): כל כיוון/חלופה נספר פעם אחת — נפח השירות בפועל
+    deps_cnt = (sum(len(L.get('wd') or []) for L in lines if L['t'] == 'in'),
+                sum(len(L.get('wd') or []) for L in lines if L['t'] == 'gate'))
+    return lines, counts, peaks, deps_cnt
 
 index = []
 out_i = 0
@@ -712,8 +715,8 @@ for pi, pk in enumerate(parks):
                 stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo, 'd': d, 'city': city,
                                    'tc': tc, 'te': te, 'wmc': cm, 'wtc': cmin, 'wme': em, 'wte': emin})
     # קווים+ספירות פעמיים: מרכז (ברירת-מחדל) וקצה (כניסה)
-    lines_c, (lic, lgc, lnc), (pki, pkg) = build_lines(stops_here, 'tc')
-    lines_e, (lie, lge, lne), (pkie, pkge) = build_lines(stops_here, 'te')
+    lines_c, (lic, lgc, lnc), (pki, pkg), (dwi, dwg) = build_lines(stops_here, 'tc')
+    lines_e, (lie, lge, lne), (pkie, pkge), (dwie, dwge) = build_lines(stops_here, 'te')
     # כיסוי שטח: דגימת רשת בתוך הפוליגונים מול footways בטווח 100מ'. נספרים רק
     # שבילים ש**נקודה מהם בתוך אזור התעשייה** — לא מדרכות של כבישים גובלים בחוץ.
     # כל שביל נשמר עם תיבת-גבול מטרית לדחייה-מהירה.
@@ -818,6 +821,8 @@ for pi, pk in enumerate(parks):
                   'lie': lie, 'lge': lge, 'lne': lne,          # קצה (כניסה)
                   'pki': pki, 'pkg': pkg,                      # קווים בשעות שיא (בפנים/שער)
                   'pkie': pkie, 'pkge': pkge,
+                  'dwi': dwi, 'dwg': dwg,                      # יציאות ביום חול (בפנים/שער)
+                  'dwie': dwie, 'dwge': dwge,
                   'in': sum(1 for s in stops_here if s['tc'] == 'in'),
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
                   'off': 1 if off else 0,
