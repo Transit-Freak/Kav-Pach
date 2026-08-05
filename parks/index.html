@@ -16,6 +16,10 @@
   .top input{font-family:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:12px;border:none;min-width:220px}
   .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
   .top .sub{font-size:14px;opacity:.95;font-weight:700;flex-basis:100%;margin-top:4px;line-height:1.6}
+  .srcs{margin-top:4px;font-size:12.5px}
+  .srcs summary{cursor:pointer;font-weight:800;display:inline-block;opacity:.95}
+  .srcs .src-l{margin-top:5px;background:rgba(255,255,255,.10);border-radius:8px;padding:6px 10px;line-height:1.55;font-weight:600}
+  .srcs .src-l b{font-weight:800}
   .top .credits{font-size:12px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
   /* באנר המחלקה — רקע לבן כדי שהלוגו הכהה ייראה על הכותרת הירוקה */
   .logorow{flex-basis:100%;margin-top:6px}
@@ -128,7 +132,15 @@
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…" title="הקלידו שם אזור תעשייה או יישוב — הרשימה מסתננת תוך כדי הקלדה">
     <button class="btn" id="csvbtn" title="הורדת כל הטבלה כקובץ CSV שנפתח באקסל — עם כל העמודות, גם המוסתרות"><svg width="17" height="17" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" y="1" width="18" height="18" rx="3.5" fill="#107c41"/><path d="M6.5 5.5 L13.5 14.5 M13.5 5.5 L6.5 14.5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>הורדה לאקסל</button>
     <a href="../" target="_blank" rel="noopener" title="לעמוד הראשי של כל הכלים (נפתח בכרטיסייה חדשה)">→ הקו הבוחן</a>
-    <div class="sub">אילו קווים באמת נכנסים לאזור התעשייה, מתי הם מגיעים ואיפה החורים בשירות · לחצו על שורה למפה · האזורים מהמאגר הרשמי של משרד הכלכלה (🏛️) ומ-OpenStreetMap לאחר בדיקת קיום (🗺️), מיקומי האזורים הוצלבו מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊), אזורי התעשייה-תעסוקה של משרד התחבורה עם הגבולות מהשכבה הרשמית שלו (📐), תחנות ולוחות זמנים מ-GTFS של משרד התחבורה, ציוני מדדי השירות (זמינות, נגישות, תחרותיות, אמינות) ממדדי השירות של משרד התחבורה (📈) · כל אזור מתויג לפי סוג — תעשייה 🏭, תעסוקה 🏢, תשתית ⚙️ — ומהרשימה הוסרו מתחמים שאינם יעד נסיעה לעבודה ואתרי כרייה · מתעדכן שבועית</div>
+    <div class="sub">אילו קווי אוטובוס באמת מגיעים לכל אזור תעשייה בישראל, באילו שעות — ואיפה נשארים חורים בשירות. לחצו על אזור ברשימה או במפה לכל הפרטים · מתעדכן שבועית
+      <details class="srcs"><summary>📚 מאיפה המידע?</summary>
+        <div class="src-l">🏛️ <b>רשימת האזורים</b> — המאגר הרשמי של משרד הכלכלה, בתוספת אזורים מ-OpenStreetMap שעברו בדיקת קיום (🗺️). מהרשימה הוסרו מתחמים שאינם יעד לנסיעת עבודה, כמו אתרי כרייה.</div>
+        <div class="src-l">📐 <b>גבולות האזורים</b> — השכבה הרשמית של אזורי תעשייה-תעסוקה של משרד התחבורה; המיקומים הוצלבו גם מול שכבת האזורים הסטטיסטיים של הלמ״ס (📊).</div>
+        <div class="src-l">🚌 <b>קווים, תחנות ולוחות זמנים</b> — נתוני ה-GTFS הרשמיים של משרד התחבורה, המקור שממנו כל אפליקציות התחבורה שואבות.</div>
+        <div class="src-l">📈 <b>ציוני השירות</b> — מדדי השירות הרשמיים של משרד התחבורה (זמינות, נגישות, תחרותיות, אמינות) לפי אזור סטטיסטי.</div>
+        <div class="src-l">🏭 <b>סיווג</b> — כל אזור מתויג לפי סוגו: תעשייה 🏭, תעסוקה 🏢 או תשתית ⚙️ (אפשר לסנן בפאנל השכבות).</div>
+      </details>
+    </div>
     <!-- באנר המחלקה: מופיע רק אם הקובץ קיים (parks/histadrut-logo.png).
          עד שהוא יועלה — onerror מסתיר את השורה ולא נשאר חלל ריק. -->
     <div class="logorow"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"></div>
@@ -252,7 +264,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='18';
+const PK_BUILD='19';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
