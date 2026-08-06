@@ -17,6 +17,9 @@
 #   state-routes.json, stops-state.json  מצב פנימי להשוואה הבאה
 import csv, json, math, os, re, sys, datetime
 from collections import defaultdict
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from compact_lines import materialize
 
 STOPS=os.environ.get('STOPS','stops.txt')
 STOP_TIMES=os.environ.get('STOP_TIMES','stop_times.txt')
@@ -231,7 +234,7 @@ for rdesc,c in cur.items():
         # אולי חזרה מהפסקה קצרה: אם הגרסה האחרונה בקובץ היא removed טרי — מוחקים
         # אותה בשקט וממשיכים כאילו לא נעלם; שינוי אמיתי ביחס ללפני-ההפסקה עדיין מדווח
         p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
-        lf=jload(p,None)
+        lf=materialize(jload(p,None))
         if lf and lf.get('versions') and lf['versions'][-1].get('k')=='removed' \
            and days_between(lf['versions'][-1]['d'],TODAY)<=PAUSE_MAX_D:
             lf['versions'].pop()
@@ -267,7 +270,7 @@ for rdesc,c in cur.items():
         # יישור: מעדכנים את הגרסה האחרונה-עם-גאומטריה במקומה, בלי אירוע —
         # ההבדל נובע מבחירת נציג לא-מסוננת בריצה קודמת, לא משינוי בפועל
         p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
-        lf=jload(p,None)
+        lf=materialize(jload(p,None))
         if lf and lf.get('versions'):
             lf['versions']=[v for v in lf['versions'] if v.get('d')!=TODAY or v.get('k')=='removed']
             tgt=next((v for v in reversed(lf['versions']) if v.get('shp')),None)
@@ -310,7 +313,7 @@ for rdesc in gone:
         # וריאנט שכל התיעוד שלו הוא baseline מהנציג הלא-מסונן = תבנית עתידית
         # שמעולם לא רצה — מוחקים את הקובץ; הוא יירשם כ'new' כשייכנס לתוקף.
         p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
-        lf=jload(p,None)
+        lf=materialize(jload(p,None))
         if lf is not None and all(v.get('k')=='baseline' for v in lf.get('versions',[])):
             os.remove(p)
             n_gone+=1
@@ -318,7 +321,7 @@ for rdesc in gone:
     chm['changes'].append({'d':TODAY,'rd':rdesc,'line':prev[rdesc].get('line',''),'k':'removed'})
     # רושמים removed גם בקובץ הקו — אם יחזור תוך חודש הרשומה תימחק בשקט (למעלה)
     p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
-    lf=jload(p,None)
+    lf=materialize(jload(p,None))
     if lf is not None:
         lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='removed')]
         lf['versions'].append({'d':TODAY,'k':'removed','shp':'','stops':[],
@@ -344,7 +347,7 @@ n_heal=0
 for rdesc in registered:
     if rdesc in cur or rdesc in prev or rdesc in carry: continue
     p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
-    lf=jload(p,None)
+    lf=materialize(jload(p,None))
     if not lf or not lf.get('versions'): continue
     if lf['versions'][-1].get('k')=='removed':
         dd=lf['versions'][-1]['d']
@@ -414,7 +417,7 @@ print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {
 # (קווים מבוטלים חייבים להישאר ניתנים לחיפוש ולסינון לפי קטגוריה).
 # ks = סוגי השינויים שיש לקו, lk/ld = הרשומה האחרונה (לסטטוס "מבוטל").
 def idx_entry(rdesc, line, dest, op, ty):
-    vs = jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {}).get('versions', [])
+    vs = materialize(jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {})).get('versions', [])
     e = {'rd': rdesc, 'line': line, 'dest': dest[:80], 'op': op, 'ty': ty, 'v': len(vs)}
     ks = {v['k'] for v in vs if v['k'] != 'baseline'}
     # גרסאות ארכיון שהועשרו בהפרשי תחנות (enrich_stop_diffs) נספרות גם
@@ -436,7 +439,7 @@ for rdesc,c in cur.items():
 seen_rd={e['rd'] for e in idx}
 for fn in os.listdir(f'{OUTDIR}/lines'):
     if not fn.endswith('.json'): continue
-    lf=jload(f'{OUTDIR}/lines/{fn}',{})
+    lf=materialize(jload(f'{OUTDIR}/lines/{fn}',{}))
     rdesc=lf.get('rd')
     if not rdesc or rdesc in seen_rd: continue
     # קובץ שאין לו מצב: אם הווריאנט נעלם מהרישום לגמרי ועוד לא סומן מבוטל —

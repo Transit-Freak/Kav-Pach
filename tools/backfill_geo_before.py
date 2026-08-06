@@ -14,6 +14,7 @@ import os
 import sys
 import time
 import zlib
+from compact_lines import materialize
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backfill_geo import (S3, OUTDIR, MAX_MIN, MAX_DAYS_ENV, ARC_LO, ARC_HI, T0,
@@ -28,7 +29,7 @@ def build_targets(avail):
     for fn in os.listdir(dd):
         if not fn.endswith('.json'):
             continue
-        lf = json.load(open(f'{dd}/{fn}', encoding='utf-8'))
+        lf = materialize(json.load(open(f'{dd}/{fn}', encoding='utf-8')))
         vs = lf.get('versions', [])
         rd = lf.get('rd')
         if not vs or not rd:
@@ -169,7 +170,7 @@ def process_day(ds, rdmap):
                 pts.sort()
                 shp = enc_polyline(thin([(p[1], p[2]) for p in pts]))
             p = f'{OUTDIR}/lines/{fsafe(rd2)}.json'
-            lf = json.load(open(p, encoding='utf-8'))
+            lf = materialize(json.load(open(p, encoding='utf-8')))
             ev = rdmap[rd2]
             vs = lf['versions']
             if any(u.get('shp') and u['d'] < ev for u in vs) or any(u['d'] == ds and u.get('k') == 'snapshot' for u in vs):
