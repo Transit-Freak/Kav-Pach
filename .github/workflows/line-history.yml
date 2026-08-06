@@ -14,6 +14,7 @@ on:
       - 'tools/rebuild_lines_index.py'
       - 'tools/enrich_stop_diffs.py'
       - 'tools/scan_vcnt_daily.py'
+      - 'tools/last_sched.py'
   workflow_dispatch:
 
 permissions:
@@ -58,6 +59,13 @@ jobs:
       - name: מעקב תגבורים (רכבים מרובים באותה נסיעה)
         run: |
           OUTDIR=line-history/data python3 tools/scan_vcnt_daily.py || echo "שרת הרישוי לא זמין — נשלים בריצה הבאה"
+
+      # קו שבוטל ומלאה שנה לביטולו (ולא נותר ממנו שום לו"ז) — המנגנון שואב
+      # לבד מהארכיון את שעות-היציאה מיום פעילותו האחרון, ספציפית לכל קו.
+      # עד 2 קבוצות-יום בריצה — ביום רגיל אפס-שתיים בודדות חוצות את סף השנה.
+      - name: לו"ז אחרון לקווים שבוטלו (שנה ומעלה)
+        run: |
+          OUTDIR=line-history/data MAX_DAYS=2 python3 tools/last_sched.py || echo "הארכיון לא זמין — נשלים בריצה הבאה"
 
       # קו באג — אותה סריקה יומית אחת: קוד הזיהוי נמשך מריפו קו-באג (מקור
       # האמת שלו נשאר שם), רץ על אותו GTFS שכבר ירד כאן, והתוצאות נשמרות
