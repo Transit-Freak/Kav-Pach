@@ -496,7 +496,11 @@ function ChoiceScreen({ onPick }) {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4" dir="rtl" style={{ fontFamily: "'Heebo', sans-serif" }}>
       <div className="max-w-7xl w-full">
         <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
+          <div className="flex items-center justify-center gap-3.5">
+            {/* העין הבוחנת — הסמל שנבחר לאתר */}
+            <svg viewBox="0 0 120 120" className="w-11 h-11 md:w-14 md:h-14 flex-none"><rect width="120" height="120" rx="26" fill="#0f172a"/><path d="M14 60 Q60 20 106 60 Q60 100 14 60 Z" stroke="#38bdf8" strokeWidth="6" fill="none" strokeLinejoin="round"/><circle cx="60" cy="60" r="20" fill="#38bdf8"/><circle cx="60" cy="60" r="9.5" fill="#0f172a"/><circle cx="66" cy="54" r="3.5" fill="#fff"/><path d="M22 60 H34 M86 60 H98" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 7"/></svg>
+            <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
+          </div>
           <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
 
