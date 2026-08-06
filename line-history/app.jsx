@@ -22,6 +22,7 @@ const KINDS = {
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
   sched:       { label: "שינוי לו\"ז", color: "#4338ca" },
+  times:       { label: "הלו\"ז האחרון", color: "#0e7490" },
 };
 // הגדרת המשתמש: "שינוי מספר הרכבים" = רק תגבור (שני רכבים באותה דקה
 // שהשתנו). כל שאר שינויי הכמות/שעות — תחת שינוי לו"ז.
@@ -555,7 +556,22 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="vhead">
           גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}
         </div>
-        {!v.shp && !approx ? (
+        {v.k === "times" && v.tb ? (
+          /* הלו"ז האחרון של קו מבוטל — צילום מהארכיון (בקשת המשתמש): קו
+             שבוטל בלי שום אירוע לו"ז מקבל, שנה אחרי הביטול, את שעות-היציאה
+             שלו מיום-הארכיון האחרון שבו פעל */
+          <div className="tsnap-wrap">
+            <div className="mut">🛈 {v.note} — נכון ל-{fmtD(v.d)}, היום האחרון שבו הקו מופיע בארכיון.</div>
+            <table className="tsnap"><tbody>
+              {v.tb.map(([label, ts]) => (
+                <tr key={label}>
+                  <th>{label}</th>
+                  <td>{ts.split(",").map((t, ti) => <span key={ti} className="tt">{t}</span>)}</td>
+                </tr>
+              ))}
+            </tbody></table>
+          </div>
+        ) : !v.shp && !approx ? (
           <div className="nogeo">
             🛈 {v.note || "אין פירוט לגרסה זו"}<br />
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>

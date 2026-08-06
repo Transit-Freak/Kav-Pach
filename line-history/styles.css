@@ -174,3 +174,10 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .vdetails { margin: 10px 0 6px; display: flex; flex-direction: column; gap: 8px; }
 .tdiff-tbl .lbl { font-weight: 900; white-space: nowrap; }
 .tdiff-tbl .val { text-align: right; direction: rtl; font-weight: 700; }
+
+/* הלו"ז האחרון של קו מבוטל (k=times) — צילום שעות מהארכיון */
+.tsnap-wrap { margin: 10px 0 4px; }
+.tsnap { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.tsnap th { background: #ecfeff; color: #155e75; font-weight: 800; padding: 7px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; white-space: nowrap; width: 1%; }
+.tsnap td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; line-height: 2; }
+.tsnap .tt { display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; padding: 1px 7px; margin: 0 0 0 6px; font-variant-numeric: tabular-nums; font-weight: 700; color: #0f172a; }
