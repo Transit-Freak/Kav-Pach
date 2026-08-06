@@ -43,6 +43,12 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
         e['dest'] = (lf.get('dest') or e.get('dest', ''))[:80]
         e['op'] = lf.get('op', e.get('op', ''))
     ks = {v['k'] for v in vs if v['k'] != 'baseline'}
+    # הגדרת המשתמש: 'freq' (שינוי מספר הרכבים) = רק תגבור באותה דקה;
+    # שינויי כמות/שעות רגילים נספרים תחת הלו"ז ('sched')
+    if 'freq' in ks:
+        ks.add('sched')
+        if not any(v['k'] == 'freq' and 'תגבור' in (v.get('note') or '') for v in vs):
+            ks.discard('freq')
     for v in vs:   # קטגוריות התחנות הנגזרות מההשוואות
         if (v.get('src') == 'ob' or v.get('gd')) and v.get('k') != 'removed':
             a, rr = v.get('add'), v.get('rem')
