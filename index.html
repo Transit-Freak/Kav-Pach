@@ -21,6 +21,11 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"הקו הבוחן","alternateName":"Kav Bochan — ניתוח התחבורה הציבורית בישראל","url":"https://transit-freak.github.io/kav-bochan/"}
 </script>
+<!-- הפונט נטען כבר כאן (ולא רק מתוך קוד האפליקציה) כדי שגם שכבת-הטעינה
+     הסטטית תוצג באותו פונט בדיוק — בלי "קפיצת" טיפוגרפיה כשהאפליקציה עולה. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
 <script src="vendor/tailwind.js"></script>
 <script src="vendor/react.development.js"></script>
 <script src="vendor/react-dom.development.js"></script>
@@ -75,7 +80,7 @@
         <div style="text-align:center;margin-bottom:40px;">
           <div style="display:flex;align-items:center;justify-content:center;gap:14px;">
             <svg viewBox="0 0 120 120" style="width:clamp(44px,8vw,60px);height:clamp(44px,8vw,60px);flex:none;"><rect width="120" height="120" rx="26" fill="#0f172a"/><path d="M14 60 Q60 20 106 60 Q60 100 14 60 Z" stroke="#38bdf8" stroke-width="6" fill="none" stroke-linejoin="round"/><circle cx="60" cy="60" r="20" fill="#38bdf8"/><circle cx="60" cy="60" r="9.5" fill="#0f172a"/><circle cx="66" cy="54" r="3.5" fill="#fff"/><path d="M22 60 H34 M86 60 H98" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 7"/></svg>
-            <h1 style="font-size:clamp(2rem,6vw,3rem);font-weight:900;color:#0f172a;margin:0;letter-spacing:-0.03em;">הקו הבוחן</h1>
+            <h1 style="font-size:clamp(2.25rem,6vw,3rem);font-weight:900;color:#0f172a;margin:0;letter-spacing:-0.025em;">הקו הבוחן</h1>
           </div>
           <p style="color:#64748b;font-weight:700;margin-top:12px;font-size:1.125rem;">שישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
@@ -210,11 +215,16 @@
        גרסה — בביקור חוזר אין קומפילציה בכלל והאתר עולה מיד. -->
   <script>
     (function () {
-      var V = '20260726b';
+      var V = '20260806';
       fetch('KavPach.jsx?v=' + V)
         .then(function (r) { return r.text(); })
         .then(function (src) {
-          var key = 'kavpach-js-' + V, js = null;
+          // מפתח ה-cache נגזר מתוכן הקובץ עצמו (hash) ולא מחותמת ידנית:
+          // כל שינוי בקוד מבטל אוטומטית את הקומפילציה השמורה — הבאג שבו
+          // מבקרים חוזרים נתקעו על גרסה ישנה (הסמל "נעלם") לא יחזור.
+          var h = 0;
+          for (var i = 0; i < src.length; i++) h = (h * 31 + src.charCodeAt(i)) | 0;
+          var key = 'kavpach-js-' + h, js = null;
           try { js = localStorage.getItem(key); } catch (e) {}
           if (!js) {
             js = Babel.transform(src, { presets: ['react'], filename: 'KavPach.jsx' }).code;
