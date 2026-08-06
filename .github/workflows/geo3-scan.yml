@@ -1,0 +1,56 @@
+# סבב geo3 — איתור תאריכי שינוי-המסלול האמיתיים (חיפוש בינארי בארכיון)
+# למקרים שבהם שינוי-שם ברישום הסתיר שינוי מסלול מוקדם יותר. חוליות קצרות
+# עם המשכה עצמית על ענף freq-backfill, כמו הסבבים הקודמים.
+name: geo3-scan
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה'
+        default: '1'
+        required: false
+  push:
+    branches: [geo3-go]
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: freq-scan-2
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: freq-backfill
+      - name: איתור תאריכי שינוי אמיתיים (חוליה קצרה)
+        id: g3
+        env:
+          MAX_MIN: '25'
+        run: |
+          set -e
+          git config user.name geo3-bot
+          git config user.email actions@users.noreply.github.com
+          OUT=$(OUTDIR=line-history/data python3 tools/backfill_geo_truth.py || true)
+          echo "$OUT" | tail -4
+          if echo "$OUT" | grep -q 'נותרו 0 מקרים'; then echo "done=1" >> "$GITHUB_OUTPUT"; else echo "done=0" >> "$GITHUB_OUTPUT"; fi
+      - name: דחיפה
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "checkpoint geo3 $(date -u +%FT%TZ)" || true
+          git fetch origin freq-backfill && git rebase origin/freq-backfill || true
+          git push -q origin HEAD:freq-backfill || true
+      - name: המשכה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          if [ "${{ steps.g3.outputs.done }}" = "1" ]; then
+            echo "geo3 הסתיים — סוף השרשרת"
+          elif [ "$CHAIN" -lt 90 ]; then
+            gh workflow run geo3-scan.yml --repo "$GITHUB_REPOSITORY" --ref geo3-go -f chain=$((CHAIN+1)) || true
+          fi
