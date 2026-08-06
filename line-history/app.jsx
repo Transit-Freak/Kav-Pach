@@ -170,7 +170,7 @@ function segDiff(cur, prev) {
    הרשימות המלאות (tl/tn). ריבוי באותה שעה = תגבור, ומוצג כמונה. */
 function TimesDiff({ tl, tn }) {
   const [open, setOpen] = useState(true);   // נפתחת מיד עם הלחיצה על האירוע
-  const rows = useMemo(() => {
+  const grp = useMemo(() => {
     const cnt = (s) => {
       const c = new Map();
       (s ? s.split(",") : []).forEach((t) => c.set(t, (c.get(t) || 0) + 1));
@@ -178,35 +178,39 @@ function TimesDiff({ tl, tn }) {
     };
     const a = cnt(tl), b = cnt(tn);
     const times = [...new Set([...a.keys(), ...b.keys()])].sort();
-    return times.map((t) => {
+    const same = [], removed = [], added = [], changed = [];
+    times.forEach((t) => {
       const x = a.get(t) || 0, y = b.get(t) || 0;
-      const cls = x === y ? "same" : x === 0 ? "added" : y === 0 ? "removed" : "changed";
-      return { t, x, y, cls };
+      if (x === y) same.push(x > 1 ? `${t} (${x}×)` : t);
+      else if (y === 0) removed.push(x > 1 ? `${t} (${x}×)` : t);
+      else if (x === 0) added.push(y > 1 ? `${t} (${y}×)` : t);
+      else changed.push(`${t} (${x}←${y} אוטובוסים)`);
     });
+    return { same, removed, added, changed };
   }, [tl, tn]);
   const nOld = tl ? tl.split(",").length : 0, nNew = tn ? tn.split(",").length : 0;
-  const changed = rows.filter((r) => r.cls !== "same").length;
+  const joined = (arr) => arr.map((t, i) => (
+    <React.Fragment key={t}>{i > 0 && " · "}<span className="num">{t}</span></React.Fragment>
+  ));
   return (
     <div className="tdiff">
       <button className="tdiff-btn" onClick={() => setOpen(!open)}
-        title="טבלה מלאה של כל שעות היציאה — מה היה לפני השינוי ומה אחריו">
-        📊 {open ? "הסתר את" : "הצג את"} טבלת הלפני/אחרי המלאה ({nOld} ← {nNew} יציאות · {changed} שורות השתנו)
+        title="כל שעות היציאה בשלוש שורות: מה נשאר, מה ירד ומה נוסף">
+        📊 {open ? "הסתר את" : "הצג את"} טבלת הלפני/אחרי המלאה ({nOld} ← {nNew} יציאות)
       </button>
       {open && (
         <div className="tdiff-wrap">
-          <table className="tdiff-tbl">
-            <thead><tr><th>שעה</th><th>לפני</th><th>אחרי</th></tr></thead>
+          <table className="tdiff-tbl tdiff-3rows">
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.t} className={"td-" + r.cls}>
-                  <td className="num">{r.t}</td>
-                  <td>{r.x === 0 ? "—" : r.x === 1 ? "✓" : r.x + "×"}</td>
-                  <td>{r.y === 0 ? "—" : r.y === 1 ? "✓" : r.y + "×"}</td>
-                </tr>
-              ))}
+              <tr className="td-same"><th>ללא שינוי ({grp.same.length})</th><td>{grp.same.length ? joined(grp.same) : "—"}</td></tr>
+              <tr className="td-removed"><th>לפני — ירדו ({grp.removed.length})</th><td>{grp.removed.length ? joined(grp.removed) : "—"}</td></tr>
+              <tr className="td-added"><th>אחרי — נוספו ({grp.added.length})</th><td>{grp.added.length ? joined(grp.added) : "—"}</td></tr>
+              {grp.changed.length > 0 && (
+                <tr className="td-changed"><th>תגבור השתנה ({grp.changed.length})</th><td>{joined(grp.changed)}</td></tr>
+              )}
             </tbody>
           </table>
-          <div className="tdiff-leg">ירוק = יציאה שנוספה · אדום = יציאה שירדה · כתום = השתנה מספר האוטובוסים באותה שעה (תגבור) · 2× = שני אוטובוסים באותה שעה</div>
+          <div className="tdiff-leg">אדום = יציאות שהיו רק לפני השינוי · ירוק = יציאות שנוספו אחריו · כתום = השתנה מספר האוטובוסים באותה שעה (תגבור) · 2× = שני אוטובוסים באותה שעה</div>
         </div>
       )}
     </div>
