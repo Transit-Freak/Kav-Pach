@@ -2,7 +2,8 @@ name: api-probe
 # בדיקה חד-פעמית של ה-API של הסדנא — אבחון עמוד המפעילה בדאטאבוס
 on:
   push:
-    branches: [api-probe]
+    paths:
+      - '.github/workflows/api-probe.yml'
 permissions: {}
 jobs:
   probe:
@@ -24,3 +25,5 @@ except Exception as e: print("ERR", e)')"; }
           probe "group_by שבוע שעבר" "$B/gtfs_rides_agg/group_by?date_from=$WEEK&date_to=$(date -u -d '7 days ago' +%F)&group_by=operator_ref&exclude_hours_from=23&exclude_hours_to=2"
           probe "group_by טווח ישן ($OLD_FROM)" "$B/gtfs_rides_agg/group_by?date_from=$OLD_FROM&date_to=$OLD_TO&group_by=operator_ref&exclude_hours_from=23&exclude_hours_to=2"
           probe "group_by בלי exclude" "$B/gtfs_rides_agg/group_by?date_from=$YDAY&date_to=$TODAY&group_by=operator_ref"
+
+# הצתה: שינוי בקובץ הזה מפעיל את הבדיקה
