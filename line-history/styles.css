@@ -167,13 +167,11 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .td-removed { background: #fef2f2; } .td-removed .num { color: #b91c1c; text-decoration: line-through; }
 .td-changed { background: #fffbeb; } .td-changed .num { color: #b45309; }
 .td-same { background: #fff; } .td-same .num { color: #334155; }
-.tdiff-3rows th { position: static; text-align: right; white-space: nowrap; vertical-align: top; background: #f8fafc; font-size: 12.5px; border-bottom: 1px solid #f1f5f9; }
-.tdiff-3rows td { text-align: right; direction: rtl; line-height: 2; border-bottom: 1px solid #f1f5f9; }
-.tdiff-3rows .num { direction: ltr; display: inline-block; font-weight: 800; padding: 0 3px; border-radius: 5px; }
-.ts-same { color: #334155; }
-.ts-removed { color: #b91c1c; text-decoration: line-through; background: #fef2f2; }
-.ts-added { color: #15803d; background: #f0fdf4; }
-.ts-changed { color: #b45309; background: #fffbeb; }
+.tdiff-tbl .tdw { font-weight: 800; }
+.td-same .tdw { color: #94a3b8; font-weight: 700; }
+.td-removed .tdw { color: #b91c1c; }
+.td-added .tdw { color: #15803d; }
+.td-changed .tdw { color: #b45309; }
 .tdiff-leg { font-size: 11.5px; color: #64748b; font-weight: 700; padding: 7px 10px; background: #f8fafc; }
 .vdetails { margin: 10px 0 6px; display: flex; flex-direction: column; gap: 8px; }
 .tdiff-tbl .lbl { font-weight: 900; white-space: nowrap; }
