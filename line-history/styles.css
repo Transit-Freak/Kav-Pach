@@ -166,6 +166,10 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .td-added { background: #f0fdf4; } .td-added .num { color: #15803d; }
 .td-removed { background: #fef2f2; } .td-removed .num { color: #b91c1c; text-decoration: line-through; }
 .td-changed { background: #fffbeb; } .td-changed .num { color: #b45309; }
+.td-same { background: #fff; } .td-same .num { color: #334155; }
+.tdiff-3rows th { position: static; text-align: right; white-space: nowrap; vertical-align: top; background: inherit; font-size: 12.5px; border-bottom: 1px solid #f1f5f9; }
+.tdiff-3rows td { text-align: right; direction: rtl; line-height: 1.9; }
+.tdiff-3rows .num { direction: ltr; display: inline-block; font-weight: 800; }
 .tdiff-leg { font-size: 11.5px; color: #64748b; font-weight: 700; padding: 7px 10px; background: #f8fafc; }
 .vdetails { margin: 10px 0 6px; display: flex; flex-direction: column; gap: 8px; }
 .tdiff-tbl .lbl { font-weight: 900; white-space: nowrap; }
