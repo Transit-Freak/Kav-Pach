@@ -20,7 +20,7 @@ const KINDS = {
   renum:       { label: "שינוי מספר", color: "#be185d" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
-  freq:        { label: "שינוי מספר יציאות", color: "#b45309" },
+  freq:        { label: "שינוי מספר הרכבים שיוצאים", color: "#b45309" },
   sched:       { label: "שינוי לו\"ז", color: "#4338ca" },
 };
 
@@ -58,7 +58,7 @@ const CAT_LABELS = {
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
-  freq: "שינוי מספר היציאות (תדירות)",
+  freq: "שינוי מספר הרכבים שיוצאים (תדירות)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
 const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b" };
@@ -178,54 +178,36 @@ function TimesDiff({ tl, tn }) {
     };
     const a = cnt(tl), b = cnt(tn);
     const times = [...new Set([...a.keys(), ...b.keys()])].sort();
-    const out = [], oldOnly = [], newOnly = [];
-    times.forEach((t) => {
+    return times.map((t) => {
       const x = a.get(t) || 0, y = b.get(t) || 0;
-      if (x > 0 && y > 0) {
-        if (x === y) out.push({ key: t, before: x > 1 ? `${t} (${x}×)` : t, cls: "same" });
-        else out.push({ key: t, before: `${t} (${x}×)`, after: `${t} (${y}×)`, cls: "changed" });
-      } else if (x > 0) oldOnly.push(t);
-      else newOnly.push(t);
+      if (x === y) return { t: x > 1 ? `${t} (${x}×)` : t, cls: "same", lbl: "לא השתנה" };
+      if (y === 0) return { t: x > 1 ? `${t} (${x}×)` : t, cls: "removed", lbl: "לפני — ירדה" };
+      if (x === 0) return { t: y > 1 ? `${t} (${y}×)` : t, cls: "added", lbl: "אחרי — נוספה" };
+      return { t, cls: "changed", lbl: `תגבור: ${x} ← ${y} אוטובוסים` };
     });
-    // התאמת יציאות שזזו: שעה שירדה מול שעה קרובה שנוספה (עד 20 דק' הפרש)
-    const mins = (t) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
-    let i = 0, j = 0;
-    while (i < oldOnly.length || j < newOnly.length) {
-      const o = oldOnly[i], n = newOnly[j];
-      if (o != null && n != null && Math.abs(mins(o) - mins(n)) <= 20) {
-        out.push({ key: o + n, before: o, after: n, cls: "moved" }); i++; j++;
-      } else if (o != null && (n == null || o < n)) {
-        out.push({ key: o + "-", before: o, after: "—", cls: "removed" }); i++;
-      } else {
-        out.push({ key: "-" + n, before: "—", after: n, cls: "added" }); j++;
-      }
-    }
-    out.sort((r, s) => (r.before !== "—" ? r.before : r.after).localeCompare(s.before !== "—" ? s.before : s.after));
-    return out;
   }, [tl, tn]);
   const nOld = tl ? tl.split(",").length : 0, nNew = tn ? tn.split(",").length : 0;
   const changed = rows.filter((r) => r.cls !== "same").length;
   return (
     <div className="tdiff">
       <button className="tdiff-btn" onClick={() => setOpen(!open)}
-        title="כל היציאות שורה-שורה: השעה לפני מול השעה אחרי; שעה שלא השתנתה מוצגת פעם אחת">
+        title="כל שעות היציאה, שורה לכל שעה, עם מה קרה לה בשינוי">
         📊 {open ? "הסתר את" : "הצג את"} טבלת הלפני/אחרי המלאה ({nOld} ← {nNew} יציאות · {changed} השתנו)
       </button>
       {open && (
         <div className="tdiff-wrap">
           <table className="tdiff-tbl">
-            <thead><tr><th>לפני</th><th>אחרי</th></tr></thead>
+            <thead><tr><th>שעה</th><th>מה קרה</th></tr></thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.key} className={"td-" + r.cls}>
-                  {r.cls === "same"
-                    ? <td className="num" colSpan={2}>{r.before}</td>
-                    : <><td className="num">{r.before}</td><td className="num">{r.after}</td></>}
+                <tr key={r.t} className={"td-" + r.cls}>
+                  <td className="num">{r.t}</td>
+                  <td className="tdw">{r.lbl}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="tdiff-leg">שורה ממוזגת = היציאה לא השתנתה · כתום = היציאה זזה (השעה הישנה מול החדשה) או תגבור שהשתנה · אדום = יציאה שירדה · ירוק = יציאה שנוספה · 2× = שני אוטובוסים באותה שעה</div>
+          <div className="tdiff-leg">"לפני — ירדה" = הייתה רק לפני השינוי (אדום) · "אחרי — נוספה" = קיימת רק אחריו (ירוק) · תגבור = השתנה מספר האוטובוסים באותה שעה (כתום) · 2× = שני אוטובוסים באותה שעה</div>
         </div>
       )}
     </div>
