@@ -1,0 +1,58 @@
+# סבב "המסלול שלפני" — צילום ארכיון של המסלול הישן לכל אירוע שינוי יעד
+# (dest) שאין לו מסלול מתועד לפני האירוע. משוגר אוטומטית בסיום ההעשרה;
+# אותו דפוס חוליות עם המשכה עצמית, על ענף freq-backfill.
+name: geo2-scan
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה'
+        default: '1'
+        required: false
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: freq-scan-2
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: freq-backfill
+      - name: צילומי המסלול-שלפני (חוליה קצרה)
+        id: geo2
+        env:
+          MAX_MIN: '25'
+        run: |
+          set -e
+          git config user.name geo2-bot
+          git config user.email actions@users.noreply.github.com
+          OUT=$(python3 tools/backfill_geo_before.py || true)
+          echo "$OUT" | tail -5
+          if echo "$OUT" | grep -q 'נותרו 0 ימים'; then
+            echo "done=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "done=0" >> "$GITHUB_OUTPUT"
+          fi
+      - name: דחיפה
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "checkpoint מסלול-שלפני $(date -u +%FT%TZ)" || true
+          git fetch origin freq-backfill && git rebase origin/freq-backfill || true
+          git push -q origin HEAD:freq-backfill || true
+      - name: המשכה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          if [ "${{ steps.geo2.outputs.done }}" = "1" ]; then
+            echo "סבב המסלול-שלפני הסתיים — סוף השרשרת"
+          elif [ "$CHAIN" -lt 80 ]; then
+            gh workflow run geo2-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
+          fi
