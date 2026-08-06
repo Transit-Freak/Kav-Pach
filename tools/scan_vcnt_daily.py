@@ -137,7 +137,7 @@ def main():
         state = json.load(open(statep, encoding='utf-8'))
     except Exception:
         state = {}
-    prev = state.get('map')
+    prev = state.get('map') or None   # מפה ריקה = עדיין לא נזרע בסיס אמיתי
     rid2rd = load_rid2rd()
     zpath = download(URL)
     if not zpath:
@@ -194,9 +194,10 @@ def main():
         try:
             month = json.load(open(mp, encoding='utf-8'))
         except Exception:
-            month = []
+            month = {'month': TODAY[:7], 'changes': []}
+        # הפורמט של הצינור היומי: {'month': 'YYYY-MM', 'changes': [...]}
         for rd2, (line, note) in feed.items():
-            month.append({'d': TODAY, 'rd': rd2, 'line': line, 'k': 'freq', 'note': note})
+            month['changes'].append({'d': TODAY, 'rd': rd2, 'line': line, 'k': 'freq', 'note': note})
         json.dump(month, open(mp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         try:
             idx = json.load(open(f'{OUT}/lines.json', encoding='utf-8'))
