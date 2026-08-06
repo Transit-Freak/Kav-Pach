@@ -20,14 +20,20 @@ const KINDS = {
   renum:       { label: "שינוי מספר", color: "#be185d" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
-  freq:        { label: "שינוי מספר הרכבים שיוצאים", color: "#b45309" },
+  freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
   sched:       { label: "שינוי לו\"ז", color: "#4338ca" },
 };
+// הגדרת המשתמש: "שינוי מספר הרכבים" = רק תגבור (שני רכבים באותה דקה
+// שהשתנו). כל שאר שינויי הכמות/שעות — תחת שינוי לו"ז.
+function evKind(v) {
+  if (v.k === "freq" && !/תגבור/.test(v.note || "")) return "sched";
+  return v.k;
+}
 
 // ביטול שנשאר בתוקף מעל שנה (הגרסה האחרונה היא removed וישנה משנה) מקבל קטגוריה משלו
 function dispKind(x, i, vs) {
   if (x.k === "removed" && i === vs.length - 1 && (Date.now() - new Date(x.d)) / 864e5 >= 365) return "removed-year";
-  return x.k;
+  return evKind(x);
 }
 // אותו כלל ברמת האינדקס (lk/ld = הרשומה האחרונה של הווריאנט)
 function isRemovedYear(l) {
@@ -58,7 +64,7 @@ const CAT_LABELS = {
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
-  freq: "שינוי מספר הרכבים שיוצאים (תדירות)",
+  freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
 const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b" };
@@ -735,7 +741,7 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
                   <a key={c.rd + c.k + i} className="lrow" href={lineHref(c.rd)}
                     onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(c.rd); }}>
                     <span className="badge sm">{c.line}</span>
-                    <span className="k" style={{ background: (KINDS[c.k] || {}).color || "#64748b" }}>{(KINDS[c.k] || { label: c.k }).label}</span>
+                    <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
                     {c.note ? <span className="lnote">{c.note}</span> : null}
