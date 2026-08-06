@@ -8,26 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: השוואת פורמט המזהים
+      - name: האם route_id משותף בין הקבצים?
         run: |
           set -e
           curl -sL -o g10.zip "https://gtfs.mot.gov.il/gtfsfiles/Gtfs_10_days.zip"
-          curl -sL -o tid.zip "https://gtfs.mot.gov.il/gtfsfiles/TripIdToDate.zip"
+          curl -sL -o gcl.zip "https://openbus-stride-public.s3.eu-west-1.amazonaws.com/gtfs_archive/2026/08/05/israel-public-transportation.zip"
           python3 - <<'PY'
-          import zipfile, io, csv, itertools
-          z = zipfile.ZipFile('g10.zip')
-          rd = csv.reader(io.TextIOWrapper(z.open('trips.txt'), 'utf-8-sig'))
-          hdr = next(rd)
-          print('עמודות trips (10 ימים):', hdr)
-          rows = list(itertools.islice(rd, 5))
-          for r in rows: print(' ', r)
-          zt = zipfile.ZipFile('tid.zip')
-          rd2 = csv.reader(io.TextIOWrapper(zt.open(zt.namelist()[0]), 'utf-8-sig'))
-          print('עמודות TripIdToDate:', next(rd2))
-          for r in itertools.islice(rd2, 3): print(' ', r)
-          # האם ה-route_id של ה-10 ימים תואם ל-route_id של הקובץ הקלאסי?
-          rd3 = csv.reader(io.TextIOWrapper(z.open('routes.txt'), 'utf-8-sig'))
-          h = {c.strip(): i for i, c in enumerate(next(rd3))}
-          print('עמודות routes (10 ימים):', sorted(h))
-          for r in itertools.islice(rd3, 3): print(' ', r[:6])
+          import zipfile, io, csv
+          def routes(p):
+              z = zipfile.ZipFile(p)
+              rd = csv.reader(io.TextIOWrapper(z.open('routes.txt'), 'utf-8-sig'))
+              h = {c.strip(): i for i, c in enumerate(next(rd))}
+              return {r[h['route_id']]: (r[h['route_short_name']], r[h['route_long_name']][:40], r[h['route_desc']]) for r in rd}
+          a = routes('g10.zip'); b = routes('gcl.zip')
+          common = set(a) & set(b)
+          print(f'10 ימים: {len(a)} | קלאסי: {len(b)} | route_id משותף: {len(common)}')
+          same_name = sum(1 for rid in common if a[rid][0] == b[rid][0])
+          print(f'מתוך המשותפים — אותו מספר קו: {same_name} ({100*same_name/max(1,len(common)):.0f}%)')
+          for rid in list(common)[:6]:
+              print(' ', rid, '| 10ימים:', a[rid][0], a[rid][1][:25], '| קלאסי:', b[rid][0], b[rid][2])
           PY
