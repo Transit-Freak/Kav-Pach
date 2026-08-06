@@ -68,7 +68,7 @@ jobs:
         run: |
           set -e
           mkdir -p /tmp/kbscan kavbug-data
-          for f in scan-country.js update-history.js data.js; do
+          for f in scan-country.js update-history.js data.js components.jsx; do
             curl -fsSL "https://raw.githubusercontent.com/Transit-Freak/kav-bug/main/$f" -o "/tmp/kbscan/$f"
           done
           npm install --prefix /tmp/kbscan fflate --no-save
