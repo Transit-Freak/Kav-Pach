@@ -13,6 +13,7 @@ on:
       - 'tools/linehistory.py'
       - 'tools/rebuild_lines_index.py'
       - 'tools/enrich_stop_diffs.py'
+      - 'tools/scan_vcnt_daily.py'
   workflow_dispatch:
 
 permissions:
@@ -50,6 +51,13 @@ jobs:
             SHAPES=shapes.txt AGENCY=agency.txt CALENDAR=calendar.txt MAIN=data-main.json \
             OUTDIR=line-history/data REBASE=$REBASE python3 tools/linehistory.py
           rm -f line-history/data/.rebase
+
+      # אותה סריקה יומית אחת לכל הדפים: גם מעקב התגבורים (Gtfs_10_days)
+      # רץ כאן, והתוצאות נדחפות באותו commit. כשל של שרת הרישוי לא מפיל
+      # את הצינור — ההשוואה הבאה תתפוס את הפער.
+      - name: מעקב תגבורים (רכבים מרובים באותה נסיעה)
+        run: |
+          OUTDIR=line-history/data python3 tools/scan_vcnt_daily.py || echo "שרת הרישוי לא זמין — נשלים בריצה הבאה"
 
       - name: Commit (לענף שהריץ — main בריצה המתוזמנת)
         run: |
