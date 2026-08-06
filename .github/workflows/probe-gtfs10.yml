@@ -1,5 +1,3 @@
-# בדיקה מתוקנת: Gtfs_10_days — יציאות מרובות-רכבים באותה דקה *באותו יום*
-# (service_id -> תאריכים דרך calendar_dates; אין calendar.txt בקובץ הזה)
 name: probe-gtfs10
 on:
   push:
@@ -8,60 +6,28 @@ permissions: {}
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
-      - name: הורדה וניתוח
+      - name: השוואת פורמט המזהים
         run: |
           set -e
-          curl -sL --retry 3 -o g10.zip "https://gtfs.mot.gov.il/gtfsfiles/Gtfs_10_days.zip"
+          curl -sL -o g10.zip "https://gtfs.mot.gov.il/gtfsfiles/Gtfs_10_days.zip"
+          curl -sL -o tid.zip "https://gtfs.mot.gov.il/gtfsfiles/TripIdToDate.zip"
           python3 - <<'PY'
-          import zipfile, csv, io, collections
+          import zipfile, io, csv, itertools
           z = zipfile.ZipFile('g10.zip')
-          rd = csv.reader(io.TextIOWrapper(z.open('routes.txt'), 'utf-8-sig'))
-          h = {c.strip(): i for i, c in enumerate(next(rd))}
-          routes = {}; t39 = {}
-          for r in rd:
-              routes[r[h['route_id']]] = (r[h['route_short_name']], r[h['route_long_name']][:55], r[h.get('route_desc', h['route_long_name'])])
-              if r[h['route_short_name']] == '39' and 'ירושלים' in r[h['route_long_name']]:
-                  t39[r[h['route_id']]] = routes[r[h['route_id']]]
-          print('מסלולי 39 ירושלים:', len(t39), list(t39.values())[:4])
-          svc2dates = collections.defaultdict(list)
-          rd = csv.reader(io.TextIOWrapper(z.open('calendar_dates.txt'), 'utf-8-sig'))
-          h = {c.strip(): i for i, c in enumerate(next(rd))}
-          for r in rd:
-              if r[h['exception_type']] == '1': svc2dates[r[h['service_id']]].append(r[h['date']])
-          print('שירותים:', len(svc2dates))
           rd = csv.reader(io.TextIOWrapper(z.open('trips.txt'), 'utf-8-sig'))
-          h = {c.strip(): i for i, c in enumerate(next(rd))}
-          trip2r = {r[h['trip_id']]: (r[h['route_id']], r[h['service_id']]) for r in rd}
-          deps = collections.defaultdict(list)
-          hdr = None
-          for ln in io.TextIOWrapper(z.open('stop_times.txt'), 'utf-8-sig'):
-              p = ln.rstrip('\n').split(',')
-              if hdr is None:
-                  hdr = {c.strip(): i for i, c in enumerate(p)}; continue
-              try:
-                  if p[hdr['stop_sequence']].strip() != '1': continue
-                  ri = trip2r.get(p[hdr['trip_id']])
-                  if ri is None: continue
-                  for ds in svc2dates.get(ri[1], []):
-                      deps[(ri[0], ds)].append(p[hdr['departure_time']][:5])
-              except (IndexError, KeyError): continue
-          dup_routes = set(); dup_extra = 0; byline = collections.Counter(); ex = []
-          for (rid, ds), ts in deps.items():
-              c = collections.Counter(ts)
-              d = {x: n for x, n in c.items() if n > 1}
-              if d:
-                  dup_routes.add(rid); dup_extra += sum(d.values()) - len(d)
-                  byline[routes[rid][0]] += sum(d.values()) - len(d)
-                  if len(ex) < 10: ex.append((routes.get(rid)[:2], ds, dict(list(d.items())[:4])))
-          print('=== תוצאה (לפי יום בודד) ===')
-          print('מסלולים עם יציאה מרובת-רכבים באותו יום:', len(dup_routes), '| רכבים עודפים:', dup_extra)
-          print('קווים מובילים:', byline.most_common(10))
-          for e in ex: print(' ', e)
-          for rid in t39:
-              for (r2, ds), ts in deps.items():
-                  if r2 == rid:
-                      c = collections.Counter(ts); d = {x: n for x, n in c.items() if n > 1}
-                      if d: print('קו 39 ירושלים!', ds, d)
+          hdr = next(rd)
+          print('עמודות trips (10 ימים):', hdr)
+          rows = list(itertools.islice(rd, 5))
+          for r in rows: print(' ', r)
+          zt = zipfile.ZipFile('tid.zip')
+          rd2 = csv.reader(io.TextIOWrapper(zt.open(zt.namelist()[0]), 'utf-8-sig'))
+          print('עמודות TripIdToDate:', next(rd2))
+          for r in itertools.islice(rd2, 3): print(' ', r)
+          # האם ה-route_id של ה-10 ימים תואם ל-route_id של הקובץ הקלאסי?
+          rd3 = csv.reader(io.TextIOWrapper(z.open('routes.txt'), 'utf-8-sig'))
+          h = {c.strip(): i for i, c in enumerate(next(rd3))}
+          print('עמודות routes (10 ימים):', sorted(h))
+          for r in itertools.islice(rd3, 3): print(' ', r[:6])
           PY
