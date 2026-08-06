@@ -21,13 +21,6 @@ import zipfile
 
 OUT = os.environ.get('OUTDIR', 'line-history/data')
 URL = 'https://gtfs.mot.gov.il/gtfsfiles/Gtfs_10_days.zip'
-# בקובץ ה-10 ימים route_desc ריק — המיפוי למק"ט נעשה דרך TripIdToDate
-# (TripId -> מק"ט-כיוון-חלופה). נופל לארכיון הסדנא אם שרת המשרד לא זמין.
-TID_URLS = ['https://gtfs.mot.gov.il/gtfsfiles/TripIdToDate.zip']
-S3 = 'https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
-for _back in range(0, 3):
-    _d = (datetime.date.today() - datetime.timedelta(days=_back))
-    TID_URLS.append(f'{S3}/gtfs_archive/{_d.year}/{_d.month:02d}/{_d.day:02d}/TripIdToDate.zip')
 UA = 'kav-bochan/line-history (daily vcnt scan; github.com/Transit-Freak/kav-bochan)'
 DAY_HE = {6: 'א', 0: 'ב', 1: 'ג', 2: 'ד', 3: 'ה', 4: 'ו', 5: 'ש'}
 BH = {'א': 'ימי ראשון', 'ב': 'ימי שני', 'ג': 'ימי שלישי', 'ד': 'ימי רביעי',
@@ -57,35 +50,36 @@ def download(url):
     return None
 
 
-def load_tid2rd():
-    """TripId -> rd (מק"ט-כיוון-חלופה) מקובץ הרישוי TripIdToDate."""
-    for url in TID_URLS:
-        p = download(url)
-        if not p:
-            continue
+def load_rid2rd():
+    """route_id -> rd (מק"ט-כיוון-חלופה). מרחב ה-route_id משותף בין קובץ
+    ה-10 ימים לקובץ הקלאסי (נבדק: 98% חפיפה, 100% התאמת מספרי קו) —
+    שולפים רק את routes.txt מהעותק הארכיוני של הקובץ הקלאסי."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from backfill_geo import central_dir, member_rows, S3
+    for back in range(0, 4):
+        d = datetime.date.today() - datetime.timedelta(days=back)
+        url = f'{S3}/gtfs_archive/{d.year}/{d.month:02d}/{d.day:02d}/israel-public-transportation.zip'
         try:
-            z = zipfile.ZipFile(p)
-            f = io.TextIOWrapper(z.open(z.namelist()[0]), 'utf-8-sig')
-            rd_ = csv.reader(f)
-            h = {c.strip(): i for i, c in enumerate(next(rd_))}
+            members = central_dir(url)
+            c, rows = member_rows(url, members, 'routes.txt')
             m = {}
-            for r in rd_:
+            for r in rows:
                 try:
-                    mkt = r[h['OfficeLineId']].lstrip('0')
-                    if mkt:
-                        m[r[h['TripId']]] = f"{mkt}-{r[h['Direction']]}-{r[h['LineAlternative']]}"
+                    parts = r[c['route_desc']].strip().split('-')
+                    mkt = parts[0].lstrip('0') if parts else ''
+                    if len(parts) >= 3 and mkt:
+                        m[r[c['route_id']]] = f"{mkt}-{parts[1]}-{parts[2]}"
                 except IndexError:
                     continue
-            os.unlink(p)
-            print(f'TripIdToDate: {len(m):,} נסיעות ממופות ({url.split("/")[2]})')
+            print(f'מיפוי route_id→מק"ט: {len(m):,} מסלולים (ארכיון {d.isoformat()})')
             return m
-        except Exception as e:
-            print(f'{url} — קובץ בעייתי: {e}', file=sys.stderr)
-    print('אין TripIdToDate זמין — מדלגים על היום')
+        except (SystemExit, Exception) as e:
+            print(f'{url} — לא זמין: {e}', file=sys.stderr)
+    print('אין קובץ קלאסי זמין למיפוי — מדלגים על היום')
     sys.exit(0)
 
 
-def build_map(zpath, tid2rd):
+def build_map(zpath, rid2rd):
     """rd -> bucket -> {hh:mm: מספר רכבים} — רק דקות עם 2+ רכבים מתוכננים."""
     z = zipfile.ZipFile(zpath)
     svc2dates = collections.defaultdict(list)
@@ -99,8 +93,7 @@ def build_map(zpath, tid2rd):
     trip2r = {}
     unmapped = 0
     for r in rd_:
-        # trip_id בפורמט "12345_100826" — המזהה שלפני הקו התחתון הוא TripId ברישוי
-        rd2 = tid2rd.get(r[h['trip_id']].split('_')[0])
+        rd2 = rid2rd.get(r[h['route_id']])
         if rd2 is None:
             unmapped += 1
             continue
@@ -145,12 +138,12 @@ def main():
     except Exception:
         state = {}
     prev = state.get('map')
-    tid2rd = load_tid2rd()
+    rid2rd = load_rid2rd()
     zpath = download(URL)
     if not zpath:
         print('הורדת Gtfs_10_days נכשלה — מדלגים על היום')
         sys.exit(0)
-    cur = build_map(zpath, tid2rd)
+    cur = build_map(zpath, rid2rd)
     os.unlink(zpath)
     n_routes = len(cur)
     n_slots = sum(len(m) for bk in cur.values() for m in bk.values())
