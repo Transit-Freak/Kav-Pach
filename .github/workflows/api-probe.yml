@@ -27,3 +27,4 @@ except Exception as e: print("ERR", e)')"; }
           probe "group_by בלי exclude" "$B/gtfs_rides_agg/group_by?date_from=$YDAY&date_to=$TODAY&group_by=operator_ref"
 
 # הצתה: שינוי בקובץ הזה מפעיל את הבדיקה
+# probe2
