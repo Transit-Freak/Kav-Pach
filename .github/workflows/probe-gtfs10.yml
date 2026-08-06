@@ -1,0 +1,82 @@
+# בדיקה חד-פעמית: האם Gtfs_10_days.zip מכיל יציאות מרובות-רכבים באותה דקה
+# (מה שה-GTFS הקלאסי לא ידע לייצג) — מבחן: קו 39 ירושלים לפני שבת.
+name: probe-gtfs10
+on:
+  push:
+    branches: [probe-go]
+permissions: {}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: הורדה וניתוח
+        run: |
+          set -e
+          curl -sL --retry 3 -o g10.zip "https://gtfs.mot.gov.il/gtfsfiles/Gtfs_10_days.zip" || \
+            curl -sL --retry 3 -o g10.zip "https://gtfs.mot.gov.il/gtfsfiles/gtfs_10_days.zip"
+          ls -la g10.zip
+          python3 - <<'PY'
+          import zipfile, csv, io, collections
+          z = zipfile.ZipFile('g10.zip')
+          print('קבצים:', z.namelist()[:12])
+          rd = csv.reader(io.TextIOWrapper(z.open('routes.txt'), 'utf-8-sig'))
+          h = {c.strip(): i for i, c in enumerate(next(rd))}
+          routes = {}; targets = {}
+          for r in rd:
+              routes[r[h['route_id']]] = (r[h['route_short_name']], r[h['route_long_name']][:50], r[h['route_desc']])
+              if r[h['route_short_name']] == '39' and 'ירושלים' in r[h['route_long_name']]:
+                  targets[r[h['route_id']]] = routes[r[h['route_id']]]
+          print('מסלולי קו 39 ירושלים:', len(targets))
+          rd = csv.reader(io.TextIOWrapper(z.open('trips.txt'), 'utf-8-sig'))
+          h = {c.strip(): i for i, c in enumerate(next(rd))}
+          trip2r = {}
+          for r in rd: trip2r[r[h['trip_id']]] = (r[h['route_id']], r[h['service_id']])
+          print('נסיעות בקובץ:', len(trip2r))
+          # calendar: אילו תאריכים לכל service
+          svc2dates = collections.defaultdict(list)
+          try:
+              rd = csv.reader(io.TextIOWrapper(z.open('calendar.txt'), 'utf-8-sig'))
+              h = {c.strip(): i for i, c in enumerate(next(rd))}
+              import datetime
+              days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+              for r in rd:
+                  d0 = datetime.datetime.strptime(r[h['start_date']], '%Y%m%d').date()
+                  d1 = datetime.datetime.strptime(r[h['end_date']], '%Y%m%d').date()
+                  d = d0
+                  while d <= d1:
+                      if r[h[days[(d.weekday()+1) % 7]]] == '1': svc2dates[r[h['service_id']]].append(d.isoformat())
+                      d += datetime.timedelta(days=1)
+          except KeyError as e: print('אין calendar רגיל:', e)
+          deps = collections.defaultdict(list)   # (route_id, date) -> [hh:mm]
+          f = z.open('stop_times.txt')
+          hdr = None
+          for ln in io.TextIOWrapper(f, 'utf-8-sig'):
+              p = ln.rstrip('\n').split(',')
+              if hdr is None:
+                  hdr = {c.strip(): i for i, c in enumerate(p)}; continue
+              try:
+                  if p[hdr['stop_sequence']].strip() != '1': continue
+                  t = p[hdr['trip_id']]
+                  ri = trip2r.get(t)
+                  if ri is None: continue
+                  for ds in svc2dates.get(ri[1], ['?']):
+                      deps[(ri[0], ds)].append(p[hdr['departure_time']][:5])
+              except (IndexError, KeyError): continue
+          dup_routes = set(); dup_total = 0; ex = []
+          for (rid, ds), ts in deps.items():
+              c = collections.Counter(ts)
+              d = {x: n for x, n in c.items() if n > 1}
+              if d:
+                  dup_routes.add(rid); dup_total += sum(d.values()) - len(d)
+                  if rid in targets or len(ex) < 8: ex.append((routes.get(rid), ds, dict(list(d.items())[:4])))
+          print('=== תוצאה ===')
+          print('מסלולים עם יציאות באותה דקה:', len(dup_routes), '| רכבים עודפים סה"כ:', dup_total)
+          for e in ex[:12]: print(' ', e)
+          # קו 39 ספציפית
+          for rid, t in targets.items():
+              for (r2, ds), ts in deps.items():
+                  if r2 == rid:
+                      c = collections.Counter(ts); d = {x: n for x, n in c.items() if n > 1}
+                      if d: print('קו 39!', t, ds, d)
+          PY
