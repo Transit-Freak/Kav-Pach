@@ -24,7 +24,7 @@ jobs:
       - name: העשרה (חוליה קצרה)
         env:
           ENRICH: '1'
-          TO: '2023-11-30'
+          TO: '2024-02-29'
           MAX_MIN: '25'
           MAX_DAYS: '30'
         run: |
@@ -48,8 +48,9 @@ jobs:
           CHAIN='${{ github.event.inputs.chain }}'
           CHAIN=${CHAIN:-1}
           echo "העשרה עד: $LAST | חוליה: $CHAIN"
-          if [ -n "$LAST" ] && [ ! "$LAST" \< "2023-11-30" ]; then
-            echo "ההעשרה הושלמה — סוף השרשרת"
+          if [ -n "$LAST" ] && [ ! "$LAST" \< "2024-02-29" ]; then
+            echo "ההעשרה הושלמה — משגר את סבב המסלול-שלפני"
+            gh workflow run geo2-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=1 || true
           elif [ "$CHAIN" -lt 80 ]; then
             gh workflow run enrich-scan.yml --repo "$GITHUB_REPOSITORY" --ref freq-go -f chain=$((CHAIN+1)) || true
           fi
