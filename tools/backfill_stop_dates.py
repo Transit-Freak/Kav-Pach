@@ -6,6 +6,9 @@
 # פער של 3 שנים נפתר ב~8 דגימות. השינוי המתוארך נהפך לאירוע עצמאי
 # בציר הזמן (stops / stops-add / stops-del) והדיף יורד מרשומת העוגן.
 import json, os, sys, time, datetime, urllib.request, urllib.parse
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from compact_lines import materialize
 
 API = 'https://open-bus-stride-api.hasadna.org.il'
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
@@ -109,7 +112,7 @@ except Exception: skip = {}
 targets = []
 for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
     if not fn.endswith('.json'): continue
-    try: lf = json.load(open(f'{OUTDIR}/lines/{fn}', encoding='utf-8'))
+    try: lf = materialize(json.load(open(f'{OUTDIR}/lines/{fn}', encoding='utf-8')))
     except Exception: continue
     vs = lf.get('versions', [])
     prev_i = None

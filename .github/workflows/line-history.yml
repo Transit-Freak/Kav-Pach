@@ -15,6 +15,7 @@ on:
       - 'tools/enrich_stop_diffs.py'
       - 'tools/scan_vcnt_daily.py'
       - 'tools/last_sched.py'
+      - 'tools/compact_lines.py'
   workflow_dispatch:
 
 permissions:
@@ -108,6 +109,7 @@ jobs:
               git checkout "origin/$BR" -- "$f" 2>/dev/null || rm -f -- "$f"
             done < /tmp/lh-theirs
             OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            OUTDIR=line-history/data python3 tools/compact_lines.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
             git add -A line-history/data kavbug-data
             if git diff --cached --quiet; then

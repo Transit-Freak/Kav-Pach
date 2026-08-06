@@ -6,6 +6,9 @@
 # בשקט מהפרמטר — לכן החישוב המקומי הוא הדרך האמינה היחידה.
 # רץ בכל לילה; ככל שנאספים עוד רצפים הרשימות מתעדכנות ומתרחבות לבד.
 import json, os, datetime
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from compact_lines import materialize
 
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 CAP = 15   # תקרת קווים מוצגת לאירוע
@@ -22,7 +25,7 @@ iv = {}
 n_files = 0
 for fn in os.listdir(f'{OUTDIR}/lines'):
     if not fn.endswith('.json'): continue
-    lf = jload(f'{OUTDIR}/lines/{fn}', {})
+    lf = materialize(jload(f'{OUTDIR}/lines/{fn}', {}))
     vs = lf.get('versions', [])
     line = lf.get('line') or ''
     if not line or not vs: continue

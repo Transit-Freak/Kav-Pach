@@ -18,6 +18,7 @@ import os
 import re
 import sys
 import time
+from compact_lines import materialize
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backfill_geo import (S3, OUTDIR, MAX_MIN, T0, central_dir, member_rows,
@@ -189,7 +190,7 @@ def build_cases():
     for fn in os.listdir(dd):
         if not fn.endswith('.json'):
             continue
-        lf = json.load(open(f'{dd}/{fn}', encoding='utf-8'))
+        lf = materialize(json.load(open(f'{dd}/{fn}', encoding='utf-8')))
         vs = lf.get('versions', [])
         rd = lf.get('rd')
         if not rd or (TEST_RD and rd != TEST_RD):

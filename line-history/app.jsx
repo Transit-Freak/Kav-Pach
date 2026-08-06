@@ -86,6 +86,21 @@ const SKINDS = {
 };
 
 // פענוח polyline (precision 5)
+// פורמט קובץ דחוס (חיסכון ~30MB, בקשת המשתמש): תחנות ומסלולים נשמרים
+// פעם אחת במאגרי pool/spool והגרסאות מפנות באינדקס; כאן פותחים חזרה
+// לצורה המלאה — שאר הקוד לא יודע שהקובץ היה דחוס. תאום-לאחור לקבצים ישנים.
+function materializeLf(lf) {
+  if (!lf) return lf;
+  const pool = lf.pool, spool = lf.spool;
+  (lf.versions || []).forEach((v) => {
+    if (pool && Array.isArray(v.stops) && v.stops.length && typeof v.stops[0] === "number")
+      v.stops = v.stops.map((i) => pool[i]);
+    if (typeof v.shp === "number") v.shp = (spool && v.shp > 0 && spool[v.shp]) || "";
+  });
+  delete lf.pool; delete lf.spool;
+  return lf;
+}
+
 function decodeShape(str) {
   const pts = []; let i = 0, la = 0, lo = 0;
   while (i < str.length) {
@@ -396,7 +411,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
     setLf(null); setErr(null); setSel(null); setMon("");
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((d) => { setLf(d); setSel(d.versions.length - 1); })
+      .then((d) => { setLf(materializeLf(d)); setSel(d.versions.length - 1); })
       .catch(setErr);
   }, [rd]);
   if (err) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button><div className="empty">לא נמצאו נתונים לוריאנט הזה.</div></div>;
@@ -586,7 +601,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
           {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>}
         </div>
-        {approx
+        {v.shpref
+          ? <div className="mut">🛈 רצף התחנות בצילום זהה לגרסה הסמוכה — מוצג המסלול המלא שלה במקום קו מקורב. {(v.stops || []).length} תחנות בגרסה זו.</div>
+          : approx
           ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(v.stops || []).length} תחנות בגרסה זו.</div>
           : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(v.stops || []).length} תחנות בגרסה זו.</div>}
         </>)}

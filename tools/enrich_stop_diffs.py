@@ -5,6 +5,9 @@
 # ביטול באמצע לא מאפס את הבסיס — קו שחזר עם תחנות אחרות יראה את ההבדל.
 # רץ בסוף כל ריצת לילה של שלב ב', ואפשר גם ידנית.
 import json, os
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from compact_lines import materialize
 
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 KINDS = {'new', 'dest', 'renum', 'operator'}   # רק גרסאות ארכיון; ליומי יש דיפים משלו
@@ -15,7 +18,7 @@ for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
     if not fn.endswith('.json'): continue
     p = f'{OUTDIR}/lines/{fn}'
     try:
-        lf = json.load(open(p, encoding='utf-8'))
+        lf = materialize(json.load(open(p, encoding='utf-8')))
     except Exception:
         continue
     changed = False

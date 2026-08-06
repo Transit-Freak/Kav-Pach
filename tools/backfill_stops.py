@@ -11,6 +11,9 @@
 #
 # קלט: OUTDIR, PAUSE, MAX_MIN (תקרת דקות לריצה), MAX_TARGETS (0=בלי תקרה)
 import json, os, sys, time, datetime, urllib.request, urllib.parse
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from compact_lines import materialize
 
 API = 'https://open-bus-stride-api.hasadna.org.il'
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
@@ -104,7 +107,7 @@ def seq_before(rd, d):
 targets = []
 for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
     if not fn.endswith('.json'): continue
-    lf = jload(f'{OUTDIR}/lines/{fn}', {})
+    lf = materialize(jload(f'{OUTDIR}/lines/{fn}', {}))
     rd = lf.get('rd', '')
     vs = lf.get('versions', [])
     has_any = any(v.get('stops') or v.get('shp') for v in vs)
