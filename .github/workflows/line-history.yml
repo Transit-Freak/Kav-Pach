@@ -29,7 +29,7 @@ jobs:
   run:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v4
 
@@ -59,6 +59,22 @@ jobs:
         run: |
           OUTDIR=line-history/data python3 tools/scan_vcnt_daily.py || echo "שרת הרישוי לא זמין — נשלים בריצה הבאה"
 
+      # קו באג — אותה סריקה יומית אחת: קוד הזיהוי נמשך מריפו קו-באג (מקור
+      # האמת שלו נשאר שם), רץ על אותו GTFS שכבר ירד כאן, והתוצאות נשמרות
+      # ב-kavbug-data/; ריפו קו-באג מושך אותן בסנכרון קטן והאתר שלו נשאר
+      # באותה כתובת בדיוק.
+      - name: סריקת קו באג (עיקופי אוטובוסים) על אותו GTFS
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p /tmp/kbscan kavbug-data
+          for f in scan-country.js update-history.js data.js; do
+            curl -fsSL "https://raw.githubusercontent.com/Transit-Freak/kav-bug/main/$f" -o "/tmp/kbscan/$f"
+          done
+          npm install --prefix /tmp/kbscan fflate --no-save
+          node --max-old-space-size=6144 /tmp/kbscan/scan-country.js gtfs.zip kavbug-data/country-scan
+          node /tmp/kbscan/update-history.js kavbug-data/country-scan.json kavbug-data/history.json
+
       - name: Commit (לענף שהריץ — main בריצה המתוזמנת)
         run: |
           set -euo pipefail
@@ -70,22 +86,22 @@ jobs:
           # שינתה נשמרים; קובץ שהשתנה בינתיים גם ב-origin — origin גובר
           # (למשל סיפור מדויק ממכונת הדיוק שנחת בזמן שהריצה רצה).
           BASE=$(git rev-parse HEAD)
-          git add -A line-history/data
-          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data > /tmp/lh-changed
-          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data > /tmp/lh-deleted
+          git add -A line-history/data kavbug-data
+          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data kavbug-data > /tmp/lh-changed
+          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data kavbug-data > /tmp/lh-deleted
           rm -rf /tmp/lh-out && mkdir -p /tmp/lh-out
           xargs -0 -r -I{} cp --parents {} /tmp/lh-out/ < /tmp/lh-changed
           for i in 1 2 3 4; do
             git fetch origin "$BR" && git reset --hard "origin/$BR"
             cp -r /tmp/lh-out/. .
             xargs -0 -r rm -f -- < /tmp/lh-deleted
-            git diff --name-only -z "$BASE" "origin/$BR" -- line-history/data > /tmp/lh-theirs
+            git diff --name-only -z "$BASE" "origin/$BR" -- line-history/data kavbug-data > /tmp/lh-theirs
             while IFS= read -r -d '' f; do
               git checkout "origin/$BR" -- "$f" 2>/dev/null || rm -f -- "$f"
             done < /tmp/lh-theirs
             OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
-            git add -A line-history/data
+            git add -A line-history/data kavbug-data
             if git diff --cached --quiet; then
               echo "unchanged — nothing to commit"; break; fi
             git commit -m "data: line-history — שינויי מסלולים ותחנות יומיים"

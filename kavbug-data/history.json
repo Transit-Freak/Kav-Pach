@@ -1,0 +1,82 @@
+[
+ {
+  "date": "2026-07-02",
+  "totalLines": 6714,
+  "realCount": 173,
+  "totalWasteDayKm": 440,
+  "railGapsCount": 0
+ },
+ {
+  "date": "2026-07-05",
+  "totalLines": 6040,
+  "realCount": 149,
+  "totalWasteDayKm": 549,
+  "railGapsCount": 0
+ },
+ {
+  "date": "2026-07-06",
+  "totalLines": 6055,
+  "realCount": 147,
+  "totalWasteDayKm": 449,
+  "railGapsCount": 0
+ },
+ {
+  "date": "2026-07-07",
+  "totalLines": 6055,
+  "realCount": 147,
+  "totalWasteDayKm": 449,
+  "railGapsCount": 0
+ },
+ {
+  "date": "2026-07-12",
+  "totalLines": 6057,
+  "realCount": 147,
+  "totalWasteDayKm": 463,
+  "railGapsCount": 0
+ },
+ {
+  "date": "2026-07-13",
+  "totalLines": 6057,
+  "realCount": 147,
+  "totalWasteDayKm": 463,
+  "railGapsCount": 112
+ },
+ {
+  "date": "2026-07-14",
+  "totalLines": 6057,
+  "realCount": 147,
+  "totalWasteDayKm": 463,
+  "railGapsCount": 16
+ },
+ {
+  "date": "2026-07-19",
+  "totalLines": 6146,
+  "realCount": 147,
+  "totalWasteDayKm": 487,
+  "railGapsCount": 16
+ },
+ {
+  "date": "2026-07-26",
+  "totalLines": 6105,
+  "realCount": 144,
+  "totalWasteDayKm": 478
+ },
+ {
+  "date": "2026-08-02",
+  "totalLines": 6195,
+  "realCount": 150,
+  "totalWasteDayKm": 571
+ },
+ {
+  "date": "2026-08-04",
+  "totalLines": 6228,
+  "realCount": 152,
+  "totalWasteDayKm": 572
+ },
+ {
+  "date": "2026-08-05",
+  "totalLines": 6202,
+  "realCount": 151,
+  "totalWasteDayKm": 572
+ }
+]
