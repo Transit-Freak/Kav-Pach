@@ -18,6 +18,7 @@ const KINDS = {
   operator:    { label: "החלפת מפעיל", color: "#0f766e" },
   dest:        { label: "שינוי יעד", color: "#9333ea" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
+  renamed:     { label: "שינוי שם תחנת קצה", color: "#d97706" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
@@ -631,9 +632,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           {shown.map(({ v: x, i }) => (
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
               <div className="d">{fmtD(x.d)}{(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}
+                {(x.shp || (x.stops || []).length > 1) && (
                 <button className={"cmpbtn" + (cmpI === i ? " on" : "")}
                   title={cmpI === i ? "זו גרסת הבסיס להשוואה — לחיצה מבטלת" : "קביעת הגרסה הזו כבסיס, ואז לחיצה על אירוע אחר תשווה מולה"}
-                  onClick={(e) => { e.stopPropagation(); setCmpI(cmpI === i ? null : i); }}>⇄</button>
+                  onClick={(e) => { e.stopPropagation(); setCmpI(cmpI === i ? null : i); }}>
+                  {cmpI === i ? "⇄ בסיס ההשוואה" : "⇄ השווה"}</button>)}
               </div>
               <div className="t">
                 <span className="k" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</span>

@@ -14,6 +14,7 @@ DRY=1 מדווח בלבד. הכלי אידמפוטנטי.
 """
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,8 +28,29 @@ def ends(stops):
     return (stops[0][0], stops[-1][0]) if stops and len(stops) > 1 else None
 
 
+NUM = re.compile(r'מספר הקו שוּנה: (\S+) ← (\S+)')
+
+
+def noise_renum(v):
+    """אירוע "שינוי מספר" שאינו שינוי אמיתי.
+
+    בקובץ המקורי הסיומת "-1" נכתבת ונמחקת חליפות (קו 386 למשל התחלף
+    386 ↔ 386-1 שש פעמים בשלושה חודשים). אחרי נירמול הסיומת שני הצדדים
+    זהים — זה רעש רישום. נמחק רק כשהאירוע אינו נושא שום מידע אחר.
+    """
+    if v.get('k') != 'renum':
+        return False
+    m = NUM.search(v.get('note') or '')
+    if not m:
+        return False
+    norm = lambda x: re.sub(r'-\d+$', '', x)
+    if norm(m.group(1)) != norm(m.group(2)):
+        return False
+    return not any(v.get(f) for f in ('stops', 'shp', 'add', 'rem', 'tb'))
+
+
 def main():
-    changed = examined = renamed = undecided = 0
+    changed = examined = renamed = undecided = dropped = 0
     for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
         if not fn.endswith('.json'):
             continue
@@ -36,6 +58,12 @@ def main():
         lf = materialize(json.load(open(p, encoding='utf-8')))
         vs = lf.get('versions') or []
         dirty = False
+        keep = [v for v in vs if not noise_renum(v)]
+        if len(keep) != len(vs):
+            dropped += len(vs) - len(keep)
+            vs = keep
+            lf['versions'] = vs
+            dirty = True
         for i, v in enumerate(vs):
             if v.get('k') != 'dest':
                 continue
@@ -62,6 +90,7 @@ def main():
     mode = 'סימולציה' if DRY else 'בוצע'
     print(f'{mode}: נבדקו {examined} אירועי "שינוי יעד" · '
           f'{renamed} הם החלפת שם בלבד · {undecided} ללא הכרעה · '
+          f'{dropped} אירועי "שינוי מספר" מזויפים נמחקו · '
           f'{changed} קבצים עודכנו', file=sys.stderr)
 
 
