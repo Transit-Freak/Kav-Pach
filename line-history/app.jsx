@@ -426,11 +426,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const vs = lf.versions;
   const months = [...new Set(vs.map((v) => v.d.slice(0, 7)))].reverse();
   const shown = vs.map((v, i) => ({ v, i }))
-    .filter((x) => (!mon || x.v.d.slice(0, 7) === mon) && !offK.has(x.v.k)).reverse();
+    .filter((x) => (!mon || x.v.d.slice(0, 7) === mon) && !offK.has(dispKind(x.v, x.i, vs))).reverse();
   // הקטגוריות שקיימות בקו הזה בפועל, לפי שכיחות — סרגל כיבוי/הדלקה
   const kindsHere = (() => {
+    // התווית שעל האירוע נגזרת מ-dispKind ולא מ-k הגולמי; סינון לפי k היה
+    // יוצר אי-התאמה — כפתור "שינוי מספר הרכבים" שמשאיר אירועים מתויגים
+    // "שינוי לו״ז". הסינון והתוויות חייבים לדבר באותה שפה.
     const c = new Map();
-    vs.forEach((x) => c.set(x.k, (c.get(x.k) || 0) + 1));
+    vs.forEach((x, i) => { const dk = dispKind(x, i, vs); c.set(dk, (c.get(dk) || 0) + 1); });
     return [...c.entries()].sort((a, b) => b[1] - a[1]);
   })();
   const toggleK = (k) => setOffK((prev) => {
