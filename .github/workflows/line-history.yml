@@ -13,6 +13,8 @@ on:
       - 'tools/linehistory.py'
       - 'tools/rebuild_lines_index.py'
       - 'tools/enrich_stop_diffs.py'
+      - 'tools/fix_dest_kind.py'
+      - 'tools/enrich_2017.py'
       - 'tools/scan_vcnt_daily.py'
       - 'tools/last_sched.py'
       - 'tools/compact_lines.py'
@@ -109,6 +111,11 @@ jobs:
               git checkout "origin/$BR" -- "$f" 2>/dev/null || rm -f -- "$f"
             done < /tmp/lh-theirs
             OUTDIR=line-history/data python3 tools/enrich_stop_diffs.py
+            # סיווג "שינוי יעד" נקבע בסורק לפי מחרוזת השם; כאן הוא מתוקן
+            # לפי מק"ט תחנות הקצה. שני הכלים אידמפוטנטיים ומחזירים את
+            # מצבם גם אחרי מיזוג של סריקת רקע שדרס גרסאות.
+            OUTDIR=line-history/data python3 tools/fix_dest_kind.py
+            OUTDIR=line-history/data python3 tools/enrich_2017.py
             OUTDIR=line-history/data python3 tools/compact_lines.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
             git add -A line-history/data kavbug-data
