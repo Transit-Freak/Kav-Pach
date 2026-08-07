@@ -481,15 +481,23 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות.
   const toPts = (x) => (x.shp ? decodeShape(x.shp) : ((x.stops || []).length > 1 ? x.stops.map((s) => [s[2], s[3]]) : null));
   const approx = !v.shp && (v.stops || []).length > 1;
-  const cur = toPts(v) || [];
+  // במצב השוואה מעניין מצב הקו בשני התאריכים, לא האירוע עצמו: אירוע לו"ז
+  // אינו נושא גאומטריה, ובלי זה המפה לא הייתה נפתחת כלל בהשוואה.
+  const geoAt = (idx) => {
+    for (let j = idx; j >= 0; j--) if ((vs[j].stops || []).length || vs[j].shp) return vs[j];
+    return null;
+  };
+  const gv = cmpOn ? (geoAt(vi) || v) : v;
+  const cur = toPts(gv) || [];
   // המסלול הקודם מוצג רק כשיש באמת מה להשוות: הגרסה מתעדת שינוי תחנות
   // (כולל הפרש-פער מול "תיעוד ראשון") או שינוי מסלול, או ששתי הגרסאות
   // מדויקות. בלי זה, קירוב-לפי-תחנות מול גאומטריה מלאה מצייר "מסלול ישן"
   // אדום שנראה כמו שינוי אמיתי כשהמסלול בכלל לא השתנה (בקשת שלמה).
   const ROUTE_KINDS = new Set(["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"]);
   const comparable = !!pv && (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
-  const prev = comparable ? toPts(pv) : null;
-  const prevApprox = !!(pv && prev && !pv.shp);
+  const pgv = cmpOn ? (geoAt(pi) || pv) : pv;
+  const prev = comparable ? toPts(pgv) : null;
+  const prevApprox = !!(pgv && prev && !pgv.shp);
   // קובץ 2012 מקבץ את כל הווריאנטים הארציים של המספר — מציגים רק את
   // הרלוונטיים לקו הפתוח (חפיפת מילים עם התחנות/היעד), עם אפשרות לחשוף הכל
   const rel12 = (() => {
@@ -672,14 +680,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               ))}
             </tbody></table>
           </div>
-        ) : !v.shp && !approx ? (
+        ) : !gv.shp && !((gv.stops || []).length > 1) ? (
           <div className="nogeo">
             🛈 {v.note || "אין פירוט לגרסה זו"}<br />
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
         ) : (<>
-        <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} prevApprox={prevApprox} curStops={v.stops}
-          prevStops={pv && (pv.stops || []).length ? pv.stops : null}
+        <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "")} cur={cur} prev={prev}
+          approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
+          prevStops={pgv && (pgv.stops || []).length ? pgv.stops : null}
           addedCodes={(!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n, i) => codeOf(n, i, true)).filter(Boolean)) : null}
           stops12={stops12} />
