@@ -359,6 +359,13 @@ function usePersistedQ(key) {
 /* עוגן 2012: rd -> תקציר המסלול דאז (נטען פעם אחת לכל הדפדוף) */
 let ANC2012 = null;
 let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "2012" בחיפוש
+let ANC2017 = null;        // עוגני 2017 (ארכיון TransitFeeds) — נטענים פעם אחת
+function getAnchors2017() {
+  ANC2017 || (ANC2017 = fetch("data/anchor-2017.json?v=" + BUILD)
+    .then((r) => (r.ok ? r.json() : { anchors: {} }))
+    .catch(() => ({ anchors: {} })));
+  return ANC2017;
+}
 const getAnchors2012 = () =>
   ANC2012 || (ANC2012 = fetch("data/anchor-2012.json?v=" + BUILD)
     .then((r) => (r.ok ? r.json() : { anchors: {} }))
@@ -372,13 +379,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
   const [mon, setMon] = useState("");
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
+  const [a17, setA17] = useState(null);   // עוגן 2017 — קדם לתחילת הארכיון של הסדנא
   const [show12, setShow12] = useState(false);
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
   useEffect(() => {
     let ok = true;
-    setAnc(null); setShow12(false); setD12(null); setR12(0);
+    setAnc(null); setA17(null); setShow12(false); setD12(null); setR12(0);
     getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
+    getAnchors2017().then((d) => { if (ok) setA17((d.anchors || {})[rd] || null); });
     return () => { ok = false; };
   }, [rd]);
   useEffect(() => {
@@ -478,6 +487,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <button className="back" title="חזרה למסך החיפוש — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש</button>
         <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {a17 && (
+          <div className="a2017" title="הקו היה קיים כבר ב-2017, לפני תחילת הארכיון היומי. המקור: ארכיון TransitFeeds של הפיד הארצי של משרד התחבורה">
+            <b>2017</b> · {a17.f} ← {a17.l}
+            {" "}<span className="a17meta">· נצפה {a17.first.split("-").reverse().join(".")}
+              {a17.seen > 1 ? " – " + a17.last.split("-").reverse().join(".") : ""}</span>
+          </div>
+        )}
         {anc && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
