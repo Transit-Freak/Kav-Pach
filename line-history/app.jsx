@@ -254,7 +254,7 @@ function TimesDiff({ tl, tn }) {
   );
 }
 
-function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12 }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // הקטעים ששונו + התחנות ששונו — היעד של מצב "התמקדות" (בקשת המשתמש:
@@ -262,12 +262,15 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }
   // השוואת קטעים רק כששני הצדדים מדויקים — קו מקורב בין תחנות ייתן רעש
   const diff = useMemo(() => (prev && !approx && !prevApprox ? segDiff(cur, prev) : null), [cur, prev, approx, prevApprox]);
   const chStops = useMemo(() => {
+    if (addedCodes && (curStops || []).length) {
+      return (curStops || []).filter((s) => addedCodes.has(s[0])).map((s) => [s[2], s[3]]);
+    }
     if (!prevStops) return [];
     const curCodes = new Set((curStops || []).map((s) => s[0]));
     const prevCodes = new Set((prevStops || []).map((s) => s[0]));
     return (curStops || []).filter((s) => !prevCodes.has(s[0])).map((s) => [s[2], s[3]])
       .concat((prevStops || []).filter((s) => !curCodes.has(s[0])).map((s) => [s[2], s[3]]));
-  }, [curStops, prevStops]);
+  }, [curStops, prevStops, addedCodes]);
   const focusPts = useMemo(() => {
     const pts = [];
     if (diff) { diff.curSegs.forEach((sg) => pts.push(...sg)); diff.prevSegs.forEach((sg) => pts.push(...sg)); }
@@ -315,7 +318,10 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }
     const popHtml = (s, status) =>
       `<b>${esc(s[1])}</b>${status ? `<br><span class="pst">${status}</span>` : ""}<br><span class="pcode">מק״ט תחנה ${esc(s[0])}</span>`;
     (curStops || []).forEach((s) => {
-      const isNew = prevStops && !prevCodes.has(s[0]);
+      // הגרסה הקודמת עשויה להיות שינוי תדירות בלי רצף תחנות, ואז אין מול מה
+      // להשוות. רשימת התחנות שנוספו כבר חושבה בצנרת ונשמרה על הגרסה — היא
+      // המקור האמין לסימון, ולא השוואה מול גרסה שאין בה גאומטריה.
+      const isNew = addedCodes ? addedCodes.has(s[0]) : (prevStops && !prevCodes.has(s[0]));
       const m = L.circleMarker([s[2], s[3]], {
         radius: isNew ? 8 : 5, color: isNew ? "#fff" : "#4c1d95", weight: 2,
         fillColor: isNew ? "#16a34a" : "#fff", fillOpacity: 1, opacity: focused && !isNew ? 0.4 : 1,
@@ -331,7 +337,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, stops12 }
         .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
     });
     return () => { mapRef.current = null; map.remove(); };
-  }, [cur, prev, curStops, prevStops, focus, diff, chStops, focusPts, canFocus, stops12]);
+  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12]);
   return (
     <div className="mapwrap">
       <div className="map" ref={ref} />
@@ -593,7 +599,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           </div>
         ) : (<>
         <DiffMap key={v.d + v.k} cur={cur} prev={prev} approx={approx} prevApprox={prevApprox} curStops={v.stops}
-          prevStops={pv && (pv.stops || []).length ? pv.stops : null} stops12={stops12} />
+          prevStops={pv && (pv.stops || []).length ? pv.stops : null}
+          addedCodes={(!pv || !(pv.stops || []).length) && (v.add || []).length
+            ? new Set((v.add || []).map((n, i) => codeOf(n, i, true)).filter(Boolean)) : null}
+          stops12={stops12} />
         <div className="legend">
           {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
