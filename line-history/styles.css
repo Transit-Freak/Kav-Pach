@@ -181,3 +181,11 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .tsnap th { background: #ecfeff; color: #155e75; font-weight: 800; padding: 7px 12px; text-align: right; border-bottom: 1px solid #e5e7eb; white-space: nowrap; width: 1%; }
 .tsnap td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; line-height: 2; }
 .tsnap .tt { display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 7px; padding: 1px 7px; margin: 0 0 0 6px; font-variant-numeric: tabular-nums; font-weight: 700; color: #0f172a; }
+
+/* סרגל סינון קטגוריות בעמוד הקו — כיבוי והדלקה של סוגי שינויים */
+.kfilter { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+.kchip { border: 1px solid #cbd5e1; background: #fff; color: #475569; border-radius: 999px;
+  padding: 3px 10px; font-size: 12px; cursor: pointer; line-height: 1.6; }
+.kchip b { font-weight: 700; opacity: .75; margin-inline-start: 3px; }
+.kchip.off { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; border-color: #e2e8f0; }
+.kchip:hover { filter: brightness(.96); }

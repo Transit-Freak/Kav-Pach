@@ -377,6 +377,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
   const [mon, setMon] = useState("");
+  const [offK, setOffK] = useState(() => new Set());   // קטגוריות שכובו בעמוד הקו
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
@@ -414,7 +415,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       .catch(() => setD12({ routes: [] }));
   }, [show12, anc, d12, lf]);
   useEffect(() => {
-    setLf(null); setErr(null); setSel(null); setMon("");
+    setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set());
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((d) => { setLf(materializeLf(d)); setSel(d.versions.length - 1); })
@@ -424,7 +425,19 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   if (!lf) return <div className="card">טוען…</div>;
   const vs = lf.versions;
   const months = [...new Set(vs.map((v) => v.d.slice(0, 7)))].reverse();
-  const shown = vs.map((v, i) => ({ v, i })).filter((x) => !mon || x.v.d.slice(0, 7) === mon).reverse();
+  const shown = vs.map((v, i) => ({ v, i }))
+    .filter((x) => (!mon || x.v.d.slice(0, 7) === mon) && !offK.has(x.v.k)).reverse();
+  // הקטגוריות שקיימות בקו הזה בפועל, לפי שכיחות — סרגל כיבוי/הדלקה
+  const kindsHere = (() => {
+    const c = new Map();
+    vs.forEach((x) => c.set(x.k, (c.get(x.k) || 0) + 1));
+    return [...c.entries()].sort((a, b) => b[1] - a[1]);
+  })();
+  const toggleK = (k) => setOffK((prev) => {
+    const n = new Set(prev);
+    n.has(k) ? n.delete(k) : n.add(k);
+    return n;
+  });
   // מס' תחנה לרשימות ➕/➖: בהוספה מחפשים בגרסה עצמה, בהורדה בגרסאות שלפניה
   const codeOf = (name, i, isAdd) => {
     const scan = (l) => { const h = (l || []).find((s) => s && s[1] === name); return h ? h[0] : null; };
@@ -542,6 +555,20 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               ? <>❌ הקו בוטל — אין חלופות פעילות — מאז {fmtD(vs[vs.length - 1].d)}</>
               : <>⚠️ החלופה הזו מבוטלת מאז {fmtD(vs[vs.length - 1].d)} (לקו יש חלופות פעילות)</>}
             {dispKind(vs[vs.length - 1], vs.length - 1, vs) === "removed-year" ? " — מעל שנה ולא חזרה" : ""}
+          </div>
+        )}
+        {kindsHere.length > 1 && (
+          <div className="kfilter">
+            <button className={"kchip" + (offK.size ? "" : " on")}
+              title="הצגת כל סוגי השינויים בקו הזה" onClick={() => setOffK(new Set())}>הכול</button>
+            {kindsHere.map(([k, n]) => (
+              <button key={k} className={"kchip" + (offK.has(k) ? " off" : " on")}
+                style={offK.has(k) ? null : { borderColor: catColor(k), color: catColor(k) }}
+                title={offK.has(k) ? "הדלקה — האירועים האלה יחזרו לרשימה" : "כיבוי — האירועים האלה ייעלמו מהרשימה"}
+                onClick={() => toggleK(k)}>
+                {(KINDS[k] || {}).label || k} <b>{n}</b>
+              </button>
+            ))}
           </div>
         )}
         {months.length > 1 && (
