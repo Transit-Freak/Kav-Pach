@@ -643,7 +643,17 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                 {(x.shp || (x.stops || []).length > 1) && (
                 <button className={"cmpbtn" + (cmpI === i ? " on" : "")}
                   title={cmpI === i ? "זו גרסת הבסיס להשוואה — לחיצה מבטלת" : "קביעת הגרסה הזו כבסיס, ואז לחיצה על אירוע אחר תשווה מולה"}
-                  onClick={(e) => { e.stopPropagation(); setCmpI(cmpI === i ? null : i); }}>
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (cmpI === i) { setCmpI(null); return; }
+                    setCmpI(i);
+                    // לחיצה אחת מספיקה: אם האירוע הפתוח הוא הבסיס עצמו אין מה
+                    // להשוות, ולכן נפתחת מולו הגרסה העדכנית ביותר.
+                    if (vs.indexOf(v) === i) {
+                      const last = vs.length - 1;
+                      setSel(last === i ? Math.max(0, i - 1) : last);
+                    }
+                  }}>
                   {cmpI === i ? "⇄ בסיס ההשוואה" : "⇄ השווה"}</button>)}
               </div>
               <div className="t">
