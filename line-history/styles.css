@@ -189,3 +189,17 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .kchip b { font-weight: 700; opacity: .75; margin-inline-start: 3px; }
 .kchip.off { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; border-color: #e2e8f0; }
 .kchip:hover { filter: brightness(.96); }
+
+/* השוואה חופשית בין שתי גרסאות בעמוד הקו */
+.cmpbar { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px;
+  padding: 7px 11px; margin: 8px 0; font-size: 13px; color: #3730a3; }
+.cmpbar b { color: #4338ca; }
+.cmpsum { color: #4f46e5; }
+.cmpx { float: inline-end; border: 1px solid #c7d2fe; background: #fff; color: #4338ca;
+  border-radius: 999px; padding: 1px 9px; font-size: 12px; cursor: pointer; }
+.cmplist { margin-top: 6px; font-size: 12px; line-height: 1.7; }
+.cmplist .ad { color: #15803d; }
+.cmplist .rm { color: #b91c1c; }
+.cmpbtn { border: 1px solid #cbd5e1; background: #fff; color: #64748b; border-radius: 6px;
+  padding: 0 6px; margin-inline-start: 6px; font-size: 12px; cursor: pointer; line-height: 1.5; }
+.cmpbtn.on { background: #4338ca; color: #fff; border-color: #4338ca; }

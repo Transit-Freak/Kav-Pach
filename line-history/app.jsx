@@ -378,6 +378,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
   const [mon, setMon] = useState("");
   const [offK, setOffK] = useState(() => new Set());   // קטגוריות שכובו בעמוד הקו
+  const [cmpI, setCmpI] = useState(null);              // גרסת בסיס להשוואה חופשית
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
@@ -415,7 +416,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       .catch(() => setD12({ routes: [] }));
   }, [show12, anc, d12, lf]);
   useEffect(() => {
-    setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set());
+    setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null);
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((d) => { setLf(materializeLf(d)); setSel(d.versions.length - 1); })
@@ -451,8 +452,31 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   };
   const withCode = (name, i, isAdd) => { const c = codeOf(name, i, isAdd); return c ? `${name} (${c})` : name; };
   const v = vs[sel] || vs[vs.length - 1];
-  const pi = vs.indexOf(v) - 1;
+  // ברירת המחדל היא הגרסה הקודמת הסמוכה; במצב השוואה חופשית המשתמש בוחר
+  // גרסת בסיס אחרת וכל ההפרש — הרשימה, המפה והמסלול — נמדד מולה.
+  const vi = vs.indexOf(v);
+  const cmpOn = cmpI != null && cmpI !== vi && cmpI >= 0 && cmpI < vs.length;
+  const pi = cmpOn ? cmpI : vi - 1;
   const pv = pi >= 0 ? vs[pi] : null;
+  // הפרש התחנות מחושב מהרשימות עצמן — במצב השוואה אי אפשר להסתמך על
+  // add/rem ששמורים על הגרסה, כי הם נמדדו מול הגרסה הקודמת ולא מול הבסיס.
+  const stopsAt = (idx, dir) => {
+    for (let j = idx; dir < 0 ? j >= 0 : j < vs.length; j += dir) {
+      if ((vs[j].stops || []).length) return vs[j].stops;
+    }
+    return null;
+  };
+  const cmpDiff = (() => {
+    if (!cmpOn) return null;
+    const a = stopsAt(pi, -1), b = stopsAt(vi, -1);
+    if (!a || !b) return null;
+    const ac = new Set(a.map((x) => x[0])), bc = new Set(b.map((x) => x[0]));
+    return {
+      add: b.filter((x) => !ac.has(x[0])),
+      rem: a.filter((x) => !bc.has(x[0])),
+      from: vs[pi].d, to: vs[vi].d,
+    };
+  })();
   // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות.
   const toPts = (x) => (x.shp ? decodeShape(x.shp) : ((x.stops || []).length > 1 ? x.stops.map((s) => [s[2], s[3]]) : null));
   const approx = !v.shp && (v.stops || []).length > 1;
@@ -560,6 +584,25 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             {dispKind(vs[vs.length - 1], vs.length - 1, vs) === "removed-year" ? " — מעל שנה ולא חזרה" : ""}
           </div>
         )}
+        {cmpOn && (
+          <div className="cmpbar">
+            <b>השוואה</b> · {String(vs[pi].d).split("-").reverse().join(".")} ← {String(v.d).split("-").reverse().join(".")}
+            {cmpDiff && (
+              <span className="cmpsum">
+                {cmpDiff.add.length ? ` · ➕ ${cmpDiff.add.length} תחנות` : ""}
+                {cmpDiff.rem.length ? ` · ➖ ${cmpDiff.rem.length} תחנות` : ""}
+                {!cmpDiff.add.length && !cmpDiff.rem.length ? " · אותן תחנות בדיוק" : ""}
+              </span>
+            )}
+            <button className="cmpx" title="סיום ההשוואה — חזרה להפרש מול הגרסה הקודמת" onClick={() => setCmpI(null)}>✕ סיום</button>
+            {cmpDiff && (cmpDiff.add.length || cmpDiff.rem.length) ? (
+              <div className="cmplist">
+                {cmpDiff.add.length ? <div className="ad">➕ {cmpDiff.add.map((x) => `${x[1]} (${x[0]})`).join(", ")}</div> : null}
+                {cmpDiff.rem.length ? <div className="rm">➖ {cmpDiff.rem.map((x) => `${x[1]} (${x[0]})`).join(", ")}</div> : null}
+              </div>
+            ) : null}
+          </div>
+        )}
         {kindsHere.length > 1 && (
           <div className="kfilter">
             <button className={"kchip" + (offK.size ? "" : " on")}
@@ -587,7 +630,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="tl">
           {shown.map(({ v: x, i }) => (
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
-              <div className="d">{fmtD(x.d)}{(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}</div>
+              <div className="d">{fmtD(x.d)}{(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}
+                <button className={"cmpbtn" + (cmpI === i ? " on" : "")}
+                  title={cmpI === i ? "זו גרסת הבסיס להשוואה — לחיצה מבטלת" : "קביעת הגרסה הזו כבסיס, ואז לחיצה על אירוע אחר תשווה מולה"}
+                  onClick={(e) => { e.stopPropagation(); setCmpI(cmpI === i ? null : i); }}>⇄</button>
+              </div>
               <div className="t">
                 <span className="k" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</span>
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
