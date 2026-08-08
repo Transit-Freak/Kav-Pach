@@ -467,8 +467,12 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
     # קובץ שאין לו מצב: אם הווריאנט נעלם מהרישום לגמרי ועוד לא סומן מבוטל —
     # רושמים ביטול. אם הוא עדיין רשום (בלי נסיעות פעילות) הוא נשאר חי.
     vs=lf.get('versions',[])
-    if not first_run and rdesc not in registered and rdesc not in carry \
-       and vs and vs[-1].get('k')!='removed':
+    # רק על מה שהסורק היומי באמת ראה חי הוא יכול להעיד שנעלם. קווים
+    # שנוצרו ממילוי הארכיון (רכבת, מוניות, וריאנטים היסטוריים) מעולם לא
+    # היו במצב היומי — סימונם "בוטל היום" היה קובע תאריך ביטול שגוי בשנים,
+    # במקום התאריך שבו הם באמת נעלמו מהפיד.
+    if not first_run and rdesc in prev and rdesc not in registered \
+       and rdesc not in carry and vs and vs[-1].get('k')!='removed':
         vs.append({'d':TODAY,'k':'removed','shp':'','stops':[],'note':'הווריאנט נעלם מהרישום'})
         json.dump(lf,open(f'{OUTDIR}/lines/{fn}','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
         chm['changes'].append({'d':TODAY,'rd':rdesc,'line':lf.get('line',''),'k':'removed'})

@@ -15,6 +15,7 @@ on:
       - 'tools/enrich_stop_diffs.py'
       - 'tools/fix_dest_kind.py'
       - 'tools/enrich_2017.py'
+      - 'tools/fix_false_removed.py'
       - 'tools/scan_vcnt_daily.py'
       - 'tools/last_sched.py'
       - 'tools/compact_lines.py'
@@ -116,6 +117,10 @@ jobs:
             # מצבם גם אחרי מיזוג של סריקת רקע שדרס גרסאות.
             OUTDIR=line-history/data python3 tools/fix_dest_kind.py
             OUTDIR=line-history/data python3 tools/enrich_2017.py
+            # רשת ביטחון: אם בכל זאת נרשם "בוטל היום" על קו שהסורק מעולם
+            # לא ראה חי, הכלי מסיר אותו. תאריך ביטול שגוי בשנים נראה כמו
+            # עובדה מדודה, וזה גרוע משתיקה.
+            OUTDIR=line-history/data python3 tools/fix_false_removed.py
             OUTDIR=line-history/data python3 tools/compact_lines.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
             git add -A line-history/data kavbug-data
