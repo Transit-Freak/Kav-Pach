@@ -14,9 +14,21 @@ import concurrent.futures
 import datetime
 import os
 import sys
+import urllib.request
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from backfill_geo import http  # noqa: E402
+# בדיקת קיום, לא הורדה: בקשת שני בתים ראשונים. הבאקט עונה 403 על קובץ
+# שאינו קיים (אין הרשאת רשימה), ולכן "אין" ו"נכשל" נראים אותו דבר —
+# מה שמצדיק בקשה נקייה בלי לוגיקת ניסיונות חוזרים. פונקציית http של
+# הכלים האחרים ישנה שש שניות אחרי כל כישלון, וכאן רוב הימים הם כישלון.
+def exists(url, timeout=20):
+    req = urllib.request.Request(url, headers={
+        'User-Agent': 'kav-bochan/line-history (archive depth probe; polite)'})
+    req.add_header('Range', 'bytes=0-1')
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status in (200, 206)
+    except Exception:
+        return False
 
 BASE = ('https://openmobilitydata-data.s3-us-west-1.amazonaws.com'
         '/public/feeds/ministry-of-transport-and-road-safety/820')
@@ -34,16 +46,12 @@ def main():
         d += datetime.timedelta(days=1)
     print(f'נבדקים {len(days)} ימים, {FROM}–{TO}', file=sys.stderr)
 
-    def exists(ds):
-        try:
-            http(f'{BASE}/{ds}/gtfs.zip', rng='bytes=0-1', tries=1)
-            return ds
-        except BaseException:
-            return None
+    def check(ds):
+        return ds if exists(f'{BASE}/{ds}/gtfs.zip') else None
 
     hits = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as ex:
-        for i, r in enumerate(ex.map(exists, days), 1):
+        for i, r in enumerate(ex.map(check, days), 1):
             if r:
                 hits.append(r)
                 print(f'  נמצא {r}', file=sys.stderr)
