@@ -1,0 +1,89 @@
+# מילוי ההיסטוריה מארכיון TransitFeeds — 799 צילומים, 2017 עד ינואר 2022.
+#
+# הריצה נמשכת שעות ולכן היא מפוצלת לחוליות קצרות שממשיכות זו את זו: כל
+# חוליה עובדת בתקציב זמן, שומרת את מצבה, דוחפת, ומפעילה את הבאה. אותו
+# דפוס של סבבי geo/freq שרצו כאן קודם.
+#
+# הצילומים עצמם אינם נשמרים — הם היו תופסים עשרות ג'יגה. המנוע זורם
+# דרכם, מחזיק בזיכרון רק את המצב האחרון הידוע של כל וריאנט, וכותב אך ורק
+# את אירועי השינוי.
+name: tf-backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      chain:
+        description: 'מספר חוליה'
+        default: '1'
+        required: false
+  push:
+    branches: [tf-go]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: tf-backfill
+  cancel-in-progress: false
+
+env:
+  WORK_BRANCH: claude/industrial-zones-accessibility-site-44h2i9
+
+jobs:
+  fill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/industrial-zones-accessibility-site-44h2i9
+
+      - name: מילוי חוליה אחת
+        id: tf
+        env:
+          FROM: '20170316'
+          TO: '20220115'      # מכאן ואילך ארכיון הסדנא מכסה יום-יום
+          MAX_MIN: '35'
+          OUTDIR: line-history/data
+        run: |
+          set -o pipefail
+          git config user.name tf-bot
+          git config user.email actions@users.noreply.github.com
+          python3 tools/backfill_tf.py 2>&1 | tee /tmp/tf.log | tail -25
+          if grep -q 'אין צילומים שנותרו' /tmp/tf.log; then
+            echo "done=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "done=0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: בניית האינדקס מחדש
+        if: always()
+        run: OUTDIR=line-history/data python3 tools/rebuild_lines_index.py || true
+
+      - name: דחיפה
+        if: always()
+        run: |
+          git add line-history/data
+          git commit -qm "מילוי TransitFeeds — נקודת ביניים $(date -u +%FT%TZ)" || exit 0
+          for i in 1 2 3 4; do
+            git fetch -q origin "$WORK_BRANCH" && git rebase -q origin/"$WORK_BRANCH" || git rebase --abort || true
+            git push -q origin HEAD:"$WORK_BRANCH" && break
+            sleep $((i * 5))
+          done
+
+      - name: המשכה
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CHAIN='${{ github.event.inputs.chain }}'
+          CHAIN=${CHAIN:-1}
+          if [ "${{ steps.tf.outputs.done }}" = "1" ]; then
+            echo "המילוי הושלם — סוף השרשרת"
+          elif [ "$CHAIN" -lt 40 ]; then
+            gh workflow run tf-backfill.yml --repo "$GITHUB_REPOSITORY" \
+              --ref tf-go -f chain=$((CHAIN + 1)) || true
+          else
+            echo "הגיע לגבול החוליות ($CHAIN) — יש להפעיל מחדש ידנית"
+          fi

@@ -17,6 +17,7 @@ DRY=1     ניתוח בלבד, בלי כתיבה לקבצי הקווים
 import json
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backfill_geo import (central_dir, enc_polyline, fsafe, http,  # noqa: E402
@@ -31,6 +32,7 @@ SRC = 'tf'
 DRY = os.environ.get('DRY') == '1'
 SNAP_META = {}      # פרטי הקווים של הצילום הנוכחי, לצורך יצירת קבצים חדשים
 MAX_DAYS = int(os.environ.get('MAX_DAYS', '0'))
+MAX_MIN = float(os.environ.get('MAX_MIN', '0'))   # תקציב זמן לחוליה אחת
 FROM = os.environ.get('FROM', '20170101')
 TO = os.environ.get('TO', '20221231')
 
@@ -274,8 +276,19 @@ def main():
     if done:
         last = max(done)
         prev = {rd: (s, h, last) for rd, (s, h) in snapshot(last).items()}
+    if not todo:
+        print('הכל עובד — אין צילומים שנותרו', file=sys.stderr)
+        return
+
     total, tally, made, skipped = 0, {}, 0, []
+    deadline = time.monotonic() + MAX_MIN * 60 if MAX_MIN else None
     for ds in todo:
+        # עצירה נקייה בגבול תקציב הזמן, בין צילומים ולא באמצע כתיבה —
+        # החוליה הבאה ממשיכה מהמצב השמור.
+        if deadline and time.monotonic() > deadline:
+            print(f'תקציב הזמן נגמר — נעצר אחרי {len(done) - len(st["done"])} '
+                  f'צילומים בחוליה זו', file=sys.stderr)
+            break
         # צילום בודד שנכשל לא מפיל ריצה של מאות צילומים. הכשל השכיח הוא
         # ניתוק SSL באמצע קריאה מול S3; הוא חולף, והיום פשוט יטופל בהרצה
         # הבאה — לכן הוא גם לא מסומן כ"עובד".
