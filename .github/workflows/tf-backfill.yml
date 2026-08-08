@@ -77,16 +77,35 @@ jobs:
         if: always()
         run: OUTDIR=line-history/data python3 tools/rebuild_lines_index.py || true
 
+      # הענף מקבל כתיבות גם מהסריקה היומית, ולכן ריבייס מתנגש בקבצי הקווים
+      # הוא המצב הרגיל ולא החריג. שני הצדדים מוסיפים אירועים אמיתיים, ולכן
+      # ההתנגשות נפתרת באיחוד ברמת הגרסה ולא בבחירת צד.
+      #
+      # הצעד נכשל ברעש אם הדחיפה לא הצליחה: בגרסה הקודמת הלולאה הסתיימה
+      # ב-sleep מוצלח, הצעד דיווח הצלחה, ועבודה של 36 דקות נעלמה בשקט.
       - name: דחיפה
         if: always()
         run: |
           git add line-history/data
           git commit -qm "מילוי TransitFeeds — נקודת ביניים $(date -u +%FT%TZ)" || exit 0
-          for i in 1 2 3 4; do
-            git fetch -q origin "$WORK_BRANCH" && git rebase -q origin/"$WORK_BRANCH" || git rebase --abort || true
-            git push -q origin HEAD:"$WORK_BRANCH" && break
-            sleep $((i * 5))
+          ok=0
+          for i in 1 2 3 4 5; do
+            git fetch -q origin "$WORK_BRANCH"
+            if ! git rebase -q origin/"$WORK_BRANCH"; then
+              while [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; do
+                python3 tools/merge_line_conflicts.py || true
+                git diff --name-only --diff-filter=U -z | xargs -0 -r git checkout --ours -- 2>/dev/null || true
+                git diff --name-only --diff-filter=U -z | xargs -0 -r git add -- 2>/dev/null || true
+                GIT_EDITOR=true git rebase --continue || { git rebase --abort || true; break; }
+              done
+            fi
+            if git push -q origin HEAD:"$WORK_BRANCH"; then ok=1; break; fi
+            sleep $((i * 10))
           done
+          if [ "$ok" != 1 ]; then
+            echo "::error::הדחיפה נכשלה — עבודת החוליה הזו לא נשמרה ותיעשה שוב"
+            exit 1
+          fi
 
       - name: המשכה
         if: always()
