@@ -274,9 +274,18 @@ def main():
     if done:
         last = max(done)
         prev = {rd: (s, h, last) for rd, (s, h) in snapshot(last).items()}
-    total, tally, made = 0, {}, 0
+    total, tally, made, skipped = 0, {}, 0, []
     for ds in todo:
-        cur = snapshot(ds)
+        # צילום בודד שנכשל לא מפיל ריצה של מאות צילומים. הכשל השכיח הוא
+        # ניתוק SSL באמצע קריאה מול S3; הוא חולף, והיום פשוט יטופל בהרצה
+        # הבאה — לכן הוא גם לא מסומן כ"עובד".
+        try:
+            cur = snapshot(ds)
+        except BaseException as e:
+            skipped.append(ds)
+            print(f'  {iso(ds)}: דילוג — {type(e).__name__}: {str(e)[:70]}',
+                  file=sys.stderr)
+            continue
         n = c = 0
         for rd, (stops, shp) in cur.items():
             if not DRY and ensure_line(rd, ds, stops, shp):
@@ -300,6 +309,9 @@ def main():
     print(f'סה"כ {total} אירועי שינוי — {brk}', file=sys.stderr)
     if made:
         print(f'נוצרו {made} קבצי קו לסוגי תחבורה חדשים', file=sys.stderr)
+    if skipped:
+        print(f'דולגו {len(skipped)} צילומים בגלל תקלות רשת — ' +
+              'ייטופלו בהרצה הבאה: ' + ', '.join(skipped[:8]), file=sys.stderr)
 
 
 if __name__ == '__main__':
