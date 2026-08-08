@@ -1175,12 +1175,6 @@ function ModesTab({ idx, openLine, spec }) {
 
   return (
     <div className="card">
-      <p className="tag" style={{ marginTop: 0 }}>
-        {spec.tip}. אלה קווים שהיו בפיד של משרד התחבורה מאז ומתמיד אבל לא
-        הוצגו כאן, כי הסורק סינן כל סוג תחבורה שאינו אוטובוס. ההיסטוריה שלהם
-        נבנתה מאותם צילומי ארכיון, ולכן הם מתנהגים כמו כל קו אחר — יומן
-        שינויים, תחנות ומפה.
-      </p>
       {spec.groups.length > 1 && (
         <div className="kfilter">
           <button className={"kchip" + (sel.size ? "" : " on")}

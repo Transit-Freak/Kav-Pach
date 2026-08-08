@@ -57,6 +57,19 @@ jobs:
             echo "done=0" >> "$GITHUB_OUTPUT"
           fi
 
+      # סריקה קלה ונפרדת: route_type קובע אם הקו אוטובוס, רכבת, מונית
+      # שירות או "לפי דרישה". שינוי בו אינו נוגע בתחנות ובשרטוט ולכן מנוע
+      # ההשוואה הראשי עיוור אליו לגמרי. הקריאה כאן היא של routes.txt בלבד
+      # ולכן זולה בהרבה, ומתקדמת מהר יותר מהמילוי המלא.
+      - name: סריקת שינויי סיווג
+        if: always()
+        env:
+          FROM: '20170316'
+          TO: '20220115'
+          MAX_MIN: '8'
+          OUTDIR: line-history/data
+        run: python3 tools/backfill_mode.py 2>&1 | tail -12 || true
+
       - name: בניית האינדקס מחדש
         if: always()
         run: OUTDIR=line-history/data python3 tools/rebuild_lines_index.py || true
