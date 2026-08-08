@@ -29,6 +29,7 @@ OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 STATE = f'{OUTDIR}/tf-state.json'
 SRC = 'tf'
 DRY = os.environ.get('DRY') == '1'
+SNAP_META = {}      # פרטי הקווים של הצילום הנוכחי, לצורך יצירת קבצים חדשים
 MAX_DAYS = int(os.environ.get('MAX_DAYS', '0'))
 FROM = os.environ.get('FROM', '20170101')
 TO = os.environ.get('TO', '20221231')
@@ -38,13 +39,41 @@ def iso(ds):
     return f'{ds[:4]}-{ds[4:6]}-{ds[6:]}'
 
 
+# סוג התחבורה לפי route_type של ה-GTFS. אוטובוס הוא ברירת המחדל ואינו
+# מסומן, כדי לא לשנות אף קובץ קיים. שאר הסוגים היו מסוננים החוצה עד כה.
+TT = {'2': 'rail', '8': 'taxi', '0': 'lightrail', '5': 'cable', '715': 'demand'}
+
+
 def snapshot(ds):
-    """{rd: (stops, shp)} מצילום יחיד. stops = [[מק"ט, שם, lat, lon], ...]"""
+    """{rd: (stops, shp)} מצילום יחיד. stops = [[מק"ט, שם, lat, lon], ...]
+
+    meta[rd] נאסף במקביל: מספר הקו, היעד, המפעיל וסוג התחבורה — נדרש כדי
+    ליצור קובץ קו לסוגים שמעולם לא נכנסו לאתר (רכבת, מוניות שירות וכו').
+    """
     url = f'{BASE}/{ds}/gtfs.zip'
     members = central_dir(url)
     c, rows = member_rows(url, members, 'routes.txt')
-    rid2rd = {r[c['route_id']]: r[c['route_desc']].strip() for r in rows
-              if r[c['route_desc']].count('-') >= 2}
+    rows = list(rows)
+    try:
+        c2, arows = member_rows(url, members, 'agency.txt')
+        agency = {r[c2['agency_id']]: r[c2['agency_name']].strip() for r in arows}
+    except (KeyError, ValueError):
+        agency = {}
+    rid2rd, meta = {}, {}
+    for r in rows:
+        rd = r[c['route_desc']].strip()
+        if rd.count('-') < 2:
+            continue
+        rid2rd[r[c['route_id']]] = rd
+        rt = r[c['route_type']].strip()
+        meta.setdefault(rd, {
+            'line': r[c['route_short_name']].strip(),
+            'dest': r[c['route_long_name']].strip(),
+            'op': agency.get(r[c['agency_id']], ''),
+            'tt': TT.get(rt) if rt != '3' else None,
+        })
+    SNAP_META.clear()
+    SNAP_META.update(meta)
     if not rid2rd:
         return {}
     # נסיעה נציגה לכל וריאנט — אותו כלל של הסריקה היומית: הראשונה בקובץ
@@ -165,6 +194,35 @@ def classify(old, new, old_shp, new_shp):
     return ('route' if geo else 'stops'), add, rem
 
 
+TTNOTE = {'rail': 'קו רכבת', 'taxi': 'קו מוניות שירות',
+          'lightrail': 'קו רכבת קלה', 'cable': 'קו כבלים',
+          'demand': 'קו שירות לפי דרישה'}
+
+
+def ensure_line(rd, ds, stops, shp):
+    """יצירת קובץ קו לסוגי תחבורה שמעולם לא נכנסו לאתר.
+
+    עד היום הסריקה סיננה כל route_type שאינו אוטובוס, ולכן לרכבת, למוניות
+    השירות ולרכבת הקלה אין קובץ כלל. כאן נוצר קובץ עם המצב שנצפה לראשונה
+    כתיעוד ראשון, ומכאן והלאה השינויים נרשמים בו כמו בכל קו אחר.
+    """
+    m = SNAP_META.get(rd)
+    if not m or not m.get('tt'):
+        return False              # אוטובוס — הקווים שנעלמו הם משימה נפרדת
+    p = f'{OUTDIR}/lines/{fsafe(rd)}.json'
+    if os.path.exists(p):
+        return False
+    lf = {'rd': rd, 'line': m['line'], 'dest': m['dest'], 'op': m['op'],
+          'ty': '', 'tt': m['tt'],
+          'versions': [{'d': iso(ds), 'k': 'baseline', 'src': SRC,
+                        'stops': stops, 'shp': shp,
+                        'note': f'{TTNOTE.get(m["tt"], "קו")} — התיעוד הראשון, '
+                                f'מארכיון הפיד הארצי'}]}
+    json.dump(compact(lf), open(p, 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+    return True
+
+
 def apply_event(rd, ds, kind, stops, shp, add, rem, since):
     p = f'{OUTDIR}/lines/{fsafe(rd)}.json'
     if not os.path.exists(p):
@@ -209,11 +267,13 @@ def main():
     if done:
         last = max(done)
         prev = {rd: (s, h, last) for rd, (s, h) in snapshot(last).items()}
-    total, tally = 0, {}
+    total, tally, made = 0, {}, 0
     for ds in todo:
         cur = snapshot(ds)
-        n = 0
+        n = c = 0
         for rd, (stops, shp) in cur.items():
+            if not DRY and ensure_line(rd, ds, stops, shp):
+                c += 1
             old = prev.get(rd)
             if old:               # וריאנט שלא נראה קודם — מטופל בצנרת הראשית
                 k, add, rem = classify(old[0], stops, old[1], shp)
@@ -221,14 +281,18 @@ def main():
                     tally[k] = tally.get(k, 0) + 1
                     n += 1
             prev[rd] = (stops, shp, ds)
+        made += c
         print(f'  {iso(ds)}: {len(cur)} וריאנטים · {n} שינויים · '
-              f'{len(prev)} במעקב', file=sys.stderr)
+              f'{len(prev)} במעקב' + (f' · {c} קווים חדשים' if c else ''),
+              file=sys.stderr)
         total += n
         if not DRY:
             done.add(ds)
             json.dump({'done': sorted(done)}, open(STATE, 'w'))
     brk = ' · '.join(f'{k}:{v}' for k, v in sorted(tally.items(), key=lambda x: -x[1]))
     print(f'סה"כ {total} אירועי שינוי — {brk}', file=sys.stderr)
+    if made:
+        print(f'נוצרו {made} קבצי קו לסוגי תחבורה חדשים', file=sys.stderr)
 
 
 if __name__ == '__main__':

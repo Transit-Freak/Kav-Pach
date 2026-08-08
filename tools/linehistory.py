@@ -70,14 +70,22 @@ if MAIN and os.path.exists(MAIN):
         mk=str(r[0]).strip().lstrip('0')
         if mk: linetype[mk]=str(r[6]).strip()
 
+# סוג התחבורה לפי route_type. עד כה נסרקו אוטובוסים בלבד וכל השאר נזרק;
+# רכבת ישראל, מוניות השירות, הרכבת הקלה, הכרמלית והקווים לפי דרישה נושאים
+# route_desc באותו פורמט בדיוק, ולכן נכנסים לאותו מבנה נתונים ללא שינוי.
+# אוטובוס אינו מסומן — כך אף קובץ קיים לא משתנה.
+TT={'2':'rail','8':'taxi','0':'lightrail','5':'cable','715':'demand'}
+
 # ---- routes: route_id -> (desc, line, dest, agency) ----
 routes={}
 for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
-    if r.get('route_type','3')!='3': continue   # אוטובוסים בלבד
+    rt=(r.get('route_type') or '3').strip()
+    if rt!='3' and rt not in TT: continue   # סוג שאיננו מכירים — לא מנחשים
     rd=(r.get('route_desc') or '').strip()
     if not rd: continue
     routes[r['route_id']]={'rd':rd,'line':r.get('route_short_name',''),
-                           'long':r.get('route_long_name',''),'ag':r.get('agency_id','')}
+                           'long':r.get('route_long_name',''),'ag':r.get('agency_id',''),
+                           'tt':TT.get(rt)}
 print('וריאנטים (route_desc):',len({v['rd'] for v in routes.values()}))
 
 # ---- שירותים שבתוקף היום ----
@@ -170,7 +178,7 @@ for rid,(t,sh) in rep.items():
     if len(codes)<2: continue
     mk=info['rd'].split('-')[0].lstrip('0')
     cur[info['rd']]={'line':info['line'],'long':info['long'],'op':agencies.get(info['ag'],''),
-                     'ty':linetype.get(mk,''),'pts':pts,'codes':codes,
+                     'ty':linetype.get(mk,''),'tt':info.get('tt'),'pts':pts,'codes':codes,
                      'stopinfo':[[stops[s]['c'],stops[s]['n'],stops[s]['la'],stops[s]['lo']] for s in sq if s in stops],
                      'sh_h':h12(json.dumps(pts)),'st_h':h12('|'.join(codes))}
 print('וריאנטים תקינים:',len(cur))
@@ -198,6 +206,7 @@ def write_line_version(rdesc,c,kind,note='',extra=None):
     p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
     lf=jload(p,{'rd':rdesc,'line':c['line'],'dest':c['long'],'op':c['op'],'ty':c['ty'],'versions':[]})
     lf['line'],lf['dest'],lf['op'],lf['ty']=c['line'],c['long'],c['op'],c['ty']
+    if c.get('tt'): lf['tt']=c['tt']      # אוטובוס נשאר בלי סימון
     lf['versions']=[v for v in lf['versions'] if v.get('d')!=TODAY]
     v={'d':TODAY,'k':kind,'shp':encode_shape(c['pts']),'stops':c['stopinfo']}
     if note: v['note']=note
@@ -278,6 +287,7 @@ for rdesc,c in cur.items():
                 tgt['shp']=encode_shape(c['pts']); tgt['stops']=c['stopinfo']
                 tgt.pop('add',None); tgt.pop('rem',None)
                 lf['line'],lf['dest'],lf['op'],lf['ty']=c['line'],c['long'],c['op'],c['ty']
+                if c.get('tt'): lf['tt']=c['tt']
                 json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
                 n_changed+=1
                 continue
@@ -416,9 +426,10 @@ print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {
 # האינדקס כולל את כל הווריאנטים שיש להם קובץ — גם כאלה שכבר לא ברישום
 # (קווים מבוטלים חייבים להישאר ניתנים לחיפוש ולסינון לפי קטגוריה).
 # ks = סוגי השינויים שיש לקו, lk/ld = הרשומה האחרונה (לסטטוס "מבוטל").
-def idx_entry(rdesc, line, dest, op, ty):
+def idx_entry(rdesc, line, dest, op, ty, tt=None):
     vs = materialize(jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {})).get('versions', [])
     e = {'rd': rdesc, 'line': line, 'dest': dest[:80], 'op': op, 'ty': ty, 'v': len(vs)}
+    if tt: e['tt'] = tt      # סוג תחבורה שאינו אוטובוס — לסינון באתר
     ks = {v['k'] for v in vs if v['k'] != 'baseline'}
     # גרסאות ארכיון שהועשרו בהפרשי תחנות (enrich_stop_diffs) נספרות גם
     # בקטגוריות התחנות — אחרת ההיסטוריה של 2022–2026 לא מופיעה שם בכלל
@@ -435,7 +446,7 @@ def idx_entry(rdesc, line, dest, op, ty):
 
 idx=[]
 for rdesc,c in cur.items():
-    idx.append(idx_entry(rdesc, c['line'], c['long'], c['op'], c['ty']))
+    idx.append(idx_entry(rdesc, c['line'], c['long'], c['op'], c['ty'], c.get('tt')))
 seen_rd={e['rd'] for e in idx}
 for fn in os.listdir(f'{OUTDIR}/lines'):
     if not fn.endswith('.json'): continue
@@ -450,7 +461,7 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
         vs.append({'d':TODAY,'k':'removed','shp':'','stops':[],'note':'הווריאנט נעלם מהרישום'})
         json.dump(lf,open(f'{OUTDIR}/lines/{fn}','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
         chm['changes'].append({'d':TODAY,'rd':rdesc,'line':lf.get('line',''),'k':'removed'})
-    idx.append(idx_entry(rdesc, lf.get('line',''), lf.get('dest') or '', lf.get('op',''), lf.get('ty','')))
+    idx.append(idx_entry(rdesc, lf.get('line',''), lf.get('dest') or '', lf.get('op',''), lf.get('ty',''), lf.get('tt')))
 idx.sort(key=lambda x:(x['line'],x['rd']))
 json.dump({'gen':TODAY,'first':first_run,'lines':idx},
           open(f'{OUTDIR}/lines.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))

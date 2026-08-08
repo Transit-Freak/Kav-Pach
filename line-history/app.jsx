@@ -531,8 +531,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
     <div className="linewrap">
       <div className="card side">
         <button className="back" title="חזרה למסך החיפוש — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש</button>
-        <div className="linehead"><span className="badge">{lf.line}</span><span className="dest">{lf.dest}</span></div>
-        <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {/* לקווי הרכבת אין מספר קו ב-GTFS — הסמל ממלא את מקומו כדי שהתג לא יופיע ריק */}
+        <div className="linehead"><span className="badge">{lf.line || TT_ICON[lf.tt] || "—"}</span><span className="dest">{lf.dest}</span></div>
+        <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
         {anc && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
@@ -1107,6 +1108,96 @@ function StopsTab() {
 }
 
 /* ---------- אפליקציה ---------- */
+// סוגי תחבורה שאינם אוטובוס. עד יולי 2026 הסורק סינן כל route_type שאינו 3,
+// ולכן הרכבת, מוניות השירות והרכבת הקלה לא היו באתר כלל — למרות שהם יושבים
+// באותו פיד ונושאים route_desc באותו פורמט. הרכבת הקלה והכרמלית מוצגות
+// כקבוצה אחת (בקשת המשתמש).
+const TMODES = [
+  { k: "rail", icon: "🚆", label: "רכבת ישראל", tts: ["rail"] },
+  { k: "taxi", icon: "🚕", label: "מוניות שירות", tts: ["taxi"] },
+  { k: "lr", icon: "🚊", label: "רכבת קלה וכרמלית", tts: ["lightrail", "cable"] },
+  { k: "demand", icon: "🚐", label: "שירות לפי דרישה", tts: ["demand"] },
+];
+const TT_ICON = { rail: "🚆", taxi: "🚕", lightrail: "🚊", cable: "🚡", demand: "🚐" };
+const TT_LABEL = { rail: "רכבת", taxi: "מונית שירות", lightrail: "רכבת קלה",
+                   cable: "רכבל/כרמלית", demand: "שירות לפי דרישה" };
+
+function ModesTab({ idx, openLine }) {
+  const [sel, setSel] = useState(() => new Set());
+  const [q, setQ] = usePersistedQ("lh-q-modes");
+  const [lim, setLim] = useState(200);
+  useEffect(() => setLim(200), [q, sel]);
+
+  const mine = useMemo(() => idx.lines.filter((l) => l.tt), [idx]);
+  const counts = useMemo(() => {
+    const c = {};
+    TMODES.forEach((m) => { c[m.k] = mine.filter((l) => m.tts.includes(l.tt)).length; });
+    return c;
+  }, [mine]);
+  const toggle = (k) => setSel((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
+
+  const needle = q.trim();
+  const allowed = sel.size ? new Set(TMODES.filter((m) => sel.has(m.k)).flatMap((m) => m.tts)) : null;
+  let list = mine.filter((l) => !allowed || allowed.has(l.tt));
+  if (needle) {
+    const toks = needle.split(/\s+/).filter(Boolean);
+    list = list.filter((l) => toks.every((t) =>
+      (l.line || "").startsWith(t) || l.rd.startsWith(t) ||
+      (l.dest || "").includes(t) || (l.op || "").includes(t)));
+  }
+  const lnum = (l) => parseInt(l.line) || 1e9;
+  list = list.slice().sort((a, b) => lnum(a) - lnum(b) || (a.line || "").localeCompare(b.line || "") || a.rd.localeCompare(b.rd));
+  const total = list.length;
+  list = list.slice(0, lim);
+
+  return (
+    <div className="card">
+      <p className="tag" style={{ marginTop: 0 }}>
+        לא רק אוטובוסים. אלה הקווים שהיו בפיד של משרד התחבורה מאז ומתמיד אבל
+        לא הוצגו כאן, כי הסורק סינן כל סוג תחבורה שאינו אוטובוס. ההיסטוריה שלהם
+        נבנתה מאותם צילומי ארכיון, ולכן הם מתנהגים בדיוק כמו כל קו אחר — יומן
+        שינויים, תחנות ומפה.
+      </p>
+      <div className="kfilter">
+        <button className={"kchip" + (sel.size ? "" : " on")}
+          style={sel.size ? {} : { borderColor: "#7c3aed", color: "#5b21b6" }}
+          onClick={() => setSel(new Set())}>הכל<b>{mine.length.toLocaleString()}</b></button>
+        {TMODES.map((m) => (
+          <button key={m.k} className={"kchip" + (sel.size && !sel.has(m.k) ? " off" : "")}
+            style={sel.has(m.k) ? { borderColor: "#7c3aed", color: "#5b21b6" } : {}}
+            onClick={() => toggle(m.k)}>
+            {m.icon} {m.label}<b>{(counts[m.k] || 0).toLocaleString()}</b>
+          </button>
+        ))}
+      </div>
+      <input className="search" type="search" dir="rtl"
+        placeholder="חיפוש: מספר קו, מק״ט, יעד או מפעיל…"
+        value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="llist">
+        {list.map((l) => (
+          <a key={l.rd} className="lrow" href={lineHref(l.rd)}
+            onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(l.rd); }}>
+            <span className="badge sm">{l.line || TT_ICON[l.tt] || "—"}</span>
+            {l.lk === "removed" && (
+              <span className="k" style={{ background: isRemovedYear(l) ? "#7f1d1d" : "#dc2626" }}>
+                {isRemovedYear(l) ? "בוטל — מעל שנה" : "בוטל"}
+              </span>
+            )}
+            <span className="ldest">{l.dest}</span>
+            <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}</span>
+          </a>
+        ))}
+        {list.length === 0 && <div className="empty">לא נמצא קו תואם.</div>}
+        {total > list.length && (
+          <button className="morebtn" onClick={() => setLim(lim + 300)}>
+            ⌄ הצג עוד — מוצגים {list.length.toLocaleString()} מתוך {total.toLocaleString()}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [idx, setIdx] = useState(null);
   const [err, setErr] = useState(null);
@@ -1171,7 +1262,10 @@ function App() {
     const toks = needle.split(/\s+/).filter(Boolean);
     const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
       (l.dest || "").includes(t) || (l.op || "").includes(t);
-    list = idx.lines.filter((l) => inKats(l) && toks.every((t) => tokHit(l, t)));
+    // טאב "קווים" הוא אוטובוסים. קווי "שירות לפי דרישה" מופעלים בידי חברות
+    // האוטובוס ונשארים גם כאן, ולא רק בטאב סוגי התחבורה (בקשת המשתמש).
+    const buses = idx.lines.filter((l) => !l.tt || l.tt === "demand");
+    list = buses.filter((l) => inKats(l) && toks.every((t) => tokHit(l, t)));
     const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
     // דירוג: קודם מספר הקו המדויק, אחריו קווים שמתחילים בו, ורק בסוף
     // התאמות מק"ט/יעד/מפעיל — ובתוך כל דרגה לפי סדר מספרי
@@ -1200,8 +1294,11 @@ function App() {
       <div className="tabs">
         <button className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
         <button className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
+        <button className={"tab" + (tab === "modes" ? " on" : "")} title="רכבת ישראל, מוניות שירות, הרכבת הקלה, הכרמלית וקווי שירות לפי דרישה — סוגי תחבורה שעד כה סוננו החוצה" onClick={() => { setTab("modes"); backToList(); }}>🚆 רכבת ומוניות</button>
       </div>
-      {tab === "stops" ? <StopsTab /> : rd ? (
+      {tab === "stops" ? <StopsTab /> : (tab === "modes" && !rd) ? (
+        <ModesTab idx={idx} openLine={openLine} />
+      ) : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
