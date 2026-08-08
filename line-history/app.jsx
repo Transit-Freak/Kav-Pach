@@ -19,6 +19,7 @@ const KINDS = {
   dest:        { label: "שינוי יעד", color: "#9333ea" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
   renamed:     { label: "שינוי שם תחנת קצה", color: "#d97706" },
+  mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
@@ -48,7 +49,7 @@ const CAT_GROUPS = [
   { title: "שינויי מסלול", items: ["route", "redraw", "extend", "shorten", "terminal"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
-  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum"] },
+  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode"] },
 ];
 const CAT_LABELS = {
   "removed-year": "מבוטל — מעל שנה לא חזר",
@@ -66,6 +67,7 @@ const CAT_LABELS = {
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
+  mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
@@ -534,6 +536,18 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         {/* לקווי הרכבת אין מספר קו ב-GTFS — הסמל ממלא את מקומו כדי שהתג לא יופיע ריק */}
         <div className="linehead"><span className="badge">{lf.line || TT_ICON[lf.tt] || "—"}</span><span className="dest">{lf.dest}</span></div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {/* "שירות לפי דרישה" יושב תחת קווים ונראה כקו אוטובוס רגיל, ולכן
+            הוא חייב הסבר בגוף העמוד — אחרת הנוסע לא יידע שהנסיעה מותנית
+            בהזמנה מראש. אותו הסבר לשאר הסוגים שאינם אוטובוס. */}
+        {lf.tt && (
+          <div className="ttnote">
+            {TT_ICON[lf.tt]} <b>{TT_LABEL[lf.tt]}</b>
+            {lf.tt === "demand" && " — הקו אינו יוצא בשעה קבועה: הנסיעה מבוצעת לפי הזמנה מראש. הוא מופעל בידי חברת אוטובוס ולכן נמצא כאן, בין הקווים."}
+            {lf.tt === "rail" && " — קו של רכבת ישראל. אין לו מספר קו בפיד, ולכן הוא מזוהה לפי המק״ט והיעדים."}
+            {lf.tt === "taxi" && " — קו מוניות שירות. מופיע בפיד הארצי של משרד התחבורה כמו כל קו אחר."}
+            {(lf.tt === "lightrail" || lf.tt === "cable") && " — לא אוטובוס: מסילה או כבל."}
+          </div>
+        )}
         {anc && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
@@ -1112,32 +1126,41 @@ function StopsTab() {
 // ולכן הרכבת, מוניות השירות והרכבת הקלה לא היו באתר כלל — למרות שהם יושבים
 // באותו פיד ונושאים route_desc באותו פורמט. הרכבת הקלה והכרמלית מוצגות
 // כקבוצה אחת (בקשת המשתמש).
-const TMODES = [
-  { k: "rail", icon: "🚆", label: "רכבת ישראל", tts: ["rail"] },
-  { k: "taxi", icon: "🚕", label: "מוניות שירות", tts: ["taxi"] },
-  { k: "lr", icon: "🚊", label: "רכבת קלה וכרמלית", tts: ["lightrail", "cable"] },
-  { k: "demand", icon: "🚐", label: "שירות לפי דרישה", tts: ["demand"] },
+// כל סוג תחבורה הוא קטגוריה עומדת בפני עצמה — רכבת ומוניות שירות אינן
+// אותו דבר ואינן חולקות מסך (בקשת המשתמש). "שירות לפי דרישה" אינו כאן:
+// הוא מופעל בידי חברות האוטובוס ויושב תחת "קווים".
+const TABS = [
+  { k: "rail", icon: "🚆", label: "רכבת", tts: ["rail", "lightrail", "cable"],
+    tip: "רכבת ישראל, הרכבת הקלה בירושלים, הכרמלית וכבל אקספרס — היסטוריית מסלולים ותחנות",
+    groups: [
+      { k: "heavy", icon: "🚆", label: "רכבת ישראל", tts: ["rail"] },
+      { k: "light", icon: "🚊", label: "רכבת קלה וכרמלית", tts: ["lightrail", "cable"] },
+    ] },
+  { k: "taxi", icon: "🚕", label: "מוניות שירות", tts: ["taxi"],
+    tip: "קווי מוניות השירות שבפיד הארצי — מסלולים, תחנות והשינויים בהם",
+    groups: [] },
 ];
 const TT_ICON = { rail: "🚆", taxi: "🚕", lightrail: "🚊", cable: "🚡", demand: "🚐" };
 const TT_LABEL = { rail: "רכבת", taxi: "מונית שירות", lightrail: "רכבת קלה",
                    cable: "רכבל/כרמלית", demand: "שירות לפי דרישה" };
 
-function ModesTab({ idx, openLine }) {
+function ModesTab({ idx, openLine, spec }) {
   const [sel, setSel] = useState(() => new Set());
-  const [q, setQ] = usePersistedQ("lh-q-modes");
+  const [q, setQ] = usePersistedQ("lh-q-" + spec.k);
   const [lim, setLim] = useState(200);
+  useEffect(() => { setLim(200); setSel(new Set()); }, [spec.k]);
   useEffect(() => setLim(200), [q, sel]);
 
-  const mine = useMemo(() => idx.lines.filter((l) => l.tt), [idx]);
+  const mine = useMemo(() => idx.lines.filter((l) => spec.tts.includes(l.tt)), [idx, spec]);
   const counts = useMemo(() => {
     const c = {};
-    TMODES.forEach((m) => { c[m.k] = mine.filter((l) => m.tts.includes(l.tt)).length; });
+    spec.groups.forEach((m) => { c[m.k] = mine.filter((l) => m.tts.includes(l.tt)).length; });
     return c;
-  }, [mine]);
+  }, [mine, spec]);
   const toggle = (k) => setSel((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
   const needle = q.trim();
-  const allowed = sel.size ? new Set(TMODES.filter((m) => sel.has(m.k)).flatMap((m) => m.tts)) : null;
+  const allowed = sel.size ? new Set(spec.groups.filter((m) => sel.has(m.k)).flatMap((m) => m.tts)) : null;
   let list = mine.filter((l) => !allowed || allowed.has(l.tt));
   if (needle) {
     const toks = needle.split(/\s+/).filter(Boolean);
@@ -1153,23 +1176,25 @@ function ModesTab({ idx, openLine }) {
   return (
     <div className="card">
       <p className="tag" style={{ marginTop: 0 }}>
-        לא רק אוטובוסים. אלה הקווים שהיו בפיד של משרד התחבורה מאז ומתמיד אבל
-        לא הוצגו כאן, כי הסורק סינן כל סוג תחבורה שאינו אוטובוס. ההיסטוריה שלהם
-        נבנתה מאותם צילומי ארכיון, ולכן הם מתנהגים בדיוק כמו כל קו אחר — יומן
+        {spec.tip}. אלה קווים שהיו בפיד של משרד התחבורה מאז ומתמיד אבל לא
+        הוצגו כאן, כי הסורק סינן כל סוג תחבורה שאינו אוטובוס. ההיסטוריה שלהם
+        נבנתה מאותם צילומי ארכיון, ולכן הם מתנהגים כמו כל קו אחר — יומן
         שינויים, תחנות ומפה.
       </p>
-      <div className="kfilter">
-        <button className={"kchip" + (sel.size ? "" : " on")}
-          style={sel.size ? {} : { borderColor: "#7c3aed", color: "#5b21b6" }}
-          onClick={() => setSel(new Set())}>הכל<b>{mine.length.toLocaleString()}</b></button>
-        {TMODES.map((m) => (
-          <button key={m.k} className={"kchip" + (sel.size && !sel.has(m.k) ? " off" : "")}
-            style={sel.has(m.k) ? { borderColor: "#7c3aed", color: "#5b21b6" } : {}}
-            onClick={() => toggle(m.k)}>
-            {m.icon} {m.label}<b>{(counts[m.k] || 0).toLocaleString()}</b>
-          </button>
-        ))}
-      </div>
+      {spec.groups.length > 1 && (
+        <div className="kfilter">
+          <button className={"kchip" + (sel.size ? "" : " on")}
+            style={sel.size ? {} : { borderColor: "#7c3aed", color: "#5b21b6" }}
+            onClick={() => setSel(new Set())}>הכל<b>{mine.length.toLocaleString()}</b></button>
+          {spec.groups.map((m) => (
+            <button key={m.k} className={"kchip" + (sel.size && !sel.has(m.k) ? " off" : "")}
+              style={sel.has(m.k) ? { borderColor: "#7c3aed", color: "#5b21b6" } : {}}
+              onClick={() => toggle(m.k)}>
+              {m.icon} {m.label}<b>{(counts[m.k] || 0).toLocaleString()}</b>
+            </button>
+          ))}
+        </div>
+      )}
       <input className="search" type="search" dir="rtl"
         placeholder="חיפוש: מספר קו, מק״ט, יעד או מפעיל…"
         value={q} onChange={(e) => setQ(e.target.value)} />
@@ -1294,10 +1319,13 @@ function App() {
       <div className="tabs">
         <button className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
         <button className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
-        <button className={"tab" + (tab === "modes" ? " on" : "")} title="רכבת ישראל, מוניות שירות, הרכבת הקלה, הכרמלית וקווי שירות לפי דרישה — סוגי תחבורה שעד כה סוננו החוצה" onClick={() => { setTab("modes"); backToList(); }}>🚆 רכבת ומוניות</button>
+        {TABS.map((t) => (
+          <button key={t.k} className={"tab" + (tab === t.k ? " on" : "")} title={t.tip}
+            onClick={() => { setTab(t.k); backToList(); }}>{t.icon} {t.label}</button>
+        ))}
       </div>
-      {tab === "stops" ? <StopsTab /> : (tab === "modes" && !rd) ? (
-        <ModesTab idx={idx} openLine={openLine} />
+      {tab === "stops" ? <StopsTab /> : (TABS.some((t) => t.k === tab) && !rd) ? (
+        <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
       ) : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}

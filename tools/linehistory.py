@@ -270,7 +270,11 @@ for rdesc,c in cur.items():
     else:
         geo=pv['sh_h']!=c['sh_h']; stp=pv['st_h']!=c['st_h']
     op_changed=pv.get('op') is not None and pv.get('op')!=c['op']
-    if not geo and not stp and not op_changed: continue
+    # שינוי בהגדרת הקו עצמו: קו רגיל שהפך ל"שירות לפי דרישה", או להפך.
+    # אין לו ביטוי בתחנות או בשרטוט, ולכן בלי בדיקה מפורשת הוא היה עובר
+    # בשקט — ומבחינת הנוסע זה שינוי מהותי יותר מהזזת תחנה.
+    tt_changed=('tt' in pv) and pv.get('tt')!=c.get('tt')
+    if not geo and not stp and not op_changed and not tt_changed: continue
     old_codes=pv['codes']; add=[x for x in c['codes'] if x not in old_codes]
     rem=[x for x in old_codes if x not in c['codes']]
     name={x[0]:x[1] for x in c['stopinfo']}
@@ -294,13 +298,20 @@ for rdesc,c in cur.items():
         write_line_version(rdesc,c,'baseline')
         n_changed+=1
         continue
-    if not geo and not stp:
+    if tt_changed and not geo and not stp:
+        kind='mode'
+    elif not geo and not stp:
         kind='operator'
     else:
         kind=classify(old_codes,c['codes'],geo,stp)
     kinds_count[kind]=kinds_count.get(kind,0)+1; n_changed+=1
     note=''
     if op_changed: note=f"המפעיל הוחלף: {pv.get('op','')} ← {c['op']}"
+    if tt_changed:
+        lbl={'rail':'רכבת','taxi':'מונית שירות','lightrail':'רכבת קלה',
+             'cable':'רכבל/כרמלית','demand':'שירות לפי דרישה',None:'קו אוטובוס רגיל'}
+        t=f"סוג הקו שוּנה: {lbl.get(pv.get('tt'),pv.get('tt'))} ← {lbl.get(c.get('tt'),c.get('tt'))}"
+        note=(note+' · '+t) if note else t
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
     if add: ch['add']=[name.get(x,x) for x in add][:15]
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
@@ -468,7 +479,9 @@ json.dump({'gen':TODAY,'first':first_run,'lines':idx},
 json.dump(chm,open(chpath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],'op':c['op']} for rdesc,c in cur.items()}
+# 'tt' נשמר כדי שאפשר יהיה לזהות שינוי בסוג הקו. במצב שנוצר לפני השדה הזה
+# הוא פשוט חסר, ולכן ההשוואה מדלגת בשקט בריצה הראשונה ולא ממציאה אירוע.
+state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],'op':c['op'],'tt':c.get('tt')} for rdesc,c in cur.items()}
 state_out.update(carry)   # רשומים ללא נסיעות פעילות — נגררים קדימה
 json.dump(state_out,
           open(f'{OUTDIR}/state-routes.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))

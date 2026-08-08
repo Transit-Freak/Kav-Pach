@@ -133,25 +133,46 @@ if (oldestL) {
 // הבדיקה מוודאת שהקווים האלה באמת מגיעים למסך ושדף הקו שלהם נפתח: לרכבת
 // אין מספר קו ב-GTFS, ותג ריק הוא בדיוק סוג התקלה שנעלמת מהעין.
 const idxLines = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines.json'), 'utf8')).lines;
-const withTt = idxLines.filter((l) => l.tt);
-if (withTt.length) {
-  await page.click('button.tab:has-text("רכבת ומוניות")', { timeout: 30000 });
-  await page.waitForSelector('.kfilter .kchip', { timeout: 30000 })
-    .catch(() => fail('טאב סוגי התחבורה: סרגל הסינון לא הופיע'));
+// רכבת ומוניות שירות הן קטגוריות נפרדות זו מזו — כל אחת נבדקת בפני עצמה
+const MODE_TABS = [
+  { label: 'רכבת', tts: ['rail', 'lightrail', 'cable'] },
+  { label: 'מוניות שירות', tts: ['taxi'] },
+];
+for (const t of MODE_TABS) {
+  const n = idxLines.filter((l) => t.tts.includes(l.tt)).length;
+  if (!n) { console.log(`· ${t.label}: אין עדיין קווים כאלה באינדקס — מדלגים`); continue; }
+  await page.click(`button.tab:has-text("${t.label}")`, { timeout: 30000 });
   await page.waitForSelector('.llist .lrow', { timeout: 30000 })
-    .catch(() => fail('טאב סוגי התחבורה: לא הופיעה אף שורת קו'));
+    .catch(() => fail(`${t.label}: לא הופיעה אף שורת קו למרות ${n} באינדקס`));
   const shown = await page.locator('.llist .lrow').count();
-  if (!shown) fail('טאב סוגי התחבורה: הרשימה ריקה');
   // תג ריק: קו רכבת בלי מספר חייב להציג סמל במקומו
   const blank = await page.locator('.llist .lrow .badge').evaluateAll(
     (els) => els.filter((e) => !e.textContent.trim()).length);
-  if (blank) fail(`טאב סוגי התחבורה: ${blank} תגים ריקים — סמל הסוג לא מוצג`);
+  if (blank) fail(`${t.label}: ${blank} תגים ריקים — סמל הסוג לא מוצג`);
   await page.locator('.llist .lrow').first().click();
   await page.waitForSelector('.linehead .badge', { timeout: 30000 })
-    .catch(() => fail('טאב סוגי התחבורה: דף הקו לא נפתח'));
-  console.log(`✓ סוגי תחבורה: ${withTt.length} קווים באינדקס, ${shown} מוצגים, דף הקו נפתח`);
-} else {
-  console.log('· סוגי תחבורה: אין עדיין קווים כאלה באינדקס — מדלגים');
+    .catch(() => fail(`${t.label}: דף הקו לא נפתח`));
+  // סוג התחבורה חייב להופיע בתוך עמוד הקו, לא רק ברשימה
+  const facts = await page.locator('.facts').first().textContent();
+  if (!/רכבת|מונית שירות|רכבל|כרמלית|לפי דרישה/.test(facts || ''))
+    fail(`${t.label}: סוג התחבורה לא מופיע בעמוד הקו — "${(facts || '').slice(0, 60)}"`);
+  await page.goBack();
+  console.log(`✓ ${t.label}: ${n} באינדקס, ${shown} מוצגים, עמוד הקו מציג את הסוג`);
+}
+// "שירות לפי דרישה" נשאר תחת קווים ולא כקטגוריה נפרדת — אבל חייב להיות
+// מסומן ככזה בתוך עמוד הקו, אחרת אי אפשר לדעת שזו לא נסיעה רגילה
+const dem = idxLines.find((l) => l.tt === 'demand');
+if (dem) {
+  // שינוי שמשנה רק את ה-hash אינו טוען את הדף מחדש, ולכן React לא קורא
+  // אותו שוב — חובה reload מפורש, אחרת נבדק המסך הקודם
+  await page.goto(`http://127.0.0.1:${port}/index.html#${encodeURIComponent(dem.rd)}`,
+    { waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.facts', { timeout: 30000 })
+    .catch(() => fail(`שירות לפי דרישה: עמוד הקו ${dem.rd} לא נטען`));
+  const f = await page.locator('.facts').first().textContent();
+  if (!/לפי דרישה/.test(f || '')) fail(`שירות לפי דרישה: הקו ${dem.rd} אינו מסומן ככזה`);
+  console.log('✓ שירות לפי דרישה: נשאר תחת קווים ומסומן בעמוד הקו');
 }
 
 await browser.close();
