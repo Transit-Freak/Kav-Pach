@@ -250,7 +250,14 @@ def apply_event(rd, ds, kind, stops, shp, add, rem, since):
 
 
 def main():
-    days = [l.strip() for l in open(os.environ.get('DAYS', '/tmp/hits.txt'))
+    # רשימת תאריכי הארכיון נשמרת בריפו: היא נבנתה מסריקה של אלפי ימים מול
+    # שרת חיצוני, ואיבודה היה מחייב לחזור על כל הסריקה. עותק ב-/tmp נשאר
+    # כגיבוי תאום-לאחור.
+    src = os.environ.get('DAYS')
+    if not src:
+        src = (f'{OUTDIR}/tf-days.txt' if os.path.exists(f'{OUTDIR}/tf-days.txt')
+               else '/tmp/hits.txt')
+    days = [l.strip() for l in open(src)
             if l.strip() and FROM <= l.strip() <= TO]
     st = json.load(open(STATE)) if os.path.exists(STATE) else {'done': []}
     done = set(st['done'])
