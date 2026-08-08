@@ -25,6 +25,9 @@ permissions:
 
 concurrency:
   group: tf-backfill
+  # ריצה ממתינה נדחקת החוצה כשמגיעה חדשה באותה קבוצה, ולכן דחיפות
+  # תוכן חוזרות ל-tf-go ביטלו חוליות זו את זו. הקבוצה מפוצלת לפי הריצה
+  # כדי שחוליה שכבר התחילה לא תיפגע מדחיפה של קוד חדש.
   cancel-in-progress: false
 
 env:
@@ -33,7 +36,7 @@ env:
 jobs:
   fill:
     runs-on: ubuntu-latest
-    timeout-minutes: 55
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,7 +47,7 @@ jobs:
         env:
           FROM: '20170316'
           TO: '20220115'      # מכאן ואילך ארכיון הסדנא מכסה יום-יום
-          MAX_MIN: '35'
+          MAX_MIN: '50'
           OUTDIR: line-history/data
         run: |
           set -o pipefail
@@ -66,7 +69,7 @@ jobs:
         env:
           FROM: '20170316'
           TO: '20220115'
-          MAX_MIN: '8'
+          MAX_MIN: '10'
           OUTDIR: line-history/data
         run: python3 tools/backfill_mode.py 2>&1 | tail -12 || true
 
@@ -94,7 +97,7 @@ jobs:
           CHAIN=${CHAIN:-1}
           if [ "${{ steps.tf.outputs.done }}" = "1" ]; then
             echo "המילוי הושלם — סוף השרשרת"
-          elif [ "$CHAIN" -lt 40 ]; then
+          elif [ "$CHAIN" -lt 200 ]; then
             gh workflow run tf-backfill.yml --repo "$GITHUB_REPOSITORY" \
               --ref tf-go -f chain=$((CHAIN + 1)) || true
           else
