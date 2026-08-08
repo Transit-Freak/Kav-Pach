@@ -42,6 +42,8 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
         e['line'] = lf.get('line', e.get('line', ''))
         e['dest'] = (lf.get('dest') or e.get('dest', ''))[:80]
         e['op'] = lf.get('op', e.get('op', ''))
+    if lf.get('tt'):          # סוג תחבורה שאינו אוטובוס — לסינון באתר
+        e['tt'] = lf['tt']
     # 'times' (הלו"ז האחרון של קו מבוטל) הוא צילום-מידע, לא שינוי — לא קטגוריה
     ks = {v['k'] for v in vs if v['k'] not in ('baseline', 'times')}
     # הגדרת המשתמש: 'freq' (שינוי מספר הרכבים) = רק תגבור באותה דקה;
