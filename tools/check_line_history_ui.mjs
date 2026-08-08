@@ -74,7 +74,20 @@ await page.route('**://unpkg.com/**', (route) => {
     : u.includes('babel') ? 'vendor/babel.min.js' : null;
   if (local) return route.fulfill({ contentType: 'text/javascript', body: fs.readFileSync(path.join(ROOT, local)) });
   if (u.endsWith('.css')) return route.fulfill({ contentType: 'text/css', body: '' });
-  return route.fulfill({ contentType: 'text/javascript', body: 'window.L=window.L||{map:()=>({})};' });
+  // סטאב לאפלט: הבדיקה רצה בלי רשת, אבל דף הקו כן מצייר מפה. הסטאב חייב
+  // לכסות את כל מה שהאפליקציה קוראת לו — אחרת נפילת הסטאב מתחזה לבאג באתר.
+  return route.fulfill({ contentType: 'text/javascript', body: `
+    (function(){
+      var chain = function(){ return obj; },
+          obj = { addTo: chain, bindPopup: chain, fitBounds: chain, remove: chain,
+                  setView: chain, on: chain, addLayer: chain, removeLayer: chain,
+                  invalidateSize: chain, extend: chain, pad: chain, getBounds: chain,
+                  setLatLng: chain, openPopup: chain, bindTooltip: chain,
+                  isValid: function(){ return true; } };
+      window.L = { map: chain, tileLayer: chain, polyline: chain,
+                   circleMarker: chain, latLngBounds: chain, marker: chain,
+                   layerGroup: chain, divIcon: chain, control: { scale: chain } };
+    })();` });
 });
 await page.route('**://fonts.googleapis.com/**', (r) => r.fulfill({ contentType: 'text/css', body: '' }));
 await page.route('**://fonts.gstatic.com/**', (r) => r.fulfill({ body: '' }));
@@ -113,6 +126,32 @@ if (oldestL) {
   await page.waitForSelector('.dayhead', { timeout: 30000 })
     .catch(() => fail(`פיד הקווים: נבחר ${lm}.${ly} ולא הופיע אף יום`));
   console.log(`✓ פיד קווים: החודש הכי ישן (${lm}.${ly}) נגיש ומציג ימים`);
+}
+
+// ---- שלב ד': טאב סוגי התחבורה — רכבת, מוניות שירות, רכבת קלה ----
+// עד יולי 2026 הסורק סינן כל route_type שאינו אוטובוס. אחרי שהוסר הסינון,
+// הבדיקה מוודאת שהקווים האלה באמת מגיעים למסך ושדף הקו שלהם נפתח: לרכבת
+// אין מספר קו ב-GTFS, ותג ריק הוא בדיוק סוג התקלה שנעלמת מהעין.
+const idxLines = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines.json'), 'utf8')).lines;
+const withTt = idxLines.filter((l) => l.tt);
+if (withTt.length) {
+  await page.click('button.tab:has-text("רכבת ומוניות")', { timeout: 30000 });
+  await page.waitForSelector('.kfilter .kchip', { timeout: 30000 })
+    .catch(() => fail('טאב סוגי התחבורה: סרגל הסינון לא הופיע'));
+  await page.waitForSelector('.llist .lrow', { timeout: 30000 })
+    .catch(() => fail('טאב סוגי התחבורה: לא הופיעה אף שורת קו'));
+  const shown = await page.locator('.llist .lrow').count();
+  if (!shown) fail('טאב סוגי התחבורה: הרשימה ריקה');
+  // תג ריק: קו רכבת בלי מספר חייב להציג סמל במקומו
+  const blank = await page.locator('.llist .lrow .badge').evaluateAll(
+    (els) => els.filter((e) => !e.textContent.trim()).length);
+  if (blank) fail(`טאב סוגי התחבורה: ${blank} תגים ריקים — סמל הסוג לא מוצג`);
+  await page.locator('.llist .lrow').first().click();
+  await page.waitForSelector('.linehead .badge', { timeout: 30000 })
+    .catch(() => fail('טאב סוגי התחבורה: דף הקו לא נפתח'));
+  console.log(`✓ סוגי תחבורה: ${withTt.length} קווים באינדקס, ${shown} מוצגים, דף הקו נפתח`);
+} else {
+  console.log('· סוגי תחבורה: אין עדיין קווים כאלה באינדקס — מדלגים');
 }
 
 await browser.close();
