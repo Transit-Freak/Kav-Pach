@@ -1289,6 +1289,16 @@ function App() {
     return c;
   }, [idx]);
   // אילו מק"טים עדיין פעילים — כדי להבדיל חלופה מבוטלת מקו שבוטל כולו
+  // הטאב אינו חלק מהכתובת, ולכן ריענון או פתיחת קישור ישיר לקו החזירו
+  // תמיד ל"קווים" — וכפתור "חזרה" הוציא את המשתמש מקו רכבת אל רשימת
+  // האוטובוסים. הטאב נגזר מסוג הקו הפתוח, כך שהחזרה נוחתת במקום שממנו
+  // הגיע גם כשהמצב בזיכרון אבד.
+  useEffect(() => {
+    if (!idx || !rd) return;
+    const l = idx.lines.find((x) => x.rd === rd);
+    const t = l && l.tt && TABS.find((x) => x.tts.includes(l.tt));
+    setTab(t ? t.k : "lines");
+  }, [idx, rd]);
   const mktAlive = useMemo(() => {
     const m = {};
     if (idx) idx.lines.forEach((l) => { if (l.lk !== "removed") m[l.rd.split("-")[0]] = true; });

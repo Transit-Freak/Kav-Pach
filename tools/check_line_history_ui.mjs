@@ -156,8 +156,15 @@ for (const t of MODE_TABS) {
   const facts = await page.locator('.facts').first().textContent();
   if (!/רכבת|מונית שירות|רכבל|כרמלית|לפי דרישה/.test(facts || ''))
     fail(`${t.label}: סוג התחבורה לא מופיע בעמוד הקו — "${(facts || '').slice(0, 60)}"`);
-  await page.goBack();
-  console.log(`✓ ${t.label}: ${n} באינדקס, ${shown} מוצגים, עמוד הקו מציג את הסוג`);
+  // "חזרה לחיפוש" מקו רכבת/מונית חייבת לנחות באותה קטגוריה ולא ב"קווים":
+  // הטאב אינו בכתובת, וללא גזירה מסוג הקו המשתמש הועף לרשימת האוטובוסים
+  await page.click('button.back');
+  await page.waitForSelector('.llist .lrow', { timeout: 30000 })
+    .catch(() => fail(`${t.label}: חזרה מעמוד הקו לא הציגה רשימה`));
+  const onTab = await page.locator('button.tab.on').textContent();
+  if (!(onTab || '').includes(t.label))
+    fail(`${t.label}: חזרה מעמוד הקו נחתה בטאב "${(onTab || '').trim()}" במקום "${t.label}"`);
+  console.log(`✓ ${t.label}: ${n} באינדקס, ${shown} מוצגים, הסוג מוצג, חזרה נשארת בקטגוריה`);
 }
 // "שירות לפי דרישה" נשאר תחת קווים ולא כקטגוריה נפרדת — אבל חייב להיות
 // מסומן ככזה בתוך עמוד הקו, אחרת אי אפשר לדעת שזו לא נסיעה רגילה
