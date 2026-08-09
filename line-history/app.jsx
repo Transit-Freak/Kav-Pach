@@ -881,6 +881,7 @@ function GoneList({ idx, openLine, kats }) {
     const by = new Map();
     let nGone = 0, nVar = 0;
     idx.lines.forEach((l) => {
+      if (l.tt && l.tt !== "demand") return;      // רכבת ומוניות — בטאבים שלהן
       if (![...kats].some((k) => catMatch(l, k))) return;
       const mkt = l.rd.split("-")[0];
       const whole = l.lk === "removed" && !alive[mkt];
@@ -915,7 +916,7 @@ function GoneList({ idx, openLine, kats }) {
         {shown.slice(0, lim).map((g) => (
           <a key={g.key} className="lrow" href={lineHref(g.l.rd)}
             onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(g.l.rd); }}>
-            <span className="badge sm">{g.l.line}</span>
+            <span className="badge sm">{g.l.line || TT_ICON[g.l.tt] || "—"}</span>
             <span className="k" style={{ background: g.whole ? (isRemovedYear(g.l) ? "#7f1d1d" : "#dc2626")
               : (isRemovedYear(g.l) ? "#9a3412" : "#ea580c") }}>
               {g.whole ? (isRemovedYear(g.l) ? "הקו בוטל — מעל שנה" : "הקו בוטל")
@@ -1001,7 +1002,14 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
   }, [mon]);
   if (months === null) return <div className="card">טוען…</div>;
   const needle = q.trim();
-  const list = (chs || []).filter((c) => { const m = meta[c.rd] || {}; return !needle || c.line.includes(needle) || (m.dest || "").includes(needle) || (m.op || "").includes(needle) || c.rd.includes(needle); });
+  // הפיד יושב בטאב "קווים", שהוא טאב האוטובוסים. רכבת ומוניות שירות הן
+  // טאבים משלהן, וכשהן הופיעו כאן הן גם הגיעו בלי מספר קו — תג ריק.
+  const list = (chs || []).filter((c) => {
+    const m = meta[c.rd] || {};
+    if (m.tt && m.tt !== "demand") return false;
+    return !needle || c.line.includes(needle) || (m.dest || "").includes(needle) ||
+      (m.op || "").includes(needle) || c.rd.includes(needle);
+  });
   const days = []; const byd = new Map();
   for (const c of list) { let g = byd.get(c.d); if (!g) { g = []; byd.set(c.d, g); days.push(c.d); } g.push(c); }
   days.sort().reverse();
@@ -1093,7 +1101,7 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
                 return (
                   <a key={c.rd + c.k + i} className="lrow" href={lineHref(c.rd)}
                     onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(c.rd); }}>
-                    <span className="badge sm">{c.line}</span>
+                    <span className="badge sm">{c.line || TT_ICON[m.tt] || "—"}</span>
                     <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
@@ -1515,7 +1523,9 @@ function App() {
     const c = {};
     if (idx) {
       const keys = CAT_GROUPS.flatMap((g) => g.items);
-      idx.lines.forEach((l) => {
+      // אותה אוכלוסייה שהרשימה מציגה. אחרת המספר ליד הקטגוריה גדול ממה
+      // שנפתח בלחיצה עליה.
+      idx.lines.filter((l) => !l.tt || l.tt === "demand").forEach((l) => {
         keys.forEach((k) => { if (catMatch(l, k)) c[k] = (c[k] || 0) + 1; });
       });
     }
@@ -1650,7 +1660,7 @@ function App() {
               {list.map((l) => (
                 <a key={l.rd} className="lrow" href={lineHref(l.rd)}
                   onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(l.rd); }}>
-                  <span className="badge sm">{l.line}</span>
+                  <span className="badge sm">{l.line || TT_ICON[l.tt] || "—"}</span>
                   {l.lk === "removed" && (isLineGone(l) ? (
                     <span className="k" style={{ background: isRemovedYear(l) ? "#7f1d1d" : "#dc2626" }}>
                       {isRemovedYear(l) ? "הקו בוטל — מעל שנה" : "הקו בוטל"}

@@ -261,6 +261,19 @@ if (oldestL) {
   await page.waitForSelector('.dayhead', { timeout: 30000 })
     .catch(() => fail(`פיד הקווים: נבחר ${lm}.${ly} ולא הופיע אף יום`));
   console.log(`✓ פיד קווים: החודש הכי ישן (${lm}.${ly}) נגיש ומציג ימים`);
+
+  // הפיד יושב בטאב האוטובוסים. קו רכבת שהגיע לכאן הופיע גם בלי מספר קו,
+  // כלומר תג ריק — תקלה שנראית כמו רווח ולא כמו שגיאה.
+  const rows = page.locator('.lrow');
+  const nr = Math.min(await rows.count(), 40);
+  for (let i = 0; i < nr; i++) {
+    const row = rows.nth(i);
+    const badge = (await row.locator('.badge').innerText()).trim();
+    if (!badge) fail(`פיד קווים: שורה ${i + 1} עם תג ריק — קו בלי מספר`);
+    const meta = await row.locator('.lmeta').innerText();
+    if (/רכבת ישראל|רכבת קלה/.test(meta)) fail(`פיד קווים: קו רכבת בטאב האוטובוסים (${meta})`);
+  }
+  console.log(`✓ פיד קווים: ${nr} שורות נבדקו — אין תג ריק ואין רכבת`);
 }
 
 // ---- שלב ד': טאב סוגי התחבורה — רכבת, מוניות שירות, רכבת קלה ----
