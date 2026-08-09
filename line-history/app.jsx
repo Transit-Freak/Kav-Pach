@@ -827,6 +827,93 @@ function StopEvMap({ ev }) {
   return <div className="smap" ref={ref} />;
 }
 
+/* ---------- עמוד קו של 2012 ---------- */
+// קו של 2012 נפתח קודם כרשימת תחנות בתוך שורה בפיד, בלי מפה ובלי כתובת
+// משלו. זה עמוד לכל דבר: מסלול על המפה דרך התחנות שהוצלבו למק"ט, רצף
+// התחנות, ומעבר לקו של היום כשיש כזה.
+function Map2012({ stops }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const map = L.map(ref.current, { scrollWheelZoom: false });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>', maxZoom: 19,
+    }).addTo(map);
+    // מיקום התחנה הוא של היום, כי ב-2012 לא נשמרו קואורדינטות. תחנה שלא
+    // הוצלבה למק"ט אינה על המפה — ולכן הקו מקווקו ולא רציף.
+    const pts = stops.filter((s) => s[5] != null && s[6] != null).map((s) => [s[5], s[6]]);
+    if (pts.length > 1) L.polyline(pts, { color: "#78350f", weight: 4, opacity: 0.85, dashArray: "6 8" }).addTo(map);
+    stops.forEach((s, i) => {
+      if (s[5] == null) return;
+      const last = i === stops.length - 1;
+      L.circleMarker([s[5], s[6]], { radius: i === 0 || last ? 8 : 5, weight: 2,
+        color: i === 0 || last ? "#fff" : "#78350f",
+        fillColor: i === 0 ? "#16a34a" : last ? "#dc2626" : "#fff", fillOpacity: 1 })
+        .addTo(map).bindPopup(`<b>${esc(s[1])}</b><br><span class="pst">תחנה ${s[0]} במסלול 2012</span>` +
+          (s[4] && s[4].length === 1 ? `<br><span class="pcode">מק״ט ${esc(String(s[4][0]))}</span>` : ""),
+          { className: "lh-pop", offset: [0, -4] });
+    });
+    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.15), { maxZoom: 16 });
+    else map.setView([31.5, 34.9], 8);
+    return () => map.remove();
+  }, [stops]);
+  return <div className="map" ref={ref} />;
+}
+
+function Line2012Page({ k12, anchorRd, openLine, onBack }) {
+  const [d, setD] = useState(null);
+  const [ri, setRi] = useState(0);
+  useEffect(() => {
+    setD(null); setRi(0);
+    fetch("../magihim-2012/data/l" + k12 + ".json?v=" + BUILD)
+      .then((r) => (r.ok ? r.json() : null)).then(setD).catch(() => setD(false));
+  }, [k12]);
+  if (d === null) return <div className="card">טוען…</div>;
+  if (!d) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button>
+    <div className="empty">הקו לא נמצא בצילום 2012.</div></div>;
+  const r = (d.routes || [])[ri] || (d.routes || [])[0] || { stops: [] };
+  const stops = r.stops || [];
+  const matched = stops.filter((s) => s[5] != null).length;
+  return (
+    <div className="card">
+      <button className="back" onClick={onBack}>→ חזרה</button>
+      <div className="linehead">
+        <span className="badge">{d.no}</span>
+        <span className="dest">{d.dest}</span>
+        <span className="k" style={{ background: "#78350f" }}>צילום 2012</span>
+      </div>
+      <div className="facts">{d.an} · {stops.length} תחנות · {(d.routes || []).length} מסלולים ·
+        {" "}{matched} תחנות הוצלבו למק"ט של היום
+        {anchorRd && <> · <a className="totoday" href={lineHref(anchorRd)}
+          onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(anchorRd); }}>הקו של היום ←</a></>}
+      </div>
+      {(d.routes || []).length > 1 && (
+        <div className="s12chips">{d.routes.map((x, i) => (
+          <button key={x.rid} className={"rchip12" + (i === ri ? " on" : "")} onClick={() => setRi(i)}>
+            {x.f} ← {x.l} ({x.n})</button>
+        ))}</div>
+      )}
+      <Map2012 stops={stops} />
+      <div className="legend">
+        <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>
+        <span><i className="dot" style={{ background: "#16a34a" }} /> ראשונה</span>
+        <span><i className="dot" style={{ background: "#dc2626" }} /> אחרונה</span>
+      </div>
+      <ol className="s12">
+        {stops.map((s) => (
+          <li key={s[0]}>{s[1]}{" "}
+            {s[4] && s[4].length === 1 ? <span className="pcode">מק״ט {s[4][0]}</span>
+              : s[4] && s[4].length > 1 ? <span className="pcode">{s[4].length} מק״טים אפשריים</span>
+                : <span className="pcode">לא הוצלבה</span>}
+          </li>
+        ))}
+      </ol>
+      <div className="katnote">🛈 המיקום על המפה הוא של התחנה כפי שהיא רשומה היום, כי בצילום
+        2012 לא נשמרו קואורדינטות. תחנה שלא הוצלבה למק"ט אינה מופיעה על המפה, ולכן הקו מקווקו.</div>
+    </div>
+  );
+}
+
 /* ---------- שינויים לפי יום (כל הקווים) ---------- */
 /* ---------- תוצאות מצילום 2012 ---------- */
 // חיפוש "548" החזיר את הקו כפי שהוא היום — קרית מלאכי לכפר חב"ד — ולא רמז
@@ -939,7 +1026,7 @@ function GoneList({ idx, openLine, kats }) {
   );
 }
 
-function DayFeed({ idx, openLine, onBack, init12 }) {
+function DayFeed({ idx, openLine, open12, onBack }) {
   const [months, setMonths] = useState(null);
   const [yr, setYr] = useState("");
   const [mon, setMon] = useState("");
@@ -949,30 +1036,16 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
   useEffect(() => setLim(300), [q, mon]);
   // יעד ומפעיל לא משוכפלים בקובצי החודש — נשלפים מהאינדקס לפי מק"ט
   const meta = useMemo(() => { const m = {}; ((idx && idx.lines) || []).forEach((l) => { m[l.rd] = l; }); return m; }, [idx]);
-  // לשונית 2012: כל קווי הצילום — המקושרים נפתחים בעמוד הקו של היום,
-  // והשאר (בוטלו / שונו ללא היכר) נפתחים במקום עם רצף התחנות
+  // לשונית 2012: כל קווי הצילום. כל שורה מובילה לעמוד של אותו קו כפי
+  // שהיה ב-2012 — מפה ורצף תחנות — ולא נפתחת בתוך השורה
   const [a12, setA12] = useState(null);
   const [idx12, setIdx12] = useState(null);
-  const [exp12, setExp12] = useState(null);   // k של שורה לא-מקושרת פתוחה
-  const [expd, setExpd] = useState(null);     // הנתונים שנטענו לשורה הפתוחה
   useEffect(() => { getAnchors2012().then((d) => setA12(d.anchors || {})); }, []);
   useEffect(() => {
     fetch("../magihim-2012/data/index.json?v=" + BUILD)
       .then((r) => (r.ok ? r.json() : { lines: [] }))
       .then(setIdx12).catch(() => setIdx12({ lines: [] }));
   }, []);
-  useEffect(() => {
-    if (!exp12) return;
-    setExpd(null);
-    fetch("../magihim-2012/data/l" + exp12 + ".json?v=" + BUILD)
-      .then((r) => r.json()).then(setExpd).catch(() => setExpd({ routes: [] }));
-  }, [exp12]);
-  // כניסה מכתובת ‎#2012/<k>‎ (כרטיסייה חדשה): פותחים את הפיד על 2012
-  // עם הקו המבוקש פתוח, ומגדילים את הרשימה כדי שהשורה תופיע
-  useEffect(() => {
-    if (!init12) return;
-    setYr("2012"); setMon(""); setExp12(init12); setLim(100000);
-  }, [init12]);
   const k2rd = useMemo(() => {
     const m = {};
     for (const [rd, v] of Object.entries(a12 || {})) if (!(v.k in m)) m[v.k] = rd;
@@ -988,7 +1061,7 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
         const ms = d.months || []; setMonths(ms);
         // לא דורסים בחירה שכבר נעשתה — כניסה מכתובת ‎#2012/<k>‎ קובעת
         // את השנה לפני שהחודשים נטענים
-        if (ms.length) { setYr((cur) => cur || ms[0].slice(0, 4)); if (!init12) setMon((cur) => cur || ms[0]); }
+        if (ms.length) { setYr((cur) => cur || ms[0].slice(0, 4)); setMon((cur) => cur || ms[0]); }
       })
       .catch(() => setMonths([]));
   }, []);
@@ -1048,37 +1121,14 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
             <div className="dayhead">צילום מצב 2012 · {list12.length.toLocaleString()} קווים ·
               {" "}{linked.toLocaleString()} מקושרים לקווים של היום</div>
             {list12.slice(0, lim).map((v) => (
-              <React.Fragment key={v.k}>
-                {v.rd ? (
-                  <a className="lrow" href={lineHref(v.rd)}
-                    onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(v.rd); }}>
-                    <span className="badge sm">{v.no}</span>
-                    <span className="k" style={{ background: "#78350f" }}>2012</span>
-                    <span className="ldest">{v.dest || "—"}</span>
-                    <span className="lmeta">{v.an} · {v.nr} מסלולים</span>
-                  </a>
-                ) : (
-                  <a className="lrow" href={"#2012/" + encodeURIComponent(v.k)}
-                    onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); setExp12(exp12 === v.k ? null : v.k); }}>
-                    <span className="badge sm">{v.no}</span>
-                    <span className="k" style={{ background: "#57534e" }}>לא קיים היום</span>
-                    <span className="ldest">{v.dest || "—"}</span>
-                    <span className="lmeta">{v.an} · {v.nr} מסלולים · {exp12 === v.k ? "סגור ▲" : "רצף התחנות ▼"}</span>
-                  </a>
-                )}
-                {exp12 === v.k && !v.rd && (
-                  <div className="a2012">
-                    {expd ? ((expd.routes || []).length ? (
-                      <ol className="s12">
-                        {(expd.routes[0].stops || []).map((s) => (
-                          <li key={s[0]}>{s[1]}{" "}
-                            {s[4] && s[4].length === 1 ? <span className="pcode">מק״ט {s[4][0]}</span> : null}</li>
-                        ))}
-                      </ol>
-                    ) : <div className="mut">הנתונים לא נטענו.</div>) : <div className="mut">טוען…</div>}
-                  </div>
-                )}
-              </React.Fragment>
+              <a key={v.k} className="lrow" href={"#2012/" + encodeURIComponent(v.k)}
+                onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); open12(v.k); }}>
+                <span className="badge sm">{v.no}</span>
+                <span className="k" style={{ background: v.rd ? "#78350f" : "#57534e" }}>
+                  {v.rd ? "2012" : "לא קיים היום"}</span>
+                <span className="ldest">{v.dest || "—"}</span>
+                <span className="lmeta">{v.an} · {v.nr} מסלולים · {v.ns} תחנות · מפה ורצף ←</span>
+              </a>
             ))}
             {list12.length > lim && (
               <button className="morebtn" onClick={() => setLim(lim + 500)}>
@@ -1491,14 +1541,25 @@ function App() {
   const isStopH = (h) => h.startsWith("stop=");
   const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? H0 : null));
   const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
-  const [byDay, setByDay] = useState(() => H0.startsWith("2012/"));   // תצוגת "שינויים לפי יום"
-  const [open12, setOpen12] = useState(null);   // קו 2012 שנפתח מתוך תוצאות החיפוש
+  const [byDay, setByDay] = useState(false);   // תצוגת "שינויים לפי יום"
+  // ‎#2012/<k>‎ הוא עמוד לכל דבר, ולא שורה שנפתחת בתוך הפיד
+  const [k12, setK12] = useState(() => (H0.startsWith("2012/") ? H0.slice(5) : null));
+  const [anc12, setAnc12] = useState({});      // מפתח קו 2012 -> מק"ט של היום
+  useEffect(() => {
+    if (!k12) return;
+    getAnchors2012().then((d) => {
+      const m = {};
+      for (const [rd, v] of Object.entries(d.anchors || {})) if (!(v.k in m)) m[v.k] = rd;
+      setAnc12(m);
+    });
+  }, [k12]);
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
-    const onPop = (e) => setRd((e.state && e.state.rd) || null);
+    const onPop = (e) => { setRd((e.state && e.state.rd) || null); setK12((e.state && e.state.k12) || null); };
     const onHash = () => {
       const h = decodeURIComponent((location.hash || "").slice(1));
+      if (h.startsWith("2012/")) { setRd(null); setK12(h.slice(5)); return; }
       if (!isStopH(h)) return;
       setRd(null); setStopSel(h.slice(5)); setTab("stops");
     };
@@ -1506,7 +1567,8 @@ function App() {
     window.addEventListener("hashchange", onHash);
     return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("hashchange", onHash); };
   }, []);
-  const openLine = (r) => { history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
+  const openLine = (r) => { setK12(null); history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
+  const open12 = (k) => { history.pushState({ k12: k }, "", "#2012/" + encodeURIComponent(k)); setK12(k); };
   const switchLine = (r) => { history.replaceState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const backToList = () => {
     setRd(null);
@@ -1602,15 +1664,17 @@ function App() {
             onClick={() => { setTab(t.k); backToList(); }}>{t.icon} {t.label}</button>
         ))}
       </div>
-      {tab === "stops" ? <StopsTab sel={stopSel} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
+      {k12 ? (
+        <Line2012Page k12={k12} anchorRd={anc12[k12] || null} openLine={openLine}
+          onBack={() => { setK12(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
+      ) : tab === "stops" ? <StopsTab sel={stopSel} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
         <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
       ) : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
       ) : byDay ? (
-        <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)}
-          init12={open12 || (H0.startsWith("2012/") ? H0.slice(5) : null)} />
+        <DayFeed idx={idx} openLine={openLine} open12={open12} onBack={() => setByDay(false)} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
@@ -1685,7 +1749,7 @@ function App() {
                   ⌄ הצג עוד — מוצגים {list.length.toLocaleString()} מתוך {total.toLocaleString()}
                 </button>
               )}
-              <Res2012 needle={needle} onOpen={(k) => { setOpen12(k); setByDay(true); }} />
+              <Res2012 needle={needle} onOpen={open12} />
             </div>
           ) : (
             <div className="empty">הקלידו מספר קו, או פתחו את "קטגוריות לבחירה" וסמנו אילו סוגי שינויים להציג.<br />

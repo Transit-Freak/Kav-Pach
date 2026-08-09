@@ -213,9 +213,16 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   if (!t12.includes('ברק')) fail('חיפוש 548: הגרסה של 2012 לבני ברק לא הופיעה');
   const n12 = await page.locator('.r12 .lrow').count();
   await page.locator('.r12 .lrow').first().click();
-  await page.waitForSelector('.s12 li, .dayhead', { timeout: 30000 })
-    .catch(() => fail('לחיצה על קו 2012 לא פתחה את רצף התחנות'));
-  console.log(`✓ חיפוש: 548 מציג גם ${n12} קווים מצילום 2012, ולחיצה פותחת אותם`);
+  // עמוד לכל דבר: כותרת, מפה ורצף תחנות — ולא רשימה שנפתחת בתוך שורה
+  await page.waitForSelector('.card > .s12 li', { timeout: 30000 })
+    .catch(() => fail('לחיצה על קו 2012 לא פתחה את העמוד שלו'));
+  if (!(await page.locator('.map').count())) fail('עמוד קו 2012 בלי מפה');
+  if (!/^#2012\//.test(await page.evaluate(() => location.hash)))
+    fail('עמוד קו 2012 בלי כתובת משלו');
+  const head12 = await page.locator('.linehead').innerText();
+  if (!head12.includes('548')) fail(`עמוד קו 2012: הכותרת לא מזהה את הקו (${head12})`);
+  const nst = await page.locator('.card > .s12 li').count();
+  console.log(`✓ חיפוש: 548 מציג ${n12} קווים מ-2012, והעמוד נפתח עם מפה ו-${nst} תחנות`);
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }

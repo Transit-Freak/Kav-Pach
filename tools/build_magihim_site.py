@@ -37,6 +37,19 @@ EXPAND = [('ת.מרכזית', 'תחנה מרכזית'), ('ת. מרכזית', 'ת
           ('תחנה מרכזית', 'מרכזית')]
 
 
+# מגיעים קיצר "בני ברק" ל"ברק" בחלק מהרשומות — לפעמים בתוך אותו מסלול
+# עצמו ("בן גוריון/ז'בוטינסקי - בני ברק" לצד "מגדלי קונקורד - ברק"). זו
+# חוסר עקביות שלהם, ובתצוגה היא נקראת כשם עיר אחר.
+# ה"ל" וה"מ" הן תחיליות היעד ("מקרית מלאכי לברק"), והבדיקה על "בני "
+# שלפני מונעת מ"בני ברק" תקין להפוך ל"בני בני ברק".
+TRUNC = re.compile(r'(?<!בני )(?<![א-ת])([למ]?)ברק(?![א-ת])')
+
+
+def untrunc(s):
+    """השלמת שמות עיר שנקטעו במקור, לתצוגה בלבד."""
+    return TRUNC.sub(r'\1בני ברק', s or '')
+
+
 def norm(s):
     """נרמול שם תחנה להצלבה: קיצורים, גרשיים, מקפים, לוכסנים ורווחים."""
     for a, b in EXPAND:
@@ -199,18 +212,18 @@ def main():
         no = m.group(1) if m else '?'
         dest = title.split(' - ', 1)[1] if ' - ' in title else ''
         key = f'{a}-{lid}' if gi == 0 else f'{a}-{lid}x{gi}'
-        payload = {'a': a, 'an': ag_names.get(a, ''), 'no': no, 'dest': dest, 'routes': [
+        payload = {'a': a, 'an': ag_names.get(a, ''), 'no': no, 'dest': untrunc(dest), 'routes': [
             {'rid': str(r.get('route')), 'n': len(r.get('stops', [])),
-             'f': (r['stops'][0]['name'] if r.get('stops') else ''),
-             'l': (r['stops'][-1]['name'] if r.get('stops') else ''),
-             'stops': [(lambda mks: [s['seq'], s['name'], s['t'], s['type'], mks]
+             'f': untrunc(r['stops'][0]['name'] if r.get('stops') else ''),
+             'l': untrunc(r['stops'][-1]['name'] if r.get('stops') else ''),
+             'stops': [(lambda mks: [s['seq'], untrunc(s['name']), s['t'], s['type'], mks]
                         + (list(coords.get(mks[0], ())) if mks else []))(mks_of(s['name']))
                        for s in r.get('stops', [])]}
             for r in rows]}
         (OUT / f'l{key}.json').write_text(
             json.dumps(payload, ensure_ascii=False), encoding='utf-8')
         idx.append({'k': key, 'a': a, 'an': ag_names.get(a, ''), 'no': no,
-                    'dest': dest, 'nr': len(rows),
+                    'dest': untrunc(dest), 'nr': len(rows),
                     'ns': max((len(r.get('stops', [])) for r in rows), default=0)})
 
     def sort_key(e):

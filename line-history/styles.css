@@ -165,6 +165,9 @@ footer a { color: #7c3aed; }
 .srow.sub { padding-right: 22px; }
 
 /* כפתור "הצג עוד" בסוף רשימות */
+/* קישור לקו של היום מתוך שורת 2012 — בלי לגזול את הלחיצה על השורה עצמה */
+.totoday { color: #7c3aed; font-weight: 800; font-size: 12px; white-space: nowrap; }
+
 /* תוצאות מצילום 2012, מתחת לתוצאות של היום */
 .r12 { margin-top: 14px; border-top: 1px dashed #e7e5e4; padding-top: 10px; }
 .r12head { font-size: 12.5px; font-weight: 800; color: #78350f; margin-bottom: 7px; line-height: 1.6; }
@@ -188,6 +191,8 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .rchip12 { border: 1px solid #e7e5e4; background: #fff; border-radius: 9999px; padding: 3px 9px; margin: 2px 0 2px 5px; font-family: inherit; font-weight: 800; font-size: 11px; cursor: pointer; }
 .rchip12.on { background: #78350f; color: #fff; border-color: #78350f; }
 .s12 { max-height: 260px; overflow-y: auto; margin: 6px 0 2px; padding-inline-start: 20px; font-size: 12.5px; line-height: 1.75; }
+/* בעמוד קו 2012 הרשימה היא התוכן ולא הצצה בתוך שורה */
+.card > .s12 { max-height: none; overflow: visible; font-size: 13.5px; margin-top: 10px; }
 .s12 .pcode { color: #a8a29e; font-size: 11px; }
 
 /* טבלת לפני/אחרי של לוח היציאות (אירועי תדירות/לו"ז) */
