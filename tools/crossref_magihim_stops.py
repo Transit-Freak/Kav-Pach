@@ -29,6 +29,11 @@ M12DIR = os.environ.get('M12DIR', 'magihim-2012/data')
 DRY = os.environ.get('DRY') == '1'
 
 
+# עד כמה מק"טים לשם אחד עוד נחשבים עדות. הממשק מציג עד שישה כ"מק"טים
+# אפשריים", אבל כאן מסיקים מהם שקו עצר בתחנה — ולכן הרשימה הרחבה נפסלת.
+EV_CAP = 3
+
+
 def m12_codes():
     """מק"טים שהופיעו ברצף התחנות של קו כלשהו ב-2012."""
     codes = set()
@@ -40,7 +45,7 @@ def m12_codes():
         for r in d.get('routes') or []:
             for s in r.get('stops') or []:
                 # [seq, שם, זמן, סוג עצירה, [מק"טים], lat, lon]
-                if len(s) > 4 and isinstance(s[4], list):
+                if len(s) > 4 and isinstance(s[4], list) and len(s[4]) <= EV_CAP:
                     for c in s[4]:
                         if c:
                             codes.add(str(c).strip())

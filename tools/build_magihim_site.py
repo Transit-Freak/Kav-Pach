@@ -18,6 +18,8 @@ import sys
 import time
 
 REF = 'origin/magihim-data'
+# תקרת מק"טים לשם אחד. מעליה ההתאמה רחבה מדי מכדי לומר עליה משהו.
+CAP = 6
 OUT = pathlib.Path('magihim-2012/data')
 
 
@@ -45,10 +47,28 @@ def norm(s):
     return ' '.join(s.split())
 
 
+def sortkey(s):
+    """אותן מילים בסדר אחר — אותה תחנה.
+
+    שם של צומת נכתב בשני המקורות בשני הסדרים: "חנה סנש/שד.ירושלים" ב-2012
+    מול "שדרות ירושלים/חנה סנש" ברישום היום. השוואה לפי שוויון או רישא
+    מפספסת את זה לגמרי, ולכן יש גם מפתח שבו המילים ממוינות.
+    """
+    return ' '.join(sorted(norm(s).split()))
+
+
+# שמות ערים שהשתנו או נכתבים אחרת ב-2012. הרישום של היום נרשם גם תחת
+# הכתיב של אז, ולא להפך — כך שם עיר ישן לא דורס שם עיר קיים.
+CITY_ALIAS = {'בני ברק': ['ברק'], 'נוף הגליל': ['נצרת עילית'],
+              'תל אביב יפו': ['תל אביב'], 'מעלות תרשיחא': ['מעלות'],
+              'דייר חנא': ['דיר חנא'], 'יהוד מונוסון': ['יהוד']}
+
+
 def build_stop_lookup():
-    """שני מפתחות: שם מלא מנורמל -> מק"טים, ולפי-עיר לשמות קטועים.
-    המקורות: המאגר הנוכחי + שמות היסטוריים מהארכיון."""
+    """שלושה מפתחות: שם מלא מנורמל, אותו שם במילים ממוינות, ולפי-עיר
+    לשמות קטועים. המקורות: המאגר הנוכחי + שמות היסטוריים מהארכיון."""
     lk = collections.defaultdict(set)          # norm(שם עיר) / norm(שם) -> מק"טים
+    srt = collections.defaultdict(set)         # sortkey(שם עיר) -> מק"טים
     by_city = collections.defaultdict(list)    # norm(עיר) -> [(norm(שם), מק"ט)]
     cities = set()
     coords = {}                                # מק"ט -> (lat, lon)
@@ -57,9 +77,13 @@ def build_stop_lookup():
         nn, nc = norm(n), norm(city)
         lk[norm(f'{n} {city}')].add(mk)
         lk[nn].add(mk)
-        if nc:
-            cities.add(nc)
-            by_city[nc].append((nn, mk))
+        # רק עם העיר: בלעדיה "הרצל/ויצמן" מכל הארץ נופל לאותו מפתח
+        for c in [city] + CITY_ALIAS.get(nc, []):
+            if norm(c):
+                lk[norm(f'{n} {c}')].add(mk)
+                srt[sortkey(f'{n} {c}')].add(mk)
+                cities.add(norm(c))
+                by_city[norm(c)].append((nn, mk))
 
     try:
         state = json.load(open('line-history/data/stops-state.json', encoding='utf-8'))
@@ -73,14 +97,17 @@ def build_stop_lookup():
         hist = json.load(open('line-history/data/stops-hist.json', encoding='utf-8'))
         for mk, evs in hist.items():
             for e in evs:
-                for n in (e.get('n'), e.get('nn')):
+                # 'on' הוא השם שהיה לפני שינוי השם — כלומר בדיוק השם שסביר
+                # שיופיע ב-2012. בלעדיו נשאר רק השם החדש, וההצלבה מחפשת
+                # שם שהתחנה כבר לא נקראת בו.
+                for n in (e.get('n'), e.get('nn'), e.get('on')):
                     if n:
                         add(n, e.get('t', ''), mk)
                 if mk not in coords and e.get('la') and e.get('lo'):
                     coords[mk] = (e['la'], e['lo'])
     except Exception:
         pass
-    return lk, by_city, cities, coords
+    return lk, srt, by_city, cities, coords
 
 
 def main():
@@ -121,14 +148,19 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, by_city, cities, coords = build_stop_lookup()
+    lookup, srt, by_city, cities, coords = build_stop_lookup()
     m_hit = m_tot = 0
 
     def mks_of(name):
         nonlocal m_hit, m_tot
         m_tot += 1
         mks = sorted(lookup.get(norm(name), []))
-        if 0 < len(mks) <= 3:
+        if 0 < len(mks) <= CAP:
+            m_hit += 1
+            return mks
+        # אותן מילים בסדר הפוך — "חנה סנש/שד.ירושלים" מול "שדרות ירושלים/חנה סנש"
+        mks = sorted(srt.get(sortkey(name), []))
+        if 0 < len(mks) <= CAP:
             m_hit += 1
             return mks
         # שמות קטועים/מקוצרים: מפרקים "שם - עיר", ואז התאמת-רישא בתוך העיר
@@ -144,7 +176,7 @@ def main():
                 break
             found = {mk for nn, mk in by_city[city]
                      if nn == street or nn.startswith(street) or street.startswith(nn)}
-            if 0 < len(found) <= 3:
+            if 0 < len(found) <= CAP:
                 m_hit += 1
                 return sorted(found)
             break
