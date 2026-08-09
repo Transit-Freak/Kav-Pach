@@ -64,7 +64,10 @@ const { chromium } = require_('playwright-core');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript',
   '.jsx': 'text/javascript', '.css': 'text/css', '.json': 'application/json' };
 const srv = http.createServer((req, res) => {
-  const p = path.join(LH, decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html');
+  const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
+  // האתר קורא גם לנתוני 2012 שיושבים מחוץ לתיקייה שלו (‎../magihim-2012‎).
+  // בלי זה הבדיקה מחזירה 404 על מה שבדפדפן עובד.
+  const p = fs.existsSync(path.join(LH, rel)) ? path.join(LH, rel) : path.join(ROOT, rel);
   try {
     let body = fs.readFileSync(p);
     if (p.endsWith('index.html')) {
@@ -198,11 +201,32 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
+// ---- שלב ב3.7': חיפוש קו מציג גם את הגרסה של 2012 ----
+// חיפוש "548" החזיר את הקו כפי שהוא היום בלבד. הגרסה של 2012 — קו אחר
+// לגמרי, מקרית מלאכי לבני ברק — קיימת בנתונים ולא הופיעה בתוצאות.
+{
+  await page.click('button.tab:has-text("קווים")');
+  await page.fill('input.search', '548');
+  await page.waitForSelector('.r12 .lrow', { timeout: 30000 })
+    .catch(() => fail('חיפוש 548 לא הציג את קווי 2012'));
+  const t12 = await page.locator('.r12').innerText();
+  if (!t12.includes('ברק')) fail('חיפוש 548: הגרסה של 2012 לבני ברק לא הופיעה');
+  const n12 = await page.locator('.r12 .lrow').count();
+  await page.locator('.r12 .lrow').first().click();
+  await page.waitForSelector('.s12 li, .dayhead', { timeout: 30000 })
+    .catch(() => fail('לחיצה על קו 2012 לא פתחה את רצף התחנות'));
+  console.log(`✓ חיפוש: 548 מציג גם ${n12} קווים מצילום 2012, ולחיצה פותחת אותם`);
+  await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.tabs', { timeout: 30000 });
+}
+
 // ---- שלב ב4': ביטולים — קטגוריה אחת, מקובצת לפי שנה ----
 // הביטולים חיים בקטגוריה ולא במסך נפרד, ולכן הבדיקה נכנסת מאותה דרך שבה
 // נכנס משתמש: פותחת את רשימת הקטגוריות ומסמנת את התיבה.
 {
   await page.click('button.tab:has-text("קווים")');
+  // החיפוש נשמר בין ביקורים, ותצוגת הביטולים המקובצת היא ללא חיפוש חופשי
+  await page.fill('input.search', '');
   await page.click('button.kathead:has-text("קטגוריות לבחירה")', { timeout: 30000 });
   await page.locator('.katrow', { hasText: 'מבוטל' }).first().locator('input').check();
   await page.waitForSelector('.gonehead', { timeout: 30000 })

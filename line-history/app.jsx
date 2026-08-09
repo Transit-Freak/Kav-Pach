@@ -828,6 +828,43 @@ function StopEvMap({ ev }) {
 }
 
 /* ---------- שינויים לפי יום (כל הקווים) ---------- */
+/* ---------- תוצאות מצילום 2012 ---------- */
+// חיפוש "548" החזיר את הקו כפי שהוא היום — קרית מלאכי לכפר חב"ד — ולא רמז
+// שב-2012 היה 548 אחר, של אגד, מקרית מלאכי לבני ברק. הוא לא נעלם מהאתר:
+// הוא נמצא רק בצילום 2012, כי הארכיון של הפיד מתחיל במרץ 2017 והקו כבר לא
+// היה שם. מי שמחפש מספר קו צריך לראות גם את זה.
+function Res2012({ needle, onOpen }) {
+  const [idx12, setIdx12] = useState(null);
+  useEffect(() => {
+    if (!needle || idx12) return;
+    fetch("../magihim-2012/data/index.json?v=" + BUILD)
+      .then((r) => (r.ok ? r.json() : { lines: [] }))
+      .then(setIdx12).catch(() => setIdx12({ lines: [] }));
+  }, [needle, idx12]);
+  if (!needle || !idx12) return null;
+  const num = /^\d/.test(needle);
+  const hit = (v) => num
+    ? String(v.no) === needle || String(v.no).startsWith(needle)
+    : (v.dest || "").includes(needle) || (v.an || "").includes(needle);
+  const list = (idx12.lines || []).filter(hit).slice(0, 12);
+  if (!list.length) return null;
+  return (
+    <div className="r12">
+      <div className="r12head">בצילום 2012 נמצאו גם <b>{list.length}</b> קווים תואמים —
+        רשת מגיעים, חמש שנים לפני תחילת הארכיון</div>
+      {list.map((v) => (
+        <a key={v.k} className="lrow" href={"#2012/" + v.k}
+          onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); onOpen(v.k); }}>
+          <span className="badge sm">{v.no}</span>
+          <span className="k" style={{ background: "#78350f" }}>2012</span>
+          <span className="ldest">{v.dest}</span>
+          <span className="lmeta">{v.an} · {v.ns} תחנות · רצף התחנות ←</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- ביטולים: אותה קטגוריה, מקובצת ---------- */
 // הביטולים כבר היו קטגוריה, ומסך נפרד להם היה דרך שנייה לאותם נתונים.
 // מה שהיה חסר בקטגוריה הוא לא מקום אחר אלא קיבוץ: הרשימה הראתה וריאנטים,
@@ -1447,6 +1484,7 @@ function App() {
   const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? H0 : null));
   const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
   const [byDay, setByDay] = useState(() => H0.startsWith("2012/"));   // תצוגת "שינויים לפי יום"
+  const [open12, setOpen12] = useState(null);   // קו 2012 שנפתח מתוך תוצאות החיפוש
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
@@ -1562,7 +1600,7 @@ function App() {
           onSwitch={switchLine} onBack={backToList} />
       ) : byDay ? (
         <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)}
-          init12={H0.startsWith("2012/") ? H0.slice(5) : null} />
+          init12={open12 || (H0.startsWith("2012/") ? H0.slice(5) : null)} />
       ) : (
         <div className="card">
           <input className="search" type="search" dir="rtl" autoFocus
@@ -1637,6 +1675,7 @@ function App() {
                   ⌄ הצג עוד — מוצגים {list.length.toLocaleString()} מתוך {total.toLocaleString()}
                 </button>
               )}
+              <Res2012 needle={needle} onOpen={(k) => { setOpen12(k); setByDay(true); }} />
             </div>
           ) : (
             <div className="empty">הקלידו מספר קו, או פתחו את "קטגוריות לבחירה" וסמנו אילו סוגי שינויים להציג.<br />
