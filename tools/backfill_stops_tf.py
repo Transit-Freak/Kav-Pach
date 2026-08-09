@@ -114,8 +114,11 @@ def main():
                 if o is None:
                     continue              # חזרה של תחנה מוכרת — לא "חדשה"
                 if o[0] != s[0]:
+                    # 'on'/'nn' ולא 'was': אלה השדות שהממשק קורא לשם הישן
+                    # והחדש, ובשמות אחרים החץ מופיע ריק משני צדדיו.
                     evs.append({'d': d, 'c': code, 'k': 'renamed', 'n': s[0],
-                                't': s[1], 'la': s[2], 'lo': s[3], 'was': o[0]})
+                                't': s[1], 'la': s[2], 'lo': s[3],
+                                'on': o[0], 'nn': s[0]})
                 elif dist_m(o[2], o[3], s[2], s[3]) >= MOVE_M:
                     evs.append({'d': d, 'c': code, 'k': 'moved', 'n': s[0],
                                 't': s[1], 'la': s[2], 'lo': s[3],
