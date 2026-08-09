@@ -1005,11 +1005,12 @@ function StopsTab() {
   const [chs, setChs] = useState(null);
   const [hist, setHist] = useState(null);   // קורות-חיים מצטברים לכל תחנה
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
+  const [onlyNs, setOnlyNs] = useState(false);           // רק תחנות שהיו ברישום ולא בשירות
   const [katOpen, setKatOpen] = useState(false);
   const [q, setQ] = usePersistedQ("lh-q-stops");
   const [openKey, setOpenKey] = useState(null);   // שורת תחנה פתוחה עם מפה
   const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
-  useEffect(() => setLim(250), [q, mon, kinds]);
+  useEffect(() => setLim(250), [q, mon, kinds, onlyNs]);
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -1072,7 +1073,8 @@ function StopsTab() {
   if (months === null) return <div className="card">טוען…</div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
   const needle = q.trim();
-  const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) &&
+  const nsCount = (source || []).filter((c) => c.ns).length;
+  const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) && (!onlyNs || c.ns) &&
     (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
   return (
     <div className="card">
@@ -1110,6 +1112,16 @@ function StopsTab() {
                 <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
               </label>
             ))}
+            {/* תחנות שהיו ברישום ואף קו לא עצר בהן. אלה בדרך כלל תחנות
+                מתוך הרישוי שלא נחשפו לציבור ופורסמו בטעות — ולכן דווקא
+                הן מעניינות, ולא רעש שצריך להסתיר. */}
+            <div className="katgrp">רישום מול שירות</div>
+            <label className="katrow">
+              <input type="checkbox" checked={onlyNs} onChange={() => setOnlyNs(!onlyNs)} />
+              <i className="katdot" style={{ background: "#64748b" }} />
+              <span className="katlab">רק תחנות שהיו ברישום ולא בשירות</span>
+              <b className="katc">{nsCount.toLocaleString()}</b>
+            </label>
             {kinds.size > 0 && (
               <button className="katclear" onClick={() => setKinds(new Set())}>✖ נקה את הבחירה</button>
             )}
@@ -1143,7 +1155,7 @@ function StopsTab() {
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
                   {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
                       נקרא כאילו נוספה תחנה שאפשר לחכות בה — וזה לא נכון. */}
-                  {c.ns && <span className="nsflag" title="התחנה קיימת ברישום של משרד התחבורה, אבל אף קו לא עצר בה בשום שלב">ללא קו</span>}
+                  {c.ns && <span className="nsflag" title="התחנה נרשמה ברישום של משרד התחבורה ואף קו לא עצר בה מעולם — לרוב תחנה שאושרה ברישוי ולא נפתחה לציבור">ברישום בלבד</span>}
                   <span className="meta">
                     {one && c.t ? c.t + " · " : ""}{fmtD(c.d)}
                     {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
