@@ -101,6 +101,10 @@ jobs:
           OUTDIR: line-history/data
         run: python3 tools/mark_archive_removed.py 2>&1 | tail -4 || true
 
+      - name: פיד "שינויים לפי יום" לשנות הארכיון
+        if: always()
+        run: OUTDIR=line-history/data python3 tools/build_archive_months.py 2>&1 | tail -3 || true
+
       - name: בניית האינדקס מחדש
         if: always()
         run: OUTDIR=line-history/data python3 tools/rebuild_lines_index.py || true
