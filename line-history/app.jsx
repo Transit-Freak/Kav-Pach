@@ -44,22 +44,30 @@ function isRemovedYear(l) {
 }
 // קטגוריות הבחירה — מחולקות לקבוצות, בלי חפיפות: שלוש קטגוריות ביטול
 // נפרדות (מעל שנה / פחות משנה / חזר), ותוויות שמסבירות את ההבדל.
+// הקטגוריות אוחדו איפה שההפרדה הייתה שלנו ולא של העולם:
+// · "מעל שנה" ו"פחות משנה" הן אותו דבר — קו מבוטל. משך הזמן כתוב בתאריך,
+//   ואין סיבה לחייב סימון שתי תיבות כדי לראות קווים מבוטלים.
+// · הארכה/קיצור/שינוי קצה הופרדו לפי סף שרירותי של שלוש תחנות: קו שקיבל
+//   שתיים בקצה נפל לקטגוריה אחת ואחד שקיבל שלוש לאחרת. שלושתן "הקצה זז",
+//   וההבחנה נשארת כתובה בתוך האירוע.
+// · "תיקון שרטוט" הוא הקטגוריה הגדולה ביותר ואין בה שינוי לנוסע — משרד
+//   התחבורה צייר מחדש בלי שאף תחנה זזה. הוצאה לקבוצה טכנית נפרדת.
+// שלוש קטגוריות התחנות נשארו: ההבדל בין תחנה שנוספה לתחנה שירדה הוא
+// בדיוק מה שמחפשים, ואיחודן היה חוסך שורה ועולה במידע.
 const CAT_GROUPS = [
-  { title: "ביטולים", items: ["removed-year", "removed-now", "removed-past"] },
-  { title: "שינויי מסלול", items: ["route", "redraw", "extend", "shorten", "terminal"] },
+  { title: "ביטולים", items: ["removed-any", "removed-past"] },
+  { title: "שינויי מסלול", items: ["route", "endpoint"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode"] },
+  { title: "שינויים טכניים", items: ["redraw"] },
 ];
 const CAT_LABELS = {
-  "removed-year": "מבוטל — מעל שנה לא חזר",
-  "removed-now": "מבוטל כרגע — פחות משנה",
+  "removed-any": "מבוטל",
   "removed-past": "בוטל בעבר וחזר לפעול",
   route: "שינוי מסלול (ציור וגם תחנות)",
-  redraw: "תיקון שרטוט (התחנות לא השתנו)",
-  extend: "הארכת קו",
-  shorten: "קיצור קו",
-  terminal: "שינוי תחנת קצה",
+  endpoint: "שינוי קצה הקו (הארכה, קיצור או החלפת קצה)",
+  redraw: "תיקון שרטוט — התחנות לא השתנו",
   stops: "הוחלפו תחנות (נוספו וגם ירדו)",
   "stops-add": "רק נוספו תחנות",
   "stops-del": "רק ירדו תחנות",
@@ -71,16 +79,18 @@ const CAT_LABELS = {
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
-const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b" };
+const CAT_COLORS = { "removed-any": "#dc2626", "removed-past": "#f59e0b",
+                     endpoint: "#c026d3" };
 function catColor(k) { return CAT_COLORS[k] || (KINDS[k] || {}).color || "#64748b"; }
-// התאמת קו לקטגוריה (שלוש קטגוריות הביטול זרות זו לזו)
+const ENDPOINT_KINDS = ["extend", "shorten", "terminal"];
+// שתי קטגוריות הביטול זרות זו לזו: מבוטל כרגע מול בוטל וחזר
 function catMatch(l, k) {
-  if (k === "removed-year") return isRemovedYear(l);
-  if (k === "removed-now") return l.lk === "removed" && !isRemovedYear(l);
+  if (k === "removed-any") return l.lk === "removed";
   if (k === "removed-past") return l.lk !== "removed" && (l.ks || []).includes("removed");
+  if (k === "endpoint") return ENDPOINT_KINDS.some((x) => (l.ks || []).includes(x));
   return (l.ks || []).includes(k);
 }
-const REMOVAL_CATS = new Set(["removed-year", "removed-now", "removed-past"]);
+const REMOVAL_CATS = new Set(["removed-any", "removed-past"]);
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
   del:     { label: "בוטלה", color: "#dc2626" },
