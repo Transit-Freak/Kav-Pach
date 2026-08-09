@@ -1141,9 +1141,13 @@ function StopsTab() {
                       <span className="code"> ({c.c})</span>
                     </span>
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
+                  {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
+                      נקרא כאילו נוספה תחנה שאפשר לחכות בה — וזה לא נכון. */}
+                  {c.ns && <span className="nsflag" title="התחנה קיימת ברישום של משרד התחבורה, אבל אף קו לא עצר בה בשום שלב">ללא קו</span>}
                   <span className="meta">
                     {one && c.t ? c.t + " · " : ""}{fmtD(c.d)}
                     {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
+                    {c.k === "moved" && c.m && !c.dist && <> · הוזזה <b>{c.m} מ׳</b></>}
                     {c.lines && c.lines.length > 0 && <> · {c.k === "new" ? "קווים שעצרו בה מהפתיחה" : "קווים שעצרו בה אז"}: {c.lines.slice(0, 10).join(", ")}</>}
                     {c.la != null && <> · 🗺️</>}
                   </span>

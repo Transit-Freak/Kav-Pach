@@ -222,3 +222,7 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 
 /* מקור האירוע — מי מדד ומתי. שקט ויזואלית, אבל תמיד נוכח. */
 .evsrc { font-size: 11px; color: #94a3b8; font-weight: 700; margin-top: 4px; line-height: 1.5; }
+
+/* רשומה ברישום שאף קו לא עצר בה — לא תחנה שאפשר לחכות בה */
+.nsflag { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 7px;
+  padding: 1px 7px; font-size: 11px; font-weight: 800; color: #64748b; cursor: help; }
