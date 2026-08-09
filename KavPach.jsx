@@ -629,7 +629,7 @@ function ChoiceScreen({ onPick }) {
                 <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🕰️</span>
               </div>
               <h2 className="text-3xl font-[900] text-violet-200">הקו בזמן</h2>
-              <p className="text-violet-100/80 font-bold mt-2 text-sm leading-relaxed">היסטוריית השינויים של כל קו — מסלול, שרטוט, תחנות ושמות</p>
+              <p className="text-violet-100/80 font-bold mt-2 text-sm leading-relaxed">היסטוריית השינויים של כל קו ממרץ 2017 ועד היום — מסלול, שרטוט, תחנות ושמות</p>
               <span className="inline-flex items-center gap-2 mt-5 bg-violet-300 text-violet-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
             </div>
           </a>

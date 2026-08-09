@@ -39,6 +39,24 @@ for (const m of listedL) if (!onDiskL.has(m)) fail(`חודש קווים ${m} ר�
 const oldestL = [...listedL].sort()[0];
 console.log(`✓ נתונים: ${listed.size} חודשי תחנות (מ-${oldest}) + ${listedL.size} חודשי קווים (מ-${oldestL})`);
 
+// ---- שלב א2': הטקסטים על האתר תואמים לטווח שבנתונים ----
+// התיאור שמופיע כשמשתפים קישור אמר "מ-2022" עוד חודשים אחרי שהמילוי הגיע
+// למרץ 2017. טקסט שמתאר את הנתונים חייב להיבדק מול הנתונים.
+{
+  const yr = oldest.slice(0, 4);
+  const html = fs.readFileSync(path.join(LH, 'index.html'), 'utf8');
+  for (const tag of ['name="description"', 'property="og:description"']) {
+    const m = html.match(new RegExp(`<meta ${tag} content="([^"]*)"`));
+    if (!m) fail(`חסר תג ${tag} בעמוד — כך נראה הקישור כשמשתפים אותו`);
+    if (!m[1].includes(yr)) fail(`${tag} לא מזכיר את ${yr}, השנה שבה הנתונים מתחילים: "${m[1]}"`);
+  }
+  const app = fs.readFileSync(path.join(LH, 'app.jsx'), 'utf8');
+  const nsrc = (app.match(/SOURCES = \[([\s\S]*?)\n\];/) || ['', ''])[1]
+    .split('{ t:').length - 1;
+  if (nsrc < 4) fail(`רשימת המקורות באתר מונה ${nsrc} מקורות — פחות ממה שבשימוש`);
+  console.log(`✓ טקסטים: התיאור לשיתוף מזכיר ${yr} · ${nsrc} מקורות רשומים באתר`);
+}
+
 // ---- שלב ב': הממשק באמת מציג את החודש הכי ישן ----
 const require_ = createRequire(path.join(process.env.PW_MODULES || ROOT, 'noop.js'));
 const { chromium } = require_('playwright-core');
@@ -131,6 +149,16 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
     if (/\(\s*,\s*\)/.test(txt)) fail(`הזזות ב-${moved.mo}: מיקום קודם ריק — "(, )"`);
     console.log(`✓ הזזות: ${moved.n} ב-${moved.mo}, המרחק והמיקום הקודם מוצגים`);
   }
+}
+
+// ---- שלב ב3': רשימת המקורות נפתחת ומציגה את המקורות ----
+{
+  const box = page.locator('.srcbox');
+  if (!(await box.count())) fail('רשימת המקורות לא הופיעה בעמוד');
+  await box.locator('summary').click();
+  const n = await page.locator('.srcbox .srcitem').count();
+  if (n < 4) fail(`רשימת המקורות נפתחה עם ${n} מקורות בלבד`);
+  console.log(`✓ מקורות: הרשימה נפתחת ומציגה ${n} מקורות`);
 }
 
 // ---- שלב ג': פיד "שינויים לפי יום" של הקווים — החודש הכי ישן נגיש ----
