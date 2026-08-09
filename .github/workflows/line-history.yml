@@ -16,7 +16,7 @@ on:
       - 'tools/fix_dest_kind.py'
       - 'tools/enrich_2017.py'
       - 'tools/fix_false_removed.py'
-      - 'tools/mark_reverted_stops.py'
+      - 'tools/mark_reverted_changes.py'
       - 'tools/scan_vcnt_daily.py'
       - 'tools/last_sched.py'
       - 'tools/compact_lines.py'
@@ -124,7 +124,7 @@ jobs:
             OUTDIR=line-history/data python3 tools/fix_false_removed.py
             # רצף תחנות שהשתנה וחזר תוך ימים אינו שינוי במסלול אלא תנודה
             # בפרסום. האירוע נשאר ומקבל סימון, כי הוא באמת פורסם.
-            OUTDIR=line-history/data python3 tools/mark_reverted_stops.py
+            OUTDIR=line-history/data python3 tools/mark_reverted_changes.py
             # אירועי הארכיון יושבים בקבצי הקווים, אבל הפיד הכרונולוגי נבנה
             # בנפרד — בלי הצעד הזה אפשר לראות 2017 בתוך קו ואי אפשר לדפדף
             # אליו לפי יום.
