@@ -188,6 +188,10 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
 {
   const hist = JSON.parse(fs.readFileSync(path.join(LH, 'data/stops-hist.json'), 'utf8'));
   const code = Object.keys(hist).find((c) => (hist[c] || []).length >= 3);
+  // קישור לתחנה חייב להסתפק בשבר. בלי הבדיקה הזו הטעינה הכבדה חוזרת
+  // בשקט בפעם הבאה שמישהו נוגע ב-useEffect, והמשתמש מחכה 4.5 מגה.
+  const heavy2 = [];
+  page.on('request', (r) => { if (r.url().includes('stops-hist.json')) heavy2.push(r.url()); });
   await page.goto(`http://127.0.0.1:${port}/index.html#stop=${code}`,
     { waitUntil: 'domcontentloaded' });
   await page.reload({ waitUntil: 'domcontentloaded' });   // hash בלבד אינו טוען מחדש
@@ -196,6 +200,7 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   const txt = await page.locator('.slist').innerText();
   if (!txt.includes(code)) fail(`הכתובת #stop=${code} נפתחה על תחנה אחרת`);
   const nrow = await page.locator('.slist .srow').count();
+  if (heavy2.length) fail('קישור לתחנה הוריד את כל קורות החיים במקום שבר');
   // לחיצה על המק"ט מעתיקה את הקישור ללוח במקום לנווט
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.locator('.slink').first().click();

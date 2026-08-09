@@ -1236,17 +1236,37 @@ function StopsTab({ sel }) {
     setMon("all"); setYr(""); setQ(sel); setKinds(new Set()); setOnlyNs(false);
   }, [sel]);
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
-  // קורות החיים של כל התחנות הם 4.5 מגה, והם נדרשים רק ל"כל התקופה"
-  // ולקישור ישיר לתחנה. תצוגת חודש בודד מסתדרת עם קובץ של עשרות קילובייט
-  // כי הכללים שדרשו אותם מסומנים מראש על האירוע (k1/xb).
+  // קורות החיים של כל התחנות הם 4.5 מגה, והם נדרשים רק ל"כל התקופה".
+  // תצוגת חודש בודד מסתדרת עם קובץ של עשרות קילובייט כי הכללים שדרשו
+  // אותם מסומנים מראש על האירוע (k1/xb), וקישור לתחנה מסתפק בשבר של
+  // הקידומת שלה — כמאתיים קילובייט במקום ארבעה וחצי מגה.
+  const [shard, setShard] = useState(null);   // המק"ט שהשבר שנטען שייך לו
   const needHist = mon === "all" || !!sel;
+  // ההשוואה ל-q הייתה מוקדמת מדי: החיפוש נקבע ל-sel באפקט אחר, ובסבב
+  // הראשון הוא עדיין הערך הישן — ואז נטען הקובץ המלא במקום השבר.
+  const wantShard = !!sel;
   useEffect(() => {
     if (!needHist || hist) return;
+    const done = (d) => setHist(d);
+    if (wantShard) {
+      setShard(sel);
+      fetch("data/stops/" + (sel.slice(0, 2) || "0").padStart(2, "0") + ".json?v=" + BUILD)
+        .then((r) => (r.ok ? r.json() : {})).then(done).catch(() => done({}));
+      return;
+    }
+    setShard(null);
     fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
-      .then((r) => (r.ok ? r.json() : {}))
-      .then(setHist)
-      .catch(() => setHist({}));
-  }, [needHist, hist]);
+      .then((r) => (r.ok ? r.json() : {})).then(done).catch(() => done({}));
+  }, [needHist, hist, wantShard, sel]);
+  // חיפוש שיצא מהתחנה של הקישור — השבר כבר לא מספיק, וצריך את הכל.
+  // הדגל נחוץ כי בסבב הראשון החיפוש עדיין מחזיק ערך קודם, ובלעדיו השבר
+  // היה נזרק ונטען שוב בלולאה אינסופית.
+  const selDone = useRef(false);
+  useEffect(() => { selDone.current = false; }, [sel]);
+  useEffect(() => {
+    if (sel && q.trim() === sel) selDone.current = true;
+    if (shard && selDone.current && q.trim() !== shard) { setHist(null); setShard(null); }
+  }, [q, shard, sel]);
   // כללי התצוגה (בקשת המשתמש, בעקבות תחנות עונתיות כמו תחנות ההתרעננות):
   // "חדשה" — רק הרישום הראשון אי-פעם של התחנה; הרשמות חוזרות לא מוצגות.
   // "בוטלה" — רק אם עברה שנה בלי שחזרה; ומי שמופיעה ברישום הנוכחי
@@ -1288,7 +1308,9 @@ function StopsTab({ sel }) {
       .catch(() => setMonths([]));
   }, []);
   useEffect(() => {
-    if (!mon) return;
+    // "כל התקופה" נבנית מקורות החיים ולא מקובץ חודש — בלי התנאי הזה נשלחה
+    // בקשה ל-stops-all.json שתמיד חוזרת 404
+    if (!mon || mon === "all") return;
     setChs(null);
     fetch("data/changes/stops-" + mon + ".json?v=" + BUILD)
       .then((r) => (r.ok ? r.json() : { changes: [] }))
@@ -1301,8 +1323,12 @@ function StopsTab({ sel }) {
     const raw = mon === "all"
       ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
       : chs;
-    return raw === null ? null : raw.filter(keepEvent);
-  }, [mon, hist, chs]);
+    // כשמגיעים לתחנה מקישור מציגים את כל מה שידוע עליה. כללי התצוגה
+    // נועדו לפיד החודשי, ובתחנה מסוימת הם הסתירו גם את מה שביקשו לראות:
+    // ‎#stop=48‎ הראה מסך ריק, כי שני האירועים שלה נחשבים "חוזרים".
+    return raw === null ? null
+      : raw.filter((c) => (sel && c.c === sel) || keepEvent(c));
+  }, [mon, hist, chs, sel]);
   const counts = useMemo(() => {
     const cn = {};
     (source || []).forEach((c) => { cn[c.k] = (cn[c.k] || 0) + 1; });

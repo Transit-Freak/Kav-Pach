@@ -17,6 +17,7 @@ on:
       - 'tools/enrich_2017.py'
       - 'tools/fix_false_removed.py'
       - 'tools/mark_reverted_changes.py'
+      - 'tools/build_stop_shards.py'
       - 'tools/scan_vcnt_daily.py'
       - 'tools/last_sched.py'
       - 'tools/compact_lines.py'
@@ -129,6 +130,8 @@ jobs:
             # בנפרד — בלי הצעד הזה אפשר לראות 2017 בתוך קו ואי אפשר לדפדף
             # אליו לפי יום.
             OUTDIR=line-history/data python3 tools/build_archive_months.py
+            # שברי תחנות: קישור לתחנה טוען כמאתיים ק"ב במקום 4.5 מגה
+            OUTDIR=line-history/data python3 tools/build_stop_shards.py
             OUTDIR=line-history/data python3 tools/compact_lines.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
             git add -A line-history/data kavbug-data
