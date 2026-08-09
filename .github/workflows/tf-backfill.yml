@@ -79,13 +79,21 @@ jobs:
       # היסטוריית הקווים כבר מגיעה ל-2017. stops.txt יושב בכל צילום והוא
       # קל בהרבה מרצפי התחנות, ולכן הסריקה הזו רצה לצד המילוי.
       - name: היסטוריית תחנות מהארכיון
+        id: st
         if: always()
         env:
           FROM: '20170316'
           TO: '20220115'
           MAX_MIN: '12'
           OUTDIR: line-history/data
-        run: python3 tools/backfill_stops_tf.py 2>&1 | tail -8 || true
+        run: |
+          set -o pipefail
+          python3 tools/backfill_stops_tf.py 2>&1 | tee /tmp/st.log | tail -8 || true
+          if grep -q 'אין צילומים שנותרו' /tmp/st.log; then
+            echo "done=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "done=0" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: סימון קווים שבוטלו לפי מועד ההיעלמות
         if: always()
@@ -134,8 +142,11 @@ jobs:
         run: |
           CHAIN='${{ github.event.inputs.chain }}'
           CHAIN=${CHAIN:-1}
-          if [ "${{ steps.tf.outputs.done }}" = "1" ]; then
-            echo "המילוי הושלם — סוף השרשרת"
+          # תנאי הסיום חייב לכלול את כל הסריקות. כשהוא בדק את המילוי בלבד,
+          # השרשרת נעצרה ברגע שהמילוי הסתיים — וסריקה שנוספה אחריו לא רצה
+          # מעולם, בלי שדבר דיווח על כך.
+          if [ "${{ steps.tf.outputs.done }}" = "1" ] && [ "${{ steps.st.outputs.done }}" = "1" ]; then
+            echo "כל הסריקות הושלמו — סוף השרשרת"
           elif [ "$CHAIN" -lt 200 ]; then
             gh workflow run tf-backfill.yml --repo "$GITHUB_REPOSITORY" \
               --ref tf-go -f chain=$((CHAIN + 1)) || true

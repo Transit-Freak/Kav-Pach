@@ -55,7 +55,7 @@ function isRemovedYear(l) {
 // שלוש קטגוריות התחנות נשארו: ההבדל בין תחנה שנוספה לתחנה שירדה הוא
 // בדיוק מה שמחפשים, ואיחודן היה חוסך שורה ועולה במידע.
 const CAT_GROUPS = [
-  { title: "ביטולים", items: ["removed-any", "removed-past"] },
+  { title: "ביטולים", items: ["removed-year", "removed-now", "removed-past"] },
   { title: "שינויי מסלול", items: ["route", "endpoint"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
@@ -63,7 +63,8 @@ const CAT_GROUPS = [
   { title: "שינויים טכניים", items: ["redraw"] },
 ];
 const CAT_LABELS = {
-  "removed-any": "מבוטל",
+  "removed-year": "מבוטל — מעל שנה לא חזר",
+  "removed-now": "מבוטל כרגע — פחות משנה",
   "removed-past": "בוטל בעבר וחזר לפעול",
   route: "שינוי מסלול (ציור וגם תחנות)",
   endpoint: "שינוי קצה הקו (הארכה, קיצור או החלפת קצה)",
@@ -79,18 +80,20 @@ const CAT_LABELS = {
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
-const CAT_COLORS = { "removed-any": "#dc2626", "removed-past": "#f59e0b",
+const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b",
                      endpoint: "#c026d3" };
 function catColor(k) { return CAT_COLORS[k] || (KINDS[k] || {}).color || "#64748b"; }
 const ENDPOINT_KINDS = ["extend", "shorten", "terminal"];
-// שתי קטגוריות הביטול זרות זו לזו: מבוטל כרגע מול בוטל וחזר
+// שלוש קטגוריות הביטול זרות זו לזו: קו שלא חזר מעל שנה הוא מבוטל בפועל,
+// ואילו ביטול טרי עוד עשוי להתברר כהפסקה. ההבחנה נשארה לבקשת המשתמש.
 function catMatch(l, k) {
-  if (k === "removed-any") return l.lk === "removed";
+  if (k === "removed-year") return isRemovedYear(l);
+  if (k === "removed-now") return l.lk === "removed" && !isRemovedYear(l);
   if (k === "removed-past") return l.lk !== "removed" && (l.ks || []).includes("removed");
   if (k === "endpoint") return ENDPOINT_KINDS.some((x) => (l.ks || []).includes(x));
   return (l.ks || []).includes(k);
 }
-const REMOVAL_CATS = new Set(["removed-any", "removed-past"]);
+const REMOVAL_CATS = new Set(["removed-year", "removed-now", "removed-past"]);
 const SKINDS = {
   new:     { label: "חדשה", color: "#16a34a" },
   del:     { label: "בוטלה", color: "#dc2626" },
