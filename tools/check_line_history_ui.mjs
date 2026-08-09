@@ -198,20 +198,25 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
-// ---- שלב ב4': מסך "קווים שנעלמו" ----
+// ---- שלב ב4': ביטולים — קטגוריה אחת, מקובצת לפי שנה ----
+// הביטולים חיים בקטגוריה ולא במסך נפרד, ולכן הבדיקה נכנסת מאותה דרך שבה
+// נכנס משתמש: פותחת את רשימת הקטגוריות ומסמנת את התיבה.
 {
   await page.click('button.tab:has-text("קווים")');
-  await page.click('button.kathead:has-text("קווים שנעלמו")', { timeout: 30000 });
+  await page.click('button.kathead:has-text("קטגוריות לבחירה")', { timeout: 30000 });
+  await page.locator('.katrow', { hasText: 'מבוטל' }).first().locator('input').check();
   await page.waitForSelector('.gonehead', { timeout: 30000 })
-    .catch(() => fail('מסך "קווים שנעלמו" לא נפתח'));
+    .catch(() => fail('סימון קטגוריית ביטול לא הציג את הרשימה המקובצת'));
   const n = await page.locator('.llist .lrow').count();
-  if (!n) fail('מסך "קווים שנעלמו" נפתח ריק');
+  if (!n) fail('קטגוריית הביטולים נפתחה ריקה');
   const head = await page.locator('.gonehead').innerText();
-  if (!/\d/.test(head)) fail('מסך "קווים שנעלמו": אין מספר קווים בכותרת');
+  if (!/\d/.test(head)) fail('ביטולים: אין מספר קווים בכותרת');
+  const chips = await page.locator('.months .mchip').count();
+  if (chips < 2) fail('ביטולים: אין חלוקה לשנים');
   await page.locator('.llist .lrow').first().click();
   await page.waitForSelector('.linehead', { timeout: 30000 })
-    .catch(() => fail('לחיצה על קו שנעלם לא פתחה את עמוד הקו'));
-  console.log(`✓ קווים שנעלמו: המסך נפתח עם ${n} שורות, ולחיצה מגיעה לעמוד הקו`);
+    .catch(() => fail('לחיצה על קו שבוטל לא פתחה את עמוד הקו'));
+  console.log(`✓ ביטולים: ${n} שורות מקובצות ב-${chips - 1} שנים, ולחיצה מגיעה לעמוד הקו`);
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }

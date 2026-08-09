@@ -828,67 +828,69 @@ function StopEvMap({ ev }) {
 }
 
 /* ---------- שינויים לפי יום (כל הקווים) ---------- */
-/* ---------- קווים שנעלמו ---------- */
-// 864 קווים שכל הווריאנטים שלהם נעלמו מהפיד ולא חזרו. עד עכשיו אפשר היה
-// להגיע אליהם רק דרך סינון קטגוריה בתוך החיפוש, כלומר רק אם ידעת מראש
-// שהם שם. זה התוכן שאין לו מקור אחר, ומגיע לו מסך.
-function GoneFeed({ idx, openLine, onBack }) {
-  const [q, setQ] = usePersistedQ("lh-q-gone");
+/* ---------- ביטולים: אותה קטגוריה, מקובצת ---------- */
+// הביטולים כבר היו קטגוריה, ומסך נפרד להם היה דרך שנייה לאותם נתונים.
+// מה שהיה חסר בקטגוריה הוא לא מקום אחר אלא קיבוץ: הרשימה הראתה וריאנטים,
+// כך שקו אחד הופיע בכמה שורות (כיוונים וחלופות), ובלי חלוקה לשנים.
+// כאן זה נעשה בתוך הקטגוריה עצמה — קו שנעלם כולו הוא שורה אחת, וחלופה
+// שבוטלה בזמן שהקו ממשיך לנסוע נשארת שורה בפני עצמה, כי זו לא אותה עובדה.
+function GoneList({ idx, openLine, kats }) {
   const [yr, setYr] = useState("");
   const [lim, setLim] = useState(200);
-  useEffect(() => setLim(200), [q, yr]);
-  // קו נחשב "נעלם" רק כשאין לו אף וריאנט חי. וריאנט שבוטל בזמן שאחיו
-  // ממשיכים לנסוע הוא שינוי מסלול, לא קו שנעלם.
-  const lines = useMemo(() => {
+  useEffect(() => setLim(200), [yr, kats]);
+  const { groups, nGone, nVar } = useMemo(() => {
     const alive = {};
     idx.lines.forEach((l) => { if (l.lk !== "removed") alive[l.rd.split("-")[0]] = true; });
-    const by = {};
+    const by = new Map();
+    let nGone = 0, nVar = 0;
     idx.lines.forEach((l) => {
+      if (![...kats].some((k) => catMatch(l, k))) return;
       const mkt = l.rd.split("-")[0];
-      if (l.lk !== "removed" || alive[mkt]) return;
-      const g = by[mkt] || (by[mkt] = { mkt, l, vars: 0, ld: "" });
+      const whole = l.lk === "removed" && !alive[mkt];
+      const key = whole ? mkt : l.rd;
+      const g = by.get(key) || { key, mkt, l, vars: 0, ld: "", whole };
       g.vars += 1;
       if ((l.ld || "") > g.ld) { g.ld = l.ld || ""; g.l = l; }
+      by.set(key, g);
     });
-    return Object.values(by).sort((a, b) => b.ld.localeCompare(a.ld));
-  }, [idx]);
-  const years = useMemo(() => [...new Set(lines.map((g) => g.ld.slice(0, 4)))].sort().reverse(), [lines]);
-  const needle = q.trim();
-  const shown = lines.filter((g) => (!yr || g.ld.startsWith(yr)) &&
-    (!needle || g.l.line === needle || g.l.line.startsWith(needle) ||
-     (g.l.dest || "").includes(needle) || (g.l.op || "").includes(needle) || g.mkt === needle));
+    by.forEach((g) => { if (g.whole) nGone++; else nVar++; });
+    return { groups: [...by.values()].sort((a, b) => b.ld.localeCompare(a.ld)), nGone, nVar };
+  }, [idx, kats]);
+  const years = useMemo(() => [...new Set(groups.map((g) => g.ld.slice(0, 4)))]
+    .filter(Boolean).sort().reverse(), [groups]);
+  const shown = groups.filter((g) => !yr || g.ld.startsWith(yr));
   return (
-    <div className="card">
-      <button className="back" onClick={onBack}>← חזרה לחיפוש</button>
+    <div>
       <div className="gonehead">
-        🪦 <b>{lines.length.toLocaleString()} קווים שנעלמו</b> — כל הווריאנטים שלהם ירדו מהפיד הארצי ולא חזרו.
+        🪦 <b>{nGone.toLocaleString()} קווים שנעלמו</b> — כל הווריאנטים שלהם ירדו מהפיד ולא חזרו
+        {nVar > 0 && <> · <b>{nVar.toLocaleString()} חלופות שבוטלו</b> בקווים שממשיכים לנסוע</>}.
         התאריך הוא היום האחרון שבו הקו עוד נראה בפרסום.
       </div>
       <div className="months">
-        <button className={"mchip" + (!yr ? " on" : "")} onClick={() => setYr("")}>הכל</button>
+        <button className={"mchip" + (!yr ? " on" : "")} onClick={() => setYr("")}>כל השנים</button>
         {years.map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")} onClick={() => setYr(y)}>
-            {y} <b>{lines.filter((g) => g.ld.startsWith(y)).length}</b>
+            {y} <b>{groups.filter((g) => g.ld.startsWith(y)).length}</b>
           </button>
         ))}
       </div>
-      <input className="search" type="search" dir="rtl" placeholder="חיפוש: מספר קו, מק״ט, יעד או מפעיל…"
-        value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="llist">
         {shown.slice(0, lim).map((g) => (
-          <a key={g.mkt} className="lrow" href={lineHref(g.l.rd)}
+          <a key={g.key} className="lrow" href={lineHref(g.l.rd)}
             onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(g.l.rd); }}>
             <span className="badge sm">{g.l.line}</span>
-            <span className="k" style={{ background: isRemovedYear(g.l) ? "#7f1d1d" : "#dc2626" }}>
-              {isRemovedYear(g.l) ? "בוטל — מעל שנה" : "בוטל"}
+            <span className="k" style={{ background: g.whole ? (isRemovedYear(g.l) ? "#7f1d1d" : "#dc2626")
+              : (isRemovedYear(g.l) ? "#9a3412" : "#ea580c") }}>
+              {g.whole ? (isRemovedYear(g.l) ? "הקו בוטל — מעל שנה" : "הקו בוטל")
+                : (isRemovedYear(g.l) ? "חלופה בוטלה — מעל שנה" : "חלופה בוטלה")}
             </span>
             {g.l.tt && <span className="k" style={{ background: "#0369a1" }}>{TT_LABEL[g.l.tt]}</span>}
             <span className="ldest">{g.l.dest}</span>
-            <span className="lmeta">{g.l.op} · מק״ט {g.mkt} · נראה לאחרונה {fmtD(g.ld)}
+            <span className="lmeta">{g.l.op} · מק״ט {g.whole ? g.mkt : g.l.rd} · נראה לאחרונה {fmtD(g.ld)}
               {g.vars > 1 && <> · {g.vars} חלופות</>}</span>
           </a>
         ))}
-        {!shown.length && <div className="empty">לא נמצא קו תואם.</div>}
+        {!shown.length && <div className="empty">אין קווים בקטגוריות שסימנתם.</div>}
         {shown.length > lim && (
           <button className="morebtn" onClick={() => setLim(lim + 300)}>
             ⌄ הצג עוד — מוצגים {lim.toLocaleString()} מתוך {shown.length.toLocaleString()}
@@ -1445,7 +1447,6 @@ function App() {
   const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? H0 : null));
   const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
   const [byDay, setByDay] = useState(() => H0.startsWith("2012/"));   // תצוגת "שינויים לפי יום"
-  const [gone, setGone] = useState(false);        // תצוגת "קווים שנעלמו"
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
@@ -1507,8 +1508,11 @@ function App() {
     for (const k of kats) { if (catMatch(l, k)) return true; }
     return false;
   };
+  // סימון קטגוריות ביטול בלבד, בלי חיפוש חופשי: הרשימה מוצגת מקובצת —
+  // קו שנעלם כולו כשורה אחת, ולפי שנת ההיעלמות
+  const goneView = !needle && kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
   let list = [], total = 0;
-  if (needle || kats.size) {
+  if ((needle || kats.size) && !goneView) {
     // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות
     const toks = needle.split(/\s+/).filter(Boolean);
     const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
@@ -1556,8 +1560,6 @@ function App() {
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
-      ) : gone ? (
-        <GoneFeed idx={idx} openLine={openLine} onBack={() => setGone(false)} />
       ) : byDay ? (
         <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)}
           init12={H0.startsWith("2012/") ? H0.slice(5) : null} />
@@ -1569,11 +1571,6 @@ function App() {
           <div className="katbox">
             <button className="kathead" title="פיד כרונולוגי: בחירת שנה וחודש ורואים כל שינוי שקרה, בכל קו בארץ, לפי תאריך" onClick={() => setByDay(true)}>
               🗓️ שינויים לפי יום — מה השתנה בכל תאריך, בכל הקווים
-            </button>
-          </div>
-          <div className="katbox">
-            <button className="kathead" title="קווים שכל הווריאנטים שלהם ירדו מהפיד הארצי ולא חזרו — לפי שנת ההיעלמות" onClick={() => setGone(true)}>
-              🪦 קווים שנעלמו — מה בוטל, מתי, ואיפה זה היה
             </button>
           </div>
           <div className="katbox">
@@ -1608,7 +1605,9 @@ function App() {
               </div>
             )}
           </div>
-          {(needle || kats.size > 0) ? (
+          {goneView ? (
+            <GoneList idx={idx} openLine={openLine} kats={kats} />
+          ) : (needle || kats.size > 0) ? (
             <div className="llist">
               {list.map((l) => (
                 <a key={l.rd} className="lrow" href={lineHref(l.rd)}
