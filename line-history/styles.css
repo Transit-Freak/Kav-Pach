@@ -216,3 +216,6 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 /* תאריך שאינו מדויק — אותר בין שני צילומי ארכיון רחוקים, ולכן מוצג החודש
    בלבד. הסימון ויזואלי כדי שלא ייקרא כתאריך מדוד. */
 .approxd { border-bottom: 1px dotted #a16207; cursor: help; }
+
+/* מתג תצוגת המפה: "מה השתנה" מול המסלול המלא אחרי השינוי */
+.onlycur { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }

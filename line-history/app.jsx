@@ -413,6 +413,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [mon, setMon] = useState("");
   const [offK, setOffK] = useState(() => new Set());   // קטגוריות שכובו בעמוד הקו
   const [cmpI, setCmpI] = useState(null);              // גרסת בסיס להשוואה חופשית
+  const [onlyCur, setOnlyCur] = useState(false);       // מפה בלי שכבת העבר
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
@@ -450,7 +451,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       .catch(() => setD12({ routes: [] }));
   }, [show12, anc, d12, lf]);
   useEffect(() => {
-    setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null);
+    setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null); setOnlyCur(false);
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((d) => { setLf(materializeLf(d)); setSel(d.versions.length - 1); })
@@ -752,15 +753,29 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
         ) : (<>
-        <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "")} cur={cur} prev={prev}
+        {/* ההשוואה עונה על "מה השתנה", אבל לא על "איך הקו נראה עכשיו" —
+            שתי השכבות יחד מקשות לקרוא את המסלול עצמו. הכפתור מסיר את
+            שכבת העבר ומשאיר את המסלול המלא כפי שהוא אחרי השינוי. */}
+        {prev && (
+          <div className="onlycur">
+            <button className={"kchip" + (onlyCur ? "" : " on")}
+              style={onlyCur ? {} : { borderColor: "#7c3aed", color: "#5b21b6" }}
+              onClick={() => setOnlyCur(false)}>⇄ מה השתנה</button>
+            <button className={"kchip" + (onlyCur ? " on" : "")}
+              style={onlyCur ? { borderColor: "#7c3aed", color: "#5b21b6" } : {}}
+              onClick={() => setOnlyCur(true)}>🚌 המסלול המלא אחרי השינוי</button>
+          </div>
+        )}
+        <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
+          cur={cur} prev={onlyCur ? null : prev}
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
-          prevStops={pgv && (pgv.stops || []).length ? pgv.stops : null}
-          addedCodes={(!pv || !(pv.stops || []).length) && (v.add || []).length
+          prevStops={!onlyCur && pgv && (pgv.stops || []).length ? pgv.stops : null}
+          addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n, i) => codeOf(n, i, true)).filter(Boolean)) : null}
-          stops12={stops12} />
+          stops12={onlyCur ? null : stops12} />
         <div className="legend">
-          {prev && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
-          <span><i style={{ borderColor: prev ? "#16a34a" : "#4c1d95" }} /> {prev ? "המסלול החדש" : "המסלול"}</span>
+          {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
+          <span><i style={{ borderColor: prev && !onlyCur ? "#16a34a" : "#4c1d95" }} /> {prev && !onlyCur ? "המסלול החדש" : "המסלול"}</span>
           <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
           {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>}
