@@ -266,3 +266,19 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 /* עדות ממאגר מגיעים 2012 — חמש שנים לפני תחילת הארכיון */
 .m12flag { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 7px;
   padding: 1px 7px; font-size: 11px; font-weight: 800; color: #047857; cursor: help; }
+
+/* --- השוואה בין חלופות --- */
+.sibwrap { display: inline-flex; align-items: center; gap: 3px; }
+.sibcmp { border: 1.5px solid #e2e8f0; background: #fff; color: #7c3aed; border-radius: 9999px;
+  width: 26px; height: 26px; font-family: inherit; font-weight: 900; font-size: 12px;
+  cursor: pointer; padding: 0; line-height: 1; }
+.sibcmp:hover { border-color: #7c3aed; background: #f5f3ff; }
+.altcmp { border: 1.5px solid #ddd6fe; background: #faf5ff; border-radius: 12px;
+  padding: 10px 12px; margin: 0 0 12px; }
+.altcmphead { font-size: 13.5px; font-weight: 700; color: #334155; display: flex;
+  align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.altcmphead b { color: #5b21b6; }
+.altstat { display: flex; gap: 12px; flex-wrap: wrap; margin: 7px 0 9px;
+  font-size: 12.5px; font-weight: 800; color: #475569; }
+.altstat .onlya { color: #4c1d95; }
+.altstat .onlyb { color: #16a34a; }

@@ -420,6 +420,66 @@ const getAnchors2012 = () =>
     .catch(() => ({ anchors: {} })));
 
 /* ---------- עמוד קו ---------- */
+/* ---------- השוואה בין חלופות ---------- */
+// עד עכשיו אפשר היה להשוות גרסה של קו לגרסה קודמת שלו, אבל לא חלופה
+// לחלופה: מי שרצה לדעת במה כיוון 1 שונה מכיוון 2, או ה"ראשית" מהחלופה,
+// היה צריך לפתוח שני עמודים ולהחזיק את שתי הרשימות בראש.
+function AltCompare({ rd, altRd, label, onClose }) {
+  const [a, setA] = useState(null);
+  const [b, setB] = useState(null);
+  useEffect(() => {
+    let ok = true;
+    setA(null); setB(null);
+    const get = (r) => fetch("data/lines/" + fsafe(r) + ".json?v=" + BUILD)
+      .then((x) => (x.ok ? x.json() : null)).then(materializeLf);
+    get(rd).then((d) => ok && setA(d)).catch(() => ok && setA(false));
+    get(altRd).then((d) => ok && setB(d)).catch(() => ok && setB(false));
+    return () => { ok = false; };
+  }, [rd, altRd]);
+  if (a === null || b === null) return <div className="altcmp">טוען…</div>;
+  if (!a || !b) return <div className="altcmp">אחת החלופות לא נטענה.</div>;
+  // המצב הנוכחי של כל חלופה: הגרסה האחרונה שיש בה רצף תחנות
+  const last = (lf) => {
+    const vs = (lf.versions || []).filter((v) => (v.stops || []).length);
+    return vs[vs.length - 1] || null;
+  };
+  const va = last(a), vb = last(b);
+  if (!va || !vb) return <div className="altcmp">לאחת החלופות אין רצף תחנות מתועד.</div>;
+  const ca = va.stops.map((x) => x[0]), cb = vb.stops.map((x) => x[0]);
+  const sa = new Set(ca), sb = new Set(cb);
+  const onlyA = va.stops.filter((x) => !sb.has(x[0]));
+  const onlyB = vb.stops.filter((x) => !sa.has(x[0]));
+  const both = ca.filter((x) => sb.has(x)).length;
+  const same = ca.length === cb.length && ca.every((x, i) => x === cb[i]);
+  return (
+    <div className="altcmp">
+      <div className="altcmphead">
+        <b>השוואת חלופות</b> · {a.dest || rd} <span className="mut">מול</span> {label}
+        <button className="cmpx" onClick={onClose}>✕ סיום</button>
+      </div>
+      <div className="altstat">
+        <span>{both.toLocaleString()} תחנות משותפות</span>
+        <span className="onlya">{onlyA.length.toLocaleString()} רק כאן</span>
+        <span className="onlyb">{onlyB.length.toLocaleString()} רק בחלופה השנייה</span>
+        <span className="mut">{fmtD(va.d)} מול {fmtD(vb.d)}</span>
+      </div>
+      {same && <div className="mut">רצף התחנות זהה בשתיהן — ההבדל הוא בכיוון הנסיעה בלבד.</div>}
+      <DiffMap cur={decodeShape(va.shp || "")} prev={decodeShape(vb.shp || "")}
+        approx={!va.shp} prevApprox={!vb.shp} curStops={va.stops} prevStops={vb.stops} />
+      <div className="legend">
+        <span><i style={{ borderColor: "#4c1d95" }} /> החלופה הפתוחה</span>
+        <span><i style={{ borderColor: "#16a34a" }} /> החלופה להשוואה</span>
+      </div>
+      {(onlyA.length > 0 || onlyB.length > 0) && (
+        <div className="cmplist">
+          {onlyA.length > 0 && <div className="ad">רק כאן: {onlyA.map((x) => `${x[1]} (${x[0]})`).join(", ")}</div>}
+          {onlyB.length > 0 && <div className="rm">רק בחלופה השנייה: {onlyB.map((x) => `${x[1]} (${x[0]})`).join(", ")}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
@@ -430,11 +490,12 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [onlyCur, setOnlyCur] = useState(false);       // מפה בלי שכבת העבר
   const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
+  const [altRd, setAltRd] = useState(null);   // חלופה שנבחרה להשוואה
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
   useEffect(() => {
     let ok = true;
-    setAnc(null); setShow12(false); setD12(null); setR12(0);
+    setAnc(null); setShow12(false); setD12(null); setR12(0); setAltRd(null);
     getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
     return () => { ok = false; };
   }, [rd]);
@@ -642,15 +703,28 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                 ? (dupDir ? " · ראשית" + (dupBase ? " (" + (alt || "־") + ")" : "") : "")
                 : " · חלופה " + alt);
               return (
-                <a key={s.rd} className={"sib" + (s.rd === rd ? " on" : "")} title={s.dest}
-                  href={lineHref(s.rd)}
-                  onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); if (s.rd !== rd) onSwitch(s.rd); }}>
-                  {lbl}
-                  {s.lk === "removed" && <span className="sibx">✖</span>}
-                </a>
+                <span key={s.rd} className="sibwrap">
+                  <a className={"sib" + (s.rd === rd ? " on" : "")} title={s.dest}
+                    href={lineHref(s.rd)}
+                    onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); if (s.rd !== rd) onSwitch(s.rd); }}>
+                    {lbl}
+                    {s.lk === "removed" && <span className="sibx">✖</span>}
+                  </a>
+                  {/* השוואה בין חלופות: עד עכשיו אפשר היה רק לעבור ביניהן,
+                      ולהחזיק את ההבדל בראש */}
+                  {s.rd !== rd && (
+                    <button className="sibcmp" title={"השוואת התחנות והמסלול מול " + lbl}
+                      onClick={() => setAltRd(altRd === s.rd ? null : s.rd)}>
+                      {altRd === s.rd ? "✕" : "⇄"}</button>
+                  )}
+                </span>
               );
             })}
           </div>
+        )}
+        {altRd && (
+          <AltCompare rd={rd} altRd={altRd} onClose={() => setAltRd(null)}
+            label={(sibs.find((x) => x.rd === altRd) || {}).dest || altRd} />
         )}
         {vs.length > 0 && vs[vs.length - 1].k === "removed" && (
           <div className="facts" style={{ color: lineGone ? (KINDS[dispKind(vs[vs.length - 1], vs.length - 1, vs)] || {}).color : "#c2410c", fontWeight: 700 }}>

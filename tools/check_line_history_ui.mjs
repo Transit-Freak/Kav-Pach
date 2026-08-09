@@ -244,6 +244,29 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
+// ---- שלב ב3.65': השוואה בין חלופות של אותו קו ----
+{
+  const idx = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines.json'), 'utf8')).lines;
+  const bym = {};
+  idx.forEach((l) => { (bym[l.rd.split('-')[0]] = bym[l.rd.split('-')[0]] || []).push(l); });
+  const grp = Object.values(bym).find((g) => g.length > 1 && g.every((l) => l.v > 1));
+  if (!grp) fail('לא נמצא קו עם יותר מחלופה אחת לבדיקה');
+  await page.goto(`http://127.0.0.1:${port}/index.html#${encodeURIComponent(grp[0].rd)}`,
+    { waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.sibs .sibcmp', { timeout: 30000 })
+    .catch(() => fail('אין כפתור השוואת חלופות בעמוד הקו'));
+  await page.locator('.sibs .sibcmp').first().click();
+  await page.waitForSelector('.altcmp .altstat', { timeout: 30000 })
+    .catch(() => fail('לחיצה על ⇄ לא פתחה את ההשוואה בין החלופות'));
+  const txt = await page.locator('.altcmp .altstat').innerText();
+  if (!/\d/.test(txt)) fail('השוואת חלופות בלי מספרים');
+  if (!(await page.locator('.altcmp .map').count())) fail('השוואת חלופות בלי מפה');
+  console.log(`✓ השוואת חלופות: ${txt.replace(/\n/g, ' · ').slice(0, 70)}`);
+  await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.tabs', { timeout: 30000 });
+}
+
 // ---- שלב ב3.7': חיפוש קו מציג גם את הגרסה של 2012 ----
 // חיפוש "548" החזיר את הקו כפי שהוא היום בלבד. הגרסה של 2012 — קו אחר
 // לגמרי, מקרית מלאכי לבני ברק — קיימת בנתונים ולא הופיעה בתוצאות.
