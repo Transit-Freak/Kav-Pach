@@ -120,7 +120,24 @@ function decodeShape(str) {
 
 function fsafe(rd) { return rd.replace(/#/g, "H").replace(/\//g, "_"); }
 function fmtD(d) { return (d || "").split("-").reverse().join("."); }
+function fmtM(d) { const p = (d || "").split("-"); return p[1] + "." + p[0]; }
 function gapDays(a, b) { return Math.round((new Date(b) - new Date(a)) / 864e5); }
+
+// דיוק התאריך נקבע לפי המרווח בין שני צילומי הארכיון שביניהם אותר השינוי.
+// בארכיון של 2020 הצילומים יומיים והתאריך מדויק; ב-2017 הם במרחק שבועיים,
+// ואז יום מדויק הוא המצאה — במקרה כזה נכתב החודש בלבד. (בקשת המשתמש.)
+function evDate(v) {
+  const sd = v.sd || (/(\d{4}-\d{2}-\d{2}) ל-(\d{4}-\d{2}-\d{2})/.exec(v.note || "") || [])[1];
+  if (!sd || sd === v.d) return { txt: fmtD(v.d), exact: true };
+  const g = gapDays(sd, v.d);
+  // עד שלושה ימים התאריך נשאר: הוא נכון עד יום-יומיים, וסימון של עשרות
+  // אלפי אירועים כ"לא ידוע" בגלל זה היה הופך את הציר לבלתי קריא בלי
+  // להוסיף אמת. מעבר לזה היום הוא ניחוש, ואז נכתב החודש בלבד.
+  if (g <= 3) return { txt: fmtD(v.d), exact: true,
+                       tip: `אותר בין ${fmtD(sd)} ל-${fmtD(v.d)}` };
+  if (fmtM(sd) === fmtM(v.d)) return { txt: fmtM(v.d), exact: false, tip: `אותר בין ${fmtD(sd)} ל-${fmtD(v.d)} — ${g} ימים בין צילומי הארכיון, ולכן היום המדויק אינו ידוע` };
+  return { txt: `${fmtM(sd)}–${fmtM(v.d)}`, exact: false, tip: `אותר בין ${fmtD(sd)} ל-${fmtD(v.d)} — ${g} ימים בין צילומי הארכיון, ולכן היום המדויק אינו ידוע` };
+}
 function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
 /* ---------- איתור הקטעים ששונו בין שתי גאומטריות ----------
@@ -652,7 +669,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <div className="tl">
           {shown.map(({ v: x, i }) => (
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
-              <div className="d">{fmtD(x.d)}{(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}
+              <div className="d">
+                <span title={evDate(x).tip || ""} className={evDate(x).exact ? "" : "approxd"}>
+                  {evDate(x).txt}{evDate(x).exact ? "" : " ≈"}</span>
+                {(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}
                 {(x.shp || (x.stops || []).length > 1) && (
                 <button className={"cmpbtn" + (cmpI === i ? " on" : "")}
                   title={cmpI === i ? "זו גרסת הבסיס להשוואה — לחיצה מבטלת" : "קביעת הגרסה הזו כבסיס, ואז לחיצה על אירוע אחר תשווה מולה"}
@@ -686,17 +706,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       </div>
       <div className="card main">
         <div className="vhead">
-          {cmpOn ? <>השוואה שביקשת: <b>{fmtD(v.d)}</b> מול <b>{fmtD(pv.d)}</b></>
-            : <>גרסת <b>{fmtD(v.d)}</b>{prev ? <> מול הגרסה שלפניה (<b>{fmtD(pv.d)}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}</>}
+          {cmpOn ? <>השוואה שביקשת: <b>{evDate(v).txt}</b> מול <b>{evDate(pv).txt}</b></>
+            : <>גרסת <b>{evDate(v).txt}</b>{prev ? <> מול הגרסה שלפניה (<b>{evDate(pv).txt}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}</>}
         </div>
-        {/* הגרסה הקודמת אינה בהכרח מהיום שלפני. כשהפער גדול, הצבעים במפה
-            מציגים את כל מה שהצטבר בין שתי המדידות ולא את מה שהאירוע הזה
-            שינה — וללא אזהרה זה נקרא כאילו כל ההפרש קרה באותו יום. */}
-        {!cmpOn && prev && pv && gapDays(pv.d, v.d) > 45 && (
+        {/* אי-הוודאות אינה בפער שבין שתי הגרסאות: המנוע עובר על כל צילומי
+            הארכיון, ולכן פער ארוך בין גרסאות פירושו שהמסלול באמת לא השתנה
+            לאורכו. אי-הוודאות היחידה היא המרווח בין שני צילומים סמוכים,
+            וזה בדיוק מה ש-'sd' מודד. */}
+        {!cmpOn && !evDate(v).exact && (
           <div className="gapwarn">
-            🛈 בין שתי המדידות עברו <b>{gapDays(pv.d, v.d)} ימים</b>. הצבעים במפה
-            מראים את ההפרש המצטבר בין {fmtD(pv.d)} ל-{fmtD(v.d)}, ולא בהכרח שינוי
-            אחד — ייתכן שהיו בדרך כמה שינויים שלא נמדדו.
+            🛈 היום המדויק אינו ידוע: {evDate(v).tip}.
           </div>
         )}
         {v.k === "times" && v.tb ? (

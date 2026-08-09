@@ -212,3 +212,7 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .cmpbtn { border: 1px solid #cbd5e1; background: #fff; color: #64748b; border-radius: 6px;
   padding: 0 6px; margin-inline-start: 6px; font-size: 12px; cursor: pointer; line-height: 1.5; }
 .cmpbtn.on { background: #4338ca; color: #fff; border-color: #4338ca; }
+
+/* תאריך שאינו מדויק — אותר בין שני צילומי ארכיון רחוקים, ולכן מוצג החודש
+   בלבד. הסימון ויזואלי כדי שלא ייקרא כתאריך מדוד. */
+.approxd { border-bottom: 1px dotted #a16207; cursor: help; }
