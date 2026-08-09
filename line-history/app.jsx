@@ -708,6 +708,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
                 {x.note && <span className="evnote"> {x.note}</span>}
               </div>
+              {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
+                  בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
+              <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
               {(x.add || x.rem) && (
                 <div className="sub">
                   {x.add && <div>➕ נוספו: {x.add.map((n) => withCode(n, i, true)).join(", ")}</div>}
@@ -1201,6 +1204,14 @@ const TABS = [
     groups: [] },
 ];
 const TT_ICON = { rail: "🚆", taxi: "🚕", lightrail: "🚊", cable: "🚡", demand: "🚐" };
+// מקור האירוע — שלושה מקורות שונים לחלוטין, וכל אחד עם דיוק אחר. בלי
+// לנקוב בשם, "מארכיון הפיד הארצי" לא אומר מי מדד ומתי.
+const SRC_LABEL = {
+  tf: "מקור: ארכיון TransitFeeds / OpenMobilityData — צילומי הפיד הארצי של משרד התחבורה, 2017–2022",
+  tf17: "מקור: ארכיון TransitFeeds / OpenMobilityData — צילום 16.3.2017, הישן ביותר שקיים",
+  ob: "מקור: ארכיון הסדנא לידע ציבורי (Open Bus) — צילומים יומיים מ-2022",
+  _daily: "מקור: הסריקה היומית שלנו — השוואת הפיד הארצי, יום מול יום",
+};
 const TT_LABEL = { rail: "רכבת", taxi: "מונית שירות", lightrail: "רכבת קלה",
                    cable: "רכבל/כרמלית", demand: "שירות לפי דרישה" };
 

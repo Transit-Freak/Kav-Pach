@@ -219,3 +219,6 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 
 /* מתג תצוגת המפה: "מה השתנה" מול המסלול המלא אחרי השינוי */
 .onlycur { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+
+/* מקור האירוע — מי מדד ומתי. שקט ויזואלית, אבל תמיד נוכח. */
+.evsrc { font-size: 11px; color: #94a3b8; font-weight: 700; margin-top: 4px; line-height: 1.5; }
