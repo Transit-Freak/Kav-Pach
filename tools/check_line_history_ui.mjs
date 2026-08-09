@@ -225,6 +225,20 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
     .catch(() => fail('עמוד קו 548 לא נפתח'));
   const n = await page.locator('.rvflag').count();
   if (!n) fail('עמוד הקו: הסימון "חזר כעבור" לא מוצג באף אירוע');
+  // סרגל הסינון מאחד שלוש דרגות של שינוי תחנות לצ'יפ אחד, וכיבוי שלו
+  // חייב להעלים את כל השלוש — אחרת הכפתור אומר דבר אחד ועושה אחר.
+  const chip = page.locator('.kchip', { hasText: 'שינוי תחנות' }).first();
+  if (await chip.count()) {
+    const before = await page.locator('.tl .ev').count();
+    await chip.click();
+    await page.waitForTimeout(400);
+    const after = await page.locator('.tl .ev').count();
+    if (after >= before) fail('כיבוי הצ\'יפ "שינוי תחנות" לא הסתיר אירועים');
+    const left = await page.locator('.tl .ev').allInnerTexts();
+    if (left.some((t) => /תחנות נוספו|תחנות ירדו|שינוי תחנות/.test(t)))
+      fail('כיבוי "שינוי תחנות" השאיר אירועי תחנות ברשימה');
+    console.log(`✓ סרגל הסינון: כיבוי "שינוי תחנות" הוריד ${before - after} אירועים`);
+  }
   console.log(`✓ שינוי שהתבטל: ${rv} אירועים מסומנים בקו 548, ${n} מוצגים בעמוד`);
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tabs', { timeout: 30000 });

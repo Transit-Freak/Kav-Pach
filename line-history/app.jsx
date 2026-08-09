@@ -3,6 +3,16 @@
 const { useState, useEffect, useMemo, useRef } = React;
 const BUILD = window.LH_BUILD || "0";
 
+// איחוד לצורך הסרגל בלבד: שלוש דרגות של שינוי תחנות הן שאלה אחת, וכך גם
+// הארכה/קיצור/החלפת קצה. "תיעוד ראשון" ו"צילום מהארכיון" אינם שינויים אלא
+// נקודות פתיחה, ולכן הם יחד.
+const KGROUP = {
+  "stops-add": "stops", "stops-del": "stops",
+  extend: "terminal", shorten: "terminal",
+  snapshot: "baseline",
+};
+const KGLABEL = { stops: "שינוי תחנות", terminal: "שינוי קצה המסלול",
+                  baseline: "נקודת פתיחה" };
 const KINDS = {
   baseline:    { label: "תיעוד ראשון", color: "#64748b" },
   snapshot:    { label: "צילום מהארכיון", color: "#94a3b8" },
@@ -467,18 +477,24 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const months = [...new Set(vs.map((v) => v.d.slice(0, 7)))].reverse();
   const shown = vs.map((v, i) => ({ v, i }))
     .filter((x) => (!mon || x.v.d.slice(0, 7) === mon) && !offK.has(dispKind(x.v, x.i, vs))).reverse();
-  // הקטגוריות שקיימות בקו הזה בפועל, לפי שכיחות — סרגל כיבוי/הדלקה
+  // הקטגוריות שקיימות בקו הזה בפועל, לפי שכיחות — סרגל כיבוי/הדלקה.
+  // שלוש קבוצות מאוחדות כאן ולא בתווית שעל האירוע: בסרגל הן שאלה אחת
+  // ("להציג שינויי תחנות?") ואילו על האירוע עצמו ההבחנה כן נושאת מידע.
   const kindsHere = (() => {
     // התווית שעל האירוע נגזרת מ-dispKind ולא מ-k הגולמי; סינון לפי k היה
     // יוצר אי-התאמה — כפתור "שינוי מספר הרכבים" שמשאיר אירועים מתויגים
     // "שינוי לו״ז". הסינון והתוויות חייבים לדבר באותה שפה.
     const c = new Map();
-    vs.forEach((x, i) => { const dk = dispKind(x, i, vs); c.set(dk, (c.get(dk) || 0) + 1); });
-    return [...c.entries()].sort((a, b) => b[1] - a[1]);
+    vs.forEach((x, i) => {
+      const dk = dispKind(x, i, vs), g = KGROUP[dk] || dk;
+      const e = c.get(g) || { n: 0, kinds: new Set() };
+      e.n += 1; e.kinds.add(dk); c.set(g, e);
+    });
+    return [...c.entries()].sort((a, b) => b[1].n - a[1].n);
   })();
-  const toggleK = (k) => setOffK((prev) => {
+  const toggleK = (ks, wasOff) => setOffK((prev) => {
     const n = new Set(prev);
-    n.has(k) ? n.delete(k) : n.add(k);
+    ks.forEach((k) => (wasOff ? n.delete(k) : n.add(k)));
     return n;
   });
   // מס' תחנה לרשימות ➕/➖: בהוספה מחפשים בגרסה עצמה, בהורדה בגרסאות שלפניה
@@ -667,14 +683,17 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <div className="kfilter">
             <button className={"kchip" + (offK.size ? "" : " on")}
               title="הצגת כל סוגי השינויים בקו הזה" onClick={() => setOffK(new Set())}>הכול</button>
-            {kindsHere.map(([k, n]) => (
-              <button key={k} className={"kchip" + (offK.has(k) ? " off" : " on")}
-                style={offK.has(k) ? null : { borderColor: catColor(k), color: catColor(k) }}
-                title={offK.has(k) ? "הדלקה — האירועים האלה יחזרו לרשימה" : "כיבוי — האירועים האלה ייעלמו מהרשימה"}
-                onClick={() => toggleK(k)}>
-                {(KINDS[k] || {}).label || k} <b>{n}</b>
-              </button>
-            ))}
+            {kindsHere.map(([g, e]) => {
+              const off = [...e.kinds].every((k) => offK.has(k));
+              return (
+                <button key={g} className={"kchip" + (off ? " off" : " on")}
+                  style={off ? null : { borderColor: catColor(g), color: catColor(g) }}
+                  title={off ? "הדלקה — האירועים האלה יחזרו לרשימה" : "כיבוי — האירועים האלה ייעלמו מהרשימה"}
+                  onClick={() => toggleK([...e.kinds], off)}>
+                  {KGLABEL[g] || (KINDS[g] || {}).label || g} <b>{e.n}</b>
+                </button>
+              );
+            })}
           </div>
         )}
         {months.length > 1 && (
