@@ -1095,18 +1095,30 @@ function StopsTab({ sel }) {
     setMon("all"); setYr(""); setQ(sel); setKinds(new Set()); setOnlyNs(false);
   }, [sel]);
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  // קורות החיים של כל התחנות הם 4.5 מגה, והם נדרשים רק ל"כל התקופה"
+  // ולקישור ישיר לתחנה. תצוגת חודש בודד מסתדרת עם קובץ של עשרות קילובייט
+  // כי הכללים שדרשו אותם מסומנים מראש על האירוע (k1/xb).
+  const needHist = mon === "all" || !!sel;
   useEffect(() => {
+    if (!needHist || hist) return;
     fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => (r.ok ? r.json() : {}))
       .then(setHist)
       .catch(() => setHist({}));
-  }, []);
+  }, [needHist, hist]);
   // כללי התצוגה (בקשת המשתמש, בעקבות תחנות עונתיות כמו תחנות ההתרעננות):
   // "חדשה" — רק הרישום הראשון אי-פעם של התחנה; הרשמות חוזרות לא מוצגות.
   // "בוטלה" — רק אם עברה שנה בלי שחזרה; ומי שמופיעה ברישום הנוכחי
   // (גם בלי קווים שעוצרים בה) אינה מבוטלת.
   const keepEvent = (c) => {
-    if (!hist) return true;
+    // בלי קורות החיים מכריעים לפי הסימונים שחושבו מראש: k1 — זה הרישום
+    // הראשון של התחנה, xb — הביטול הזה כבר לא בתוקף. כלל השנה נשאר כאן,
+    // כי הוא תלוי בתאריך של היום.
+    if (!hist) {
+      if (c.k === "new") return !!c.k1;
+      if (c.k === "del") return !c.xb && Date.now() - new Date(c.d) >= 365 * 864e5;
+      return true;
+    }
     const evs = hist[c.c] || [];
     if (c.k === "new") {
       // "חדשה" = לידת התחנה: האירוע הראשון בכלל בקורות-החיים שלה. תחנה

@@ -128,6 +128,24 @@ await page.waitForSelector('.slist .srow', { timeout: 30000 })
 const rows = await page.locator('.slist .srow').count();
 console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומציג ${rows} שורות`);
 
+// תצוגת חודש בודד אינה זקוקה לקורות החיים של כל התחנות (4.5 מגה), ולכן
+// הקובץ הזה לא אמור להיטען לפני שבוחרים "כל התקופה". בלי הבדיקה הזו
+// הטעינה הכבדה תחזור בהיסח הדעת בפעם הבאה שמישהו נוגע ב-useEffect.
+{
+  const heavy = [];
+  page.on('request', (r) => { if (r.url().includes('stops-hist.json')) heavy.push(r.url()); });
+  await page.locator('.months .mchip', { hasText: `${om}.${oy}` }).first().click();
+  await page.waitForTimeout(1500);
+  if (heavy.length) fail('תצוגת חודש הורידה את כל קורות החיים של התחנות');
+  await page.click('.months .mchip:has-text("כל התקופה")');
+  await page.waitForTimeout(3000);
+  if (!heavy.length) fail('"כל התקופה" לא טענה את קורות החיים');
+  console.log('✓ משקל: תצוגת חודש נטענת בלי 4.5 המגה, ו"כל התקופה" טוענת אותם');
+  await page.locator('.months .mchip', { hasText: new RegExp(`^${oy}$`) }).first().click();
+  await page.locator('.months .mchip', { hasText: `${om}.${oy}` }).first().click();
+  await page.waitForSelector('.slist .srow', { timeout: 30000 });
+}
+
 // ---- שלב ב2': אירועי הזזה — "מ־" ו"אל" מלאים משני הצדדים ----
 // הסורק הארכיוני רשם רק את המיקום החדש, והשורה יצאה "הוזזה מ׳ · (, ) ← (…)":
 // מרחק ריק וסוגריים ריקים. תקלה שקטה — הכל מוצג, פשוט בלי תוכן.
