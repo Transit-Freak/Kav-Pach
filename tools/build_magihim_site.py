@@ -120,7 +120,13 @@ def build_stop_lookup():
                     coords[mk] = (e['la'], e['lo'])
     except Exception:
         pass
-    return lk, srt, by_city, cities, coords
+    # אינדקס מילים לכל עיר, להתאמת שם שקיבל או איבד מילה: "שדרות בן
+    # גוריון/בן אהרון" של 2012 מול "שדרות דוד בן גוריון/בן אהרון" אצלנו.
+    tok_city = collections.defaultdict(list)
+    for c, items in by_city.items():
+        for nn, mk in set(items):
+            tok_city[c].append((frozenset(nn.split()), mk))
+    return lk, srt, by_city, cities, coords, tok_city
 
 
 def main():
@@ -161,7 +167,7 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, srt, by_city, cities, coords = build_stop_lookup()
+    lookup, srt, by_city, cities, coords, tok_city = build_stop_lookup()
     m_hit = m_tot = 0
 
     def mks_of(name):
@@ -193,6 +199,18 @@ def main():
                 m_hit += 1
                 return sorted(found)
             break
+        # שם שקיבל או איבד מילה: "שדרות בן גוריון/בן אהרון" מול "שדרות דוד
+        # בן גוריון/בן אהרון". שני הצדדים חייבים שלוש מילים לפחות, אחרת
+        # "הרצל/ויצמן" היה נבלע בכל שם ארוך שמכיל אותן.
+        if len(parts) > 1:
+            city = norm(parts[-1])
+            street = frozenset(norm(' '.join(parts[:-1])).split())
+            if city in tok_city and len(street) >= 3:
+                found = {mk for toks, mk in tok_city[city]
+                         if len(toks) >= 3 and (street <= toks or toks <= street)}
+                if 0 < len(found) <= CAP:
+                    m_hit += 1
+                    return sorted(found)
         return []
 
     by_al = collections.defaultdict(list)    # (agency, line_id) -> [(sig, rows)]
