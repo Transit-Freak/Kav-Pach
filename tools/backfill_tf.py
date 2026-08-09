@@ -78,22 +78,36 @@ def snapshot(ds):
     SNAP_META.update(meta)
     if not rid2rd:
         return {}
-    # נסיעה נציגה לכל וריאנט — אותו כלל של הסריקה היומית: הראשונה בקובץ
-    # שיש לה שרטוט. הבחירה חייבת להיות יציבה בין צילומים, אחרת החלפת נציג
-    # תיראה כשינוי מסלול שלא היה.
+    # נסיעה נציגה לכל וריאנט. הכלל הקודם היה "הראשונה בקובץ שיש לה שרטוט",
+    # והוא נשען על סדר השורות ב-trips.txt — סדר שאינו יציב בין צילומים.
+    # בקו 548 היו בשני הצילומים 23 נסיעות בתבנית של 21 תחנות ו-7 בתבנית של
+    # 25, ורק הסדר התחלף; הכלל בחר ב-13.1 את בת ה-25 וב-14.1 את בת ה-21,
+    # ונרשם "ירדו ארבע תחנות" על נתונים שלא זזו.
+    #
+    # הבחירה כאן אינה תלויה בסדר: התבנית שרוב הנסיעות רצות בה, ובתוכה
+    # מזהה הנסיעה הקטן ביותר. שוויון נשבר לפי מזהה השרטוט.
     c, rows = member_rows(url, members, 'trips.txt')
-    picked, fallback = {}, {}
+    cnt, first_t, noshape = {}, {}, {}
     for r in rows:
         rd = rid2rd.get(r[c['route_id']])
         if not rd:
             continue
+        tid = r[c['trip_id']]
         sh = r[c['shape_id']] if 'shape_id' in c else ''
-        if sh and rd not in picked:
-            picked[rd] = (r[c['trip_id']], sh)
-        elif rd not in fallback:
-            fallback[rd] = (r[c['trip_id']], '')
-    for rd, v in fallback.items():
-        picked.setdefault(rd, v)
+        if not sh:
+            if rd not in noshape or tid < noshape[rd]:
+                noshape[rd] = tid
+            continue
+        cnt.setdefault(rd, {})[sh] = cnt.setdefault(rd, {}).get(sh, 0) + 1
+        k = (rd, sh)
+        if k not in first_t or tid < first_t[k]:
+            first_t[k] = tid
+    picked = {}
+    for rd, shapes in cnt.items():
+        sh = min(shapes, key=lambda x: (-shapes[x], x))
+        picked[rd] = (first_t[(rd, sh)], sh)
+    for rd, tid in noshape.items():
+        picked.setdefault(rd, (tid, ''))
 
     trip2rd = {v[0].encode(): k for k, v in picked.items()}
     seqs, buf, hdr = {}, [b''], {}

@@ -109,14 +109,28 @@ else:
     print('אזהרה: אין calendar.txt — בלי סינון תבניות עתידיות',file=sys.stderr)
 
 # ---- trips: נציג לכל route_id (רק מנסיעות שבתוקף) ----
+# הכלל הקודם היה "הנסיעה הראשונה בקובץ שיש לה שרטוט", והוא נשען על סדר
+# השורות ב-trips.txt. הסדר אינו יציב בין פרסומים: בקו 548 היו בשני ימים
+# רצופים אותן 23 נסיעות בתבנית של 21 תחנות ו-7 בתבנית של 25, ורק הסדר
+# התחלף — ונרשם "ירדו ארבע תחנות" על נתונים שלא זזו.
+#
+# הבחירה כאן אינה תלויה בסדר: התבנית שרוב הנסיעות רצות בה, ובתוכה מזהה
+# הנסיעה הקטן ביותר. שוויון נשבר לפי מזהה השרטוט.
 rep={}          # route_id -> (trip_id, shape_id)
+_cnt={}         # route_id -> {shape_id: כמה נסיעות}
+_first={}       # (route_id, shape_id) -> מזהה הנסיעה הקטן ביותר
 registered=set()   # וריאנטים שקיימים ברישום (יש להם נסיעות בקובץ, גם אם לא בתוקף היום)
 for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     rid=r['route_id']
     if rid in routes: registered.add(routes[rid]['rd'])
     if active is not None and r.get('service_id') not in active: continue
-    if rid in routes and rid not in rep and r.get('shape_id'):
-        rep[rid]=(r['trip_id'],r['shape_id'])
+    if rid in routes and r.get('shape_id'):
+        sh=r['shape_id']; t=r['trip_id']
+        _cnt.setdefault(rid,{})[sh]=_cnt[rid].get(sh,0)+1
+        if (rid,sh) not in _first or t<_first[(rid,sh)]: _first[(rid,sh)]=t
+for rid,shapes in _cnt.items():
+    sh=min(shapes,key=lambda x:(-shapes[x],x))
+    rep[rid]=(_first[(rid,sh)],sh)
 rep_trips={t:(rid,sh) for rid,(t,sh) in rep.items()}
 print('נסיעות נציג:',len(rep),'| וריאנטים רשומים:',len(registered))
 
