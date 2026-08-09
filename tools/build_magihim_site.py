@@ -11,6 +11,7 @@
 """
 import collections
 import json
+import math
 import pathlib
 import re
 import subprocess
@@ -213,6 +214,56 @@ def main():
                     return sorted(found)
         return []
 
+    n_amb = n_res = n_out = 0
+
+    def km(a, b):
+        return math.hypot((a[0] - b[0]) * 111,
+                          (a[1] - b[1]) * 111 * math.cos(math.radians(a[0])))
+
+    def drop_outliers(out):
+        """ביטול התאמה שיושבת רחוק משתי שכנותיה במסלול.
+
+        שם קצר כמו "הנביאים" קיים בכמה ערים, ולפעמים ההתאמה נופלת על תחנה
+        במרחק מאה קילומטר משתי התחנות שלפניה ואחריה. אין מסלול כזה — עדיף
+        להשאיר את התחנה בלי מק"ט מאשר לשייך אותה לעיר אחרת.
+        """
+        nonlocal n_out
+        for i in range(1, len(out) - 1):
+            c, a, b = out[i], out[i - 1], out[i + 1]
+            if len(c) < 7 or len(a) < 7 or len(b) < 7:
+                continue
+            da, db = km(c[5:7], a[5:7]), km(c[5:7], b[5:7])
+            if da > 25 and db > 25 and km(a[5:7], b[5:7]) < 5:
+                out[i] = c[:4] + [[]]
+                n_out += 1
+
+    def route_stops(r):
+        """רצף התחנות של מסלול, אחרי הכרעה בין מועמדים לפי הגאוגרפיה.
+
+        שם כמו "ספריה עירונית/בן גוריון" מתאים לשתי תחנות באותה עיר — שני
+        הכיוונים של אותו רחוב. השם לבדו אינו יכול להכריע, אבל המסלול כן:
+        התחנה הנכונה היא זו שמתיישבת עם השכנות שלה ברצף.
+        """
+        nonlocal n_amb, n_res
+        raw = [(st, mks_of(st['name'])) for st in (r.get('stops') or [])]
+        anchors = [(i, coords[mk[0]]) for i, (st, mk) in enumerate(raw)
+                   if len(mk) == 1 and mk[0] in coords]
+        out = []
+        for i, (st, mks) in enumerate(raw):
+            if len(mks) > 1 and all(mk in coords for mk in mks):
+                n_amb += 1
+                near = [c for j, c in anchors if 0 < abs(j - i) <= 3]
+                if near:
+                    def cost(mk):
+                        y, x = coords[mk]
+                        return sum((y - b) ** 2 + (x - a) ** 2 for b, a in near)
+                    mks = [min(mks, key=cost)]
+                    n_res += 1
+            out.append([st['seq'], untrunc(st['name']), st['t'], st['type'], mks]
+                       + (list(coords.get(mks[0], ())) if mks else []))
+        drop_outliers(out)
+        return out
+
     by_al = collections.defaultdict(list)    # (agency, line_id) -> [(sig, rows)]
     for (a, lid, sig), rows in lines.items():
         by_al[(a, lid)].append((sig, rows))
@@ -234,9 +285,7 @@ def main():
             {'rid': str(r.get('route')), 'n': len(r.get('stops', [])),
              'f': untrunc(r['stops'][0]['name'] if r.get('stops') else ''),
              'l': untrunc(r['stops'][-1]['name'] if r.get('stops') else ''),
-             'stops': [(lambda mks: [s['seq'], untrunc(s['name']), s['t'], s['type'], mks]
-                        + (list(coords.get(mks[0], ())) if mks else []))(mks_of(s['name']))
-                       for s in r.get('stops', [])]}
+             'stops': route_stops(r)}
             for r in rows]}
         (OUT / f'l{key}.json').write_text(
             json.dumps(payload, ensure_ascii=False), encoding='utf-8')
@@ -259,6 +308,8 @@ def main():
         'routes_total': len(routes),
         'lines': idx,
     }, ensure_ascii=False), encoding='utf-8')
+    print(f'הכרעת מועמדים לפי המסלול: {n_res} מתוך {n_amb} תחנות רב-משמעיות · '
+          f'{n_out} התאמות בוטלו כחריגות גאוגרפיות')
     print(f'נבנו {len(idx)} קווים | {len(routes)} מסלולים | '
           f'{sum(1 for _ in OUT.glob("l*.json"))} קבצים | '
           f'הצלבת תחנות: {m_hit}/{m_tot} ({m_hit * 100 // max(m_tot, 1)}%)')
