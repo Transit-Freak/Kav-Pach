@@ -201,6 +201,23 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
+// ---- שלב ב3.6': שינוי תחנות שהתבטל מיד מסומן ככזה ----
+// "ירדו 4 תחנות" בקו שעוצר בהן עד היום — הרצף התנדנד ימים ספורים וחזר.
+{
+  const lf = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines/10548-1-0.json'), 'utf8'));
+  const rv = (lf.versions || []).filter((v) => v.rv).length;
+  if (!rv) fail('קו 548: אין סימון לשינויים שהתבטלו מיד');
+  await page.goto(`http://127.0.0.1:${port}/index.html#10548-1-0`, { waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.tl .ev', { timeout: 30000 })
+    .catch(() => fail('עמוד קו 548 לא נפתח'));
+  const n = await page.locator('.rvflag').count();
+  if (!n) fail('עמוד הקו: הסימון "חזר כעבור" לא מוצג באף אירוע');
+  console.log(`✓ שינוי שהתבטל: ${rv} אירועים מסומנים בקו 548, ${n} מוצגים בעמוד`);
+  await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.tabs', { timeout: 30000 });
+}
+
 // ---- שלב ב3.7': חיפוש קו מציג גם את הגרסה של 2012 ----
 // חיפוש "548" החזיר את הקו כפי שהוא היום בלבד. הגרסה של 2012 — קו אחר
 // לגמרי, מקרית מלאכי לבני ברק — קיימת בנתונים ולא הופיעה בתוצאות.

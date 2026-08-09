@@ -713,6 +713,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               <div className="t">
                 <span className="k" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</span>
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
+                {/* שינוי שרצף התחנות חזר ממנו מיד. בלי הסימון הזה השורה
+                    אומרת שתחנות ירדו, בעוד הקו עוצר בהן עד היום. */}
+                {x.rv ? (
+                  <span className="rvflag" title="רצף התחנות חזר בדיוק למה שהיה לפני השינוי הזה. שינוי שמתבטל מיד הוא כמעט תמיד תנודה בפרסום ולא שינוי במסלול">
+                    ↩ חזר כעבור {x.rv === 1 ? "יום" : x.rv + " ימים"}</span>
+                ) : x.rvb ? (
+                  <span className="rvflag" title="השינוי הקודם התבטל כאן — רצף התחנות חזר למה שהיה לפניו">
+                    ↩ החזרת המצב הקודם</span>
+                ) : null}
                 {x.note && <span className="evnote"> {x.note}</span>}
               </div>
               {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
