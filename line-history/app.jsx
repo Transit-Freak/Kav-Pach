@@ -1181,6 +1181,41 @@ function DayFeed({ idx, openLine, open12, onBack }) {
   );
 }
 
+/* ---------- מק"ט שהוא גם כפתור העתקה ---------- */
+// לחיצה על המק"ט מעתיקה את הקישור לתחנה ישר ללוח, בלי תפריט ובלי שלב
+// נוסף. הוא נשאר קישור אמיתי, כך שפתיחה בלשונית חדשה (לחיצה אמצעית או
+// לחיצה ארוכה) ממשיכה לעבוד כרגיל.
+function StopCode({ code }) {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    if (!ok) return;
+    const t = setTimeout(() => setOk(false), 1600);
+    return () => clearTimeout(t);
+  }, [ok]);
+  const copy = (e) => {
+    e.stopPropagation();
+    if (!plainClick(e)) return;      // Ctrl/אמצעית — פתיחה בלשונית חדשה
+    e.preventDefault();
+    const url = location.origin + location.pathname + stopHref(code);
+    const done = () => setOk(true);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(done, () => fallback(url, done));
+    } else fallback(url, done);
+  };
+  const fallback = (url, done) => {
+    const ta = document.createElement("textarea");
+    ta.value = url; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (err) { /* אין לוח — הקישור עדיין ב-href */ }
+    document.body.removeChild(ta);
+  };
+  return (
+    <a className={"code slink" + (ok ? " copied" : "")} href={stopHref(code)} onClick={copy}
+      title="לחיצה מעתיקה את הקישור לתחנה הזו — כל השינויים שלה, מכל השנים">
+      {" "}({code}) {ok ? "✓ הועתק" : "🔗"}</a>
+  );
+}
+
 /* ---------- טאב תחנות ---------- */
 function StopsTab({ sel }) {
   const [months, setMonths] = useState(null);
@@ -1354,8 +1389,7 @@ function StopsTab({ sel }) {
                   {one ? (
                     <span className="nm">
                       {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
-                      <a className="code slink" href={stopHref(c.c)} title="קישור לתחנה הזו — כל השינויים שלה"
-                        onClick={(e) => e.stopPropagation()}> ({c.c}) 🔗</a>
+                      <StopCode code={c.c} />
                     </span>
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
                   {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
@@ -1390,7 +1424,7 @@ function StopsTab({ sel }) {
                 <div className="sgroup" key={g.code}>
                   <div className="srow ghead">
                     <span className="nm"><b>{nm}</b>
-                      <a className="code slink" href={stopHref(g.code)} title="קישור לתחנה הזו — כל השינויים שלה"> ({g.code}) 🔗</a></span>
+                      <StopCode code={g.code} /></span>
                     <span className="meta">{head.t ? head.t + " · " : ""}{g.evs.length} שינויים</span>
                   </div>
                   {g.evs.map((c) => evRow(c, false))}

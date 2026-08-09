@@ -196,7 +196,14 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   const txt = await page.locator('.slist').innerText();
   if (!txt.includes(code)) fail(`הכתובת #stop=${code} נפתחה על תחנה אחרת`);
   const nrow = await page.locator('.slist .srow').count();
-  console.log(`✓ קישור לתחנה: #stop=${code} נפתח עם ${nrow} שורות`);
+  // לחיצה על המק"ט מעתיקה את הקישור ללוח במקום לנווט
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.locator('.slink').first().click();
+  await page.waitForSelector('.slink.copied', { timeout: 5000 })
+    .catch(() => fail('לחיצה על המק"ט לא סימנה שהקישור הועתק'));
+  const clip = await page.evaluate(() => navigator.clipboard.readText());
+  if (!clip.includes('#stop=')) fail(`הלוח לא קיבל קישור לתחנה: "${clip}"`);
+  console.log(`✓ קישור לתחנה: #stop=${code} נפתח עם ${nrow} שורות, ולחיצה מעתיקה ${clip.slice(-14)}`);
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
