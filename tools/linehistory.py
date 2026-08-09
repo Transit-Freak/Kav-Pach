@@ -126,7 +126,7 @@ for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     if active is not None and r.get('service_id') not in active: continue
     if rid in routes and r.get('shape_id'):
         sh=r['shape_id']; t=r['trip_id']
-        _cnt.setdefault(rid,{})[sh]=_cnt[rid].get(sh,0)+1
+        d=_cnt.setdefault(rid,{}); d[sh]=d.get(sh,0)+1
         if (rid,sh) not in _first or t<_first[(rid,sh)]: _first[(rid,sh)]=t
 for rid,shapes in _cnt.items():
     sh=min(shapes,key=lambda x:(-shapes[x],x))
