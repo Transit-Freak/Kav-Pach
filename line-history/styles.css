@@ -226,3 +226,7 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 /* רשומה ברישום שאף קו לא עצר בה — לא תחנה שאפשר לחכות בה */
 .nsflag { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 7px;
   padding: 1px 7px; font-size: 11px; font-weight: 800; color: #64748b; cursor: help; }
+
+/* עדות ממאגר מגיעים 2012 — חמש שנים לפני תחילת הארכיון */
+.m12flag { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 7px;
+  padding: 1px 7px; font-size: 11px; font-weight: 800; color: #047857; cursor: help; }

@@ -48,7 +48,9 @@ def main():
     hist = json.load(open(hp, encoding='utf-8'))
     n_st = n_ev = 0
     for code, evs in hist.items():
-        if code in served:
+        # m12 = נמצאה במסלול של קו במאגר מגיעים 2012. זו עדות לשירות בדיוק
+        # כמו רצף תחנות של קו אצלנו, ובלעדיה הסימון היה חוזר בכל ריצה.
+        if code in served or any(e.get('m12') for e in evs):
             for e in evs:
                 e.pop('ns', None)        # חזרה לשירות מבטלת סימון קודם
             continue

@@ -110,6 +110,29 @@ await page.waitForSelector('.slist .srow', { timeout: 30000 })
 const rows = await page.locator('.slist .srow').count();
 console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומציג ${rows} שורות`);
 
+// ---- שלב ב2': אירועי הזזה — "מ־" ו"אל" מלאים משני הצדדים ----
+// הסורק הארכיוני רשם רק את המיקום החדש, והשורה יצאה "הוזזה מ׳ · (, ) ← (…)":
+// מרחק ריק וסוגריים ריקים. תקלה שקטה — הכל מוצג, פשוט בלי תוכן.
+{
+  const moved = fs.readdirSync(path.join(LH, 'data/changes'))
+    .filter((f) => f.startsWith('stops-') && f.endsWith('.json'))
+    .map((f) => {
+      const j = JSON.parse(fs.readFileSync(path.join(LH, 'data/changes', f), 'utf8'));
+      return { mo: j.month, n: j.changes.filter((c) => c.k === 'moved').length };
+    }).sort((a, b) => b.n - a.n)[0];
+  if (moved && moved.n) {
+    const [my, mm] = moved.mo.split('-');
+    await page.locator('.months .mchip', { hasText: new RegExp(`^${my}$`) }).first().click();
+    await page.locator('.months .mchip', { hasText: `${mm}.${my}` }).first().click();
+    await page.waitForSelector('.slist .srow', { timeout: 30000 })
+      .catch(() => fail(`הזזות: נבחר ${mm}.${my} ולא הופיעה אף שורה`));
+    const txt = await page.locator('.slist').innerText();
+    if (/הוזזה\s+מ׳/.test(txt)) fail(`הזזות ב-${moved.mo}: "הוזזה מ׳" בלי מרחק`);
+    if (/\(\s*,\s*\)/.test(txt)) fail(`הזזות ב-${moved.mo}: מיקום קודם ריק — "(, )"`);
+    console.log(`✓ הזזות: ${moved.n} ב-${moved.mo}, המרחק והמיקום הקודם מוצגים`);
+  }
+}
+
 // ---- שלב ג': פיד "שינויים לפי יום" של הקווים — החודש הכי ישן נגיש ----
 if (oldestL) {
   await page.click('button.tab:has-text("קווים")');

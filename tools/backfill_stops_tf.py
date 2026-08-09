@@ -120,9 +120,12 @@ def main():
                                 't': s[1], 'la': s[2], 'lo': s[3],
                                 'on': o[0], 'nn': s[0]})
                 elif dist_m(o[2], o[3], s[2], s[3]) >= MOVE_M:
+                    # ola/olo/dist ולא 'm': הממשק מציג "הוזזה מ־(א) ← (ב)",
+                    # ובלי המיקום הקודם השורה יוצאת עם חצים ריקים.
                     evs.append({'d': d, 'c': code, 'k': 'moved', 'n': s[0],
                                 't': s[1], 'la': s[2], 'lo': s[3],
-                                'm': round(dist_m(o[2], o[3], s[2], s[3]))})
+                                'ola': o[2], 'olo': o[3],
+                                'dist': round(dist_m(o[2], o[3], s[2], s[3]))})
             for code in prev:
                 if code not in cur and code not in gone:
                     gone[code] = [d, prev[code]]   # תחילת היעדרות, לא ביטול
