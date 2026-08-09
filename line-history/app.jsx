@@ -387,6 +387,10 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
 /* שורת קו כקישור אמיתי: קליק רגיל נשאר בתוך האפליקציה, Ctrl/קליק־אמצעי
    פותחים את דף הקו בכרטיסייה חדשה (לכל קו יש כתובת משלו אחרי ה-#) */
 const lineHref = (r) => "#" + encodeURIComponent(r);
+// לקו יש כתובת משלו ולתחנה לא הייתה — אי אפשר היה לשלוח למישהו שינוי
+// בתחנה מסוימת, רק להעתיק לו טקסט. ‎#stop=<מק"ט>‎ פותח את התחנה עם כל
+// קורות החיים שלה.
+const stopHref = (c) => "#stop=" + encodeURIComponent(c);
 const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
 
 /* חיפוש שנשמר בין ניווטים: חזרה מעמוד קו לא מוחקת את מה שהוקלד */
@@ -1072,7 +1076,7 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
 }
 
 /* ---------- טאב תחנות ---------- */
-function StopsTab() {
+function StopsTab({ sel }) {
   const [months, setMonths] = useState(null);
   const [mon, setMon] = useState("");
   const [yr, setYr] = useState("");   // שנה נבחרת בבוחר החודשים
@@ -1085,6 +1089,11 @@ function StopsTab() {
   const [openKey, setOpenKey] = useState(null);   // שורת תחנה פתוחה עם מפה
   const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
   useEffect(() => setLim(250), [q, mon, kinds, onlyNs]);
+  // תחנה שהגיעה מהכתובת: כל קורות החיים שלה, ולא רק החודש שנבחר
+  useEffect(() => {
+    if (!sel) return;
+    setMon("all"); setYr(""); setQ(sel); setKinds(new Set()); setOnlyNs(false);
+  }, [sel]);
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   useEffect(() => {
     fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
@@ -1120,7 +1129,9 @@ function StopsTab() {
         setMonths(ms);
         // ברירת המחדל: החודש האחרון — נטען מיידית. "כל התקופה" (פירוק
         // ומיון של כל קורות-החיים, מאות אלפי אירועים) רק בבחירה מפורשת
-        if (ms.length) { setMon(ms[0]); setYr(ms[0].slice(0, 4)); } })
+        // כשהגענו מקישור לתחנה, "כל התקופה" כבר נבחר — וטעינת החודשים
+        // דרסה אותו בחודש האחרון, כך שהקישור נחת על מסך ריק
+        if (ms.length && !sel) { setMon(ms[0]); setYr(ms[0].slice(0, 4)); } })
       .catch(() => setMonths([]));
   }, []);
   useEffect(() => {
@@ -1225,7 +1236,8 @@ function StopsTab() {
                   {one ? (
                     <span className="nm">
                       {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
-                      <span className="code"> ({c.c})</span>
+                      <a className="code slink" href={stopHref(c.c)} title="קישור לתחנה הזו — כל השינויים שלה"
+                        onClick={(e) => e.stopPropagation()}> ({c.c}) 🔗</a>
                     </span>
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
                   {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
@@ -1259,7 +1271,8 @@ function StopsTab() {
               return (
                 <div className="sgroup" key={g.code}>
                   <div className="srow ghead">
-                    <span className="nm"><b>{nm}</b><span className="code"> ({g.code})</span></span>
+                    <span className="nm"><b>{nm}</b>
+                      <a className="code slink" href={stopHref(g.code)} title="קישור לתחנה הזו — כל השינויים שלה"> ({g.code}) 🔗</a></span>
                     <span className="meta">{head.t ? head.t + " · " : ""}{g.evs.length} שינויים</span>
                   </div>
                   {g.evs.map((c) => evRow(c, false))}
@@ -1407,7 +1420,8 @@ function ModesTab({ idx, openLine, spec }) {
 function App() {
   const [idx, setIdx] = useState(null);
   const [err, setErr] = useState(null);
-  const [tab, setTab] = useState("lines");
+  const [tab, setTab] = useState(() =>
+    decodeURIComponent((location.hash || "").slice(1)).startsWith("stop=") ? "stops" : "lines");
   const [q, setQ] = usePersistedQ("lh-q-main");
   const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
   const [katOpen, setKatOpen] = useState(false);
@@ -1415,15 +1429,23 @@ function App() {
   // בטלפון חוזר לרשימה במקום לצאת מהאתר, וקישור לקו נפתח ישירות עליו.
   // ‎#2012/<k>‎ הוא כתובת של קו 2012 בלי מקבילה של היום — נפתח בפיד.
   const H0 = decodeURIComponent((location.hash || "").slice(1));
-  const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") ? H0 : null));
+  const isStopH = (h) => h.startsWith("stop=");
+  const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? H0 : null));
+  const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
   const [byDay, setByDay] = useState(() => H0.startsWith("2012/"));   // תצוגת "שינויים לפי יום"
   const [gone, setGone] = useState(false);        // תצוגת "קווים שנעלמו"
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
     const onPop = (e) => setRd((e.state && e.state.rd) || null);
+    const onHash = () => {
+      const h = decodeURIComponent((location.hash || "").slice(1));
+      if (!isStopH(h)) return;
+      setRd(null); setStopSel(h.slice(5)); setTab("stops");
+    };
     window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
+    window.addEventListener("hashchange", onHash);
+    return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("hashchange", onHash); };
   }, []);
   const openLine = (r) => { history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const switchLine = (r) => { history.replaceState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
@@ -1516,7 +1538,7 @@ function App() {
             onClick={() => { setTab(t.k); backToList(); }}>{t.icon} {t.label}</button>
         ))}
       </div>
-      {tab === "stops" ? <StopsTab /> : (TABS.some((t) => t.k === tab) && !rd) ? (
+      {tab === "stops" ? <StopsTab sel={stopSel} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
         <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
       ) : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}

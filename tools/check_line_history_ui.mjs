@@ -161,6 +161,25 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   console.log(`✓ מקורות: הרשימה נפתחת ומציגה ${n} מקורות`);
 }
 
+// ---- שלב ב3.5': קישור ישיר לתחנה ----
+// לקו הייתה כתובת ולתחנה לא, ולכן אי אפשר היה לשלוח למישהו שינוי בתחנה
+// מסוימת. הבדיקה נכנסת דרך הכתובת עצמה, כמו מי שקיבל אותה בהודעה.
+{
+  const hist = JSON.parse(fs.readFileSync(path.join(LH, 'data/stops-hist.json'), 'utf8'));
+  const code = Object.keys(hist).find((c) => (hist[c] || []).length >= 3);
+  await page.goto(`http://127.0.0.1:${port}/index.html#stop=${code}`,
+    { waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'domcontentloaded' });   // hash בלבד אינו טוען מחדש
+  await page.waitForSelector('.slist .srow', { timeout: 30000 })
+    .catch(() => fail(`הכתובת #stop=${code} לא פתחה את התחנה`));
+  const txt = await page.locator('.slist').innerText();
+  if (!txt.includes(code)) fail(`הכתובת #stop=${code} נפתחה על תחנה אחרת`);
+  const nrow = await page.locator('.slist .srow').count();
+  console.log(`✓ קישור לתחנה: #stop=${code} נפתח עם ${nrow} שורות`);
+  await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.tabs', { timeout: 30000 });
+}
+
 // ---- שלב ב4': מסך "קווים שנעלמו" ----
 {
   await page.click('button.tab:has-text("קווים")');
