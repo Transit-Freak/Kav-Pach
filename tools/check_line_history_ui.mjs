@@ -161,6 +161,24 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   console.log(`✓ מקורות: הרשימה נפתחת ומציגה ${n} מקורות`);
 }
 
+// ---- שלב ב4': מסך "קווים שנעלמו" ----
+{
+  await page.click('button.tab:has-text("קווים")');
+  await page.click('button.kathead:has-text("קווים שנעלמו")', { timeout: 30000 });
+  await page.waitForSelector('.gonehead', { timeout: 30000 })
+    .catch(() => fail('מסך "קווים שנעלמו" לא נפתח'));
+  const n = await page.locator('.llist .lrow').count();
+  if (!n) fail('מסך "קווים שנעלמו" נפתח ריק');
+  const head = await page.locator('.gonehead').innerText();
+  if (!/\d/.test(head)) fail('מסך "קווים שנעלמו": אין מספר קווים בכותרת');
+  await page.locator('.llist .lrow').first().click();
+  await page.waitForSelector('.linehead', { timeout: 30000 })
+    .catch(() => fail('לחיצה על קו שנעלם לא פתחה את עמוד הקו'));
+  console.log(`✓ קווים שנעלמו: המסך נפתח עם ${n} שורות, ולחיצה מגיעה לעמוד הקו`);
+  await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.tabs', { timeout: 30000 });
+}
+
 // ---- שלב ג': פיד "שינויים לפי יום" של הקווים — החודש הכי ישן נגיש ----
 if (oldestL) {
   await page.click('button.tab:has-text("קווים")');

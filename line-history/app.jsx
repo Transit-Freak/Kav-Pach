@@ -580,6 +580,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         {anc && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
+            {/* מספר התחנות המשותפות הוא מה שקושר את הקו של אז לקו של היום.
+                כשההתאמה נעשתה לפי שם ומספר קו בלבד הוא לא קיים. */}
+            {anc.ov && <span className="a2012ov" title="מספר התחנות שמופיעות גם במסלול של 2012 וגם במסלול הישן ביותר שידוע לנו — על סמך זה נקבע שמדובר באותו קו">· {anc.ov} תחנות משותפות</span>}
             <button className="a2012btn" title="הצגת רשימת התחנות של הקו כפי שהייתה ב-2012 — כולל המסלול על המפה בקו מקווקו חום" onClick={() => setShow12(!show12)}>
               {show12 ? "הסתר ▲" : "רצף התחנות ▼"}
             </button>
@@ -821,6 +824,77 @@ function StopEvMap({ ev }) {
 }
 
 /* ---------- שינויים לפי יום (כל הקווים) ---------- */
+/* ---------- קווים שנעלמו ---------- */
+// 864 קווים שכל הווריאנטים שלהם נעלמו מהפיד ולא חזרו. עד עכשיו אפשר היה
+// להגיע אליהם רק דרך סינון קטגוריה בתוך החיפוש, כלומר רק אם ידעת מראש
+// שהם שם. זה התוכן שאין לו מקור אחר, ומגיע לו מסך.
+function GoneFeed({ idx, openLine, onBack }) {
+  const [q, setQ] = usePersistedQ("lh-q-gone");
+  const [yr, setYr] = useState("");
+  const [lim, setLim] = useState(200);
+  useEffect(() => setLim(200), [q, yr]);
+  // קו נחשב "נעלם" רק כשאין לו אף וריאנט חי. וריאנט שבוטל בזמן שאחיו
+  // ממשיכים לנסוע הוא שינוי מסלול, לא קו שנעלם.
+  const lines = useMemo(() => {
+    const alive = {};
+    idx.lines.forEach((l) => { if (l.lk !== "removed") alive[l.rd.split("-")[0]] = true; });
+    const by = {};
+    idx.lines.forEach((l) => {
+      const mkt = l.rd.split("-")[0];
+      if (l.lk !== "removed" || alive[mkt]) return;
+      const g = by[mkt] || (by[mkt] = { mkt, l, vars: 0, ld: "" });
+      g.vars += 1;
+      if ((l.ld || "") > g.ld) { g.ld = l.ld || ""; g.l = l; }
+    });
+    return Object.values(by).sort((a, b) => b.ld.localeCompare(a.ld));
+  }, [idx]);
+  const years = useMemo(() => [...new Set(lines.map((g) => g.ld.slice(0, 4)))].sort().reverse(), [lines]);
+  const needle = q.trim();
+  const shown = lines.filter((g) => (!yr || g.ld.startsWith(yr)) &&
+    (!needle || g.l.line === needle || g.l.line.startsWith(needle) ||
+     (g.l.dest || "").includes(needle) || (g.l.op || "").includes(needle) || g.mkt === needle));
+  return (
+    <div className="card">
+      <button className="back" onClick={onBack}>← חזרה לחיפוש</button>
+      <div className="gonehead">
+        🪦 <b>{lines.length.toLocaleString()} קווים שנעלמו</b> — כל הווריאנטים שלהם ירדו מהפיד הארצי ולא חזרו.
+        התאריך הוא היום האחרון שבו הקו עוד נראה בפרסום.
+      </div>
+      <div className="months">
+        <button className={"mchip" + (!yr ? " on" : "")} onClick={() => setYr("")}>הכל</button>
+        {years.map((y) => (
+          <button key={y} className={"mchip" + (yr === y ? " on" : "")} onClick={() => setYr(y)}>
+            {y} <b>{lines.filter((g) => g.ld.startsWith(y)).length}</b>
+          </button>
+        ))}
+      </div>
+      <input className="search" type="search" dir="rtl" placeholder="חיפוש: מספר קו, מק״ט, יעד או מפעיל…"
+        value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="llist">
+        {shown.slice(0, lim).map((g) => (
+          <a key={g.mkt} className="lrow" href={lineHref(g.l.rd)}
+            onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(g.l.rd); }}>
+            <span className="badge sm">{g.l.line}</span>
+            <span className="k" style={{ background: isRemovedYear(g.l) ? "#7f1d1d" : "#dc2626" }}>
+              {isRemovedYear(g.l) ? "בוטל — מעל שנה" : "בוטל"}
+            </span>
+            {g.l.tt && <span className="k" style={{ background: "#0369a1" }}>{TT_LABEL[g.l.tt]}</span>}
+            <span className="ldest">{g.l.dest}</span>
+            <span className="lmeta">{g.l.op} · מק״ט {g.mkt} · נראה לאחרונה {fmtD(g.ld)}
+              {g.vars > 1 && <> · {g.vars} חלופות</>}</span>
+          </a>
+        ))}
+        {!shown.length && <div className="empty">לא נמצא קו תואם.</div>}
+        {shown.length > lim && (
+          <button className="morebtn" onClick={() => setLim(lim + 300)}>
+            ⌄ הצג עוד — מוצגים {lim.toLocaleString()} מתוך {shown.length.toLocaleString()}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DayFeed({ idx, openLine, onBack, init12 }) {
   const [months, setMonths] = useState(null);
   const [yr, setYr] = useState("");
@@ -1343,6 +1417,7 @@ function App() {
   const H0 = decodeURIComponent((location.hash || "").slice(1));
   const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") ? H0 : null));
   const [byDay, setByDay] = useState(() => H0.startsWith("2012/"));   // תצוגת "שינויים לפי יום"
+  const [gone, setGone] = useState(false);        // תצוגת "קווים שנעלמו"
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
@@ -1447,6 +1522,8 @@ function App() {
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
+      ) : gone ? (
+        <GoneFeed idx={idx} openLine={openLine} onBack={() => setGone(false)} />
       ) : byDay ? (
         <DayFeed idx={idx} openLine={openLine} onBack={() => setByDay(false)}
           init12={H0.startsWith("2012/") ? H0.slice(5) : null} />
@@ -1458,6 +1535,11 @@ function App() {
           <div className="katbox">
             <button className="kathead" title="פיד כרונולוגי: בחירת שנה וחודש ורואים כל שינוי שקרה, בכל קו בארץ, לפי תאריך" onClick={() => setByDay(true)}>
               🗓️ שינויים לפי יום — מה השתנה בכל תאריך, בכל הקווים
+            </button>
+          </div>
+          <div className="katbox">
+            <button className="kathead" title="קווים שכל הווריאנטים שלהם ירדו מהפיד הארצי ולא חזרו — לפי שנת ההיעלמות" onClick={() => setGone(true)}>
+              🪦 קווים שנעלמו — מה בוטל, מתי, ואיפה זה היה
             </button>
           </div>
           <div className="katbox">
