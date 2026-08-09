@@ -83,6 +83,16 @@ def main():
     days = [l.strip() for l in open(src) if l.strip() and FROM <= l.strip() <= TO]
     st = json.load(open(STATE)) if os.path.exists(STATE) else {'done': [], 'tt': {}}
     done, prev = set(st['done']), dict(st.get('tt') or {})
+    # 'seen' = הצילום האחרון שבו הווריאנט עוד היה בפיד. זה מה שמאפשר לומר
+    # מתי קו בוטל: המנוע הראשי רואה רק את מה שקיים בצילום ולכן היעלמות
+    # שקופה לו לגמרי.
+    seen = dict(st.get('seen') or {})
+    # מצב שנוצר לפני שהשדה הזה קיים אינו יודע מתי קווים נעלמו, ובלי זה אי
+    # אפשר לקבוע תאריך ביטול. הסריקה קלה (routes.txt בלבד), ולכן עדיף
+    # לסרוק מחדש מאשר להסיק תאריכים ממידע חלקי. האירועים אידמפוטנטיים.
+    if done and not seen:
+        print('חסר מידע "נראה לאחרונה" — סורק מחדש מההתחלה', file=sys.stderr)
+        done, prev = set(), {}
     todo = [d for d in days if d not in done]
     print(f'צילומים בטווח: {len(days)} · עובדו: {len(done)} · בריצה זו: {len(todo)}',
           file=sys.stderr)
@@ -109,12 +119,13 @@ def main():
                 if DRY or write_mode(rd, ds, prev[rd], tt):
                     n += 1
             prev[rd] = tt
+            seen[rd] = ds
         if n:
             print(f'  {iso(ds)}: {n} שינויי סיווג', file=sys.stderr)
         total += n
         if not DRY:
             done.add(ds)
-            json.dump({'done': sorted(done), 'tt': prev}, open(STATE, 'w'))
+            json.dump({'done': sorted(done), 'tt': prev, 'seen': seen}, open(STATE, 'w'))
     print(f'סה"כ {total} שינויי סיווג', file=sys.stderr)
 
 

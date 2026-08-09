@@ -73,6 +73,14 @@ jobs:
           OUTDIR: line-history/data
         run: python3 tools/backfill_mode.py 2>&1 | tail -12 || true
 
+      # ביטול = היעלמות מהפיד. תאריך הביטול נגזר מהצילום האחרון שבו הקו
+      # עוד נראה, ולא מיום הריצה — ההבדל בין השניים הגיע ל-3,000 יום.
+      - name: סימון קווים שבוטלו לפי מועד ההיעלמות
+        if: always()
+        env:
+          OUTDIR: line-history/data
+        run: python3 tools/mark_archive_removed.py 2>&1 | tail -4 || true
+
       - name: בניית האינדקס מחדש
         if: always()
         run: OUTDIR=line-history/data python3 tools/rebuild_lines_index.py || true
