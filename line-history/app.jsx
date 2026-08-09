@@ -876,15 +876,15 @@ function DayFeed({ idx, openLine, onBack, init12 }) {
     <div className="card">
       <button className="back" title="חזרה למסך החיפוש הראשי — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש הקווים</button>
       <div className="months">
-        {/* 2012 היא השנה הישנה מכולן ולכן היא ראשונה. היא הודבקה בסוף כי
-            היא אינה מגיעה מ-months.json אלא מצילום נפרד, וזה הוציא אותה
-            מהסדר הכרונולוגי — אחרי 2026. */}
-        <button className={"mchip" + (yr === "2012" ? " on" : "")} title="רשת הקווים המלאה כפי שצולמה ב-2012 — 3,214 קווים מאתר מגיעים"
-          onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
-        {[...new Set(months.map((m) => m.slice(0, 4)))].sort().map((y) => (
+        {/* מהחדשה לישנה, כמו החודשים בתוך כל שנה. 2012 אינה מגיעה
+            מ-months.json אלא מצילום נפרד, ולכן היא נכתבת בנפרד — ובסדר
+            יורד מקומה הנכון הוא בסוף, כשנה הישנה מכולן. */}
+        {[...new Set(months.map((m) => m.slice(0, 4)))].sort().reverse().map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
             title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
+        <button className={"mchip" + (yr === "2012" ? " on" : "")} title="רשת הקווים המלאה כפי שצולמה ב-2012 — 3,214 קווים מאתר מגיעים"
+          onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
       </div>
       {yr && yr !== "2012" && (
         <div className="months">
@@ -1062,7 +1062,8 @@ function StopsTab() {
           עכשיו כל שנה נגישה בלחיצה, והחודשים שלה נפתחים מתחתיה */}
       <div className="months">
         <button className={"mchip" + (mon === "all" ? " on" : "")} title="כל האירועים מכל השנים ברצף אחד" onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
-        {[...new Set(months.map((m) => m.slice(0, 4)))].sort().map((y) => (
+        {/* מהחדשה לישנה, באותו כיוון של החודשים בתוך כל שנה */}
+        {[...new Set(months.map((m) => m.slice(0, 4)))].sort().reverse().map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
             title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
