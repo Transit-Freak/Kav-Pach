@@ -123,15 +123,9 @@ def main():
             for code in prev:
                 if code not in cur and code not in gone:
                     gone[code] = [d, prev[code]]   # תחילת היעדרות, לא ביטול
-            # ביטול נקבע רק אחרי שההיעדרות החזיקה מעמד. בלי זה יותר ממחצית
-            # האירועים היו תחנות שנעלמו לצילום אחד וחזרו — רעש בפיד שנרשם
-            # כביטול ולידה מחדש.
-            for code, (since, o) in list(gone.items()):
-                if gapd(since, d) >= SETTLE_D:
-                    evs.append({'d': since, 'c': code, 'k': 'del', 'n': o[0],
-                                't': o[1], 'la': o[2], 'lo': o[3]})
-                    gone.pop(code)
-                    ever.pop(code, None)  # אם תחזור, זו באמת תחנה שחזרה לפעול
+            # ביטול אינו נקבע כאן בכוונה. תחנה שנעלמה וחזרה — ולו אחרי
+            # חודשים — לא בוטלה מעולם, ורק סריקה עד סוף הטווח יכולה לדעת
+            # זאת. ההכרעה נעשית בסוף, על מי שלא חזר כלל.
         else:
             for code in cur:
                 ever.setdefault(code, d)
@@ -144,10 +138,38 @@ def main():
                 h.append({k: v for k, v in e.items() if k != 'c'})
         if evs:
             print(f'  {d}: {len(evs)} שינויי תחנות', file=sys.stderr)
+        done.add(ds)      # גם בסימולציה, אחרת הכרעת הביטולים לא נבדקת כלל
         if not DRY:
-            done.add(ds)
             json.dump({'done': sorted(done), 'stops': prev, 'ever': ever,
                        'gone': {k: list(v) for k, v in gone.items()}}, open(STATE, 'w'))
+
+    # הכרעת הביטולים — רק כשכל הטווח נסרק. תחנה נחשבת מבוטלת רק אם נעלמה
+    # מהרישום ולא חזרה עד סוף הטווח, וגם אינה ברישום של היום. שתי הבדיקות
+    # נחוצות: הטווח נגמר בינואר 2022, ומשם ואילך הצינור היומי הוא הסמכות.
+    if not [x for x in days if x not in done]:
+        try:
+            alive = set(json.load(open(f'{OUTDIR}/stops-state.json', encoding='utf-8')))
+        except Exception:
+            alive = set()
+        end = iso(max(done))
+        n_del = held = 0
+        for code, (since, o) in list(gone.items()):
+            if code in alive:
+                held += 1                 # קיימת היום — לא בוטלה
+                continue
+            if gapd(since, end) < SETTLE_D:
+                held += 1                 # נעלמה ממש בסוף הטווח — לא מוכרע
+                continue
+            e = {'d': since, 'c': code, 'k': 'del', 'n': o[0], 't': o[1],
+                 'la': o[2], 'lo': o[3]}
+            tally['del'] = tally.get('del', 0) + 1
+            months.setdefault(since[:7], []).append(e)
+            h = hist.setdefault(code, [])
+            if not any(x.get('d') == since and x.get('k') == 'del' for x in h):
+                h.append({k: v for k, v in e.items() if k != 'c'})
+            n_del += 1
+        print(f'הכרעת ביטולים: {n_del} תחנות שלא חזרו · {held} חזרו או קיימות היום',
+              file=sys.stderr)
 
     if not DRY and months:
         os.makedirs(f'{OUTDIR}/changes', exist_ok=True)
