@@ -98,6 +98,17 @@ jobs:
             echo "done=0" >> "$GITHUB_OUTPUT"
           fi
 
+      # תחנה שהופיעה ונעלמה בתוך זמן קצר לא נוספה מעולם. הכלל של "נעלם ולא
+      # חזר" הגן על צד הביטול בלבד, ולכן כשהפיד קפץ ב-13,000 רשומות ל-11
+      # יום בספטמבר 2021 נרשמו אלפי "תחנות חדשות" ואחריהן "בוטלו".
+      - name: ניקוי תחנות שהופיעו ונעלמו מיד
+        if: always()
+        env:
+          OUTDIR: line-history/data
+        run: |
+          test -f tools/fix_stop_blips.py || { echo "::error::הכלי חסר בענף"; exit 1; }
+          python3 tools/fix_stop_blips.py 2>&1 | tail -3
+
       - name: סימון קווים שבוטלו לפי מועד ההיעלמות
         if: always()
         env:
