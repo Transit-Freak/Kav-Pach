@@ -1112,14 +1112,15 @@ function StopsTab() {
                 <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
               </label>
             ))}
-            {/* תחנות שהיו ברישום ואף קו לא עצר בהן. אלה בדרך כלל תחנות
-                מתוך הרישוי שלא נחשפו לציבור ופורסמו בטעות — ולכן דווקא
-                הן מעניינות, ולא רעש שצריך להסתיר. */}
+            {/* תחנות שלא נמצאו במסלול של אף קו מהמתועדים אצלנו. חלקן
+                אושרו ברישוי ולא נפתחו לציבור — ולכן דווקא הן מעניינות.
+                אי אפשר לקבוע שאף קו לא עצר בהן: הכיסוי שלנו חלקי, וזה
+                מה שהסינון אומר ולא יותר. */}
             <div className="katgrp">רישום מול שירות</div>
             <label className="katrow">
               <input type="checkbox" checked={onlyNs} onChange={() => setOnlyNs(!onlyNs)} />
               <i className="katdot" style={{ background: "#64748b" }} />
-              <span className="katlab">רק תחנות שהיו ברישום ולא בשירות</span>
+              <span className="katlab">רק תחנות שלא נמצאו במסלול של אף קו</span>
               <b className="katc">{nsCount.toLocaleString()}</b>
             </label>
             {kinds.size > 0 && (
@@ -1155,7 +1156,7 @@ function StopsTab() {
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
                   {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
                       נקרא כאילו נוספה תחנה שאפשר לחכות בה — וזה לא נכון. */}
-                  {c.ns && <span className="nsflag" title="התחנה נרשמה ברישום של משרד התחבורה ואף קו לא עצר בה מעולם — לרוב תחנה שאושרה ברישוי ולא נפתחה לציבור">ברישום בלבד</span>}
+                  {c.ns && <span className="nsflag" title="התחנה לא נמצאה במסלול של אף קו מהקווים שמתועדים אצלנו. ייתכן שהיא אושרה ברישוי ולא נפתחה לציבור, וייתכן שעצר בה קו שרצף התחנות שלו חסר לנו">ברישום בלבד</span>}
                   <span className="meta">
                     {one && c.t ? c.t + " · " : ""}{fmtD(c.d)}
                     {c.k === "moved" && <> · הוזזה <b>{c.dist} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>}
