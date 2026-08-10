@@ -1763,8 +1763,11 @@ function App() {
     const onHash = () => {
       const h = decodeURIComponent((location.hash || "").slice(1));
       if (h.startsWith("2012/")) { setRd(null); setK12(h.slice(5)); return; }
-      if (!isStopH(h)) return;
-      setRd(null); setStopSel(h.slice(5)); setTab("stops");
+      if (isStopH(h)) { setRd(null); setStopSel(h.slice(5)); setTab("stops"); return; }
+      // כתובת של קו נקראה רק בטעינה הראשונה: מי שהדביק קישור לקו בשורת
+      // הכתובת של לשונית פתוחה, או ערך את הכתובת ידנית, נשאר במסך הקודם.
+      // pushState/replaceState אינם מפעילים hashchange, ולכן אין כאן לולאה.
+      if (h) { setK12(null); setRd(h); }
     };
     window.addEventListener("popstate", onPop);
     window.addEventListener("hashchange", onHash);
