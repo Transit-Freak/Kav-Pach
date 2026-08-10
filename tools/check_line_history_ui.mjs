@@ -216,15 +216,22 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
 // ---- שלב ב3.6': שינוי תחנות שהתבטל מיד מסומן ככזה ----
 // "ירדו 4 תחנות" בקו שעוצר בהן עד היום — הרצף התנדנד ימים ספורים וחזר.
 {
-  const lf = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines/10548-1-0.json'), 'utf8'));
-  const rv = (lf.versions || []).filter((v) => v.rv).length;
-  if (!rv) fail('קו 548: אין סימון לשינויים שהתבטלו מיד');
-  await page.goto(`http://127.0.0.1:${port}/index.html#10548-1-0`, { waitUntil: 'domcontentloaded' });
+  // הקו נבחר מהנתונים ולא מקובע: אחרי תיקון בחירת הנציג רוב התנודות
+  // התבררו כשלנו ונעלמו, וקו שהיה מסומן אתמול כבר לא בהכרח מסומן היום.
+  let rvFile = null, rv = 0;
+  for (const f of fs.readdirSync(path.join(LH, 'data/lines'))) {
+    const lf = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines', f), 'utf8'));
+    const n = (lf.versions || []).filter((v) => v.rv).length;
+    if (n) { rvFile = lf.rd; rv = n; break; }
+  }
+  if (!rvFile) fail('אין באף קו סימון לשינוי שהתבטל מיד');
+  await page.goto(`http://127.0.0.1:${port}/index.html#${encodeURIComponent(rvFile)}`,
+    { waitUntil: 'domcontentloaded' });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tl .ev', { timeout: 30000 })
     .catch(() => fail('עמוד קו 548 לא נפתח'));
   const n = await page.locator('.rvflag').count();
-  if (!n) fail('עמוד הקו: הסימון "חזר כעבור" לא מוצג באף אירוע');
+  if (!n) fail(`עמוד הקו ${rvFile}: הסימון "חזר כעבור" לא מוצג באף אירוע`);
   // סרגל הסינון מאחד שלוש דרגות של שינוי תחנות לצ'יפ אחד, וכיבוי שלו
   // חייב להעלים את כל השלוש — אחרת הכפתור אומר דבר אחד ועושה אחר.
   const chip = page.locator('.kchip', { hasText: 'שינוי תחנות' }).first();
@@ -239,7 +246,7 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
       fail('כיבוי "שינוי תחנות" השאיר אירועי תחנות ברשימה');
     console.log(`✓ סרגל הסינון: כיבוי "שינוי תחנות" הוריד ${before - after} אירועים`);
   }
-  console.log(`✓ שינוי שהתבטל: ${rv} אירועים מסומנים בקו 548, ${n} מוצגים בעמוד`);
+  console.log(`✓ שינוי שהתבטל: ${rv} אירועים מסומנים בקו ${rvFile}, ${n} מוצגים בעמוד`);
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
