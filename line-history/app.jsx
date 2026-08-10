@@ -535,11 +535,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       .catch(() => setD12({ routes: [] }));
   }, [show12, anc, d12, lf]);
   useEffect(() => {
+    // מעבר מהיר בין קווים מייצר שתי בקשות, והתשובה האיטית יותר עלולה
+    // לנחות אחרונה ולערבב קו אחד עם מצב של אחר. אותו שמירה כמו בהשוואת
+    // החלופות.
+    let ok = true;
     setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null); setOnlyCur(false);
     fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((d) => { setLf(materializeLf(d)); setSel(d.versions.length - 1); })
-      .catch(setErr);
+      .then((d) => { if (!ok) return; setLf(materializeLf(d)); setSel(d.versions.length - 1); })
+      .catch((e) => { if (ok) setErr(e); });
+    return () => { ok = false; };
   }, [rd]);
   if (err) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button><div className="empty">לא נמצאו נתונים לוריאנט הזה.</div></div>;
   if (!lf) return <div className="card">טוען…</div>;
@@ -570,8 +575,12 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   // מס' תחנה לרשימות ➕/➖: בהוספה מחפשים בגרסה עצמה, בהורדה בגרסאות שלפניה
   const codeOf = (name, i, isAdd) => {
     const scan = (l) => { const h = (l || []).find((s) => s && s[1] === name); return h ? h[0] : null; };
-    if (isAdd) { const c = scan(vs[i].stops); if (c) return c; }
-    for (let j = i - (isAdd ? 0 : 1); j >= 0; j--) { const c = scan(vs[j].stops); if (c) return c; }
+    // האינדקס עלול להצביע מחוץ למערך כשמעבר בין קווים מותיר מצב מגרסה
+    // קודמת. הגבול התחתון נשמר כאן מאז ומתמיד, אבל העליון לא — ובקו שקיבל
+    // תחנות בגרסה האחרונה זה הפיל את כל העמוד.
+    const top = Math.min(i, vs.length - 1);
+    if (isAdd && vs[top]) { const c = scan(vs[top].stops); if (c) return c; }
+    for (let j = top - (isAdd ? 0 : 1); j >= 0; j--) { const c = scan(vs[j].stops); if (c) return c; }
     for (let j = i + 1; j < vs.length; j++) { const c = scan(vs[j].stops); if (c) return c; }
     return null;
   };
