@@ -85,6 +85,7 @@ if MAIN and os.path.exists(MAIN):
 # לפי דרישה.
 BUSX = {'700', '701', '702', '703', '704', '705', '706', '707', '708', '709',
         '710', '711', '712', '713', '714', '716'}
+import unknown_values as unk
 TT={'2':'rail','8':'taxi','0':'lightrail','5':'cable','715':'demand'}
 
 # ---- routes: route_id -> (desc, line, dest, agency) ----
@@ -92,7 +93,9 @@ routes={}
 for r in csv.DictReader(open(ROUTES,encoding='utf-8-sig')):
     rt=(r.get('route_type') or '3').strip()
     if rt in BUSX: rt='3'                   # כל טווח ה-70x הוא אוטובוס
-    if rt!='3' and rt not in TT: continue   # סוג שאיננו מכירים — לא מנחשים
+    if rt!='3' and rt not in TT:
+        # לא מנחשים — אבל גם לא שותקים: ערך לא מוכר נרשם ומתריע
+        unk.note('route_type',rt,TODAY,(r.get('route_desc') or '').strip()); continue
     rd=(r.get('route_desc') or '').strip()
     if not rd: continue
     routes[r['route_id']]={'rd':rd,'line':r.get('route_short_name',''),
@@ -142,6 +145,7 @@ for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
         # הוא תכונה של הקו ולא של הנסיעה.
         wa=(r.get('wheelchair_accessible') or '').strip()
         if wa in ('1','2'): _wa[rid]=wa
+        elif wa not in ('','0'): unk.note('wheelchair_accessible',wa,TODAY,rid)
 for rid,shapes in _cnt.items():
     sh=min(shapes,key=lambda x:(-shapes[x],x))
     rep[rid]=(_first[(rid,sh)],sh)
@@ -180,8 +184,12 @@ with open(STOP_TIMES,encoding='utf-8-sig') as f:
             # אחת מכל תשע עצירות בפיד מוגבלת כך, וזה לא מופיע בשום מקום.
             pd=0
             try:
-                if PU is not None and len(r)>PU and r[PU]=='1': pd+=2
-                if DO is not None and len(r)>DO and r[DO]=='1': pd+=1
+                if PU is not None and len(r)>PU:
+                    if r[PU]=='1': pd+=2
+                    elif r[PU] not in ('','0'): unk.note('pickup_type',r[PU],TODAY,r[SIx])
+                if DO is not None and len(r)>DO:
+                    if r[DO]=='1': pd+=1
+                    elif r[DO] not in ('','0'): unk.note('drop_off_type',r[DO],TODAY,r[SIx])
             except Exception: pd=0
             try: seqs[t].append((int(r[SQ]),r[SIx],pd))
             except: pass
@@ -584,4 +592,12 @@ mons=sorted({f[8:15] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('s
 json.dump({'months':sorted({f[:7] for f in os.listdir(f'{OUTDIR}/changes') if re.match(r'^\d{4}-\d{2}\.json$',f)},reverse=True),
            'stopMonths':sorted({f[6:13] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')},reverse=True)},
           open(f'{OUTDIR}/months.json','w',encoding='utf-8'),ensure_ascii=False)
+# ערכים שלא הכרנו — מתריעים ברעש. דילוג שקט על סוג חדש הוא בדיוק מה
+# שהקפיא את הסיווג של 3,046 קווים במרץ 2023.
+new_unk=unk.flush()
+if new_unk:
+    for kind,vals in new_unk.items():
+        for v,d in vals.items():
+            print(f'::warning::ערך לא מוכר ב-{kind}: {v} ({d["n"]} פעמים, למשל {d["ex"][:2]})')
+    print('פירוט מלא:',f'{OUTDIR}/unknown-values.json')
 print('נכתב הכול תחת',OUTDIR)

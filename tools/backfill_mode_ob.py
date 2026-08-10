@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backfill_geo import central_dir, member_rows  # noqa: E402
 from backfill_mode import LBL  # noqa: E402
 from compact_lines import compact, materialize  # noqa: E402
+import unknown_values as unk  # noqa: E402
 
 S3 = ('https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
       '/gtfs_archive/{y}/{m}/{d}/israel-public-transportation.zip')
@@ -63,7 +64,8 @@ def modes(day):
         if rt in BUSX:
             rt = '3'
         if rt != '3' and rt not in TT:
-            continue                     # סוג שאיננו מכירים — לא מנחשים
+            unk.note('route_type', rt, day, rd)   # לא מנחשים, אבל גם לא שותקים
+            continue
         out[rd] = TT.get(rt)
     return out
 
@@ -138,6 +140,9 @@ def main():
         done.add(day)
         if not DRY:
             json.dump({'done': sorted(done), 'tt': prev}, open(STATE, 'w'))
+    for kind, vals in (unk.flush() or {}).items():
+        for v, d in vals.items():
+            print(f'::warning::ערך לא מוכר ב-{kind}: {v} ({d["n"]} פעמים)', file=sys.stderr)
     print(f'סה"כ {total} שינויי סיווג', file=sys.stderr)
 
 

@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backfill_geo import (central_dir, enc_polyline, fsafe, http,  # noqa: E402
                           member_rows, stream_member, thin)
 from compact_lines import compact, materialize  # noqa: E402
+import unknown_values as unk  # noqa: E402
 
 BASE = ('https://openmobilitydata-data.s3-us-west-1.amazonaws.com'
         '/public/feeds/ministry-of-transport-and-road-safety/820')
@@ -354,5 +355,12 @@ def main():
               'ייטופלו בהרצה הבאה: ' + ', '.join(skipped[:8]), file=sys.stderr)
 
 
+
+def _flush_unknown():
+    for kind, vals in (unk.flush() or {}).items():
+        for v, d in vals.items():
+            print(f'::warning::ערך לא מוכר ב-{kind}: {v} ({d["n"]} פעמים)', file=sys.stderr)
+
 if __name__ == '__main__':
     main()
+    _flush_unknown()

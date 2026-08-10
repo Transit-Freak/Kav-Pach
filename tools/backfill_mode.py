@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from backfill_geo import central_dir, fsafe, member_rows  # noqa: E402
 from backfill_tf import BASE, TT, iso  # noqa: E402
 from compact_lines import compact, materialize  # noqa: E402
+import unknown_values as unk  # noqa: E402
 
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 STATE = f'{OUTDIR}/tf-mode-state.json'
@@ -59,6 +60,7 @@ def modes(ds):
             rt = '3'
         # סוג שאיננו מכירים — לא מנחשים, ולא רושמים עליו אירוע
         if rt != '3' and rt not in TT:
+            unk.note('route_type', rt, iso(ds), rd)
             continue
         out.setdefault(rd, TT.get(rt) if rt != '3' else None)
     return out
@@ -137,6 +139,9 @@ def main():
         if not DRY:
             done.add(ds)
             json.dump({'done': sorted(done), 'tt': prev, 'seen': seen}, open(STATE, 'w'))
+    for kind, vals in (unk.flush() or {}).items():
+        for v, d in vals.items():
+            print(f'::warning::ערך לא מוכר ב-{kind}: {v} ({d["n"]} פעמים)', file=sys.stderr)
     print(f'סה"כ {total} שינויי סיווג', file=sys.stderr)
 
 

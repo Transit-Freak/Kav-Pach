@@ -57,6 +57,25 @@ console.log(`✓ נתונים: ${listed.size} חודשי תחנות (מ-${oldest
   console.log(`✓ טקסטים: התיאור לשיתוף מזכיר ${yr} · ${nsrc} מקורות רשומים באתר`);
 }
 
+// ---- שלב א3': ערכים שהסורק לא הכיר ----
+// route_type 707 הופיע במרץ 2023 על 3,046 קווים, הסורק דילג עליו בשקט,
+// והמצב שלהם קפא. מעכשיו כל ערך לא מוכר נרשם, והבדיקה נופלת עליו עד
+// שמישהו הכריע מה הוא — הכרעה נרשמת ב-unknown-ack.json.
+{
+  const up = path.join(LH, 'data/unknown-values.json');
+  const ap = path.join(LH, 'data/unknown-ack.json');
+  if (fs.existsSync(up)) {
+    const unk = JSON.parse(fs.readFileSync(up, 'utf8'));
+    const ack = fs.existsSync(ap) ? JSON.parse(fs.readFileSync(ap, 'utf8')) : {};
+    const open_ = [];
+    for (const [kind, vals] of Object.entries(unk))
+      for (const [v, d] of Object.entries(vals))
+        if (!(ack[kind] || []).includes(v)) open_.push(`${kind}=${v} (${d.n} פעמים)`);
+    if (open_.length) fail(`ערכים חדשים בפיד שטרם הוכרעו: ${open_.join(' · ')}`);
+    console.log(`✓ ערכים לא מוכרים: אין חדשים שטרם הוכרעו`);
+  }
+}
+
 // ---- שלב ב': הממשק באמת מציג את החודש הכי ישן ----
 const require_ = createRequire(path.join(process.env.PW_MODULES || ROOT, 'noop.js'));
 const { chromium } = require_('playwright-core');
