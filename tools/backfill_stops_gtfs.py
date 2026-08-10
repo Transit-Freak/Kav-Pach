@@ -173,6 +173,17 @@ def drop_recent_del(code, ds, max_d=35):
     mm['changes'] = [x for x in mm['changes'] if not (x.get('c') == code and x.get('k') == 'del' and x.get('d') == dd)]
     return True
 
+def jdump(obj, path):
+    """כתיבה אטומית. ריצה ארוכה נקטעת באמצע (תקרת זמן, kill, מכולה שנסגרת),
+    ואם היא נקטעת בדיוק בתוך json.dump נשאר קובץ חתוך — קרה ל-state של
+    הסריקה הזו, וכל ההתקדמות ירדה לטמיון כי אי אפשר היה לטעון אותו."""
+    tmp = f'{path}.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(obj, f, ensure_ascii=False, separators=(',', ':'))
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
+
 def flush():
     os.makedirs(f'{OUTDIR}/changes', exist_ok=True)
     cur_reg = jload(f'{OUTDIR}/stops-state.json', {})
@@ -183,12 +194,12 @@ def flush():
             else: evs[-1].pop('now', None)
     for m, chm in months.items():
         chm['changes'].sort(key=lambda e: e['d'])
-        json.dump(chm, open(f'{OUTDIR}/changes/stops-{m}.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    json.dump(shist, open(f'{OUTDIR}/stops-hist.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    json.dump(state, open(statep, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    json.dump({'months': sorted({f[:7] for f in os.listdir(f'{OUTDIR}/changes') if re.match(r'^\d{4}-\d{2}\.json$', f)}, reverse=True),
-               'stopMonths': sorted({f[6:13] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')}, reverse=True)},
-              open(f'{OUTDIR}/months.json', 'w', encoding='utf-8'), ensure_ascii=False)
+        jdump(chm, f'{OUTDIR}/changes/stops-{m}.json')
+    jdump(shist, f'{OUTDIR}/stops-hist.json')
+    jdump(state, statep)
+    jdump({'months': sorted({f[:7] for f in os.listdir(f'{OUTDIR}/changes') if re.match(r'^\d{4}-\d{2}\.json$', f)}, reverse=True),
+           'stopMonths': sorted({f[6:13] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')}, reverse=True)},
+          f'{OUTDIR}/months.json')
 
 dates = [d for d in list_archive_dates() if d > (state.get('last_date') or '')]
 if state.get('last_date'): print('ממשיך מ-', state['last_date'])
@@ -196,6 +207,7 @@ print(len(dates), 'תאריכים לדגימה')
 
 prev = state.get('stops') or {}
 n_ev = 0
+t_flush = time.time()
 for ds in dates:
     if (time.time() - T0) / 60 > MAX_MIN:
         print('תקרת זמן — ממשיכים בריצה הבאה'); break
@@ -227,7 +239,11 @@ for ds in dates:
     print(ds, '|', len(cur), 'תחנות | אירועים עד כה:', n_ev)
     prev = cur
     state = {'last_date': ds, 'stops': prev}
-    if n_ev and n_ev % 2000 < 50: flush()
+    # שמירה לפי שעון ולא לפי מונה אירועים: התנאי הקודם (n_ev % 2000 < 50)
+    # יכול לדלג על החלון כולו כשיום אחד מוסיף מאות אירועים, ואז ריצה של
+    # שעות נשמרת רק בסוף.
+    if time.time() - t_flush > 300:
+        flush(); t_flush = time.time()
 
 flush()
 print('סיום ריצה:', n_ev, 'אירועי תחנות | נדגם עד', state.get('last_date'))
