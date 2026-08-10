@@ -1329,6 +1329,72 @@ function StopCode({ code }) {
   );
 }
 
+/* ---------- מה השתנה לאחרונה ---------- */
+// המסך הראשון הציג שורת חיפוש והוראה להקליד, וכל 58 אלף השינויים היו
+// מוסתרים מאחורי פעולה שהמבקר צריך ליזום. כאן מוצגים הימים האחרונים
+// שבהם קרה משהו, כמו בטאב התחנות שכבר נפתח על החודש האחרון.
+const WDR = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+function RecentChanges({ idx, openLine, onAll }) {
+  const [rows, setRows] = useState(null);
+  const meta = useMemo(() => { const m = {}; ((idx && idx.lines) || []).forEach((l) => { m[l.rd] = l; }); return m; }, [idx]);
+  useEffect(() => {
+    fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+      .then((r) => r.json())
+      .then((d) => {
+        const ms = (d.months || []).slice().sort();
+        if (!ms.length) return setRows([]);
+        return fetch("data/changes/" + ms[ms.length - 1] + ".json?v=" + BUILD)
+          .then((r) => r.json())
+          .then((j) => setRows((j.changes || []).slice().sort((a, b) => b.d.localeCompare(a.d))));
+      })
+      .catch(() => setRows([]));
+  }, []);
+  if (rows === null) return <div className="empty">טוען את השינויים האחרונים…</div>;
+  if (!rows.length) return <div className="empty">אין עדיין שינויים בחודש הזה.</div>;
+  const days = [];
+  const byd = new Map();
+  for (const c of rows) {
+    if (!byd.has(c.d)) { byd.set(c.d, []); days.push(c.d); }
+    byd.get(c.d).push(c);
+  }
+  const top = days.slice(0, 3);
+  return (
+    <div className="recent">
+      <div className="rechead">
+        <b>מה השתנה לאחרונה</b>
+        <button className="recall" onClick={onAll}>כל השינויים לפי יום ←</button>
+      </div>
+      {top.map((d) => (
+        <React.Fragment key={d}>
+          <div className="dayhead">{fmtD(d)} · יום {WDR[new Date(d).getDay()]} · {byd.get(d).length.toLocaleString()} שינויים</div>
+          {byd.get(d).slice(0, 8).map((c, i) => {
+            const m = meta[c.rd] || {};
+            return (
+              <a key={c.rd + c.k + i} className="lrow" href={lineHref(c.rd)}
+                onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(c.rd); }}>
+                <span className="badge sm">{c.line}</span>
+                <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
+                <span className="ldest">{m.dest || c.rd}</span>
+                <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
+                {c.note ? <span className="lnote">{c.note}</span> : null}
+              </a>
+            );
+          })}
+          {byd.get(d).length > 8 && (
+            <button className="recmore" onClick={onAll}>
+              ועוד {(byd.get(d).length - 8).toLocaleString()} שינויים ב-{fmtD(d)} ←
+            </button>
+          )}
+        </React.Fragment>
+      ))}
+      <div className="katnote">
+        🛈 הקלידו מספר קו כדי לראות את ההיסטוריה שלו, או פתחו את "קטגוריות לבחירה"
+        וסמנו אילו סוגי שינויים להציג. התיעוד מתחיל ב-16.03.2017.
+      </div>
+    </div>
+  );
+}
+
 /* ---------- טאב תחנות ---------- */
 function StopsTab({ sel }) {
   const [months, setMonths] = useState(null);
@@ -1936,8 +2002,7 @@ function App() {
               <Res2012 needle={needle} onOpen={open12} />
             </div>
           ) : (
-            <div className="empty">הקלידו מספר קו, או פתחו את "קטגוריות לבחירה" וסמנו אילו סוגי שינויים להציג.<br />
-              <span className="mut">התיעוד מתחיל ב-16.03.2017, הצילום הישן ביותר שקיים בארכיון TransitFeeds, וממשיך ברצף עד היום. לפני זה יש רק צילום אחד: רשת 2012 מאתר מגיעים, שמופיעה בעמוד הקו כעוגן.</span></div>
+            <RecentChanges idx={idx} openLine={openLine} onAll={() => setByDay(true)} />
           )}
         </div>
       )}

@@ -270,6 +270,21 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
+// ---- שלב ב3.55': מסך הפתיחה מציג את השינויים האחרונים ----
+// קודם הוא הציג תיבת חיפוש ריקה והוראה להקליד, וכל 58 אלף השינויים היו
+// מאחורי פעולה שהמבקר צריך ליזום.
+{
+  await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.click('button.tab:has-text("קווים")');
+  await page.fill('input.search', '');
+  await page.waitForSelector('.recent .lrow', { timeout: 30000 })
+    .catch(() => fail('מסך הפתיחה לא הציג את השינויים האחרונים'));
+  const days = await page.locator('.recent .dayhead').count();
+  const rows = await page.locator('.recent .lrow').count();
+  if (!days || !rows) fail(`מסך הפתיחה ריק: ${days} ימים, ${rows} שורות`);
+  console.log(`✓ מסך פתיחה: ${days} ימים אחרונים, ${rows} שינויים`);
+}
+
 // ---- שלב ב3.6': אין עוגן 2012 לרכבת, לרכבת קלה, לכרמלית ולמוניות ----
 // מאגר מגיעים הוא רשת האוטובוסים של 2012. עוגן על רכבת "174" הוא האוטובוס
 // 174 מרמת גן — שני קווים שאין ביניהם דבר מלבד המספר.

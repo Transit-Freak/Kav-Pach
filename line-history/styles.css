@@ -287,3 +287,13 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 .wa.yes { color: #0d9488; font-weight: 800; }
 .wa.no { color: #b45309; font-weight: 800; }
 .pdflag { color: #a16207; font-weight: 800; font-size: 11px; }
+
+/* --- מה השתנה לאחרונה (מסך הפתיחה) --- */
+.recent { margin-top: 4px; }
+.rechead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 12px 0 0; }
+.rechead b { font-size: 15px; color: #1e293b; }
+.recall { border: none; background: none; color: #7c3aed; font-family: inherit;
+  font-weight: 800; font-size: 12.5px; cursor: pointer; padding: 0; }
+.recmore { display: block; width: 100%; border: 1.5px dashed #e2e8f0; background: #fff;
+  color: #64748b; border-radius: 10px; padding: 7px; margin: 2px 0 4px; font-family: inherit;
+  font-weight: 800; font-size: 12.5px; cursor: pointer; }
