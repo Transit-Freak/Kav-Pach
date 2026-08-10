@@ -549,6 +549,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   if (err) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button><div className="empty">לא נמצאו נתונים לוריאנט הזה.</div></div>;
   if (!lf) return <div className="card">טוען…</div>;
   const vs = lf.versions;
+  // מספר הנסיעות מגיע מהאינדקס ולא מקובץ הקו: הוא משתנה מיום ליום, ובקובץ
+  // הקו הוא היה משנה את כל 13,000 הקבצים בכל ריצה יומית
+  const ntr = ((sibs || []).find((x) => x.rd === rd) || {}).ntr || 0;
   const months = [...new Set(vs.map((v) => v.d.slice(0, 7)))].reverse();
   const shown = vs.map((v, i) => ({ v, i }))
     .filter((x) => (!mon || x.v.d.slice(0, 7) === mon) && !offK.has(dispKind(x.v, x.i, vs))).reverse();
@@ -671,6 +674,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               אחידה לכל נסיעות הקו — ולכן תכונה של הקו. */}
           {lf.wa === "1" && <span className="wa yes" title="לפי הפיד הארצי, הקו מונגש לכיסא גלגלים"> · ♿ נגיש</span>}
           {lf.wa === "2" && <span className="wa no" title="לפי הפיד הארצי, הקו אינו מונגש לכיסא גלגלים"> · ♿ אינו נגיש</span>}
+          {/* כמה נסיעות מתוכננות יש לחלופה היום. "קיים בפיד" אינו "פועל":
+              הפיד מפרסם קווים לפני הפתיחה, והקו הירוק בירושלים נכנס עם
+              נסיעה אחת בכיוון מול 680 של הקו הירוק בתל אביב. המספר מוצג
+              כעובדה ולא כמסקנה — שליש מהחלופות נוסעות ארבע פעמים ביום או
+              פחות (קווי תלמידים, חלופות משנה), ואזהרה עליהן הייתה רעש. */}
+          {ntr > 0 && (
+            <span title="מספר הנסיעות המתוכננות לחלופה הזו בפיד של היום, לפי לוחות הזמנים שבתוקף">
+              {" · "}{ntr === 1 ? "נסיעה אחת ביום" : `${ntr.toLocaleString()} נסיעות ביום`}</span>
+          )}
           {" · מק״ט "}{lf.rd} · {vs.length} גרסאות מתועדות</div>
         {/* רק "שירות לפי דרישה" מקבל הערה, כי היא נושאת מידע שאינו במקום
             אחר: הקו יושב בין קווי האוטובוס ונראה רגיל לחלוטין, ואי אפשר

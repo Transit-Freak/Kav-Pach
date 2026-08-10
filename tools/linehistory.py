@@ -131,11 +131,17 @@ rep={}          # route_id -> (trip_id, shape_id)
 _wa={}          # route_id -> נגישות (1/2)
 _cnt={}         # route_id -> {shape_id: כמה נסיעות}
 _first={}       # (route_id, shape_id) -> מזהה הנסיעה הקטן ביותר
+_ntr={}         # rd -> מספר הנסיעות שבתוקף היום
 registered=set()   # וריאנטים שקיימים ברישום (יש להם נסיעות בקובץ, גם אם לא בתוקף היום)
 for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     rid=r['route_id']
     if rid in routes: registered.add(routes[rid]['rd'])
     if active is not None and r.get('service_id') not in active: continue
+    # כמה נסיעות בפועל יש לוריאנט. הפיד מפרסם קווים הרבה לפני הפתיחה, ואז
+    # "קיים בפיד" אינו "פועל": הקו הירוק בירושלים (93003) נכנס עם נסיעה
+    # אחת בכל כיוון, פעם בשבוע, בעוד הקו הירוק של דנקל (86003) מפרסם 680.
+    # המספר עצמו עובדה מהפיד, והוא מבדיל בין השניים בלי לנחש.
+    if rid in routes: _ntr[routes[rid]['rd']] = _ntr.get(routes[rid]['rd'], 0) + 1
     if rid in routes and r.get('shape_id'):
         sh=r['shape_id']; t=r['trip_id']
         d=_cnt.setdefault(rid,{}); d[sh]=d.get(sh,0)+1
@@ -229,7 +235,7 @@ for rid,(t,sh) in rep.items():
     mk=info['rd'].split('-')[0].lstrip('0')
     cur[info['rd']]={'line':info['line'],'long':info['long'],'op':agencies.get(info['ag'],''),
                      'ty':linetype.get(mk,''),'tt':info.get('tt'),'pts':pts,'codes':codes,
-                     'wa':_wa.get(rid,''),
+                     'wa':_wa.get(rid,''),'ntr':_ntr.get(info['rd'],0),
                      # איבר חמישי בתחנה = מגבלת עלייה/ירידה; 0 נשמר כרשימה
                      # קצרה כדי שקבצים ישנים וחדשים ייראו זהים כשאין מגבלה
                      'stopinfo':[[stops[s]['c'],stops[s]['n'],stops[s]['la'],stops[s]['lo']]
@@ -588,6 +594,10 @@ state_out.update(carry)   # רשומים ללא נסיעות פעילות — נ
 json.dump(state_out,
           open(f'{OUTDIR}/state-routes.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(cur_stops,open(f'{OUTDIR}/stops-state.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+# מספר הנסיעות משתנה מיום ליום, ולכן הוא יושב בקובץ צדדי אחד ולא בתוך
+# 13,000 קובצי הקווים — אחרת כל ריצה יומית הייתה משנה את כולם.
+json.dump({k:v for k,v in sorted(_ntr.items()) if k.count('-')>=2},
+          open(f'{OUTDIR}/line-trips.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 mons=sorted({f[8:15] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')})
 json.dump({'months':sorted({f[:7] for f in os.listdir(f'{OUTDIR}/changes') if re.match(r'^\d{4}-\d{2}\.json$',f)},reverse=True),
            'stopMonths':sorted({f[6:13] for f in os.listdir(f'{OUTDIR}/changes') if f.startswith('stops-')},reverse=True)},

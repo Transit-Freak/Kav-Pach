@@ -22,6 +22,7 @@ if idx.get('lines') is None:
     raise SystemExit('אין אינדקס — מדלגים')
 
 byrd = {e['rd']: e for e in idx['lines']}
+ntr = jload(f'{OUTDIR}/line-trips.json', {})
 n_new = 0
 for fn in os.listdir(f'{OUTDIR}/lines'):
     if not fn.endswith('.json'):
@@ -51,6 +52,13 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
         e.pop('tt', None)
     if lf.get('wa'):
         e['wa'] = lf['wa']
+    # מספר הנסיעות שבתוקף — מבדיל בין קו שפורסם לקראת פתיחה לבין קו שנוסע.
+    # מגיע מקובץ צדדי כי הוא משתנה יומית; מי שאינו בו נמחק, אחרת מספר ישן
+    # של קו שבוטל היה נשאר תלוי באוויר.
+    if rd in ntr:
+        e['ntr'] = ntr[rd]
+    else:
+        e.pop('ntr', None)
     # 'times' (הלו"ז האחרון של קו מבוטל) הוא צילום-מידע, לא שינוי — לא קטגוריה
     ks = {v['k'] for v in vs if v['k'] not in ('baseline', 'times')}
     # הגדרת המשתמש: 'freq' (שינוי מספר הרכבים) = רק תגבור באותה דקה;
