@@ -61,9 +61,27 @@ def central_dir(url):
         if cd[p:p + 4] != b'PK\x01\x02':
             break
         method, = struct.unpack('<H', cd[p + 10:p + 12])
-        csize, = struct.unpack('<I', cd[p + 20:p + 24])
+        csize, usize = struct.unpack('<II', cd[p + 20:p + 28])
         nlen, xlen, clen = struct.unpack('<HHH', cd[p + 28:p + 34])
         lho, = struct.unpack('<I', cd[p + 42:p + 46])
+        # הקובץ הוא zip64: הגדלים במרכזייה הם 0xFFFFFFFF והערך האמיתי יושב
+        # בשדה ההרחבה. בלי לקרוא אותו נתבקש טווח של 4 ג'יגה, כלומר הורדה
+        # מתחילת האיבר ועד סוף ה-zip — קריאת routes.txt בת 100 ק"ב משכה
+        # 187 מגה. כאן זה מוכפל בכל איבר שנקרא בכל יום.
+        if csize == 0xFFFFFFFF or lho == 0xFFFFFFFF:
+            x = cd[p + 46 + nlen:p + 46 + nlen + xlen]
+            q = 0
+            while q + 4 <= len(x):
+                hid, hsz = struct.unpack('<HH', x[q:q + 4])
+                if hid == 1:
+                    vals = list(struct.unpack(f'<{hsz // 8}Q', x[q + 4:q + 4 + hsz]))
+                    if usize == 0xFFFFFFFF:
+                        usize = vals.pop(0)
+                    if csize == 0xFFFFFFFF:
+                        csize = vals.pop(0)
+                    if lho == 0xFFFFFFFF:
+                        lho = vals.pop(0)
+                q += 4 + hsz
         members[cd[p + 46:p + 46 + nlen].decode()] = (lho, csize, method)
         p += 46 + nlen + xlen + clen
     return members
@@ -162,12 +180,30 @@ def build_targets(avail):
         rd = lf.get('rd')
         if not rd:
             continue
-        t = ARC_HI
-        if vs[-1].get('k') == 'removed':
-            t = (datetime.date.fromisoformat(vs[-1]['d']) - datetime.timedelta(days=1)).isoformat()
+        # יום היעד חייב להיות יום שבו הווריאנט באמת היה בפיד. "יום לפני
+        # הביטול" נכשל כשהביטול נמדד בדגימה שבועית — הוא נופל אחרי
+        # ההיעלמות. התאריך של הגרסה האחרונה שאינה 'בוטל' הוא יום שראינו בו
+        # את הווריאנט בוודאות.
+        alive = [v for v in vs if v.get('k') not in ('removed', 'removed-year')]
+        if vs[-1].get('k') not in ('removed', 'removed-year'):
+            t = ARC_HI               # עדיין קיים — הצילום העדכני ביותר
+        elif alive:
+            t = alive[-1]['d']
+        else:
+            # רק אירוע ביטול, בלי חיים מתועדים לפניו — הווריאנט חי בתחילת
+            # הארכיון ונעלם. 'sd' הוא הדגימה האחרונה שבה נראה בוודאות;
+            # "יום לפני הביטול" נופל בפער הדגימה כשהסריקה הייתה שבועית.
+            t = vs[-1].get('sd') or \
+                (datetime.date.fromisoformat(vs[-1]['d']) - datetime.timedelta(days=1)).isoformat()
         t = max(min(t, ARC_HI), ARC_LO)
-        first = vs[0].get('d') or ARC_LO
-        snap = t[:8] + '01'          # הצמדה לתחילת החודש — מקבץ ימים
+        # הצמדה לתחילת החודש מקבצת אלפי וריאנטים לכ-100 ימי-ארכיון, אבל
+        # רק אם הווריאנט כבר היה קיים אז. הבדיקה הייתה מול הגרסה הראשונה
+        # אי-פעם, ולכן חלופה שחיה שבוע במרץ 2025 אחרי שכבר הופיעה ונעלמה
+        # ב-2023 הוצמדה ל-01.03.2025 — תאריך שבו לא הייתה בפיד כלל.
+        START = ('new', 'baseline', 'snapshot')
+        starts = [v['d'] for v in vs if v.get('k') in START and v['d'] <= t]
+        first = starts[-1] if starts else (vs[0].get('d') or ARC_LO)
+        snap = t[:8] + '01'
         if snap >= first and snap >= ARC_LO:
             t = snap
         t = nearest_available(t, avail)   # בארכיון יש חורים — היום הקיים הקרוב

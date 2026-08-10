@@ -616,14 +616,29 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   })();
   // גרסת ארכיון בלי גאומטריה אך עם רצף תחנות (שלב ב') — קו מקורב בין התחנות.
   const toPts = (x) => (x.shp ? decodeShape(x.shp) : ((x.stops || []).length > 1 ? x.stops.map((s) => [s[2], s[3]]) : null));
-  const approx = !v.shp && (v.stops || []).length > 1;
   // במצב השוואה מעניין מצב הקו בשני התאריכים, לא האירוע עצמו: אירוע לו"ז
   // אינו נושא גאומטריה, ובלי זה המפה לא הייתה נפתחת כלל בהשוואה.
   const geoAt = (idx) => {
     for (let j = idx; j >= 0; j--) if ((vs[j].stops || []).length || vs[j].shp) return vs[j];
     return null;
   };
-  const gv = cmpOn ? (geoAt(vi) || v) : v;
+  // אירוע בלי גאומטריה משלו — "הווריאנט הופיע ברישום", "בוטל" — הציג
+  // "אין פירוט" גם כשלקו יש מסלול מתועד. בקשת שלמה: שתיפתח מפה גם בתיעוד
+  // הראשון וגם באחרון. לוקחים את הגרסה הגיאומטרית הקרובה — אחורה ואם אין
+  // אז קדימה (התיעוד הראשון של קו מהארכיון הוא לרוב אירוע-רישום, והצילום
+  // עם המסלול נוסף אחריו) — ואומרים מאיזה תאריך המפה.
+  const geoNear = (idx) => {
+    const back = geoAt(idx);
+    if (back) return back;
+    for (let j = idx + 1; j < vs.length; j++) if ((vs[j].stops || []).length || vs[j].shp) return vs[j];
+    return null;
+  };
+  const ownGeo = !!(v.shp || (v.stops || []).length > 1);
+  const gv = cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v));
+  const borrowed = !cmpOn && !ownGeo && gv !== v;
+  // "מקורב" נמדד על הגרסה שמצוירת בפועל — כשהמפה שאולה מגרסה אחרת,
+  // הדיוק שלה הוא של אותה גרסה ולא של האירוע שנבחר
+  const approx = !gv.shp && (gv.stops || []).length > 1;
   const cur = toPts(gv) || [];
   // המסלול הקודם מוצג רק כשיש באמת מה להשוות: הגרסה מתעדת שינוי תחנות
   // (כולל הפרש-פער מול "תיעוד ראשון") או שינוי מסלול, או ששתי הגרסאות
@@ -919,6 +934,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               onClick={() => setOnlyCur(true)}>🚌 המסלול המלא אחרי השינוי</button>
           </div>
         )}
+        {borrowed && (
+          <div className="mut">🛈 האירוע עצמו אינו נושא מסלול — המפה מציגה את המסלול המתועד
+            {gv.d < v.d ? " האחרון לפני האירוע" : " הראשון אחרי האירוע"}, מ-{fmtD(gv.d)}.</div>
+        )}
         <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
           cur={cur} prev={onlyCur ? null : prev}
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
@@ -936,8 +955,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         {v.shpref
           ? <div className="mut">🛈 רצף התחנות בצילום זהה לגרסה הסמוכה — מוצג המסלול המלא שלה במקום קו מקורב. {(v.stops || []).length} תחנות בגרסה זו.</div>
           : approx
-          ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(v.stops || []).length} תחנות בגרסה זו.</div>
-          : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(v.stops || []).length} תחנות בגרסה זו.</div>}
+          ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>
+          : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>}
         </>)}
         {(v.tl || v.tn) && <TimesDiff tl={v.tl} tn={v.tn} />}
       </div>

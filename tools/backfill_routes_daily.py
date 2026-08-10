@@ -203,11 +203,18 @@ def jload(p, dflt):
 def days_between(a, b):
     return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
 
-NOTES = {'new': 'הווריאנט הופיע ברישום (ארכיון אופן באס, תאריך מדויק)',
-         'removed': 'הווריאנט נעלם מהרישום (ארכיון אופן באס, תאריך מדויק)'}
+# "תאריך מדויק" נכון רק בדגימה יומית. הסריקה המדוללת (STEP>1) ירשה את
+# הנוסח והצמידה אותו לאירועים שמדויקים עד שבוע — והצליבה מול הארכיון
+# הראתה וריאנט שנעלם ב-02.03 רשום כ"נעלם ב-08.03, תאריך מדויק".
+if STEP > 1:
+    NOTES = {'new': 'הווריאנט הופיע ברישום (ארכיון אופן באס)',
+             'removed': 'הווריאנט נעלם מהרישום (ארכיון אופן באס)'}
+else:
+    NOTES = {'new': 'הווריאנט הופיע ברישום (ארכיון אופן באס, תאריך מדויק)',
+             'removed': 'הווריאנט נעלם מהרישום (ארכיון אופן באס, תאריך מדויק)'}
 
 n_sharp = n_add = n_blip = 0
-def apply_event(rd2, ds, kind, info, note_extra=''):
+def apply_event(rd2, ds, kind, info, note_extra='', sd=None):
     """מחדד אירוע שבועי תואם או מוסיף אירוע חדש — בלי כפילויות."""
     global n_sharp, n_add
     p = f'{OUTDIR}/lines/{fsafe(rd2)}.json'
@@ -244,6 +251,9 @@ def apply_event(rd2, ds, kind, info, note_extra=''):
     v = {'d': ds, 'k': kind, 'shp': '', 'stops': [], 'src': 'ob'}
     if kind in NOTES: v['note'] = NOTES[kind]
     elif note_extra: v['note'] = note_extra
+    # בדגימה מדוללת האירוע קרה מתישהו בין שתי דגימות — 'sd' מוסר לאתר את
+    # הדגימה האחרונה שבה המצב הקודם עוד נראה, והוא מציג את אי-הוודאות
+    if sd and sd != ds: v['sd'] = sd
     lf['versions'].append(v)
     lf['versions'].sort(key=lambda x: x['d'])
     json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
@@ -262,6 +272,7 @@ absent = state.get('absent') or {}
 first_anchor = not seen
 chain_start = state.get('chain_start') or (dates[0] if dates else FROM)
 
+prev_ds = state.get('last_date')
 for di, ds in enumerate(dates):
     if (time.time() - T0) / 60 > MAX_MIN:
         print('תקרת זמן — ממשיכים בריצה הבאה'); break
@@ -275,14 +286,14 @@ for di, ds in enumerate(dates):
         if rd2 in absent:
             gap = days_between(absent[rd2], ds)
             if gap > GAP_OK:   # היעלמות אמיתית שהסתיימה בחזרה — שני אירועים
-                apply_event(rd2, absent[rd2], 'removed', seen[rd2]['info'])
-                apply_event(rd2, ds, 'new', info)
+                apply_event(rd2, absent[rd2], 'removed', seen[rd2]['info'], sd=seen[rd2]['last'])
+                apply_event(rd2, ds, 'new', info, sd=prev_ds)
             del absent[rd2]    # עד 35 יום — הפסקה, נבלע בשקט
         elif old is None and not first_anchor:
             # התחממות: וריאנט שפשוט לא פעל ביום העיגון (קו של שישי בלבד,
             # קו תלמידים בחופשה) אינו "חדש" — 35 הימים הראשונים נבלעים
             if days_between(chain_start, ds) > GAP_OK:
-                apply_event(rd2, ds, 'new', info)
+                apply_event(rd2, ds, 'new', info, sd=prev_ds)
         if old is not None:
             ov = old['info']
             if ov['dest'] != info['dest']:
@@ -300,6 +311,7 @@ for di, ds in enumerate(dates):
         print(ds, '— נקודת עיגון ראשונה:', len(cur), 'וריאנטים פעילים')
         first_anchor = False
     state = {'last_date': ds, 'seen': seen, 'absent': absent, 'chain_start': chain_start}
+    prev_ds = ds
     if di % 40 == 0:
         json.dump(state, open(statep, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         print(ds, f'| {len(cur)} פעילים | חודדו {n_sharp} · נוספו {n_add} · הפסקות שנבלעו {n_blip}')
@@ -309,7 +321,7 @@ for di, ds in enumerate(dates):
 if state.get('last_date') == (dates[-1] if dates else None):
     for rd2, d0 in list(absent.items()):
         if days_between(d0, TO) > GAP_OK:
-            apply_event(rd2, d0, 'removed', seen[rd2]['info'])
+            apply_event(rd2, d0, 'removed', seen[rd2]['info'], sd=seen[rd2]['last'])
             del absent[rd2]
     state = {'last_date': state['last_date'], 'seen': seen, 'absent': absent, 'chain_start': chain_start}
 
