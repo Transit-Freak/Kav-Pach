@@ -10,13 +10,16 @@
 אזהרה כשהקובץ אינו ריק, והבדיקה נופלת על ערך שטרם אושר — כך שהוספת סוג
 חדש בפיד מגיעה כהתראה ולא כטעות שקטה בנתונים.
 
-ACK: ערכים שכבר בדקנו והוחלט עליהם יושבים ב-unknown-ack.json ואינם מתריעים.
+ערכים שכבר נבדקו והוכרעו יושבים ב-tools/state/unknown-ack.json ואינם מתריעים.
 """
 import json
 import os
 
-OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
-PATH = f'{OUTDIR}/unknown-values.json'
+# היומן אינו נתון של האתר אלא כלי עבודה, ולכן הוא יושב מחוץ לתיקייה
+# שמתפרסמת. הוא נשמר בגיט כדי שהמונים והתאריכים יצטברו בין ריצות.
+DIR = os.environ.get('UNKDIR', 'tools/state')
+PATH = f'{DIR}/unknown-values.json'
+ACK = f'{DIR}/unknown-ack.json'
 _buf = {}
 
 
@@ -51,7 +54,7 @@ def flush():
             for x in d['ex']:
                 if x not in o['ex'] and len(o['ex']) < 5:
                     o['ex'].append(x)
-    os.makedirs(OUTDIR, exist_ok=True)
+    os.makedirs(DIR, exist_ok=True)
     json.dump(old, open(PATH, 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1, sort_keys=True)
     return _buf

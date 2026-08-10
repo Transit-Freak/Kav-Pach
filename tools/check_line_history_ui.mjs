@@ -62,8 +62,8 @@ console.log(`✓ נתונים: ${listed.size} חודשי תחנות (מ-${oldest
 // והמצב שלהם קפא. מעכשיו כל ערך לא מוכר נרשם, והבדיקה נופלת עליו עד
 // שמישהו הכריע מה הוא — הכרעה נרשמת ב-unknown-ack.json.
 {
-  const up = path.join(LH, 'data/unknown-values.json');
-  const ap = path.join(LH, 'data/unknown-ack.json');
+  const up = path.join(ROOT, 'tools/state/unknown-values.json');
+  const ap = path.join(ROOT, 'tools/state/unknown-ack.json');
   if (fs.existsSync(up)) {
     const unk = JSON.parse(fs.readFileSync(up, 'utf8'));
     const ack = fs.existsSync(ap) ? JSON.parse(fs.readFileSync(ap, 'utf8')) : {};
