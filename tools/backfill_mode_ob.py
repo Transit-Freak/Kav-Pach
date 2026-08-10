@@ -109,7 +109,10 @@ def main():
 
     st = json.load(open(STATE)) if os.path.exists(STATE) else {'done': [], 'tt': {}}
     done, prev = set(st['done']), dict(st.get('tt') or {})
-    todo = [d for d in days if d not in done]
+    # יום שאין לו צילום בארכיון יחזיר 404 לנצח. בלי הרשימה הזו כל ריצה
+    # מבזבזת עליו ארבעה ניסיונות עם המתנה, ובששה ימים חסרים זה רוב התקציב.
+    missing = set(st.get('missing') or [])
+    todo = [d for d in days if d not in done and d not in missing]
     print(f'דגימות: {len(days)} · עובדו: {len(done)} · בריצה זו: {len(todo)}',
           file=sys.stderr)
     if not todo:
@@ -127,6 +130,10 @@ def main():
             cur = modes(day)
         except BaseException as e:
             print(f'  {day}: דילוג — {type(e).__name__}', file=sys.stderr)
+            missing.add(day)
+            if not DRY:
+                json.dump({'done': sorted(done), 'tt': prev,
+                           'missing': sorted(missing)}, open(STATE, 'w'))
             continue
         n = 0
         for rd, tt in cur.items():
@@ -139,7 +146,8 @@ def main():
         last = day
         done.add(day)
         if not DRY:
-            json.dump({'done': sorted(done), 'tt': prev}, open(STATE, 'w'))
+            json.dump({'done': sorted(done), 'tt': prev,
+                       'missing': sorted(missing)}, open(STATE, 'w'))
     for kind, vals in (unk.flush() or {}).items():
         for v, d in vals.items():
             print(f'::warning::ערך לא מוכר ב-{kind}: {v} ({d["n"]} פעמים)', file=sys.stderr)
