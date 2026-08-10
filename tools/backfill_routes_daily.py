@@ -230,6 +230,7 @@ def apply_event(rd2, ds, kind, info, note_extra='', sd=None):
         if v.get('src') != 'ob': continue   # אירועי הצינור היומי לא זזים
         if 0 < gap <= MATCH_WIN and 'תאריך מדויק' not in (v.get('note') or ''):
             v['d'] = ds
+            v.pop('sd', None)   # התאריך מדויק עכשיו — טווח אי-הוודאות מיותר
             v['note'] = ((v.get('note') or '').replace('(ארכיון אופן באס)', '(ארכיון אופן באס, תאריך מדויק)')
                          or NOTES.get(kind, ''))
             if 'תאריך מדויק' not in v['note']:
