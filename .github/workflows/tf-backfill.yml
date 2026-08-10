@@ -65,6 +65,7 @@ jobs:
       # ההשוואה הראשי עיוור אליו לגמרי. הקריאה כאן היא של routes.txt בלבד
       # ולכן זולה בהרבה, ומתקדמת מהר יותר מהמילוי המלא.
       - name: סריקת שינויי סיווג
+        id: md
         if: always()
         env:
           FROM: '20170316'
@@ -72,8 +73,14 @@ jobs:
           MAX_MIN: '10'
           OUTDIR: line-history/data
         run: |
+          set -o pipefail
           test -f tools/backfill_mode.py || { echo "::error::הכלי חסר בענף"; exit 1; }
-          python3 tools/backfill_mode.py 2>&1 | tail -12
+          python3 tools/backfill_mode.py 2>&1 | tee /tmp/md.log | tail -12
+          if grep -q 'אין צילומים שנותרו' /tmp/md.log; then
+            echo "done=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "done=0" >> "$GITHUB_OUTPUT"
+          fi
 
       # ביטול = היעלמות מהפיד. תאריך הביטול נגזר מהצילום האחרון שבו הקו
       # עוד נראה, ולא מיום הריצה — ההבדל בין השניים הגיע ל-3,000 יום.
@@ -166,8 +173,10 @@ jobs:
           CHAIN=${CHAIN:-1}
           # תנאי הסיום חייב לכלול את כל הסריקות. כשהוא בדק את המילוי בלבד,
           # השרשרת נעצרה ברגע שהמילוי הסתיים — וסריקה שנוספה אחריו לא רצה
-          # מעולם, בלי שדבר דיווח על כך.
-          if [ "${{ steps.tf.outputs.done }}" = "1" ] && [ "${{ steps.st.outputs.done }}" = "1" ]; then
+          # מעולם, בלי שדבר דיווח על כך. סריקת הסיווג נוספה מאוחר יותר
+          # ונשארה מחוץ לתנאי, ולכן היא נעצרה ב-586 מתוך 799 צילומים.
+          if [ "${{ steps.tf.outputs.done }}" = "1" ] && [ "${{ steps.st.outputs.done }}" = "1" ] \
+             && [ "${{ steps.md.outputs.done }}" = "1" ]; then
             echo "כל הסריקות הושלמו — סוף השרשרת"
           elif [ "$CHAIN" -lt 200 ]; then
             gh workflow run tf-backfill.yml --repo "$GITHUB_REPOSITORY" \
