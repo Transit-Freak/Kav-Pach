@@ -29,6 +29,23 @@ MATCH_WIN = 8    # אירוע שבועי עד 8 ימים אחרי היום הא�
 GAP_OK = 35      # נעלם וחזר תוך עד ~חודש = הפסקה — לא נרשם
 T0 = time.time()
 
+# הסריקה סיננה route_type שאינו '3', כלומר אוטובוס בלבד. התוצאה: לרכבת,
+# לרכבת הקלה, למוניות השירות ולרכבליות אין ולו אירוע אחד בכל התקופה
+# 16.01.2022–24.07.2026 — 2,615 וריאנטים עם ארבע שנים וחצי ריקות. הרכבת
+# הקלה של תל אביב הופיעה באתר כאילו נוספה לרישום באוגוסט 2026.
+# טווח ה-70x הוא אוטובוס, מלבד 715 שהוא שירות לפי דרישה.
+BUSX = {'700', '701', '702', '703', '704', '705', '706', '707', '708', '709',
+        '710', '711', '712', '713', '714', '716'}
+TT = {'2': 'rail', '8': 'taxi', '0': 'lightrail', '5': 'cable', '715': 'demand'}
+# ONLY_TT=1 מצמצם את הסריקה לקווים שאינם אוטובוס. כך אפשר להשלים את מה
+# שהסינון החסיר בלי לגעת בשרשרת של האוטובוסים, שכבר נסרקה במלואה —
+# עם STATE נפרד משלה.
+ONLY_TT = os.environ.get('ONLY_TT') == '1'
+STEP = int(os.environ.get('STEP_DAYS', '1'))
+# סף "קובץ חשוד": כשהסריקה מצומצמת לקווים שאינם אוטובוס יש רק כ-85
+# וריאנטים פעילים ביום, והסף של 300 פסל כל יום ויום.
+MIN_ACTIVE = int(os.environ.get('MIN_ACTIVE', '30' if ONLY_TT else '300'))
+
 def http(url, rng=None, tries=4):
     for attempt in range(tries):
         try:
@@ -58,10 +75,25 @@ def member(url, want):
     while p + 46 <= len(cd):
         if cd[p:p+4] != b'PK\x01\x02': break
         method, = struct.unpack('<H', cd[p+10:p+12])
-        csize, = struct.unpack('<I', cd[p+20:p+24])
+        csize, usize = struct.unpack('<II', cd[p+20:p+28])
         nlen, xlen, clen = struct.unpack('<HHH', cd[p+28:p+34])
         lho, = struct.unpack('<I', cd[p+42:p+46])
         name = cd[p+46:p+46+nlen]
+        # הקובץ הוא zip64, וכל הגדלים במרכזייה הם 0xFFFFFFFF — הערך האמיתי
+        # יושב בשדה ההרחבה. בלי לקרוא אותו התבקש טווח של 4 ג'יגה, כלומר
+        # הורדה מתחילת האיבר ועד סוף ה-zip: קריאת agency.txt בת 2 ק"ב
+        # משכה 187 מגה, וכל יום סריקה עלה כארבע הורדות כאלה.
+        if csize == 0xFFFFFFFF or lho == 0xFFFFFFFF:
+            x = cd[p+46+nlen:p+46+nlen+xlen]
+            q = 0
+            while q + 4 <= len(x):
+                hid, hsz = struct.unpack('<HH', x[q:q+4])
+                if hid == 1:
+                    vals = list(struct.unpack(f'<{hsz//8}Q', x[q+4:q+4+hsz]))
+                    if usize == 0xFFFFFFFF: usize = vals.pop(0)
+                    if csize == 0xFFFFFFFF: csize = vals.pop(0)
+                    if lho == 0xFFFFFFFF: lho = vals.pop(0)
+                q += 4 + hsz
         if name.endswith(want):
             lh, _ = http(url, f'bytes={lho}-{lho+29}')
             n2, x2 = struct.unpack('<HH', lh[26:30])
@@ -77,7 +109,15 @@ def csvdict(url, want):
     c = {h.strip(): i for i, h in enumerate(hdr)}
     return c, rd_
 
-def list_dates():
+def list_dates(step=1):
+    """כל ימי הארכיון בטווח. step>1 מדלל את הדגימה.
+
+    כל יום עולה כ-150 מגה, כמעט כולם trips.txt, ולכן סריקה יומית מלאה
+    היא עניין של עשרות שעות על runner. לקווים שאינם אוטובוס — רכבת,
+    רכבת קלה, מוניות שירות — דגימה שבועית נותנת את ההיסטוריה בדיוק של
+    שבוע במחיר של שביעית, וזה ההבדל בין היסטוריה חלקית לבין ארבע שנים
+    וחצי ריקות לגמרי.
+    """
     dates = []
     ym = datetime.date.fromisoformat(FROM[:7] + '-01')
     while ym.isoformat()[:7] <= TO[:7]:
@@ -86,7 +126,12 @@ def list_dates():
             ds = b'-'.join(m.groups()).decode()
             if FROM <= ds <= TO: dates.append(ds)
         ym = (ym.replace(day=28) + datetime.timedelta(days=5)).replace(day=1)
-    return sorted(set(dates))
+    dates = sorted(set(dates))
+    if step > 1:
+        # יום בשבוע קבוע, אחרת דגימה שנופלת על שבת מראה חצי מהקווים כלא-פעילים
+        keep = [d for d in dates if datetime.date.fromisoformat(d).weekday() == 1]
+        dates = keep or dates[::step]
+    return dates
 
 def active_routes(ds):
     """rd -> {'line','dest','op'} רק לקווים עם נסיעות מתוכננות ביום ds."""
@@ -99,7 +144,12 @@ def active_routes(ds):
         svc = set()
         for row in rows:
             try:
-                if row[c[col]].strip() == '1' and row[c['start_date']] <= dsc <= row[c['end_date']]:
+                if not (row[c['start_date']] <= dsc <= row[c['end_date']]):
+                    continue
+                # בדגימה מדוללת היום הנבחר מייצג שבוע שלם, ולכן דגלי ימי
+                # השבוע מוזנחים: קו שנוסע רק בשבת (מוניות שירות) או רק
+                # בשישי היה נעדר מכל דגימה ומסומן כבוטל.
+                if STEP > 1 or row[c[col]].strip() == '1':
                     svc.add(row[c['service_id']])
             except IndexError: continue
         try:   # חריגים: הוספה/הסרה נקודתית של שירות
@@ -127,7 +177,11 @@ def active_routes(ds):
         for row in rows:
             try:
                 if row[c['route_id']] not in active_rids: continue
-                if row[c['route_type']].strip() != '3': continue
+                rt = row[c['route_type']].strip()
+                if rt in BUSX: rt = '3'
+                if rt != '3' and rt not in TT: continue
+                tt = TT.get(rt)
+                if ONLY_TT and tt is None: continue
                 parts = row[c['route_desc']].strip().split('-')
                 if len(parts) < 3: continue
                 mkt = parts[0].lstrip('0')
@@ -135,7 +189,7 @@ def active_routes(ds):
                 out[f"{mkt}-{parts[1]}-{parts[2]}"] = {
                     'line': row[c['route_short_name']].strip(),
                     'dest': (row[c['route_long_name']] or '').strip()[:120],
-                    'op': ag.get(row[c['agency_id']], '')}
+                    'op': ag.get(row[c['agency_id']], ''), 'tt': tt}
             except IndexError: continue
         return out
     except (ValueError, KeyError) as e:
@@ -161,6 +215,7 @@ def apply_event(rd2, ds, kind, info, note_extra=''):
     if lf is None:
         lf = {'rd': rd2, 'line': info['line'], 'dest': info['dest'], 'op': info['op'],
               'ty': '', 'versions': []}
+        if info.get('tt'): lf['tt'] = info['tt']
     for v in lf['versions']:
         if v.get('k') != kind: continue
         gap = days_between(ds, v['d'])
@@ -194,9 +249,9 @@ def apply_event(rd2, ds, kind, info, note_extra=''):
     json.dump(lf, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     n_add += 1
 
-statep = f'{OUTDIR}/routes-daily-state.json'
+statep = os.environ.get('STATE') or f'{OUTDIR}/routes-daily-state.json'
 state = jload(statep, {})
-dates = [d for d in list_dates() if d > (state.get('last_date') or '')]
+dates = [d for d in list_dates(STEP) if d > (state.get('last_date') or '')]
 if state.get('last_date'): print('ממשיך מ-', state['last_date'])
 print(len(dates), 'ימים לסריקה')
 
@@ -213,7 +268,7 @@ for di, ds in enumerate(dates):
     cur = active_routes(ds)
     if cur is None:
         continue
-    if seen and len(cur) < 300:
+    if seen and len(cur) < MIN_ACTIVE:
         print(ds, f'— קובץ חשוד ({len(cur)} פעילים), מדלג'); continue
     for rd2, info in cur.items():
         old = seen.get(rd2)

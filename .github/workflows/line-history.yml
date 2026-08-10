@@ -14,6 +14,7 @@ on:
       - 'tools/rebuild_lines_index.py'
       - 'tools/enrich_stop_diffs.py'
       - 'tools/fix_dest_kind.py'
+      - 'tools/drop_rename_only.py'
       - 'tools/enrich_2017.py'
       - 'tools/fix_false_removed.py'
       - 'tools/mark_reverted_changes.py'
@@ -118,6 +119,9 @@ jobs:
             # לפי מק"ט תחנות הקצה. שני הכלים אידמפוטנטיים ומחזירים את
             # מצבם גם אחרי מיזוג של סריקת רקע שדרס גרסאות.
             OUTDIR=line-history/data python3 tools/fix_dest_kind.py
+            # ואחרי שהתברר שרק השם השתנה — האירוע יורד מהקו לגמרי. הקו לא
+            # השתנה בשום צורה, ושינוי השם מתועד בהיסטוריית התחנה.
+            OUTDIR=line-history/data python3 tools/drop_rename_only.py
             OUTDIR=line-history/data python3 tools/enrich_2017.py
             # רשת ביטחון: אם בכל זאת נרשם "בוטל היום" על קו שהסורק מעולם
             # לא ראה חי, הכלי מסיר אותו. תאריך ביטול שגוי בשנים נראה כמו
