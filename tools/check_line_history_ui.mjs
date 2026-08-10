@@ -347,27 +347,22 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
-// ---- שלב ב4': ביטולים — קטגוריה אחת, מקובצת לפי שנה ----
-// הביטולים חיים בקטגוריה ולא במסך נפרד, ולכן הבדיקה נכנסת מאותה דרך שבה
-// נכנס משתמש: פותחת את רשימת הקטגוריות ומסמנת את התיבה.
+// ---- שלב ב4': קטגוריית ביטול מתנהגת כמו כל קטגוריה ----
+// היא הייתה מסך בפני עצמו עם כותרת ושורת שנים משלו — קטגוריה בתוך קטגוריה.
+// הבדיקה מוודאת שסימון התיבה מחזיר את הרשימה הרגילה.
 {
   await page.click('button.tab:has-text("קווים")');
-  // החיפוש נשמר בין ביקורים, ותצוגת הביטולים המקובצת היא ללא חיפוש חופשי
   await page.fill('input.search', '');
   await page.click('button.kathead:has-text("קטגוריות לבחירה")', { timeout: 30000 });
   await page.locator('.katrow', { hasText: 'מבוטל' }).first().locator('input').check();
-  await page.waitForSelector('.gonehead', { timeout: 30000 })
-    .catch(() => fail('סימון קטגוריית ביטול לא הציג את הרשימה המקובצת'));
+  await page.waitForSelector('.llist .lrow', { timeout: 30000 })
+    .catch(() => fail('סימון קטגוריית ביטול לא הציג רשימת קווים'));
+  if (await page.locator('.gonehead').count()) fail('קטגוריית הביטול עדיין מציגה מסך נפרד');
   const n = await page.locator('.llist .lrow').count();
-  if (!n) fail('קטגוריית הביטולים נפתחה ריקה');
-  const head = await page.locator('.gonehead').innerText();
-  if (!/\d/.test(head)) fail('ביטולים: אין מספר קווים בכותרת');
-  const chips = await page.locator('.months .mchip').count();
-  if (chips < 2) fail('ביטולים: אין חלוקה לשנים');
   await page.locator('.llist .lrow').first().click();
   await page.waitForSelector('.linehead', { timeout: 30000 })
     .catch(() => fail('לחיצה על קו שבוטל לא פתחה את עמוד הקו'));
-  console.log(`✓ ביטולים: ${n} שורות מקובצות ב-${chips - 1} שנים, ולחיצה מגיעה לעמוד הקו`);
+  console.log(`✓ ביטולים: ${n} שורות ברשימה הרגילה, ולחיצה מגיעה לעמוד הקו`);
   await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
