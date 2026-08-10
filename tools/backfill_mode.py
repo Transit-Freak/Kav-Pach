@@ -76,6 +76,11 @@ def write_mode(rd, ds, old, new):
     if any(v.get('d') == d and v.get('k') == 'mode' and v.get('src') == SRC
            for v in vs):
         return False
+    # לפני התיעוד הראשון אין "לפני" שממנו השתנה משהו. התיעוד הראשון כבר
+    # אומר מה סוג הקו ("קו שירות לפי דרישה — התיעוד הראשון"), ואירוע
+    # "שוּנה: אוטובוס ← שירות לפי דרישה" באותו יום עצמו סותר אותו.
+    if vs and d <= min(v['d'] for v in vs if v.get('k') != 'mode'):
+        return False
     vs.append({'d': d, 'k': 'mode', 'src': SRC, 'shp': '', 'stops': [],
                'note': f'סוג הקו שוּנה: {LBL.get(old, old)} ← {LBL.get(new, new)} '
                        f'(לפי סיווג route_type בפיד הארצי)'})

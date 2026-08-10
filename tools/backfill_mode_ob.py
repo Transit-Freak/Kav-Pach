@@ -78,6 +78,9 @@ def write_mode(rd, day, old, new, since):
     vs = lf.get('versions') or []
     if any(v.get('d') == day and v.get('k') == 'mode' for v in vs):
         return False
+    # ראה backfill_mode: אין "לפני" לפני התיעוד הראשון של הקו
+    if vs and day <= min(v['d'] for v in vs if v.get('k') != 'mode'):
+        return False
     v = {'d': day, 'k': 'mode', 'src': SRC, 'shp': '', 'stops': [],
          'note': f'סוג הקו שוּנה: {LBL.get(old, old)} ← {LBL.get(new, new)} '
                  f'(לפי סיווג route_type בפיד הארצי)'}

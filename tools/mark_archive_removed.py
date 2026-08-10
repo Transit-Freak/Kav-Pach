@@ -35,12 +35,24 @@ def iso(ds):
 
 def main():
     st = json.load(open(f'{OUTDIR}/tf-mode-state.json', encoding='utf-8'))
-    seen = st.get('seen') or {}
+    seen = dict(st.get('seen') or {})
     if not seen:
         raise SystemExit('אין נתוני "נראה לאחרונה" — יש להריץ קודם את backfill_mode')
     days = sorted(st['done'])
     if not days:
         raise SystemExit('לא נסרקו צילומים')
+
+    # "נראה לאחרונה" של תקופת אופן באס, אם נסרקה. בלעדיו הטווח נגמר
+    # ב-15.01.2022, וכל מה שנעלם בחודשיים שלפניו נופל בחלון החסד ונשאר
+    # לא מוכרע — 2,697 וריאנטים שאינם ברישום היום ואינם מסומנים כבוטלים.
+    try:
+        ob = json.load(open(f'{OUTDIR}/ob-seen-state.json', encoding='utf-8'))
+    except Exception:
+        ob = {}
+    for rd, last in (ob.get('seen') or {}).items():
+        if seen.get(rd, '') < last:
+            seen[rd] = last
+    days = sorted(set(days) | {d.replace('-', '') for d in (ob.get('done') or [])})
     end = datetime.date.fromisoformat(iso(days[-1]))
     cutoff = end - datetime.timedelta(days=GRACE)
 
