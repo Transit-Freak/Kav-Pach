@@ -50,9 +50,18 @@ def op_match(agency, op):
     return want in op
 
 
+# מאגר מגיעים הוא רשת האוטובוסים של 2012: החברות שבו הן אגד, דן, נתיב
+# אקספרס וכיוצא בהן, ואין בו רכבת, רכבת קלה, כרמלית או מוניות שירות.
+# התאמה לפי מספר קו ועיר משייכת בשמחה את רכבת "174" לאוטובוס 174 מרמת גן
+# ואת הכרמלית לקו 1 בחיפה — קווים שאין ביניהם דבר. "שירות לפי דרישה"
+# נשאר, כי אלה קווי אוטובוס לכל דבר שרק סיווגם שונה.
+NO_2012 = {'rail', 'lightrail', 'cable', 'taxi'}
+
+
 def main():
     idx = json.load(open('line-history/data/lines.json', encoding='utf-8'))
-    today = idx['lines'] if isinstance(idx, dict) else idx
+    today = [l for l in (idx['lines'] if isinstance(idx, dict) else idx)
+             if (l.get('tt') or '') not in NO_2012]
 
     anchors = {}
     n2012 = 0
@@ -122,6 +131,8 @@ def main():
         try:
             lf = materialize(json.load(open(p, encoding='utf-8')))
         except Exception:
+            continue
+        if (lf.get('tt') or '') in NO_2012:
             continue
         vs = [v for v in (lf.get('versions') or []) if v.get('stops')]
         if not vs:

@@ -496,6 +496,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   useEffect(() => {
     let ok = true;
     setAnc(null); setShow12(false); setD12(null); setR12(0); setAltRd(null);
+    // רשת מגיעים היא אוטובוסים בלבד. עוגן על רכבת, רכבת קלה, כרמלית או
+    // מונית שירות הוא בהכרח קו אחר שבמקרה נושא את אותו מספר.
     getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
     return () => { ok = false; };
   }, [rd]);
@@ -664,7 +666,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             מפורסם להם לוח זמנים, ולכן כדאי לבדוק מול המפעיל איך הנסיעה מוזמנת בפועל.
           </div>
         )}
-        {anc && (
+        {anc && !NO_2012.has(lf.tt || "") && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
             {/* מספר התחנות המשותפות הוא מה שקושר את הקו של אז לקו של היום.
@@ -1593,6 +1595,8 @@ const TABS = [
     tip: "קווי מוניות השירות שבפיד הארצי — מסלולים, תחנות והשינויים בהם",
     groups: [] },
 ];
+// רשת 2012 היא אוטובוסים בלבד — לסוגים האלה אין שם מקבילה
+const NO_2012 = new Set(["rail", "lightrail", "cable", "taxi"]);
 const TT_ICON = { rail: "🚆", taxi: "🚕", lightrail: "🚊", cable: "🚡", demand: "🚐" };
 // מקור האירוע — שלושה מקורות שונים לחלוטין, וכל אחד עם דיוק אחר. בלי
 // לנקוב בשם, "מארכיון הפיד הארצי" לא אומר מי מדד ומתי.

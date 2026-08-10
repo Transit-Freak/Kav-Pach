@@ -244,6 +244,19 @@ console.log(`✓ ממשק: החודש הכי ישן (${om}.${oy}) נגיש ומ�
   await page.waitForSelector('.tabs', { timeout: 30000 });
 }
 
+// ---- שלב ב3.6': אין עוגן 2012 לרכבת, לרכבת קלה, לכרמלית ולמוניות ----
+// מאגר מגיעים הוא רשת האוטובוסים של 2012. עוגן על רכבת "174" הוא האוטובוס
+// 174 מרמת גן — שני קווים שאין ביניהם דבר מלבד המספר.
+{
+  const anc = JSON.parse(fs.readFileSync(path.join(LH, 'data/anchor-2012.json'), 'utf8')).anchors;
+  const idx = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines.json'), 'utf8')).lines;
+  const tt = {};
+  idx.forEach((l) => { tt[l.rd] = l.tt || 'bus'; });
+  const bad = Object.keys(anc).filter((rd) => ['rail', 'lightrail', 'cable', 'taxi'].includes(tt[rd]));
+  if (bad.length) fail(`${bad.length} עוגני 2012 על קווים שאינם אוטובוס — למשל ${bad.slice(0, 3)}`);
+  console.log(`✓ עוגני 2012: ${Object.keys(anc).length} — אף אחד מהם לא על רכבת או מונית שירות`);
+}
+
 // ---- שלב ב3.65': השוואה בין חלופות של אותו קו ----
 {
   const idx = JSON.parse(fs.readFileSync(path.join(LH, 'data/lines.json'), 'utf8')).lines;
