@@ -30,6 +30,8 @@ const KINDS = {
   renum:       { label: "שינוי מספר", color: "#be185d" },
   renamed:     { label: "שינוי שם תחנת קצה", color: "#d97706" },
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
+  access:      { label: "שינוי נגישות", color: "#0d9488" },
+  board:       { label: "שינוי עלייה/ירידה", color: "#a16207" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
@@ -359,8 +361,13 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     const prevCodes = new Set((prevStops || []).map((s) => s[0]));
     // שם התחנה נפתח בחלון קופץ (popup) — הוא מוצמד לעוגן של התחנה והמפה
     // זזה אליו לבד, אז השם תמיד מוצג במקום הנכון גם בקצה המפה ובנייד.
+    // האיבר החמישי בתחנה הוא מגבלת עלייה/ירידה מהפיד: אחת מכל תשע עצירות
+    // מוגבלת כך, ובשום מקום לא כתוב לנוסע שבתחנה הזו רק מורידים.
+    const PD = { 1: "הורדה בלבד", 2: "העלאה בלבד", 3: "לא עוצר לנוסעים" };
     const popHtml = (s, status) =>
-      `<b>${esc(s[1])}</b>${status ? `<br><span class="pst">${status}</span>` : ""}<br><span class="pcode">מק״ט תחנה ${esc(s[0])}</span>`;
+      `<b>${esc(s[1])}</b>${status ? `<br><span class="pst">${status}</span>` : ""}` +
+      (PD[s[4]] ? `<br><span class="pst">⛔ ${PD[s[4]]}</span>` : "") +
+      `<br><span class="pcode">מק״ט תחנה ${esc(s[0])}</span>`;
     (curStops || []).forEach((s) => {
       // הגרסה הקודמת עשויה להיות שינוי תדירות בלי רצף תחנות, ואז אין מול מה
       // להשוות. רשימת התחנות שנוספו כבר חושבה בצנרת ונשמרה על הגרסה — היא
@@ -650,7 +657,12 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         <button className="back" title="חזרה למסך החיפוש — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש</button>
         {/* לקווי הרכבת אין מספר קו ב-GTFS — הסמל ממלא את מקומו כדי שהתג לא יופיע ריק */}
         <div className="linehead"><span className="badge">{lf.line || TT_ICON[lf.tt] || "—"}</span><span className="dest">{lf.dest}</span></div>
-        <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""} · מק״ט {lf.rd} · {vs.length} גרסאות מתועדות</div>
+        <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
+          {/* נגישות לכיסא גלגלים מגיעה מ-wheelchair_accessible בפיד, והיא
+              אחידה לכל נסיעות הקו — ולכן תכונה של הקו. */}
+          {lf.wa === "1" && <span className="wa yes" title="לפי הפיד הארצי, הקו מונגש לכיסא גלגלים"> · ♿ נגיש</span>}
+          {lf.wa === "2" && <span className="wa no" title="לפי הפיד הארצי, הקו אינו מונגש לכיסא גלגלים"> · ♿ אינו נגיש</span>}
+          {" · מק״ט "}{lf.rd} · {vs.length} גרסאות מתועדות</div>
         {/* רק "שירות לפי דרישה" מקבל הערה, כי היא נושאת מידע שאינו במקום
             אחר: הקו יושב בין קווי האוטובוס ונראה רגיל לחלוטין, ואי אפשר
             לדעת ממנו שהנסיעה מותנית בהזמנה. לשאר הסוגים התווית בשורת

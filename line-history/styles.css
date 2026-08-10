@@ -282,3 +282,8 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
   font-size: 12.5px; font-weight: 800; color: #475569; }
 .altstat .onlya { color: #4c1d95; }
 .altstat .onlyb { color: #16a34a; }
+
+/* נגישות הקו ומגבלות עלייה/ירידה בתחנה */
+.wa.yes { color: #0d9488; font-weight: 800; }
+.wa.no { color: #b45309; font-weight: 800; }
+.pdflag { color: #a16207; font-weight: 800; font-size: 11px; }

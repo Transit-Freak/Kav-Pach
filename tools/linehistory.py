@@ -117,6 +117,7 @@ else:
 # הבחירה כאן אינה תלויה בסדר: התבנית שרוב הנסיעות רצות בה, ובתוכה מזהה
 # הנסיעה הקטן ביותר. שוויון נשבר לפי מזהה השרטוט.
 rep={}          # route_id -> (trip_id, shape_id)
+_wa={}          # route_id -> נגישות (1/2)
 _cnt={}         # route_id -> {shape_id: כמה נסיעות}
 _first={}       # (route_id, shape_id) -> מזהה הנסיעה הקטן ביותר
 registered=set()   # וריאנטים שקיימים ברישום (יש להם נסיעות בקובץ, גם אם לא בתוקף היום)
@@ -128,6 +129,11 @@ for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
         sh=r['shape_id']; t=r['trip_id']
         d=_cnt.setdefault(rid,{}); d[sh]=d.get(sh,0)+1
         if (rid,sh) not in _first or t<_first[(rid,sh)]: _first[(rid,sh)]=t
+        # נגישות לכיסא גלגלים: 1 = נגיש, 2 = לא. השדה אחיד לכל הנסיעות של
+        # אותו קו (נבדק על הפיד המלא — אפס קווים עם ערכים מעורבים), ולכן
+        # הוא תכונה של הקו ולא של הנסיעה.
+        wa=(r.get('wheelchair_accessible') or '').strip()
+        if wa in ('1','2'): _wa[rid]=wa
 for rid,shapes in _cnt.items():
     sh=min(shapes,key=lambda x:(-shapes[x],x))
     rep[rid]=(_first[(rid,sh)],sh)
@@ -158,10 +164,18 @@ stop_lines=defaultdict(set) # stop_code -> קווים
 with open(STOP_TIMES,encoding='utf-8-sig') as f:
     rd_=csv.reader(f); hdr=next(rd_); hi={h:i for i,h in enumerate(hdr)}
     TI,SIx,SQ=hi['trip_id'],hi['stop_id'],hi['stop_sequence']
+    PU,DO=hi.get('pickup_type'),hi.get('drop_off_type')
     for r in rd_:
         t=r[TI]
         if t in rep_trips:
-            try: seqs[t].append((int(r[SQ]),r[SIx]))
+            # 1 = העלאה בלבד, 2 = הורדה בלבד, 3 = לא עוצר לנוסעים.
+            # אחת מכל תשע עצירות בפיד מוגבלת כך, וזה לא מופיע בשום מקום.
+            pd=0
+            try:
+                if PU is not None and len(r)>PU and r[PU]=='1': pd+=2
+                if DO is not None and len(r)>DO and r[DO]=='1': pd+=1
+            except Exception: pd=0
+            try: seqs[t].append((int(r[SQ]),r[SIx],pd))
             except: pass
         s=stops.get(r[SIx])
         if s is not None:
@@ -191,14 +205,23 @@ for rid,(t,sh) in rep.items():
     info=routes[rid]
     pts=shapes.get(sh)
     if not pts or len(pts)<2: continue
-    sq=[sid for _,sid in sorted(seqs.get(t,[]))]
+    _rows=sorted(seqs.get(t,[]))
+    sq=[x[1] for x in _rows]
+    pdm={x[1]:(x[2] if len(x)>2 else 0) for x in _rows}
     codes=[stops[s]['c'] for s in sq if s in stops]
     if len(codes)<2: continue
     mk=info['rd'].split('-')[0].lstrip('0')
     cur[info['rd']]={'line':info['line'],'long':info['long'],'op':agencies.get(info['ag'],''),
                      'ty':linetype.get(mk,''),'tt':info.get('tt'),'pts':pts,'codes':codes,
-                     'stopinfo':[[stops[s]['c'],stops[s]['n'],stops[s]['la'],stops[s]['lo']] for s in sq if s in stops],
-                     'sh_h':h12(json.dumps(pts)),'st_h':h12('|'.join(codes))}
+                     'wa':_wa.get(rid,''),
+                     # איבר חמישי בתחנה = מגבלת עלייה/ירידה; 0 נשמר כרשימה
+                     # קצרה כדי שקבצים ישנים וחדשים ייראו זהים כשאין מגבלה
+                     'stopinfo':[[stops[s]['c'],stops[s]['n'],stops[s]['la'],stops[s]['lo']]
+                                 + ([pdm.get(s,0)] if pdm.get(s,0) else [])
+                                 for s in sq if s in stops],
+                     'sh_h':h12(json.dumps(pts)),'st_h':h12('|'.join(codes)),
+                     'pd_h':h12('|'.join(f"{stops[s]['c']}:{pdm.get(s,0)}" for s in sq
+                                        if s in stops and pdm.get(s,0)))}
 print('וריאנטים תקינים:',len(cur))
 
 # ---- טעינת מצב קודם ----
@@ -208,6 +231,18 @@ def jload(p,dflt):
     try: return json.load(open(p,encoding='utf-8'))
     except Exception: return dflt
 prev=jload(f'{OUTDIR}/state-routes.json',{})
+
+
+def prev_pd_of(rdesc):
+    """מגבלות העלייה/ירידה כפי שהיו בגרסה האחרונה — לניסוח ההפרש.
+
+    המצב היומי שומר חתימה בלבד (pd_h) כדי להישאר קטן, ולכן כשצריך לומר מה
+    בדיוק השתנה קוראים את הגרסה מקובץ הקו עצמו.
+    """
+    lf=materialize(jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json',None))
+    if not lf: return {}
+    v=next((x for x in reversed(lf.get('versions') or []) if x.get('stops')),None)
+    return {x[0]:x[4] for x in (v or {}).get('stops',[]) if len(x)>4}
 prev_stops=jload(f'{OUTDIR}/stops-state.json',{})
 first_run=not prev
 
@@ -225,6 +260,8 @@ def write_line_version(rdesc,c,kind,note='',extra=None):
     lf=jload(p,{'rd':rdesc,'line':c['line'],'dest':c['long'],'op':c['op'],'ty':c['ty'],'versions':[]})
     lf['line'],lf['dest'],lf['op'],lf['ty']=c['line'],c['long'],c['op'],c['ty']
     if c.get('tt'): lf['tt']=c['tt']      # אוטובוס נשאר בלי סימון
+    # נגישות היא תכונה של הקו ולא של הגרסה, ולכן היא יושבת על הקובץ עצמו
+    if c.get('wa'): lf['wa']=c['wa']
     lf['versions']=[v for v in lf['versions'] if v.get('d')!=TODAY]
     v={'d':TODAY,'k':kind,'shp':encode_shape(c['pts']),'stops':c['stopinfo']}
     if note: v['note']=note
@@ -292,7 +329,13 @@ for rdesc,c in cur.items():
     # אין לו ביטוי בתחנות או בשרטוט, ולכן בלי בדיקה מפורשת הוא היה עובר
     # בשקט — ומבחינת הנוסע זה שינוי מהותי יותר מהזזת תחנה.
     tt_changed=('tt' in pv) and pv.get('tt')!=c.get('tt')
-    if not geo and not stp and not op_changed and not tt_changed: continue
+    # נגישות לכיסא גלגלים ומגבלות עלייה/ירידה: שניהם אינם נראים בתחנות
+    # ובשרטוט, ולכן בלי בדיקה מפורשת הם עוברים בשקט — ולנוסע שתלוי בהם
+    # אלה השינויים החשובים ביותר בקו.
+    wa_changed=bool(pv.get('wa')) and bool(c.get('wa')) and pv['wa']!=c['wa']
+    pd_changed=('pd_h' in pv) and pv.get('pd_h')!=c.get('pd_h')
+    if not geo and not stp and not op_changed and not tt_changed \
+       and not wa_changed and not pd_changed: continue
     old_codes=pv['codes']; add=[x for x in c['codes'] if x not in old_codes]
     rem=[x for x in old_codes if x not in c['codes']]
     name={x[0]:x[1] for x in c['stopinfo']}
@@ -318,6 +361,10 @@ for rdesc,c in cur.items():
         continue
     if tt_changed and not geo and not stp:
         kind='mode'
+    elif wa_changed and not geo and not stp and not op_changed:
+        kind='access'
+    elif pd_changed and not geo and not stp and not op_changed:
+        kind='board'
     elif not geo and not stp:
         kind='operator'
     else:
@@ -330,6 +377,21 @@ for rdesc,c in cur.items():
              'cable':'רכבל/כרמלית','demand':'שירות לפי דרישה',None:'קו אוטובוס רגיל'}
         t=f"סוג הקו שוּנה: {lbl.get(pv.get('tt'),pv.get('tt'))} ← {lbl.get(c.get('tt'),c.get('tt'))}"
         note=(note+' · '+t) if note else t
+    if wa_changed:
+        lblw={'1':'נגיש לכיסא גלגלים','2':'אינו נגיש לכיסא גלגלים'}
+        t=f"הנגישות שוּנתה: {lblw.get(pv['wa'],pv['wa'])} ← {lblw.get(c['wa'],c['wa'])}"
+        note=(note+' · '+t) if note else t
+    if pd_changed:
+        lblp={1:'הורדה בלבד',2:'העלאה בלבד',3:'לא עוצר לנוסעים'}
+        now={x[0]:x[4] for x in c['stopinfo'] if len(x)>4}
+        was=prev_pd_of(rdesc)
+        chg=[f"{name.get(k,k)}: {lblp.get(was.get(k,0),'רגילה')} ← {lblp.get(v,'רגילה')}"
+             for k,v in sorted(now.items()) if was.get(k,0)!=v][:6]
+        chg+= [f"{oldname(k)}: {lblp.get(v,'')} ← רגילה" for k,v in sorted(was.items())
+               if k not in now and k in c['codes']][:6]
+        if chg:
+            t='מגבלת עלייה/ירידה: '+' · '.join(chg)
+            note=(note+' · '+t) if note else t
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
     if add: ch['add']=[name.get(x,x) for x in add][:15]
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
@@ -503,7 +565,9 @@ json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',
 json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 # 'tt' נשמר כדי שאפשר יהיה לזהות שינוי בסוג הקו. במצב שנוצר לפני השדה הזה
 # הוא פשוט חסר, ולכן ההשוואה מדלגת בשקט בריצה הראשונה ולא ממציאה אירוע.
-state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],'op':c['op'],'tt':c.get('tt')} for rdesc,c in cur.items()}
+state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],
+                  'op':c['op'],'tt':c.get('tt'),'wa':c.get('wa',''),'pd_h':c.get('pd_h','')}
+           for rdesc,c in cur.items()}
 state_out.update(carry)   # רשומים ללא נסיעות פעילות — נגררים קדימה
 json.dump(state_out,
           open(f'{OUTDIR}/state-routes.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
