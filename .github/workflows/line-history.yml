@@ -101,9 +101,9 @@ jobs:
           # שינתה נשמרים; קובץ שהשתנה בינתיים גם ב-origin — origin גובר
           # (למשל סיפור מדויק ממכונת הדיוק שנחת בזמן שהריצה רצה).
           BASE=$(git rev-parse HEAD)
-          git add -A line-history/data kavbug-data
-          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data kavbug-data > /tmp/lh-changed
-          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data kavbug-data > /tmp/lh-deleted
+          git add -A line-history/data kavbug-data kavpach-live.json
+          git diff --cached --name-only --diff-filter=d -z "$BASE" -- line-history/data kavbug-data kavpach-live.json > /tmp/lh-changed
+          git diff --cached --name-only --diff-filter=D -z "$BASE" -- line-history/data kavbug-data kavpach-live.json > /tmp/lh-deleted
           rm -rf /tmp/lh-out && mkdir -p /tmp/lh-out
           xargs -0 -r -I{} cp --parents {} /tmp/lh-out/ < /tmp/lh-changed
           for i in 1 2 3 4; do
@@ -138,7 +138,10 @@ jobs:
             OUTDIR=line-history/data python3 tools/build_stop_shards.py
             OUTDIR=line-history/data python3 tools/compact_lines.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
-            git add -A line-history/data kavbug-data
+            # הדלתא לקו פח ולקו המוזהב: קווים שבוטלו, נסיעות עדכניות,
+            # צמצומים — נגזר מהארכיון ונטען באתר הראשי
+            OUTDIR=line-history/data python3 tools/build_kavpach_live.py
+            git add -A line-history/data kavbug-data kavpach-live.json
             if git diff --cached --quiet; then
               echo "unchanged — nothing to commit"; break; fi
             git commit -m "data: line-history — שינויי מסלולים ותחנות יומיים"

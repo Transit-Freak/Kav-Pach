@@ -406,6 +406,13 @@ const parseCity = (stopName) => {
 const cityOnlyStr = (s) => s ? (s.indexOf(' - ') > 0 ? s.slice(0, s.indexOf(' - ')).trim() : s.split('/')[0].trim()) : '';
 
 // רכיב לעיצוב המק"ט, הכיוון והחלופה בתגיות ברורות (Badge style)
+// שקלים בקריאה אנושית: 12,400 → "12.4 אלף ₪", 3,180,000 → "3.2 מיליון ₪"
+const fmtShekels = (v) => {
+  if (v >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + ' מיליון ₪';
+  if (v >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + ' אלף ₪';
+  return Math.round(v).toLocaleString() + ' ₪';
+};
+
 const RouteFormat = ({ val }) => {
   if (!val) return null;
   const parts = String(val).split('-');
@@ -643,7 +650,7 @@ function ChoiceScreen({ onPick }) {
 }
 
 // ── GoldenApp — כלי "הקו המוזהב": קווים מצטיינים ─────────────────────────
-function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
+function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMakat, onClearFocus }) {
   const [goldenTab, setGoldenTab] = useState('top');
   const [filterDistrict, setFilterDistrict] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -661,7 +668,8 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
   const [gTripsVisible, setGTripsVisible] = useState(80);
   const [areaFilter, setAreaFilter] = useState(null);
 
-  // ניקוד מוזהב (0-100, גבוה יותר = טוב יותר) — ההפך המדויק מניקוד קו פח
+  // ניקוד מוזהב (0-100, גבוה יותר = טוב יותר) — ברוח הפוכה לניקוד קו פח,
+  // אבל עם רכיבים ומשקולות משלו — לא "הפוך מדויק"
   const goldenLines = useMemo(() => {
     if (!trips || trips.length === 0) return [];
 
@@ -687,8 +695,16 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
       const totalPeaks = data.reduce((s, t) => s + (t.peakLoad * t.tripCount), 0);
       const avgPeak = totalTrips > 0 ? (totalPeaks / totalTrips) : 0;
 
-      // דרישת סף לקו מוזהב: גם ממוצע הנוסעים וגם השיא חייבים להיות מעל 30
-      if (avgRiders <= 30 || avgPeak <= 30) return null;
+      // הקיבולת מחושבת לפני שער הכניסה, משוקללת בנסיעות — ממוצע פשוט על
+      // שורות נתן משקל שווה לווריאנט של נסיעה אחת ולווריאנט של מאה
+      const avgCapacity = (data.reduce((s, t) => s + (t.capacity || 50) * t.tripCount, 0) / (totalTrips || 1)) || 50;
+      const scale = avgCapacity / 50;
+
+      // דרישת סף לקו מוזהב: ממוצע הנוסעים והשיא ביחס לקיבולת. הסף הקבוע
+      // (30) חסם פיזית קווי מיניבוס — קיבולת 19 לא מגיעה לשיא 30 לעולם,
+      // ומצוינות בפריפריה נשארה בלתי-נראית. עכשיו מיניבוס מלא נמדד כמו
+      // אוטובוס מלא: 30 × (קיבולת/50).
+      if (avgRiders <= 30 * scale || avgPeak <= 30 * scale) return null;
 
       const category = classifyLine({
         opGroup: data[0].opGroup,
@@ -718,9 +734,6 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
       const lowCount = lowTrips.reduce((s, t) => s + t.tripCount, 0);
       const percentLow = totalTrips > 0 ? (lowCount / totalTrips) * 100 : 0;
 
-      const avgCapacity = data.reduce((s, t) => s + (t.capacity || 50), 0) / data.length || 50;
-      const scale = avgCapacity / 50;
-
       const wastedKm = Math.round(lowTrips.reduce((s, t) => s + ((t.distance || 0) * t.tripCount), 0));
       const totalKm = Math.round(data.reduce((s, t) => s + ((t.distance || 0) * t.tripCount), 0));
       const wastedRatio = totalKm > 0 ? (wastedKm / totalKm) : 0;
@@ -729,7 +742,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
       const avgCost = validCosts.length > 0 ? validCosts.reduce((s, t) => s + t.cost, 0) / validCosts.length : 0;
       const costRatio = costBenchmark > 0 && avgCost > 0 ? avgCost / costBenchmark : 0;
 
-      // ── ניקוד מוזהב — הפוך מדויק מניקוד קו פח ──
+      // ── ניקוד מוזהב ──
       // 1. נסיעות ברמה גבוהה (עד 20 נק')
       const highTripsScore = Math.min(20, (100 - percentLow) * 0.20);
 
@@ -789,12 +802,15 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
         cost: avgCost,
         costRatio: Number(costRatio.toFixed(2)),
         costBenchmark,
+        // הפירוט חייב להסתכם לציון — רכיב הנפח השבועי (עד 20 נק') היה
+        // מושמט מכאן, ומי שחיבר את המספרים המוצגים לא הגיע לסכום
         componentScores: {
           highTrips: Math.round(highTripsScore),
           efficientKm: Math.round(efficientKmScore),
           cost: costScore,
           avgRiders: avgRidersScore,
           peak: peakScore,
+          volume: volumeScore,
         },
       };
     }).filter(Boolean).sort((a, b) => b.score - a.score);
@@ -805,6 +821,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
 
   const filtered = useMemo(() => {
     let r = [...goldenLines];
+    // קישור עמוק לקו בודד — מסנן אליו בלבד עד שהמשתמש מנקה
+    if (focusMakat) {
+      const fm = String(focusMakat).replace(/^0+/, '').trim();
+      r = r.filter(l => String(l.makat || '').replace(/^0+/, '').trim() === fm);
+    }
     if (filterDistrict !== 'all') r = r.filter(l => l.district === filterDistrict);
     if (filterCategory !== 'all') r = r.filter(l => l.category === filterCategory);
     if (submittedSearch) {
@@ -818,11 +839,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
       });
     }
     if (sortBy === 'riders') r.sort((a, b) => Number(b.avg) - Number(a.avg));
-    else if (sortBy === 'cost') r.sort((a, b) => a.costRatio - b.costRatio);
+    else if (sortBy === 'cost') r.sort((a, b) => (a.costRatio || Infinity) - (b.costRatio || Infinity));
     else if (sortBy === 'km') r.sort((a, b) => b.totalKm - a.totalKm);
     else r.sort((a, b) => b.score - a.score);
     return r;
-  }, [goldenLines, filterDistrict, filterCategory, submittedSearch, sortBy, lineCitiesMap]);
+  }, [goldenLines, filterDistrict, filterCategory, submittedSearch, sortBy, lineCitiesMap, focusMakat]);
 
   const areaStats = useMemo(() => {
     const map = new Map();
@@ -954,6 +975,14 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
               </div>
             </div>
 
+            {focusMakat && (
+              <div className="mb-4 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                <span className="text-sm font-black text-amber-800">🔗 מציג קו משותף (מק"ט {focusMakat})</span>
+                <button className="text-xs font-black text-amber-700 hover:text-amber-900 underline" onClick={onClearFocus}>
+                  ✕ הצג את כל הקווים
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.slice(0, visibleCount).map((line, idx) => (
                 <div key={line.groupKey} className="vcard bg-white border-2 border-slate-100 rounded-[2.5rem] p-7 shadow-sm hover:border-slate-900 transition-all text-right flex flex-col group relative">
@@ -969,7 +998,17 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
                       </div>
                       <div className="text-[10px] font-bold text-slate-400">מק&quot;ט: {String(line.makat || '').replace(/^0+/, '') || '—'}</div>
                     </div>
-                    <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shrink-0">{line.lineNum}</div>
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg">{line.lineNum}</div>
+                      <button className="text-[10px] font-black text-slate-400 hover:text-slate-900 transition-colors"
+                        title="העתקת קישור ישיר לקו הזה"
+                        onClick={(e) => {
+                          const url = location.origin + location.pathname + '#מוזהב/קו/' + String(line.makat || '').replace(/^0+/, '');
+                          try { navigator.clipboard.writeText(url); } catch (err) { /* ignore */ }
+                          const b = e.currentTarget; const t = b.textContent; b.textContent = '✓ הועתק';
+                          setTimeout(() => { b.textContent = t; }, 1500);
+                        }}>🔗 שיתוף</button>
+                    </div>
                   </div>
 
                   <div className="flex-1 mb-5">
@@ -1495,7 +1534,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
           <div className="space-y-8">
             <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
               <h2 className="text-2xl font-black text-slate-900 mb-4">מה זה הקו המוזהב?</h2>
-              <p className="text-slate-600 leading-relaxed font-bold mb-6">הקו המוזהב הוא ההפך המדויק של קו פח — הוא מאתר את הקווים שעושים את העבודה הכי טוב. קווים עם ביקוש גבוה, עלות לנוסע נמוכה, ורוב הנסיעות מלאות.</p>
+              <p className="text-slate-600 leading-relaxed font-bold mb-6">הקו המוזהב הוא תמונת הראי של קו פח — הוא מאתר את הקווים שעושים את העבודה הכי טוב. קווים עם ביקוש גבוה, עלות לנוסע נמוכה, ורוב הנסיעות מלאות.</p>
               <h3 className="font-black text-slate-900 text-lg mb-4">ניקוד מוזהב (0–100)</h3>
               <div className="space-y-3">
                 {[
@@ -1539,12 +1578,23 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap }) {
 function KavPach() {
   // appMode: 'choice' (מסך בחירה) · 'kavpach' (קו פח) · 'golden' (הקו המוזהב)
   // מאותחל מה-hash כדי שלינקים ישירים ורענון דף יישמרו (אותה כתובת בסיס).
+  // קישור עמוק לקו בודד: ‎#פח/קו/10415‎ או ‎#מוזהב/קו/10415‎ — פותח את
+  // הכלי, מסנן אל הקו ומבליט אותו. בלי זה אי אפשר לשתף ממצא ספציפי.
+  const parseHash = () => {
+    const h = decodeURIComponent((window.location.hash || '').replace('#', '').trim());
+    const m = h.match(/^(פח|kavpach|מוזהב|golden)\/קו\/(\S+)$/);
+    if (m) return { mode: (m[1] === 'golden' || m[1] === 'מוזהב') ? 'golden' : 'kavpach', makat: m[2] };
+    if (h === 'golden' || h === 'מוזהב') return { mode: 'golden', makat: null };
+    if (h === 'kavpach' || h === 'פח') return { mode: 'kavpach', makat: null };
+    return { mode: 'choice', makat: null };
+  };
   const [appMode, setAppMode] = useState(() => {
     if (typeof window === 'undefined') return 'choice';
-    const h = decodeURIComponent((window.location.hash || '').replace('#', '').trim());
-    if (h === 'golden' || h === 'מוזהב') return 'golden';
-    if (h === 'kavpach' || h === 'פח') return 'kavpach';
-    return 'choice';
+    return parseHash().mode;
+  });
+  const [focusMakat, setFocusMakat] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    return parseHash().makat;
   });
   const pickMode = useCallback((m) => {
     try { window.location.hash = m === 'choice' ? '' : m; } catch (e) { /* ignore */ }
@@ -1554,10 +1604,9 @@ function KavPach() {
   // סנכרון כפתור Back/Forward של הדפדפן עם appMode
   useEffect(() => {
     const onHash = () => {
-      const h = decodeURIComponent((window.location.hash || '').replace('#', '').trim());
-      if (h === 'golden' || h === 'מוזהב') setAppMode('golden');
-      else if (h === 'kavpach' || h === 'פח') setAppMode('kavpach');
-      else setAppMode('choice');
+      const { mode, makat } = parseHash();
+      setAppMode(mode);
+      setFocusMakat(makat);
     };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
@@ -1584,6 +1633,24 @@ function KavPach() {
   useEffect(() => {
     fetch('kavpach-overlap.json').then(r => (r.ok ? r.json() : null)).then(d => d && setOverlapMap(d.lines || null)).catch(() => {});
   }, []);
+  // הדלתא מהארכיון של "הקו בזמן" (kavpach-live.json, נבנה לילית): קווים
+  // שכבר בוטלו, נסיעות עדכניות, צמצומים, קווים חדשים והשבתות. נתוני
+  // הליבה כאן הם צילום מיוני 2026 — בלי זה הכלי ממליץ לבטל קווים
+  // שכבר בוטלו. נטען ברקע; אם איננו — הכל עובד כמו קודם.
+  const [liveMap, setLiveMap] = useState(null);
+  const [liveGen, setLiveGen] = useState('');
+  useEffect(() => {
+    fetch('kavpach-live.json').then(r => (r.ok ? r.json() : null)).then(d => {
+      if (d) { setLiveMap(d.lines || null); setLiveGen(d.gen || ''); }
+    }).catch(() => {});
+  }, []);
+  // הכרטיסים מאגדים את שני הכיוונים — לכן החיפוש ברמת המקט השלם
+  // (מפתח בלי מקף בדלתא); המקט בקו פח מגיע עם אפסים מובילים
+  const liveOf = useCallback((makat) => {
+    if (!liveMap) return null;
+    const mk = String(makat || '').replace(/^0+/, '').trim();
+    return liveMap[mk] || null;
+  }, [liveMap]);
   const [filterDistrict, setFilterDistrict] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [redundantSortBy, setRedundantSortBy] = useState("score"); 
@@ -2238,8 +2305,28 @@ const DAYS_FILTER = [
         isNight: data[0].isNightLine,
         isFeeding: data[0].isFeedingLine,
       });
-      const lowRiderTh = LOW_RIDER_THRESHOLD[category] || 10;
-      const costBenchmark = lookupCostBenchmark(costBenchmarkTable, category, data[0].district);
+      let lowRiderTh = LOW_RIDER_THRESHOLD[category] || 10;
+      let costBenchmark = lookupCostBenchmark(costBenchmarkTable, category, data[0].district);
+
+      // החלקת מדרגות הסיווג: קו של 46 ק"מ נמדד מול רף ₪34 וקו של 44 מול
+      // ₪23.1 — פער 47% על הבדל של 2 ק"מ; ומעבר מ-599 ל-600 נסיעות שבועיות
+      // הקפיץ בבת אחת גם את הבנצ'מרק וגם את סף השפל. ליד הגבול (40-50 ק"מ,
+      // 500-700 נסיעות) הרף עובר בהדרגה בין שתי הקטגוריות.
+      const dist0 = data[0].distance || 0;
+      if ((category === 'בינעירוני ארוך' || category === 'בינעירוני קצר') && dist0 >= 40 && dist0 <= 50) {
+        const bLong = lookupCostBenchmark(costBenchmarkTable, 'בינעירוני ארוך', data[0].district);
+        const bShort = lookupCostBenchmark(costBenchmarkTable, 'בינעירוני קצר', data[0].district);
+        const w = (dist0 - 40) / 10;                       // 0 ב-40 ק"מ, 1 ב-50
+        costBenchmark = bShort + (bLong - bShort) * w;
+      }
+      if ((category === 'עירוני תדירות גבוהה' || category === 'עירוני תדירות נמוכה') && totalTrips >= 500 && totalTrips <= 700) {
+        const bHi = lookupCostBenchmark(costBenchmarkTable, 'עירוני תדירות גבוהה', data[0].district);
+        const bLo = lookupCostBenchmark(costBenchmarkTable, 'עירוני תדירות נמוכה', data[0].district);
+        const w = (totalTrips - 500) / 200;                // 0 ב-500, 1 ב-700
+        costBenchmark = bLo + (bHi - bLo) * w;
+        lowRiderTh = Math.round((LOW_RIDER_THRESHOLD['עירוני תדירות נמוכה'] +
+          (LOW_RIDER_THRESHOLD['עירוני תדירות גבוהה'] - LOW_RIDER_THRESHOLD['עירוני תדירות נמוכה']) * w));
+      }
 
       // נסיעות שפל לפי סף הקטגוריה
       const lowTrips  = data.filter(t => t.ridership < lowRiderTh);
@@ -2337,8 +2424,64 @@ const DAYS_FILTER = [
         }
       }
 
+      // הגנה 4: הזמנה מראש (קווי אילת) — התיקופים חלקיים בהגדרה, והציון
+      // שנבנה עליהם מנופח. עד עכשיו זה היה רק פופאפ הסבר, והקווים האלה
+      // צפו לראש רשימת הביטול על סמך נתון שהאתר עצמו מודה שהוא חסר.
+      if (data[0].isEilatPrebooked) {
+        protections.push({ name: 'הזמנה מראש', value: 20, detail: 'התיקופים חלקיים — העומס בפועל גבוה מהנמדד' });
+        totalDeduction += 20;
+      }
+
+      // הגנה 5: קו סופ"ש — רוב הנסיעות בשישי-שבת, שבהם דפוס הביקוש הפוך
+      // מקווי חול (9:00-14:00 של שישי הוא שיא, לא שפל). הסף והבנצ'מרק
+      // נבנו על קווי חול.
+      const wkndTrips = data.filter(t => {
+        const dl = t.daysList || [];
+        return dl.length > 0 && dl.every(d => d === '6' || d === '7');
+      }).reduce((s, t) => s + t.tripCount, 0);
+      if (totalTrips > 0 && wkndTrips / totalTrips >= 0.6) {
+        protections.push({ name: 'קו סופ"ש', value: 10, detail: `${Math.round(100 * wkndTrips / totalTrips)}% מהנסיעות בשישי-שבת` });
+        totalDeduction += 10;
+      }
+
+      // הגנות מהארכיון של "הקו בזמן" (kavpach-live.json, מתעדכן לילית):
+      // הצילום של יוני לא יודע מה קרה לקו לפני הצילום ואחריו — הארכיון יודע.
+      const live = liveOf(data[0].makat);
+      if (live && !live.rm) {
+        // קו שנפתח בשנה האחרונה נמצא בתקופת הרצה — מעט נוסעים זה השלב
+        // הטבעי של בניית ביקוש, לא בזבוז
+        if (live.newd) {
+          protections.push({ name: 'קו חדש בהרצה', value: 10, detail: `הופיע לראשונה ב-${String(live.newd).split('-').reverse().join('.')}` });
+          totalDeduction += 10;
+        }
+        // קו שהשירות בו כבר צומצם פעמיים ומעלה בשנה האחרונה — הצמצום כבר
+        // קרה, והנוסעים המעטים הם גם תוצאה שלו
+        if ((live.red || 0) >= 2) {
+          protections.push({ name: 'כבר צומצם', value: 10, detail: `${live.red} צמצומי שירות בשנה האחרונה` });
+          totalDeduction += 10;
+        }
+      }
+
+      // הגנה: אין קו חלופי. "האם לנוסעים יש חלופה?" היא השאלה המקדימה של
+      // כל המלצת ביטול, וחפיפת המסלולים (kavpach-overlap.json, מחושב
+      // לילית) הוצגה עד עכשיו רק כצ'יפ תצוגתי בלי להשפיע על הציון.
+      if (overlapMap) {
+        const ovl = overlapMap[String(data[0].makat || '').replace(/^0+/, '').trim()];
+        const strong = (ovl || []).some(o => (o[3] || 0) >= 40);
+        if (!strong) {
+          protections.push({ name: 'אין קו חלופי', value: 10,
+            detail: ovl && ovl.length ? 'החפיפה הקיימת חלקית (מתחת ל-40%)' : 'לא נמצא קו עם מסלול חופף' });
+          totalDeduction += 10;
+        }
+      }
+
       const finalScore = Math.max(0, rawScore - totalDeduction);
       const tier = getStatusTier(finalScore);
+
+      // עלות עודפת שנתית באומדן — השפה שמקבלי החלטות מבינים: לא "יחס 2.4"
+      // אלא שקלים בשנה. (עלות לנוסע − בנצ'מרק) × נוסעים × נסיעות × 52.
+      const annualExcess = (avgCost > 0 && costBenchmark > 0 && avgCost > costBenchmark)
+        ? Math.round((avgCost - costBenchmark) * avgRiders * totalTrips * 52) : 0;
 
       const sortedData = [...data].sort((a, b) => {
         const dirA = String(a.direction).replace(/\D/g, '');
@@ -2377,12 +2520,19 @@ const DAYS_FILTER = [
         isEilatPrebooked: sortedData[0].isEilatPrebooked,
         isFeedingLine: sortedData[0].isFeedingLine,
         exclusiveStops,
+        annualExcess,
+        live,
       };
     }).filter(l => l.score >= 25).sort((a,b) => b.score - a.score);
-  }, [trips, costBenchmarkTable]);
+  }, [trips, costBenchmarkTable, liveOf, overlapMap]);
 
   const filteredRedundant = useMemo(() => {
     let result = [...redundantLines];
+    // קישור עמוק לקו בודד — מסנן אליו בלבד עד שהמשתמש מנקה
+    if (focusMakat) {
+      const fm = String(focusMakat).replace(/^0+/, '').trim();
+      result = result.filter(r => String(r.makat || '').replace(/^0+/, '').trim() === fm);
+    }
     if (filterDistrict !== "all") {
       result = result.filter(r => r.district === filterDistrict);
     }
@@ -2410,13 +2560,16 @@ const DAYS_FILTER = [
     });
 
     return result;
-  }, [redundantLines, searchCity, filterDistrict, filterCategory, lineCitiesMap, redundantSortBy]);
+  }, [redundantLines, searchCity, filterDistrict, filterCategory, lineCitiesMap, redundantSortBy, focusMakat]);
 
   const areaStats = useMemo(() => {
     const map = new Map();
     redundantLines.forEach(line => {
       // כאן הוספנו את הסינון - הניתוח האזורי יתייחס רק לקווים מיותרים לחלוטין (80 ומעלה)
       if (line.score < 80) return;
+      // קו שכבר בוטל — הבזבוז שלו כבר נגמר; לספור אותו בניתוח האזורי
+      // היה מנפח את "פוטנציאל החיסכון" של האזור במשהו שכבר נחסך
+      if (line.live && line.live.rm) return;
 
       const keys = areaViewMode === 'district' 
         ? [line.district] 
@@ -2425,12 +2578,13 @@ const DAYS_FILTER = [
       keys.forEach(key => {
         if (!key || key === "לא ידוע" || key === "כללי") return;
         if (!map.has(key)) {
-          map.set(key, { name: key, totalScore: 0, lineCount: 0, totalWastedKm: 0, totalCost: 0, validCostCount: 0, sumAvgRiders: 0, totalAreaTrips: 0, totalAreaRiders: 0 });
+          map.set(key, { name: key, totalScore: 0, lineCount: 0, totalWastedKm: 0, totalCost: 0, validCostCount: 0, sumAvgRiders: 0, totalAreaTrips: 0, totalAreaRiders: 0, totalAnnualExcess: 0 });
         }
         const entry = map.get(key);
         entry.totalScore += line.score;
         entry.lineCount += 1;
         entry.totalWastedKm += line.wastedKm;
+        entry.totalAnnualExcess += line.annualExcess || 0;
         entry.totalAreaRiders += line.totalRiders;
         entry.totalAreaTrips += line.count;
         entry.sumAvgRiders += parseFloat(line.avg || 0);
@@ -2453,7 +2607,8 @@ const DAYS_FILTER = [
         wastedKm: entry.totalWastedKm,
         totalTrips: entry.totalAreaTrips,
         avgCost: entry.validCostCount > 0 ? entry.totalCost / entry.validCostCount : 0,
-        avgAreaRiders: entry.totalAreaTrips > 0 ? (entry.totalAreaRiders / entry.totalAreaTrips).toFixed(1) : 0
+        avgAreaRiders: entry.totalAreaTrips > 0 ? (entry.totalAreaRiders / entry.totalAreaTrips).toFixed(1) : 0,
+        annualExcess: entry.totalAnnualExcess
       };
     }).sort((a, b) => {
       if (areaSortBy === 'wastedKm') return b.wastedKm - a.wastedKm;
@@ -2927,7 +3082,7 @@ const DAYS_FILTER = [
   if (appMode === 'choice') return <ChoiceScreen onPick={pickMode} />;
   // כלים — מחכים לנתונים; מראים טעינה עד שהם מוכנים
   if (initialLoading || trips.length === 0) return fullLoadingScreen;
-  if (appMode === 'golden') return <GoldenApp onBack={() => pickMode('choice')} trips={trips} costBenchmarkTable={costBenchmarkTable} lineCitiesMap={lineCitiesMap} />;
+  if (appMode === 'golden') return <GoldenApp onBack={() => pickMode('choice')} trips={trips} costBenchmarkTable={costBenchmarkTable} lineCitiesMap={lineCitiesMap} focusMakat={focusMakat} onClearFocus={() => { setFocusMakat(null); try { window.location.hash = 'מוזהב'; } catch (e) {} }} />;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 p-4 md:p-6 pb-20" style={{ fontFamily: "'Heebo', sans-serif" }} dir="rtl">
@@ -2952,6 +3107,12 @@ const DAYS_FILTER = [
               </div>
             </div>
             <p className="text-slate-500 text-sm font-bold mt-2 pr-1">מאתרים קווים ריקים • מייעלים את הלו&quot;ז</p>
+            {/* שקיפות: על סמך מה הטענות. בלי זה כל ספקן — או מפעיל שהקו
+                שלו סומן — מתחיל מ"הנתונים בכלל לא עדכניים" וצודק חלקית */}
+            <p className="text-slate-400 text-[11px] font-bold mt-1 pr-1">
+              נתוני נוסעים ועלויות: צילום משרד התחבורה, יוני 2026
+              {liveGen ? ` · הצלבה מול רישום הקווים העדכני: ${String(liveGen).split('-').reverse().join('.')}` : ''}
+            </p>
           </div>
           <button
             onClick={() => pickMode('choice')}
@@ -3131,6 +3292,15 @@ const DAYS_FILTER = [
                   </div>
                 </div>
 
+                {focusMakat && (
+                  <div className="mb-4 flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-3">
+                    <span className="text-sm font-black text-indigo-800">🔗 מציג קו משותף (מק"ט {focusMakat})</span>
+                    <button className="text-xs font-black text-indigo-700 hover:text-indigo-900 underline"
+                      onClick={() => { setFocusMakat(null); try { window.location.hash = 'פח'; } catch (e) {} }}>
+                      ✕ הצג את כל הקווים
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredRedundant.length > 0 ? filteredRedundant.map((res, i) => (
                     <div key={`red-${res.groupKey}-${i}`} className="vcard bg-white border-2 border-slate-100 rounded-[2.5rem] p-7 shadow-sm hover:border-slate-900 transition-all text-right flex flex-col group relative">
@@ -3150,12 +3320,34 @@ const DAYS_FILTER = [
                             )}
                             {renderPrebookedInfo('red-'+i, res.isEilatPrebooked)}
                             {renderFeedingLineInfo('red-'+i, res.isFeedingLine)}
+                            {res.live && res.live.rm && (
+                              <span className="px-3 py-1.5 rounded-full text-[11px] font-black bg-red-600 text-white border border-red-700"
+                                title={'לפי ארכיון "הקו בזמן" — הקו כבר אינו קיים ברישום' + (res.live.rmd ? '. נעלם ב-' + String(res.live.rmd).split('-').reverse().join('.') : '')}>
+                                ✖ הקו כבר בוטל
+                              </span>
+                            )}
+                            {res.live && !res.live.rm && res.live.gap && (
+                              <span className="px-3 py-1.5 rounded-full text-[11px] font-black bg-amber-100 text-amber-800 border border-amber-200"
+                                title={'הקו הושבת בין ' + String(res.live.gap[0]).split('-').reverse().join('.') + ' ל-' + String(res.live.gap[1]).split('-').reverse().join('.') + ' וחזר — נתוני הנוסעים עשויים לשקף גם את תקופת ההשבתה'}>
+                                ⏸ הושבת וחזר
+                              </span>
+                            )}
                           </div>
                           <div className="mt-1">
                             <RouteFormat val={res.makat} />
                           </div>
                         </div>
-                        <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg shrink-0">{res.lineNum}</div>
+                        <div className="flex flex-col items-center gap-1 shrink-0">
+                          <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg">{res.lineNum}</div>
+                          <button className="text-[10px] font-black text-slate-400 hover:text-slate-900 transition-colors"
+                            title="העתקת קישור ישיר לקו הזה"
+                            onClick={(e) => {
+                              const url = location.origin + location.pathname + '#פח/קו/' + String(res.makat || '').replace(/^0+/, '');
+                              try { navigator.clipboard.writeText(url); } catch (err) { /* ignore */ }
+                              const b = e.currentTarget; const t = b.textContent; b.textContent = '✓ הועתק';
+                              setTimeout(() => { b.textContent = t; }, 1500);
+                            }}>🔗 שיתוף</button>
+                        </div>
                       </div>
                       <div className="flex-1 mb-5">
                         
@@ -3243,7 +3435,14 @@ const DAYS_FILTER = [
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600 font-bold">נסיעות בשבוע</span>
-                            <span className="font-black text-slate-900">{res.count}</span>
+                            <span className="text-right">
+                              <span className="font-black text-slate-900">{res.count}</span>
+                              {res.live && !res.live.rm && res.live.ntr > 0 && (
+                                <div className="text-[10px] font-bold text-slate-400" title='מספר הנסיעות בפיד העדכני, מארכיון "הקו בזמן" — נתוני הכרטיס הם צילום מיוני 2026'>
+                                  היום בפיד: {res.live.ntr.toLocaleString()} ביום
+                                </div>
+                              )}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between text-sm gap-2">
                             <span className="text-slate-600 font-bold">עלות תפעולית לנוסע</span>
@@ -3267,6 +3466,13 @@ const DAYS_FILTER = [
                             <span className="text-slate-600 font-bold">ק&quot;מ מבוזבז (נסיעות סרק)</span>
                             <span className="font-black text-rose-600">{res.wastedKm.toLocaleString()} ק&quot;מ</span>
                           </div>
+                          {res.annualExcess > 0 && !(res.live && res.live.rm) && (
+                            <div className="flex items-center justify-between text-sm bg-rose-50 rounded-xl px-3 py-2 border border-rose-100"
+                              title="אומדן: (עלות לנוסע − ממוצע הקטגוריה) × נוסעים × נסיעות שבועיות × 52. אומדן גס להמחשה — לא נתון תקציבי רשמי">
+                              <span className="text-rose-700 font-bold">עלות עודפת באומדן</span>
+                              <span className="font-black text-rose-700">~{fmtShekels(res.annualExcess)} בשנה</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <button onClick={() => handleOptimizeLineForm(res.lineNum, res.origin)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-black hover:bg-black transition-all shadow-md">חפש הזדמנויות התייעלות</button>
@@ -3325,6 +3531,13 @@ const DAYS_FILTER = [
                            <div className="flex justify-between"><span className="text-slate-600 font-bold">ממוצע נוסעים בנסיעה</span><span className="font-black text-slate-900">{area.avgAreaRiders}</span></div>
                            <div className="flex justify-between"><span className="text-slate-600 font-bold">ק&quot;מ מבוזבז (סה&quot;כ)</span><span className="font-black text-rose-600">{area.wastedKm.toLocaleString()} ק&quot;מ</span></div>
                            <div className="flex justify-between"><span className="text-slate-600 font-bold">עלות תפעולית ממוצעת</span><span className="font-black text-slate-900">{area.avgCost > 0 ? `₪${area.avgCost.toFixed(2)}` : 'לא זמין'}</span></div>
+                           {area.annualExcess > 0 && (
+                             <div className="flex justify-between bg-rose-50 rounded-xl px-3 py-2 border border-rose-100"
+                               title="סכום האומדנים של הקווים החמורים באזור: (עלות לנוסע − ממוצע הקטגוריה) × נוסעים × נסיעות × 52. אומדן להמחשה">
+                               <span className="text-rose-700 font-bold">עלות עודפת באומדן</span>
+                               <span className="font-black text-rose-700">~{fmtShekels(area.annualExcess)} בשנה</span>
+                             </div>
+                           )}
                         </div>
                         <button onClick={() => handleViewAreaLines(area.name)} className="mt-auto w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-black hover:bg-black transition-all shadow-md">צפה בקווים אלו</button>
                      </div>
