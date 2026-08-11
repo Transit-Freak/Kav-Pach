@@ -90,7 +90,7 @@ header h1 { font-size: 24px; font-weight: 900; margin: 6px 0 4px; }
 .slink:hover { color: #7c3aed; }
 .slink.copied { color: #16a34a; }
 .srow .meta { color: #64748b; font-size: 12px; font-weight: 700; }
-footer { margin-top: 18px; text-align: center; color: #64748b; font-size: 12px; font-weight: 700; }
+footer { margin-top: 18px; text-align: center; color: #475569; font-size: 12px; font-weight: 700; }
 footer a { color: #7c3aed; }
 
 /* --- רשימת המקורות (מתקפלת, בתחתית כל טאב) --- */
@@ -261,7 +261,7 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 
 /* רשומה ברישום שאף קו לא עצר בה — לא תחנה שאפשר לחכות בה */
 .nsflag { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 7px;
-  padding: 1px 7px; font-size: 11px; font-weight: 800; color: #64748b; cursor: help; }
+  padding: 1px 7px; font-size: 11px; font-weight: 800; color: #475569; cursor: help; }
 
 /* עדות ממאגר מגיעים 2012 — חמש שנים לפני תחילת הארכיון */
 .m12flag { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 7px;
@@ -313,3 +313,6 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 button.kbtn { border: 0; cursor: pointer; font: inherit; }
 .mapbtn { border: 0; background: none; cursor: pointer; font-size: inherit; padding: 0 2px; }
 .mapbtn:focus-visible, button.kbtn:focus-visible { outline: 2px solid #4c1d95; outline-offset: 2px; }
+
+/* המונה בצ׳יפ פעיל יורש את צבע הצ׳יפ — האפור נכשל בניגודיות */
+.kchip.on b { color: inherit; opacity: 1; }

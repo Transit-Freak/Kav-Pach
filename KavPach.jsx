@@ -945,9 +945,9 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
         </header>
 
         <nav className="flex bg-slate-200/50 backdrop-blur p-1.5 rounded-[2rem] mb-12 max-w-4xl mx-auto shadow-inner border border-slate-200 overflow-x-auto">
-          {[['top', 'star', 'הקווים המצטיינים', 'bg-white text-amber-700 shadow-md'], ['areas', 'chart', 'ניתוח אזורי', 'bg-white text-amber-700 shadow-md'], ['expand', 'zap', 'הזדמנויות הרחבה', 'bg-white text-emerald-600 shadow-md'], ['allTrips', 'list', 'כל הנסיעות', 'bg-white text-rose-600 shadow-md'], ['about', 'info', 'על המערכת', 'bg-white text-indigo-600 shadow-md']].map(([id, icon, label, activeCls]) => (
+          {[['top', 'star', 'הקווים המצטיינים', 'bg-white text-amber-700 shadow-md'], ['areas', 'chart', 'ניתוח אזורי', 'bg-white text-amber-700 shadow-md'], ['expand', 'zap', 'הזדמנויות הרחבה', 'bg-white text-emerald-700 shadow-md'], ['allTrips', 'list', 'כל הנסיעות', 'bg-white text-rose-600 shadow-md'], ['about', 'info', 'על המערכת', 'bg-white text-indigo-600 shadow-md']].map(([id, icon, label, activeCls]) => (
             <button key={id} onClick={() => setGoldenTab(id)}
-              className={`flex-1 min-w-[120px] py-3.5 rounded-[1.5rem] font-black text-sm transition-all flex items-center justify-center gap-2 ${goldenTab === id ? activeCls : 'text-slate-500 hover:text-slate-700'}`}>
+              className={`flex-1 min-w-[120px] py-3.5 rounded-[1.5rem] font-black text-sm transition-all flex items-center justify-center gap-2 ${goldenTab === id ? activeCls : 'text-slate-600 hover:text-slate-800'}`}>
               <Ic n={icon} size={16} /> {label}
             </button>
           ))}
@@ -1034,7 +1034,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                       <div className="text-slate-300 text-2xl font-black shrink-0 leading-none">←</div>
                       <div className="text-slate-900 font-black text-lg truncate leading-tight">{line.dest}</div>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">{line.district}</span>
+                    <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">{line.district}</span>
                     {/* הצלבה מול הארכיון (סעיף 29): השבתה זמנית משפיעה על נתוני הצילום */}
                     {line.live && !line.live.rm && line.live.gap && (
                       <span className="mr-2 text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full"
@@ -1044,7 +1044,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
 
                     <div className="text-xs font-bold text-slate-500 mt-4 mb-4 flex items-center gap-2">
                       <span>ניקוד מוזהב:</span>
-                      <span className="font-black text-emerald-600">{line.score}/100</span>
+                      <span className="font-black text-emerald-700">{line.score}/100</span>
                     </div>
 
                     <div className="space-y-2.5 pt-4 border-t border-slate-100">
@@ -1068,7 +1068,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                             <div className="text-[10px] font-bold text-slate-500">
                               ממוצע {line.category}: ₪{line.costBenchmark}
                               {line.costRatio < 1 && (
-                                <span className="text-emerald-500 mr-1">(×{line.costRatio.toFixed(2)})</span>
+                                <span className="text-emerald-700 mr-1">(×{line.costRatio.toFixed(2)})</span>
                               )}
                               {line.costRatio >= 1 && (
                                 <span className="text-slate-500 mr-1">(×{line.costRatio.toFixed(2)})</span>
@@ -1079,7 +1079,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-slate-600 font-bold">ק&quot;מ לא מבוזבז (שימושי)</span>
-                        <span className="font-black text-emerald-600">{(line.nonWastedKm || 0).toLocaleString()} ק&quot;מ</span>
+                        <span className="font-black text-emerald-700">{(line.nonWastedKm || 0).toLocaleString()} ק&quot;מ</span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-slate-600 font-bold">ק&quot;מ מבוזבז (נסיעות סרק)</span>
@@ -1414,7 +1414,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="text-center md:text-right">
                     <p className={`font-bold text-sm ${totalTripsToAdd > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>סך נסיעות מומלצות להוספה (שבועי)</p>
-                    <p className={`text-5xl font-[900] mt-1 ${totalTripsToAdd > 0 ? 'text-emerald-600' : 'text-slate-500'}`}>{totalTripsToAdd > 0 ? `+${totalTripsToAdd}` : '0'}</p>
+                    <p className={`text-5xl font-[900] mt-1 ${totalTripsToAdd > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>{totalTripsToAdd > 0 ? `+${totalTripsToAdd}` : '0'}</p>
                   </div>
                   <div className="text-center md:text-left max-w-sm">
                     <p className="text-slate-600 font-bold text-sm leading-relaxed">
@@ -1453,7 +1453,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
               {/* המלצות להוספה — כרטיסים בסגנון קו פח, מראים איפה צריך להוסיף */}
               <div>
                 <div className="flex items-center gap-2 mb-4 px-1">
-                  <Ic n="zap" size={20} cls="text-emerald-600" />
+                  <Ic n="zap" size={20} cls="text-emerald-700" />
                   <h3 className="text-lg font-black text-slate-900">
                     {crowdedWindows.length > 0 ? `נמצאו ${crowdedWindows.length} חלונות שמומלץ להוסיף בהם נסיעות` : 'אין חלונות שדורשים הוספת נסיעות'}
                   </h3>
@@ -1470,7 +1470,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                     return (
                       <div key={p.label} className="bg-white border-2 border-slate-50 p-6 rounded-[2rem] flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:shadow-lg transition-all border-r-4 border-r-emerald-500">
                         <div className="flex items-start gap-4">
-                          <div className="bg-emerald-50 text-emerald-600 p-3.5 rounded-2xl mt-1"><Ic n="zap" size={24} /></div>
+                          <div className="bg-emerald-50 text-emerald-700 p-3.5 rounded-2xl mt-1"><Ic n="zap" size={24} /></div>
                           <div>
                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                               <span className="font-black text-slate-900 text-lg">קו {selectedLine.lineNum}</span>
@@ -1496,7 +1496,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                           </div>
                           <div className="pt-3 border-t border-slate-200 flex justify-between items-center mb-3">
                             <span className="font-black text-emerald-700">מומלץ להוסיף:</span>
-                            <span className="font-black text-2xl text-emerald-600 bg-white px-3 py-1 rounded-xl shadow-sm">+{p.tripsToAdd} נסיעות</span>
+                            <span className="font-black text-2xl text-emerald-700 bg-white px-3 py-1 rounded-xl shadow-sm">+{p.tripsToAdd} נסיעות</span>
                           </div>
                           {p.suggestedTimes.length > 0 ? (
                             <div>
@@ -1506,7 +1506,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                                   <span key={ti} className="font-black text-sm text-emerald-700 bg-white border border-emerald-200 px-3 py-1.5 rounded-xl shadow-sm">{t}</span>
                                 ))}
                                 {p.moreTimes > 0 && (
-                                  <span className="font-black text-sm text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">ועוד {p.moreTimes}</span>
+                                  <span className="font-black text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">ועוד {p.moreTimes}</span>
                                 )}
                               </div>
                             </div>
@@ -3377,11 +3377,11 @@ const DAYS_FILTER = [
                 let colorClass = "text-slate-500";
                 let iconName = "";
                 let label = "";
-                if (tabName === "redundant") { colorClass = isSelected ? "bg-white text-rose-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "trash"; label = "קווים לא יעילים"; }
-                if (tabName === "areas") { colorClass = isSelected ? "bg-white text-amber-700 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "chart"; label = "ניתוח אזורי"; }
-                if (tabName === "allTrips") { colorClass = isSelected ? "bg-white text-indigo-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "list"; label = "כל הנסיעות"; }
-                if (tabName === "simulator") { colorClass = isSelected ? "bg-white text-slate-900 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "zap"; label = "אלגוריתם ייעול"; }
-                if (tabName === "about") { colorClass = isSelected ? "bg-white text-indigo-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "info"; label = "על המערכת"; }
+                if (tabName === "redundant") { colorClass = isSelected ? "bg-white text-rose-600 shadow-md" : "text-slate-600 hover:text-slate-800"; iconName = "trash"; label = "קווים לא יעילים"; }
+                if (tabName === "areas") { colorClass = isSelected ? "bg-white text-amber-700 shadow-md" : "text-slate-600 hover:text-slate-800"; iconName = "chart"; label = "ניתוח אזורי"; }
+                if (tabName === "allTrips") { colorClass = isSelected ? "bg-white text-indigo-600 shadow-md" : "text-slate-600 hover:text-slate-800"; iconName = "list"; label = "כל הנסיעות"; }
+                if (tabName === "simulator") { colorClass = isSelected ? "bg-white text-slate-900 shadow-md" : "text-slate-600 hover:text-slate-800"; iconName = "zap"; label = "אלגוריתם ייעול"; }
+                if (tabName === "about") { colorClass = isSelected ? "bg-white text-indigo-600 shadow-md" : "text-slate-600 hover:text-slate-800"; iconName = "info"; label = "על המערכת"; }
 
                 return (
                   <button key={`nav-${tabName}`} onClick={() => {
@@ -3504,7 +3504,7 @@ const DAYS_FILTER = [
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-4">
-                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">{res.district}</span>
+                          <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">{res.district}</span>
                           {(() => {
                             if (!searchCity) return null;
                             const sCity = searchCity.toLowerCase();
@@ -3606,7 +3606,7 @@ const DAYS_FILTER = [
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600 font-bold">ק&quot;מ לא מבוזבז (שימושי)</span>
-                            <span className="font-black text-emerald-600">{res.nonWastedKm.toLocaleString()} ק&quot;מ</span>
+                            <span className="font-black text-emerald-700">{res.nonWastedKm.toLocaleString()} ק&quot;מ</span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600 font-bold">ק&quot;מ מבוזבז (נסיעות סרק)</span>
@@ -3687,8 +3687,8 @@ const DAYS_FILTER = [
                   </div>
                   <div className="flex flex-col md:flex-row gap-3 relative w-full xl:w-auto">
                     <div className="flex bg-slate-100 p-1 rounded-2xl shadow-inner">
-                       <button onClick={() => setAreaViewMode('city')} className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${areaViewMode === 'city' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>לפי עיר</button>
-                       <button onClick={() => setAreaViewMode('district')} className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${areaViewMode === 'district' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>לפי מחוז</button>
+                       <button onClick={() => setAreaViewMode('city')} className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${areaViewMode === 'city' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-800'}`}>לפי עיר</button>
+                       <button onClick={() => setAreaViewMode('district')} className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${areaViewMode === 'district' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-800'}`}>לפי מחוז</button>
                     </div>
                     <select aria-label="תצוגת הניתוח האזורי"
                       value={areaSortBy}
