@@ -14,6 +14,7 @@ DRY=1 מדווח בלבד.
 """
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -43,11 +44,10 @@ def main():
         for v in lf.get('versions') or []:
             if SRCS is not None and v.get('src') not in SRCS:
                 continue
-            # תיעוד-מצב אינו שינוי: baseline הוא תחילת התיעוד, times הוא
-            # צילום הלו"ז האחרון, ו-snapshot של ob הוא השלמת-גאומטריה
-            # שנוספה בדיעבד. צילומי tf17 (מצב 2017) כבר בפיד מאז ומתמיד
-            # ונשארים בו דרך הדדופ.
-            if v.get('k') in ('baseline', 'times'):
+            # baseline (תחילת התיעוד) אינו שינוי ואינו בפיד; 'times'
+            # (צילום הלו"ז האחרון) וצילומי tf17 כן מוצגים בפיד מאז ומתמיד
+            # ולכן נשארים. snapshot של ob הוא השלמת-גאומטריה שנוספה בדיעבד.
+            if v.get('k') == 'baseline':
                 continue
             if v.get('src') == 'ob' and v.get('k') == 'snapshot':
                 continue
@@ -65,21 +65,34 @@ def main():
         print('אין אירועי ארכיון', file=sys.stderr)
         return
 
-    n_new = n_upd = total = 0
-    for mo, evs in sorted(months.items()):
+    # הפיד חייב לשקף את קובצי הקווים לשני הכיוונים: גם להשלים אירוע חסר,
+    # וגם למחוק רשומה שהאירוע שלה כבר אינו קיים. כל ניקוי בקובצי הקווים
+    # (סיווג מחדש של "שינוי יעד", מחיקת שינויי-שם, חידוד תאריכים) השאיר
+    # בפיד רשומות יתומות — 33,903 הצטברו עד שהכיוון השני נבדק לראשונה.
+    valid = {(e['d'], rd_, e['k'])
+             for mo_evs in months.values() for e in mo_evs
+             for rd_ in [e['rd']]}
+    n_new = n_upd = total = n_drop = 0
+    import glob as _g
+    all_months = {os.path.basename(x)[:7] for x in _g.glob(f'{OUTDIR}/changes/[0-9]*.json')
+                  if re.match(r'^\d{4}-\d{2}\.json$', os.path.basename(x))}
+    for mo in sorted(all_months | set(months)):
+        evs = months.get(mo, [])
         p = f'{OUTDIR}/changes/{mo}.json'
         old = json.load(open(p, encoding='utf-8'))['changes'] if os.path.exists(p) else []
-        seen = {(x['d'], x['rd'], x['k']) for x in old}
+        keep = [x for x in old if (x['d'], x['rd'], x['k']) in valid]
+        n_drop += len(old) - len(keep)
+        seen = {(x['d'], x['rd'], x['k']) for x in keep}
         add = [e for e in evs if (e['d'], e['rd'], e['k']) not in seen]
         total += len(add)
-        if not add:
+        if not add and len(keep) == len(old):
             continue
         if os.path.exists(p):
             n_upd += 1
         else:
             n_new += 1
         if not DRY:
-            out = old + add
+            out = keep + add
             out.sort(key=lambda x: (x['d'], x.get('line') or '', x['rd']))
             os.makedirs(f'{OUTDIR}/changes', exist_ok=True)
             json.dump({'month': mo, 'changes': out}, open(p, 'w', encoding='utf-8'),
@@ -95,8 +108,8 @@ def main():
                   ensure_ascii=False, separators=(',', ':'))
 
     mode = 'סימולציה' if DRY else 'בוצע'
-    print(f'{mode}: {total} אירועים · {n_new} חודשים חדשים · {n_upd} חודשים עודכנו',
-          file=sys.stderr)
+    print(f'{mode}: {total} אירועים נוספו · {n_drop} רשומות יתומות נמחקו · '
+          f'{n_new} חודשים חדשים · {n_upd} חודשים עודכנו', file=sys.stderr)
 
 
 if __name__ == '__main__':

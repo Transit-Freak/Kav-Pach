@@ -41,6 +41,10 @@ OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 MAX_DAYS = int(os.environ.get('MAX_DAYS', '0'))      # 0 = בלי מגבלה
 MAX_MIN = float(os.environ.get('MAX_MIN', '0'))      # 0 = בלי מגבלה
 TEST_RD = os.environ.get('TEST_RD', '')              # ריצה יבשה על וריאנט אחד
+# רשימת וריאנטים מפורשת, בלי סף השנה: לביטולים שסופיותם ודאית כבר
+# עכשיו — קטעי החירום של מלחמת מרץ 2026 בוטלו עם שוך הקרבות, ולא
+# יחזרו. הלו"ז נכתב מיד ולא בעוד שנה (בקשת המשתמש).
+RDS = {x for x in os.environ.get('RDS', '').split(',') if x}
 YEAR_D = int(os.environ.get('YEAR_D', '365'))
 T0 = time.time()
 
@@ -80,6 +84,8 @@ def pending_variants(today):
         rd = lf.get('rd') or fn[:-5].replace('H', '#')
         if TEST_RD and rd != TEST_RD:
             continue
+        if RDS and rd not in RDS:
+            continue
         vs = lf['versions']
         ks = [v.get('k') for v in vs]
         if any(k in ('sched', 'freq', 'times') for k in ks):
@@ -93,7 +99,7 @@ def pending_variants(today):
                 last_new = max(last_new, v['d'])
         if not last_rem or last_new > last_rem:
             continue
-        if last_rem > cutoff:
+        if last_rem > cutoff and rd not in RDS:
             continue          # טרם מלאה שנה — הצעד היומי יתפוס אותו בבוא היום
         if skip.get(rd):
             continue
