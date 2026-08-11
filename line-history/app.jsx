@@ -1430,9 +1430,10 @@ function RecentChanges({ idx, openLine, onAll }) {
   const top = days.slice(0, 3);
   return (
     <div className="recent">
+      {/* בלי כפתור "כל השינויים לפי יום" — הוא שכפל את הכפתור הגדול
+          שכבר יושב ממש מעל (שלמה סימן את הכפילות בצילום מסך) */}
       <div className="rechead">
         <b>מה השתנה לאחרונה</b>
-        <button className="recall" onClick={onAll}>כל השינויים לפי יום ←</button>
       </div>
       {top.map((d) => (
         <React.Fragment key={d}>
@@ -2032,8 +2033,10 @@ function App() {
         idx ? <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
           : <div className="card">טוען את רשימת הקווים…</div>
       ) : rd ? (
-        <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
-          sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
+        /* קישור ישיר לקו נפתח לפני שהאינדקס הגיע — בלי ההגנות האלה הדף
+           קרס ללבן (הבאג ששלמה מצא): idx עדיין null ו-idx.lines התפוצץ */
+        <LinePage rd={rd} lineGone={idx ? !mktAlive[rd.split("-")[0]] : false}
+          sibs={((idx && idx.lines) || []).filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
           onSwitch={switchLine} onBack={backToList} />
       ) : byDay ? (
         <DayFeed idx={idx} openLine={openLine} open12={open12} onBack={() => setByDay(false)} />

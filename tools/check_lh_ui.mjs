@@ -77,6 +77,26 @@ await page.waitForSelector('.slist .srow, .slist .sgroup', { timeout: 60000 }).c
 const srows = await page.locator('.slist .srow').count();
 console.log('✓ טאב התחנות:', srows, 'שורות');
 
+// רגרסיה לבאג הדף הלבן שמצא שלמה: קישור ישיר לקו נפתח בזמן שהאינדקס
+// הכבד (3.6MB) עדיין בדרך — עמוד הקו חייב לעלות בלי לקרוס
+const page2 = await browser.newPage();
+const errs2 = [];
+page2.on('pageerror', (e) => errs2.push(e.message.slice(0, 140)));
+await page2.route('**://unpkg.com/**', (r) => {
+  const u = r.request().url();
+  if (u.endsWith('.css')) return r.fulfill({ contentType: 'text/css', body: '' });
+  if (u.includes('babel')) return r.fulfill({ contentType: 'text/javascript', body: fs.readFileSync(path.join(ROOT, 'vendor/babel.min.js')) });
+  return r.fulfill({ contentType: 'text/javascript', body: `(function(){var P=new Proxy(function(){},{get:function(t,k){if(k===Symbol.toPrimitive||k==='toString')return function(){return ''};return P;},apply:function(){return P;},construct:function(){return P;}});window.L=P;})();` });
+});
+await page2.route('**://fonts.g**/**', (r) => r.fulfill({ contentType: 'text/css', body: '' }));
+await page2.route('**://*.tile.openstreetmap.org/**', (r) => r.fulfill({ body: Buffer.from([]) }));
+await page2.route('**/data/lines.json*', async (r) => { await new Promise((res) => setTimeout(res, 3000)); r.continue(); });
+await page2.goto(`http://127.0.0.1:${port}/index.html#82001-2-0`, { waitUntil: 'domcontentloaded' });
+await page2.waitForSelector('.linehead .badge', { timeout: 60000 })
+  .catch(() => fail('קישור ישיר לקו לא נפתח בזמן שהאינדקס בדרך (רגרסיית הדף הלבן)'));
+if (errs2.length) fail('חריגות JS בקישור ישיר: ' + errs2.slice(0, 3).join(' | '));
+console.log('✓ קישור ישיר לקו עולה גם לפני שהאינדקס הגיע (הבאג של שלמה תוקן)');
+
 if (errs.length) fail('חריגות JS: ' + errs.slice(0, 3).join(' | '));
 console.log('✅ בדיקת הקו בזמן עברה');
 await browser.close();
