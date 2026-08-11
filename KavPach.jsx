@@ -3467,10 +3467,33 @@ const DAYS_FILTER = [
                             <span className="font-black text-rose-600">{res.wastedKm.toLocaleString()} ק&quot;מ</span>
                           </div>
                           {res.annualExcess > 0 && !(res.live && res.live.rm) && (
-                            <div className="flex items-center justify-between text-sm bg-rose-50 rounded-xl px-3 py-2 border border-rose-100"
-                              title="אומדן: (עלות לנוסע − ממוצע הקטגוריה) × נוסעים × נסיעות שבועיות × 52. אומדן גס להמחשה — לא נתון תקציבי רשמי">
-                              <span className="text-rose-700 font-bold">עלות עודפת באומדן</span>
-                              <span className="font-black text-rose-700">~{fmtShekels(res.annualExcess)} בשנה</span>
+                            <div className="text-sm bg-rose-50 rounded-xl px-3 py-2 border border-rose-100">
+                              <div className="flex items-center justify-between">
+                                <span className="text-rose-700 font-bold flex items-center">
+                                  עלות עודפת באומדן
+                                  {/* הסבר גלוי בלחיצה — עם המספרים של הקו הזה עצמו,
+                                      לא נוסחה כללית (בקשת שלמה: שקיפות מלאה) */}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setActiveExplainId(activeExplainId === 'exc-' + i ? null : 'exc-' + i); }}
+                                    className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-bold text-sm flex items-center justify-center border border-rose-300 hover:bg-rose-200 transition-colors mx-1 outline-none relative z-10"
+                                    title="איך חושב האומדן?"
+                                  >?</button>
+                                </span>
+                                <span className="font-black text-rose-700">~{fmtShekels(res.annualExcess)} בשנה</span>
+                              </div>
+                              {activeExplainId === 'exc-' + i && (
+                                <div ref={explainRef}
+                                  className="mt-2 p-3 sm:p-4 bg-white text-slate-800 text-xs sm:text-sm rounded-xl shadow-lg leading-relaxed font-normal text-right border border-slate-200">
+                                  <strong className="block mb-2 text-slate-900 text-base">איך מחושבת העלות העודפת?</strong>
+                                  כמה עולה להסיע נוסע בקו הזה, לעומת כמה זה עולה בקו ממוצע מאותו סוג — כפול כל הנוסעים בשנה.
+                                  <div className="my-2 bg-slate-50 rounded-lg p-2 font-bold text-slate-700" style={{ direction: 'rtl' }}>
+                                    (₪{res.cost.toFixed(2)} לנוסע בקו הזה − ₪{Number(res.costBenchmark).toFixed(2)} ממוצע {res.category})
+                                    <br />× {res.avg} נוסעים בנסיעה × {res.count} נסיעות בשבוע × 52 שבועות
+                                    <br />= ~{fmtShekels(res.annualExcess)} בשנה
+                                  </div>
+                                  <span className="text-slate-500">זהו אומדן להמחשה, לא נתון תקציבי רשמי: העלות לנוסע מגיעה מדוח משרד התחבורה (יוני 2026), והחישוב מניח שהיא אחידה על פני השנה. המספר עונה על שאלה אחת — בכמה הקו הזה יקר יותר מקו רגיל מסוגו.</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -3532,10 +3555,27 @@ const DAYS_FILTER = [
                            <div className="flex justify-between"><span className="text-slate-600 font-bold">ק&quot;מ מבוזבז (סה&quot;כ)</span><span className="font-black text-rose-600">{area.wastedKm.toLocaleString()} ק&quot;מ</span></div>
                            <div className="flex justify-between"><span className="text-slate-600 font-bold">עלות תפעולית ממוצעת</span><span className="font-black text-slate-900">{area.avgCost > 0 ? `₪${area.avgCost.toFixed(2)}` : 'לא זמין'}</span></div>
                            {area.annualExcess > 0 && (
-                             <div className="flex justify-between bg-rose-50 rounded-xl px-3 py-2 border border-rose-100"
-                               title="סכום האומדנים של הקווים החמורים באזור: (עלות לנוסע − ממוצע הקטגוריה) × נוסעים × נסיעות × 52. אומדן להמחשה">
-                               <span className="text-rose-700 font-bold">עלות עודפת באומדן</span>
-                               <span className="font-black text-rose-700">~{fmtShekels(area.annualExcess)} בשנה</span>
+                             <div className="bg-rose-50 rounded-xl px-3 py-2 border border-rose-100">
+                               <div className="flex justify-between">
+                                 <span className="text-rose-700 font-bold flex items-center">
+                                   עלות עודפת באומדן
+                                   <button
+                                     onClick={(e) => { e.stopPropagation(); setActiveExplainId(activeExplainId === 'aexc-' + i ? null : 'aexc-' + i); }}
+                                     className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 font-bold text-sm flex items-center justify-center border border-rose-300 hover:bg-rose-200 transition-colors mx-1 outline-none relative z-10"
+                                     title="איך חושב האומדן?"
+                                   >?</button>
+                                 </span>
+                                 <span className="font-black text-rose-700">~{fmtShekels(area.annualExcess)} בשנה</span>
+                               </div>
+                               {activeExplainId === 'aexc-' + i && (
+                                 <div ref={explainRef}
+                                   className="mt-2 p-3 bg-white text-slate-800 text-xs sm:text-sm rounded-xl shadow-lg leading-relaxed font-normal text-right border border-slate-200">
+                                   <strong className="block mb-1 text-slate-900">איך מחושב הסכום האזורי?</strong>
+                                   חיבור של אומדני העלות העודפת של {area.lineCount} הקווים החמורים (ציון 80+) באזור.
+                                   האומדן לכל קו: (עלות לנוסע − ממוצע הקטגוריה) × נוסעים × נסיעות שבועיות × 52 —
+                                   ההסבר המלא מופיע על כל כרטיס קו (כפתור ה-?). אומדן להמחשה, לא נתון תקציבי רשמי.
+                                 </div>
+                               )}
                              </div>
                            )}
                         </div>
@@ -4130,7 +4170,29 @@ const DAYS_FILTER = [
                         <li><strong>תחנות בלעדיות / יעד ייחודי (−15):</strong> הקו משרת תחנות שאין אליהן קו אחר.</li>
                         <li><strong>מותאם רכבת (−10):</strong> עמודת "ייחודיות" מציינת זאת במפורש.</li>
                         <li><strong>תלמידים בשעות בי&quot;ס (−10):</strong> 60%+ מהנסיעות ב-7:00–8:30 או 13:00–15:30.</li>
+                        <li><strong>הזמנה מראש (−20):</strong> בקווים בהזמנה מראש (אילת) התיקופים חלקיים בהגדרה — העומס בפועל גבוה מהנמדד.</li>
+                        <li><strong>קו סופ&quot;ש (−10):</strong> 60%+ מהנסיעות בשישי-שבת, שבהם דפוס הביקוש שונה מקווי חול.</li>
+                        <li><strong>קו חדש בהרצה (−10):</strong> הקו הופיע לראשונה בשנה האחרונה — מעט נוסעים זה שלב בניית הביקוש, לא בזבוז. מזוהה מארכיון "הקו בזמן".</li>
+                        <li><strong>כבר צומצם (−10):</strong> שני צמצומי שירות ומעלה בשנה האחרונה — הצמצום כבר קרה. מזוהה מהארכיון.</li>
+                        <li><strong>אין קו חלופי (−10):</strong> לא נמצא קו עם מסלול חופף (40%+) — ביטול ישאיר את הנוסעים בלי שירות.</li>
                       </ul>
+                    </div>
+
+                    <div className="bg-rose-50 rounded-2xl border border-rose-100 p-4 mb-3">
+                      <h4 className="font-black text-rose-800 text-sm mb-2">עלות עודפת באומדן — מה זה ואיך מחושב</h4>
+                      <p className="text-slate-700 text-sm leading-relaxed mb-2">
+                        תרגום של חוסר היעילות לשקלים: כמה עולה להסיע נוסע בקו הזה, לעומת כמה זה עולה בקו ממוצע
+                        מאותה קטגוריה — כפול כל הנוסעים בשנה.
+                      </p>
+                      <div className="bg-white rounded-xl border border-rose-100 p-3 text-sm font-bold text-slate-700 mb-2" style={{ direction: 'rtl' }}>
+                        (עלות לנוסע בקו − עלות ממוצעת בקטגוריה) × ממוצע נוסעים בנסיעה × נסיעות בשבוע × 52 שבועות
+                      </div>
+                      <p className="text-slate-600 text-xs leading-relaxed">
+                        המספר מוצג רק כשהעלות לנוסע גבוהה מהממוצע, והוא <strong>אומדן להמחשה ולא נתון תקציבי רשמי</strong>:
+                        העלות לנוסע מגיעה מדוח משרד התחבורה (יוני 2026), החישוב מניח שהיא אחידה לאורך השנה,
+                        וקווים שכבר בוטלו אינם נספרים. לחיצה על כפתור ה-? שליד המספר בכל כרטיס מציגה את החישוב
+                        המלא עם המספרים של אותו קו.
+                      </p>
                     </div>
 
                     <div className="bg-white rounded-2xl border border-rose-100 p-4">
@@ -4158,7 +4220,7 @@ const DAYS_FILTER = [
                       <h4 className="font-black text-slate-800 text-sm mb-2">איך החישוב עובד</h4>
                       <ul className="list-disc list-inside text-slate-600 text-sm space-y-1.5 pr-2">
                         <li>הניתוח מתייחס <strong>רק לקווים עם ציון 80+</strong> (סטטוס "חמור — דורש התערבות"), כדי לזקק את התמונה.</li>
-                        <li>לכל עיר/מחוז נסכמים: מספר הקווים החמורים, סך הנסיעות, סך ק"מ מבוזבז, וממוצע עלות תפעולית.</li>
+                        <li>לכל עיר/מחוז נסכמים: מספר הקווים החמורים, סך הנסיעות, סך ק"מ מבוזבז, ממוצע עלות תפעולית, וסכום העלות העודפת באומדן (הסבר מלא בסעיף למעלה). קווים שכבר בוטלו אינם נספרים.</li>
                         <li>לחיצה על אזור מעבירה ישירות לטאב "קווים לא יעילים" עם פילטר מתאים.</li>
                       </ul>
                     </div>

@@ -55,6 +55,18 @@ if (!share) fail('אין כפתורי שיתוף על הכרטיסים');
 const newProt = await page.locator('text=/כבר צומצם|קו חדש בהרצה|אין קו חלופי|הזמנה מראש/').count();
 console.log(`✓ הגנות חדשות גלויות ברשימה: ${newProt}`);
 
+// ---- הסבר העלות העודפת נפתח בלחיצה ----
+const excBtn = page.locator('button[title="איך חושב האומדן?"]').first();
+if (await excBtn.count()) {
+  await excBtn.click();
+  await page.waitForSelector('text=איך מחושבת העלות העודפת', { timeout: 8000 })
+    .catch(() => fail('לחיצה על ? לא פתחה את הסבר העלות העודפת'));
+  const hasNumbers = await page.locator('text=/₪[0-9]/').first().count();
+  console.log('✓ הסבר העלות העודפת נפתח, עם מספרי הקו עצמו:', hasNumbers > 0 ? 'כן' : 'לא');
+} else {
+  console.log('· אין כרטיס עם עלות עודפת במסך הראשון — מדלגים על בדיקת הפופאפ');
+}
+
 // ---- קישור עמוק ----
 const makat = await page.locator('.vcard').first().locator('text=/מק/').first().textContent().catch(() => '');
 await page.evaluate(() => { location.hash = 'פח/קו/10415'; });
