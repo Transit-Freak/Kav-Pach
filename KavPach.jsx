@@ -1083,7 +1083,22 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
                 </div>
               ))}
               {filtered.length === 0 && (
+                /* אותו טיפול כמו בקו פח: קישור משותף לקו שירד מהרשימה */
+                focusMakat && trips.some(t => String(t.makat || '').replace(/^0+/, '').trim() === String(focusMakat).replace(/^0+/, '').trim()) ? (
+                  <div className="col-span-full bg-white border-2 border-amber-200 rounded-[2rem] p-8 text-right shadow-sm">
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                      <span className="bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-4 py-1.5 text-[11px] font-black">ירד מהרשימה בעדכון האחרון</span>
+                      <span className="font-black text-slate-900 text-lg">מק"ט {focusMakat}</span>
+                    </div>
+                    <p className="text-slate-600 font-bold text-sm leading-relaxed">
+                      הקו קיים במערכת, אבל בעדכון הנתונים האחרון הוא כבר לא עובר את הסף לרשימת המצטיינים.
+                    </p>
+                    <button onClick={onClearFocus}
+                      className="mt-4 bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-2xl text-xs font-black transition-colors">✕ נקה את הסינון וחזור לרשימה</button>
+                  </div>
+                ) : (
                 <div className="col-span-full text-center py-20 text-slate-400 font-bold">לא נמצאו קווים מצטיינים בסינון הנוכחי.</div>
+                )
               )}
             </div>
             {filtered.length > visibleCount && (
@@ -3562,7 +3577,24 @@ const DAYS_FILTER = [
                         : <button onClick={() => handleOptimizeLineForm(res.lineNum, res.origin)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-black hover:bg-black transition-all shadow-md">חפש הזדמנויות התייעלות</button>}
                     </div>
                   )) : (
+                    /* קישור משותף לקו שירד מהרשימה בעדכון הלילי: במקום מסך
+                       ריק — הסבר קצר וכפתור ניקוי */
+                    focusMakat && trips.some(t => String(t.makat || '').replace(/^0+/, '').trim() === String(focusMakat).replace(/^0+/, '').trim()) ? (
+                      <div className="col-span-full bg-white border-2 border-sky-200 rounded-[2rem] p-8 text-right shadow-sm">
+                        <div className="flex items-center gap-3 mb-3 flex-wrap">
+                          <span className="bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-4 py-1.5 text-[11px] font-black">ירד מהרשימה בעדכון האחרון</span>
+                          <span className="font-black text-slate-900 text-lg">מק"ט {focusMakat}</span>
+                        </div>
+                        <p className="text-slate-600 font-bold text-sm leading-relaxed">
+                          הקו קיים במערכת, אבל אחרי עדכון הנתונים האחרון הציון שלו כבר לא עובר את
+                          סף התצוגה — כלומר הוא כבר לא נראה "חשוד כמיותר". זה דווקא סימן טוב.
+                        </p>
+                        <button onClick={() => { setFocusMakat(null); try { window.location.hash = 'פח'; } catch (e) {} }}
+                          className="mt-4 bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-2xl text-xs font-black transition-colors">✕ נקה את הסינון וחזור לרשימה</button>
+                      </div>
+                    ) : (
                     <div className="col-span-full text-center py-20 text-slate-400 font-bold">לא נמצאו קווים לסינון המבוקש.</div>
+                    )
                   )}
                 </div>
               </div>
