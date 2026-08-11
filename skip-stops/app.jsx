@@ -323,7 +323,7 @@ const Row = React.memo(function Row({ it, open, onToggle, db, inner, onLine }) {
         {!inner && <span className="line-badge">{it.line}</span>}
         <span className="it-main">
           <span className="it-title">מדלג על: {it.stop} <span className="code">({it.code})</span></span>
-          <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים{it.ty && it.ty !== "עירוני" ? <span className="tag-sys ty">{it.ty}</span> : null}{it._sys ? <span className="tag-sys">שיטתי</span> : null}</span>
+          <span className="it-sub">{it.city} · עוצר {fmtM(it.before)} לפני ו-{fmtM(it.after)} אחרי · {it.onum} קווים כן עוצרים{it._new ? <span className="tag-sys new">חדש</span> : null}{it.ty && it.ty !== "עירוני" ? <span className="tag-sys ty">{it.ty}</span> : null}{it._sys ? <span className="tag-sys">שיטתי</span> : null}</span>
         </span>
         <span className="arrow">{open ? "▲" : "▼"}</span>
       </button>
@@ -398,6 +398,23 @@ function App() {
       .catch((e) => setErr(e));
   }, []);
 
+  // "מה חדש מאז הביקור הקודם": מפתחות הממצאים מהביקור הקודם נשמרים
+  // מקומית (localStorage), וכשקובץ הנתונים התחדש מאז — ממצא שלא היה
+  // בביקור הקודם מסומן "חדש", עם אפשרות להציג רק אותם. ההשוואה על
+  // הקובץ העירוני הבסיסי בלבד (הבין-עירוני נטען עצל ולא תמיד קיים).
+  const [showOnlyNew, setShowOnlyNew] = useState(false);
+  const fresh = useMemo(() => {
+    if (!data) return null;
+    const keyOf = (it, i) => it.line + "@" + it.sid + "@" + (it.ty || "") + "@" + (it.skey || i);
+    const cur = (data.items || []).map(keyOf);
+    let prev = null;
+    try { prev = JSON.parse(localStorage.getItem("sk-visit") || "null"); } catch (e) { prev = null; }
+    try { localStorage.setItem("sk-visit", JSON.stringify({ gen: data.gen, keys: cur })); } catch (e) { /* מצב פרטי / אין מקום */ }
+    if (!prev || !prev.gen || prev.gen === data.gen || !Array.isArray(prev.keys)) return null;
+    const old = new Set(prev.keys);
+    return { since: prev.gen, news: new Set(cur.filter((k) => !old.has(k))) };
+  }, [data]);
+
   // הקובץ הלא-עירוני כבד — נטען פעם אחת, רק כשבוחרים סוג קו שאינו עירוני.
   // כישלון (רשת סלולרית, 15MB) חייב להיות גלוי: קודם הוא נבלע בשקט והמשתמש
   // ראה "אין ממצאים בינעירוניים" — מסקנה שגויה בלי שום רמז לתקלה.
@@ -428,8 +445,11 @@ function App() {
     if (!db) return [];
     // המפתח כולל את skey (תבנית המסלול): קו שמדלג על אותה תחנה בשני
     // הכיוונים קיבל שני מפתחות זהים — ופתיחת כרטיס אחד פתחה את השני
-    const raw = (db.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid + "@" + (it.ty || "") + "@" + (it.skey || i), _i: i,
-      _q: (it.line + " " + it.stop + " " + it.code + " " + it.city).toLowerCase() }));
+    const raw = (db.items || []).map((it, i) => {
+      const k = it.line + "@" + it.sid + "@" + (it.ty || "") + "@" + (it.skey || i);
+      return { ...it, _k: k, _i: i, _new: !!(fresh && fresh.news.has(k)),
+        _q: (it.line + " " + it.stop + " " + it.code + " " + it.city).toLowerCase() };
+    });
     // "דילוג שיטתי" — כשכמה קווים מדלגים על אותה תחנה (תכנון ציר, כמו דרך בגין
     // בת"א) זה כנראה מכוון ולא טעות. קו בודד שמדלג על הרבה תחנות רק מסומן בהערה.
     const perLine = {};
@@ -439,11 +459,12 @@ function App() {
       it._sys = (it.skippers || []).length >= 3;
     });
     return raw;
-  }, [db]);
+  }, [db, fresh]);
 
   const filtered = useMemo(() => {
     const needle = dq.trim().toLowerCase();
     return items.filter((it) => {
+      if (showOnlyNew && !it._new) return false;
       if (!byStop && !showSys && it._sys) return false;
       if (fType !== "all" && (it.ty || "עירוני") !== fType) return false;
       if (city && it.city !== city) return false;
@@ -456,9 +477,9 @@ function App() {
       if (it.line === needle) return true;
       return it._q.includes(needle);
     });
-  }, [items, city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
+  }, [items, city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType, showOnlyNew]);
 
-  useEffect(() => { setPage(1); }, [city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
+  useEffect(() => { setPage(1); }, [city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType, showOnlyNew]);
 
   // הקיבוץ והספירות ב-useMemo: קודם הם נבנו מחדש בכל רינדור — כולל כל
   // הקלדה בחיפוש — על אלפי פריטים, מה שביטל את התועלת של useDeferredValue
@@ -515,6 +536,14 @@ function App() {
           {cities.slice(0, 4).map((c) => <span key={c} className="stat">{c}: <b>{byCity[c] || 0}</b></span>)}
           <span className="stat mut">עודכן: {data.gen}</span>
         </div>
+        {fresh && fresh.news.size > 0 && (
+          <div className="newbar">
+            ✨ מאז הביקור הקודם שלך ({fresh.since.split("-").reverse().join(".")}) נוספו <b>{fresh.news.size.toLocaleString()}</b> ממצאים חדשים
+            <button className={"chip clk" + (showOnlyNew ? " on" : "")} onClick={() => setShowOnlyNew(!showOnlyNew)}>
+              {showOnlyNew ? "✓ מציג רק חדשים — לביטול" : "הצג רק את החדשים"}
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="explain">

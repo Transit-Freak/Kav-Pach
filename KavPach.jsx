@@ -662,6 +662,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
   const [expandSearch, setExpandSearch] = useState('');
   const [expandCity, setExpandCity] = useState('');
   const [expandMatches, setExpandMatches] = useState([]);
+  // "לא נמצא" הוצג כבר מההקשה הראשונה, לפני שחיפשו — הדגל נדלק רק בלחיצת חיפוש
+  const [expandSearched, setExpandSearched] = useState(false);
+  // ניתוח לפי כיוון נסיעה — ערבוב הלוך+חזור מיצע כיוון עמוס עם כיוון ריק
+  const [expandDir, setExpandDir] = useState(null);
+  useEffect(() => { setExpandDir(null); }, [selectedLine]);
   const [gTripsCity, setGTripsCity] = useState('');
   const [gTripsCrowded, setGTripsCrowded] = useState(false);
   const [gTripsSort, setGTripsSort] = useState({ key: 'peakLoad', direction: 'desc' });
@@ -916,8 +921,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
                 <Ic n="star" size={28} strokeWidth="2" />
               </div>
               <h1 className="text-4xl font-[900] text-slate-900 tracking-tighter leading-none">הקו המוזהב</h1>
+              <span className="text-xs font-bold text-slate-400 mr-3">נבנה על ידי שלמה הרטמן</span>
             </div>
             <p className="text-slate-500 text-sm font-bold mt-2 pr-1">מאתרים קווים מצטיינים • יעילות גבוהה, נוסעים רבים</p>
+            {/* אותה חותמת שקיפות כמו בקו פח — שני הכלים נשענים על אותו צילום */}
+            <p className="text-slate-400 text-[11px] font-bold mt-1 pr-1">נתוני נוסעים ועלויות: צילום משרד התחבורה, יוני 2026</p>
           </div>
           <button
             onClick={onBack}
@@ -1165,7 +1173,10 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
             const doExpandSearch = () => {
               const q = expandSearch.trim();
               if (!q) return;
-              let matches = goldenLines.filter(l => String(l.lineNum) === q || String(l.makat) === q);
+              setExpandSearched(true);
+              // מק"ט מוקלד כפי שמוצג בכרטיס (עם אפסים מובילים) החמיץ — משווים בלי אפסים
+              const qn = q.replace(/^0+/, '');
+              let matches = goldenLines.filter(l => String(l.lineNum) === q || String(l.makat || '').replace(/^0+/, '') === qn);
               if (matches.length === 0) {
                 // הקו לא ברשימת המצטיינים — בונים אותו ישירות מנתוני הנסיעות (כל קו במערכת)
                 const cityOnly2 = (s2) => s2 ? (s2.indexOf(' - ') > 0 ? s2.slice(0, s2.indexOf(' - ')).trim() : s2.split('/')[0].trim()) : '';
@@ -1200,7 +1211,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
                       <input
                         type="text"
                         value={expandSearch}
-                        onChange={e => { setExpandSearch(e.target.value); setExpandMatches([]); }}
+                        onChange={e => { setExpandSearch(e.target.value); setExpandMatches([]); setExpandSearched(false); }}
                         onKeyDown={e => e.key === 'Enter' && doExpandSearch()}
                         placeholder="למשל 1, 480..."
                         className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 font-black text-sm outline-none focus:border-slate-900 shadow-sm transition-all text-right"
@@ -1211,7 +1222,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
                       <input
                         type="text"
                         value={expandCity}
-                        onChange={e => { setExpandCity(e.target.value); setExpandMatches([]); }}
+                        onChange={e => { setExpandCity(e.target.value); setExpandMatches([]); setExpandSearched(false); }}
                         onKeyDown={e => e.key === 'Enter' && doExpandSearch()}
                         placeholder="הקלד שם עיר..."
                         className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 font-black text-sm outline-none focus:border-slate-900 shadow-sm transition-all text-right"
@@ -1242,7 +1253,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
                     ))}
                   </div>
                 )}
-                {expandMatches.length === 0 && expandSearch && (
+                {expandSearched && expandMatches.length === 0 && expandSearch && (
                   <p className="text-xs font-bold text-rose-500 text-right mt-4">קו {expandSearch} לא נמצא במערכת{expandCity ? " בעיר שהוקלדה" : ""}</p>
                 )}
               </div>
@@ -1256,9 +1267,20 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
             const pair = [cityOnly(t.origin), cityOnly(t.dest)].sort().join('-');
             return `${t.lineNum}_${pair}` === selectedLine.groupKey;
           });
+          // ניתוח לפי כיוון (כמו בסימולטור של קו פח): מיצוע הלוך+חזור הסתיר
+          // כיוון בוקר דחוס מאחורי כיוון חוזר ריק, ו"השעות המוצעות" נבנו
+          // משני הכיוונים יחד — מרווחים שלא קיימים באף כיוון בפועל.
+          // ברירת המחדל: הכיוון העמוס יותר.
+          const dirs = [...new Set(lineTrips.map(t => String(t.direction || '')))].filter(Boolean).sort();
+          const dirWeight = (d) => lineTrips.filter(t => String(t.direction || '') === d)
+            .reduce((s, t) => s + (t.peakLoad || 0) * t.tripCount, 0);
+          const chosenDir = dirs.length > 1
+            ? (expandDir && dirs.includes(expandDir) ? expandDir : dirs.slice().sort((a, b) => dirWeight(b) - dirWeight(a))[0])
+            : (dirs[0] || null);
+          const dirTrips = dirs.length > 1 ? lineTrips.filter(t => String(t.direction || '') === chosenDir) : lineTrips;
           const periods = { 'לילה (00-06)': [], 'בוקר שיא (06-09)': [], 'בוקר (09-12)': [], 'צהריים (12-15)': [], 'אחה"צ שיא (15-18)': [], 'ערב (18-22)': [], 'לילה מאוחר (22-24)': [] };
           const periodRange = [[0,360],[360,540],[540,720],[720,900],[900,1080],[1080,1320],[1320,1440]];
-          lineTrips.forEach(t => {
+          dirTrips.forEach(t => {
             const mins = t.timeMins;
             if (mins == null) return;
             const idx = periodRange.findIndex(([a,b]) => mins >= a && mins < b);
@@ -1319,8 +1341,28 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
                     </div>
                   </div>
                   <p className="text-slate-500 font-bold text-sm mt-2">חישוב כמה נסיעות כדאי להוסיף כדי להוריד את העומס לרמה נוחה (עד 85% מקיבולת האוטובוס)</p>
+                  {dirs.length > 1 && (
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <span className="text-xs font-black text-slate-400">הניתוח לכל כיוון בנפרד:</span>
+                      {dirs.map(d => {
+                        const t0 = lineTrips.find(t => String(t.direction || '') === d) || {};
+                        return (
+                          <button key={d} onClick={() => setExpandDir(d)}
+                            className={"px-4 py-2 rounded-xl text-xs font-black border-2 transition-colors " + (chosenDir === d ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400")}>
+                            כיוון {d} · {t0.origin} ← {t0.dest}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <button onClick={() => setGoldenTab('top')} className="shrink-0 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-2xl font-black text-sm transition-colors">← חזרה לרשימה</button>
+                <div className="shrink-0 flex flex-wrap gap-2">
+                  {/* בלי הכפתור הזה, מי שבחר קו נשאר תקוע עליו — טופס החיפוש
+                      לא היה נגיש יותר בלי רענון של הדף */}
+                  <button onClick={() => { setSelectedLine(null); setExpandMatches([]); setExpandSearch(''); setExpandCity(''); setExpandSearched(false); }}
+                    className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-2xl font-black text-sm transition-colors shadow-md">🔍 נתח קו אחר</button>
+                  <button onClick={() => setGoldenTab('top')} className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-2xl font-black text-sm transition-colors">← חזרה לרשימה</button>
+                </div>
               </div>
 
               {/* סיכום: סך נסיעות להוספה */}
@@ -1438,16 +1480,18 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
 
               {/* נתוני קו */}
               <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-7">
-                <h3 className="text-lg font-black text-slate-900 mb-5">נתוני הקו המצטיין</h3>
+                <h3 className="text-lg font-black text-slate-900 mb-5">{selectedLine.notGolden ? 'נתוני הקו' : 'נתוני הקו המצטיין'}</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* קו שנבחר ידנית ("כל קו במערכת") אינו נושא ניקוד ונתוני
+                      סיכום — בלי הסינון הוצג undefined/100 ומשבצות ריקות */}
                   {[
-                    ['ניקוד מוזהב', `${selectedLine.score}/100`],
-                    ['ממוצע נוסעים', selectedLine.avg],
-                    ['עומס שיא', selectedLine.avgPeak],
-                    ['נסיעות בשבוע', selectedLine.count],
+                    ['ניקוד מוזהב', selectedLine.score != null ? `${selectedLine.score}/100` : 'לא מדורג'],
+                    ['ממוצע נוסעים', selectedLine.avg != null ? selectedLine.avg : '—'],
+                    ['עומס שיא', selectedLine.avgPeak != null ? selectedLine.avgPeak : '—'],
+                    ['נסיעות בשבוע', selectedLine.count != null ? selectedLine.count : '—'],
                     ['עלות לנוסע', selectedLine.cost > 0 ? `₪${selectedLine.cost.toFixed(2)}` : '—'],
-                    ['ק"מ שימושי', `${(selectedLine.nonWastedKm||0).toLocaleString()} ק"מ`],
-                    ['קטגוריה', selectedLine.category],
+                    ['ק"מ שימושי', selectedLine.nonWastedKm != null ? `${(selectedLine.nonWastedKm||0).toLocaleString()} ק"מ` : '—'],
+                    ['קטגוריה', selectedLine.category || '—'],
                   ].map(([label, val]) => (
                     <div key={label} className="bg-slate-50 rounded-2xl p-4 text-right">
                       <div className="text-slate-400 text-xs font-bold mb-1">{label}</div>
@@ -1723,6 +1767,7 @@ function KavPach() {
 
   // ── מצב מפה ──────────────────────────────────────────────────────────────
   const [simLoading, setSimLoading] = useState(false);
+  const [simSkipped, setSimSkipped] = useState(0);   // קווים מבוטלים שהוחרגו מהסימולציה
 
   useEffect(() => {
     if (!activeExplainId) return;
@@ -2704,7 +2749,12 @@ const DAYS_FILTER = [
     setVisibleOptCount(50);
     await yieldFrame();
 
+    // קווים שכבר בוטלו לפי ארכיון "הקו בזמן" לא נכנסים לסימולציה: בלעדי
+    // הבדיקה הכלי המליץ "לבטל" נסיעות של קווים מתים — כולל באקסל המיוצא
+    const skippedMakats = new Set();
     const filteredTrips = trips.filter(t => {
+        const live = liveOf(t.makat);
+        if (live && live.rm) { skippedMakats.add(t.makat); return false; }
         if (lineToUse) {
           const searchVals = String(lineToUse).split(',').map(s => s.trim()).filter(Boolean);
           if (searchVals.length > 0) {
@@ -2733,6 +2783,7 @@ const DAYS_FILTER = [
       return true;
     });
 
+    setSimSkipped(skippedMakats.size);
     if (filteredTrips.length === 0) {
       setOptimizations([]);
       setSimLoading(false);
@@ -2759,7 +2810,10 @@ const DAYS_FILTER = [
     for (let gi = 0; gi < groupEntries.length; gi++) {
       const group = groupEntries[gi];
       group.sort((a,b) => a.timeMins - b.timeMins);
-      const usedTrips = new Set(); 
+      const usedTrips = new Set();
+      // נסיעות שבוטלו בריצה הזו — נסיעה מבוטלת אינה "חלופה קרובה" למי
+      // שבא לבטל את השכנה שלה (אחרת שתי נסיעות סמוכות מבטלות זו את זו)
+      const cancelledIds = new Set();
       let cancelledInGroup = 0;
       
       for(let i = 0; i < group.length; i++) {
@@ -2767,7 +2821,10 @@ const DAYS_FILTER = [
         if (usedTrips.has(t1.id)) continue;
 
         const t2 = i < group.length - 1 ? group[i+1] : null;
-        if (t2 && t1.timeMins === t2.timeMins) continue;
+        // שתי יציאות באותה דקה: בעבר t1 פשוט דולג ונעלם מהתוצאות (לוח
+        // זמנים חסר). עכשיו הוא ממשיך לבדיקה רגילה — זוג באותה דקה עם
+        // מעט נוסעים הוא מועמד האיחוד הטבעי ביותר (gap 0), ועם הרבה
+        // נוסעים הוא מוצג כ"תקין" כמו כל נסיעה אחרת.
 
         let merged = false;
         const category = getLineCategory(t1.lineType);
@@ -2827,7 +2884,7 @@ const DAYS_FILTER = [
             }
           }
 
-          if (!skipForBetterMerge && gap1 > 0 && gap1 <= maxGapMerge && val1 < maxRidersEach && val2 < maxRidersEach && totalVal1 < maxTotalMerge && (!isNight || hasCustomGap)) {
+          if (!skipForBetterMerge && gap1 >= 0 && gap1 <= maxGapMerge && val1 < maxRidersEach && val2 < maxRidersEach && totalVal1 < maxTotalMerge && (!isNight || hasCustomGap)) {
             const suggestedMins = Math.floor((t1.timeMins + t2.timeMins) / 2);
             const suggestedTime = `${String(Math.floor(suggestedMins/60)).padStart(2,'0')}:${String(suggestedMins%60).padStart(2,'0')}`;
 
@@ -2870,7 +2927,7 @@ const DAYS_FILTER = [
               let hasAlternative = false; 
               const prev = i > 0 ? group[i-1] : null; const next = t2;
               
-              if (prev && (t1.timeMins - prev.timeMins) <= cancelGapCheck) hasAlternative = true;
+              if (prev && !cancelledIds.has(prev.id) && (t1.timeMins - prev.timeMins) <= cancelGapCheck) hasAlternative = true;
               if (next && (next.timeMins - t1.timeMins) <= cancelGapCheck) hasAlternative = true;
 
               if (hasAlternative) {
@@ -2881,7 +2938,7 @@ const DAYS_FILTER = [
                   time: t1.time, timeMins: t1.timeMins, days: t1.days, usedMetric: optMetric, metricVal: valCancel, efficiency: t1.efficiency,
                   busSize: t1.busSize, capacity: t1.capacity
                 });
-                usedTrips.add(t1.id); cancelledInGroup++; cancelledCountByLineDay[dayKey] = (cancelledCountByLineDay[dayKey] || 0) + 1; actionTaken = true;
+                usedTrips.add(t1.id); cancelledIds.add(t1.id); cancelledInGroup++; cancelledCountByLineDay[dayKey] = (cancelledCountByLineDay[dayKey] || 0) + 1; actionTaken = true;
               }
             }
           }
@@ -3498,7 +3555,11 @@ const DAYS_FILTER = [
                           )}
                         </div>
                       </div>
-                      <button onClick={() => handleOptimizeLineForm(res.lineNum, res.origin)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-black hover:bg-black transition-all shadow-md">חפש הזדמנויות התייעלות</button>
+                      {/* על קו שכבר בוטל אין מה לייעל — הכפתור הוביל לסימולטור
+                          שהציג "חשד לנסיעה מיותרת" על קו שאינו קיים */}
+                      {res.live && res.live.rm
+                        ? <div className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl text-xs font-black text-center">הקו כבר בוטל — הנתונים נשמרים לתיעוד בלבד</div>
+                        : <button onClick={() => handleOptimizeLineForm(res.lineNum, res.origin)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-black hover:bg-black transition-all shadow-md">חפש הזדמנויות התייעלות</button>}
                     </div>
                   )) : (
                     <div className="col-span-full text-center py-20 text-slate-400 font-bold">לא נמצאו קווים לסינון המבוקש.</div>
@@ -3892,6 +3953,11 @@ const DAYS_FILTER = [
                       <p className="text-slate-500 text-sm font-bold">
                         נמצאו {optimizations.filter(o => o.type !== 'ok').length} המלצות לשינויים בלוח הזמנים
                       </p>
+                      {simSkipped > 0 && (
+                        <p className="text-red-500 text-xs font-bold mt-1">
+                          ✖ {simSkipped} קווים שכבר בוטלו (לפי ארכיון "הקו בזמן") הוחרגו מהסימולציה
+                        </p>
+                      )}
                     </div>
                     <label className="flex items-center gap-2 bg-slate-100 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors">
                       <input 

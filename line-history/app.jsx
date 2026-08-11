@@ -147,6 +147,14 @@ function fsafe(rd) { return rd.replace(/#/g, "H").replace(/\//g, "_"); }
 function fmtD(d) { return (d || "").split("-").reverse().join("."); }
 function fmtM(d) { const p = (d || "").split("-"); return p[1] + "." + p[0]; }
 function gapDays(a, b) { return Math.round((new Date(b) - new Date(a)) / 864e5); }
+// חיפוש סלחני לגרשיים: בנתונים כתוב רשל''צ (שני גרשים) והמשתמש מקליד
+// רשל"צ או רשל״צ — כל סימני הגרש/גרשיים מוסרים משני צידי ההשוואה
+const sQ = (t) => String(t || "").replace(/[׳״'"]+/g, "");
+// קובצי הנתונים מתעדכנים יומית תחת אותה כתובת. חותמת-יום בכתובת החטיאה
+// את המטמון פעם ביום גם לקבצים היסטוריים שלא השתנו, ובחלק מהקבצים
+// (?v=BUILD בלבד) הוגשה גרסה של אתמול. cache:no-cache מאלץ בדיקת
+// טריות מול השרת: קובץ שלא השתנה חוזר 304 זעיר, קובץ שהשתנה מגיע טרי.
+const dfetch = (p) => fetch(p + "?v=" + BUILD, { cache: "no-cache" });
 
 // דיוק התאריך נקבע לפי המרווח בין שני צילומי הארכיון שביניהם אותר השינוי.
 // בארכיון של 2020 הצילומים יומיים והתאריך מדויק; ב-2017 הם במרחק שבועיים,
@@ -410,6 +418,30 @@ const lineHref = (r) => "#" + encodeURIComponent(r);
 const stopHref = (c) => "#stop=" + encodeURIComponent(c);
 const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
 
+/* תגית עם הסבר שנפתח בהקשה: title מוצג רק בריחוף עכבר, ובטלפון אין
+   ריחוף — רוב הקהל לא ראה את ההסברים האלה מעולם. הקשה על התגית פותחת
+   את אותו הסבר כשורה קטנה מתחתיה, והקשה נוספת סוגרת. */
+function TipTag({ cls, tip, children }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <span className={(cls || "") + " tiptag"} title={tip} role="button" tabIndex={0}
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setOpen(!open); } }}>
+        {children}</span>
+      {open && <span className="tipnote" onClick={(e) => e.stopPropagation()}>🛈 {tip}</span>}
+    </>
+  );
+}
+
+/* הודעת כשל רשת אחידה עם כפתור ניסיון חוזר — במקום "אין נתונים" מטעה */
+function NetErr({ onRetry }) {
+  return (
+    <div className="empty">📡 הנתונים לא ירדו — כנראה תקלת רשת רגעית.{" "}
+      <button className="morebtn" onClick={onRetry}>↻ נסו שוב</button></div>
+  );
+}
+
 /* חיפוש שנשמר בין ניווטים: חזרה מעמוד קו לא מוחקת את מה שהוקלד */
 function usePersistedQ(key) {
   const [q, setQ] = useState(() => { try { return sessionStorage.getItem(key) || ""; } catch (e) { return ""; } });
@@ -421,7 +453,7 @@ function usePersistedQ(key) {
 let ANC2012 = null;
 let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "2012" בחיפוש
 const getAnchors2012 = () =>
-  ANC2012 || (ANC2012 = fetch("data/anchor-2012.json?v=" + BUILD)
+  ANC2012 || (ANC2012 = dfetch("data/anchor-2012.json")
     .then((r) => (r.ok ? r.json() : { anchors: {} }))
     .then((d) => { ANC_SET = new Set(Object.keys(d.anchors || {})); return d; })
     .catch(() => ({ anchors: {} })));
@@ -437,7 +469,9 @@ function AltCompare({ rd, altRd, label, onClose }) {
   useEffect(() => {
     let ok = true;
     setA(null); setB(null);
-    const get = (r) => fetch("data/lines/" + fsafe(r) + ".json?v=" + BUILD)
+    // אותה כתובת בדיוק כמו בעמוד הקו — אחרת אותו קובץ ירד פעמיים תחת
+    // שתי חותמות שונות, ובמקרה גרוע חצי מסך הציג נתונים של אתמול
+    const get = (r) => dfetch("data/lines/" + fsafe(r) + ".json")
       .then((x) => (x.ok ? x.json() : null)).then(materializeLf);
     get(rd).then((d) => ok && setA(d)).catch(() => ok && setA(false));
     get(altRd).then((d) => ok && setB(d)).catch(() => ok && setB(false));
@@ -500,6 +534,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [altRd, setAltRd] = useState(null);   // חלופה שנבחרה להשוואה
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
+  const [rty, setRty] = useState(0);      // מונה "נסו שוב" אחרי כשל רשת
   useEffect(() => {
     let ok = true;
     setAnc(null); setShow12(false); setD12(null); setR12(0); setAltRd(null);
@@ -510,7 +545,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   }, [rd]);
   useEffect(() => {
     if (!show12 || d12 || !anc) return;
-    fetch("../magihim-2012/data/l" + anc.k + ".json?v=" + BUILD)
+    dfetch("../magihim-2012/data/l" + anc.k + ".json")
       .then((r) => r.json())
       .then((d) => {
         // בחירת וריאנט 2012 שתואם את כיוון הווריאנט הפתוח — לפי דמיון
@@ -540,13 +575,21 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
     // החלופות.
     let ok = true;
     setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null); setOnlyCur(false);
-    fetch("data/lines/" + fsafe(rd) + ".json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+    dfetch("data/lines/" + fsafe(rd) + ".json")
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((d) => { if (!ok) return; setLf(materializeLf(d)); setSel(d.versions.length - 1); })
       .catch((e) => { if (ok) setErr(e); });
     return () => { ok = false; };
-  }, [rd]);
-  if (err) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button><div className="empty">לא נמצאו נתונים לוריאנט הזה.</div></div>;
+  }, [rd, rty]);
+  // הודעת שגיאה אחת לשני מצבים שונים הטעתה: כשל רשת רגעי בנייד הוצג
+  // כ"לא נמצאו נתונים" והגולש הסיק שאין מה לראות. סטטוס HTTP (404) הוא
+  // באמת קו שאין לו קובץ; כל השאר — תקלה, עם כפתור לנסות שוב.
+  if (err) return (
+    <div className="card"><button className="back" onClick={onBack}>→ חזרה</button>
+      {/^\d+$/.test(String(err.message)) ? <div className="empty">לא נמצאו נתונים לוריאנט הזה.</div>
+        : <div className="empty">📡 הנתונים לא ירדו — כנראה תקלת רשת רגעית.{" "}
+          <button className="morebtn" onClick={() => setRty((n) => n + 1)}>↻ נסו שוב</button></div>}
+    </div>);
   if (!lf) return <div className="card">טוען…</div>;
   const vs = lf.versions;
   // מספר הנסיעות מגיע מהאינדקס ולא מקובץ הקו: הוא משתנה מיום ליום, ובקובץ
@@ -719,7 +762,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
             {/* מספר התחנות המשותפות הוא מה שקושר את הקו של אז לקו של היום.
                 כשההתאמה נעשתה לפי שם ומספר קו בלבד הוא לא קיים. */}
-            {anc.ov && <span className="a2012ov" title="מספר התחנות שמופיעות גם במסלול של 2012 וגם במסלול הישן ביותר שידוע לנו — על סמך זה נקבע שמדובר באותו קו">· {anc.ov} תחנות משותפות</span>}
+            {anc.ov && <TipTag cls="a2012ov" tip="מספר התחנות שמופיעות גם במסלול של 2012 וגם במסלול הישן ביותר שידוע לנו — על סמך זה נקבע שמדובר באותו קו">· {anc.ov} תחנות משותפות</TipTag>}
             <button className="a2012btn" title="הצגת רשימת התחנות של הקו כפי שהייתה ב-2012 — כולל המסלול על המפה בקו מקווקו חום" onClick={() => setShow12(!show12)}>
               {show12 ? "הסתר ▲" : "רצף התחנות ▼"}
             </button>
@@ -840,8 +883,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           {shown.map(({ v: x, i }) => (
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
               <div className="d">
-                <span title={evDate(x).tip || ""} className={evDate(x).exact ? "" : "approxd"}>
-                  {evDate(x).txt}{evDate(x).exact ? "" : " ≈"}</span>
+                {(() => { const ed = evDate(x); return ed.tip
+                  ? <TipTag cls={ed.exact ? "" : "approxd"} tip={ed.tip}>{ed.txt}{ed.exact ? "" : " ≈"}</TipTag>
+                  : <span>{ed.txt}</span>; })()}
                 {(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}
                 {(x.shp || (x.stops || []).length > 1) && (
                 <button className={"cmpbtn" + (cmpI === i ? " on" : "")}
@@ -865,11 +909,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                 {/* שינוי שרצף התחנות חזר ממנו מיד. בלי הסימון הזה השורה
                     אומרת שתחנות ירדו, בעוד הקו עוצר בהן עד היום. */}
                 {x.rv ? (
-                  <span className="rvflag" title="רצף התחנות חזר בדיוק למה שהיה לפני השינוי הזה. שינוי שמתבטל מיד הוא כמעט תמיד תנודה בפרסום ולא שינוי במסלול">
-                    ↩ חזר כעבור {x.rv === 1 ? "יום" : x.rv + " ימים"}</span>
+                  <TipTag cls="rvflag" tip="רצף התחנות חזר בדיוק למה שהיה לפני השינוי הזה. שינוי שמתבטל מיד הוא כמעט תמיד תנודה בפרסום ולא שינוי במסלול">
+                    ↩ חזר כעבור {x.rv === 1 ? "יום" : x.rv + " ימים"}</TipTag>
                 ) : x.rvb ? (
-                  <span className="rvflag" title="השינוי הקודם התבטל כאן — רצף התחנות חזר למה שהיה לפניו">
-                    ↩ החזרת המצב הקודם</span>
+                  <TipTag cls="rvflag" tip="השינוי הקודם התבטל כאן — רצף התחנות חזר למה שהיה לפניו">
+                    ↩ החזרת המצב הקודם</TipTag>
                 ) : null}
                 {x.note && <span className="evnote"> {x.note}</span>}
               </div>
@@ -938,12 +982,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <div className="mut">🛈 האירוע עצמו אינו נושא מסלול — המפה מציגה את המסלול המתועד
             {gv.d < v.d ? " האחרון לפני האירוע" : " הראשון אחרי האירוע"}, מ-{fmtD(gv.d)}.</div>
         )}
+        {/* addedCodes: codeOf מצפה לאינדקס גרסה (vi) — האינדקס בתוך רשימת
+            ➕ גרם לסריקה מהגרסאות הישנות ביותר, ותחנה עם שם זהה ומק"ט אחר
+            מהעבר קיבלה את הסימון הירוק במקום התחנה שבאמת נוספה */}
         <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
           cur={cur} prev={onlyCur ? null : prev}
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
           prevStops={!onlyCur && pgv && (pgv.stops || []).length ? pgv.stops : null}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
-            ? new Set((v.add || []).map((n, i) => codeOf(n, i, true)).filter(Boolean)) : null}
+            ? new Set((v.add || []).map((n) => codeOf(n, vi, true)).filter(Boolean)) : null}
           stops12={onlyCur ? null : stops12} />
         <div className="legend">
           {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
@@ -978,11 +1025,11 @@ function StopEvMap({ ev }) {
       pts.push([ev.ola, ev.olo]);
       L.polyline([[ev.ola, ev.olo], [ev.la, ev.lo]], { color: "#2563eb", weight: 3, dashArray: "5 7", opacity: 0.9 }).addTo(map);
       L.circleMarker([ev.ola, ev.olo], { radius: 9, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
-        .addTo(map).bindPopup(`<b>המיקום הישן</b><br><span class="pcode">(${ev.ola}, ${ev.olo})</span>`, { className: "lh-pop" });
+        .addTo(map).bindPopup(`<b>המיקום הישן</b><br><span class="pcode" dir="ltr">(${ev.ola}, ${ev.olo})</span>`, { className: "lh-pop" });
     }
     L.circleMarker([ev.la, ev.lo], { radius: 9, color: "#fff", weight: 2,
       fillColor: ev.k === "moved" ? "#16a34a" : ((SKINDS[ev.k] || {}).color || "#2563eb"), fillOpacity: 1 })
-      .addTo(map).bindPopup(`<b>${esc(ev.n || ev.nn || "")}</b>${ev.k === "moved" ? "<br>המיקום החדש" : ""}<br><span class="pcode">(${ev.la}, ${ev.lo})</span>`, { className: "lh-pop" });
+      .addTo(map).bindPopup(`<b>${esc(ev.n || ev.nn || "")}</b>${ev.k === "moved" ? "<br>המיקום החדש" : ""}<br><span class="pcode" dir="ltr">(${ev.la}, ${ev.lo})</span>`, { className: "lh-pop" });
     map.fitBounds(L.latLngBounds(pts).pad(0.6), { maxZoom: 17 });
     return () => map.remove();
   }, [ev]);
@@ -1136,7 +1183,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
   const [idx12, setIdx12] = useState(null);
   useEffect(() => { getAnchors2012().then((d) => setA12(d.anchors || {})); }, []);
   useEffect(() => {
-    fetch("../magihim-2012/data/index.json?v=" + BUILD)
+    dfetch("../magihim-2012/data/index.json")
       .then((r) => (r.ok ? r.json() : { lines: [] }))
       .then(setIdx12).catch(() => setIdx12({ lines: [] }));
   }, []);
@@ -1148,34 +1195,48 @@ function DayFeed({ idx, openLine, open12, onBack }) {
   const rows12 = useMemo(() =>
     (((idx12 && idx12.lines) || []).map((l) => ({ ...l, rd: k2rd[l.k] || null }))),
   [idx12, k2rd]);
+  const [mErr, setMErr] = useState(false);
+  const [chErr, setChErr] = useState(false);
+  const [rty, setRty] = useState(0);
   useEffect(() => {
-    fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+    let ok = true;
+    setMErr(false);
+    dfetch("data/months.json")
       .then((r) => r.json())
       .then((d) => {
+        if (!ok) return;
         const ms = d.months || []; setMonths(ms);
         // לא דורסים בחירה שכבר נעשתה — כניסה מכתובת ‎#2012/<k>‎ קובעת
-        // את השנה לפני שהחודשים נטענים
-        if (ms.length) { setYr((cur) => cur || ms[0].slice(0, 4)); setMon((cur) => cur || ms[0]); }
+        // את השנה לפני שהחודשים נטענים. months ממוין עולה, והאיבר האחרון
+        // הוא החודש הנוכחי: פתיחה על ms[0] נחתה על מרץ 2017.
+        const last = ms[ms.length - 1] || "";
+        if (ms.length) { setYr((cur) => cur || last.slice(0, 4)); setMon((cur) => cur || last); }
       })
-      .catch(() => setMonths([]));
-  }, []);
+      .catch(() => { if (ok) { setMErr(true); setMonths([]); } });
+    return () => { ok = false; };
+  }, [rty]);
   useEffect(() => {
     if (!mon) return;
-    setChs(null);
-    fetch("data/changes/" + mon + ".json?v=" + BUILD)
+    // מעבר מהיר בין חודשים ברשת איטית: בלי הביטול, תשובה איטית של החודש
+    // הקודם עלולה לנחות אחרונה ולהציג רשימה של חודש אחד תחת כותרת של אחר
+    let ok = true;
+    setChs(null); setChErr(false);
+    dfetch("data/changes/" + mon + ".json")
       .then((r) => (r.ok ? r.json() : { changes: [] }))
-      .then((d) => setChs(d.changes || []))
-      .catch(() => setChs([]));
-  }, [mon]);
+      .then((d) => { if (ok) setChs(d.changes || []); })
+      .catch(() => { if (ok) { setChErr(true); setChs([]); } });
+    return () => { ok = false; };
+  }, [mon, rty]);
   if (months === null) return <div className="card">טוען…</div>;
+  if (mErr) return <div className="card"><NetErr onRetry={() => { setMonths(null); setRty((n) => n + 1); }} /></div>;
   const needle = q.trim();
   // הפיד יושב בטאב "קווים", שהוא טאב האוטובוסים. רכבת ומוניות שירות הן
   // טאבים משלהן, וכשהן הופיעו כאן הן גם הגיעו בלי מספר קו — תג ריק.
   const list = (chs || []).filter((c) => {
     const m = meta[c.rd] || {};
     if (m.tt && m.tt !== "demand") return false;
-    return !needle || c.line.includes(needle) || (m.dest || "").includes(needle) ||
-      (m.op || "").includes(needle) || c.rd.includes(needle);
+    return !needle || c.line.includes(needle) || sQ(m.dest).includes(sQ(needle)) ||
+      sQ(m.op).includes(sQ(needle)) || c.rd.includes(needle);
   });
   const days = []; const byd = new Map();
   for (const c of list) { let g = byd.get(c.d); if (!g) { g = []; byd.set(c.d, g); days.push(c.d); } g.push(c); }
@@ -1233,7 +1294,8 @@ function DayFeed({ idx, openLine, open12, onBack }) {
               או ששונה עד ללא היכר. לחיצה על השורה פותחת את רצף התחנות שלו מ-2012.</div>
           </div>
         );
-      })() : chs === null ? "טוען…" : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
+      })() : chs === null ? "טוען…" : chErr ? <NetErr onRetry={() => setRty((n) => n + 1)} />
+        : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
         <div>
           {days.map((d) => shown >= lim ? null : (
             <React.Fragment key={d}>
@@ -1308,20 +1370,33 @@ function StopCode({ code }) {
 const WDR = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 function RecentChanges({ idx, openLine, onAll }) {
   const [rows, setRows] = useState(null);
+  const [nerr, setNerr] = useState(false);
+  const [rty, setRty] = useState(0);
   const meta = useMemo(() => { const m = {}; ((idx && idx.lines) || []).forEach((l) => { m[l.rd] = l; }); return m; }, [idx]);
   useEffect(() => {
-    fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+    let ok = true;
+    setNerr(false);
+    dfetch("data/months.json")
       .then((r) => r.json())
-      .then((d) => {
+      .then(async (d) => {
         const ms = (d.months || []).slice().sort();
-        if (!ms.length) return setRows([]);
-        return fetch("data/changes/" + ms[ms.length - 1] + ".json?v=" + BUILD)
-          .then((r) => r.json())
-          .then((j) => setRows((j.changes || []).slice().sort((a, b) => b.d.localeCompare(a.d))));
+        if (!ms.length) { if (ok) setRows([]); return; }
+        const get = (m) => dfetch("data/changes/" + m + ".json")
+          .then((r) => (r.ok ? r.json() : { changes: [] }));
+        let list = (await get(ms[ms.length - 1])).changes || [];
+        // ב-1 בחודש הקובץ החדש כמעט ריק, והמסך הראשי נראה כאילו האתר מת —
+        // כשחסרים ימים משלימים מהחודש הקודם כדי שתמיד יוצגו הימים האחרונים
+        const daysIn = new Set(list.map((c) => c.d));
+        if (daysIn.size < 3 && ms.length > 1) {
+          list = list.concat((await get(ms[ms.length - 2])).changes || []);
+        }
+        if (ok) setRows(list.slice().sort((a, b) => b.d.localeCompare(a.d)));
       })
-      .catch(() => setRows([]));
-  }, []);
+      .catch(() => { if (ok) { setNerr(true); setRows([]); } });
+    return () => { ok = false; };
+  }, [rty]);
   if (rows === null) return <div className="empty">טוען את השינויים האחרונים…</div>;
+  if (nerr) return <NetErr onRetry={() => { setRows(null); setRty((n) => n + 1); }} />;
   if (!rows.length) return <div className="empty">אין עדיין שינויים בחודש הזה.</div>;
   const days = [];
   const byd = new Map();
@@ -1446,28 +1521,37 @@ function StopsTab({ sel }) {
     }
     return true;
   };
+  const [mErr, setMErr] = useState(false);
+  const [chErr, setChErr] = useState(false);
+  const [rty, setRty] = useState(0);
   useEffect(() => {
-    fetch("data/months.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+    let ok = true;
+    setMErr(false);
+    dfetch("data/months.json")
       .then((r) => r.json())
-      .then((d) => { const ms = d.stopMonths || [];
+      .then((d) => { if (!ok) return; const ms = d.stopMonths || [];
         setMonths(ms);
         // ברירת המחדל: החודש האחרון — נטען מיידית. "כל התקופה" (פירוק
         // ומיון של כל קורות-החיים, מאות אלפי אירועים) רק בבחירה מפורשת
         // כשהגענו מקישור לתחנה, "כל התקופה" כבר נבחר — וטעינת החודשים
         // דרסה אותו בחודש האחרון, כך שהקישור נחת על מסך ריק
         if (ms.length && !sel) { setMon(ms[0]); setYr(ms[0].slice(0, 4)); } })
-      .catch(() => setMonths([]));
-  }, []);
+      .catch(() => { if (ok) { setMErr(true); setMonths([]); } });
+    return () => { ok = false; };
+  }, [rty]);
   useEffect(() => {
     // "כל התקופה" נבנית מקורות החיים ולא מקובץ חודש — בלי התנאי הזה נשלחה
     // בקשה ל-stops-all.json שתמיד חוזרת 404
     if (!mon || mon === "all") return;
-    setChs(null);
-    fetch("data/changes/stops-" + mon + ".json?v=" + BUILD)
+    // ביטול כשעוברים חודש: תשובה איטית של חודש קודם לא דורסת את החדש
+    let ok = true;
+    setChs(null); setChErr(false);
+    dfetch("data/changes/stops-" + mon + ".json")
       .then((r) => (r.ok ? r.json() : { changes: [] }))
-      .then((d) => setChs(d.changes || []))
-      .catch(() => setChs([]));
-  }, [mon]);
+      .then((d) => { if (ok) setChs(d.changes || []); })
+      .catch(() => { if (ok) { setChErr(true); setChs([]); } });
+    return () => { ok = false; };
+  }, [mon, rty]);
   // ממואם: בלי זה כל הקלדה בחיפוש בנתה ומיינה מחדש את כל האירועים (לאגים).
   // "כל התקופה": כל האירועים מכל הזמנים מתוך קורות-החיים, עם תאריך ליד כל אחד
   const source = useMemo(() => {
@@ -1486,26 +1570,30 @@ function StopsTab({ sel }) {
     return cn;
   }, [source]);
   if (months === null) return <div className="card">טוען…</div>;
+  if (mErr) return <div className="card"><NetErr onRetry={() => { setMonths(null); setRty((n) => n + 1); }} /></div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
   const needle = q.trim();
   const nsCount = (source || []).filter((c) => c.ns).length;
+  const sNeedle = sQ(needle);
   const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) && (!onlyNs || c.ns) &&
-    (!needle || (c.n || "").includes(needle) || (c.nn || "").includes(needle) || (c.on || "").includes(needle) || (c.t || "").includes(needle) || c.c === needle));
+    (!needle || sQ(c.n).includes(sNeedle) || sQ(c.nn).includes(sNeedle) || sQ(c.on).includes(sNeedle) || sQ(c.t).includes(sNeedle) || c.c === needle));
   return (
     <div className="card">
       {/* בוחר לפי שנה: slice(0,18) הישן הסתיר את כל מה שלפני 02.2025 —
           עכשיו כל שנה נגישה בלחיצה, והחודשים שלה נפתחים מתחתיה */}
       <div className="months">
         <button className={"mchip" + (mon === "all" ? " on" : "")} title="כל האירועים מכל השנים ברצף אחד" onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
-        {/* מהחדשה לישנה, באותו כיוון של החודשים בתוך כל שנה */}
+        {/* מהחדשה לישנה, באותו כיוון של החודשים בתוך כל שנה.
+            stopMonths ממוין יורד (בניגוד ל-months של הקווים) — החודש
+            החדש של שנה הוא ms[0], וה-reverse היה הופך את סדר התצוגה */}
         {[...new Set(months.map((m) => m.slice(0, 4)))].sort().reverse().map((y) => (
           <button key={y} className={"mchip" + (yr === y ? " on" : "")}
-            title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
+            title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[0]); }}>{y}</button>
         ))}
       </div>
       {yr && (
         <div className="months">
-          {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
+          {months.filter((m) => m.startsWith(yr)).map((m) => (
             <button key={m} className={"mchip" + (mon === m ? " on" : "")} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
           ))}
         </div>
@@ -1571,20 +1659,22 @@ function StopsTab({ sel }) {
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
                   {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
                       נקרא כאילו נוספה תחנה שאפשר לחכות בה — וזה לא נכון. */}
-                  {c.ns && <span className="nsflag" title="התחנה לא נמצאה במסלול של אף קו מהקווים שמתועדים אצלנו. ייתכן שהיא אושרה ברישוי ולא נפתחה לציבור, וייתכן שעצר בה קו שרצף התחנות שלו חסר לנו">ברישום בלבד</span>}
+                  {c.ns && <TipTag cls="nsflag" tip="התחנה לא נמצאה במסלול של אף קו מהקווים שמתועדים אצלנו. ייתכן שהיא אושרה ברישוי ולא נפתחה לציבור, וייתכן שעצר בה קו שרצף התחנות שלו חסר לנו">ברישום בלבד</TipTag>}
                   {/* רק על "תחנה חדשה", ששם זה תיקון של מה שכתוב: התחנה
                       חזרה לרישום, לא נבנתה. על שאר סוגי האירועים זו הערת
                       רקע שלא מוסיפה כלום, ולכן היא לא מוצגת. */}
-                  {c.m12 && c.k === "new" && <span className="m12flag"
-                    title="התחנה כבר הופיעה במסלול של קו במאגר מגיעים מ-2012, ולכן אין מדובר בתחנה שנבנתה עכשיו אלא בחזרה לרישום הארצי">
-                    הייתה כבר ב-2012</span>}
+                  {c.m12 && c.k === "new" && <TipTag cls="m12flag"
+                    tip="התחנה כבר הופיעה במסלול של קו במאגר מגיעים מ-2012, ולכן אין מדובר בתחנה שנבנתה עכשיו אלא בחזרה לרישום הארצי">
+                    הייתה כבר ב-2012</TipTag>}
                   <span className="meta">
                     {one && c.t ? c.t + " · " : ""}{fmtD(c.d)}
                     {/* בלי המיקום הקודם השורה יצאה "הוזזה מ׳ · (, ) ← (…)" —
                         חצים ריקים משני הצדדים. כשהוא חסר מוצג היעד בלבד. */}
+                    {/* dir=ltr על זוג הקואורדינטות: בטקסט עברי הפסיק והרווח
+                        מקבלים כיוון RTL וסדר lat/lon התהפך ויזואלית */}
                     {c.k === "moved" && (c.ola != null
-                      ? <> · הוזזה <b>{c.dist || c.m} מ׳</b> · <s>({c.ola}, {c.olo})</s> ← <b>({c.la}, {c.lo})</b></>
-                      : <> · הוזזה <b>{c.dist || c.m} מ׳</b> · אל <b>({c.la}, {c.lo})</b></>)}
+                      ? <> · הוזזה <b>{c.dist || c.m} מ׳</b> · <s dir="ltr">({c.ola}, {c.olo})</s> ← <b dir="ltr">({c.la}, {c.lo})</b></>
+                      : <> · הוזזה <b>{c.dist || c.m} מ׳</b> · אל <b dir="ltr">({c.la}, {c.lo})</b></>)}
                     {c.lines && c.lines.length > 0 && <> · {c.k === "new" ? "קווים שעצרו בה מהפתיחה" : "קווים שעצרו בה אז"}: {c.lines.slice(0, 10).join(", ")}</>}
                     {c.la != null && <> · 🗺️</>}
                   </span>
@@ -1619,7 +1709,9 @@ function StopsTab({ sel }) {
               </React.Fragment>
             );
           })()}
-          {list.length === 0 && <div className="empty">אין שינויים תואמים בחודש הזה.</div>}
+          {list.length === 0 && (chErr
+            ? <NetErr onRetry={() => setRty((n) => n + 1)} />
+            : <div className="empty">אין שינויים תואמים בחודש הזה.</div>)}
         </div>
       )}
     </div>
@@ -1694,10 +1786,10 @@ function ModesTab({ idx, openLine, spec }) {
   const allowed = sel.size ? new Set(spec.groups.filter((m) => sel.has(m.k)).flatMap((m) => m.tts)) : null;
   let list = mine.filter((l) => !allowed || allowed.has(l.tt));
   if (needle) {
-    const toks = needle.split(/\s+/).filter(Boolean);
+    const toks = sQ(needle).split(/\s+/).filter(Boolean);
     list = list.filter((l) => toks.every((t) =>
       (l.line || "").startsWith(t) || l.rd.startsWith(t) ||
-      (l.dest || "").includes(t) || (l.op || "").includes(t)));
+      sQ(l.dest).includes(t) || sQ(l.op).includes(t)));
   }
   const lnum = (l) => parseInt(l.line) || 1e9;
   list = list.slice().sort((a, b) => lnum(a) - lnum(b) || (a.line || "").localeCompare(b.line || "") || a.rd.localeCompare(b.rd));
@@ -1800,12 +1892,13 @@ function App() {
     if (location.hash) history.replaceState(null, "", location.pathname + location.search);
   };
   const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const [rty, setRty] = useState(0);
   useEffect(() => {
-    fetch("data/lines.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+    dfetch("data/lines.json")
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(setIdx)
       .catch(setErr);
-  }, []);
+  }, [rty]);
   const counts = useMemo(() => {
     const c = {};
     if (idx) {
@@ -1835,8 +1928,16 @@ function App() {
     return m;
   }, [idx]);
   const isLineGone = (l) => l.lk === "removed" && !mktAlive[l.rd.split("-")[0]];
-  if (err) return <div className="boot">הנתונים עוד לא נוצרו — הריצה הראשונה של הצינור תיצור אותם. נסו לרענן מאוחר יותר.</div>;
-  if (!idx) return <div className="boot">טוען נתונים…</div>;
+  // סטטוס HTTP = הקובץ באמת לא קיים; כל כשל אחר הוא תקלת רשת — עם כפתור
+  // ניסיון חוזר במקום הודעה שגורמת לגולש לחשוב שאין נתונים
+  if (err) return (
+    <div className="boot">{/^\d+$/.test(String(err && err.message))
+      ? "הנתונים עוד לא נוצרו — הריצה הראשונה של הצינור תיצור אותם. נסו לרענן מאוחר יותר."
+      : <>📡 הנתונים לא ירדו — כנראה תקלת רשת רגעית.{" "}
+        <button className="morebtn" onClick={() => { setErr(null); setRty((n) => n + 1); }}>↻ נסו שוב</button></>}
+    </div>);
+  // האינדקס (3.6MB) נדרש רק לחיפוש הקווים — טאב התחנות, הפיד היומי ועמודי
+  // קווים מקישור ישיר עובדים בלעדיו, ולכן האתר כבר לא מחכה לו כדי להופיע
   const needle = q.trim();
   const inKats = (l) => {
     if (!kats.size) return true;
@@ -1844,11 +1945,12 @@ function App() {
     return false;
   };
   let list = [], total = 0;
-  if (needle || kats.size) {
-    // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות
-    const toks = needle.split(/\s+/).filter(Boolean);
+  if (idx && (needle || kats.size)) {
+    // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות.
+    // ההשוואה דרך sQ: גרשיים בכל צורה (רשל"צ / רשל''צ / רשל״צ) מתאימים
+    const toks = sQ(needle).split(/\s+/).filter(Boolean);
     const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
-      (l.dest || "").includes(t) || (l.op || "").includes(t);
+      sQ(l.dest).includes(t) || sQ(l.op).includes(t);
     // טאב "קווים" הוא אוטובוסים. קווי "שירות לפי דרישה" מופעלים בידי חברות
     // האוטובוס ונשארים גם כאן, ולא רק בטאב סוגי התחבורה (בקשת המשתמש).
     const buses = idx.lines.filter((l) => !l.tt || l.tt === "demand");
@@ -1866,16 +1968,18 @@ function App() {
     total = list.length;
     list = list.slice(0, lim);
   }
-  const changed = idx.lines.filter((l) => l.v > 1).length;
+  const changed = idx ? idx.lines.filter((l) => l.v > 1).length : 0;
   return (
     <div className="wrap">
       <header>
         <h1>🕰️ הקו בזמן <span className="beta">ניסוי</span></h1>
         <p className="tag">כל שינוי שנכנס לתוקף במסלולי הקווים ובתחנות — מסלול, שרטוט, תחנות ושמות. מהשוואת ה-GTFS של משרד התחבורה, יום מול יום, ממרץ 2017 ועד היום.</p>
         <div className="stats">
-          <span className="stat"><b>{idx.lines.length.toLocaleString()}</b> וריאנטים מתועדים</span>
-          <span className="stat"><b>{changed.toLocaleString()}</b> עם שינויים</span>
-          <span className="stat mut">עודכן: {idx.gen}</span>
+          {idx ? (<>
+            <span className="stat"><b>{idx.lines.length.toLocaleString()}</b> וריאנטים מתועדים</span>
+            <span className="stat"><b>{changed.toLocaleString()}</b> עם שינויים</span>
+            <span className="stat mut">עודכן: {idx.gen}</span>
+          </>) : <span className="stat mut">טוען את רשימת הקווים ברקע…</span>}
         </div>
       </header>
       <div className="tabs">
@@ -1890,7 +1994,8 @@ function App() {
         <Line2012Page k12={k12} anchorRd={anc12[k12] || null} openLine={openLine}
           onBack={() => { setK12(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
       ) : tab === "stops" ? <StopsTab sel={stopSel} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
-        <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
+        idx ? <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
+          : <div className="card">טוען את רשימת הקווים…</div>
       ) : rd ? (
         <LinePage rd={rd} lineGone={!mktAlive[rd.split("-")[0]]}
           sibs={idx.lines.filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
@@ -1939,7 +2044,9 @@ function App() {
               </div>
             )}
           </div>
-          {(needle || kats.size > 0) ? (
+          {(needle || kats.size > 0) && !idx ? (
+            <div className="empty">טוען את רשימת הקווים — החיפוש יעבוד בעוד רגע…</div>
+          ) : (needle || kats.size > 0) ? (
             <div className="llist">
               {list.map((l) => (
                 <a key={l.rd} className="lrow" href={lineHref(l.rd)}
