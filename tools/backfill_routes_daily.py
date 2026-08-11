@@ -173,9 +173,11 @@ def active_routes(ds):
             try: ag[row[c['agency_id']]] = row[c['agency_name']].strip()
             except IndexError: continue
         out = {}
+        tot = 0
         c, rows = csvdict(url, b'routes.txt')
         for row in rows:
             try:
+                tot += 1
                 if row[c['route_id']] not in active_rids: continue
                 rt = row[c['route_type']].strip()
                 if rt in BUSX: rt = '3'
@@ -191,7 +193,7 @@ def active_routes(ds):
                     'dest': (row[c['route_long_name']] or '').strip()[:120],
                     'op': ag.get(row[c['agency_id']], ''), 'tt': tt}
             except IndexError: continue
-        return out
+        return out, tot
     except (ValueError, KeyError) as e:
         print(ds, '— קובץ בעייתי:', e); return None
 
@@ -277,11 +279,16 @@ prev_ds = state.get('last_date')
 for di, ds in enumerate(dates):
     if (time.time() - T0) / 60 > MAX_MIN:
         print('תקרת זמן — ממשיכים בריצה הבאה'); break
-    cur = active_routes(ds)
-    if cur is None:
+    got = active_routes(ds)
+    if got is None:
         continue
-    if seen and len(cur) < MIN_ACTIVE:
-        print(ds, f'— קובץ חשוד ({len(cur)} פעילים), מדלג'); continue
+    cur, tot_routes = got
+    # מעט פעילים + קטלוג שלם = צמצום שירות אמיתי, לא קובץ פגום. הסף הישן
+    # פסל את ימי מלחמת מרץ 2026 — הרכבות הושבתו, נותרו 21 וריאנטים פעילים
+    # מתוך קטלוג תקין של 8,200 שורות — ופיצול הקו האדום לשני קטעים נעלם
+    # מהדגימות. קובץ פגום באמת מגיע קטוע, והקטלוג כולו מתרסק איתו.
+    if seen and len(cur) < MIN_ACTIVE and tot_routes < 3000:
+        print(ds, f'— קובץ חשוד ({len(cur)} פעילים, {tot_routes} בקטלוג), מדלג'); continue
     for rd2, info in cur.items():
         old = seen.get(rd2)
         if rd2 in absent:

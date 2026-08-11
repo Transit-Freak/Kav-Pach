@@ -21,7 +21,12 @@ from compact_lines import materialize  # noqa: E402
 
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 DRY = os.environ.get('DRY') == '1'
-SRCS = {'tf', 'tf17'}          # מקורות הארכיון; 'ob' כבר בפיד היומי
+# מקורות הארכיון. 'ob' לא היה כאן כי "הוא כבר בפיד היומי" — נכון לאירועים
+# שהצינור החי כתב, אבל אירועי 'ob' שנוספו רטרואקטיבית לקובצי הקווים
+# (סריקת הרכבות, שינויי סיווג) לא הגיעו לפיד מעולם: פיצול הקו האדום
+# לשני קטעים במלחמת מרץ 2026 ישב בקובצי הקווים ולא הופיע בשום חודש.
+# הכפילות נמנעת ממילא — ההוספה בודקת (d, rd, k) מול תוכן החודש הקיים.
+SRCS = {'tf', 'tf17', 'ob'}
 
 
 def main():
@@ -36,6 +41,10 @@ def main():
         rd, line = lf.get('rd'), lf.get('line', '')
         for v in lf.get('versions') or []:
             if v.get('src') not in SRCS or v.get('k') == 'baseline':
+                continue
+            # צילומי השלמת-גאומטריה (src=ob, k=snapshot) הם תיעוד סינתטי
+            # שנוסף בדיעבד — לא שינוי שקרה באותו יום, ולא שייך לפיד
+            if v.get('src') == 'ob' and v.get('k') == 'snapshot':
                 continue
             c = {'d': v['d'], 'rd': rd, 'line': line, 'k': v['k']}
             if v.get('note'):
