@@ -316,3 +316,23 @@ button.kbtn { border: 0; cursor: pointer; font: inherit; }
 
 /* המונה בצ׳יפ פעיל יורש את צבע הצ׳יפ — האפור נכשל בניגודיות */
 .kchip.on b { color: inherit; opacity: 1; }
+
+/* חלון "מה חדש" (בקשת שלמה) */
+.newsbtn { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; border-radius: 999px;
+  font-size: 12px; font-weight: 800; padding: 3px 12px; cursor: pointer; font-family: inherit; vertical-align: middle; }
+.newsbtn:hover { background: #ddd6fe; }
+.wnover { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 9999;
+  display: flex; align-items: center; justify-content: center; padding: 16px; }
+.wncard { background: #fff; border-radius: 18px; max-width: 560px; width: 100%; max-height: 85vh;
+  overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.wnhead { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px;
+  border-bottom: 1px solid #e2e8f0; font-size: 17px; position: sticky; top: 0; background: #fff; }
+.wnx { border: 0; background: #f1f5f9; color: #475569; width: 30px; height: 30px; border-radius: 50%;
+  font-size: 18px; font-weight: 900; cursor: pointer; line-height: 1; }
+.wnx:hover { background: #e2e8f0; color: #0f172a; }
+.wnbody { padding: 12px 18px 18px; }
+.wnsec { font-weight: 900; color: #4c1d95; font-size: 14px; margin: 12px 0 6px; }
+.wnbody ul { margin: 0; padding-inline-start: 18px; }
+.wnbody li { font-size: 13.5px; color: #334155; margin-bottom: 7px; line-height: 1.65; }
+.wnbody li b { color: #0f172a; }
+.wnlead { font-size: 14.5px; color: #0f172a; line-height: 1.7; margin: 10px 0 4px; }

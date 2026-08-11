@@ -1769,6 +1769,46 @@ function StopsTab({ sel }) {
   );
 }
 
+
+/* "מה חדש" — חלון לקוראי האתר (בקשת שלמה): מה השתפר לאחרונה, בדגש
+   על הקו בזמן. נסגר בלחיצה בחוץ, ב-Esc או בכפתור. */
+function WhatsNew({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="wnover" onClick={onClose}>
+      <div className="wncard" role="dialog" aria-modal="true" aria-label="מה חדש באתר" onClick={(e) => e.stopPropagation()}>
+        <div className="wnhead">
+          <b>מה חדש</b>
+          <button className="wnx" aria-label="סגירה" onClick={onClose}>×</button>
+        </div>
+        <div className="wnbody">
+          <p className="wnlead">רציתם אי פעם לראות איך קו נראה פעם? איזה תחנות היו לו,
+            איפה הוא עבר, מתי שינו אותו? <b>עכשיו אתם יכולים.</b></p>
+          <div className="wnsec">מה אפשר לעשות כאן</div>
+          <ul>
+            <li><b>לחזור אחורה בזמן עם כל קו בישראל</b> — עד 2017, ולהציץ אפילו איך הוא נראה ב-2012. כל שינוי מסלול, תחנה ולו״ז, על מפה של לפני ואחרי.</li>
+            <li><b>לא רק אוטובוסים:</b> גם רכבת ישראל, הרכבת הקלה, הכרמלית ומוניות השירות — לכל אחד טאב משלו.</li>
+            <li><b>לבדוק כל תחנה:</b> מתי נפתחה, אם הוזזה, איך קראו לה פעם ואילו קווים עצרו בה.</li>
+            <li><b>לשלוח לחברים:</b> לכל קו ולכל תחנה יש קישור משלהם — כפתור 🔗 שיתוף בעמוד הקו, ולחיצה על מק״ט מעתיקה.</li>
+            <li><b>לראות מה קרה במלחמה:</b> פיצול הקו האדום בתל אביב במרץ 2026 מתועד במלואו, כולל הלו״ז האחרון של קטעי החירום.</li>
+          </ul>
+          <div className="wnsec">ועוד דברים קטנים ששווה לדעת</div>
+          <ul>
+            <li>קטגוריית תגבורים חדשה — מתי נוסף אוטובוס שני לאותה יציאה.</li>
+            <li>תאריך שאינו ודאי מסומן ≈, והקשה עליו מסבירה למה. כל אירוע אומר מאיזה מקור הגיע.</li>
+            <li>האתר נהיה מהיר משמעותית, ויש כפתור נגישות כחול בפינת המסך.</li>
+            <li>ובשאר הכלים: קו פח והמוזהב יודעים עכשיו אילו קווים בוטלו, והקו המדלג מציג מה חדש מאז הביקור הקודם שלכם.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------- אפליקציה ---------- */
 // סוגי תחבורה שאינם אוטובוס. עד יולי 2026 הסורק סינן כל route_type שאינו 3,
 // ולכן הרכבת, מוניות השירות והרכבת הקלה לא היו באתר כלל — למרות שהם יושבים
@@ -1946,6 +1986,7 @@ function App() {
   };
   const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [rty, setRty] = useState(0);
+  const [showNews, setShowNews] = useState(false);
   useEffect(() => {
     dfetch("data/lines.json")
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -2028,7 +2069,8 @@ function App() {
   return (
     <div className="wrap">
       <header>
-        <h1>🕰️ הקו בזמן <span className="beta">ניסוי</span></h1>
+        <h1>🕰️ הקו בזמן <span className="beta">ניסוי</span>{" "}
+          <button className="newsbtn" onClick={() => setShowNews(true)}>מה חדש</button></h1>
         <p className="tag">כל שינוי שנכנס לתוקף במסלולי הקווים ובתחנות — מסלול, שרטוט, תחנות ושמות. מהשוואת ה-GTFS של משרד התחבורה, יום מול יום, ממרץ 2017 ועד היום.</p>
         <div className="stats">
           {idx ? (<>
@@ -2141,6 +2183,7 @@ function App() {
           )}
         </div>
       )}
+      {showNews && <WhatsNew onClose={() => setShowNews(false)} />}
       <details className="srcbox">
         <summary>📚 המקורות — מאיפה מגיע כל פרט, ועד לאן הוא מגיע</summary>
         <div className="srclist">
