@@ -392,7 +392,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetch("data.json?v=" + BUILD)
+    fetch("data.json", { cache: "no-cache" })
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(setData)
       .catch((e) => setErr(e));
@@ -422,7 +422,7 @@ function App() {
   useEffect(() => {
     if (fType === "עירוני" || interD || interBusy || interErr) return;
     setInterBusy(true);
-    fetch("data-inter.json?v=" + BUILD)
+    fetch("data-inter.json", { cache: "no-cache" })
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then((d) => { setInterD(d); setInterBusy(false); })
       .catch(() => { setInterErr(true); setInterBusy(false); });

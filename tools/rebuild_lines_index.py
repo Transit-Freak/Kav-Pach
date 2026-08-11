@@ -23,6 +23,11 @@ if idx.get('lines') is None:
 
 byrd = {e['rd']: e for e in idx['lines']}
 ntr = jload(f'{OUTDIR}/line-trips.json', {})
+# עוגן 2012 מוטמע בקובץ הקו עצמו (פאנל שלב ב, סעיף 13): עמוד הקו קורא
+# אותו משם במקום להוריד 1.2MB של כל העוגנים בכל פתיחה. הכתיבה רק כשיש
+# שינוי — אחרי ההטמעה החד-פעמית זו השוואה בלבד.
+anchors = jload(f'{OUTDIR}/anchor-2012.json', {}).get('anchors', {})
+n_anc = 0
 n_new = 0
 for fn in os.listdir(f'{OUTDIR}/lines'):
     if not fn.endswith('.json'):
@@ -31,6 +36,15 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
     rd = lf.get('rd')
     if not rd:
         continue
+    a = anchors.get(rd)
+    if a != lf.get('anc'):
+        if a is None:
+            lf.pop('anc', None)
+        else:
+            lf['anc'] = a
+        json.dump(lf, open(f'{OUTDIR}/lines/{fn}', 'w', encoding='utf-8'),
+                  ensure_ascii=False, separators=(',', ':'))
+        n_anc += 1
     vs = lf.get('versions', [])
     e = byrd.get(rd)
     if e is None:
@@ -88,4 +102,4 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
 
 idx['lines'].sort(key=lambda x: (x.get('line', ''), x['rd']))
 json.dump(idx, open(idxp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-print(f'אינדקס נבנה מחדש: {len(idx["lines"])} שורות ({n_new} חדשות)')
+print(f'אינדקס נבנה מחדש: {len(idx["lines"])} שורות ({n_new} חדשות) · עוגני 2012 שהוטמעו/עודכנו: {n_anc}')

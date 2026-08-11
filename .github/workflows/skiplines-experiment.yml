@@ -4,8 +4,11 @@ name: skiplines-experiment
 # (כל הארץ). מדפיס ממצאים ליומן וכותב skip-stops/data.json לאתר.
 
 on:
-  schedule:
-    - cron: '0 7 * * *'   # 10:00 ישראל בקיץ — אחרי חלון הפרסום של משרד התחבורה
+  # צינור מאוחד: נדלק בסיום הריצה היומית של "הקו בזמן" (10:30 ישראל)
+  # ומשתמש ב-GTFS שהיא כבר הורידה — בלי הורדה כפולה ובלי לו"ז נפרד.
+  workflow_run:
+    workflows: ["line-history"]
+    types: [completed]
   push:
     paths:
       - '.github/workflows/skiplines-experiment.yml'
@@ -24,18 +27,32 @@ concurrency:
 
 jobs:
   run:
-    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    # בטריגר workflow_run — רק אחרי ריצה שהצליחה של הצינור הראשי
+    if: (github.ref == 'refs/heads/main' || github.event_name != 'push') && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch GTFS
+      - name: ה-GTFS שכבר ירד בצינור המאוחד
+        if: github.event_name == 'workflow_run'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: gtfs-daily
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Fetch GTFS (הורדה ישירה רק אם אין קובץ מהצינור)
         run: |
           set -euo pipefail
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-          curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
-            -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          if [ -f gtfs.zip ]; then
+            echo "משתמשים ב-GTFS מהצינור המאוחד"
+          else
+            UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
+              -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+          fi
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt
           ls -la
 

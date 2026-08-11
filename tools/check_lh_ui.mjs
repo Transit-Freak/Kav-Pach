@@ -19,7 +19,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.jsx': 'text/jav
 const srv = http.createServer((req, res) => {
   const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
   try {
-    const p = path.join(ROOT, rel.startsWith('line-history') || rel.startsWith('magihim') ? '' : 'line-history', rel);
+    const p = path.join(ROOT, rel.startsWith('line-history') || rel.startsWith('magihim') || rel.startsWith('vendor') ? '' : 'line-history', rel);
     let body = fs.readFileSync(p);
     if (p.endsWith('index.html')) body = Buffer.from(body.toString().replace(/\s(integrity|crossorigin)="[^"]*"/g, ''));
     res.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' });

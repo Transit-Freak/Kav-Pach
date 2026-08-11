@@ -8,8 +8,11 @@ name: update-weekly
 #    — סינון רעש: התאמת רחובות עמידה למקפים/ר"ת, דילוג על שמות בכתב ערבי/מספריים.)
 
 on:
-  schedule:
-    - cron: '0 7 * * *'   # כל בוקר 07:00 UTC (10:00 ישראל בקיץ, 09:00 בחורף) — אחרי שעת-הפרסום הנודדת של GTFS במשרד התחבורה
+  # צינור מאוחד: נדלק בסיום הריצה היומית של "הקו בזמן" (10:30 ישראל)
+  # ומשתמש ב-GTFS שהיא כבר הורידה — הורדה אחת ביום לכל הכלים.
+  workflow_run:
+    workflows: ["line-history"]
+    types: [completed]
   # (דחיפה: הפעלת סיווג-מחדש אחרי סינון וריאציות כתיב)
   push:
     paths:
@@ -27,18 +30,32 @@ concurrency:
 
 jobs:
   run:
-    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    # בטריגר workflow_run — רק אחרי ריצה שהצליחה של הצינור הראשי
+    if: (github.ref == 'refs/heads/main' || github.event_name != 'push') && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
+      - name: ה-GTFS שכבר ירד בצינור המאוחד
+        if: github.event_name == 'workflow_run'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: gtfs-daily
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
       - name: Fetch fresh GTFS stops + active set
         run: |
           set -euo pipefail
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-          URL="https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
-          curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" -o gtfs.zip "$URL"
+          if [ ! -f gtfs.zip ]; then
+            UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            URL="https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+            curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" -o gtfs.zip "$URL"
+          else
+            echo "משתמשים ב-GTFS מהצינור המאוחד"
+          fi
           unzip -o gtfs.zip stops.txt
           unzip -o gtfs.zip stop_times.txt
           unzip -o gtfs.zip translations.txt

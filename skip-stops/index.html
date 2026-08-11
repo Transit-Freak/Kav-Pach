@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>הקו המדלג — קווים שחולפים ליד תחנה בלי לעצור</title>
   <meta name="description" content="הקו המדלג — איתור קווי אוטובוס עירוניים שעוברים ממש ליד תחנה פעילה, עוצרים לפניה ואחריה — אבל מדלגים עליה." />
+  <!-- תגיות שיתוף (אותו בלוק כמו בהקו בזמן): קישור שנשלח בוואטסאפ מקבל
+       תצוגה מקדימה עם כותרת, תיאור ותמונה — במקום קישור עירום -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="הקו הבוחן" />
+  <meta property="og:title" content="הקו המדלג — קווים שחולפים ליד תחנה בלי לעצור" />
+  <meta property="og:description" content="איתור קווי אוטובוס שעוברים ממש ליד תחנה פעילה, עוצרים בתחנה שלפניה ובתחנה שאחריה — אבל עליה מדלגים. מהשוואת מסלולי ה-GTFS של משרד התחבורה." />
+  <meta property="og:url" content="https://transit-freak.github.io/kav-bochan/skip-stops/" />
+  <meta property="og:locale" content="he_IL" />
+  <meta property="og:image" content="https://transit-freak.github.io/kav-bochan/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://transit-freak.github.io/kav-bochan/skip-stops/" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'%3E%3Crect width='34' height='34' rx='8' fill='%23d97706'/%3E%3Cpath d='M4 26 L10 26 Q17 15 24 26 L30 26' stroke='%23fde68a' stroke-width='2' fill='none' stroke-dasharray='2.5 2' stroke-linecap='round'/%3E%3Ccircle cx='17' cy='26' r='2.6' fill='%237c2d12' stroke='%23fff' stroke-width='1.4'/%3E%3Ccircle cx='7' cy='26' r='2.6' fill='%23fff'/%3E%3Ccircle cx='27' cy='26' r='2.6' fill='%23fff'/%3E%3Crect x='10' y='6' width='14' height='9' rx='2.5' fill='%23fff'/%3E%3Crect x='12' y='8' width='4' height='3.5' rx='1' fill='%23d97706'/%3E%3Crect x='18' y='8' width='4' height='3.5' rx='1' fill='%23d97706'/%3E%3Ccircle cx='13' cy='15' r='1.6' fill='%237c2d12'/%3E%3Ccircle cx='21' cy='15' r='1.6' fill='%237c2d12'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -29,26 +42,31 @@
 
   <script>
     (function () {
-      // קומפילציית ה-JSX נשמרת ב-localStorage לפי גרסה: בביקור חוזר אין
-      // קומפילציה בכלל והדף עולה מיד (אותו דפוס כמו בקו פח)
-      var build = window.SK_BUILD;
-      var CK = "sk-compiled-v" + build;
+      // הקוד נטען עם revalidation מול השרת (ETag): עדכון מגיע מיד בלי
+      // להעלות SK_BUILD ידנית, וקובץ שלא השתנה חוזר 304 זעיר. הפלט
+      // המקומפל נשמר ב-localStorage לפי טביעת-תוכן — ביקור חוזר עולה
+      // בלי קומפילציה בכלל (אותו דפוס כמו בדף הראשי ובהקו בזמן).
       function run(js) {
         var s = document.createElement("script");
         s.textContent = js;
         document.body.appendChild(s);
       }
-      try {
-        var cached = localStorage.getItem(CK);
-        if (cached) { run(cached); return; }
-      } catch (e) { /* מצב פרטי */ }
-      fetch("app.jsx?v=" + build)
-        .then(function (r) { return r.text(); })
+      function hash(str) {
+        var h = 5381, i = str.length;
+        while (i) h = (h * 33) ^ str.charCodeAt(--i);
+        return (h >>> 0).toString(36);
+      }
+      fetch("app.jsx", { cache: "no-cache" })
+        .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
         .then(function (code) {
+          var key = "sk-js-" + hash(code);
+          var cached = null;
+          try { cached = localStorage.getItem(key); } catch (e) { /* מצב פרטי */ }
+          if (cached) { run(cached); return; }
           var out = Babel.transform(code, { presets: ["react"], filename: "app.jsx" }).code;
           try {
-            Object.keys(localStorage).forEach(function (k) { if (k.indexOf("sk-compiled-") === 0 && k !== CK) localStorage.removeItem(k); });
-            localStorage.setItem(CK, out);
+            Object.keys(localStorage).forEach(function (k) { if ((k.indexOf("sk-js-") === 0 || k.indexOf("sk-compiled-") === 0) && k !== key) localStorage.removeItem(k); });
+            localStorage.setItem(key, out);
           } catch (e) { /* אין מקום — פשוט בלי מטמון */ }
           run(out);
         })

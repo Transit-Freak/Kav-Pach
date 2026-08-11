@@ -90,6 +90,19 @@ jobs:
           node --max-old-space-size=6144 /tmp/kbscan/scan-country.js gtfs.zip kavbug-data/country-scan
           node /tmp/kbscan/update-history.js kavbug-data/country-scan.json kavbug-data/history.json
 
+      # איחוד הצינור: ה-GTFS שכבר ירד כאן מפורסם כ-artifact, והצינורות של
+      # "הקו המדלג" ו"התחנה הבאה" נדלקים בסיום הריצה וניזונים ממנו —
+      # הורדה אחת ביום במקום שלוש, וכל הכלים מתעדכנים על אותו קובץ בדיוק.
+      - name: פרסום ה-GTFS לשאר הצינורות
+        if: hashFiles('gtfs.zip') != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtfs-daily
+          path: gtfs.zip
+          retention-days: 1
+          compression-level: 0
+
       - name: Commit (לענף שהריץ — main בריצה המתוזמנת)
         run: |
           set -euo pipefail

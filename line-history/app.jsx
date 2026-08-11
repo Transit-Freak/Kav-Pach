@@ -283,7 +283,7 @@ function TimesDiff({ tl, tn }) {
   const changed = rows.filter((r) => r.cls !== "same").length;
   return (
     <div className="tdiff">
-      <button className="tdiff-btn" onClick={() => setOpen(!open)}
+      <button className="tdiff-btn" aria-expanded={open} onClick={() => setOpen(!open)}
         title="כל היציאות שורה-שורה: השעה לפני מול השעה אחרי; שעה שלא השתנתה מוצגת פעם אחת">
         📊 {open ? "הסתר את" : "הצג את"} טבלת הלפני/אחרי המלאה ({nOld} ← {nNew} יציאות · {changed} השתנו)
       </button>
@@ -397,9 +397,15 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     });
     return () => { mapRef.current = null; map.remove(); };
   }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12]);
+  // סיכום טקסטואלי למי שלא רואה את המפה — המספרים כבר מחושבים ממילא
+  const nAdd = (curStops || []).filter((s) => addedCodes && addedCodes.has(s[0])).length;
+  const curC = new Set((curStops || []).map((s) => s[0]));
+  const nRem = (prevStops || []).filter((s) => !curC.has(s[0])).length;
+  const mapLabel = "מפת המסלול" + (prev ? " בהשוואה לגרסה הקודמת" : "") +
+    (nAdd ? " · " + nAdd + " תחנות נוספו" : "") + (nRem ? " · " + nRem + " תחנות ירדו" : "");
   return (
     <div className="mapwrap">
-      <div className="map" ref={ref} />
+      <div className="map" ref={ref} role="img" aria-label={mapLabel} />
       {canFocus && (
         <button className="focusbtn" title="החלפה בין תצוגת כל המסלול לבין התקרבות רק לקטע שבו היה השינוי" onClick={() => setFocus(!focus)}>
           {focus ? "🗺️ כל המסלול" : "🔍 רק הקטע ששונה"}
@@ -426,7 +432,8 @@ function TipTag({ cls, tip, children }) {
   return (
     <>
       <span className={(cls || "") + " tiptag"} title={tip} role="button" tabIndex={0}
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        aria-expanded={open}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); }}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setOpen(!open); } }}>
         {children}</span>
       {open && <span className="tipnote" onClick={(e) => e.stopPropagation()}>🛈 {tip}</span>}
@@ -529,19 +536,17 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
   const [offK, setOffK] = useState(() => new Set());   // קטגוריות שכובו בעמוד הקו
   const [cmpI, setCmpI] = useState(null);              // גרסת בסיס להשוואה חופשית
   const [onlyCur, setOnlyCur] = useState(false);       // מפה בלי שכבת העבר
-  const [anc, setAnc] = useState(null);   // עוגן 2012 לוריאנט הזה, אם הוצלב
   const [show12, setShow12] = useState(false);
   const [altRd, setAltRd] = useState(null);   // חלופה שנבחרה להשוואה
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
   const [rty, setRty] = useState(0);      // מונה "נסו שוב" אחרי כשל רשת
+  // העוגן של 2012 מוטמע בקובץ הקו עצמו (lf.anc, מוזרק בצינור הלילי) —
+  // בעבר כל פתיחת עמוד קו הורידה את קובץ העוגנים המלא (1.2MB) רק כדי
+  // לשלוף שורה אחת, כולל בקווי רכבת ומוניות שאין להם עוגן בכלל.
+  const anc = (lf && lf.anc) || null;
   useEffect(() => {
-    let ok = true;
-    setAnc(null); setShow12(false); setD12(null); setR12(0); setAltRd(null);
-    // רשת מגיעים היא אוטובוסים בלבד. עוגן על רכבת, רכבת קלה, כרמלית או
-    // מונית שירות הוא בהכרח קו אחר שבמקרה נושא את אותו מספר.
-    getAnchors2012().then((d) => { if (ok) setAnc((d.anchors || {})[rd] || null); });
-    return () => { ok = false; };
+    setShow12(false); setD12(null); setR12(0); setAltRd(null);
   }, [rd]);
   useEffect(() => {
     if (!show12 || d12 || !anc) return;
@@ -726,7 +731,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
       <div className="card side">
         <button className="back" title="חזרה למסך החיפוש — הטקסט שחיפשתם נשמר" onClick={onBack}>→ חזרה לחיפוש</button>
         {/* לקווי הרכבת אין מספר קו ב-GTFS — הסמל ממלא את מקומו כדי שהתג לא יופיע ריק */}
-        <div className="linehead"><span className="badge">{lf.line || TT_ICON[lf.tt] || "—"}</span><span className="dest">{lf.dest}</span></div>
+        <div className="linehead"><span className="badge">{lf.line || TT_ICON[lf.tt] || "—"}</span><span className="dest">{lf.dest}</span>
+          {/* שיתוף כמו בהקו המדלג: גיליון השיתוף של הטלפון, ובנפילה — העתקה */}
+          <button className="sharebtn" title="שיתוף הקישור לעמוד הקו הזה — כל ההיסטוריה שלו"
+            onClick={(e) => {
+              const url = location.origin + location.pathname + "#" + encodeURIComponent(rd);
+              try { navigator.share ? navigator.share({ title: "הקו בזמן — " + (lf.line ? "קו " + lf.line : lf.dest), url }) : navigator.clipboard.writeText(url); } catch (err) { /* ignore */ }
+              const b = e.currentTarget; const t = b.textContent; b.textContent = "✓ הועתק";
+              setTimeout(() => { b.textContent = t; }, 1500);
+            }}>🔗 שיתוף</button>
+        </div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
           {/* נגישות לכיסא גלגלים מגיעה מ-wheelchair_accessible בפיד, והיא
               אחידה לכל נסיעות הקו — ולכן תכונה של הקו. */}
@@ -763,7 +777,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
             {/* מספר התחנות המשותפות הוא מה שקושר את הקו של אז לקו של היום.
                 כשההתאמה נעשתה לפי שם ומספר קו בלבד הוא לא קיים. */}
             {anc.ov && <TipTag cls="a2012ov" tip="מספר התחנות שמופיעות גם במסלול של 2012 וגם במסלול הישן ביותר שידוע לנו — על סמך זה נקבע שמדובר באותו קו">· {anc.ov} תחנות משותפות</TipTag>}
-            <button className="a2012btn" title="הצגת רשימת התחנות של הקו כפי שהייתה ב-2012 — כולל המסלול על המפה בקו מקווקו חום" onClick={() => setShow12(!show12)}>
+            <button className="a2012btn" title="הצגת רשימת התחנות של הקו כפי שהייתה ב-2012 — כולל המסלול על המפה בקו מקווקו חום" aria-expanded={show12} onClick={() => setShow12(!show12)}>
               {show12 ? "הסתר ▲" : "רצף התחנות ▼"}
             </button>
             {show12 && (d12 ? (d12.routes || []).length ? (
@@ -871,17 +885,23 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
         )}
         {months.length > 1 && (
           <div className="months">
-            <button className={"mchip" + (!mon ? " on" : "")} title="כל התקופה — בלי סינון לחודש" onClick={() => setMon("")}>הכול</button>
+            <button className={"mchip" + (!mon ? " on" : "")} aria-pressed={!mon} title="כל התקופה — בלי סינון לחודש" onClick={() => setMon("")}>הכול</button>
             {months.map((m) => (
-              <button key={m} className={"mchip" + (mon === m ? " on" : "")} onClick={() => setMon(m)}>
+              <button key={m} className={"mchip" + (mon === m ? " on" : "")} aria-pressed={mon === m} onClick={() => setMon(m)}>
                 {m.split("-").reverse().join(".")} <b>{vs.filter((x) => x.d.slice(0, 7) === m).length}</b>
               </button>
             ))}
           </div>
         )}
         <div className="tl">
+          {/* בחירת אירוע היא הפעולה המרכזית של העמוד — חייבת לעבוד גם
+              במקלדת ובקורא מסך, לא רק בעכבר (פאנל שלב ב, סעיף 4) */}
           {shown.map(({ v: x, i }) => (
-            <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")} onClick={() => setSel(i)}>
+            <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")}
+              role="button" tabIndex={0} aria-current={i === vs.indexOf(v)}
+              aria-label={"אירוע מ-" + evDate(x).txt + ": " + ((KINDS[dispKind(x, i, vs)] || { label: x.k }).label)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSel(i); } }}
+              onClick={() => setSel(i)}>
               <div className="d">
                 {(() => { const ed = evDate(x); return ed.tip
                   ? <TipTag cls={ed.exact ? "" : "approxd"} tip={ed.tip}>{ed.txt}{ed.exact ? "" : " ≈"}</TipTag>
@@ -1033,7 +1053,8 @@ function StopEvMap({ ev }) {
     map.fitBounds(L.latLngBounds(pts).pad(0.6), { maxZoom: 17 });
     return () => map.remove();
   }, [ev]);
-  return <div className="smap" ref={ref} />;
+  return <div className="smap" ref={ref} role="img"
+    aria-label={ev.k === "moved" ? "מפה: הזזת התחנה מהמיקום הישן לחדש, " + (ev.dist || ev.m || "") + " מטרים" : "מפה: מיקום התחנה " + (ev.n || ev.nn || "")} />;
 }
 
 /* ---------- עמוד קו של 2012 ---------- */
@@ -1066,7 +1087,8 @@ function Map2012({ stops }) {
     else map.setView([31.5, 34.9], 8);
     return () => map.remove();
   }, [stops]);
-  return <div className="map" ref={ref} />;
+  return <div className="map" ref={ref} role="img"
+    aria-label={"מפת מסלול 2012 דרך " + (stops || []).filter((x) => x[5] != null).length + " תחנות שהוצלבו למיקום של היום"} />;
 }
 
 function Line2012Page({ k12, anchorRd, openLine, onBack }) {
@@ -1251,16 +1273,16 @@ function DayFeed({ idx, openLine, open12, onBack }) {
             מ-months.json אלא מצילום נפרד, ולכן היא נכתבת בנפרד — ובסדר
             יורד מקומה הנכון הוא בסוף, כשנה הישנה מכולן. */}
         {[...new Set(months.map((m) => m.slice(0, 4)))].sort().reverse().map((y) => (
-          <button key={y} className={"mchip" + (yr === y ? " on" : "")}
+          <button key={y} className={"mchip" + (yr === y ? " on" : "")} aria-pressed={yr === y}
             title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[ms.length - 1]); }}>{y}</button>
         ))}
-        <button className={"mchip" + (yr === "2012" ? " on" : "")} title="רשת הקווים המלאה כפי שצולמה ב-2012 — 3,214 קווים מאתר מגיעים"
+        <button className={"mchip" + (yr === "2012" ? " on" : "")} aria-pressed={yr === "2012"} title="רשת הקווים המלאה כפי שצולמה ב-2012 — 3,214 קווים מאתר מגיעים"
           onClick={() => { setYr("2012"); setMon(""); }}>2012</button>
       </div>
       {yr && yr !== "2012" && (
         <div className="months">
           {months.filter((m) => m.startsWith(yr)).slice().reverse().map((m) => (
-            <button key={m} className={"mchip" + (mon === m ? " on" : "")} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+            <button key={m} className={"mchip" + (mon === m ? " on" : "")} aria-pressed={mon === m} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
           ))}
         </div>
       )}
@@ -1311,6 +1333,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
                     <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
+                    {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
                     {c.note ? <span className="lnote">{c.note}</span> : null}
                   </a>
                 );
@@ -1423,7 +1446,8 @@ function RecentChanges({ idx, openLine, onAll }) {
                 <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
                 <span className="ldest">{m.dest || c.rd}</span>
                 <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
-                {c.note ? <span className="lnote">{c.note}</span> : null}
+                {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
+                    {c.note ? <span className="lnote">{c.note}</span> : null}
               </a>
             );
           })}
@@ -1569,39 +1593,42 @@ function StopsTab({ sel }) {
     (source || []).forEach((c) => { cn[c.k] = (cn[c.k] || 0) + 1; });
     return cn;
   }, [source]);
+  // ב-useMemo — הסינון על עשרות אלפי אירועים לא רץ מחדש בפעולות שאינן
+  // חיפוש (סעיף 14); הערה קיימת על source מסבירה את אותו לאג
+  const { nsCount, list } = useMemo(() => {
+    const needle = q.trim(); const sNeedle = sQ(needle);
+    const ls = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) && (!onlyNs || c.ns) &&
+      (!needle || sQ(c.n).includes(sNeedle) || sQ(c.nn).includes(sNeedle) || sQ(c.on).includes(sNeedle) || sQ(c.t).includes(sNeedle) || c.c === needle));
+    return { nsCount: (source || []).filter((c) => c.ns).length, list: ls };
+  }, [source, q, kinds, onlyNs]);
   if (months === null) return <div className="card">טוען…</div>;
   if (mErr) return <div className="card"><NetErr onRetry={() => { setMonths(null); setRty((n) => n + 1); }} /></div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
-  const needle = q.trim();
-  const nsCount = (source || []).filter((c) => c.ns).length;
-  const sNeedle = sQ(needle);
-  const list = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) && (!onlyNs || c.ns) &&
-    (!needle || sQ(c.n).includes(sNeedle) || sQ(c.nn).includes(sNeedle) || sQ(c.on).includes(sNeedle) || sQ(c.t).includes(sNeedle) || c.c === needle));
   return (
     <div className="card">
       {/* בוחר לפי שנה: slice(0,18) הישן הסתיר את כל מה שלפני 02.2025 —
           עכשיו כל שנה נגישה בלחיצה, והחודשים שלה נפתחים מתחתיה */}
       <div className="months">
-        <button className={"mchip" + (mon === "all" ? " on" : "")} title="כל האירועים מכל השנים ברצף אחד" onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
+        <button className={"mchip" + (mon === "all" ? " on" : "")} aria-pressed={mon === "all"} title="כל האירועים מכל השנים ברצף אחד" onClick={() => { setYr(""); setMon("all"); }}>🗓️ כל התקופה</button>
         {/* מהחדשה לישנה, באותו כיוון של החודשים בתוך כל שנה.
             stopMonths ממוין יורד (בניגוד ל-months של הקווים) — החודש
             החדש של שנה הוא ms[0], וה-reverse היה הופך את סדר התצוגה */}
         {[...new Set(months.map((m) => m.slice(0, 4)))].sort().reverse().map((y) => (
-          <button key={y} className={"mchip" + (yr === y ? " on" : "")}
+          <button key={y} className={"mchip" + (yr === y ? " on" : "")} aria-pressed={yr === y}
             title={"הצגת השינויים של שנת " + y} onClick={() => { setYr(y); const ms = months.filter((m) => m.startsWith(y)); if (!ms.includes(mon)) setMon(ms[0]); }}>{y}</button>
         ))}
       </div>
       {yr && (
         <div className="months">
           {months.filter((m) => m.startsWith(yr)).map((m) => (
-            <button key={m} className={"mchip" + (mon === m ? " on" : "")} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
+            <button key={m} className={"mchip" + (mon === m ? " on" : "")} aria-pressed={mon === m} title="הצגת השינויים של החודש הזה בלבד" onClick={() => setMon(m)}>{m.split("-").reverse().join(".")}</button>
           ))}
         </div>
       )}
       <input className="search" type="search" placeholder="חיפוש תחנה / עיר / מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
       <div className="katbox">
-        <button className="kathead" onClick={() => setKatOpen(!katOpen)}>
-          <span className="katarrow">{katOpen ? "▼" : "◀"}</span>
+        <button className="kathead" aria-expanded={katOpen} onClick={() => setKatOpen(!katOpen)}>
+          <span className="katarrow" aria-hidden="true">{katOpen ? "▼" : "◀"}</span>
           🗂️ קטגוריות לבחירה
           {kinds.size > 0 && <b className="katn">{kinds.size} מסומנות</b>}
         </button>
@@ -1649,6 +1676,9 @@ function StopsTab({ sel }) {
               return (
                 <React.Fragment key={k0}>
                 <div className={"srow" + (one ? "" : " sub") + (c.la != null ? " clk" : "")}
+                  role={c.la != null ? "button" : undefined} tabIndex={c.la != null ? 0 : undefined}
+                  aria-expanded={c.la != null ? openKey === k0 : undefined}
+                  onKeyDown={(e) => { if (c.la != null && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setOpenKey(openKey === k0 ? null : k0); } }}
                   onClick={() => { if (c.la != null) setOpenKey(openKey === k0 ? null : k0); }}>
                   <span className="k" style={{ background: (SKINDS[c.k] || {}).color }}>{(SKINDS[c.k] || { label: c.k }).label}</span>
                   {one ? (
@@ -1782,19 +1812,21 @@ function ModesTab({ idx, openLine, spec }) {
   }, [mine, spec]);
   const toggle = (k) => setSel((s) => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
 
-  const needle = q.trim();
-  const allowed = sel.size ? new Set(spec.groups.filter((m) => sel.has(m.k)).flatMap((m) => m.tts)) : null;
-  let list = mine.filter((l) => !allowed || allowed.has(l.tt));
-  if (needle) {
-    const toks = sQ(needle).split(/\s+/).filter(Boolean);
-    list = list.filter((l) => toks.every((t) =>
-      (l.line || "").startsWith(t) || l.rd.startsWith(t) ||
-      sQ(l.dest).includes(t) || sQ(l.op).includes(t)));
-  }
-  const lnum = (l) => parseInt(l.line) || 1e9;
-  list = list.slice().sort((a, b) => lnum(a) - lnum(b) || (a.line || "").localeCompare(b.line || "") || a.rd.localeCompare(b.rd));
-  const total = list.length;
-  list = list.slice(0, lim);
+  // ב-useMemo — שלא ירוץ מחדש על כל רינדור שאינו קשור לחיפוש (סעיף 14)
+  const { list, total } = useMemo(() => {
+    const needle = q.trim();
+    const allowed = sel.size ? new Set(spec.groups.filter((m) => sel.has(m.k)).flatMap((m) => m.tts)) : null;
+    let ls = mine.filter((l) => !allowed || allowed.has(l.tt));
+    if (needle) {
+      const toks = sQ(needle).split(/\s+/).filter(Boolean);
+      ls = ls.filter((l) => toks.every((t) =>
+        (l.line || "").startsWith(t) || l.rd.startsWith(t) ||
+        sQ(l.dest).includes(t) || sQ(l.op).includes(t)));
+    }
+    const lnum = (l) => parseInt(l.line) || 1e9;
+    ls = ls.slice().sort((a, b) => lnum(a) - lnum(b) || (a.line || "").localeCompare(b.line || "") || a.rd.localeCompare(b.rd));
+    return { total: ls.length, list: ls.slice(0, lim) };
+  }, [mine, spec, sel, q, lim]);
 
   return (
     <div className="card">
@@ -1928,6 +1960,37 @@ function App() {
     return m;
   }, [idx]);
   const isLineGone = (l) => l.lk === "removed" && !mktAlive[l.rd.split("-")[0]];
+  // הסינון והמיון של 13 אלף שורות ב-useMemo: קודם הם רצו מחדש גם ברינדורים
+  // שאינם קשורים לחיפוש — פתיחת קטגוריות, "הצג עוד" — תקיעות מורגשת בנייד
+  const searchRes = useMemo(() => {
+    const needle = q.trim();
+    if (!idx || (!needle && !kats.size)) return { list: [], total: 0 };
+    const inKats = (l) => {
+      if (!kats.size) return true;
+      for (const k of kats) { if (catMatch(l, k)) return true; }
+      return false;
+    };
+    // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות.
+    // ההשוואה דרך sQ: גרשיים בכל צורה (רשל"צ / רשל''צ / רשל״צ) מתאימים
+    const toks = sQ(needle).split(/\s+/).filter(Boolean);
+    const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
+      sQ(l.dest).includes(t) || sQ(l.op).includes(t);
+    // טאב "קווים" הוא אוטובוסים. קווי "שירות לפי דרישה" מופעלים בידי חברות
+    // האוטובוס ונשארים גם כאן, ולא רק בטאב סוגי התחבורה (בקשת המשתמש).
+    const buses = idx.lines.filter((l) => !l.tt || l.tt === "demand");
+    let list = buses.filter((l) => inKats(l) && toks.every((t) => tokHit(l, t)));
+    const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
+    // דירוג: קודם מספר הקו המדויק, אחריו קווים שמתחילים בו, ורק בסוף
+    // התאמות מק"ט/יעד/מפעיל — ובתוך כל דרגה לפי סדר מספרי
+    const numTok = toks.find((t) => /^\d/.test(t)) || toks[0] || "";
+    const rank = (l) => !numTok ? 0 : l.line === numTok ? 0 : l.line.startsWith(numTok) ? 1
+      : l.rd.startsWith(numTok) ? 2 : ((l.dest || "").includes(numTok) ? 3 : 4);
+    const lnum = (l) => parseInt(l.line) || 1e9;
+    if (needle) list.sort((a, b) => rank(a) - rank(b) || lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
+    else if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
+    else list.sort((a, b) => lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
+    return { total: list.length, list: list.slice(0, lim) };
+  }, [idx, q, kats, lim]);
   // סטטוס HTTP = הקובץ באמת לא קיים; כל כשל אחר הוא תקלת רשת — עם כפתור
   // ניסיון חוזר במקום הודעה שגורמת לגולש לחשוב שאין נתונים
   if (err) return (
@@ -1939,35 +2002,7 @@ function App() {
   // האינדקס (3.6MB) נדרש רק לחיפוש הקווים — טאב התחנות, הפיד היומי ועמודי
   // קווים מקישור ישיר עובדים בלעדיו, ולכן האתר כבר לא מחכה לו כדי להופיע
   const needle = q.trim();
-  const inKats = (l) => {
-    if (!kats.size) return true;
-    for (const k of kats) { if (catMatch(l, k)) return true; }
-    return false;
-  };
-  let list = [], total = 0;
-  if (idx && (needle || kats.size)) {
-    // חיפוש רב-מילים: "13 קרית גת" — כל מילה חייבת להתאים לאחד השדות.
-    // ההשוואה דרך sQ: גרשיים בכל צורה (רשל"צ / רשל''צ / רשל״צ) מתאימים
-    const toks = sQ(needle).split(/\s+/).filter(Boolean);
-    const tokHit = (l, t) => l.line === t || l.line.startsWith(t) || l.rd.startsWith(t) ||
-      sQ(l.dest).includes(t) || sQ(l.op).includes(t);
-    // טאב "קווים" הוא אוטובוסים. קווי "שירות לפי דרישה" מופעלים בידי חברות
-    // האוטובוס ונשארים גם כאן, ולא רק בטאב סוגי התחבורה (בקשת המשתמש).
-    const buses = idx.lines.filter((l) => !l.tt || l.tt === "demand");
-    list = buses.filter((l) => inKats(l) && toks.every((t) => tokHit(l, t)));
-    const onlyRemoval = kats.size > 0 && [...kats].every((k) => REMOVAL_CATS.has(k));
-    // דירוג: קודם מספר הקו המדויק, אחריו קווים שמתחילים בו, ורק בסוף
-    // התאמות מק"ט/יעד/מפעיל — ובתוך כל דרגה לפי סדר מספרי
-    const numTok = toks.find((t) => /^\d/.test(t)) || toks[0] || "";
-    const rank = (l) => !numTok ? 0 : l.line === numTok ? 0 : l.line.startsWith(numTok) ? 1
-      : l.rd.startsWith(numTok) ? 2 : ((l.dest || "").includes(numTok) ? 3 : 4);
-    const lnum = (l) => parseInt(l.line) || 1e9;
-    if (needle) list.sort((a, b) => rank(a) - rank(b) || lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
-    else if (onlyRemoval) list.sort((a, b) => (b.ld || "").localeCompare(a.ld || ""));
-    else list.sort((a, b) => lnum(a) - lnum(b) || a.line.localeCompare(b.line) || a.rd.localeCompare(b.rd));
-    total = list.length;
-    list = list.slice(0, lim);
-  }
+  const { list, total } = searchRes;
   const changed = idx ? idx.lines.filter((l) => l.v > 1).length : 0;
   return (
     <div className="wrap">
@@ -1982,11 +2017,11 @@ function App() {
           </>) : <span className="stat mut">טוען את רשימת הקווים ברקע…</span>}
         </div>
       </header>
-      <div className="tabs">
-        <button className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
-        <button className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
+      <div className="tabs" role="tablist" aria-label="אזורי האתר">
+        <button role="tab" aria-selected={tab === "lines"} className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
+        <button role="tab" aria-selected={tab === "stops"} className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
         {TABS.map((t) => (
-          <button key={t.k} className={"tab" + (tab === t.k ? " on" : "")} title={t.tip}
+          <button key={t.k} role="tab" aria-selected={tab === t.k} className={"tab" + (tab === t.k ? " on" : "")} title={t.tip}
             onClick={() => { setTab(t.k); backToList(); }}>{t.icon} {t.label}</button>
         ))}
       </div>
@@ -2013,8 +2048,8 @@ function App() {
             </button>
           </div>
           <div className="katbox">
-            <button className="kathead" onClick={() => setKatOpen(!katOpen)}>
-              <span className="katarrow">{katOpen ? "▼" : "◀"}</span>
+            <button className="kathead" aria-expanded={katOpen} onClick={() => setKatOpen(!katOpen)}>
+              <span className="katarrow" aria-hidden="true">{katOpen ? "▼" : "◀"}</span>
               🗂️ קטגוריות לבחירה
               {kats.size > 0 && <b className="katn">{kats.size} מסומנות</b>}
             </button>

@@ -1305,21 +1305,28 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
           // נסיעות להוספה = נסיעות שיביאו את העומס הממוצע חזרה ליעד הנוח.
           const TARGET_LOAD = 0.85;
           const minsToStr = (m) => `${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.round(m)%60).padStart(2,'0')}`;
-          // מציע שעות יציאה קונקרטיות להוספה: בכל מרווח שעולה על תדירות מינימלית של
-          // 5 דקות, משתל נסיעות נוספות כדי לקרב את המרווח ל-5 דקות (התדר המעשי הצפוף
-          // ביותר). מרווח של 5 דקות לא יחולק. מחזיר עד 10 שעות, וגם את הספירה הכוללת.
+          // שעות יציאה מוצעות — בדיוק כמספר הנסיעות שההמלצה קובעת (בקשת
+          // שלמה, סעיף 32): קודם הרשימה הציעה עשרות שעות (ציפוף כל הלוח
+          // ל-5 דקות) ליד המלצה של "הוסיפו 3" — שני מספרים סותרים על אותו
+          // כרטיס. עכשיו: בכל פעם מפוצל המרווח הגדול ביותר שנותר בלוח,
+          // עד שמגיעים למספר המומלץ. מרווח של 5 דקות ומטה לא מפוצל.
           const MIN_HEADWAY = 5;
-          const suggestTimes = (pts) => {
+          const suggestTimes = (pts, n) => {
             const times = [...new Set(pts.map(t => t.timeMins).filter(m => m != null && m > 0))].sort((a,b) => a-b);
-            if (times.length < 2) return { times: [], total: 0 };
+            if (times.length < 2 || !n || n <= 0) return { times: [], total: 0 };
+            const gaps = [];
+            for (let i=0; i<times.length-1; i++) gaps.push([times[i], times[i+1]]);
             const picks = [];
-            for (let i=0; i<times.length-1; i++) {
-              const start = times[i], gap = times[i+1] - start;
-              const inserts = Math.round(gap / MIN_HEADWAY) - 1; // כמה נסיעות לשתול כדי להגיע ל~5 דק'
-              for (let k=1; k<=inserts; k++) picks.push(Math.round(start + (gap * k) / (inserts + 1)));
+            for (let k=0; k<n; k++) {
+              gaps.sort((a,b) => (b[1]-b[0]) - (a[1]-a[0]));
+              const g = gaps[0];
+              if (!g || (g[1]-g[0]) <= MIN_HEADWAY * 2) break;   // אין מרווח שאפשר לפצל
+              const mid = Math.round((g[0]+g[1]) / 2);
+              picks.push(mid);
+              gaps.shift(); gaps.push([g[0], mid], [mid, g[1]]);
             }
             picks.sort((a,b) => a-b);
-            return { times: picks.slice(0, 10).map(minsToStr), total: picks.length };
+            return { times: picks.map(minsToStr), total: picks.length };
           };
           const periodStats = Object.entries(periods).map(([label, pts]) => {
             if (pts.length === 0) return { label, count: 0, avgRiders: 0, avgPeak: 0, capacity: 0, occupancy: 0, tripsToAdd: 0, suggestedTimes: [], moreTimes: 0 };
@@ -1335,7 +1342,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
               const needed = Math.ceil(totalTrips * avgPeak / target);
               tripsToAdd = Math.max(0, needed - totalTrips);
             }
-            const sug = tripsToAdd > 0 ? suggestTimes(pts) : { times: [], total: 0 };
+            const sug = tripsToAdd > 0 ? suggestTimes(pts, tripsToAdd) : { times: [], total: 0 };
             return { label, count: totalTrips, avgRiders: avgRiders.toFixed(1), avgPeak: Math.round(avgPeak), capacity, occupancy, tripsToAdd, suggestedTimes: sug.times, moreTimes: Math.max(0, sug.total - sug.times.length) };
           }).filter(p => p.count > 0);
           const maxRiders = Math.max(...periodStats.map(p => Number(p.avgRiders)), 1);
@@ -1523,8 +1530,17 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, focusMaka
         {/* ── טאב: כל הנסיעות — הפוך מקו פח: מהעמוסה ביותר לריקה ── */}
         {goldenTab === 'allTrips' && (() => {
           const sCity = gTripsCity.trim().toLowerCase();
+          // חיפוש אחיד עם הטאב המקביל בקו פח (סעיף 35): גם ערי מעבר
+          // (lineCitiesMap), לא רק מוצא/יעד ומספר קו מדויק
           let rows = trips;
-          if (sCity) rows = rows.filter(t => (t.origin || '').toLowerCase().includes(sCity) || (t.dest || '').toLowerCase().includes(sCity) || String(t.lineNum) === gTripsCity.trim());
+          if (sCity) rows = rows.filter(t => {
+            if ((t.origin || '').toLowerCase().includes(sCity) || (t.dest || '').toLowerCase().includes(sCity)) return true;
+            if (String(t.lineNum) === gTripsCity.trim()) return true;
+            const makatKey = String(t.makat || '').replace(/^0+/, '').trim();
+            const lineKey = String(t.lineNum || '').replace(/^0+/, '').trim();
+            const citiesSet = lineCitiesMap.get(makatKey) || lineCitiesMap.get(lineKey);
+            return citiesSet ? Array.from(citiesSet).some(c => c.includes(sCity)) : false;
+          });
           if (gTripsCrowded) rows = rows.filter(t => t.peakLoad >= (t.capacity || 50) * 0.85);
           const { key, direction } = gTripsSort;
           rows = [...rows].sort((a, b) => direction === 'desc' ? (b[key] || 0) - (a[key] || 0) : (a[key] || 0) - (b[key] || 0));
@@ -2686,12 +2702,17 @@ const DAYS_FILTER = [
       setFilterDistrict("all");
       setSearchCity(areaName);
     }
+    // מיון לפי ציון — הקווים שהכרטיס האזורי ספר (80+) מופיעים ראשונים
+    setRedundantSortBy("score");
     setTab("redundant");
   };
 
   const exportAreaToExcel = (areaName, viewMode) => {
-    // סינון הקווים הרלוונטיים לאזור שנבחר, ורק אלו שחשודים כמיותרים (ציון 80 ומעלה) כדי שיתאים לתצוגה
+    // סינון הקווים הרלוונטיים לאזור שנבחר, ורק אלו שחשודים כמיותרים (ציון 80 ומעלה) כדי שיתאים לתצוגה.
+    // קווים שכבר בוטלו מוחרגים — בדיוק כמו בספירה שעל הכרטיס (areaStats),
+    // אחרת הקובץ המיוצא מכיל יותר שורות מהמספר שהכרטיס מציג
     const filteredLines = redundantLines.filter(line => {
+      if (line.live && line.live.rm) return false;
       if (line.score < 80) return false;
       if (viewMode === 'district') return line.district === areaName;
       return line.origin === areaName || line.dest === areaName;
@@ -2727,18 +2748,22 @@ const DAYS_FILTER = [
 
   const tableTrips = useMemo(() => {
     const sCity = searchCity.toLowerCase();
+    // חיפוש אחיד עם הטאב המקביל במוזהב (סעיף 35): גם מספר קו/מק"ט, לא רק עיר
+    const sLine = searchCity.trim().replace(/^0+/, '');
     let filtered = trips.filter(t => {
       if (filterLineType !== "all" && t.lineType !== filterLineType) return false;
       if (sCity) {
+        const isLine = sLine && (String(t.lineNum).trim() === searchCity.trim() ||
+          String(t.makat || '').replace(/^0+/, '').trim() === sLine);
         const isOriginDest = t.origin.toLowerCase().includes(sCity) || t.dest.toLowerCase().includes(sCity);
         let isTransit = false;
-        if (!isOriginDest) {
+        if (!isOriginDest && !isLine) {
             const makatKey = String(t.makat || '').replace(/^0+/, '').trim();
             const lineKey = String(t.lineNum || '').replace(/^0+/, '').trim();
             const citiesSet = lineCitiesMap.get(makatKey) || lineCitiesMap.get(lineKey);
             isTransit = citiesSet ? Array.from(citiesSet).some(c => c.includes(sCity)) : false;
         }
-        if (!isOriginDest && !isTransit) return false;
+        if (!isOriginDest && !isTransit && !isLine) return false;
       }
       if (showCrowded && t.ridership < 40 && t.peakLoad < 40) return false;
       return true;
@@ -2811,7 +2836,10 @@ const DAYS_FILTER = [
     const cancelledCountByLineDay = {};
 
     filteredTrips.forEach(t => {
-      const key = `${t.lineNum}|${t.direction}|${t.days}|${t.origin}|${t.dest}`;
+      // המק"ט בתוך מפתח הקיבוץ (בקשת שלמה): שתי חלופות מסלול של אותו
+      // מספר קו הן קווים שונים בשטח — איחוד נסיעה מחלופה א' עם נסיעה
+      // מחלופה ב' אינו אפשרי לנוסע שתלוי בתחנה שקיימת רק באחת מהן
+      const key = `${t.makat || ''}|${t.lineNum}|${t.direction}|${t.days}|${t.origin}|${t.dest}`;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(t);
       const countKey = `${t.lineNum}|${t.daysList.join('')}`;
