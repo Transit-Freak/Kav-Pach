@@ -27,6 +27,9 @@ ntr = jload(f'{OUTDIR}/line-trips.json', {})
 # אותו משם במקום להוריד 1.2MB של כל העוגנים בכל פתיחה. הכתיבה רק כשיש
 # שינוי — אחרי ההטמעה החד-פעמית זו השוואה בלבד.
 anchors = jload(f'{OUTDIR}/anchor-2012.json', {}).get('anchors', {})
+# קובץ עוגנים ריק/פגום אינו הוראת-מחיקה: בלי השומר הזה תקלה בקובץ אחד
+# הייתה מוחקת בשקט את מקטע 2012 מכל העמודים (ציד הבאגים, סבב ב)
+KEEP_ANC = not anchors
 n_anc = 0
 n_new = 0
 for fn in os.listdir(f'{OUTDIR}/lines'):
@@ -37,7 +40,7 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
     if not rd:
         continue
     a = anchors.get(rd)
-    if a != lf.get('anc'):
+    if (not KEEP_ANC) and a != lf.get('anc'):
         if a is None:
             lf.pop('anc', None)
         else:

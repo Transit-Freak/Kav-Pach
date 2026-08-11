@@ -1212,7 +1212,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 const cityOnly2 = (s2) => s2 ? (s2.indexOf(' - ') > 0 ? s2.slice(0, s2.indexOf(' - ')).trim() : s2.split('/')[0].trim()) : '';
                 const seen = new Map();
                 trips.forEach(t => {
-                  if (String(t.lineNum) !== q && String(t.makat || '').replace(/^0+/, '') !== q) return;
+                  if (String(t.lineNum) !== q && String(t.makat || '').replace(/^0+/, '') !== qn) return;
                   const pair = [cityOnly2(t.origin), cityOnly2(t.dest)].sort().join('-');
                   const gk = `${t.lineNum}_${pair}`;
                   if (!seen.has(gk)) seen.set(gk, { lineNum: t.lineNum, makat: t.makat, origin: t.origin, dest: t.dest, district: t.district || '', groupKey: gk, notGolden: true });

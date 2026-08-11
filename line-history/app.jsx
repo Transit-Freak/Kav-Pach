@@ -439,7 +439,7 @@ function TipTag({ cls, tip, children }) {
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); }}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setOpen(!open); } }}>
         {children}</span>
-      {open && <span className="tipnote" onClick={(e) => e.stopPropagation()}>🛈 {tip}</span>}
+      {open && <span className="tipnote" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>🛈 {tip}</span>}
     </>
   );
 }
@@ -1445,10 +1445,11 @@ function RecentChanges({ idx, openLine, onAll }) {
       <div className="rechead">
         <b>מה השתנה לאחרונה</b>
       </div>
+      {/* אותו סינון כמו בפיד היומי: רכבת/רק"ל/מוניות הן טאבים משלהן */}
       {top.map((d) => (
         <React.Fragment key={d}>
           <div className="dayhead">{fmtD(d)} · יום {WDR[new Date(d).getDay()]} · {byd.get(d).length.toLocaleString()} שינויים</div>
-          {byd.get(d).slice(0, 8).map((c, i) => {
+          {byd.get(d).filter((c) => { const m = meta[c.rd] || {}; return !m.tt || m.tt === "demand"; }).slice(0, 8).map((c, i) => {
             const m = meta[c.rd] || {};
             return (
               <a key={c.rd + c.k + i} className="lrow" href={lineHref(c.rd)}
