@@ -173,7 +173,7 @@ const StopGroup = React.memo(function StopGroup({ items, open, onToggle, db, onL
   const flip = (k) => setHidden((h) => { const n = new Set(h); n.has(k) ? n.delete(k) : n.add(k); return n; });
   return (
     <div className={"it grp" + (open ? " open" : "")}>
-      <button className="it-head" onClick={onToggle}>
+      <button className="it-head" onClick={onToggle} aria-expanded={open}>
         <span className="stop-badge">{items.length} קווים</span>
         <span className="it-main">
           <span className="it-title">מדלגים על: {it.stop} <span className="code">({it.code})</span></span>
@@ -235,6 +235,9 @@ function Detail({ it, db, onLine }) {
     const r = sd[x];
     if (r) listing.push({ n: r[0], c: r[1], b: x === it.bsid || x === it.asid });
   });
+  // התחנה המדולגת משובצת לפי מזהה העצירה שאחריה; אם הוא לא נמצא ברצף
+  // (חוסר עקביות בנתונים) — הרשימה הוצגה בלעדיה בלי שום רמז
+  const skipShown = listing.some((x) => x.skip);
   return (
     <div className="detail">
       <SkipMap it={it} route={db.shapes && it.shp ? db.shapes[it.shp] : null} lineStops={lineStops} />
@@ -280,6 +283,9 @@ function Detail({ it, db, onLine }) {
             עם מקטע מהיר מכוון, לא דילוג נקודתי.
           </p>
         )}
+        {listing.length > 0 && !skipShown && (
+          <p className="mut">שימו לב: התחנה המדולגת לא אותרה בתוך רצף התחנות של המסלול — ייתכן פער בנתונים, והמיקום המדויק שלה ברשימה אינו מוצג.</p>
+        )}
         {listing.length > 0 && (
           <details className="stoplist">
             <summary>רשימת התחנות של קו {it.line} במסלול הזה ({listing.filter((x) => !x.skip).length})</summary>
@@ -296,6 +302,14 @@ function Detail({ it, db, onLine }) {
           ייתכן שיש סיבה מוצדקת — נתיב נסיעה שממנו אי-אפשר לעצור, עומס במפרץ, או החלטת תכנון מכוונת.
           הממצא מבוסס על השוואת מסלול הקו (GTFS) לרצף התחנות שלו בלבד.
         </p>
+        <p>
+          <button className="chip clk" onClick={(e) => {
+            const url = location.origin + location.pathname + "#ק/" + encodeURIComponent(it.line);
+            try { navigator.share ? navigator.share({ title: "הקו המדלג — קו " + it.line, url }) : navigator.clipboard.writeText(url); } catch (err) { /* ignore */ }
+            const b = e.currentTarget; const t = b.textContent; b.textContent = "✓ הקישור הועתק";
+            setTimeout(() => { b.textContent = t; }, 1500);
+          }}>🔗 שיתוף הממצאים של קו {it.line}</button>
+        </p>
       </div>
     </div>
   );
@@ -305,7 +319,7 @@ function Detail({ it, db, onLine }) {
 const Row = React.memo(function Row({ it, open, onToggle, db, inner, onLine }) {
   return (
     <div className={"it" + (open ? " open" : "") + (inner ? " inner" : "")}>
-      <button className="it-head" onClick={onToggle}>
+      <button className="it-head" onClick={onToggle} aria-expanded={open}>
         {!inner && <span className="line-badge">{it.line}</span>}
         <span className="it-main">
           <span className="it-title">מדלג על: {it.stop} <span className="code">({it.code})</span></span>
@@ -323,7 +337,7 @@ const LineGroup = React.memo(function LineGroup({ items, open, onToggle, openSub
   const it = items[0];
   return (
     <div className={"it grp" + (open ? " open" : "")}>
-      <button className="it-head" onClick={onToggle}>
+      <button className="it-head" onClick={onToggle} aria-expanded={open}>
         <span className="line-badge">{it.line}</span>
         <span className="it-main">
           <span className="it-title">מדלג על {items.length} תחנות{it.ty && it.ty !== "עירוני" ? <span className="tag-sys ty">{it.ty}</span> : null}</span>
@@ -365,6 +379,18 @@ function App() {
   const dq = useDeferredValue(q);
   const goLine = (ln) => { setQ(ln); setOpenKey(null); setOpenSub(null); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
+  // קישור עמוק: ‎#ק/548‎ פותח את האתר עם חיפוש הקו — אפשר סוף-סוף לשלוח
+  // לחבר או לרשות "תראו מה הקו הזה מדלג" (אותה קונבנציה כמו קו פח)
+  useEffect(() => {
+    const read = () => {
+      const m = decodeURIComponent((location.hash || "").slice(1)).match(/^ק\/(.+)$/);
+      if (m) setQ(m[1]);
+    };
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+
   useEffect(() => {
     fetch("data.json?v=" + BUILD)
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -372,15 +398,18 @@ function App() {
       .catch((e) => setErr(e));
   }, []);
 
-  // הקובץ הלא-עירוני כבד — נטען פעם אחת, רק כשבוחרים סוג קו שאינו עירוני
+  // הקובץ הלא-עירוני כבד — נטען פעם אחת, רק כשבוחרים סוג קו שאינו עירוני.
+  // כישלון (רשת סלולרית, 15MB) חייב להיות גלוי: קודם הוא נבלע בשקט והמשתמש
+  // ראה "אין ממצאים בינעירוניים" — מסקנה שגויה בלי שום רמז לתקלה.
+  const [interErr, setInterErr] = useState(false);
   useEffect(() => {
-    if (fType === "עירוני" || interD || interBusy) return;
+    if (fType === "עירוני" || interD || interBusy || interErr) return;
     setInterBusy(true);
     fetch("data-inter.json?v=" + BUILD)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { setInterD(d || { items: [] }); setInterBusy(false); })
-      .catch(() => { setInterD({ items: [] }); setInterBusy(false); });
-  }, [fType, interD, interBusy]);
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((d) => { setInterD(d); setInterBusy(false); })
+      .catch(() => { setInterErr(true); setInterBusy(false); });
+  }, [fType, interD, interBusy, interErr]);
 
   // מאחדים את שתי החבילות לעבודה אחידה בהמשך
   const db = useMemo(() => {
@@ -397,7 +426,9 @@ function App() {
 
   const items = useMemo(() => {
     if (!db) return [];
-    const raw = (db.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid + "@" + (it.ty || ""), _i: i,
+    // המפתח כולל את skey (תבנית המסלול): קו שמדלג על אותה תחנה בשני
+    // הכיוונים קיבל שני מפתחות זהים — ופתיחת כרטיס אחד פתחה את השני
+    const raw = (db.items || []).map((it, i) => ({ ...it, _k: it.line + "@" + it.sid + "@" + (it.ty || "") + "@" + (it.skey || i), _i: i,
       _q: (it.line + " " + it.stop + " " + it.code + " " + it.city).toLowerCase() }));
     // "דילוג שיטתי" — כשכמה קווים מדלגים על אותה תחנה (תכנון ציר, כמו דרך בגין
     // בת"א) זה כנראה מכוון ולא טעות. קו בודד שמדלג על הרבה תחנות רק מסומן בהערה.
@@ -429,35 +460,48 @@ function App() {
 
   useEffect(() => { setPage(1); }, [city, dq, showSys, byStop, fOp, fMahoz, fUniq, fGap, fSkips, fType]);
 
+  // הקיבוץ והספירות ב-useMemo: קודם הם נבנו מחדש בכל רינדור — כולל כל
+  // הקלדה בחיפוש — על אלפי פריטים, מה שביטל את התועלת של useDeferredValue
+  const { byCity, cities, sysN, stopN } = useMemo(() => {
+    const bc = {};
+    items.forEach((it) => { if (it.city) bc[it.city] = (bc[it.city] || 0) + 1; });
+    const c = {};
+    items.forEach((it) => { c[it.code] = (c[it.code] || 0) + 1; });
+    return {
+      byCity: bc,
+      cities: Object.keys(bc).sort((a, b) => bc[b] - bc[a]),
+      sysN: items.filter((it) => it._sys).length,
+      stopN: Object.values(c).filter((n) => n >= 2).length,
+    };
+  }, [items]);
+  // קיבוץ: כל הדילוגים של אותו קו באותה עיר — כרטיס אחד (הסדר לפי הממצא המדורג הכי גבוה)
+  // ובתצוגה-לפי-תחנה: כל הקווים שמדלגים על אותה תחנה — כרטיס אחד, מרובי-הקווים קודם
+  const groups = useMemo(() => {
+    const out = [];
+    if (byStop) {
+      const gm = new Map();
+      filtered.forEach((it) => {
+        if (!gm.has(it.code)) gm.set(it.code, []);
+        gm.get(it.code).push(it);
+      });
+      [...gm.values()].filter((g) => g.length >= 2)
+        .sort((a, b) => b.length - a.length)
+        .forEach((g) => out.push(g));
+    } else {
+      const gm = new Map();
+      filtered.forEach((it) => {
+        const k = it.line + "@" + it.city + "@" + (it.ty || "");
+        if (!gm.has(k)) { gm.set(k, []); out.push(gm.get(k)); }
+        gm.get(k).push(it);
+      });
+    }
+    return out;
+  }, [filtered, byStop]);
+
   if (err) return <div className="boot">שגיאה בטעינת הנתונים — ייתכן שההרצה הראשונה עוד לא הסתיימה. נסו לרענן מאוחר יותר.</div>;
   if (!data) return <div className="boot">טוען נתונים…</div>;
 
-  const byCity = {};
-  items.forEach((it) => { if (it.city) byCity[it.city] = (byCity[it.city] || 0) + 1; });
-  const cities = Object.keys(byCity).sort((a, b) => byCity[b] - byCity[a]);
-  const sysN = items.filter((it) => it._sys).length;
-  // קיבוץ: כל הדילוגים של אותו קו באותה עיר — כרטיס אחד (הסדר לפי הממצא המדורג הכי גבוה)
-  // ובתצוגה-לפי-תחנה: כל הקווים שמדלגים על אותה תחנה — כרטיס אחד, מרובי-הקווים קודם
-  const groups = [];
-  if (byStop) {
-    const gm = new Map();
-    filtered.forEach((it) => {
-      if (!gm.has(it.code)) gm.set(it.code, []);
-      gm.get(it.code).push(it);
-    });
-    [...gm.values()].filter((g) => g.length >= 2)
-      .sort((a, b) => b.length - a.length)
-      .forEach((g) => groups.push(g));
-  } else {
-    const gm = new Map();
-    filtered.forEach((it) => {
-      const k = it.line + "@" + it.city + "@" + (it.ty || "");
-      if (!gm.has(k)) { gm.set(k, []); groups.push(gm.get(k)); }
-      gm.get(k).push(it);
-    });
-  }
   const shown = groups.slice(0, page * PAGE);
-  const stopN = (() => { const c = {}; items.forEach((it) => { c[it.code] = (c[it.code] || 0) + 1; }); return Object.values(c).filter((n) => n >= 2).length; })();
 
   return (
     <div className="wrap">
@@ -555,6 +599,12 @@ function App() {
         );
       })()}
 
+      {interErr && fType !== "עירוני" && (
+        <div className="count" style={{ color: "#b91c1c", fontWeight: 700 }}>
+          טעינת הקווים הלא-עירוניים נכשלה (הקובץ גדול — ברשת איטית זה קורה).{" "}
+          <button className="chip clk" onClick={() => setInterErr(false)}>נסו שוב</button>
+        </div>
+      )}
       <div className="count">
         {interBusy ? "טוען קווים לא-עירוניים… " : ""}
         {filtered.length === items.length ? "" : filtered.length + " תוצאות (" + groups.length + " קווים)"}

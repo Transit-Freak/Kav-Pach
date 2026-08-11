@@ -18,6 +18,10 @@
 <meta property="og:description" content="כלים חופשיים לבחינת התחבורה הציבורית: היסטוריית קווים ותחנות ממרץ 2017, נגישות אזורי תעשייה, תחנות בעייתיות ועוד — על בסיס הנתונים הרשמיים." />
 <meta property="og:url" content="https://transit-freak.github.io/kav-bochan/" />
 <meta property="og:site_name" content="הקו הבוחן" />
+<meta property="og:image" content="https://transit-freak.github.io/kav-bochan/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"הקו הבוחן","alternateName":"Kav Bochan — ניתוח התחבורה הציבורית בישראל","url":"https://transit-freak.github.io/kav-bochan/"}
 </script>
@@ -27,8 +31,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
 <script src="vendor/tailwind.js"></script>
-<script src="vendor/react.development.js"></script>
-<script src="vendor/react-dom.development.js"></script>
+<!-- React ייצור: גרסת הפיתוח איטית משמעותית (בדיקות בכל רינדור) -->
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
 <script src="vendor/babel.min.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -86,7 +91,7 @@
         </div>
         <div class="choice-grid">
           <!-- קו פח -->
-          <div style="background:#0f172a;border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
+          <a href="#פח" data-boot-tool style="display:block;text-decoration:none;background:#0f172a;border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
             <div style="position:absolute;left:-32px;top:-32px;width:176px;height:176px;background:#1e293b;border-radius:50%;opacity:.5;"></div>
             <div style="position:relative;">
               <div style="position:relative;height:128px;margin-bottom:20px;">
@@ -114,11 +119,11 @@
               </div>
               <h2 style="font-size:1.875rem;font-weight:900;color:#fff;margin:0;">קו פח</h2>
               <p style="color:#cbd5e1;font-weight:700;margin-top:8px;font-size:.875rem;line-height:1.625;">קווים ריקים ובזבזניים — מועמדים לביטול או צמצום</p>
-              <span style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:#fff;color:#0f172a;padding:10px 20px;border-radius:16px;font-weight:900;font-size:.875rem;">כניסה ←</span>
+              <span data-cta style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:#fff;color:#0f172a;padding:10px 20px;border-radius:16px;font-weight:900;font-size:.875rem;">כניסה ←</span>
             </div>
-          </div>
+          </a>
           <!-- הקו המוזהב -->
-          <div style="background:linear-gradient(155deg,#1f2937 0%,#3b2f12 52%,#92400e 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
+          <a href="#מוזהב" data-boot-tool style="display:block;text-decoration:none;background:linear-gradient(155deg,#1f2937 0%,#3b2f12 52%,#92400e 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
             <div style="position:absolute;left:-32px;top:-32px;width:176px;height:176px;background:#fbbf24;border-radius:50%;opacity:.25;"></div>
             <div style="position:relative;">
               <div style="height:112px;margin-bottom:24px;display:flex;align-items:center;justify-content:flex-end;">
@@ -139,9 +144,9 @@
               </div>
               <h2 style="font-size:1.875rem;font-weight:900;color:#fcd34d;margin:0;">הקו המוזהב</h2>
               <p style="color:rgba(254,243,199,.8);font-weight:700;margin-top:8px;font-size:.875rem;line-height:1.625;">הקווים המצטיינים — הסטנדרט שאליו כדאי לשאוף</p>
-              <span style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:#fbbf24;color:#451a03;padding:10px 20px;border-radius:16px;font-weight:900;font-size:.875rem;">כניסה ←</span>
+              <span data-cta style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:#fbbf24;color:#451a03;padding:10px 20px;border-radius:16px;font-weight:900;font-size:.875rem;">כניסה ←</span>
             </div>
-          </div>
+          </a>
           <!-- קו באג -->
           <a href="https://transit-freak.github.io/kav-bug/" target="_blank" rel="noopener" style="display:block;text-decoration:none;background:linear-gradient(155deg,#1e1b4b 0%,#312e81 55%,#4338ca 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
             <div style="position:absolute;left:-32px;top:-32px;width:176px;height:176px;background:#6366f1;border-radius:50%;opacity:.25;"></div>
@@ -160,7 +165,7 @@
             </div>
           </a>
           <!-- התחנה הבאה -->
-          <a href="next-station/" target="_blank" rel="noopener" style="display:block;text-decoration:none;background:linear-gradient(155deg,#0b2545 0%,#13386e 52%,#2563eb 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
+          <a href="next-station/" style="display:block;text-decoration:none;background:linear-gradient(155deg,#0b2545 0%,#13386e 52%,#2563eb 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
             <div style="position:absolute;left:-32px;top:-32px;width:176px;height:176px;background:#60a5fa;border-radius:50%;opacity:.25;"></div>
             <div style="position:relative;">
               <div style="height:112px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
@@ -172,7 +177,7 @@
             </div>
           </a>
           <!-- הקו המדלג -->
-          <a href="skip-stops/" target="_blank" rel="noopener" style="display:block;text-decoration:none;background:linear-gradient(155deg,#451a03 0%,#7c2d12 52%,#d97706 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
+          <a href="skip-stops/" style="display:block;text-decoration:none;background:linear-gradient(155deg,#451a03 0%,#7c2d12 52%,#d97706 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
             <div style="position:absolute;left:-32px;top:-32px;width:176px;height:176px;background:#f59e0b;border-radius:50%;opacity:.25;"></div>
             <div style="position:relative;">
               <div style="height:112px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
@@ -193,7 +198,7 @@
             </div>
           </a>
           <!-- הקו בזמן -->
-          <a href="line-history/" target="_blank" rel="noopener" style="display:block;text-decoration:none;background:linear-gradient(155deg,#2e1065 0%,#4c1d95 52%,#7c3aed 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
+          <a href="line-history/" style="display:block;text-decoration:none;background:linear-gradient(155deg,#2e1065 0%,#4c1d95 52%,#7c3aed 100%);border-radius:40px;padding:32px;text-align:right;box-shadow:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);position:relative;overflow:hidden;">
             <div style="position:absolute;left:-32px;top:-32px;width:176px;height:176px;background:#a78bfa;border-radius:50%;opacity:.25;"></div>
             <div style="position:relative;">
               <div style="height:112px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
@@ -210,13 +215,19 @@
       </div>
     </div>
   </div>
-  <!-- ?v= חותמת גרסה: עדכן בכל פריסת קוד כדי לאלץ הורדה מחדש (cache-busting).
-       הקומפילציה של Babel (הקפאת השניות הראשונות) נשמרת ב-localStorage לפי
-       גרסה — בביקור חוזר אין קומפילציה בכלל והאתר עולה מיד. -->
+  <!-- הקוד נטען עם cache:no-cache — הדפדפן מאמת מול השרת (ETag) ומקבל 304
+       כשאין שינוי, כך שאין צורך לעדכן חותמת ?v ידנית בכל פריסה. הקומפילציה
+       נשמרת ב-localStorage לפי hash של התוכן — מתחלפת מעצמה בכל שינוי קוד. -->
   <script>
     (function () {
-      var V = '20260811b';
-      fetch('KavPach.jsx?v=' + V)
+      // חיווי מיידי בלחיצה על כלי לפני שהאפליקציה עלתה — במקום כפתור מת
+      document.addEventListener('click', function (ev) {
+        var a = ev.target && ev.target.closest && ev.target.closest('a[data-boot-tool]');
+        if (!a || window.__kavpachReady) return;
+        var cta = a.querySelector('[data-cta]');
+        if (cta) cta.textContent = '⏳ טוען את הכלי…';
+      });
+      fetch('KavPach.jsx', { cache: 'no-cache' })
         .then(function (r) { return r.text(); })
         .then(function (src) {
           // מפתח ה-cache נגזר מתוכן הקובץ עצמו (hash) ולא מחותמת ידנית:
@@ -238,6 +249,7 @@
           var sc = document.createElement('script');
           sc.text = js;
           document.body.appendChild(sc);
+          window.__kavpachReady = true;
           var tries = 0;
           (function go() {
             if (typeof KavPach === 'undefined') {
