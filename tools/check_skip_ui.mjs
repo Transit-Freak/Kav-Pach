@@ -6,7 +6,7 @@ const { chromium } = require_('playwright-core');
 const MIME = { '.html':'text/html','.js':'text/javascript','.jsx':'text/javascript','.css':'text/css','.json':'application/json' };
 const srv = http.createServer((req,res)=>{
   const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/,'')||'index.html';
-  try{ const p=path.join(ROOT,'skip-stops',rel); let b=fs.readFileSync(p);
+  try{ const p=(rel.startsWith('vendor/babel')||rel==='a11y.js')?path.join(ROOT,rel):path.join(ROOT,'skip-stops',rel); let b=fs.readFileSync(p);
     if (p.endsWith('index.html')) b = Buffer.from(b.toString().replace(/\s(integrity|crossorigin)="[^"]*"/g, ''));
     res.writeHead(200,{'content-type':MIME[path.extname(p)]||'application/octet-stream'}); res.end(b);
   }catch{ res.writeHead(404); res.end(); }

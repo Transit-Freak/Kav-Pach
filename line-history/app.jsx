@@ -747,9 +747,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           <button className="sharebtn" title="שיתוף הקישור לעמוד הקו הזה — כל ההיסטוריה שלו"
             onClick={(e) => {
               const url = location.origin + location.pathname + "#" + encodeURIComponent(rd);
-              try { navigator.share ? navigator.share({ title: "הקו בזמן — " + (lf.line ? "קו " + lf.line : lf.dest), url }) : navigator.clipboard.writeText(url); } catch (err) { /* ignore */ }
-              const b = e.currentTarget; const t = b.textContent; b.textContent = "✓ הועתק";
-              setTimeout(() => { b.textContent = t; }, 1500);
+              const b = e.currentTarget;
+              // "הועתק" רק אחרי שההעתקה באמת הצליחה; בגיליון השיתוף של
+              // הטלפון אין מה להכריז (ציד הבאגים, סבב ב)
+              if (navigator.share) { navigator.share({ title: "הקו בזמן — " + (lf.line ? "קו " + lf.line : lf.dest), url }).catch(() => {}); return; }
+              const t = b.textContent;
+              const done = () => { b.textContent = "✓ הועתק"; setTimeout(() => { b.textContent = t; }, 1500); };
+              if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => {});
             }}>🔗 שיתוף</button>
         </div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
@@ -909,7 +913,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               אבל בלי כפתור-בתוך-כפתור: השורה נשארת לחיצה לעכבר בלבד,
               ותגית הסוג היא הכפתור האמיתי (nested-interactive מהביקורת) */}
           {shown.map(({ v: x, i }) => (
-            <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")}
+            <div key={x.d + x.k + i} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")}
               onClick={() => setSel(i)}>
               <div className="d">
                 {(() => { const ed = evDate(x); return ed.tip
@@ -1506,18 +1510,23 @@ function StopsTab({ sel }) {
   const needHist = mon === "all" || !!sel;
   // ההשוואה ל-q הייתה מוקדמת מדי: החיפוש נקבע ל-sel באפקט אחר, ובסבב
   // הראשון הוא עדיין הערך הישן — ואז נטען הקובץ המלא במקום השבר.
-  const wantShard = !!sel;
+  // shardLeft: אחרי שהחיפוש עזב את תחנת הקישור, הדגל נשאר דלוק והשבר
+  // נטען שוב ושוב — חיפוש תחנה אחרת רץ בשקט על ~1% מהתחנות בלבד
+  // והציג "אין תוצאות" על תחנות קיימות (ציד הבאגים, סבב ב).
+  const shardLeft = useRef(false);
+  useEffect(() => { shardLeft.current = false; }, [sel]);
+  const wantShard = !!sel && !shardLeft.current;
   useEffect(() => {
     if (!needHist || hist) return;
     const done = (d) => setHist(d);
     if (wantShard) {
       setShard(sel);
-      fetch("data/stops/" + (sel.slice(0, 2) || "0").padStart(2, "0") + ".json?v=" + BUILD)
+      dfetch("data/stops/" + (sel.slice(0, 2) || "0").padStart(2, "0") + ".json")
         .then((r) => (r.ok ? r.json() : {})).then(done).catch(() => done({}));
       return;
     }
     setShard(null);
-    fetch("data/stops-hist.json?v=" + BUILD + "-" + new Date().toISOString().slice(0, 10))
+    dfetch("data/stops-hist.json")
       .then((r) => (r.ok ? r.json() : {})).then(done).catch(() => done({}));
   }, [needHist, hist, wantShard, sel]);
   // חיפוש שיצא מהתחנה של הקישור — השבר כבר לא מספיק, וצריך את הכל.
@@ -1527,7 +1536,7 @@ function StopsTab({ sel }) {
   useEffect(() => { selDone.current = false; }, [sel]);
   useEffect(() => {
     if (sel && q.trim() === sel) selDone.current = true;
-    if (shard && selDone.current && q.trim() !== shard) { setHist(null); setShard(null); }
+    if (shard && selDone.current && q.trim() !== shard) { shardLeft.current = true; setHist(null); setShard(null); }
   }, [q, shard, sel]);
   // כללי התצוגה (בקשת המשתמש, בעקבות תחנות עונתיות כמו תחנות ההתרעננות):
   // "חדשה" — רק הרישום הראשון אי-פעם של התחנה; הרשמות חוזרות לא מוצגות.

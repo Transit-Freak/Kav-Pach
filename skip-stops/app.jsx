@@ -403,16 +403,37 @@ function App() {
   // בביקור הקודם מסומן "חדש", עם אפשרות להציג רק אותם. ההשוואה על
   // הקובץ העירוני הבסיסי בלבד (הבין-עירוני נטען עצל ולא תמיד קיים).
   const [showOnlyNew, setShowOnlyNew] = useState(false);
+  // המפתח להשוואה בין ביקורים יציב בכוונה בלי skey: מזהי התבנית (shape)
+  // ממוספרים מחדש בכל פרסום של משרד התחבורה, וההשוואה איתם סימנה 73%
+  // מהפריטים כ"חדשים" בטעות (ציד הבאגים, סבב ב). skey נשאר רק ב-_k
+  // של פתיחת כרטיסים בתוך העמוד.
+  const stableKey = (it) => it.line + "@" + it.sid + "@" + (it.ty || "");
   const fresh = useMemo(() => {
     if (!data) return null;
-    const keyOf = (it, i) => it.line + "@" + it.sid + "@" + (it.ty || "") + "@" + (it.skey || i);
-    const cur = (data.items || []).map(keyOf);
+    const cur = (data.items || []).map(stableKey);
     let prev = null;
     try { prev = JSON.parse(localStorage.getItem("sk-visit") || "null"); } catch (e) { prev = null; }
-    try { localStorage.setItem("sk-visit", JSON.stringify({ gen: data.gen, keys: cur })); } catch (e) { /* מצב פרטי / אין מקום */ }
-    if (!prev || !prev.gen || prev.gen === data.gen || !Array.isArray(prev.keys)) return null;
-    const old = new Set(prev.keys);
-    return { since: prev.gen, news: new Set(cur.filter((k) => !old.has(k))) };
+    if (!prev || !prev.seen || !Array.isArray(prev.keys)) return null;
+    // הבסיס להשוואה: baseline — מפתחות הגרסה הקודמת שהמשתמש ראה.
+    // רענון באותה גרסת נתונים משווה מול אותו בסיס, כך שהתגים לא נעלמים
+    // אחרי F5 או טאב שנטען מחדש (ציד הבאגים, סבב ב).
+    const base = new Set(prev.seen === data.gen ? (prev.baseline || prev.keys) : prev.keys);
+    const news = new Set(cur.filter((k) => !base.has(k)));
+    return news.size ? { since: prev.seen === data.gen ? (prev.sinceGen || prev.seen) : prev.seen, news } : null;
+  }, [data]);
+  // הכתיבה אחרי הרינדור (useEffect), לא בתוכו: כתיבה בתוך useMemo
+  // "שרפה" את הביקור ברגע הטעינה, לפני שהמשתמש ראה משהו
+  useEffect(() => {
+    if (!data) return;
+    const cur = (data.items || []).map(stableKey);
+    let prev = null;
+    try { prev = JSON.parse(localStorage.getItem("sk-visit") || "null"); } catch (e) { prev = null; }
+    const rec = (!prev || !prev.seen || !Array.isArray(prev.keys)) 
+      ? { seen: data.gen, keys: cur, baseline: cur, sinceGen: data.gen }
+      : prev.seen === data.gen
+        ? { seen: data.gen, keys: cur, baseline: prev.baseline || prev.keys, sinceGen: prev.sinceGen || prev.seen }
+        : { seen: data.gen, keys: cur, baseline: prev.keys, sinceGen: prev.seen };
+    try { localStorage.setItem("sk-visit", JSON.stringify(rec)); } catch (e) { /* מצב פרטי / אין מקום */ }
   }, [data]);
 
   // הקובץ הלא-עירוני כבד — נטען פעם אחת, רק כשבוחרים סוג קו שאינו עירוני.
@@ -447,7 +468,7 @@ function App() {
     // הכיוונים קיבל שני מפתחות זהים — ופתיחת כרטיס אחד פתחה את השני
     const raw = (db.items || []).map((it, i) => {
       const k = it.line + "@" + it.sid + "@" + (it.ty || "") + "@" + (it.skey || i);
-      return { ...it, _k: k, _i: i, _new: !!(fresh && fresh.news.has(k)),
+      return { ...it, _k: k, _i: i, _new: !!(fresh && fresh.news.has(it.line + "@" + it.sid + "@" + (it.ty || ""))),
         _q: (it.line + " " + it.stop + " " + it.code + " " + it.city).toLowerCase() };
     });
     // "דילוג שיטתי" — כשכמה קווים מדלגים על אותה תחנה (תכנון ציר, כמו דרך בגין
@@ -465,7 +486,9 @@ function App() {
     const needle = dq.trim().toLowerCase();
     return items.filter((it) => {
       if (showOnlyNew && !it._new) return false;
-      if (!byStop && !showSys && it._sys) return false;
+      // במצב "רק חדשים" גם השיטתיים מוצגים — אחרת הבאנר מבטיח N
+      // והרשימה מציגה פחות בלי הסבר (ציד הבאגים, סבב ב)
+      if (!byStop && !showSys && it._sys && !showOnlyNew) return false;
       if (fType !== "all" && (it.ty || "עירוני") !== fType) return false;
       if (city && it.city !== city) return false;
       if (fOp && it.op !== fOp) return false;
@@ -505,7 +528,7 @@ function App() {
         if (!gm.has(it.code)) gm.set(it.code, []);
         gm.get(it.code).push(it);
       });
-      [...gm.values()].filter((g) => g.length >= 2)
+      [...gm.values()].filter((g) => showOnlyNew || g.length >= 2)
         .sort((a, b) => b.length - a.length)
         .forEach((g) => out.push(g));
     } else {

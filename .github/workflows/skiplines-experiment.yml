@@ -27,8 +27,8 @@ concurrency:
 
 jobs:
   run:
-    # בטריגר workflow_run — רק אחרי ריצה שהצליחה של הצינור הראשי
-    if: (github.ref == 'refs/heads/main' || github.event_name != 'push') && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    # גם כשהצינור הראשי נכשל — הנסיגה מורידה את הפיד ישירות; מדלגים רק על ביטול ידני
+    if: (github.ref == 'refs/heads/main' || github.event_name != 'push') && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'cancelled')
     runs-on: ubuntu-latest
     timeout-minutes: 55
     steps:

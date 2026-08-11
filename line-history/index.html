@@ -36,7 +36,8 @@
        13,192 וריאנטים — והוסיפה תלות בשרת חיצוני -->
   <script src="../vendor/react.production.min.js?v=18.3.1"></script>
   <script src="../vendor/react-dom.production.min.js?v=18.3.1"></script>
-  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <!-- Babel מקומי — בלי תלות בשרת חיצוני בביקור ראשון -->
+  <script src="../vendor/babel.min.js?v=7.29"></script>
   <script>
     (function () {
       // הקוד נטען עם revalidation מול השרת (ETag): עדכון מגיע מיד בלי
@@ -68,6 +69,12 @@
           run(out);
         })
         .catch(function (e) {
+          // תקלת רשת רגעית: אם יש קומפילציה שמורה מביקור קודם — מריצים
+          // אותה במקום להציג שגיאה (הקוד מעט ישן, אבל האתר חי)
+          try {
+            var k = Object.keys(localStorage).find(function (x) { return x.indexOf("lh-js-") === 0; });
+            if (k) { run(localStorage.getItem(k)); return; }
+          } catch (e2) { /* אין מטמון */ }
           document.getElementById("root").innerHTML = '<div class="boot">שגיאה בטעינה: ' + e + "</div>";
         });
     })();

@@ -682,6 +682,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
     const groups = {};
     for (let i = 0; i < trips.length; i++) {
       const t = trips[i];
+      // הסינון ברמת הנסיעה: קבוצה מקובצת לפי מספר-קו+ערים ויכולה לערבב
+      // מק"ט מבוטל עם מק"ט חי (קווי 97/85/87 בחיפה) — פסילה לפי המק"ט
+      // הראשון העלימה את הקו החי כולו מהרשימה (ציד הבאגים, סבב ב)
+      const tl = liveOf ? liveOf(t.makat) : null;
+      if (tl && tl.rm) continue;
       const o = cityOnlyStr(t.origin);
       const d = cityOnlyStr(t.dest);
       const cityPair = [o, d].sort().join('-');
@@ -1501,6 +1506,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                           {p.suggestedTimes.length > 0 ? (
                             <div>
                               <div className="text-xs font-bold text-slate-500 mb-2">שעות יציאה מוצעות (קירוב לתדירות של 5 דק'):</div>
+                              {p.suggestedTimes.length < p.tripsToAdd && (
+                                <div className="text-[11px] font-bold text-amber-700 mb-2">
+                                  בלוח יש מקום רק ל-{p.suggestedTimes.length} מתוך {p.tripsToAdd} — לשאר עדיף רכב גדול יותר.
+                                </div>
+                              )}
                               <div className="flex flex-wrap gap-2">
                                 {p.suggestedTimes.map((t, ti) => (
                                   <span key={ti} className="font-black text-sm text-emerald-700 bg-white border border-emerald-200 px-3 py-1.5 rounded-xl shadow-sm">{t}</span>
@@ -1512,7 +1522,9 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                             </div>
                           ) : (
                             <div className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                              הלוח כבר רץ בתדירות של עד 5 דקות — עדיף לשדרג ל{p.capacity < 90 ? 'אוטובוס מפרקי (90 מקומות)' : 'תוספת קיבולת'} מאשר להוסיף נסיעות.
+                              {p.count >= 2
+                                ? <>הלוח כבר רץ בתדירות של עד 5 דקות — עדיף לשדרג ל{p.capacity < 90 ? 'אוטובוס מפרקי (90 מקומות)' : 'תוספת קיבולת'} מאשר להוסיף נסיעות.</>
+                                : <>בחלון הזה יש מעט יציאות מכדי לחשב שעות מוצעות — כנראה עדיף רכב גדול יותר.</>}
                             </div>
                           )}
                         </div>
@@ -2555,7 +2567,10 @@ const DAYS_FILTER = [
 
       // הגנות מהארכיון של "הקו בזמן" (kavpach-live.json, מתעדכן לילית):
       // הצילום של יוני לא יודע מה קרה לקו לפני הצילום ואחריו — הארכיון יודע.
-      const live = liveOf(data[0].makat);
+      // קבוצה יכולה לערבב מק"ט מבוטל וחי (אותו מספר קו) — התג "בוטל"
+      // ניתן רק כשכל המק"טים בוטלו; אחרת נדגם מק"ט חי (ציד הבאגים)
+      const firstAlive = data.find(t => { const lv = liveOf(t.makat); return !(lv && lv.rm); });
+      const live = liveOf((firstAlive || data[0]).makat);
       if (live && !live.rm) {
         // קו שנפתח בשנה האחרונה נמצא בתקופת הרצה — מעט נוסעים זה השלב
         // הטבעי של בניית ביקוש, לא בזבוז. קו שהושבת וחזר אינו חדש —
@@ -2833,8 +2848,6 @@ const DAYS_FILTER = [
     // הבדיקה הכלי המליץ "לבטל" נסיעות של קווים מתים — כולל באקסל המיוצא
     const skippedMakats = new Set();
     const filteredTrips = trips.filter(t => {
-        const live = liveOf(t.makat);
-        if (live && live.rm) { skippedMakats.add(t.makat); return false; }
         if (lineToUse) {
           const searchVals = String(lineToUse).split(',').map(s => s.trim()).filter(Boolean);
           if (searchVals.length > 0) {
@@ -2860,6 +2873,10 @@ const DAYS_FILTER = [
         const hasMatchingDay = daysToUse.some(day => t.daysList.includes(String(day)));
         if (!hasMatchingDay) return false;
       }
+      // בדיקת הביטול אחרונה — נספרים רק קווים שבאמת היו נכנסים לריצה
+      // הזו, לא כל 338 המבוטלים שבמאגר (ציד הבאגים, סבב ב)
+      const live = liveOf(t.makat);
+      if (live && live.rm) { skippedMakats.add(t.makat); return false; }
       return true;
     });
 
@@ -2882,7 +2899,7 @@ const DAYS_FILTER = [
       const key = `${t.makat || ''}|${t.lineNum}|${t.direction}|${t.days}|${t.origin}|${t.dest}`;
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(t);
-      const countKey = `${t.lineNum}|${t.daysList.join('')}`;
+      const countKey = `${t.makat || ''}|${t.lineNum}|${t.daysList.join('')}`;
       lineDayCounts[countKey] = (lineDayCounts[countKey] || 0) + t.tripCount;
     });
 
@@ -2897,6 +2914,10 @@ const DAYS_FILTER = [
       // נסיעות שבוטלו בריצה הזו — נסיעה מבוטלת אינה "חלופה קרובה" למי
       // שבא לבטל את השכנה שלה (אחרת שתי נסיעות סמוכות מבטלות זו את זו)
       const cancelledIds = new Set();
+      // שעת היעד החדשה של נסיעות שאוחדו — בדיקת "חלופה קרובה" נמדדת
+      // מהשעה האמיתית אחרי ההזזה, לא מהשעה המקורית (ציד הבאגים, סבב ב)
+      const effTime = new Map();
+      const cancelInfo = new Map();   // id -> {rec, gapCheck, dayKey} לאימות בדיעבד
       let cancelledInGroup = 0;
       
       for(let i = 0; i < group.length; i++) {
@@ -2911,7 +2932,7 @@ const DAYS_FILTER = [
 
         let merged = false;
         const category = getLineCategory(t1.lineType);
-        const totalTripsInDay = lineDayCounts[`${t1.lineNum}|${t1.daysList.join('')}`] || 0;
+        const totalTripsInDay = lineDayCounts[`${t1.makat || ''}|${t1.lineNum}|${t1.daysList.join('')}`] || 0;
 
         const capacity = t1.capacity || 50;
         const scale = capacity / 50;
@@ -2962,7 +2983,7 @@ const DAYS_FILTER = [
             const gap2 = t3.timeMins - t2.timeMins;
             const val3 = getMetricVal(t3);
             const totalVal2 = val2 + val3;
-            if (gap2 > 0 && gap2 < gap1 && gap2 <= maxGapMerge && val2 < maxRidersEach && val3 < maxRidersEach && totalVal2 < maxTotalMerge) {
+            if (gap2 >= 0 && gap2 < gap1 && gap2 <= maxGapMerge && val2 < maxRidersEach && val3 < maxRidersEach && totalVal2 < maxTotalMerge) {
               skipForBetterMerge = true; 
             }
           }
@@ -2983,6 +3004,7 @@ const DAYS_FILTER = [
               busSize: t1.busSize, capacity: t1.capacity, efficiency: t1.efficiency, metricVal: val1
             });
             usedTrips.add(t1.id); usedTrips.add(t2.id); merged = true; actionTaken = true;
+            effTime.set(t1.id, suggestedMins); effTime.set(t2.id, suggestedMins);
           }
         }
 
@@ -2991,7 +3013,7 @@ const DAYS_FILTER = [
 
           if (valCancel < cancelRiders) {
             let allowCancel = true;
-            const dayKey = `${t1.lineNum}|${t1.daysList.join('')}`;
+            const dayKey = `${t1.makat || ''}|${t1.lineNum}|${t1.daysList.join('')}`;
             const totalTripsBothDirs = lineDayCounts[dayKey] || 0;
             const currentCancelledBoth = cancelledCountByLineDay[dayKey] || 0;
 
@@ -3010,7 +3032,8 @@ const DAYS_FILTER = [
               let hasAlternative = false; 
               const prev = i > 0 ? group[i-1] : null; const next = t2;
               
-              if (prev && !cancelledIds.has(prev.id) && (t1.timeMins - prev.timeMins) <= cancelGapCheck) hasAlternative = true;
+              const prevT = prev ? (effTime.has(prev.id) ? effTime.get(prev.id) : prev.timeMins) : 0;
+              if (prev && !cancelledIds.has(prev.id) && (t1.timeMins - prevT) <= cancelGapCheck) hasAlternative = true;
               if (next && (next.timeMins - t1.timeMins) <= cancelGapCheck) hasAlternative = true;
 
               if (hasAlternative) {
@@ -3022,6 +3045,7 @@ const DAYS_FILTER = [
                   busSize: t1.busSize, capacity: t1.capacity
                 });
                 usedTrips.add(t1.id); cancelledIds.add(t1.id); cancelledInGroup++; cancelledCountByLineDay[dayKey] = (cancelledCountByLineDay[dayKey] || 0) + 1; actionTaken = true;
+                cancelInfo.set(t1.id, { rec: results[results.length - 1], gapCheck: cancelGapCheck, dayKey });
               }
             }
           }
@@ -3035,6 +3059,27 @@ const DAYS_FILTER = [
               busSize: t1.busSize, capacity: t1.capacity
            });
            usedTrips.add(t1.id);
+        }
+      }
+      // אימות בדיעבד: ביטול שנשען על "חלופה" שבוטלה או הוזזה אחריו —
+      // מוחזר. כך שרשרת ביטולים (קווי לילה בעיקר) לא משאירה נוסעים
+      // בלי חלופה אמיתית בטווח שהכלי מבטיח (ציד הבאגים, סבב ב)
+      let revalidate = true;
+      while (revalidate) {
+        revalidate = false;
+        for (const [cid, info] of cancelInfo) {
+          if (!cancelledIds.has(cid)) continue;
+          const ct = group.find(x => x.id === cid);
+          if (!ct) continue;
+          const stillOk = group.some(m => m.id !== cid && !cancelledIds.has(m.id) &&
+            Math.abs((effTime.has(m.id) ? effTime.get(m.id) : m.timeMins) - ct.timeMins) <= info.gapCheck);
+          if (!stillOk) {
+            cancelledIds.delete(cid);
+            info.rec.type = 'ok';
+            cancelledCountByLineDay[info.dayKey] = Math.max(0, (cancelledCountByLineDay[info.dayKey] || 1) - 1);
+            cancelledInGroup = Math.max(0, cancelledInGroup - 1);
+            revalidate = true;
+          }
         }
       }
       if (gi % GSIM_CHUNK === GSIM_CHUNK - 1) await yieldFrame();
@@ -4084,6 +4129,12 @@ const DAYS_FILTER = [
                   </div>
                 )}
 
+                {!simLoading && optimizations.length === 0 && simSkipped > 0 && (
+                  <div className="text-center py-8 text-red-500 font-black text-sm bg-red-50 border border-red-200 rounded-2xl">
+                    ✖ {simSkipped === 1 ? 'הקו שחיפשת כבר בוטל (לפי ארכיון "הקו בזמן") — לכן אין תוצאות.'
+                      : simSkipped + ' קווים שתאמו את החיפוש כבר בוטלו (לפי ארכיון "הקו בזמן") — לכן אין תוצאות.'}
+                  </div>
+                )}
                 <div className="space-y-4">
                   {!simLoading && optimizations.length > 0 ? (() => {
                     const optsToRender = showAllTripsInSimulator

@@ -22,6 +22,10 @@ on:
       - 'tools/scan_vcnt_daily.py'
       - 'tools/last_sched.py'
       - 'tools/compact_lines.py'
+      # שני אלה רצים בצעד ה-commit — שינוי שבור בהם היה מתגלה רק בריצה
+      # הלילית ומפיל את כל שלושת הצינורות (ציד הבאגים, סבב ב)
+      - 'tools/build_kavpach_live.py'
+      - 'tools/build_archive_months.py'
   workflow_dispatch:
 
 permissions:
