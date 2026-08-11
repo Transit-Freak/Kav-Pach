@@ -559,7 +559,7 @@ function App() {
 
       <div className="controls">
         <div className="chips">
-          <select className="city-sel" value={city} onChange={(e) => setCity(e.target.value)}>
+          <select aria-label="בחירת עיר" className="city-sel" value={city} onChange={(e) => setCity(e.target.value)}>
             <option value="">כל הארץ ({items.length})</option>
             {cities.map((c) => (
               <option key={c} value={c}>{c} ({byCity[c] || 0})</option>
@@ -588,26 +588,26 @@ function App() {
         const uniqs = uniqVals(items.map((it) => it.uniq || "סדיר"));
         return (
           <div className="controls2">
-            <select className="fsel" value={fType} onChange={(e) => setFType(e.target.value)}>
+            <select aria-label="סינון לפי סוג הקו" className="fsel" value={fType} onChange={(e) => setFType(e.target.value)}>
               <option value="עירוני">קווים עירוניים</option>
               <option value="בינעירוני">קווים בין-עירוניים</option>
               <option value="אזורי">קווים אזוריים</option>
               <option value="all">כל סוגי הקווים</option>
             </select>
             {ops.length > 0 && (
-              <select className="fsel" value={fOp} onChange={(e) => setFOp(e.target.value)}>
+              <select aria-label="סינון לפי מפעיל" className="fsel" value={fOp} onChange={(e) => setFOp(e.target.value)}>
                 <option value="">מפעיל: הכול</option>
                 {ops.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             )}
             {mahozs.length > 0 && (
-              <select className="fsel" value={fMahoz} onChange={(e) => setFMahoz(e.target.value)}>
+              <select aria-label="סינון לפי מחוז" className="fsel" value={fMahoz} onChange={(e) => setFMahoz(e.target.value)}>
                 <option value="">מחוז: הכול</option>
                 {mahozs.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             )}
             {uniqs.length > 1 && (
-              <select className="fsel" value={fUniq} onChange={(e) => setFUniq(e.target.value)}>
+              <select aria-label="סינון לפי סוג רישוי" className="fsel" value={fUniq} onChange={(e) => setFUniq(e.target.value)}>
                 <option value="">סוג קו: הכול</option>
                 {uniqs.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
@@ -658,7 +658,9 @@ function App() {
               onToggle={() => setOpenKey(openKey === gk ? null : gk)} />
           );
         })}
-        {shown.length === 0 && <div className="empty">לא נמצאו תוצאות.</div>}
+        {shown.length === 0 && (showOnlyNew
+          ? <div className="empty">אין ממצאים חדשים בסינון הנוכחי — לחצו שוב על "מציג רק חדשים" כדי לראות את כל הממצאים.</div>
+          : <div className="empty">לא נמצאו תוצאות.</div>)}
         {groups.length > shown.length && (
           <button className="more-btn" onClick={() => setPage(page + 1)}>
             הצגת עוד ({groups.length - shown.length} קווים נוספים)

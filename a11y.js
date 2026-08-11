@@ -18,6 +18,10 @@
   function apply(p) {
     var h = document.documentElement;
     FLAGS.forEach(function (f) { h.classList.toggle("a11y-" + f, !!p[f]); });
+    // מפות Leaflet שכבר צוירו מחשבות פיקסלים לפי הגודל הקודם — אירוע
+    // resize גורם להן למדוד מחדש (trackResize), אחרת סמן תחנה נוחת
+    // במקום שגוי אחרי הפעלת ההגדלה
+    try { window.dispatchEvent(new Event("resize")); } catch (e) { /* דפדפן ישן */ }
   }
 
   var css = [
@@ -109,10 +113,12 @@
       };
       panel.appendChild(reset);
       var a = document.createElement("a");
-      // ההצהרה יושבת בשורש האתר — הנתיב מחושב לפי מיקום הסקריפט עצמו
+      // ההצהרה יושבת בשורש האתר — הנתיב מחושב לפי מיקום הסקריפט עצמו,
+      // ואם אין src (הזרקה חריגה) נופלים לכתובת המלאה של האתר
       var me = document.querySelector('script[src*="a11y.js"]');
       var base = me ? me.getAttribute("src").replace(/a11y\.js.*$/, "") : "";
-      a.href = base + "accessibility.html";
+      a.href = me ? base + "accessibility.html"
+        : "https://transit-freak.github.io/kav-bochan/accessibility.html";
       a.textContent = "הצהרת נגישות ←";
       panel.appendChild(a);
       document.body.appendChild(panel);

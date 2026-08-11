@@ -22,7 +22,7 @@ header h1 {
   padding: 4px 10px; font-size: 14px; color: #334155;
 }
 .stat b { color: #b45309; }
-.mut { color: #94a3b8; }
+.mut { color: #64748b; }
 
 .explain {
   background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px;
@@ -49,7 +49,7 @@ header h1 {
   padding: 9px 12px; font-size: 15px; font-family: inherit; background: #fff;
 }
 .search:focus { outline: 2px solid #f59e0b; border-color: transparent; }
-.count { font-size: 13px; color: #94a3b8; min-height: 18px; margin-bottom: 4px; }
+.count { font-size: 13px; color: #64748b; min-height: 18px; margin-bottom: 4px; }
 .controls2 { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 8px; }
 .fsel {
   border: 1px solid #e2e8f0; background: #fff; border-radius: 8px;
@@ -91,7 +91,7 @@ header h1 {
 }
 .it-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .it-title { font-weight: 700; font-size: 15.5px; color: #0f172a; }
-.it-title .code { font-weight: 400; color: #94a3b8; font-size: 13px; }
+.it-title .code { font-weight: 400; color: #64748b; font-size: 13px; }
 .it-sub { font-size: 13.5px; color: #64748b; }
 .arrow { color: #cbd5e1; font-size: 12px; flex: 0 0 auto; }
 
@@ -122,7 +122,7 @@ header h1 {
 .legend .ln.lt { background: #fbd38d; height: 3px; }
 .facts { font-size: 15px; }
 .facts p { margin: 8px 0; }
-.facts .mut { font-size: 13.5px; color: #94a3b8; }
+.facts .mut { font-size: 13.5px; color: #64748b; }
 .chip {
   display: inline-block; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
   padding: 1px 8px; margin: 0 2px 3px; font-size: 13.5px; font-weight: 600; color: #334155;
@@ -144,10 +144,10 @@ header h1 {
 .stoplist summary { cursor: pointer; color: #b45309; font-weight: 700; }
 .stoplist ol { margin: 8px 0 0; padding-right: 22px; color: #475569; }
 .stoplist li { padding: 1px 0; }
-.stoplist li .code { color: #94a3b8; font-size: 12px; }
+.stoplist li .code { color: #64748b; font-size: 12px; }
 .stoplist li.adj { color: #166534; font-weight: 700; }
 .stoplist li.skip { color: #b91c1c; font-weight: 800; list-style: none; margin-right: -22px; padding-right: 22px; background: #fef2f2; border-radius: 6px; }
-.empty { text-align: center; color: #94a3b8; padding: 30px 0; }
+.empty { text-align: center; color: #64748b; padding: 30px 0; }
 .more-btn {
   display: block; width: 100%; padding: 12px; margin-top: 4px;
   background: #fff; border: 1px dashed #cbd5e1; border-radius: 12px;
@@ -155,7 +155,7 @@ header h1 {
 }
 .more-btn:hover { border-color: #f59e0b; }
 
-footer { margin-top: 30px; font-size: 13px; color: #94a3b8; text-align: center; }
+footer { margin-top: 30px; font-size: 13px; color: #64748b; text-align: center; }
 footer a { color: #b45309; }
 
 /* תוויות מפה: שכבת התוויות LTR כדי שהיסט הפיקסלים של Leaflet יחושב נכון, הטקסט עצמו RTL */
@@ -183,12 +183,12 @@ footer a { color: #b45309; }
 .map.big { height: 420px; }
 .lnchips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
 .lnchip {
-  border: 2px solid #94a3b8; background: #94a3b8; color: #fff; border-radius: 8px;
+  border: 2px solid #64748b; background: #64748b; color: #fff; border-radius: 8px;
   min-width: 44px; padding: 4px 10px; font-family: "Heebo", sans-serif; font-weight: 800;
   font-size: 15px; cursor: pointer;
 }
-.lnchip.off { background: #fff; color: #94a3b8; border-style: dashed; opacity: .75; }
-.lnchips-hint { font-size: 12px; color: #94a3b8; }
+.lnchip.off { background: #fff; color: #64748b; border-style: dashed; opacity: .75; }
+.lnchips-hint { font-size: 12px; color: #64748b; }
 @media (max-width: 640px) { .map.big { height: 320px; } }
 
 /* "מה חדש מאז הביקור הקודם" (שלב ב, סעיף 39) */

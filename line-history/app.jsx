@@ -15,23 +15,23 @@ const KGLABEL = { stops: "שינוי תחנות", terminal: "שינוי קצה �
                   baseline: "נקודת פתיחה" };
 const KINDS = {
   baseline:    { label: "תיעוד ראשון", color: "#64748b" },
-  snapshot:    { label: "צילום מהארכיון", color: "#94a3b8" },
-  new:         { label: "וריאנט חדש", color: "#16a34a" },
+  snapshot:    { label: "צילום מהארכיון", color: "#64748b" },
+  new:         { label: "וריאנט חדש", color: "#15803d" },
   route:       { label: "שינוי מסלול", color: "#7c3aed" },
-  redraw:      { label: "תיקון שרטוט", color: "#0891b2" },
-  terminal:    { label: "שינוי קצה המסלול", color: "#c026d3" },
+  redraw:      { label: "תיקון שרטוט", color: "#0e7490" },
+  terminal:    { label: "שינוי קצה המסלול", color: "#a21caf" },
   extend:      { label: "הארכת קו", color: "#15803d" },
-  shorten:     { label: "קיצור קו", color: "#ea580c" },
-  "stops-add": { label: "תחנות נוספו", color: "#65a30d" },
-  "stops-del": { label: "תחנות ירדו", color: "#e11d48" },
-  stops:       { label: "שינוי תחנות", color: "#d97706" },
+  shorten:     { label: "קיצור קו", color: "#c2410c" },
+  "stops-add": { label: "תחנות נוספו", color: "#3f6212" },
+  "stops-del": { label: "תחנות ירדו", color: "#be123c" },
+  stops:       { label: "שינוי תחנות", color: "#b45309" },
   operator:    { label: "החלפת מפעיל", color: "#0f766e" },
   dest:        { label: "שינוי יעד", color: "#9333ea" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
-  renamed:     { label: "שינוי שם תחנת קצה", color: "#d97706" },
+  renamed:     { label: "שינוי שם תחנת קצה", color: "#b45309" },
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
-  access:      { label: "שינוי נגישות", color: "#0d9488" },
-  board:       { label: "שינוי עלייה/ירידה", color: "#a16207" },
+  access:      { label: "שינוי נגישות", color: "#0f766e" },
+  board:       { label: "שינוי עלייה/ירידה", color: "#854d0e" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
@@ -93,7 +93,7 @@ const CAT_LABELS = {
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
 const CAT_COLORS = { "removed-now": "#dc2626", "removed-past": "#f59e0b",
-                     endpoint: "#c026d3" };
+                     endpoint: "#a21caf" };
 function catColor(k) { return CAT_COLORS[k] || (KINDS[k] || {}).color || "#64748b"; }
 const ENDPOINT_KINDS = ["extend", "shorten", "terminal"];
 // שלוש קטגוריות הביטול זרות זו לזו: קו שלא חזר מעל שנה הוא מבוטל בפועל,
@@ -107,9 +107,9 @@ function catMatch(l, k) {
 }
 const REMOVAL_CATS = new Set(["removed-year", "removed-now", "removed-past"]);
 const SKINDS = {
-  new:     { label: "חדשה", color: "#16a34a" },
+  new:     { label: "חדשה", color: "#15803d" },
   del:     { label: "בוטלה", color: "#dc2626" },
-  renamed: { label: "שינוי שם", color: "#d97706" },
+  renamed: { label: "שינוי שם", color: "#b45309" },
   moved:   { label: "הזזת מיקום", color: "#2563eb" },
 };
 
@@ -429,6 +429,9 @@ const plainClick = (e) => !(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey);
    את אותו הסבר כשורה קטנה מתחתיה, והקשה נוספת סוגרת. */
 function TipTag({ cls, tip, children }) {
   const [open, setOpen] = useState(false);
+  // כשאותו רכיב מקבל הסבר אחר (החלפת חודש/סינון עם key זהה) — ההסבר
+  // הפתוח נסגר, אחרת הוא נשאר "תקוע" ליד תוכן שכבר התחלף
+  useEffect(() => { setOpen(false); }, [tip]);
   return (
     <>
       <span className={(cls || "") + " tiptag"} title={tip} role="button" tabIndex={0}
@@ -459,6 +462,14 @@ function usePersistedQ(key) {
 /* עוגן 2012: rd -> תקציר המסלול דאז (נטען פעם אחת לכל הדפדוף) */
 let ANC2012 = null;
 let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "2012" בחיפוש
+/* months.json נטען פעם אחת לביקור: שלוש קומפוננטות (מסך הבית, הפיד
+   היומי וטאב התחנות) ביקשו אותו כל אחת בנפרד. כשל מנקה את המטמון כדי
+   שכפתור "נסו שוב" באמת ינסה שוב. */
+let MONTHS_P = null;
+const getMonths = () => MONTHS_P || (MONTHS_P = dfetch("data/months.json")
+  .then((r) => r.json())
+  .catch((e) => { MONTHS_P = null; throw e; }));
+
 const getAnchors2012 = () =>
   ANC2012 || (ANC2012 = dfetch("data/anchor-2012.json")
     .then((r) => (r.ok ? r.json() : { anchors: {} }))
@@ -894,13 +905,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
           </div>
         )}
         <div className="tl">
-          {/* בחירת אירוע היא הפעולה המרכזית של העמוד — חייבת לעבוד גם
-              במקלדת ובקורא מסך, לא רק בעכבר (פאנל שלב ב, סעיף 4) */}
+          {/* בחירת אירוע חייבת לעבוד גם במקלדת ובקורא מסך (סעיף 4) —
+              אבל בלי כפתור-בתוך-כפתור: השורה נשארת לחיצה לעכבר בלבד,
+              ותגית הסוג היא הכפתור האמיתי (nested-interactive מהביקורת) */}
           {shown.map(({ v: x, i }) => (
             <div key={x.d + x.k} className={"ev" + (i === vs.indexOf(v) ? " sel" : "")}
-              role="button" tabIndex={0} aria-current={i === vs.indexOf(v)}
-              aria-label={"אירוע מ-" + evDate(x).txt + ": " + ((KINDS[dispKind(x, i, vs)] || { label: x.k }).label)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSel(i); } }}
               onClick={() => setSel(i)}>
               <div className="d">
                 {(() => { const ed = evDate(x); return ed.tip
@@ -924,7 +933,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
                   {cmpI === i ? "⇄ בסיס ההשוואה" : "⇄ השווה"}</button>)}
               </div>
               <div className="t">
-                <span className="k" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</span>
+                <button className="k kbtn" style={{ background: (KINDS[dispKind(x, i, vs)] || {}).color || "#64748b" }}
+                  aria-current={i === vs.indexOf(v)}
+                  aria-label={"בחירת האירוע מ-" + evDate(x).txt + ": " + ((KINDS[dispKind(x, i, vs)] || { label: x.k }).label)}
+                  onClick={(e) => { e.stopPropagation(); setSel(i); }}>{(KINDS[dispKind(x, i, vs)] || { label: x.k }).label}</button>
                 {x.k === "redraw" && " הגאומטריה תוקנה — רצף התחנות לא השתנה"}
                 {/* שינוי שרצף התחנות חזר ממנו מיד. בלי הסימון הזה השורה
                     אומרת שתחנות ירדו, בעוד הקו עוצר בהן עד היום. */}
@@ -1223,8 +1235,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
   useEffect(() => {
     let ok = true;
     setMErr(false);
-    dfetch("data/months.json")
-      .then((r) => r.json())
+    getMonths()
       .then((d) => {
         if (!ok) return;
         const ms = d.months || []; setMonths(ms);
@@ -1399,8 +1410,7 @@ function RecentChanges({ idx, openLine, onAll }) {
   useEffect(() => {
     let ok = true;
     setNerr(false);
-    dfetch("data/months.json")
-      .then((r) => r.json())
+    getMonths()
       .then(async (d) => {
         const ms = (d.months || []).slice().sort();
         if (!ms.length) { if (ok) setRows([]); return; }
@@ -1552,8 +1562,7 @@ function StopsTab({ sel }) {
   useEffect(() => {
     let ok = true;
     setMErr(false);
-    dfetch("data/months.json")
-      .then((r) => r.json())
+    getMonths()
       .then((d) => { if (!ok) return; const ms = d.stopMonths || [];
         setMonths(ms);
         // ברירת המחדל: החודש האחרון — נטען מיידית. "כל התקופה" (פירוק
@@ -1676,10 +1685,9 @@ function StopsTab({ sel }) {
               const k0 = c.c + c.k + c.d;
               return (
                 <React.Fragment key={k0}>
+                {/* השורה לחיצה לעכבר; הכפתור האמיתי למקלדת/קורא מסך הוא
+                    סמל המפה בסופה — בלי כפתור-בתוך-כפתור (הביקורת) */}
                 <div className={"srow" + (one ? "" : " sub") + (c.la != null ? " clk" : "")}
-                  role={c.la != null ? "button" : undefined} tabIndex={c.la != null ? 0 : undefined}
-                  aria-expanded={c.la != null ? openKey === k0 : undefined}
-                  onKeyDown={(e) => { if (c.la != null && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setOpenKey(openKey === k0 ? null : k0); } }}
                   onClick={() => { if (c.la != null) setOpenKey(openKey === k0 ? null : k0); }}>
                   <span className="k" style={{ background: (SKINDS[c.k] || {}).color }}>{(SKINDS[c.k] || { label: c.k }).label}</span>
                   {one ? (
@@ -1707,7 +1715,9 @@ function StopsTab({ sel }) {
                       ? <> · הוזזה <b>{c.dist || c.m} מ׳</b> · <s dir="ltr">({c.ola}, {c.olo})</s> ← <b dir="ltr">({c.la}, {c.lo})</b></>
                       : <> · הוזזה <b>{c.dist || c.m} מ׳</b> · אל <b dir="ltr">({c.la}, {c.lo})</b></>)}
                     {c.lines && c.lines.length > 0 && <> · {c.k === "new" ? "קווים שעצרו בה מהפתיחה" : "קווים שעצרו בה אז"}: {c.lines.slice(0, 10).join(", ")}</>}
-                    {c.la != null && <> · 🗺️</>}
+                    {c.la != null && <> · <button className="mapbtn" aria-expanded={openKey === k0}
+                      aria-label={"מפת התחנה " + (c.n || c.nn || c.c)}
+                      onClick={(e) => { e.stopPropagation(); setOpenKey(openKey === k0 ? null : k0); }}>🗺️</button></>}
                   </span>
                 </div>
                 {openKey === k0 && c.la != null && <StopEvMap ev={c} />}

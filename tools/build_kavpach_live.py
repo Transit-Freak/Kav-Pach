@@ -120,7 +120,9 @@ def main():
             rec['ntr'] = e['ntr']
         if e['red']:
             rec['red'] = e['red']
-        if e['first'] and e['first'] >= YEAR_AGO:
+        # קו שהושבת וחזר אינו "קו חדש בהרצה": תאריך ההופעה-מחדש שלו נראה
+        # כמו תאריך לידה, והתג הטעה (ציד הבאגים של שלב ב)
+        if e['first'] and e['first'] >= YEAR_AGO and not e['gap']:
             rec['newd'] = e['first']
         if e['gap']:
             rec['gap'] = e['gap'][:2]

@@ -93,7 +93,7 @@ const SearchInput = React.memo(function SearchInput({ value, onSubmit, placehold
         >×</button>
       )}
       {isDirty && (
-        <div className="absolute -bottom-5 right-2 text-[10px] font-bold text-slate-400">הקש Enter לחיפוש</div>
+        <div className="absolute -bottom-5 right-2 text-[10px] font-bold text-slate-500">הקש Enter לחיפוש</div>
       )}
     </div>
   );
@@ -350,7 +350,7 @@ const STATUS_TIERS = [
   { min: 80, label: 'חמור - דורש התערבות', color: 'text-rose-700', bg: 'bg-rose-100 border-rose-300', dot: 'bg-rose-600' },
   { min: 65, label: 'לא יעיל',              color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200',  dot: 'bg-rose-500' },
   { min: 45, label: 'טעון בדיקה',           color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', dot: 'bg-orange-500' },
-  { min: 25, label: 'סטייה קלה',            color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' },
+  { min: 25, label: 'סטייה קלה',            color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', dot: 'bg-amber-500' },
   { min: 0,  label: 'תקין',                color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', dot: 'bg-emerald-500' },
 ];
 const getStatusTier = (score) => STATUS_TIERS.find(t => score >= t.min) || STATUS_TIERS[STATUS_TIERS.length - 1];
@@ -643,7 +643,7 @@ function ChoiceScreen({ onPick }) {
 
         </div>
 
-        <p className="text-center text-slate-400 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן</p>
+        <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן</p>
       </div>
     </div>
   );
@@ -666,7 +666,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
   const [expandSearched, setExpandSearched] = useState(false);
   // ניתוח לפי כיוון נסיעה — ערבוב הלוך+חזור מיצע כיוון עמוס עם כיוון ריק
   const [expandDir, setExpandDir] = useState(null);
-  useEffect(() => { setExpandDir(null); }, [selectedLine]);
+  useEffect(() => { setExpandDir(null); }, [selectedLine && selectedLine.groupKey]);
   const [gTripsCity, setGTripsCity] = useState('');
   const [gTripsCrowded, setGTripsCrowded] = useState(false);
   const [gTripsSort, setGTripsSort] = useState({ key: 'peakLoad', direction: 'desc' });
@@ -927,11 +927,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 <Ic n="star" size={28} strokeWidth="2" />
               </div>
               <h1 className="text-4xl font-[900] text-slate-900 tracking-tighter leading-none">הקו המוזהב</h1>
-              <span className="text-xs font-bold text-slate-400 mr-3">נבנה על ידי שלמה הרטמן</span>
+              <span className="text-xs font-bold text-slate-500 mr-3">נבנה על ידי שלמה הרטמן</span>
             </div>
             <p className="text-slate-500 text-sm font-bold mt-2 pr-1">מאתרים קווים מצטיינים • יעילות גבוהה, נוסעים רבים</p>
             {/* אותה חותמת שקיפות כמו בקו פח — שני הכלים נשענים על אותו צילום */}
-            <p className="text-slate-400 text-[11px] font-bold mt-1 pr-1">
+            <p className="text-slate-500 text-[11px] font-bold mt-1 pr-1">
               נתוני נוסעים ועלויות: צילום משרד התחבורה, יוני 2026
               {liveGen ? ` · הצלבה מול רישום הקווים העדכני: ${String(liveGen).split('-').reverse().join('.')}` : ''}
             </p>
@@ -945,7 +945,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
         </header>
 
         <nav className="flex bg-slate-200/50 backdrop-blur p-1.5 rounded-[2rem] mb-12 max-w-4xl mx-auto shadow-inner border border-slate-200 overflow-x-auto">
-          {[['top', 'star', 'הקווים המצטיינים', 'bg-white text-amber-600 shadow-md'], ['areas', 'chart', 'ניתוח אזורי', 'bg-white text-amber-600 shadow-md'], ['expand', 'zap', 'הזדמנויות הרחבה', 'bg-white text-emerald-600 shadow-md'], ['allTrips', 'list', 'כל הנסיעות', 'bg-white text-rose-600 shadow-md'], ['about', 'info', 'על המערכת', 'bg-white text-indigo-600 shadow-md']].map(([id, icon, label, activeCls]) => (
+          {[['top', 'star', 'הקווים המצטיינים', 'bg-white text-amber-700 shadow-md'], ['areas', 'chart', 'ניתוח אזורי', 'bg-white text-amber-700 shadow-md'], ['expand', 'zap', 'הזדמנויות הרחבה', 'bg-white text-emerald-600 shadow-md'], ['allTrips', 'list', 'כל הנסיעות', 'bg-white text-rose-600 shadow-md'], ['about', 'info', 'על המערכת', 'bg-white text-indigo-600 shadow-md']].map(([id, icon, label, activeCls]) => (
             <button key={id} onClick={() => setGoldenTab(id)}
               className={`flex-1 min-w-[120px] py-3.5 rounded-[1.5rem] font-black text-sm transition-all flex items-center justify-center gap-2 ${goldenTab === id ? activeCls : 'text-slate-500 hover:text-slate-700'}`}>
               <Ic n={icon} size={16} /> {label}
@@ -962,17 +962,17 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 <p className="text-slate-500 font-bold">דירוג המציג את הקווים החזקים ביותר במערכת — ביקוש גבוה, יעילות גבוהה ועלות נמוכה</p>
               </div>
               <div className="flex flex-col md:flex-row gap-3 relative w-full xl:w-auto">
-                <select value={sortBy} onChange={e => { setSortBy(e.target.value); setVisibleCount(60); }} className={selectCls}>
+                <select aria-label="מיון הקווים המצטיינים" value={sortBy} onChange={e => { setSortBy(e.target.value); setVisibleCount(60); }} className={selectCls}>
                   <option value="score">מיון: לפי ניקוד מוזהב</option>
                   <option value="riders">מיון: ממוצע נוסעים (גבוה לנמוך)</option>
                   <option value="cost">מיון: עלות לנוסע (נמוך לגבוה)</option>
                   <option value="km">מיון: ק"מ שבועי</option>
                 </select>
-                <select value={filterDistrict} onChange={e => { setFilterDistrict(e.target.value); setVisibleCount(60); }} className={selectCls}>
+                <select aria-label="סינון לפי מחוז" value={filterDistrict} onChange={e => { setFilterDistrict(e.target.value); setVisibleCount(60); }} className={selectCls}>
                   <option value="all">כל המחוזות</option>
                   {allDistricts.map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
-                <select value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setVisibleCount(60); }} className={selectCls}>
+                <select aria-label="סינון לפי קטגוריה" value={filterCategory} onChange={e => { setFilterCategory(e.target.value); setVisibleCount(60); }} className={selectCls}>
                   <option value="all">כל הקטגוריות</option>
                   {allCategories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -1013,11 +1013,11 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                           {line.category}
                         </div>
                       </div>
-                      <div className="text-[10px] font-bold text-slate-400">מק&quot;ט: {String(line.makat || '').replace(/^0+/, '') || '—'}</div>
+                      <div className="text-[10px] font-bold text-slate-500">מק&quot;ט: {String(line.makat || '').replace(/^0+/, '') || '—'}</div>
                     </div>
                     <div className="flex flex-col items-center gap-1 shrink-0">
                       <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg">{line.lineNum}</div>
-                      <button className="text-[10px] font-black text-slate-400 hover:text-slate-900 transition-colors"
+                      <button className="text-[10px] font-black text-slate-500 hover:text-slate-900 transition-colors"
                         title="העתקת קישור ישיר לקו הזה"
                         onClick={(e) => {
                           const url = location.origin + location.pathname + '#מוזהב/קו/' + String(line.makat || '').replace(/^0+/, '');
@@ -1042,7 +1042,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                         ⏸ הושבת וחזר</span>
                     )}
 
-                    <div className="text-xs font-bold text-slate-400 mt-4 mb-4 flex items-center gap-2">
+                    <div className="text-xs font-bold text-slate-500 mt-4 mb-4 flex items-center gap-2">
                       <span>ניקוד מוזהב:</span>
                       <span className="font-black text-emerald-600">{line.score}/100</span>
                     </div>
@@ -1065,7 +1065,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                         <span className="text-right">
                           <span className="font-black text-slate-900">{line.cost > 0 ? `₪${line.cost.toFixed(2)}` : 'לא זמין'}</span>
                           {line.cost > 0 && line.costBenchmark > 0 && (
-                            <div className="text-[10px] font-bold text-slate-400">
+                            <div className="text-[10px] font-bold text-slate-500">
                               ממוצע {line.category}: ₪{line.costBenchmark}
                               {line.costRatio < 1 && (
                                 <span className="text-emerald-500 mr-1">(×{line.costRatio.toFixed(2)})</span>
@@ -1112,7 +1112,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                       className="mt-4 bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-2xl text-xs font-black transition-colors">✕ נקה את הסינון וחזור לרשימה</button>
                   </div>
                 ) : (
-                <div className="col-span-full text-center py-20 text-slate-400 font-bold">לא נמצאו קווים מצטיינים בסינון הנוכחי.</div>
+                <div className="col-span-full text-center py-20 text-slate-500 font-bold">לא נמצאו קווים מצטיינים בסינון הנוכחי.</div>
                 )
               )}
             </div>
@@ -1161,7 +1161,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                   </div>
                 ))}
                 {areaStats.length === 0 && (
-                  <div className="col-span-full text-center py-20 text-slate-400 font-bold">אין נתונים.</div>
+                  <div className="col-span-full text-center py-20 text-slate-500 font-bold">אין נתונים.</div>
                 )}
               </div>
             )}
@@ -1237,7 +1237,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 <div className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 mb-4 shadow-inner">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                     <div>
-                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">מספר קו / מק&quot;ט</label>
+                      <label className="block text-xs font-[900] text-slate-500 mb-3 pr-2 uppercase tracking-wider">מספר קו / מק&quot;ט</label>
                       <input
                         type="text"
                         value={expandSearch}
@@ -1248,7 +1248,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">עיר (רשות — לצמצום תוצאות)</label>
+                      <label className="block text-xs font-[900] text-slate-500 mb-3 pr-2 uppercase tracking-wider">עיר (רשות — לצמצום תוצאות)</label>
                       <input
                         type="text"
                         value={expandCity}
@@ -1387,7 +1387,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                   ) : null; })()}
                   {dirs.length > 1 && (
                     <div className="flex flex-wrap items-center gap-2 mt-3">
-                      <span className="text-xs font-black text-slate-400">הניתוח לכל כיוון בנפרד:</span>
+                      <span className="text-xs font-black text-slate-500">הניתוח לכל כיוון בנפרד:</span>
                       {dirs.map(d => {
                         const t0 = lineTrips.find(t => String(t.direction || '') === d) || {};
                         return (
@@ -1414,7 +1414,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="text-center md:text-right">
                     <p className={`font-bold text-sm ${totalTripsToAdd > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>סך נסיעות מומלצות להוספה (שבועי)</p>
-                    <p className={`text-5xl font-[900] mt-1 ${totalTripsToAdd > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{totalTripsToAdd > 0 ? `+${totalTripsToAdd}` : '0'}</p>
+                    <p className={`text-5xl font-[900] mt-1 ${totalTripsToAdd > 0 ? 'text-emerald-600' : 'text-slate-500'}`}>{totalTripsToAdd > 0 ? `+${totalTripsToAdd}` : '0'}</p>
                   </div>
                   <div className="text-center md:text-left max-w-sm">
                     <p className="text-slate-600 font-bold text-sm leading-relaxed">
@@ -1445,9 +1445,9 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                       </div>
                     );
                   })}
-                  {periodStats.length === 0 && <p className="text-slate-400 font-bold text-sm">אין נתוני זמן לקו זה</p>}
+                  {periodStats.length === 0 && <p className="text-slate-500 font-bold text-sm">אין נתוני זמן לקו זה</p>}
                 </div>
-                <p className="text-slate-400 text-xs font-bold mt-4 pt-3 border-t border-slate-100">קו ירוק = העומס עובר 85% מהקיבולת — חלון מועמד להוספת נסיעות</p>
+                <p className="text-slate-500 text-xs font-bold mt-4 pt-3 border-t border-slate-100">קו ירוק = העומס עובר 85% מהקיבולת — חלון מועמד להוספת נסיעות</p>
               </div>
 
               {/* המלצות להוספה — כרטיסים בסגנון קו פח, מראים איפה צריך להוסיף */}
@@ -1488,7 +1488,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                         <div className="bg-slate-50/80 px-6 py-4 rounded-2xl flex-1 max-w-md w-full">
                           <div className="flex justify-between items-center mb-3 text-sm">
                             <span className="font-bold text-slate-500">עומס שיא ממוצע:</span>
-                            <span className="font-black text-slate-700">{p.avgPeak} <span className="text-xs text-slate-400 font-normal">על קיבולת {p.capacity}</span></span>
+                            <span className="font-black text-slate-700">{p.avgPeak} <span className="text-xs text-slate-500 font-normal">על קיבולת {p.capacity}</span></span>
                           </div>
                           <div className="flex justify-between items-center mb-4 text-sm">
                             <span className="font-bold text-slate-500">נסיעות שבועיות כיום:</span>
@@ -1538,7 +1538,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                     ['קטגוריה', selectedLine.category || '—'],
                   ].map(([label, val]) => (
                     <div key={label} className="bg-slate-50 rounded-2xl p-4 text-right">
-                      <div className="text-slate-400 text-xs font-bold mb-1">{label}</div>
+                      <div className="text-slate-500 text-xs font-bold mb-1">{label}</div>
                       <div className="font-black text-slate-900 text-lg">{val}</div>
                     </div>
                   ))}
@@ -1571,8 +1571,8 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
           rows = [...rows].sort((a, b) => direction === 'desc' ? sortVal(b) - sortVal(a) : sortVal(a) - sortVal(b));
           const SortBtns = ({ k }) => (
             <span className="inline-flex flex-col -space-y-1.5 mr-1 align-middle">
-              <button onClick={() => setGTripsSort({ key: k, direction: 'desc' })} className={key === k && direction === 'desc' ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}><Ic n="chevronUp" size={12} strokeWidth="3" /></button>
-              <button onClick={() => setGTripsSort({ key: k, direction: 'asc' })} className={key === k && direction === 'asc' ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}><Ic n="chevronDown" size={12} strokeWidth="3" /></button>
+              <button onClick={() => setGTripsSort({ key: k, direction: 'desc' })} className={key === k && direction === 'desc' ? 'text-amber-700' : 'text-slate-300 hover:text-slate-500'}><Ic n="chevronUp" size={12} strokeWidth="3" /></button>
+              <button onClick={() => setGTripsSort({ key: k, direction: 'asc' })} className={key === k && direction === 'asc' ? 'text-amber-700' : 'text-slate-300 hover:text-slate-500'}><Ic n="chevronDown" size={12} strokeWidth="3" /></button>
             </span>
           );
           return (
@@ -1594,7 +1594,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
               <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100 max-h-[60vh]">
                 <table className="w-full text-right border-collapse">
                   <thead className="sticky top-0 bg-slate-50 shadow-sm z-20">
-                    <tr className="text-slate-400 text-xs font-black uppercase">
+                    <tr className="text-slate-500 text-xs font-black uppercase">
                       <th className="p-5">מס&apos; קו</th>
                       <th className="p-5">מוצא</th>
                       <th className="p-5">יעד</th>
@@ -1607,7 +1607,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                     {/* חיפוש בלי תוצאות השאיר טבלה עם כותרות וריקה מתחת — בלי
                         שום הסבר (סעיף 34) */}
                     {rows.length === 0 && (
-                      <tr><td colSpan={6} className="p-10 text-center text-slate-400 font-black">
+                      <tr><td colSpan={6} className="p-10 text-center text-slate-500 font-black">
                         לא נמצאו נסיעות{sCity ? ' ל"' + gTripsCity.trim() + '"' : ''} — נסו שם עיר או מספר קו אחר
                         {sCity ? <button onClick={() => setGTripsCity('')} className="mr-3 bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-black transition-colors">✕ נקה חיפוש</button> : null}
                       </td></tr>
@@ -1621,7 +1621,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                           <td className="p-5">{t.dest}</td>
                           <td className="p-5 font-black">{t.time}</td>
                           <td className="p-5">{t.ridership}</td>
-                          <td className={`p-5 font-black ${occ >= 85 ? 'text-rose-600' : occ >= 60 ? 'text-amber-600' : ''}`}>{Math.round(t.peakLoad)} <span className="text-[11px] text-slate-400">({occ}%)</span></td>
+                          <td className={`p-5 font-black ${occ >= 85 ? 'text-rose-600' : occ >= 60 ? 'text-amber-700' : ''}`}>{Math.round(t.peakLoad)} <span className="text-[11px] text-slate-500">({occ}%)</span></td>
                         </tr>
                       );
                     })}
@@ -1656,7 +1656,7 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                   <div key={title} className="flex items-start justify-between p-5 rounded-2xl bg-slate-50 border border-slate-100">
                     <div>
                       <div className="font-black text-slate-800 text-sm">{title}</div>
-                      <div className="text-slate-400 text-xs font-bold mt-1">{desc}</div>
+                      <div className="text-slate-500 text-xs font-bold mt-1">{desc}</div>
                     </div>
                     <span className="shrink-0 ml-4 px-3 py-1 rounded-full text-[11px] font-black bg-slate-200 text-slate-700">{pts}</span>
                   </div>
@@ -1667,12 +1667,12 @@ function GoldenApp({ onBack, trips, costBenchmarkTable, lineCitiesMap, liveOf, l
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {[['עירוני תדירות גבוהה','44'],['עירוני תדירות נמוכה','21'],['תלמידים','23'],['בינעירוני ארוך','26'],['בינעירוני קצר','22'],['קווים מזינים','12'],['אזורי','12'],['לילה','25']].map(([cat,th]) => (
                     <div key={cat} className="bg-slate-50 rounded-xl p-2.5 text-right border border-slate-100">
-                      <div className="text-slate-400 text-[10px] font-bold">{cat}</div>
+                      <div className="text-slate-500 text-[10px] font-bold">{cat}</div>
                       <div className="font-black text-slate-900 text-sm">{th} נוסעים</div>
                     </div>
                   ))}
                 </div>
-                <p className="text-slate-400 text-xs font-bold mt-4">* מוצגים רק קווים עם ניקוד 60 ומעלה</p>
+                <p className="text-slate-500 text-xs font-bold mt-4">* מוצגים רק קווים עם ניקוד 60 ומעלה</p>
               </div>
             </div>
           </div>
@@ -2558,8 +2558,9 @@ const DAYS_FILTER = [
       const live = liveOf(data[0].makat);
       if (live && !live.rm) {
         // קו שנפתח בשנה האחרונה נמצא בתקופת הרצה — מעט נוסעים זה השלב
-        // הטבעי של בניית ביקוש, לא בזבוז
-        if (live.newd) {
+        // הטבעי של בניית ביקוש, לא בזבוז. קו שהושבת וחזר אינו חדש —
+        // תאריך ההופעה-מחדש שלו רק נראה כמו תאריך לידה.
+        if (live.newd && !live.gap) {
           protections.push({ name: 'קו חדש בהרצה', value: 10, detail: `הופיע לראשונה ב-${String(live.newd).split('-').reverse().join('.')}` });
           totalDeduction += 10;
         }
@@ -3078,7 +3079,7 @@ const DAYS_FILTER = [
     const exportData = dataToExport.map(opt => {
       const metricName = opt.usedMetric === 'peakLoad' ? 'עומס שיא' : 'נוסעים';
       if (opt.type === 'merge') {
-        return { 'מספר קו': opt.line, 'סוג קו': opt.categoryLabel, 'סוג רכב': opt.busSize, 'מוצא': opt.origin, 'יעד': opt.dest, 'כיוון': opt.direction, 'ימי פעילות': opt.days, 'פעולה מומלצת': 'איחוד נסיעות', 'שעות מקוריות': `${opt.from}, ${opt.to}`, 'שעה מוצעת (חדשה)': opt.suggestedTime, 'מדד (נוסעים / עומס)': `סה"כ ${metricName}: ${opt.total} (נסיעה 1: ${opt.val1}, נסיעה 2: ${opt.val2})`, 'הערות': `איחוד 2 נסיעות בהפרש של ${opt.gap} דקות` };
+        return { 'מספר קו': opt.line, 'סוג קו': opt.categoryLabel, 'סוג רכב': opt.busSize, 'מוצא': opt.origin, 'יעד': opt.dest, 'כיוון': opt.direction, 'ימי פעילות': opt.days, 'פעולה מומלצת': 'איחוד נסיעות', 'שעות מקוריות': `${opt.from}, ${opt.to}`, 'שעה מוצעת (חדשה)': opt.suggestedTime, 'מדד (נוסעים / עומס)': `סה"כ ${metricName}: ${opt.total} (נסיעה 1: ${opt.val1}, נסיעה 2: ${opt.val2})`, 'הערות': opt.gap === 0 ? 'שתי יציאות באותה דקה — איחוד לרכב אחד' : `איחוד 2 נסיעות בהפרש של ${opt.gap} דקות` };
       } else if (opt.type === 'cancel') {
         return { 'מספר קו': opt.line, 'סוג קו': opt.categoryLabel, 'סוג רכב': opt.busSize, 'מוצא': opt.origin, 'יעד': opt.dest, 'כיוון': opt.direction, 'ימי פעילות': opt.days, 'פעולה מומלצת': 'ביטול נסיעה', 'שעות מקוריות': opt.time, 'שעה מוצעת (חדשה)': '--', 'מדד (נוסעים / עומס)': `${metricName}: ${opt.metricVal}`, 'הערות': 'חשד לנסיעה מיותרת עם חלופה קרובה בזמן' };
       } else {
@@ -3248,13 +3249,13 @@ const DAYS_FILTER = [
                 >
                   מה חדש
                 </button>
-                <span className="text-xs font-bold text-slate-400">נבנה על ידי שלמה הרטמן</span>
+                <span className="text-xs font-bold text-slate-500">נבנה על ידי שלמה הרטמן</span>
               </div>
             </div>
             <p className="text-slate-500 text-sm font-bold mt-2 pr-1">מאתרים קווים ריקים • מייעלים את הלו&quot;ז</p>
             {/* שקיפות: על סמך מה הטענות. בלי זה כל ספקן — או מפעיל שהקו
                 שלו סומן — מתחיל מ"הנתונים בכלל לא עדכניים" וצודק חלקית */}
-            <p className="text-slate-400 text-[11px] font-bold mt-1 pr-1">
+            <p className="text-slate-500 text-[11px] font-bold mt-1 pr-1">
               נתוני נוסעים ועלויות: צילום משרד התחבורה, יוני 2026
               {liveGen ? ` · הצלבה מול רישום הקווים העדכני: ${String(liveGen).split('-').reverse().join('.')}` : ''}
             </p>
@@ -3274,9 +3275,9 @@ const DAYS_FILTER = [
               <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4">
                 <div>
                   <h3 className="font-black text-2xl text-slate-800">מה חדש</h3>
-                  <p className="text-slate-400 font-bold text-xs mt-1">עדכון מידע — נתונים עדכניים ועלות תפעולית מדויקת לפי מחוז</p>
+                  <p className="text-slate-500 font-bold text-xs mt-1">עדכון מידע — נתונים עדכניים ועלות תפעולית מדויקת לפי מחוז</p>
                 </div>
-                <button onClick={() => setShowWhatsNew(false)} className="text-slate-400 hover:bg-slate-100 hover:text-slate-900 rounded-full w-8 h-8 flex items-center justify-center font-black text-2xl transition-colors leading-none pb-1" title="סגור">
+                <button onClick={() => setShowWhatsNew(false)} className="text-slate-500 hover:bg-slate-100 hover:text-slate-900 rounded-full w-8 h-8 flex items-center justify-center font-black text-2xl transition-colors leading-none pb-1" title="סגור">
                   &times;
                 </button>
               </div>
@@ -3328,7 +3329,7 @@ const DAYS_FILTER = [
                 </div>
                 <div>
                   <p className="text-xl font-black text-slate-900">{initialLoading && !fileLoad.active ? "טוען נתונים..." : fileLoad.message}</p>
-                  <p className="text-slate-400 text-sm font-bold mt-1">יקח כמה שניות</p>
+                  <p className="text-slate-500 text-sm font-bold mt-1">יקח כמה שניות</p>
                 </div>
               </div>
             ) : (
@@ -3340,7 +3341,7 @@ const DAYS_FILTER = [
                 <div className="w-72 bg-slate-200 rounded-full h-3 overflow-hidden">
                   <div className="h-3 rounded-full bg-slate-900" style={{ width: `${fileLoad.progress}%`, transition: 'width 0.3s ease' }} />
                 </div>
-                <p className="text-slate-400 font-bold text-sm">{fileLoad.progress}%</p>
+                <p className="text-slate-500 font-bold text-sm">{fileLoad.progress}%</p>
               </div>
             )}
           </div>
@@ -3350,7 +3351,7 @@ const DAYS_FILTER = [
             <h2 className="text-3xl font-black text-slate-800 mb-4">מוכנים לזרוק קווים?</h2>
             <h3 className="text-xl font-black text-slate-700 mb-3 bg-indigo-50 text-indigo-800 px-5 py-2 rounded-xl border border-indigo-100 shadow-sm inline-block">המערכת שמוצאת קווים שאפשר לזרוק לפח</h3>
             <p className="text-slate-500 font-medium mb-6 max-w-md">לא נמצא קובץ נתונים מקומי (data.csv).</p>
-            <p className="text-slate-400 font-medium mb-12 max-w-md">העלו קובץ אקסל עם נתוני תיקופים כדי להתחיל בניתוח המערכת.</p>
+            <p className="text-slate-500 font-medium mb-12 max-w-md">העלו קובץ אקסל עם נתוני תיקופים כדי להתחיל בניתוח המערכת.</p>
             <label className="bg-slate-900 hover:bg-black text-white px-16 py-5 rounded-[2rem] font-black text-xl cursor-pointer transition-all shadow-xl hover:scale-105 active:scale-95">
               העלאת קובץ נתונים
               <input type="file" className="hidden" accept=".xlsx,.xls" onChange={onFile} />
@@ -3364,7 +3365,7 @@ const DAYS_FILTER = [
               </div>
               <div>
                 <p className="text-xl font-black text-slate-900">טוען נתונים...</p>
-                <p className="text-slate-400 text-sm font-bold mt-1">יקח כמה שניות</p>
+                <p className="text-slate-500 text-sm font-bold mt-1">יקח כמה שניות</p>
               </div>
             </div>
           </div>
@@ -3377,7 +3378,7 @@ const DAYS_FILTER = [
                 let iconName = "";
                 let label = "";
                 if (tabName === "redundant") { colorClass = isSelected ? "bg-white text-rose-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "trash"; label = "קווים לא יעילים"; }
-                if (tabName === "areas") { colorClass = isSelected ? "bg-white text-amber-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "chart"; label = "ניתוח אזורי"; }
+                if (tabName === "areas") { colorClass = isSelected ? "bg-white text-amber-700 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "chart"; label = "ניתוח אזורי"; }
                 if (tabName === "allTrips") { colorClass = isSelected ? "bg-white text-indigo-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "list"; label = "כל הנסיעות"; }
                 if (tabName === "simulator") { colorClass = isSelected ? "bg-white text-slate-900 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "zap"; label = "אלגוריתם ייעול"; }
                 if (tabName === "about") { colorClass = isSelected ? "bg-white text-indigo-600 shadow-md" : "text-slate-500 hover:text-slate-700"; iconName = "info"; label = "על המערכת"; }
@@ -3400,7 +3401,7 @@ const DAYS_FILTER = [
                     <p className="text-slate-500 font-bold">דירוג המציג את הקווים החלשים ביותר במערכת, לצורך בחינה וייעול</p>
                   </div>
                   <div className="flex flex-col md:flex-row gap-3 relative w-full xl:w-auto">
-                    <select 
+                    <select aria-label="סינון לפי מחוז" 
                       value={redundantSortBy} 
                       onChange={e => setRedundantSortBy(e.target.value)} 
                       className="bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 font-black outline-none focus:border-slate-900 text-right shadow-sm w-full md:w-56 appearance-none cursor-pointer"
@@ -3410,7 +3411,7 @@ const DAYS_FILTER = [
                       <option value="cost">מיון: עלות לנוסע (גבוהה לנמוכה)</option>
                       <option value="count">מיון: כמות נסיעות בשבוע</option>
                     </select>
-                    <select 
+                    <select aria-label="סינון לפי קטגוריה" 
                       value={filterDistrict} 
                       onChange={e => setFilterDistrict(e.target.value)} 
                       className="bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 font-black outline-none focus:border-slate-900 text-right shadow-sm w-full md:w-48 appearance-none cursor-pointer"
@@ -3418,7 +3419,7 @@ const DAYS_FILTER = [
                       <option value="all">כל המחוזות</option>
                       {allDistricts.map(d => <option key={`dist-${d}`} value={d}>{d}</option>)}
                     </select>
-                    <select
+                    <select aria-label="מיון הרשימה"
                       value={filterCategory}
                       onChange={e => setFilterCategory(e.target.value)}
                       className="bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 font-black outline-none focus:border-slate-900 text-right shadow-sm w-full md:w-56 appearance-none cursor-pointer"
@@ -3484,7 +3485,7 @@ const DAYS_FILTER = [
                         </div>
                         <div className="flex flex-col items-center gap-1 shrink-0">
                           <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl shadow-lg">{res.lineNum}</div>
-                          <button className="text-[10px] font-black text-slate-400 hover:text-slate-900 transition-colors"
+                          <button className="text-[10px] font-black text-slate-500 hover:text-slate-900 transition-colors"
                             title="העתקת קישור ישיר לקו הזה"
                             onClick={(e) => {
                               const url = location.origin + location.pathname + '#פח/קו/' + String(res.makat || '').replace(/^0+/, '');
@@ -3528,11 +3529,11 @@ const DAYS_FILTER = [
                           })()}
                         </div>
 
-                        <div className="text-xs font-bold text-slate-400 mb-4 flex items-center gap-2 flex-wrap">
+                        <div className="text-xs font-bold text-slate-500 mb-4 flex items-center gap-2 flex-wrap">
                           <span>ציון אי-יעילות:</span>
                           <span className={`font-black ${res.statusTier.color}`}>{res.score}/100</span>
                           {res.totalDeduction > 0 && (
-                            <span className="text-slate-400 font-bold">
+                            <span className="text-slate-500 font-bold">
                               (גולמי {res.rawScore}, הופחתו {res.totalDeduction} בגין הגנות)
                             </span>
                           )}
@@ -3583,7 +3584,7 @@ const DAYS_FILTER = [
                             <span className="text-right">
                               <span className="font-black text-slate-900">{res.count}</span>
                               {res.live && !res.live.rm && res.live.ntr > 0 && (
-                                <div className="text-[10px] font-bold text-slate-400" title='מספר הנסיעות בפיד העדכני, מארכיון "הקו בזמן" — נתוני הכרטיס הם צילום מיוני 2026'>
+                                <div className="text-[10px] font-bold text-slate-500" title='מספר הנסיעות בפיד העדכני, מארכיון "הקו בזמן" — נתוני הכרטיס הם צילום מיוני 2026'>
                                   היום בפיד: {res.live.ntr.toLocaleString()} ביום
                                 </div>
                               )}
@@ -3594,7 +3595,7 @@ const DAYS_FILTER = [
                             <span className="text-right">
                               <span className="font-black text-slate-900">{res.cost > 0 ? `₪${res.cost.toFixed(2)}` : 'לא זמין'}</span>
                               {res.cost > 0 && res.costBenchmark > 0 && (
-                                <div className="text-[10px] font-bold text-slate-400">
+                                <div className="text-[10px] font-bold text-slate-500">
                                   ממוצע {res.category}: ₪{res.costBenchmark}
                                   {res.costRatio > 1 && (
                                     <span className="text-rose-500 mr-1">(×{res.costRatio.toFixed(2)})</span>
@@ -3650,7 +3651,7 @@ const DAYS_FILTER = [
                       {/* על קו שכבר בוטל אין מה לייעל — הכפתור הוביל לסימולטור
                           שהציג "חשד לנסיעה מיותרת" על קו שאינו קיים */}
                       {res.live && res.live.rm
-                        ? <div className="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl text-xs font-black text-center">הקו כבר בוטל — הנתונים נשמרים לתיעוד בלבד</div>
+                        ? <div className="w-full py-4 bg-slate-100 text-slate-500 rounded-2xl text-xs font-black text-center">הקו כבר בוטל — הנתונים נשמרים לתיעוד בלבד</div>
                         : <button onClick={() => handleOptimizeLineForm(res.lineNum, res.origin)} className="w-full py-4 bg-slate-900 text-white rounded-2xl text-xs font-black hover:bg-black transition-all shadow-md">חפש הזדמנויות התייעלות</button>}
                     </div>
                   )) : (
@@ -3670,7 +3671,7 @@ const DAYS_FILTER = [
                           className="mt-4 bg-slate-900 hover:bg-black text-white px-6 py-3 rounded-2xl text-xs font-black transition-colors">✕ נקה את הסינון וחזור לרשימה</button>
                       </div>
                     ) : (
-                    <div className="col-span-full text-center py-20 text-slate-400 font-bold">לא נמצאו קווים לסינון המבוקש.</div>
+                    <div className="col-span-full text-center py-20 text-slate-500 font-bold">לא נמצאו קווים לסינון המבוקש.</div>
                     )
                   )}
                 </div>
@@ -3689,7 +3690,7 @@ const DAYS_FILTER = [
                        <button onClick={() => setAreaViewMode('city')} className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${areaViewMode === 'city' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>לפי עיר</button>
                        <button onClick={() => setAreaViewMode('district')} className={`px-6 py-2.5 rounded-xl font-black text-sm transition-all ${areaViewMode === 'district' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>לפי מחוז</button>
                     </div>
-                    <select
+                    <select aria-label="תצוגת הניתוח האזורי"
                       value={areaSortBy}
                       onChange={e => setAreaSortBy(e.target.value)}
                       className="bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 font-black outline-none focus:border-slate-900 text-right shadow-sm w-full md:w-48 appearance-none cursor-pointer"
@@ -3756,7 +3757,7 @@ const DAYS_FILTER = [
                      </div>
                   ))}
                   {areaStats.length === 0 && (
-                     <div className="col-span-full text-center py-20 text-slate-400 font-bold">לא נמצאו אזורים תואמים לסינון.</div>
+                     <div className="col-span-full text-center py-20 text-slate-500 font-bold">לא נמצאו אזורים תואמים לסינון.</div>
                   )}
                 </div>
               </div>
@@ -3788,7 +3789,7 @@ const DAYS_FILTER = [
                 <div className="overflow-x-auto rounded-[2rem] border-2 border-slate-100 max-h-[60vh] pb-32">
                   <table className="w-full text-right border-collapse">
                     <thead className="sticky top-0 bg-slate-50 shadow-sm z-20" ref={tooltipRef}>
-                      <tr className="text-slate-400 text-xs font-black uppercase">
+                      <tr className="text-slate-500 text-xs font-black uppercase">
                         <th className="p-5">מס&apos; קו</th>
                         <th className="p-5">מוצא</th>
                         <th className="p-5">יעד</th>
@@ -3796,7 +3797,7 @@ const DAYS_FILTER = [
                         <th className="p-5 relative">
                           <div className="flex items-center gap-1.5">
                             <span>נוסעים (יעילות)</span>
-                            <button onClick={() => setActiveTooltip(activeTooltip === 'ridership' ? null : 'ridership')} className="text-slate-400 hover:text-indigo-600 transition-colors">
+                            <button onClick={() => setActiveTooltip(activeTooltip === 'ridership' ? null : 'ridership')} className="text-slate-500 hover:text-indigo-600 transition-colors">
                               <Ic n="info" size={14} />
                             </button>
                             <div className="flex flex-col -space-y-1.5 mr-2">
@@ -3813,7 +3814,7 @@ const DAYS_FILTER = [
                         <th className="p-5 relative">
                           <div className="flex items-center gap-1.5">
                             <span>עומס שיא</span>
-                            <button onClick={() => setActiveTooltip(activeTooltip === 'peakLoad' ? null : 'peakLoad')} className="text-slate-400 hover:text-indigo-600 transition-colors">
+                            <button onClick={() => setActiveTooltip(activeTooltip === 'peakLoad' ? null : 'peakLoad')} className="text-slate-500 hover:text-indigo-600 transition-colors">
                               <Ic n="info" size={14} />
                             </button>
                             <div className="flex flex-col -space-y-1.5 mr-2">
@@ -3831,7 +3832,7 @@ const DAYS_FILTER = [
                           <div className="flex items-center gap-2">
                             <span>סוג</span>
                             <div className="relative inline-block">
-                              <select
+                              <select aria-label="בחירת כיוון הנסיעה בסימולטור"
                                 value={filterLineType}
                                 onChange={e => setFilterLineType(e.target.value)}
                                 className="appearance-none bg-slate-100 border border-slate-200 text-slate-600 rounded-md pl-6 pr-2 py-1 text-[10px] font-black outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer hover:bg-slate-200 transition-colors"
@@ -3839,7 +3840,7 @@ const DAYS_FILTER = [
                                 <option value="all">הכל</option>
                                 {allLineTypes.map(t => <option key={`type-${t}`} value={t}>{t}</option>)}
                               </select>
-                              <div className="absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                              <div className="absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                                 <Ic n="chevronDown" size={10} strokeWidth="3" />
                               </div>
                             </div>
@@ -3911,7 +3912,7 @@ const DAYS_FILTER = [
                     </div>
                   )}
                   {tableTrips.length <= visibleTripsCount && tableTrips.length > 0 && (
-                    <div className="text-center py-4 text-xs font-bold text-slate-400 bg-slate-50 border-t border-slate-100">
+                    <div className="text-center py-4 text-xs font-bold text-slate-500 bg-slate-50 border-t border-slate-100">
                       הוצגו כל {tableTrips.length.toLocaleString()} התוצאות.
                     </div>
                   )}
@@ -3931,7 +3932,7 @@ const DAYS_FILTER = [
                 <div className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 mb-8 shadow-inner">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div>
-                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">מספר קו / מק&quot;ט</label>
+                      <label className="block text-xs font-[900] text-slate-500 mb-3 pr-2 uppercase tracking-wider">מספר קו / מק&quot;ט</label>
                       <input
                         type="text"
                         value={optLine}
@@ -3947,7 +3948,7 @@ const DAYS_FILTER = [
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">עיר (מוצא או יעד)</label>
+                      <label className="block text-xs font-[900] text-slate-500 mb-3 pr-2 uppercase tracking-wider">עיר (מוצא או יעד)</label>
                       <input 
                         type="text" 
                         list="cities-list"
@@ -3958,7 +3959,7 @@ const DAYS_FILTER = [
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-[900] text-slate-400 mb-3 pr-2 uppercase tracking-wider">כיוון נסיעה</label>
+                      <label className="block text-xs font-[900] text-slate-500 mb-3 pr-2 uppercase tracking-wider">כיוון נסיעה</label>
                       <select value={optDirection} onChange={e => setOptDirection(e.target.value)} className="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-3 font-black outline-none focus:border-slate-900 cursor-pointer text-right shadow-sm appearance-none">
                         <option value="all">כל הכיוונים</option>
                         {allDirections.map(d => <option key={`dir-${d}`} value={d}>{d}</option>)}
@@ -3967,7 +3968,7 @@ const DAYS_FILTER = [
                   </div>
 
                   <div className="mb-8">
-                    <label className="block text-xs font-[900] text-slate-400 mb-4 pr-2 uppercase tracking-wider">ימי פעילות (סינון מרובה)</label>
+                    <label className="block text-xs font-[900] text-slate-500 mb-4 pr-2 uppercase tracking-wider">ימי פעילות (סינון מרובה)</label>
                     <div className="flex flex-wrap gap-3">
                       <button 
                         onClick={() => setOptDays([])} 
@@ -4000,14 +4001,14 @@ const DAYS_FILTER = [
                     {showAdvanced && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6 p-6 bg-white rounded-3xl border border-slate-200 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="space-y-2">
-                          <label className="block text-[11px] font-black text-slate-400 uppercase pr-1">מדד לניתוח</label>
+                          <label className="block text-[11px] font-black text-slate-500 uppercase pr-1">מדד לניתוח</label>
                           <select value={optMetric} onChange={e => setOptMetric(e.target.value)} className="w-full bg-slate-50 border-2 border-slate-100 rounded-xl px-4 py-2.5 font-black text-sm outline-none focus:border-teal-600 cursor-pointer text-right transition-all">
                             <option value="ridership">נוסעים בפועל</option>
                             <option value="peakLoad">עומס שיא</option>
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-[11px] font-black text-slate-400 uppercase pr-1">מרווח איחוד (דק&apos;)</label>
+                          <label className="block text-[11px] font-black text-slate-500 uppercase pr-1">מרווח איחוד (דק&apos;)</label>
                           <input
                             type="number"
                             value={optCustomGap}
@@ -4017,7 +4018,7 @@ const DAYS_FILTER = [
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-[11px] font-black text-slate-400 uppercase pr-1">מינימום נסיעות ביום</label>
+                          <label className="block text-[11px] font-black text-slate-500 uppercase pr-1">מינימום נסיעות ביום</label>
                           <input
                             type="number"
                             value={optMinTrips}
@@ -4027,7 +4028,7 @@ const DAYS_FILTER = [
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-[11px] font-black text-slate-400 uppercase pr-1">רף נוסעים לביטול</label>
+                          <label className="block text-[11px] font-black text-slate-500 uppercase pr-1">רף נוסעים לביטול</label>
                           <input
                             type="number"
                             value={optCancelThreshold}
@@ -4122,12 +4123,12 @@ const DAYS_FILTER = [
                         <div className="bg-slate-50/80 px-6 py-4 rounded-2xl flex-1 max-w-md w-full">
                           <div className="flex justify-between items-center mb-3 text-sm">
                             <span className="font-bold text-slate-500">נסיעות נוכחיות:</span>
-                            <span className="font-black text-slate-700">{opt.from} ו-{opt.to} <span className="text-xs text-slate-400 font-normal">({opt.gap} דק&apos; הפרש)</span></span>
+                            <span className="font-black text-slate-700">{opt.from} ו-{opt.to} <span className="text-xs text-slate-500 font-normal">{opt.gap === 0 ? '(באותה דקה — איחוד לרכב אחד)' : `(${opt.gap} דק' הפרש)`}</span></span>
                           </div>
                           <div className="flex justify-between items-center mb-4 text-sm">
                             <span className="font-bold text-slate-500">{opt.usedMetric === 'peakLoad' ? 'עומס שיא מצטבר:' : 'נוסעים מצטבר:'}</span>
                             <span className="font-black text-slate-700">
-                              {opt.total} <span className="text-xs text-slate-400 font-normal mr-1">({opt.val1} בנסיעה ה-1, {opt.val2} בנסיעה ה-2)</span>
+                              {opt.total} <span className="text-xs text-slate-500 font-normal mr-1">({opt.val1} בנסיעה ה-1, {opt.val2} בנסיעה ה-2)</span>
                             </span>
                           </div>
                           <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
@@ -4241,7 +4242,7 @@ const DAYS_FILTER = [
                   })() : !simLoading ? (
                     <div className="py-20 text-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
                       <div className="text-slate-300 font-black italic text-lg mb-2">לא נמצאו הזדמנויות ייעול לסינון המבוקש</div>
-                      <p className="text-slate-400 text-sm font-bold px-10">נסה לשנות את הסינון או לבחור קו/עיר אחרים.</p>
+                      <p className="text-slate-500 text-sm font-bold px-10">נסה לשנות את הסינון או לבחור קו/עיר אחרים.</p>
                     </div>
                   ) : null}
                 </div>
@@ -4377,7 +4378,7 @@ const DAYS_FILTER = [
                       <h4 className="font-black text-slate-800 text-sm mb-2">שלב 4: תיוג סטטוס</h4>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[11px] font-black">
                         <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl p-2 text-center">0–24 תקין</div>
-                        <div className="bg-amber-50 border border-amber-200 text-amber-600 rounded-xl p-2 text-center">25–44 סטייה קלה</div>
+                        <div className="bg-amber-50 border border-amber-200 text-amber-700 rounded-xl p-2 text-center">25–44 סטייה קלה</div>
                         <div className="bg-orange-50 border border-orange-200 text-orange-600 rounded-xl p-2 text-center">45–64 טעון בדיקה</div>
                         <div className="bg-rose-50 border border-rose-200 text-rose-600 rounded-xl p-2 text-center">65–79 לא יעיל</div>
                         <div className="bg-rose-100 border border-rose-300 text-rose-700 rounded-xl p-2 text-center">80+ חמור</div>
