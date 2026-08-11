@@ -28,8 +28,12 @@
     /* הגדלת תצוגה — על התוכן, לא על הכפתור הצף */
     "html.a11y-font1 #root, html.a11y-font1 body > .wrap { zoom: 1.12; }",
     "html.a11y-font2 #root, html.a11y-font2 body > .wrap { zoom: 1.25; }",
-    /* ניגודיות מוגברת */
-    "html.a11y-contrast #root, html.a11y-contrast body > .wrap { filter: contrast(1.25); }",
+    /* ניגודיות מוגברת — דרך שכבת-על עם backdrop-filter ולא filter על
+       התוכן: filter הופך אלמנטים צפים (position:fixed) בתוך העמוד
+       להיצמד לעמוד במקום למסך והם נגררו עם הגלילה (באג מהביקורת).
+       שכבת-העל יושבת מעל הכול, שקופה לאירועים, ומסננת את מה שמתחתיה
+       בלי לגעת במיקום של שום דבר. */
+    "html.a11y-contrast::before { content: ''; position: fixed; inset: 0; z-index: 2147483646; pointer-events: none; backdrop-filter: contrast(1.25); -webkit-backdrop-filter: contrast(1.25); }",
     /* הדגשת קישורים וכפתורים */
     "html.a11y-links a, html.a11y-links button { text-decoration: underline !important; }",
     /* ביטול אנימציות ומעברים */
