@@ -1,0 +1,29 @@
+# בדיקה חד-פעמית: האם קיימים קובצי GTFS ישראליים מלפני מרץ 2017
+# בארכיונים ציבוריים (GTFS Data Exchange הישן, S3, Transitland, Wayback).
+# מורץ ידנית בלבד; הפלט נקרא מהלוג. לא נוגע באתר.
+name: probe-archives
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: probe old archives for israel GTFS
+        run: |
+          set +e
+          echo "===== 1. GDX live API ====="
+          curl -sSL --max-time 30 "https://www.gtfs-data-exchange.com/api/agency?agency=israel-public-transportation" | head -c 4000; echo
+          echo "===== 2. S3 bucket 'gtfs' listing (prefix=israel) ====="
+          curl -sSL --max-time 30 "https://gtfs.s3.amazonaws.com/?prefix=israel" | head -c 6000; echo
+          echo "===== 3. Wayback CDX: GDX israel agency page snapshots ====="
+          curl -sSL --max-time 40 "http://web.archive.org/cdx/search/cdx?url=www.gtfs-data-exchange.com/agency/israel-public-transportation/&output=text&limit=30" | head -c 3000; echo
+          echo "===== 4. Wayback: newest snapshot of GDX israel page -> zip filenames ====="
+          curl -sSL --max-time 60 "http://web.archive.org/web/2016id_/http://www.gtfs-data-exchange.com/agency/israel-public-transportation/" > page.html
+          wc -c page.html
+          grep -oE 'israel-public-transportation_[0-9_]+\.zip' page.html | sort -u | head -60
+          echo "===== 5. Wayback: GDX API response for israel (archived) ====="
+          curl -sSL --max-time 60 "http://web.archive.org/web/2016id_/http://www.gtfs-data-exchange.com/api/agency?agency=israel-public-transportation" | head -c 6000; echo
+          echo "===== 6. Transitland v2 REST without key (expect 401, just checking) ====="
+          curl -sS --max-time 30 "https://transit.land/api/v2/rest/feeds?search=israel" | head -c 1500; echo
+          echo "===== done ====="
+          true
