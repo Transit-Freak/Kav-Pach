@@ -7,6 +7,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>נגישות אזורי תעשייה — הקו הבוחן</title>
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="4" y="14" width="8" height="12" fill="%230f766e"/><rect x="13" y="9" width="8" height="17" fill="%2314b8a6"/><path d="M21 26 V13 l6-4 v17 z" fill="%230f766e"/><circle cx="9" cy="29" r="2.4" fill="%23fff" stroke="%230f172a" stroke-width="1.6"/><circle cx="23" cy="29" r="2.4" fill="%23fff" stroke="%230f172a" stroke-width="1.6"/></svg>'>
+<!-- באג: style.css מגדיר Assistant/Heebo אבל שורת הטעינה מעולם לא הייתה כאן —
+     האתר הוצג בגופן ברירת המחדל של כל מכשיר -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <!-- כל העיצוב יושב בקובץ נפרד כדי שמעצב יוכל לעבוד עליו בלי
      לגעת בלוגיקה. ראו parks/DESIGN.md — כללי העבודה למעצב. -->
@@ -503,7 +508,11 @@ function openPark(f,push=true){
     const lines=(WALKMODE=='c'?d.lines:(d.linesE||d.lines));
     const nin=d.stops.filter(s=>sTier(s)=='in').length, ngate=d.stops.filter(s=>sTier(s)=='gate').length,
           nnear=d.stops.filter(s=>sTier(s)=='near').length;
+    // אזור שטרם נבנה: בלי ההערה הזו "אין שירות" נקרא כחור בשירות אמיתי,
+    // כשבפועל פשוט אין שם עדיין עובדים (הסימון קיים בטבלה ובמפה — לא כאן)
+    const _pi=IDX.find(x=>x.f===f), _plan=!!(_pi&&_pi.st==='planned');
     let h=`<h2 style="margin:0 0 8px">${esc(d.name)}${d.city?` · ${esc(d.city)}`:''}</h2>
+    ${_plan?'<div class="plannote">🏗️ אזור בהקמה — טרם נבנה. היעדר קווים צפוי בשלב זה ואינו נחשב חור בשירות</div>':''}
     <div class="stats">
       <span class="stat" title="שטח האזור בקילומטרים רבועים">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat" title="תחנות אוטובוס שנמצאות בתוך גבולות האזור עצמו">תחנות בפנים <b>${nin}</b></span>
@@ -557,7 +566,7 @@ function openPark(f,push=true){
         <div class="note" style="margin:6px 0 0">${sa2?'"אשכול האזור עצמו" = האזור הסטטיסטי שבו אזור התעשייה יושב; ':''}${se?`אשכול היישוב = ${esc(d.city)} כולו. `:''}ההקשר החברתי-כלכלי של הנגישות: באשכולות נמוכים התלות בתחבורה הציבורית גבוהה יותר.</div>
       </div>`;
     }
-    if(!lines.length) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
+    if(!lines.length&&!_plan) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהכניסה/הסביבה</div>`;
     if(lines.length) h+=`<h2>קווים (${lines.length}) — לחצו לשעות המלאות</h2>`;
     for(const L2 of lines){
@@ -578,7 +587,13 @@ function openPark(f,push=true){
     }
     h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות</b> (מרווח חציוני בין נסיעות ביום חול): ירוק ≤20 דק׳ · ירוק-כהה ≤35 · צהוב ≤50 · כתום ≤70 · אדום מעל · אפור = מעט נסיעות מדי.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. הכפתור <b>"מדידה"</b> למעלה מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
-  }).catch(()=>{panel.innerHTML='<div class="msg">שגיאה בטעינת האזור</div>'});
+  }).catch(()=>{
+    // באג: ההודעה נכתבה לפאנל שנשאר מוסתר כשהטעינה נכשלה — המשתמש לחץ
+    // ושום דבר לא קרה. מציגים את התצוגה עם ההודעה וכפתור ניסיון חוזר.
+    tblview.style.display='none';heatview.style.display='none';heatbtn.style.display='none';
+    wrap.style.display='grid';backbtn.style.display='inline-block';
+    panel.innerHTML='<div class="msg">⚠ לא הצלחנו לטעון את האזור — בדקו את החיבור ונסו שוב<br><button class="btn" style="margin-top:12px" onclick="openPark(decodeURIComponent(location.hash.slice(1)),false)">🔄 נסו שוב</button></div>';
+  });
 }
 </script>
 </body>
