@@ -8,22 +8,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: probe old archives for israel GTFS
+      - name: round 2 - wide search for israel in GDX archives
         run: |
           set +e
-          echo "===== 1. GDX live API ====="
-          curl -sSL --max-time 30 "https://www.gtfs-data-exchange.com/api/agency?agency=israel-public-transportation" | head -c 4000; echo
-          echo "===== 2. S3 bucket 'gtfs' listing (prefix=israel) ====="
-          curl -sSL --max-time 30 "https://gtfs.s3.amazonaws.com/?prefix=israel" | head -c 6000; echo
-          echo "===== 3. Wayback CDX: GDX israel agency page snapshots ====="
-          curl -sSL --max-time 40 "http://web.archive.org/cdx/search/cdx?url=www.gtfs-data-exchange.com/agency/israel-public-transportation/&output=text&limit=30" | head -c 3000; echo
-          echo "===== 4. Wayback: newest snapshot of GDX israel page -> zip filenames ====="
-          curl -sSL --max-time 60 "http://web.archive.org/web/2016id_/http://www.gtfs-data-exchange.com/agency/israel-public-transportation/" > page.html
-          wc -c page.html
-          grep -oE 'israel-public-transportation_[0-9_]+\.zip' page.html | sort -u | head -60
-          echo "===== 5. Wayback: GDX API response for israel (archived) ====="
-          curl -sSL --max-time 60 "http://web.archive.org/web/2016id_/http://www.gtfs-data-exchange.com/api/agency?agency=israel-public-transportation" | head -c 6000; echo
-          echo "===== 6. Transitland v2 REST without key (expect 401, just checking) ====="
-          curl -sS --max-time 30 "https://transit.land/api/v2/rest/feeds?search=israel" | head -c 1500; echo
+          echo "===== 1. GDX over plain HTTP (https cert dead) ====="
+          curl -sL --max-time 30 "http://www.gtfs-data-exchange.com/api/agency?agency=israel-public-transportation" | head -c 3000; echo
+          echo "===== 2. Wayback CDX: ANY israel URL on gtfs-data-exchange.com ====="
+          curl -s --max-time 60 "http://web.archive.org/cdx/search/cdx?url=gtfs-data-exchange.com&matchType=domain&filter=urlkey:.*israel.*&collapse=urlkey&limit=60&output=text" | head -c 5000; echo
+          echo "===== 3. Wayback CDX: agency page prefix, no www ====="
+          curl -s --max-time 40 "http://web.archive.org/cdx/search/cdx?url=gtfs-data-exchange.com/agency/israel-public-transportation&matchType=prefix&limit=30&output=text" | head -c 3000; echo
+          echo "===== 4. Wayback: GDX agencies list page - does israel appear at all ====="
+          curl -sL --max-time 60 "http://web.archive.org/web/2016id_/http://www.gtfs-data-exchange.com/agencies" -o ag.html
+          wc -c ag.html
+          grep -io -E '[a-z-]*israel[a-z-]*|jerusalem|tel-aviv' ag.html | sort | uniq -c | head
+          echo "===== 5. Internet Archive items named gtfs-data-exchange (full dump?) ====="
+          curl -s --max-time 40 "https://archive.org/advancedsearch.php?q=gtfs-data-exchange&fl%5B%5D=identifier&fl%5B%5D=title&rows=20&output=json" | head -c 3000; echo
+          echo "===== 6. Internet Archive: items mentioning israel gtfs ====="
+          curl -s --max-time 40 "https://archive.org/advancedsearch.php?q=title%3A%28gtfs+israel%29&fl%5B%5D=identifier&fl%5B%5D=title&rows=20&output=json" | head -c 3000; echo
           echo "===== done ====="
           true
