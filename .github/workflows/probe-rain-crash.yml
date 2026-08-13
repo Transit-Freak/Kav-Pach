@@ -1,5 +1,4 @@
-# בדיקה חד-פעמית: מקורות נתונים לאתר גשם מול תאונות.
-# מורץ ידנית; הפלט נקרא מהלוג ואז הקובץ נמחק.
+# בדיקה חד-פעמית סיבוב 2: מה בתוך הקבצים — שדות, כמויות, טווחי תאריכים.
 name: probe-rain-crash
 on: workflow_dispatch
 jobs:
@@ -7,42 +6,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: probe accident + rain data sources
+      - name: sample the actual records
         run: |
           set +e
-          echo "===== 1. data.gov.il: חיפוש תאונות ====="
-          curl -sS --max-time 40 -A "Mozilla/5.0" "https://data.gov.il/api/3/action/package_search?q=%D7%AA%D7%90%D7%95%D7%A0%D7%95%D7%AA%20%D7%93%D7%A8%D7%9B%D7%99%D7%9D&rows=10" \
-            | python3 -c "
+          Q() { curl -sS --max-time 60 -A "Mozilla/5.0" "https://data.gov.il/api/3/action/datastore_search?resource_id=$1&limit=$2" ; }
+          echo "===== 1. שירות מטאורולוגי — נתונים יומיים (שדות + רשומה) ====="
+          Q cee3ad4a-4e77-4015-8245-52505417d7ea 2 | python3 -c "
           import json,sys
-          d=json.load(sys.stdin)
-          for p in d.get('result',{}).get('results',[]):
-              print('DATASET:',p.get('title'),'| org:',(p.get('organization') or {}).get('title'))
-              for r in p.get('resources',[])[:6]:
-                  print('   RES:',r.get('name'),'|',r.get('format'),'| id:',r.get('id'))
-          " 2>&1 | head -50
-          echo "===== 2. data.gov.il: חיפוש גשם/משקעים ====="
-          curl -sS --max-time 40 -A "Mozilla/5.0" "https://data.gov.il/api/3/action/package_search?q=%D7%9E%D7%A9%D7%A7%D7%A2%D7%99%D7%9D&rows=8" \
-            | python3 -c "
+          d=json.load(sys.stdin)['result']
+          print('total:',d.get('total'))
+          print('fields:',[f['id'] for f in d.get('fields',[])])
+          for r in d.get('records',[])[:2]: print(r)
+          " 2>&1 | head -20
+          echo "===== 2. שירות מטאורולוגי — תחנות ====="
+          Q 83841660-b9c4-4ecc-a403-d435b3e8c92f 3 | python3 -c "
           import json,sys
-          d=json.load(sys.stdin)
-          for p in d.get('result',{}).get('results',[]):
-              print('DATASET:',p.get('title'),'| org:',(p.get('organization') or {}).get('title'))
-              for r in p.get('resources',[])[:5]:
-                  print('   RES:',r.get('name'),'|',r.get('format'),'| id:',r.get('id'))
-          " 2>&1 | head -40
-          echo "===== 3. NOAA GHCN-Daily: תחנות ישראליות ====="
-          curl -sS --max-time 60 "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt" -o st.txt
-          wc -l st.txt
-          grep -E "^IS[EM]?" st.txt | head -20
-          echo "-- תחנות IS (ישראל):"; grep -c "^IS" st.txt
-          echo "===== 4. NOAA: קובץ יומי של תחנה ישראלית (בית דגן?) ====="
-          SID=$(grep "^IS" st.txt | head -1 | cut -c1-11)
-          echo "station: $SID"
-          curl -sS --max-time 60 "https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/access/${SID}.csv" -o d.csv
-          wc -l d.csv; head -2 d.csv; tail -1 d.csv
-          echo "===== 5. anyway.co.il: ה-API הציבורי של מפת התאונות ====="
-          curl -sS --max-time 40 -A "Mozilla/5.0" "https://www.anyway.co.il/markers?ne_lat=32.09&ne_lng=34.80&sw_lat=32.07&sw_lng=34.77&zoom=17&start_date=1672531200&end_date=1704067200&show_fatal=1&show_severe=1&show_light=1&approx=1&accurate=1&show_markers=1&show_accidents=1&format=json" | head -c 1500; echo
-          echo "===== 6. IMS envista בלי טוקן (לראות את הודעת השגיאה) ====="
-          curl -sS --max-time 30 "https://api.ims.gov.il/v1/envista/stations" | head -c 400; echo
+          d=json.load(sys.stdin)['result']
+          print('total:',d.get('total'))
+          print('fields:',[f['id'] for f in d.get('fields',[])])
+          for r in d.get('records',[])[:3]: print(r)
+          " 2>&1 | head -20
+          echo "===== 3. למ\"ס PUF 2024 — שדות התאונות ====="
+          Q 05d14adb-fe54-49f7-b7ce-f30348e2d959 2 | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)['result']
+          print('total:',d.get('total'))
+          print('fields:',[f['id'] for f in d.get('fields',[])])
+          for r in d.get('records',[])[:1]: print(r)
+          " 2>&1 | head -25
+          echo "===== 4. נתונים יומיים של השמ\"ט: כמה אחורה זה הולך? (מיון לפי תאריך) ====="
+          curl -sS --max-time 60 -A "Mozilla/5.0" "https://data.gov.il/api/3/action/datastore_search?resource_id=cee3ad4a-4e77-4015-8245-52505417d7ea&limit=1&sort=_id%20asc" | head -c 700; echo
+          curl -sS --max-time 60 -A "Mozilla/5.0" "https://data.gov.il/api/3/action/datastore_search?resource_id=cee3ad4a-4e77-4015-8245-52505417d7ea&limit=1&sort=_id%20desc" | head -c 700; echo
           echo "===== done ====="
           true
