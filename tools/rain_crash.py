@@ -331,6 +331,7 @@ def main():
                 'mo': r.get('HODESH_TEUNA'), 'sh': r.get('SHAA'),
                 'yb': r.get('SEMEL_YISHUV'), 'kv': r.get('KVISH1'), 'km': r.get('KM'),
                 'rh': r.get('REHOV1'), 'urb': r.get('THUM_GEOGRAFI'),
+                'mz': mez, 'pn': pne,
             })
     print('תאונות עם מיקום:', len(acc), flush=True)
 
@@ -486,6 +487,19 @@ def main():
               open(os.path.join(OUTDIR, 'streets.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     print('רחובות עם גאומטריה:', len(out_streets), flush=True)
+
+    # ---- הנתונים הגולמיים להורדה (בקשת המשתמשים): כל התאונות, עם התוויות ----
+    with open(os.path.join(OUTDIR, 'accidents.csv'), 'w', newline='', encoding='utf-8-sig') as f:
+        wcsv = csv.writer(f)
+        wcsv.writerow(['שנה', 'חודש', 'סמל_יישוב', 'יישוב', 'כביש', 'קוד_רחוב',
+                       'lat', 'lon', 'בגשם_או_רטוב', 'מזג_אוויר', 'פני_כביש', 'חומרה'])
+        for a in acc:
+            wcsv.writerow([a['y'], a['mo'], a['yb'] or '', names.get(str(a['yb']), ''),
+                           a['kv'] or '', a['rh'] or '',
+                           round(a['la'], 5), round(a['lo'], 5), 1 if a['wet'] else 0,
+                           mez_tbl.get(a['mz'], a['mz']), pne_tbl.get(a['pn'], a['pn']),
+                           sev_tbl.get(a['sev'], a['sev'])])
+    print('accidents.csv:', len(acc), 'שורות', flush=True)
     print('נכתב:', OUTDIR, flush=True)
 
 

@@ -41,7 +41,7 @@
   </div>
 
   <div class="tblwrap" id="cityview" style="display:none">
-    <div class="tblnote">יישובים עם 40 תאונות ומעלה · <b>מקדם הגשם</b> = חלק תאונות הגשם ביישוב חלקי הממוצע הארצי · "ימי גשם" = ממוצע שנתי בתחנה הקרובה (השירות המטאורולוגי)</div>
+    <div class="tblnote">יישובים עם 40 תאונות ומעלה · <b>מקדם הגשם</b> = חלק תאונות הגשם ביישוב חלקי הממוצע הארצי · "ימי גשם" = ממוצע שנתי בתחנה הקרובה (השירות המטאורולוגי) <button class="btn dlbtn" onclick="dlCsv('cities')">⬇️ הורדת הטבלה</button></div>
     <div class="tblcard"><table id="ctbl">
       <thead><tr>
         <th data-k="n">יישוב <span class="arr"></span></th>
@@ -55,7 +55,7 @@
   </div>
 
   <div class="tblwrap" id="roadview" style="display:none">
-    <div class="tblnote">כבישים בין-עירוניים לפי קטעים · קטעים עם 12 תאונות ומעלה · <b>מקדם הגשם</b> = חלק תאונות הגשם בקטע חלקי הממוצע הארצי</div>
+    <div class="tblnote">כבישים בין-עירוניים לפי קטעים · קטעים עם 12 תאונות ומעלה · <b>מקדם הגשם</b> = חלק תאונות הגשם בקטע חלקי הממוצע הארצי <button class="btn dlbtn" onclick="dlCsv('roads')">⬇️ הורדת הטבלה</button></div>
     <div class="tblcard"><table id="rtbl">
       <thead><tr>
         <th data-k="kv">כביש <span class="arr"></span></th>
@@ -77,6 +77,7 @@
         <div class="src-l">🌧️ <b>גשם</b> — ארכיון הנתונים הפתוח של השירות המטאורולוגי: גשם יומי לפי תחנות. <a href="https://data.gov.il/dataset/imsarchive" target="_blank" rel="noopener">לארכיון ›</a></div>
         <div class="src-l">⚠️ <b>מגבלה חשובה</b> — מתאם אינו הוכחת סיבה: בגשם גם נוסעים אחרת ופחות. מקדם גשם גבוה מסמן מקום ששווה בדיקה הנדסית (ניקוז, אחיזה, תאורה) — לא קביעה משפטית.</div>
         <div class="src-l">🔢 מוצגים רק מקומות עם מספיק תאונות למובהקות בסיסית (8+ בתא מפה, 40+ ביישוב, 12+ בקטע כביש).</div>
+        <div class="src-l">⬇️ <b>הנתונים הגולמיים</b> — כל התאונות שבבסיס האתר, שורה לתאונה עם מיקום, מזג אוויר, פני כביש וחומרה: <a href="data/accidents.csv" download>accidents.csv ›</a></div>
       </details>
     </div>
     <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · חלק ממשפחת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · <a href="mailto:shlomihartman@gmail.com">מצאתם טעות? כתבו לנו</a></div>
@@ -84,7 +85,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-const RC_BUILD='2';
+const RC_BUILD='3';
 const DV='?v='+RC_BUILD+'-'+new Date().toISOString().slice(0,10);
 const $=id=>document.getElementById(id);
 const msg=$('msg');
@@ -182,6 +183,23 @@ document.querySelectorAll('#rtbl th').forEach(th=>th.onclick=()=>{const k=th.dat
   if(rsort.k===k)rsort.dir*=-1;else rsort={k,dir:-1};drawRoads();});
 $('q').oninput=()=>{drawCities();drawRoads();if($('mapview').style.display!=='none')drawMap();};
 
+// הורדת הטבלאות כ-CSV שנפתח באקסל (BOM לעברית), עם תאריך בשם הקובץ
+function dlCsv(which){
+  let head,rows,fn;
+  if(which==='cities'){
+    head=['יישוב','מקדם_גשם','תאונות_בגשם','תאונות_ביבש','ימי_גשם_בשנה'];
+    rows=CITIES.cities.map(c=>[cityName(c.s),c.rf,c.w,c.d,c.rd??'']);
+    fn='מקדם-הגשם-יישובים';
+  }else{
+    head=['כביש','קטע_קמ','מקדם_גשם','תאונות_בגשם','תאונות_ביבש'];
+    rows=ROADS.roads.map(r=>[r.kv,r.seg+'-'+(r.seg+5),r.rf,r.w,r.d]);
+    fn='מקדם-הגשם-כבישים';
+  }
+  const csvTxt='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csvTxt],{type:'text/csv;charset=utf-8'}));
+  a.download=fn+'-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
 function stats(){
   const pct=x=>(x*100).toFixed(1).replace(/\.0$/,'');
   const mult=SUM.sev_share_dry?(SUM.sev_share_wet/SUM.sev_share_dry):0;

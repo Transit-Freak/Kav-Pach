@@ -50,3 +50,4 @@ tbody tr:nth-child(even){background:#fafcff}
 .srcs .src-l b{font-weight:800}
 .foot a{color:#7dd3fc;font-weight:800}
 .foot .credits{font-size:12px;opacity:.85}
+.dlbtn{font-size:11.5px;padding:4px 11px;background:#fff;border:1.5px solid #0ea5e9;color:#0c4a6e;margin-inline-start:8px}
