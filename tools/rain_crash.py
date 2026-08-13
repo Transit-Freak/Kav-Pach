@@ -63,27 +63,42 @@ def itm_to_wgs():
 
 
 def load_dict(resource, year):
-    # מילון הקודים של הלמ"ס: שדה -> קוד -> תווית. שמות העמודות משתנים בין
-    # שנים, לכן מזהים אותן לפי תוכן ולא לפי שם.
+    # מילון הקודים של הלמ"ס בנוי כ-(MS_TAVLA, KOD, TEUR): שורות עם טבלה 0 הן
+    # אינדקס — מספר טבלה לשם משתנה בעברית ("מזג אוויר"), ושורות עם מספר
+    # טבלה N הן הקודים של אותו משתנה. ב-datastore שלוש העמודות לפעמים
+    # מגיעות מאוחדות לעמודה דחוסה אחת ('0,1,יחידה משטרתית') — תומכים בשניהם.
     rows = fetch_all(resource, f'מילון {year}')
     if not rows:
         return {}
-    cols = list(rows[0].keys())
-    fld = next((c for c in cols if 'field' in c.lower() or 'משתנה' in c or 'variable' in c.lower()), None)
-    code = next((c for c in cols if c.lower() in ('code', 'קוד', 'value') or 'קוד' in c), None)
-    lab = next((c for c in cols if 'label' in c.lower() or 'תיאור' in c or 'תווית' in c or 'desc' in c.lower()), None)
+    cols = [c for c in rows[0].keys() if c != '_id']
+    tv = next((c for c in cols if 'tavla' in c.lower()), None)
+    kd = next((c for c in cols if c.lower() == 'kod'), None)
+    tr_ = next((c for c in cols if 'teur' in c.lower()), None)
+    fused = None if (tv and kd and tr_) else cols[0]
+
+    def triple(r):
+        if fused:
+            parts = str(r.get(fused, '')).split(',', 2)
+            return parts if len(parts) == 3 else None
+        return [str(r.get(tv, '')), str(r.get(kd, '')), str(r.get(tr_, ''))]
+
+    tables, codes = {}, defaultdict(dict)
+    for r in rows:
+        t = triple(r)
+        if not t:
+            continue
+        tav, kod, teur = (str(x).strip() for x in t)
+        if tav == '0':
+            tables[kod] = teur          # מספר טבלה -> שם המשתנה
+        else:
+            codes[tav][kod] = teur      # קודי המשתנה עצמו
+    named = {name: dict(codes.get(num, {})) for num, name in tables.items()}
     if EXPLORE:
-        print(f'  עמודות המילון {year}: {cols} | זוהו: fld={fld} code={code} lab={lab}')
-        for r in rows[:12]:
-            print('   ', r)
-    d = defaultdict(dict)
-    if fld and code and lab:
-        for r in rows:
-            try:
-                d[str(r[fld]).strip()][str(r[code]).strip()] = str(r[lab]).strip()
-            except Exception:
-                continue
-    return d
+        print(f'  מילון {year}: {len(tables)} טבלאות | פורמט {"דחוס" if fused else "עמודות"}')
+        for name in named:
+            if any(w in name for w in ('מזג', 'פני', 'חומרת', 'שעה')):
+                print(f'   == {name}:', dict(list(named[name].items())[:12]))
+    return named
 
 
 def yishuv_names():
@@ -121,21 +136,26 @@ def yishuv_names():
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
 
-    # ---- מילון 2024 — לזיהוי קודי "רטוב"/"גשום" באופן דינמי ----
+    # ---- מילון 2024 — קודי "רטוב"/"גשום"/חומרה לפי שמות הטבלאות בעברית ----
     dic = load_dict(PUF[2024][1], 2024)
-    if EXPLORE:
-        for f in ('MEZEG_AVIR', 'PNE_KVISH', 'HUMRAT_TEUNA', 'SHAA', 'SUG_DEREH'):
-            print(f'== {f}:', dict(list(dic.get(f, {}).items())[:30]))
 
-    def codes_containing(field, *words):
-        return {c for c, l in dic.get(field, {}).items() if any(w in l for w in words)}
+    def table_like(*words):
+        for name, tbl in dic.items():
+            if any(w in name for w in words):
+                return name, tbl
+        return None, {}
 
-    wet_pne = codes_containing('PNE_KVISH', 'רטוב')
-    rain_mezeg = codes_containing('MEZEG_AVIR', 'גשום', 'גשם')
-    unk_pne = codes_containing('PNE_KVISH', 'לא ידוע', 'אחר')
-    unk_mezeg = codes_containing('MEZEG_AVIR', 'לא ידוע', 'אחר')
+    pn_name, pne_tbl = table_like('פני הכביש', 'פני כביש')
+    mz_name, mez_tbl = table_like('מזג')
+    sv_name, sev_tbl = table_like('חומרת התאונה', 'חומרה')
+    wet_pne = {c for c, l in pne_tbl.items() if 'רטוב' in l}
+    rain_mezeg = {c for c, l in mez_tbl.items() if 'גשום' in l or 'גשם' in l}
+    unk_pne = {c for c, l in pne_tbl.items() if 'לא ידוע' in l or 'אחר' in l}
+    unk_mezeg = {c for c, l in mez_tbl.items() if 'לא ידוע' in l or 'אחר' in l}
+    severe = {c for c, l in sev_tbl.items() if 'קטלנית' in l or 'קשה' in l} or {'1', '2'}
+    print(f'טבלאות: "{pn_name}" {pne_tbl} | "{mz_name}" {mez_tbl} | "{sv_name}" {sev_tbl}', flush=True)
     print('קודי כביש-רטוב:', wet_pne, '| קודי מזג-גשום:', rain_mezeg,
-          '| לא-ידוע:', unk_pne, unk_mezeg, flush=True)
+          '| חומרה קשה:', severe, '| לא-ידוע:', unk_pne, unk_mezeg, flush=True)
     if not EXPLORE and (not wet_pne or not rain_mezeg):
         # בלי קודי רטוב/גשום כל הבנייה חסרת משמעות — עדיף ליפול בקול
         sys.exit('המילון לא פוענח: לא נמצאו קודי רטוב/גשום. הריצו EXPLORE=1 ובדקו.')
@@ -210,7 +230,7 @@ def main():
             known = not (pne in unk_pne and mez in unk_mezeg)
             acc.append({
                 'la': la, 'lo': lo, 'wet': wet, 'known': known,
-                'y': year, 'sev': r.get('HUMRAT_TEUNA'),
+                'y': year, 'sev': str(r.get('HUMRAT_TEUNA', '')).strip(),
                 'mo': r.get('HODESH_TEUNA'), 'sh': r.get('SHAA'),
                 'yb': r.get('SEMEL_YISHUV'), 'kv': r.get('KVISH1'), 'km': r.get('KM'),
                 'urb': r.get('THUM_GEOGRAFI'),
@@ -224,7 +244,7 @@ def main():
 
     # מכפיל חומרה: חלק הקטלניות+קשות בתוך תאונות רטובות מול יבשות
     def sev_share(items):
-        s = [a for a in items if a['sev'] in (1, 2, '1', '2')]
+        s = [a for a in items if a['sev'] in severe]
         return len(s) / len(items) if items else 0
     wet_acc = [a for a in known if a['wet']]
     dry_acc = [a for a in known if not a['wet']]
@@ -236,7 +256,7 @@ def main():
         k = (int(a['la'] / CL), int(a['lo'] / CO))
         if a['wet']:
             cells[k][0] += 1
-            if a['sev'] in (1, 2, '1', '2'):
+            if a['sev'] in severe:
                 cells[k][2] += 1
         else:
             cells[k][1] += 1
@@ -274,12 +294,19 @@ def main():
     print('יישובים בטבלה:', len(out_cities), flush=True)
 
     # ---- כבישים בין-עירוניים לפי קטעי 5 ק"מ ----
+    # יחידות ה-KM לא מתועדות חד-משמעית (ק"מ או עשיריות) — קובעים לפי הנתונים:
+    # אם האחוזון ה-99 גדול מ-600, אין כביש כזה בישראל => עשיריות-ק"מ.
+    kms = sorted(float(a['km']) for a in known
+                 if a['kv'] and a['km'] is not None and str(a['km']).replace('.', '').isdigit())
+    p99 = kms[int(len(kms) * 0.99)] if kms else 0
+    km_scale = 10.0 if p99 > 600 else 1.0
+    print(f'KM: p99={p99} | מפרשים כ{"עשיריות-ק"+chr(34)+"מ" if km_scale == 10 else "ק"+chr(34)+"מ"}', flush=True)
     by_road = defaultdict(lambda: [0, 0])
     for a in known:
         if not a['kv'] or a['km'] is None:
             continue
         try:
-            seg = int(float(a['km']) // 50) * 5   # KM נשמר בעשיריות-ק"מ בלמ"ס
+            seg = int(float(a['km']) / km_scale // 5) * 5
         except (TypeError, ValueError):
             continue
         k = (a['kv'], seg)
@@ -313,7 +340,7 @@ def main():
         'sev_share_dry': round(sev_share(dry_acc), 4),
         'by_month': {m: v for m, v in sorted(by_month.items())},
         'wet_codes': {'pne': sorted(wet_pne), 'mezeg': sorted(rain_mezeg)},
-        'dict_pne': dic.get('PNE_KVISH', {}), 'dict_mezeg': dic.get('MEZEG_AVIR', {}),
+        'dict_pne': pne_tbl, 'dict_mezeg': mez_tbl, 'dict_sev': sev_tbl,
     }
     json.dump(summary, open(os.path.join(OUTDIR, 'summary.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
