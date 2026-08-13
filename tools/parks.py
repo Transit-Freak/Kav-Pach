@@ -19,6 +19,7 @@ OFFICIAL_ONLY = bool(os.environ.get('OFFICIAL_ONLY'))
 STOPS = os.environ.get('STOPS', 'stops.txt')
 STOPTIMES = os.environ.get('STOPTIMES', 'stop_times.txt')
 TRIPS = os.environ.get('TRIPS', 'trips.txt')
+SHAPES = os.environ.get('SHAPES', 'shapes.txt')   # מסלולי הקווים (אופציונלי)
 ROUTES = os.environ.get('ROUTES', 'routes.txt')
 CAL = os.environ.get('CAL', 'calendar.txt')
 OUTDIR = os.environ.get('OUTDIR', 'parks-out')
@@ -660,7 +661,8 @@ def build_lines(stops_here, tk):
         _, s = best_stop[rid]
         num, longnm, mkt = route_meta.get(rid, ('?', '', ''))
         dest = longnm.split('<->')[-1].split('-')[0].strip() if '<->' in longnm else longnm[:30]
-        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk], 'mk': mkt or num}
+        rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk], 'mk': mkt or num,
+               'rid': rid}   # מזהה הקו — מפתח לקובץ המסלול (data/shp/<rid>.json)
         for gk, _ in DAYGROUPS:
             mins = sorted(set(deps.get((s['sid'], rid, gk), [])))
             rec[gk] = [hhmm(m) for m in mins]
@@ -703,6 +705,7 @@ def build_lines(stops_here, tk):
 index = []
 out_i = 0
 _noname_ser = {}
+used_rids = set()   # כל הקווים שמופיעים באזור כלשהו — להפקת קובצי מסלול
 for pi, pk in enumerate(parks):
     stops_here = []
     for sid, hits in stop_hits.items():
@@ -812,6 +815,8 @@ for pi, pk in enumerate(parks):
     off = pk.get('official')
     if off:
         rec['official'] = {k: off.get(k) for k in ('oname', 'district', 'avail', 'occ', 'cur_emp', 'fut_emp')}
+    for L in lines_c: used_rids.add(L['rid'])
+    for L in lines_e: used_rids.add(L['rid'])
     fn = f'p{out_i}.json'
     json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
@@ -840,3 +845,59 @@ json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8')
 print('פארקים שנכתבו:', out_i)
 print('מהם עם קווים:', sum(1 for x in index if x['lines']),
       '| בלי שירות בכלל:', sum(1 for x in index if not x['lines']))
+
+# ---- מסלולי הקווים (בקשת ההסתדרות): לחיצה על קו בעמוד אזור מציגה את ----
+# מסלולו על המפה. לכל route_id שמופיע באחד האזורים נבחר ה-shape השכיח
+# מבין הנסיעות שלו, מדולל לצעדי ~50 מ' ומקודד polyline (אותו פורמט
+# ש-decPoly שבאתר כבר יודע לפענח). קובץ זעיר לכל קו, נטען רק בלחיצה.
+if used_rids and os.path.exists(SHAPES):
+    rid_shape_votes = defaultdict(lambda: defaultdict(int))
+    for r in csv.DictReader(open(TRIPS, encoding='utf-8-sig')):
+        rid = r['route_id']
+        if rid in used_rids and r.get('shape_id'):
+            rid_shape_votes[rid][r['shape_id']] += 1
+    rid_shape = {rid: max(v, key=v.get) for rid, v in rid_shape_votes.items()}
+    need = set(rid_shape.values())
+    pts_by_shape = defaultdict(list)
+    MIN_D = 0.0005   # ~50 מ' — דילול תוך-כדי קריאה; החלק מספיק לתצוגת מסלול
+    _last = {}
+    for r in csv.DictReader(open(SHAPES, encoding='utf-8-sig')):
+        sid = r.get('shape_id')
+        if sid not in need:
+            continue
+        try:
+            la = float(r['shape_pt_lat']); lo = float(r['shape_pt_lon'])
+        except (KeyError, ValueError):
+            continue
+        lp = _last.get(sid)
+        if lp is None or abs(la - lp[0]) + abs(lo - lp[1]) >= MIN_D:
+            pts_by_shape[sid].append((la, lo))
+            _last[sid] = (la, lo)
+
+    def _enc(pts):
+        # קידוד polyline (גוגל, דיוק 1e5) — תואם decPoly שבצד הלקוח
+        out = []
+        pla = plo = 0
+        for la, lo in pts:
+            ila, ilo = round(la * 1e5), round(lo * 1e5)
+            for v in (ila - pla, ilo - plo):
+                v = ~(v << 1) if v < 0 else (v << 1)
+                while v >= 0x20:
+                    out.append(chr((0x20 | (v & 0x1f)) + 63)); v >>= 5
+                out.append(chr(v + 63))
+            pla, plo = ila, ilo
+        return ''.join(out)
+
+    shp_dir = os.path.join(OUTDIR, 'shp')
+    os.makedirs(shp_dir, exist_ok=True)
+    written = 0
+    for rid, sid in rid_shape.items():
+        pts = pts_by_shape.get(sid)
+        if not pts or len(pts) < 2:
+            continue
+        json.dump({'e': _enc(pts)}, open(os.path.join(shp_dir, f'{rid}.json'), 'w'),
+                  separators=(',', ':'))
+        written += 1
+    print('קובצי מסלול שנכתבו:', written, 'מתוך', len(used_rids), 'קווים בשימוש')
+else:
+    print('shapes.txt לא נמצא — מדלגים על קובצי המסלולים')

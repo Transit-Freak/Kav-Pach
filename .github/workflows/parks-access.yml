@@ -36,7 +36,7 @@ jobs:
   run:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 90   # ‎+15 דק' לעיבוד shapes.txt (קובץ המסלולים הגדול)
     steps:
       - uses: actions/checkout@v4
 
@@ -93,7 +93,8 @@ jobs:
             echo "GTFS server not responding; waiting 60s"; sleep 60
           done
           [ "$ok" = "1" ] || { echo "GTFS server (gtfs.mot.gov.il) unreachable after retries"; exit 1; }
-          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt
+          # shapes.txt — מסלולי הקווים לתצוגה בלחיצה על קו (בקשת ההסתדרות)
+          unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt shapes.txt
 
       - name: Set up local OSRM (foot) — מפת ישראל, ניתוב מקומי מלא
         run: |
@@ -138,7 +139,7 @@ jobs:
         run: |
           set -euo pipefail
           BR="${GITHUB_REF_NAME:-main}"
-          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt parks-raw.json footways.json regions.json official.json osm-approved-raw.json
+          rm -f gtfs.zip stops.txt stop_times.txt trips.txt routes.txt calendar.txt shapes.txt parks-raw.json footways.json regions.json official.json osm-approved-raw.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4; do

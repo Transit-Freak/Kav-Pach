@@ -149,3 +149,16 @@ tbody tr:nth-child(even){background:#fafcff}
   #heatmap{height:56vh !important}
 }
 
+
+/* ===== משוב איריס (13.8): דסקטופ ===== */
+/* הכפתורים פוצלו לקצוות המסך ויש שטח מת — הכותרת והפוטר מיושרים לעמודת
+   התוכן (עד 1500px), החיפוש מוגבל ברוחב, והתוכן מקבל יותר מהמסך */
+.top,.foot{padding-inline:max(18px,calc((100vw - 1500px)/2 + 10px))}
+.top input{max-width:540px}
+#heatview{max-width:1500px !important}
+.tblwrap,.wrap{max-width:1500px}
+/* ההסברים נעלמו בדסקטופ — רצועת משפט-אחד מתחת לכותרת */
+.introbar{background:#f0fdfa;border-bottom:1px solid #99f6e4;color:#134e4a;font-size:13px;font-weight:700;padding:6px max(18px,calc((100vw - 1500px)/2 + 10px));line-height:1.5}
+@media(max-width:760px){.introbar{display:none}}
+/* מקרא מעודכן בכרטיס הצף שעל מפת האזור */
+.maphint{font-size:10.5px;color:#64748b;border-top:1px solid #f1f5f9;padding-top:4px;margin-top:2px}
