@@ -149,7 +149,8 @@ def street_names():
 
 
 OVERPASS = ['https://overpass-api.de/api/interpreter',
-            'https://overpass.kumi.systems/api/interpreter']
+            'https://overpass.kumi.systems/api/interpreter',
+            'https://overpass.private.coffee/api/interpreter']
 
 
 def _norm_st(n):
@@ -167,13 +168,15 @@ def overpass_streets(items):
     # "שד' קדיש לוז") — לכן חיפוש הכלה (regex) על שם מנורמל, לא שוויון מדויק.
     import re as _re
     out = {}
-    for c0 in range(0, len(items), 20):
-        chunk = items[c0:c0 + 20]
+    for c0 in range(0, len(items), 12):
+        chunk = items[c0:c0 + 12]
+        # escape לכל מילה בנפרד ורק אז חיבור ב-.? — אחרת ה-escape הופך את
+        # התו הגמיש למילולי ושמות של יותר ממילה אחת לא נמצאים לעולם
         parts = ''.join(
-            f'way[highway]["name"~"{_re.escape(_norm_st(s["name"]).replace(" ", ".?"))}"]'
+            f'way[highway]["name"~"{".?".join(_re.escape(w) for w in _norm_st(s["name"]).split())}"]'
             f'(around:1500,{s["la"]:.5f},{s["lo"]:.5f});'
             for s in chunk)
-        qy = f'[out:json][timeout:90];({parts});out geom;'
+        qy = f'[out:json][timeout:120];({parts});out geom;'
         data = None
         for ep in OVERPASS:
             try:
@@ -206,8 +209,8 @@ def overpass_streets(items):
                 continue
             out.setdefault(id(best), {'s': best, 'segs': []})['segs'].append(
                 enc_poly([(g['lat'], g['lon']) for g in geom]))
-        print(f'  Overpass: {min(c0+20,len(items))}/{len(items)} רחובות', flush=True)
-        time.sleep(4)
+        print(f'  Overpass: {min(c0+12,len(items))}/{len(items)} רחובות', flush=True)
+        time.sleep(6)
     return [{**v['s'], 'segs': v['segs']} for v in out.values() if v['segs']]
 
 
