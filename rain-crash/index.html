@@ -84,12 +84,14 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-const RC_BUILD='1';
+const RC_BUILD='2';
 const DV='?v='+RC_BUILD+'-'+new Date().toISOString().slice(0,10);
 const $=id=>document.getElementById(id);
 const msg=$('msg');
-let SUM=null,CELLS=null,CITIES=null,ROADS=null,NAMES={};
-let map=null,layer=null;
+let SUM=null,CELLS=null,CITIES=null,ROADS=null,STREETS=null,NAMES={};
+let map=null,layer=null,streetLayer=null;
+// פענוח polyline (אותו פורמט כמו בשאר כלי הקו הבוחן)
+function decPoly(str){const pts=[];let i=0,la=0,lo=0;while(i<str.length){for(const w of [0,1]){let b,sh=0,r=0;do{b=str.charCodeAt(i++)-63;r|=(b&0x1f)<<sh;sh+=5}while(b>=0x20);const d=(r&1)?~(r>>1):(r>>1);if(w===0)la+=d;else lo+=d}pts.push([la/1e5,lo/1e5])}return pts}
 
 // צבע לפי מקדם הגשם: כחלחל=פחות מהממוצע, אפור=סביב הממוצע, אדום=חריג
 function rfCol(rf){
@@ -131,10 +133,21 @@ function drawMap(){
         `<a href="https://www.google.com/maps?q=${la},${lo}" target="_blank" rel="noopener">פתיחה במפות גוגל ›</a>`)
       .addTo(layer);
   }
+  // רחובות (בקשת המשתמשים): קטע הרחוב שבו קרו תאונות הגשם, צבוע לפי המקדם
+  if(streetLayer)streetLayer.remove();
+  streetLayer=L.layerGroup().addTo(map);
+  if(STREETS&&STREETS.streets)for(const s of STREETS.streets){
+    for(const seg of s.segs){
+      L.polyline(decPoly(seg),{color:rfCol(s.rf),weight:5,opacity:.75})
+        .bindPopup(`<b>${esc(s.n)}</b> · ${esc(cityName(s.c))}<br><b>מקדם גשם: פי ${s.rf}</b><br>☔ ${s.w} תאונות בגשם/רטוב · ☀️ ${s.d} ביבש`)
+        .addTo(streetLayer);
+    }
+  }
   $('mleg').innerHTML=`<b>מקדם הגשם</b> — כמה תאונות-גשם יש כאן ביחס לממוצע הארצי:`+
     `<span class="lrow"><i style="background:#38bdf8"></i> מתחת לממוצע · <i style="background:#94a3b8"></i> סביב הממוצע · `+
     `<i style="background:#f59e0b"></i> מעל · <i style="background:#ea580c"></i> פי 1.6+ · <i style="background:#dc2626"></i> פי 2.2+</span>`+
-    `<span class="lrow">גודל עיגול = כמות תאונות הגשם · מוצגים רק מקומות עם 8+ תאונות</span>`;
+    `<span class="lrow">גודל עיגול = כמות תאונות הגשם · קו צבעוני לאורך רחוב = הרחוב שבו קרו התאונות (בהתקרבות)</span>`+
+    `<span class="lrow">אזור בלי סימונים = אין בו מספיק תאונות גשם (באילת, למשל: 216 תאונות — אפס בגשם)</span>`;
   if(focus)map.setView(focus,13);
 }
 
@@ -188,9 +201,9 @@ function stats(){
 
 const j=p=>fetch('data/'+p+DV).then(r=>{if(!r.ok)throw 0;return r.json()});
 Promise.all([j('summary.json'),j('cells.json'),j('cities.json'),j('roads.json'),
-             j('names.json').catch(()=>({}))])
-.then(([s,ce,ci,ro,nm])=>{
-  SUM=s;CELLS=ce;CITIES=ci;ROADS=ro;NAMES=nm.names||nm||{};
+             j('names.json').catch(()=>({})),j('streets.json').catch(()=>null)])
+.then(([s,ce,ci,ro,nm,st])=>{
+  SUM=s;CELLS=ce;CITIES=ci;ROADS=ro;NAMES=nm.names||nm||{};STREETS=st;
   msg.style.display='none';
   stats();drawMap();drawCities();drawRoads();
   show('tabmap');

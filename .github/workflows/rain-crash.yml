@@ -26,7 +26,7 @@ jobs:
   run:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60   # Overpass לרחובות מוסיף זמן
     steps:
       - uses: actions/checkout@v4
       - name: Build rain-crash data

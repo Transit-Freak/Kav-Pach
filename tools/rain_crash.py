@@ -101,6 +101,103 @@ def load_dict(resource, year):
     return named
 
 
+def enc_poly(pts):
+    # קידוד polyline (גוגל, דיוק 1e5) — תואם decPoly שבצד הלקוח
+    out = []
+    pla = plo = 0
+    for la, lo in pts:
+        ila, ilo = round(la * 1e5), round(lo * 1e5)
+        for v in (ila - pla, ilo - plo):
+            v = ~(v << 1) if v < 0 else (v << 1)
+            while v >= 0x20:
+                out.append(chr((0x20 | (v & 0x1f)) + 63)); v >>= 5
+            out.append(chr(v + 63))
+        pla, plo = ila, ilo
+    return ''.join(out)
+
+
+def street_names():
+    # (סמל יישוב, קוד רחוב) -> שם רחוב: מאתרים דינמית את מאגר הרחובות הארצי
+    q = urllib.parse.urlencode({'q': 'רחובות בישראל', 'rows': 10})
+    try:
+        with urllib.request.urlopen(urllib.request.Request(
+                f'https://data.gov.il/api/3/action/package_search?{q}', headers=UA), timeout=90) as r:
+            pkgs = json.load(r)['result']['results']
+    except Exception as e:
+        print('חיפוש מאגר הרחובות נכשל:', e)
+        return {}
+    for p in pkgs:
+        for res in p.get('resources', []):
+            if (res.get('format') or '').upper() != 'CSV':
+                continue
+            try:
+                probe = fetch(res['id'], limit=1)
+            except Exception:
+                continue
+            flds = [f['id'] for f in probe.get('fields', [])]
+            sem = next((f for f in flds if 'סמל_ישוב' in f or 'סמל_יישוב' in f), None)
+            stc = next((f for f in flds if 'סמל_רחוב' in f), None)
+            stn = next((f for f in flds if 'שם_רחוב' in f), None)
+            if not (sem and stc and stn):
+                continue
+            print('מאגר הרחובות:', p.get('title'), res['id'])
+            rows = fetch_all(res['id'], 'רחובות')
+            return {(str(r[sem]).strip(), str(r[stc]).strip()): str(r[stn]).strip()
+                    for r in rows if r.get(sem) and r.get(stc) and r.get(stn)}
+    print('לא נמצא מאגר רחובות — מדלגים על שכבת הרחובות')
+    return {}
+
+
+OVERPASS = ['https://overpass-api.de/api/interpreter',
+            'https://overpass.kumi.systems/api/interpreter']
+
+
+def overpass_streets(items):
+    # מקבל [{'name','la','lo',...}] ומחזיר לכל אחד segs=[polyline,...] מ-OSM.
+    # שאילתות באצוות: כל רחוב מחפש way[highway] בשמו ברדיוס 1500 מ' מהמרכז.
+    out = {}
+    for c0 in range(0, len(items), 20):
+        chunk = items[c0:c0 + 20]
+        parts = ''.join(
+            f'way[highway]["name"="{s["name"]}"](around:1500,{s["la"]:.5f},{s["lo"]:.5f});'
+            for s in chunk)
+        qy = f'[out:json][timeout:90];({parts});out geom;'
+        data = None
+        for ep in OVERPASS:
+            try:
+                req = urllib.request.Request(ep, data=urllib.parse.urlencode({'data': qy}).encode(),
+                                             headers=UA)
+                with urllib.request.urlopen(req, timeout=180) as r:
+                    data = json.load(r)
+                break
+            except Exception as e:
+                print(f'  Overpass נכשל ({ep.split("/")[2]}): {e}', flush=True)
+                time.sleep(15)
+        if not data:
+            continue
+        for el in data.get('elements', []):
+            nm = (el.get('tags') or {}).get('name')
+            geom = el.get('geometry') or []
+            if not nm or len(geom) < 2:
+                continue
+            # שיוך לרחוב הקרוב ביותר עם אותו שם (שמות חוזרים בין ערים)
+            g0 = geom[0]
+            best, bd = None, 1e9
+            for s in chunk:
+                if s['name'] != nm:
+                    continue
+                d = (g0['lat'] - s['la']) ** 2 + (g0['lon'] - s['lo']) ** 2
+                if d < bd:
+                    bd, best = d, s
+            if best is None or bd > 0.03 ** 2:
+                continue
+            out.setdefault(id(best), {'s': best, 'segs': []})['segs'].append(
+                enc_poly([(g['lat'], g['lon']) for g in geom]))
+        print(f'  Overpass: {min(c0+20,len(items))}/{len(items)} רחובות', flush=True)
+        time.sleep(4)
+    return [{**v['s'], 'segs': v['segs']} for v in out.values() if v['segs']]
+
+
 def yishuv_names():
     # סמל יישוב -> שם: מאתרים דינמית את משאב רשימת היישובים ב-data.gov.il
     # (מזהים לפי שדות שמכילים 'סמל' + שם עברי), כדי לא לתלות במזהה קשיח.
@@ -233,7 +330,7 @@ def main():
                 'y': year, 'sev': str(r.get('HUMRAT_TEUNA', '')).strip(),
                 'mo': r.get('HODESH_TEUNA'), 'sh': r.get('SHAA'),
                 'yb': r.get('SEMEL_YISHUV'), 'kv': r.get('KVISH1'), 'km': r.get('KM'),
-                'urb': r.get('THUM_GEOGRAFI'),
+                'rh': r.get('REHOV1'), 'urb': r.get('THUM_GEOGRAFI'),
             })
     print('תאונות עם מיקום:', len(acc), flush=True)
 
@@ -357,6 +454,38 @@ def main():
     json.dump({'names': names}, open(os.path.join(OUTDIR, 'names.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     print('שמות יישובים:', len(names), flush=True)
+
+    # ---- רחובות (בקשת המשתמשים): סימון קטע הרחוב שבו קרו תאונות הגשם ----
+    # קיבוץ לפי (יישוב, קוד רחוב), שם מהמאגר הארצי, גאומטריה מ-OSM.
+    stn = street_names()
+    by_street = defaultdict(lambda: [0, 0, 0.0, 0.0, 0])
+    for a in known:
+        if not a['yb'] or not a['rh']:
+            continue
+        e = by_street[(str(a['yb']), str(a['rh']))]
+        e[0] += 1 if a['wet'] else 0
+        e[1] += 0 if a['wet'] else 1
+        e[2] += a['la']; e[3] += a['lo']; e[4] += 1
+    cand = []
+    for (sem, rh), (w, d, sla, slo, n) in by_street.items():
+        if w < 2 or n < 8:
+            continue
+        name = stn.get((sem, rh)) or stn.get((sem, rh.lstrip('0')))
+        if not name:
+            continue
+        cand.append({'name': name, 'city': sem, 'w': w, 'd': d,
+                     'rf': round((w / n) / base, 2) if base else 0,
+                     'la': sla / n, 'lo': slo / n})
+    cand.sort(key=lambda s: -s['w'])
+    cand = cand[:400]   # תקרה הוגנת ל-Overpass; הרחובות עם הכי הרבה תאונות-גשם
+    print('רחובות מועמדים לגאומטריה:', len(cand), flush=True)
+    with_geom = overpass_streets(cand)
+    out_streets = [{'n': s['name'], 'c': s['city'], 'w': s['w'], 'd': s['d'],
+                    'rf': s['rf'], 'segs': s['segs']} for s in with_geom]
+    json.dump({'gen': summary['gen'], 'base': summary['base_share'], 'streets': out_streets},
+              open(os.path.join(OUTDIR, 'streets.json'), 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+    print('רחובות עם גאומטריה:', len(out_streets), flush=True)
     print('נכתב:', OUTDIR, flush=True)
 
 
