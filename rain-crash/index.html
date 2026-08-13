@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>הקו הרטוב — איפה הכביש מסוכן בגשם</title>
+<meta name="description" content="הקו הרטוב — הצלבת תאונות הדרכים של הלמ&quot;ס עם נתוני הגשם של השירות המטאורולוגי: איפה בישראל הכביש הופך מסוכן כשיורד גשם, לפי מקום, יישוב וקטע כביש.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="הקו הבוחן">
+<meta property="og:title" content="הקו הרטוב — איפה הכביש מסוכן בגשם">
+<meta property="og:description" content="כל תאונות הדרכים בגשם ובכביש רטוב על מפה אחת: המקומות, היישובים וקטעי הכבישים שבהם הגשם מכפיל את הסכנה. מנתוני הלמ&quot;ס והשירות המטאורולוגי.">
+<meta property="og:url" content="https://transit-freak.github.io/kav-bochan/rain-crash/">
+<meta property="og:locale" content="he_IL">
+<meta property="og:image" content="https://transit-freak.github.io/kav-bochan/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://transit-freak.github.io/kav-bochan/rain-crash/">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%230c4a6e"/><path d="M10 13 a6 6 0 1 1 12 0 h1 a4 4 0 0 1 0 8 H9 a4 4 0 0 1 0-8 z" fill="%23bae6fd"/><path d="M12 24 l-2 5 M17 24 l-2 5 M22 24 l-2 5" stroke="%2338bdf8" stroke-width="2.2" stroke-linecap="round"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="top">
+    <h1>🌧️ הקו הרטוב</h1>
+    <span class="tag">ניסוי</span>
+    <span class="vseg">
+      <button class="btn vt on" id="tabmap">🗺️ מפה</button>
+      <button class="btn vt" id="tabcity">🏙️ יישובים</button>
+      <button class="btn vt" id="tabroad">🛣️ כבישים</button>
+    </span>
+    <input id="q" type="search" placeholder="חיפוש יישוב או מספר כביש…">
+  </div>
+  <div class="introbar" id="introbar">איפה בישראל הכביש הופך מסוכן כשיורד גשם — כל תאונות הדרכים בגשם ובכביש רטוב, לפי מקום, יישוב וקטע כביש</div>
+
+  <div class="statrow" id="statrow" style="display:none"></div>
+
+  <div id="mapview" style="display:none">
+    <div class="mapwrap"><div id="map"></div><div class="maplegend" id="mleg"></div></div>
+  </div>
+
+  <div class="tblwrap" id="cityview" style="display:none">
+    <div class="tblnote">יישובים עם 40 תאונות ומעלה · <b>מקדם הגשם</b> = חלק תאונות הגשם ביישוב חלקי הממוצע הארצי · "ימי גשם" = ממוצע שנתי בתחנה הקרובה (השירות המטאורולוגי)</div>
+    <div class="tblcard"><table id="ctbl">
+      <thead><tr>
+        <th data-k="n">יישוב <span class="arr"></span></th>
+        <th data-k="rf" class="num">מקדם גשם ☔ <span class="arr"></span></th>
+        <th data-k="w" class="num">תאונות בגשם/רטוב <span class="arr"></span></th>
+        <th data-k="d" class="num">תאונות ביבש <span class="arr"></span></th>
+        <th data-k="rd" class="num">ימי גשם בשנה <span class="arr"></span></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="tblwrap" id="roadview" style="display:none">
+    <div class="tblnote">כבישים בין-עירוניים לפי קטעים · קטעים עם 12 תאונות ומעלה · <b>מקדם הגשם</b> = חלק תאונות הגשם בקטע חלקי הממוצע הארצי</div>
+    <div class="tblcard"><table id="rtbl">
+      <thead><tr>
+        <th data-k="kv">כביש <span class="arr"></span></th>
+        <th data-k="seg" class="num">קטע (ק"מ) <span class="arr"></span></th>
+        <th data-k="rf" class="num">מקדם גשם ☔ <span class="arr"></span></th>
+        <th data-k="w" class="num">בגשם/רטוב <span class="arr"></span></th>
+        <th data-k="d" class="num">ביבש <span class="arr"></span></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="msg" id="msg">⏳ טוען את נתוני התאונות והגשם…</div>
+
+  <div class="foot">
+    <div class="sub">האתר מצליב את קובצי תאונות הדרכים עם נפגעים של הלשכה המרכזית לסטטיסטיקה (2020–2024) עם נתוני הגשם של השירות המטאורולוגי. "תאונה בגשם/רטוב" = תאונה שבדוח המשטרה שלה נרשם מזג אוויר גשום או פני כביש רטובים.
+      <details class="srcs"><summary>📚 מאיפה המידע ומה המגבלות?</summary>
+        <div class="src-l">🚑 <b>תאונות</b> — קובצי ה-PUF הציבוריים של הלמ"ס (מבוססי דוחות משטרת ישראל), כולל מיקום מדויק, חומרה, מזג אוויר ומצב הכביש בכל תאונה. <a href="https://data.gov.il/dataset/teunot2020-2024" target="_blank" rel="noopener">לקבצים ›</a></div>
+        <div class="src-l">🌧️ <b>גשם</b> — ארכיון הנתונים הפתוח של השירות המטאורולוגי: גשם יומי לפי תחנות. <a href="https://data.gov.il/dataset/imsarchive" target="_blank" rel="noopener">לארכיון ›</a></div>
+        <div class="src-l">⚠️ <b>מגבלה חשובה</b> — מתאם אינו הוכחת סיבה: בגשם גם נוסעים אחרת ופחות. מקדם גשם גבוה מסמן מקום ששווה בדיקה הנדסית (ניקוז, אחיזה, תאורה) — לא קביעה משפטית.</div>
+        <div class="src-l">🔢 מוצגים רק מקומות עם מספיק תאונות למובהקות בסיסית (8+ בתא מפה, 40+ ביישוב, 12+ בקטע כביש).</div>
+      </details>
+    </div>
+    <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · חלק ממשפחת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · <a href="mailto:shlomihartman@gmail.com">מצאתם טעות? כתבו לנו</a></div>
+  </div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+const RC_BUILD='1';
+const DV='?v='+RC_BUILD+'-'+new Date().toISOString().slice(0,10);
+const $=id=>document.getElementById(id);
+const msg=$('msg');
+let SUM=null,CELLS=null,CITIES=null,ROADS=null,NAMES={};
+let map=null,layer=null;
+
+// צבע לפי מקדם הגשם: כחלחל=פחות מהממוצע, אפור=סביב הממוצע, אדום=חריג
+function rfCol(rf){
+  if(rf<0.7)return'#38bdf8';
+  if(rf<1.15)return'#94a3b8';
+  if(rf<1.6)return'#f59e0b';
+  if(rf<2.2)return'#ea580c';
+  return'#dc2626';
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function cityName(s){return NAMES[String(s)]||('יישוב '+s)}
+
+const VIEWS={tabmap:'mapview',tabcity:'cityview',tabroad:'roadview'};
+function show(tab){
+  for(const t in VIEWS){$(t).classList.toggle('on',t===tab);$(VIEWS[t]).style.display=(t===tab)?'':'none';}
+  if(tab==='tabmap'&&map)setTimeout(()=>map.invalidateSize(),60);
+}
+for(const t in VIEWS)$(t).onclick=()=>show(t);
+
+function drawMap(){
+  if(!map){
+    map=L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+    layer=L.layerGroup().addTo(map);
+    map.setView([31.8,35.0],8);
+  }
+  layer.clearLayers();
+  const f=($('q').value||'').trim();
+  // סינון לפי יישוב: מתמקדים בתאים שבסביבת היישוב שנמצא בטבלה
+  let focus=null;
+  if(f&&CITIES){const c=CITIES.cities.find(c=>cityName(c.s).includes(f));if(c)focus=[c.la,c.lo];}
+  const cells=[...CELLS.cells].sort((a,b)=>a[4]-b[4]);   // האדומים מצוירים אחרונים=עליונים
+  for(const [la,lo,w,d,rf,ws] of cells){
+    const r=Math.min(7+Math.sqrt(w)*2.2,20);
+    L.circleMarker([la,lo],{radius:r,color:'#fff',weight:1.4,fillColor:rfCol(rf),fillOpacity:.82})
+      .bindPopup(`<b>מקדם גשם: פי ${rf}</b> מהממוצע הארצי<br>`+
+        `☔ ${w} תאונות בגשם/כביש רטוב${ws?` (מהן ${ws} קשות/קטלניות)`:''}<br>`+
+        `☀️ ${d} תאונות ביבש<br>`+
+        `<a href="https://www.google.com/maps?q=${la},${lo}" target="_blank" rel="noopener">פתיחה במפות גוגל ›</a>`)
+      .addTo(layer);
+  }
+  $('mleg').innerHTML=`<b>מקדם הגשם</b> — כמה תאונות-גשם יש כאן ביחס לממוצע הארצי:`+
+    `<span class="lrow"><i style="background:#38bdf8"></i> מתחת לממוצע · <i style="background:#94a3b8"></i> סביב הממוצע · `+
+    `<i style="background:#f59e0b"></i> מעל · <i style="background:#ea580c"></i> פי 1.6+ · <i style="background:#dc2626"></i> פי 2.2+</span>`+
+    `<span class="lrow">גודל עיגול = כמות תאונות הגשם · מוצגים רק מקומות עם 8+ תאונות</span>`;
+  if(focus)map.setView(focus,13);
+}
+
+let csort={k:'rf',dir:-1},rsort={k:'rf',dir:-1};
+function drawCities(){
+  const f=($('q').value||'').trim();
+  let rows=CITIES.cities.map(c=>({...c,n:cityName(c.s)}));
+  if(f)rows=rows.filter(c=>c.n.includes(f));
+  rows.sort((a,b)=>{const va=a[csort.k]??-1,vb=b[csort.k]??-1;
+    return (typeof va==='number'?va-vb:String(va).localeCompare(String(vb),'he'))*csort.dir;});
+  document.querySelector('#ctbl tbody').innerHTML=rows.map(c=>`<tr>
+    <td>${esc(c.n)}</td>
+    <td class="num"><span class="pill" style="background:${rfCol(c.rf)}22;color:${rfCol(c.rf)}">פי ${c.rf}</span></td>
+    <td class="num">${c.w}</td><td class="num">${c.d}</td>
+    <td class="num">${c.rd??'—'}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">לא נמצא יישוב מתאים</td></tr>';
+  document.querySelectorAll('#ctbl th').forEach(th=>th.querySelector('.arr').textContent=th.dataset.k===csort.k?(csort.dir<0?'▼':'▲'):'');
+}
+function drawRoads(){
+  const f=($('q').value||'').trim();
+  let rows=ROADS.roads;
+  if(f)rows=rows.filter(r=>String(r.kv).includes(f));
+  rows=[...rows].sort((a,b)=>((a[rsort.k]??-1)-(b[rsort.k]??-1))*rsort.dir);
+  document.querySelector('#rtbl tbody').innerHTML=rows.map(r=>`<tr>
+    <td>כביש ${r.kv}</td><td class="num">${r.seg}–${r.seg+5}</td>
+    <td class="num"><span class="pill" style="background:${rfCol(r.rf)}22;color:${rfCol(r.rf)}">פי ${r.rf}</span></td>
+    <td class="num">${r.w}</td><td class="num">${r.d}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">לא נמצא כביש מתאים</td></tr>';
+  document.querySelectorAll('#rtbl th').forEach(th=>th.querySelector('.arr').textContent=th.dataset.k===rsort.k?(rsort.dir<0?'▼':'▲'):'');
+}
+document.querySelectorAll('#ctbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;
+  if(csort.k===k)csort.dir*=-1;else csort={k,dir:k==='n'?1:-1};drawCities();});
+document.querySelectorAll('#rtbl th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;
+  if(rsort.k===k)rsort.dir*=-1;else rsort={k,dir:-1};drawRoads();});
+$('q').oninput=()=>{drawCities();drawRoads();if($('mapview').style.display!=='none')drawMap();};
+
+function stats(){
+  const pct=x=>(x*100).toFixed(1).replace(/\.0$/,'');
+  const mult=SUM.sev_share_dry?(SUM.sev_share_wet/SUM.sev_share_dry):0;
+  $('statrow').style.display='';
+  $('statrow').innerHTML=
+    `<div class="statcard"><div class="sc-n">${pct(SUM.base_share)}%</div><div class="sc-t">מהתאונות בישראל קורות בגשם או על כביש רטוב (${SUM.wet.toLocaleString('he')} מתוך ${SUM.known.toLocaleString('he')})</div></div>`+
+    `<div class="statcard"><div class="sc-n">פי ${mult.toFixed(2)}</div><div class="sc-t">הסיכוי שתאונת גשם תהיה קשה או קטלנית, לעומת תאונה ביבש</div></div>`+
+    `<div class="statcard"><div class="sc-n">${SUM.years[0]}–${SUM.years[SUM.years.length-1]}</div><div class="sc-t">שנות הנתונים · עודכן ${SUM.gen.split('-').reverse().join('.')}</div></div>`;
+}
+
+const j=p=>fetch('data/'+p+DV).then(r=>{if(!r.ok)throw 0;return r.json()});
+Promise.all([j('summary.json'),j('cells.json'),j('cities.json'),j('roads.json'),
+             j('names.json').catch(()=>({}))])
+.then(([s,ce,ci,ro,nm])=>{
+  SUM=s;CELLS=ce;CITIES=ci;ROADS=ro;NAMES=nm.names||nm||{};
+  msg.style.display='none';
+  stats();drawMap();drawCities();drawRoads();
+  show('tabmap');
+}).catch(e=>{
+  msg.innerHTML='⚠ לא הצלחנו לטעון את הנתונים — ייתכן שהם עדיין בהפקה הראשונה. <button class="btn" onclick="location.reload()">🔄 רענון</button>';
+});
+</script>
+<script src="../a11y.js" defer></script>
+</body>
+</html>

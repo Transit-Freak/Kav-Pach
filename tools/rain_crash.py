@@ -86,6 +86,38 @@ def load_dict(resource, year):
     return d
 
 
+def yishuv_names():
+    # סמל יישוב -> שם: מאתרים דינמית את משאב רשימת היישובים ב-data.gov.il
+    # (מזהים לפי שדות שמכילים 'סמל' + שם עברי), כדי לא לתלות במזהה קשיח.
+    q = urllib.parse.urlencode({'q': 'רשימת יישובים', 'rows': 10})
+    try:
+        with urllib.request.urlopen(urllib.request.Request(
+                f'https://data.gov.il/api/3/action/package_search?{q}', headers=UA), timeout=90) as r:
+            pkgs = json.load(r)['result']['results']
+    except Exception as e:
+        print('חיפוש רשימת יישובים נכשל:', e)
+        return {}
+    for p in pkgs:
+        for res in p.get('resources', []):
+            if (res.get('format') or '').upper() != 'CSV':
+                continue
+            try:
+                probe = fetch(res['id'], limit=1)
+            except Exception:
+                continue
+            flds = [f['id'] for f in probe.get('fields', [])]
+            sem = next((f for f in flds if 'סמל_י' in f or f.lower() in ('semel', 'סמל')), None)
+            nam = next((f for f in flds if 'שם_י' in f or f == 'שם יישוב' or 'city_name_he' in f.lower()), None)
+            if not (sem and nam):
+                continue
+            print('משאב היישובים:', p.get('title'), res['id'], '| שדות:', sem, nam)
+            rows = fetch_all(res['id'], 'יישובים')
+            return {str(r[sem]).strip(): str(r[nam]).strip().replace('  ', ' ')
+                    for r in rows if r.get(sem) and r.get(nam)}
+    print('לא נמצא משאב יישובים — נשתמש בסמלים בלבד')
+    return {}
+
+
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
 
@@ -294,6 +326,10 @@ def main():
     json.dump({'gen': summary['gen'], 'base': summary['base_share'], 'roads': out_roads},
               open(os.path.join(OUTDIR, 'roads.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
+    names = yishuv_names()
+    json.dump({'names': names}, open(os.path.join(OUTDIR, 'names.json'), 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+    print('שמות יישובים:', len(names), flush=True)
     print('נכתב:', OUTDIR, flush=True)
 
 
