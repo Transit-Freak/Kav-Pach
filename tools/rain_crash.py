@@ -152,14 +152,26 @@ OVERPASS = ['https://overpass-api.de/api/interpreter',
             'https://overpass.kumi.systems/api/interpreter']
 
 
+def _norm_st(n):
+    # נרמול שם רחוב להשוואה: בלי גרשיים, מקפים וקידומות שד'/רח'
+    n = str(n or '')
+    for ch in '"\'׳״`’':
+        n = n.replace(ch, '')
+    n = n.replace('-', ' ').replace('שדרות ', '').replace('שד ', '').replace('רח ', '')
+    return ' '.join(n.split())
+
+
 def overpass_streets(items):
     # מקבל [{'name','la','lo',...}] ומחזיר לכל אחד segs=[polyline,...] מ-OSM.
-    # שאילתות באצוות: כל רחוב מחפש way[highway] בשמו ברדיוס 1500 מ' מהמרכז.
+    # שאילתות באצוות. השמות של הלמ"ס לא זהים לשמות ב-OSM ("קדיש לוז" מול
+    # "שד' קדיש לוז") — לכן חיפוש הכלה (regex) על שם מנורמל, לא שוויון מדויק.
+    import re as _re
     out = {}
     for c0 in range(0, len(items), 20):
         chunk = items[c0:c0 + 20]
         parts = ''.join(
-            f'way[highway]["name"="{s["name"]}"](around:1500,{s["la"]:.5f},{s["lo"]:.5f});'
+            f'way[highway]["name"~"{_re.escape(_norm_st(s["name"]).replace(" ", ".?"))}"]'
+            f'(around:1500,{s["la"]:.5f},{s["lo"]:.5f});'
             for s in chunk)
         qy = f'[out:json][timeout:90];({parts});out geom;'
         data = None
@@ -180,11 +192,12 @@ def overpass_streets(items):
             geom = el.get('geometry') or []
             if not nm or len(geom) < 2:
                 continue
-            # שיוך לרחוב הקרוב ביותר עם אותו שם (שמות חוזרים בין ערים)
+            # שיוך לרחוב הקרוב ביותר ששמו המנורמל מוכל בשם ה-OSM (שמות חוזרים בין ערים)
             g0 = geom[0]
+            nmn = _norm_st(nm)
             best, bd = None, 1e9
             for s in chunk:
-                if s['name'] != nm:
+                if _norm_st(s['name']) not in nmn:
                     continue
                 d = (g0['lat'] - s['la']) ** 2 + (g0['lon'] - s['lo']) ** 2
                 if d < bd:

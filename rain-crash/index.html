@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>מקדם הגשם — איפה הכביש מסוכן כשיורד גשם</title>
-<meta name="description" content="מקדם הגשם — הצלבת תאונות הדרכים של הלמ&quot;ס עם נתוני הגשם של השירות המטאורולוגי: איפה בישראל הכביש הופך מסוכן כשיורד גשם, לפי מקום, יישוב וקטע כביש.">
+<title>גשמון — איפה הכביש מסוכן כשיורד גשם</title>
+<meta name="description" content="גשמון — הצלבת תאונות הדרכים של הלמ&quot;ס עם נתוני הגשם של השירות המטאורולוגי: איפה בישראל הכביש הופך מסוכן כשיורד גשם, לפי מקום, יישוב וקטע כביש.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="הקו הבוחן">
-<meta property="og:title" content="מקדם הגשם — איפה הכביש מסוכן כשיורד גשם">
+<meta property="og:title" content="גשמון — איפה הכביש מסוכן כשיורד גשם">
 <meta property="og:description" content="כל תאונות הדרכים בגשם ובכביש רטוב על מפה אחת: המקומות, היישובים וקטעי הכבישים שבהם הגשם מכפיל את הסכנה. מנתוני הלמ&quot;ס והשירות המטאורולוגי.">
 <meta property="og:url" content="https://transit-freak.github.io/kav-bochan/rain-crash/">
 <meta property="og:locale" content="he_IL">
@@ -23,7 +23,7 @@
 </head>
 <body>
   <div class="top">
-    <h1>🌧️ מקדם הגשם</h1>
+    <h1>🌧️ גשמון</h1>
     <span class="tag">ניסוי</span>
     <span class="vseg">
       <button class="btn vt on" id="tabmap">🗺️ מפה</button>
@@ -85,7 +85,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-const RC_BUILD='3';
+const RC_BUILD='4';
 const DV='?v='+RC_BUILD+'-'+new Date().toISOString().slice(0,10);
 const $=id=>document.getElementById(id);
 const msg=$('msg');
@@ -189,11 +189,11 @@ function dlCsv(which){
   if(which==='cities'){
     head=['יישוב','מקדם_גשם','תאונות_בגשם','תאונות_ביבש','ימי_גשם_בשנה'];
     rows=CITIES.cities.map(c=>[cityName(c.s),c.rf,c.w,c.d,c.rd??'']);
-    fn='מקדם-הגשם-יישובים';
+    fn='גשמון-יישובים';
   }else{
     head=['כביש','קטע_קמ','מקדם_גשם','תאונות_בגשם','תאונות_ביבש'];
     rows=ROADS.roads.map(r=>[r.kv,r.seg+'-'+(r.seg+5),r.rf,r.w,r.d]);
-    fn='מקדם-הגשם-כבישים';
+    fn='גשמון-כבישים';
   }
   const csvTxt='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
