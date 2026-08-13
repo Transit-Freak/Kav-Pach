@@ -172,10 +172,17 @@ $('q').oninput=()=>{drawCities();drawRoads();if($('mapview').style.display!=='no
 function stats(){
   const pct=x=>(x*100).toFixed(1).replace(/\.0$/,'');
   const mult=SUM.sev_share_dry?(SUM.sev_share_wet/SUM.sev_share_dry):0;
+  // מציגים את הממצא כמו שהוא, לשני הכיוונים — בנתוני 2020–2024 תאונות
+  // גשם דווקא מעט פחות חמורות בממוצע (כנראה מהירויות נמוכות יותר)
+  const sevCard = mult>=1.05
+    ? `<div class="sc-n">פי ${mult.toFixed(2)}</div><div class="sc-t">הסיכוי שתאונת גשם תהיה קשה או קטלנית, לעומת תאונה ביבש</div>`
+    : mult>0&&mult<=0.95
+    ? `<div class="sc-n">−${((1-mult)*100).toFixed(0)}%</div><div class="sc-t">תאונות בגשם מעט פחות חמורות בממוצע מתאונות ביבש (${(SUM.sev_share_wet*100).toFixed(1)}% קשות/קטלניות מול ${(SUM.sev_share_dry*100).toFixed(1)}%) — אבל יש הרבה יותר מהן בכל שעת גשם</div>`
+    : `<div class="sc-n">≈</div><div class="sc-t">חומרת תאונות הגשם דומה לתאונות ביבש (${(SUM.sev_share_wet*100).toFixed(1)}% מול ${(SUM.sev_share_dry*100).toFixed(1)}% קשות/קטלניות)</div>`;
   $('statrow').style.display='';
   $('statrow').innerHTML=
     `<div class="statcard"><div class="sc-n">${pct(SUM.base_share)}%</div><div class="sc-t">מהתאונות בישראל קורות בגשם או על כביש רטוב (${SUM.wet.toLocaleString('he')} מתוך ${SUM.known.toLocaleString('he')})</div></div>`+
-    `<div class="statcard"><div class="sc-n">פי ${mult.toFixed(2)}</div><div class="sc-t">הסיכוי שתאונת גשם תהיה קשה או קטלנית, לעומת תאונה ביבש</div></div>`+
+    `<div class="statcard">${sevCard}</div>`+
     `<div class="statcard"><div class="sc-n">${SUM.years[0]}–${SUM.years[SUM.years.length-1]}</div><div class="sc-t">שנות הנתונים · עודכן ${SUM.gen.split('-').reverse().join('.')}</div></div>`;
 }
 
