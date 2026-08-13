@@ -1,0 +1,57 @@
+# הקו הרטוב — גשם מול תאונות. מוריד את קובצי ה-PUF של הלמ"ס ואת נתוני
+# הגשם של השירות המטאורולוגי מ-data.gov.il, מעבד ומעלה את נתוני האתר.
+# הנתונים מתעדכנים אצל הלמ"ס פעם בשנה — ריצה חודשית מספיקה בשפע.
+name: rain-crash
+on:
+  schedule:
+    - cron: '30 5 3 * *'   # ה-3 בחודש, 05:30 UTC
+  workflow_dispatch:
+    inputs:
+      explore:
+        description: 'מצב סיור בלבד (הדפסת מילונים ושדות, בלי בנייה)'
+        default: 'no'
+  push:
+    paths:
+      - 'tools/rain_crash.py'
+      - '.github/workflows/rain-crash.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rain-crash-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build rain-crash data
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet pyproj
+          EXPLORE_FLAG=""
+          if [ "${{ github.event.inputs.explore || 'no' }}" = "yes" ]; then EXPLORE_FLAG=1; fi
+          EXPLORE="${EXPLORE_FLAG}" OUTDIR=/tmp/rcout python3 tools/rain_crash.py
+          ls -la /tmp/rcout 2>/dev/null || true
+      - name: Commit results
+        if: ${{ github.event.inputs.explore != 'yes' }}
+        run: |
+          set -euo pipefail
+          BR="${GITHUB_REF_NAME:-main}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3 4; do
+            git fetch origin "$BR" && git reset --hard "origin/$BR"
+            mkdir -p rain-crash
+            rm -rf rain-crash/data
+            cp -r /tmp/rcout rain-crash/data
+            git add rain-crash/data
+            if git diff --cached --quiet; then echo "unchanged"; break; fi
+            git commit -m "data: refresh rain-crash (למ\"ס PUF + גשם שמ\"ט)"
+            if git push origin HEAD:"$BR"; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
