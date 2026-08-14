@@ -19,6 +19,13 @@ def main():
                   json.load(open('next-station/stops-names.json', encoding='utf-8')).items()}
     except Exception:
         cities = {}
+    # תיקונים ידניים: לפעמים line-history שומר שם ישן של תחנה שכבר
+    # השתנה (רואים את שני השמות בו-זמנית באותו קובץ קו, אז אין דרך
+    # אוטומטית אמינה להכריע ביניהם) — ראו tools/fares-stop-overrides.json
+    try:
+        overrides = json.load(open('tools/fares-stop-overrides.json', encoding='utf-8'))
+    except Exception:
+        overrides = {}
 
     stops = {}
     n_files = n_active = 0
@@ -40,6 +47,10 @@ def main():
             sid, name, la, lo = p[0], p[1], p[2], p[3]
             if sid not in stops:
                 stops[sid] = [name, cities.get(sid, ''), la, lo]
+
+    for sid, ov in overrides.items():
+        if sid in stops:
+            stops[sid][0] = ov['name']
 
     os.makedirs(OUT, exist_ok=True)
     json.dump({'gen': os.environ.get('GEN_DATE', ''), 'stops': stops},

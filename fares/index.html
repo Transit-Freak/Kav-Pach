@@ -118,6 +118,10 @@
 const $=id=>document.getElementById(id);
 const LH='../line-history/data/';
 const fsafe=rd=>rd.replace(/#/g,'H').replace(/\//g,'_');
+// אותו דפוס no-cache שיש בכל שאר כלי המשפחה — בלי זה נתוני קווים/תחנות
+// יכולים להישאר תקועים אצל המשתמש גם אחרי שהם התעדכנו בשרת
+const DV='?v='+new Date().toISOString().slice(0,10);
+const dfetch=p=>fetch(p+DV,{cache:'no-cache'});
 
 // אזורי התעריף — bus.gov.il/FaresDistance, נבדק ידנית 14.8.2026.
 // bus/train = נסיעה בודדת · daily = חופשי יומי · mb = חופשי חודשי ארצי (אוטובוס) · mt = חופשי חודשי + רכבת
@@ -185,14 +189,18 @@ const KIND={
 function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
 let LINES=null, POOL=null, CURKIND=null;
-fetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
+dfetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
 
 $('q').addEventListener('input', onSearchLine);
 function onSearchLine(){
   const v=$('q').value.trim();
   const box=$('reslist');
   if (!v || !LINES){ box.style.display='none'; box.innerHTML=''; return; }
-  const matches=LINES.filter(l=> kindOf(l.tt) && l.lk!=='removed' && l.line && l.line.startsWith(v)).slice(0,30);
+  // התאמה מדויקת למספר הקו קודם, אחר כך סוגים נדירים (רכבת/רק"ל/דרישה)
+  // לפני אוטובוס רגיל — אחרת קו רק"ל "1" נטבע מתחת לעשרות קווי אוטובוס "1"
+  const matches=LINES.filter(l=> kindOf(l.tt) && l.lk!=='removed' && l.line && l.line.startsWith(v))
+    .sort((a,b)=> (a.line===v?0:1)-(b.line===v?0:1) || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1))
+    .slice(0,40);
   if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם</div>'; return; }
   box.style.display='block';
   box.innerHTML=matches.map(l=>{
@@ -209,7 +217,7 @@ function onSearchLine(){
 function pickLine(rd, line, dest, op, tt){
   $('picked').style.display='none';
   CURKIND=kindOf(tt||null);
-  fetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()).then(d=>{
+  dfetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()).then(d=>{
     POOL=(d.pool||[]).filter(p=>p && p.length>=4);
     if (POOL.length<2){
       emptyResult('אין מספיק נתוני תחנות לקו הזה כדי לחשב מרחק');
@@ -247,7 +255,7 @@ function computeLine(){
 /* ---------- מצב 2: לפי תחנות ---------- */
 let STOPS=null, stopsPromise=null;
 function loadStops(){
-  if (!stopsPromise) stopsPromise=fetch('data/stops.json').then(r=>r.json()).then(d=>{ STOPS=d.stops; });
+  if (!stopsPromise) stopsPromise=dfetch('data/stops.json').then(r=>r.json()).then(d=>{ STOPS=d.stops; });
   return stopsPromise;
 }
 // מנטרל גרשיים/גרש (״ ' '' " חד-תו) לפני השוואה — בנתוני התחנות גרשיים
