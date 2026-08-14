@@ -1,0 +1,68 @@
+/* המחירון — עיצוב בשפה המשפחתית (כותרת דקה, כרטיס מחשבון קודם, פוטר),
+   בפלטת סגול-כרטיס. */
+html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#f5f3f9;color:#1e1030}
+.top{background:#4c1d95;color:#fff;padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:1100}
+.top,.foot{padding-inline:max(18px,calc((100vw - 1500px)/2 + 10px))}
+.top h1{font-size:17px;font-weight:900;margin:0;white-space:nowrap}
+.tag{background:#e9d5ff;color:#4c1d95;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
+.introbar{background:#faf5ff;border-bottom:1px solid #e9d5ff;color:#4c1d95;font-size:13px;font-weight:700;padding:8px max(18px,calc((100vw - 1500px)/2 + 10px));line-height:1.6}
+@media(max-width:760px){.introbar{display:none}}
+
+.wrap{max-width:980px;margin:16px auto;padding:0 12px;display:flex;flex-direction:column;gap:16px}
+
+/* כרטיס המחשבון */
+.calc{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(76,29,149,.10);padding:16px 18px}
+.calc h2{margin:0 0 10px;font-size:16px;font-weight:900;color:#4c1d95}
+.searchrow{position:relative}
+.searchrow input{width:100%;font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:12px;border:1.5px solid #e2d4f5;box-sizing:border-box}
+.searchrow input:focus{outline:none;border-color:#a855f7}
+.reslist{margin-top:6px;border-radius:12px;overflow:hidden;border:1px solid #eee2fb}
+.resitem{padding:9px 12px;cursor:pointer;font-size:13.5px;font-weight:700;border-top:1px solid #f3edfb;display:flex;gap:8px;align-items:baseline}
+.resitem:first-child{border-top:none}
+.resitem:hover{background:#faf5ff}
+.resitem .rn{background:#4c1d95;color:#fff;border-radius:7px;padding:1px 8px;font-size:12px;min-width:26px;text-align:center}
+.resitem .rd2{color:#6b7280;font-weight:600;font-size:12.5px}
+
+.picked{margin-top:12px;padding-top:12px;border-top:1.5px dashed #e9d5ff}
+.picked .pline{font-size:14px;font-weight:800;color:#1e1030;margin-bottom:10px}
+.picked .pline b{color:#7e22ce}
+.selrow{display:flex;gap:10px;flex-wrap:wrap}
+.selrow .fld{flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px}
+.selrow label{font-size:11.5px;font-weight:800;color:#7c6a91}
+.selrow select{font-family:inherit;font-weight:700;font-size:13.5px;padding:9px 10px;border-radius:10px;border:1.5px solid #e2d4f5;background:#fff}
+.selrow select:disabled{opacity:.5}
+.swapbtn{align-self:flex-end;background:#f3e8ff;border:none;border-radius:10px;width:38px;height:38px;font-size:16px;cursor:pointer;color:#7e22ce}
+
+.result{margin-top:14px}
+.zonebadge{display:inline-flex;align-items:center;gap:7px;font-weight:900;font-size:14px;padding:6px 14px;border-radius:9999px;margin-bottom:10px}
+.zonebadge i{display:inline-block;width:12px;height:12px;border-radius:50%}
+.distnote{font-size:12px;font-weight:700;color:#7c6a91;margin-bottom:10px}
+.pricegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px}
+.pcard{background:#faf5ff;border-radius:12px;padding:10px 12px;border-right:4px solid #a855f7}
+.pcard.na{opacity:.45}
+.pcard .pn{font-size:26px;font-weight:900;color:#4c1d95;line-height:1.1}
+.pcard .pn small{font-size:13px;font-weight:800}
+.pcard .pt{font-size:11.5px;font-weight:700;color:#6b5480;margin-top:3px;line-height:1.4}
+.msg{padding:14px 4px;color:#7c6a91;font-weight:700;font-size:13px}
+
+/* טבלת התעריפים המלאה */
+.reftbl{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(76,29,149,.10);overflow:hidden}
+.reftbl .rt-head{padding:14px 18px 4px;font-size:16px;font-weight:900;color:#4c1d95}
+.reftbl .rt-sub{padding:0 18px 12px;font-size:12.5px;font-weight:700;color:#7c6a91;line-height:1.6}
+.reftbl table{width:100%;border-collapse:collapse;font-size:13px}
+.reftbl th{background:#faf5ff;color:#4c1d95;font-weight:900;padding:9px 10px;border-bottom:2px solid #e9d5ff;white-space:nowrap}
+.reftbl td{padding:9px 10px;border-bottom:1px solid #f3edfb;font-weight:700;text-align:center;white-space:nowrap}
+.reftbl td:first-child{text-align:right;display:flex;align-items:center;gap:7px;font-weight:900}
+.reftbl td:first-child i{display:inline-block;width:11px;height:11px;border-radius:50%;flex:none}
+.reftbl .zn{font-size:11px;font-weight:700;color:#9ca3af}
+.reftbl .tblwrapx{overflow-x:auto}
+
+/* פוטר */
+.foot{background:#4c1d95;color:#fff;margin-top:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.foot .sub{font-size:13px;font-weight:500;opacity:.95;line-height:1.6}
+.srcs{margin-top:2px;font-size:12.5px}
+.srcs summary{cursor:pointer;font-weight:800;display:inline-block}
+.srcs .src-l{margin-top:5px;background:rgba(255,255,255,.10);border-radius:8px;padding:6px 10px;line-height:1.6;font-weight:500}
+.srcs .src-l b{font-weight:800}
+.foot a{color:#e9d5ff;font-weight:800}
+.foot .credits{font-size:12px;opacity:.85}

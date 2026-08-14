@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>המחירון — כמה עולה כל קו בתחבורה הציבורית</title>
+<meta name="description" content="המחירון — בחרו קו ותחנות עלייה וירידה, ותקבלו את מחיר הנסיעה בפועל: נסיעה בודדת, חופשי יומי וחופשי חודשי, לפי אזורי התעריף של משרד התחבורה.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="הקו הבוחן">
+<meta property="og:title" content="המחירון — כמה עולה כל קו בתחבורה הציבורית">
+<meta property="og:description" content="בחרו קו ותחנות עלייה וירידה וקבלו את מחיר הנסיעה בפועל: בודדת, יומי וחודשי, לפי אזורי התעריף הרשמיים של משרד התחבורה.">
+<meta property="og:url" content="https://transit-freak.github.io/kav-bochan/fares/">
+<meta property="og:locale" content="he_IL">
+<meta property="og:image" content="https://transit-freak.github.io/kav-bochan/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://transit-freak.github.io/kav-bochan/fares/">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="%234c1d95"/><path d="M7 13 h18 a2 2 0 0 1 2 2 v1 a2.5 2.5 0 0 0 0 5 v1 a2 2 0 0 1-2 2 H7 a2 2 0 0 1-2-2 v-1 a2.5 2.5 0 0 0 0-5 v-1 a2 2 0 0 1 2-2 z" fill="%23e9d5ff"/><circle cx="16" cy="19.5" r="2.6" fill="%234c1d95"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="top">
+    <h1>🎫 המחירון</h1>
+    <span class="tag">מחירי נסיעה לפי מרחק</span>
+  </div>
+  <div class="introbar">המחיר בתחבורה הציבורית בישראל נקבע לפי מרחק הנסיעה שלכם ולא לפי הקו — בחרו קו ותחנות עלייה וירידה, ונחשב לכם בדיוק כמה זה עולה</div>
+
+  <div class="wrap">
+    <div class="calc">
+      <h2>1. בחרו קו</h2>
+      <div class="searchrow">
+        <input id="q" type="search" placeholder="הקלידו מספר קו… (למשל 351)" autocomplete="off">
+        <div class="reslist" id="reslist" style="display:none"></div>
+      </div>
+
+      <div class="picked" id="picked" style="display:none">
+        <div class="pline" id="pline"></div>
+        <div class="selrow">
+          <div class="fld">
+            <label>תחנת עלייה</label>
+            <select id="fromSel"></select>
+          </div>
+          <button class="swapbtn" id="swapBtn" title="החלפת כיוון">⇄</button>
+          <div class="fld">
+            <label>תחנת ירידה</label>
+            <select id="toSel"></select>
+          </div>
+        </div>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+
+    <div class="reftbl">
+      <div class="rt-head">טבלת התעריפים המלאה</div>
+      <div class="rt-sub">נסיעה בודדת כוללת נסיעת מעבר חינם בין קווים תוך 90 דקות. חופשי יומי וחודשי מוכרים כמנוי נפרד ולא בהכרח כדאיים לנסיעה בודדת.</div>
+      <div class="tblwrapx"><table id="reftable"></table></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="sub">האתר מחשב עבורכם לאיזה אזור תעריף נופלת נסיעה בין שתי תחנות על קו מסוים, על בסיס נתוני ה-GTFS הרשמיים של משרד התחבורה שכל כלי הקו הבוחן מבוססים עליהם.
+      <details class="srcs">
+        <summary>📚 מאיפה המידע ומה המגבלות?</summary>
+        <div class="src-l">💰 <b>טבלת התעריפים</b> — פורסמה על ידי הרשות הארצית לתחבורה ציבורית, משרד התחבורה. <a href="https://bus.gov.il/FaresDistance" target="_blank" rel="noopener">bus.gov.il/FaresDistance ›</a> — נבדק ועודכן ידנית ב-14.8.2026. המחירים הם נתון קבוע שמפרסם משרד התחבורה, לא משהו שהאתר מחשב — לבדיקה עדכנית תמיד כדאי לבקר בקישור.</div>
+        <div class="src-l">📏 <b>המרחק</b> — סכום המרחקים האוויריים בין כל שתי תחנות עוקבות של הקו, מתחנת העלייה שבחרתם ועד תחנת הירידה. זה לא בהכרח זהה מטר-במטר למרחק הרשמי שמחשב משרד התחבורה, אבל קרוב אליו מאוד ברוב המקרים — סטייה עשויה להיווצר קרוב לגבול בין שני אזורים.</div>
+        <div class="src-l">🚌 <b>כרגע — קווי אוטובוס בלבד</b>. רכבת, רכבת קלה, מוניות שירות וקווי דרישה לא נכללים במחשבון (יש להם מחירי נסיעה בודדת שונים, המופיעים בטבלה למעלה בעמודת "רכבת").</div>
+        <div class="src-l">🎟️ הנחות (ילד/נוער, אזרח ותיק, גיל 67+ ועוד) לא מחושבות כאן — מוצג המחיר המלא בלבד. <a href="https://bus.gov.il/FaresDiscounts" target="_blank" rel="noopener">פירוט הנחות ›</a></div>
+      </details>
+    </div>
+    <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · חלק ממשפחת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · <a href="mailto:shlomihartman@gmail.com">מצאתם טעות? כתבו לנו</a></div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const LH='../line-history/data/';
+const fsafe=rd=>rd.replace(/#/g,'H').replace(/\//g,'_');
+
+// אזורי התעריף — bus.gov.il/FaresDistance, נבדק ידנית 14.8.2026.
+// bus/train = נסיעה בודדת · daily = חופשי יומי · mb = חופשי חודשי ארצי (אוטובוס) · mt = חופשי חודשי + רכבת
+const ZONES=[
+  {n:'צהוב', c:'#eab308', lbl:'0–15 ק"מ',    max:15,       bus:8,    train:11.5, daily:17.5, mb:315, mt:323},
+  {n:'ירוק', c:'#22c55e', lbl:'15–40 ק"מ',   max:40,       bus:14.5, train:21,   daily:29,   mb:315, mt:323},
+  {n:'תכלת', c:'#06b6d4', lbl:'40–75 ק"מ',   max:75,       bus:19,   train:27,   daily:37.5, mb:315, mt:464},
+  {n:'כחול', c:'#3b82f6', lbl:'75–120 ק"מ',  max:120,      bus:19,   train:30.5, daily:37.5, mb:315, mt:684},
+  {n:'סגול', c:'#a855f7', lbl:'120–225 ק"מ', max:225,      bus:30.5, train:52.5, daily:60.5, mb:315, mt:684},
+  {n:'אפור', c:'#6b7280', lbl:'מעל 225 ק"מ', max:Infinity, bus:74,   train:null, daily:79.5, mb:null,mt:684},
+];
+function zoneFor(km){ for (const z of ZONES) if (km<=z.max) return z; return ZONES[ZONES.length-1]; }
+function hav(a,b){
+  const R=6371, toRad=x=>x*Math.PI/180;
+  const dLat=toRad(b[0]-a[0]), dLon=toRad(b[1]-a[1]);
+  const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+}
+function money(v){ return v==null ? null : ('₪'+(v%1?v.toFixed(1):v)); }
+
+// טבלת הייחוס הסטטית
+$('reftable').innerHTML =
+  '<thead><tr><th>אזור / מרחק</th><th>נסיעה בודדת<br>אוטובוס</th><th>נסיעה בודדת<br>רכבת</th><th>חופשי יומי</th><th>חופשי חודשי<br>ארצי</th><th>חופשי חודשי<br>+ רכבת</th></tr></thead><tbody>'+
+  ZONES.map(z=>`<tr><td><i style="background:${z.c}"></i>${z.n}<span class="zn">${z.lbl}</span></td>`+
+    `<td>${money(z.bus)}</td><td>${z.train==null?'—':money(z.train)}</td><td>${money(z.daily)}</td>`+
+    `<td>${z.mb==null?'—':money(z.mb)}</td><td>${money(z.mt)}</td></tr>`).join('')+
+  '</tbody>';
+
+let LINES=null, POOL=null;
+fetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
+
+$('q').addEventListener('input', onSearch);
+function onSearch(){
+  const v=$('q').value.trim();
+  const box=$('reslist');
+  if (!v || !LINES){ box.style.display='none'; box.innerHTML=''; return; }
+  const matches=LINES.filter(l=> l.tt==null && l.lk!=='removed' && l.line && l.line.startsWith(v)).slice(0,30);
+  if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם (כרגע רק קווי אוטובוס)</div>'; return; }
+  box.style.display='block';
+  box.innerHTML=matches.map(l=>
+    `<div class="resitem" data-rd="${l.rd}" data-line="${l.line}" data-dest="${(l.dest||'').replace(/<->/g,' ↔ ')}" data-op="${l.op||''}">`+
+    `<span class="rn">${l.line}</span><span>${(l.dest||'').replace(/<->/g,' ↔ ')}</span><span class="rd2">${l.op||''}</span></div>`
+  ).join('');
+  box.querySelectorAll('.resitem').forEach(el=>el.addEventListener('click', ()=>{
+    box.style.display='none'; $('q').value=el.dataset.line+' · '+el.dataset.dest;
+    pickLine(el.dataset.rd, el.dataset.line, el.dataset.dest, el.dataset.op);
+  }));
+}
+
+function pickLine(rd, line, dest, op){
+  $('picked').style.display='none';
+  fetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()).then(d=>{
+    POOL=(d.pool||[]).filter(p=>p && p.length>=4);
+    if (POOL.length<2){
+      $('result').innerHTML='<div class="msg">אין מספיק נתוני תחנות לקו הזה כדי לחשב מרחק</div>';
+      $('picked').style.display='block'; $('fromSel').innerHTML=''; $('toSel').innerHTML='';
+      return;
+    }
+    $('pline').innerHTML=`<b>${line}</b> · ${dest} <span style="font-weight:600;color:#7c6a91">(${op})</span>`;
+    const opts=POOL.map((p,i)=>`<option value="${i}">${p[1]}</option>`).join('');
+    $('fromSel').innerHTML=opts; $('toSel').innerHTML=opts;
+    $('fromSel').selectedIndex=0; $('toSel').selectedIndex=POOL.length-1;
+    $('picked').style.display='block';
+    compute();
+  }).catch(()=>{
+    $('result').innerHTML='<div class="msg">שגיאה בטעינת נתוני הקו — נסו שוב</div>';
+    $('picked').style.display='block';
+  });
+}
+
+$('fromSel').addEventListener('change', compute);
+$('toSel').addEventListener('change', compute);
+$('swapBtn').addEventListener('click', ()=>{
+  const a=$('fromSel').selectedIndex, b=$('toSel').selectedIndex;
+  $('fromSel').selectedIndex=b; $('toSel').selectedIndex=a;
+  compute();
+});
+
+function compute(){
+  if (!POOL) return;
+  const i=+$('fromSel').value, j=+$('toSel').value;
+  const res=$('result');
+  if (i===j){ res.innerHTML='<div class="msg">בחרו שתי תחנות שונות</div>'; return; }
+  const lo=Math.min(i,j), hi=Math.max(i,j);
+  let km=0;
+  for (let k=lo;k<hi;k++) km += hav([POOL[k][2],POOL[k][3]], [POOL[k+1][2],POOL[k+1][3]]);
+  const z=zoneFor(km);
+  const cards=[
+    ['נסיעה בודדת · אוטובוס', z.bus],
+    ['נסיעה בודדת · רכבת', z.train],
+    ['חופשי יומי', z.daily],
+    ['חופשי חודשי ארצי', z.mb],
+    ['חופשי חודשי + רכבת', z.mt],
+  ];
+  res.innerHTML=
+    `<div class="zonebadge" style="background:${z.c}22;color:${z.c}"><i style="background:${z.c}"></i>אזור ${z.n} · ${z.lbl}</div>`+
+    `<div class="distnote">מרחק הנסיעה בפועל: כ-${km.toFixed(1)} ק"מ</div>`+
+    `<div class="pricegrid">`+cards.map(([t,v])=>
+      v==null ? `<div class="pcard na"><div class="pn"><small>לא זמין</small></div><div class="pt">${t}</div></div>`
+              : `<div class="pcard"><div class="pn"><small>₪</small>${v%1?v.toFixed(1):v}</div><div class="pt">${t}</div></div>`
+    ).join('')+`</div>`;
+}
+</script>
+<script src="../a11y.js" defer></script>
+</body>
+</html>
