@@ -253,6 +253,9 @@ function loadStops(){
 // מנטרל גרשיים/גרש (״ ' '' " חד-תו) לפני השוואה — בנתוני התחנות גרשיים
 // מסומנים כשני גרשים בודדים ('') וזה לא תמיד מה שהמקלדת מקלידה
 function norm(s){ return (s||'').normalize('NFKC').replace(/["'׳״‘’“”´`]/g,'').toLowerCase(); }
+// מפרק לרסיסי-חיפוש כדי שסדר המילים לא ישנה — "קקל/הרב" צריך למצוא גם
+// "הרב עובדיה יוסף/שדרות קקל", לא רק תחנה שבה הסדר זהה למה שהוקלד
+function tokens(s){ return norm(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean); }
 
 const picked={from:null, to:null}; // [id,name,city,lat,lon]
 
@@ -261,11 +264,12 @@ function stopSearch(inputId, boxId, key){
   $(inputId).addEventListener('input', ()=>{
     const v=$(inputId).value.trim();
     if (v.length<2 || !STOPS){ box.style.display='none'; box.innerHTML=''; return; }
-    const nv=norm(v);
+    const qt=tokens(v);
     const out=[];
     for (const sid in STOPS){
       const s=STOPS[sid];
-      if (norm(s[0]).includes(nv) || (s[1]&&norm(s[1]).includes(nv)) || sid.includes(v)){
+      const hay=norm(s[0])+' '+norm(s[1]||'');
+      if (qt.every(t=>hay.includes(t)) || sid.includes(v)){
         out.push([sid,s]); if (out.length>=25) break;
       }
     }
