@@ -342,23 +342,55 @@ function computeStops(){
 }
 
 /* מפה לבחירת תחנה בלחיצה — נטענת רק כשנכנסים למצב "לפי תחנות" */
-let MAP=null, MK={from:null, to:null};
+let MAP=null, MK={from:null, to:null}, DOTS=null, DOTHINT=null;
+const DOT_ZOOM=14, DOT_CAP=350; // מתחת לזום הזה יש יותר מדי תחנות להציג בבת אחת
+function nextKey(){ return !picked.from ? 'from' : (!picked.to ? 'to' : 'from'); }
 function ensureMap(){
-  if (MAP){ setTimeout(()=>MAP.invalidateSize(), 60); return; }
+  if (MAP){ setTimeout(()=>MAP.invalidateSize(), 60); refreshDots(); return; }
   setTimeout(()=>{
     MAP=L.map('stmap').setView([31.6,34.9], 8);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:'&copy; OpenStreetMap', maxZoom:18
     }).addTo(MAP);
+    DOTS=L.layerGroup().addTo(MAP);
+    DOTHINT=L.control({position:'bottomleft'});
+    DOTHINT.onAdd=()=>{ const d=L.DomUtil.create('div','dothint'); d.textContent='🔍 התקרבו על המפה כדי לבחור תחנה בלחיצה מדויקת'; return d; };
+    DOTHINT.addTo(MAP);
+    MAP.on('moveend zoomend', refreshDots);
     MAP.on('click', e=>{
       if (!STOPS) return;
-      const key = !picked.from ? 'from' : (!picked.to ? 'to' : 'from');
+      const key=nextKey();
       const other = key==='from' ? picked.to : picked.from;
       const sid=nearestStop(e.latlng.lat, e.latlng.lng, other ? other[0] : null);
       if (!sid) return; // אין תחנה קרובה מספיק ללחיצה (או שזו התחנה השנייה שכבר נבחרה)
       selectStop(key, sid);
     });
+    if (STOPS) refreshDots();
   }, 0);
+}
+// נקודות תחנה אמיתיות על המפה (רק בזום קרוב, אחרת יש יותר מדי) —
+// לחיצה על נקודה בוחרת בדיוק אותה תחנה, לא "הכי קרובה ללחיצה"
+function refreshDots(){
+  if (!MAP || !DOTS) return;
+  DOTS.clearLayers();
+  const el=DOTHINT.getContainer && DOTHINT.getContainer();
+  if (MAP.getZoom()<DOT_ZOOM || !STOPS){
+    if (el) el.style.display = STOPS ? '' : 'none';
+    return;
+  }
+  if (el) el.style.display='none';
+  const b=MAP.getBounds();
+  let n=0;
+  for (const sid in STOPS){
+    if (n>=DOT_CAP) break;
+    const s=STOPS[sid];
+    if (!b.contains([s[2],s[3]])) continue;
+    n++;
+    const m=L.circleMarker([s[2],s[3]], {radius:5, weight:1.5, color:'#78350f', fillColor:'#d97706', fillOpacity:.85})
+      .bindTooltip(s[0]+(s[1]?' · '+s[1]:'')+' · מס\' '+sid, {direction:'top'});
+    m.on('click', e=>{ L.DomEvent.stopPropagation(e); selectStop(nextKey(), sid); });
+    DOTS.addLayer(m);
+  }
 }
 function nearestStop(lat, lon, excludeSid){
   let best=null, bd=1.0; // עד ק"מ מהלחיצה
@@ -391,7 +423,7 @@ $('modeLine').addEventListener('click', ()=>{
 $('modeStop').addEventListener('click', ()=>{
   $('modeStop').classList.add('on'); $('modeLine').classList.remove('on');
   $('paneStop').classList.add('on'); $('paneLine').classList.remove('on');
-  loadStops();
+  loadStops().then(refreshDots);
   ensureMap();
   if (picked.from&&picked.to) computeStops(); else emptyResult('בחרו שתי תחנות — והמחיר יופיע כאן');
 });
