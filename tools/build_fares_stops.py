@@ -4,6 +4,7 @@
 # stop_id -> [שם,עיר,lat,lon]. רץ פעם בשבוע (אותו קצב כמו רענון שמות
 # התחנות הארצי) כי מיקומי תחנות משתנים לעיתים רחוקות מאוד.
 import csv
+import datetime
 import glob
 import json
 import os
@@ -13,6 +14,19 @@ OUT = os.environ.get('OUTDIR', 'fares/data')
 LH = 'line-history/data/lines'
 # מוניות שירות וכבלים לא בטבלת התעריפים הזאת בכלל — נשארים בחוץ
 INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
+MAX_STALE_DAYS = 120  # לא כל וריאנט "מת" מסומן k=removed — כאלה שנתקעו בלי
+                       # עדכון הרבה זמן כבר לא באמת חלק מהלוז הנוכחי
+
+
+def is_current(d):
+    vs = d.get('versions') or []
+    if not vs or vs[-1].get('k') == 'removed':
+        return False
+    try:
+        age = (datetime.date.today() - datetime.date.fromisoformat(vs[-1]['d'])).days
+    except Exception:
+        return False
+    return age <= MAX_STALE_DAYS
 
 
 def city_from_desc(desc):
@@ -68,7 +82,7 @@ def main():
             d = json.load(open(path, encoding='utf-8'))
         except Exception:
             continue
-        if d.get('tt') not in INCLUDE_TT or d.get('lk') == 'removed':
+        if d.get('tt') not in INCLUDE_TT or not is_current(d):
             continue
         pool = d.get('pool') or []
         if len(pool) < 2:

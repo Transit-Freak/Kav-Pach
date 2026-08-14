@@ -190,6 +190,10 @@ function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
 let LINES=null, POOL=null, CURKIND=null;
 dfetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
+// לא כל וריאנט "מת" מסומן lk=removed בפועל — חלקם פשוט מפסיקים להתעדכן
+// בלי אירוע ביטול רשמי (line-history עוקב אחרי היסטוריה במכוון, לא
+// "מנקה" כאלה). וריאנט שהאירוע האחרון שלו ישן מ-120 יום כבר לא באמת חי.
+function isCurrent(l){ return l.lk!=='removed' && l.ld && (Date.now()-new Date(l.ld).getTime())/864e5<=120; }
 
 $('q').addEventListener('input', onSearchLine);
 function onSearchLine(){
@@ -198,7 +202,7 @@ function onSearchLine(){
   if (!v || !LINES){ box.style.display='none'; box.innerHTML=''; return; }
   // התאמה מדויקת למספר הקו קודם, אחר כך סוגים נדירים (רכבת/רק"ל/דרישה)
   // לפני אוטובוס רגיל — אחרת קו רק"ל "1" נטבע מתחת לעשרות קווי אוטובוס "1"
-  const matches=LINES.filter(l=> kindOf(l.tt) && l.lk!=='removed' && l.line && l.line.startsWith(v))
+  const matches=LINES.filter(l=> kindOf(l.tt) && isCurrent(l) && l.line && l.line.startsWith(v))
     .sort((a,b)=> (a.line===v?0:1)-(b.line===v?0:1) || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1))
     .slice(0,40);
   if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם</div>'; return; }
