@@ -257,13 +257,21 @@ function onSearchLine(){
   // דרישה) לפני אוטובוס — אחרת קו רק"ל "1" נטבע מתחת לעשרות אוטובוס "1"
   const qt=tokens(v);
   if (!qt.length){ box.style.display='none'; box.innerHTML=''; return; }
+  // טוקן שנראה כמו מספר קו ("1", "62א") מותאם רק למספר הקו עצמו — אחרת
+  // "1 קרית מלאכי" מוצא כל קו שיש ספרת 1 איפשהו בתיאור שלו (כמו קו 33
+  // עם סיומת וריאנט -10) במקום את קו 1. שאר המילים מותאמות ליעד/מפעילה.
+  const numTok=qt.find(t=>/^\d+[א-ת]?$/.test(t));
+  const rest=numTok ? qt.filter(t=>t!==numTok) : qt;
   const matches=LINES.filter(l=>{
     if (!kindOf(l.tt) || !isCurrent(l) || !l.line) return false;
-    const hay=norm(l.line)+' '+norm(l.dest||'')+' '+norm(l.op||'');
-    return qt.every(t=>hay.includes(t));
+    const ln=norm(l.line);
+    if (numTok && !ln.startsWith(numTok)) return false;
+    const hay=ln+' '+norm(l.dest||'')+' '+norm(l.op||'');
+    return rest.every(t=>hay.includes(t));
   })
-    .sort((a,b)=> (a.line===v?0:1)-(b.line===v?0:1) || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1)
-      || (b.ld||'').localeCompare(a.ld||''))   // וריאנט שעודכן לאחרונה לפני וריאנט רדום
+    .sort((a,b)=> (numTok&&norm(a.line)===numTok?0:1)-(numTok&&norm(b.line)===numTok?0:1)
+      || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1)
+      || (b.ld||'').localeCompare(a.ld||''))   // מספר מדויק › סוג נדיר › עודכן לאחרונה
     .slice(0,40);
   if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם</div>'; return; }
   box.style.display='block';
