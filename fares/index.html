@@ -188,12 +188,14 @@ const KIND={
 };
 function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
-let LINES=null, POOL=null, CURKIND=null;
+let LINES=null, POOL=null, CURKIND=null, CURRENT_RDS=null;
 dfetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
-// לא כל וריאנט "מת" מסומן lk=removed בפועל — חלקם פשוט מפסיקים להתעדכן
-// בלי אירוע ביטול רשמי (line-history עוקב אחרי היסטוריה במכוון, לא
-// "מנקה" כאלה). וריאנט שהאירוע האחרון שלו ישן מ-120 יום כבר לא באמת חי.
-function isCurrent(l){ return l.lk!=='removed' && l.ld && (Date.now()-new Date(l.ld).getTime())/864e5<=120; }
+// המקור הסופי ל"האם הקו הזה קיים היום" — לא ניחוש לפי תאריך אירוע
+// אחרון (lk/ld יכולים להישאר תקועים בלי אירוע ביטול רשמי), אלא
+// routes-daily-state.json של הקו בזמן עצמו: המפה seen היא בדיוק
+// הרשימה שהסריקה האחרונה שלו מצאה בפועל ב-GTFS
+dfetch(LH+'routes-daily-state.json').then(r=>r.json()).then(d=>{ CURRENT_RDS=new Set(Object.keys(d.seen||{})); }).catch(()=>{});
+function isCurrent(l){ return CURRENT_RDS ? CURRENT_RDS.has(l.rd) : l.lk!=='removed'; }
 
 $('q').addEventListener('input', onSearchLine);
 function onSearchLine(){
@@ -221,7 +223,11 @@ function onSearchLine(){
 function pickLine(rd, line, dest, op, tt){
   $('picked').style.display='none';
   CURKIND=kindOf(tt||null);
-  dfetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()).then(d=>{
+  // אינדקס התחנות הארצי (data/stops.json) עבר עיבוד לשמות עדכניים —
+  // ה-pool של הקו עצמו יכול להיות תמונת-מצב ישנה יותר, אז מציגים את
+  // השם מהאינדקס הארצי כשיש, ורק נופלים חזרה לשם מה-pool כשאין
+  Promise.all([dfetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()), loadStops().catch(()=>{})])
+    .then(([d])=>{
     POOL=(d.pool||[]).filter(p=>p && p.length>=4);
     if (POOL.length<2){
       emptyResult('אין מספיק נתוני תחנות לקו הזה כדי לחשב מרחק');
@@ -229,7 +235,10 @@ function pickLine(rd, line, dest, op, tt){
       return;
     }
     $('pline').innerHTML=`${CURKIND[0]} <b>${line}</b> · ${dest} <span style="font-weight:600;color:var(--sub)">(${op})</span>`;
-    const opts=POOL.map((p,i)=>`<option value="${i}">${p[1]} · מס' ${p[0]}</option>`).join('');
+    const opts=POOL.map((p,i)=>{
+      const nm=(STOPS && STOPS[p[0]]) ? STOPS[p[0]][0] : p[1];
+      return `<option value="${i}">${nm} · מס' ${p[0]}</option>`;
+    }).join('');
     $('fromSel').innerHTML=opts; $('toSel').innerHTML=opts;
     $('fromSel').selectedIndex=0; $('toSel').selectedIndex=POOL.length-1;
     $('picked').style.display='block';

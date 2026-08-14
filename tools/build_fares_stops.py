@@ -4,7 +4,6 @@
 # stop_id -> [שם,עיר,lat,lon]. רץ פעם בשבוע (אותו קצב כמו רענון שמות
 # התחנות הארצי) כי מיקומי תחנות משתנים לעיתים רחוקות מאוד.
 import csv
-import datetime
 import glob
 import json
 import os
@@ -14,19 +13,18 @@ OUT = os.environ.get('OUTDIR', 'fares/data')
 LH = 'line-history/data/lines'
 # מוניות שירות וכבלים לא בטבלת התעריפים הזאת בכלל — נשארים בחוץ
 INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
-MAX_STALE_DAYS = 120  # לא כל וריאנט "מת" מסומן k=removed — כאלה שנתקעו בלי
-                       # עדכון הרבה זמן כבר לא באמת חלק מהלוז הנוכחי
 
 
-def is_current(d):
-    vs = d.get('versions') or []
-    if not vs or vs[-1].get('k') == 'removed':
-        return False
+def current_rds():
+    # לא ניחוש לפי תאריך אירוע אחרון (lk/ld יכולים להישאר תקועים בלי
+    # אירוע ביטול רשמי) — routes-daily-state.json של הקו בזמן עצמו הוא
+    # המקור הסופי: seen היא בדיוק רשימת הקווים שהסריקה האחרונה שלו
+    # מצאה בפועל ב-GTFS
     try:
-        age = (datetime.date.today() - datetime.date.fromisoformat(vs[-1]['d'])).days
+        return set(json.load(open('line-history/data/routes-daily-state.json',
+                                   encoding='utf-8')).get('seen') or {})
     except Exception:
-        return False
-    return age <= MAX_STALE_DAYS
+        return None
 
 
 def city_from_desc(desc):
@@ -74,6 +72,8 @@ def main():
     except Exception:
         overrides = {}
 
+    current = current_rds()
+
     stops = {}
     n_files = n_active = 0
     for path in glob.glob(f'{LH}/*.json'):
@@ -82,7 +82,12 @@ def main():
             d = json.load(open(path, encoding='utf-8'))
         except Exception:
             continue
-        if d.get('tt') not in INCLUDE_TT or not is_current(d):
+        if current is not None:
+            is_current = d.get('rd') in current
+        else:
+            vs = d.get('versions') or []
+            is_current = bool(vs) and vs[-1].get('k') != 'removed'
+        if d.get('tt') not in INCLUDE_TT or not is_current:
             continue
         pool = d.get('pool') or []
         if len(pool) < 2:
