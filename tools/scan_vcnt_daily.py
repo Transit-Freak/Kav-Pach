@@ -119,16 +119,22 @@ def build_map(zpath, rid2rd):
     # לכל (וריאנט, יום-בשבוע): המקסימום לכל שעה על פני התאריכים בחלון —
     # תגבור שמופיע בשישי אחד ייתפס גם אם השישי השני רגיל
     out = collections.defaultdict(lambda: collections.defaultdict(dict))
+    # סך היציאות (שעות שונות) לכל וריאנט+יום — כדי לדעת אם תגבור חל על כל הקו
+    tot = collections.defaultdict(dict)
     for (rd2, ds), ts in per_date.items():
         d = datetime.datetime.strptime(ds, '%Y%m%d').date()
         bucket = DAY_HE[d.weekday()]
         cnt = collections.Counter(ts)
+        ndist = len(cnt)
+        if ndist > tot[rd2].get(bucket, 0):
+            tot[rd2][bucket] = ndist
         for t, n in cnt.items():
             if n >= 2:
                 cur = out[rd2][bucket].get(t, 0)
                 if n > cur:
                     out[rd2][bucket][t] = n
-    return {rd2: {b: dict(sorted(m.items())) for b, m in bk.items()} for rd2, bk in out.items()}
+    return ({rd2: {b: dict(sorted(m.items())) for b, m in bk.items()} for rd2, bk in out.items()},
+            {rd2: dict(bk) for rd2, bk in tot.items()})
 
 
 def main():
@@ -143,7 +149,7 @@ def main():
     if not zpath:
         print('הורדת Gtfs_10_days נכשלה — מדלגים על היום')
         sys.exit(0)
-    cur = build_map(zpath, rid2rd)
+    cur, cur_tot = build_map(zpath, rid2rd)
     os.unlink(zpath)
     n_routes = len(cur)
     n_slots = sum(len(m) for bk in cur.values() for m in bk.values())
@@ -159,19 +165,32 @@ def main():
                 po, co = pb.get(b, {}), cb.get(b, {})
                 if po == co:
                     continue
-                parts = []
-                for t in sorted(set(po) | set(co)):
-                    o, n = po.get(t, 1), co.get(t, 1)
-                    if o == n:
-                        continue
+                changed = [(t, po.get(t, 1), co.get(t, 1))
+                           for t in sorted(set(po) | set(co)) if po.get(t, 1) != co.get(t, 1)]
+                if not changed:
+                    continue
+                # בקשת המשתמש: כשכל היציאות של הקו השתנו באותה מידה — שורה
+                # מאוחדת אחת ("בכל היציאות"); שינוי חלקי — מפרטים רק את השעות.
+                total = cur_tot.get(rd2, {}).get(b, 0)
+                pairs = {(o, n) for _, o, n in changed}
+                if len(pairs) == 1 and total and len(changed) == total:
+                    o, n = next(iter(pairs))
                     if o == 1:
-                        parts.append(f'ב-{t} מתוכננים עכשיו {n} אוטובוסים (תגבור חדש)')
+                        parts = [f'בכל {total} היציאות מתוכננים עכשיו {n} אוטובוסים (תגבור לכל הקו)']
                     elif n == 1:
-                        parts.append(f'התגבור של {t} בוטל ({o} ← 1 אוטובוסים)')
+                        parts = [f'התגבור בוטל בכל {total} היציאות ({o} ← 1 אוטובוסים)']
                     else:
-                        parts.append(f'ב-{t} — {o} ← {n} אוטובוסים (תגבור)')
-                if parts:
-                    events.append((rd2, f'שינוי תגבור ({BH[b]}): ' + ' · '.join(parts[:6])))
+                        parts = [f'בכל {total} היציאות — {o} ← {n} אוטובוסים (תגבור)']
+                else:
+                    parts = []
+                    for t, o, n in changed:
+                        if o == 1:
+                            parts.append(f'ב-{t} מתוכננים עכשיו {n} אוטובוסים (תגבור חדש)')
+                        elif n == 1:
+                            parts.append(f'התגבור של {t} בוטל ({o} ← 1 אוטובוסים)')
+                        else:
+                            parts.append(f'ב-{t} — {o} ← {n} אוטובוסים (תגבור)')
+                events.append((rd2, f'שינוי תגבור ({BH[b]}): ' + ' · '.join(parts[:6])))
 
     n_written = 0
     feed = {}
