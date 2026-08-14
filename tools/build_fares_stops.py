@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 # המחירון — אינדקס תחנות ארצי לחיפוש-לפי-תחנה: סורק את כל קבצי הקווים
-# הפעילים ב-line-history (אוטובוס בלבד) ובונה מפה אחת stop_id -> [שם,עיר,lat,lon].
-# רץ פעם בשבוע (אותו קצב כמו רענון שמות התחנות הארצי) כי מיקומי תחנות
-# משתנים לעיתים רחוקות מאוד.
+# הפעילים ב-line-history (אוטובוס, קווי דרישה, רכבת ורק"ל) ובונה מפה אחת
+# stop_id -> [שם,עיר,lat,lon]. רץ פעם בשבוע (אותו קצב כמו רענון שמות
+# התחנות הארצי) כי מיקומי תחנות משתנים לעיתים רחוקות מאוד.
 import glob
 import json
 import os
 
 OUT = os.environ.get('OUTDIR', 'fares/data')
 LH = 'line-history/data/lines'
+# מוניות שירות וכבלים לא בטבלת התעריפים הזאת בכלל — נשארים בחוץ
+INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
 
 
 def main():
@@ -26,8 +28,8 @@ def main():
             d = json.load(open(path, encoding='utf-8'))
         except Exception:
             continue
-        if d.get('tt') or d.get('lk') == 'removed':
-            continue  # רק קווי אוטובוס פעילים כרגע
+        if d.get('tt') not in INCLUDE_TT or d.get('lk') == 'removed':
+            continue
         pool = d.get('pool') or []
         if len(pool) < 2:
             continue

@@ -107,7 +107,7 @@
         <div class="src-l">💰 <b>טבלת התעריפים</b> — פורסמה על ידי הרשות הארצית לתחבורה ציבורית, משרד התחבורה. <a href="https://bus.gov.il/FaresDistance" target="_blank" rel="noopener">bus.gov.il/FaresDistance ›</a> — נבדק ועודכן ידנית ב-14.8.2026. המחירים הם נתון קבוע שמפרסם משרד התחבורה, לא משהו שהאתר מחשב — לבדיקה עדכנית תמיד כדאי לבקר בקישור.</div>
         <div class="src-l">📏 <b>לפי קו</b> — המרחק הוא סכום המרחקים האוויריים בין כל שתי תחנות עוקבות של הקו, מתחנת העלייה ועד תחנת הירידה שבחרתם. קרוב מאוד למרחק הרשמי שמחשב משרד התחבורה, עם סטייה אפשרית קרוב לגבול בין שני אזורים.</div>
         <div class="src-l">📍 <b>לפי תחנות</b> — המרחק הוא קו אווירי ישיר בין שתי התחנות שבחרתם, בלי קשר לקו ספציפי. שימושי כשלא בטוחים אילו קווים מחברים ביניהן, אבל פחות מדויק מ"לפי קו" בנסיעות מפותלות.</div>
-        <div class="src-l">🚌 <b>כרגע — קווי אוטובוס בלבד</b>. רכבת, רכבת קלה, מוניות שירות וקווי דרישה לא נכללים במחשבון (יש להם מחירי נסיעה בודדת שונים, המופיעים בטבלה למעלה בעמודת "רכבת").</div>
+        <div class="src-l">🚌🚆 <b>סוגי קווים</b> — אוטובוס, קווי דרישה, רכבת ורכבת קלה נכללים במחשבון (בקווי רכבת/רק"ל מוצג מחיר הרכבת, לא האוטובוס). מוניות שירות וכבלים לא נכללים — יש להם מבנה תעריפים נפרד לגמרי.</div>
         <div class="src-l">🎟️ הנחות (ילד/נוער, אזרח ותיק, גיל 67+ ועוד) לא מחושבות כאן — מוצג המחיר המלא בלבד. <a href="https://bus.gov.il/FaresDiscounts" target="_blank" rel="noopener">פירוט הנחות ›</a></div>
       </details>
     </div>
@@ -146,23 +146,25 @@ $('reftable').innerHTML =
     `<td>${z.mb==null?'—':money(z.mb)}</td><td>${money(z.mt)}</td></tr>`).join('')+
   '</tbody>';
 
-function renderResult(km, note){
+function renderResult(km, note, isTrain){
   const z=zoneFor(km);
   const cards=[
-    ['נסיעה בודדת · אוטובוס', z.bus],
-    ['נסיעה בודדת · רכבת', z.train],
-    ['חופשי יומי', z.daily],
-    ['חופשי חודשי ארצי', z.mb],
-    ['חופשי חודשי + רכבת', z.mt],
+    ['נסיעה בודדת · אוטובוס', z.bus, !isTrain],
+    ['נסיעה בודדת · רכבת', z.train, !!isTrain],
+    ['חופשי יומי', z.daily, false],
+    ['חופשי חודשי ארצי', z.mb, false],
+    ['חופשי חודשי + רכבת', z.mt, !!isTrain],
   ];
   const wrap=$('resultWrap');
   wrap.classList.remove('empty');
+  const trainNote = isTrain
+    ? `<div class="distnote">🚆 קו רכבת/רק"ל — המנוי "חופשי חודשי ארצי" הרגיל לא כולל רכבת, צריך את המנוי "+ רכבת".</div>` : '';
   wrap.innerHTML=
     `<div class="zonebadge" style="background:${z.c}33;color:${z.c}"><i style="background:${z.c}"></i>אזור ${z.n} · ${z.lbl}</div>`+
-    `<div class="distnote">${note}: כ-${km.toFixed(1)} ק"מ</div>`+
-    `<div class="pricegrid">`+cards.map(([t,v])=>
+    `<div class="distnote">${note}: כ-${km.toFixed(1)} ק"מ</div>`+trainNote+
+    `<div class="pricegrid">`+cards.map(([t,v,hl])=>
       v==null ? `<div class="pcard na"><div class="pn"><small>לא זמין</small></div><div class="pt">${t}</div></div>`
-              : `<div class="pcard"><div class="pn"><small>₪</small>${v%1?v.toFixed(1):v}</div><div class="pt">${t}</div></div>`
+              : `<div class="pcard${hl?' hl':''}"><div class="pn"><small>₪</small>${v%1?v.toFixed(1):v}</div><div class="pt">${t}</div></div>`
     ).join('')+`</div>`;
 }
 function emptyResult(msg){
@@ -172,7 +174,17 @@ function emptyResult(msg){
 }
 
 /* ---------- מצב 1: לפי קו ---------- */
-let LINES=null, POOL=null;
+// tt של line-history -> [סמל, תווית, מתומחר-כמו-רכבת?]. מוניות שירות
+// וכבלים לא בטבלת התעריפים הזאת בכלל ונשארים בחוץ.
+const KIND={
+  'null':  ['🚌','אוטובוס', false],
+  demand:  ['📞','קו לפי דרישה', false],
+  rail:    ['🚆','רכבת', true],
+  lightrail:['🚊','רכבת קלה', true],
+};
+function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
+
+let LINES=null, POOL=null, CURKIND=null;
 fetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
 
 $('q').addEventListener('input', onSearchLine);
@@ -180,21 +192,23 @@ function onSearchLine(){
   const v=$('q').value.trim();
   const box=$('reslist');
   if (!v || !LINES){ box.style.display='none'; box.innerHTML=''; return; }
-  const matches=LINES.filter(l=> l.tt==null && l.lk!=='removed' && l.line && l.line.startsWith(v)).slice(0,30);
-  if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם (כרגע רק קווי אוטובוס)</div>'; return; }
+  const matches=LINES.filter(l=> kindOf(l.tt) && l.lk!=='removed' && l.line && l.line.startsWith(v)).slice(0,30);
+  if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם</div>'; return; }
   box.style.display='block';
-  box.innerHTML=matches.map(l=>
-    `<div class="resitem" data-rd="${l.rd}" data-line="${l.line}" data-dest="${(l.dest||'').replace(/<->/g,' ↔ ')}" data-op="${l.op||''}">`+
-    `<span class="rn">${l.line}</span><span>${(l.dest||'').replace(/<->/g,' ↔ ')}</span><span class="rd2">${l.op||''}</span></div>`
-  ).join('');
+  box.innerHTML=matches.map(l=>{
+    const k=kindOf(l.tt);
+    return `<div class="resitem" data-rd="${l.rd}" data-line="${l.line}" data-dest="${(l.dest||'').replace(/<->/g,' ↔ ')}" data-op="${l.op||''}" data-tt="${l.tt||''}">`+
+    `<span title="${k[1]}">${k[0]}</span><span class="rn">${l.line}</span><span>${(l.dest||'').replace(/<->/g,' ↔ ')}</span><span class="rd2">${l.op||''}</span></div>`;
+  }).join('');
   box.querySelectorAll('.resitem').forEach(el=>el.addEventListener('click', ()=>{
     box.style.display='none'; $('q').value=el.dataset.line+' · '+el.dataset.dest;
-    pickLine(el.dataset.rd, el.dataset.line, el.dataset.dest, el.dataset.op);
+    pickLine(el.dataset.rd, el.dataset.line, el.dataset.dest, el.dataset.op, el.dataset.tt);
   }));
 }
 
-function pickLine(rd, line, dest, op){
+function pickLine(rd, line, dest, op, tt){
   $('picked').style.display='none';
+  CURKIND=kindOf(tt||null);
   fetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()).then(d=>{
     POOL=(d.pool||[]).filter(p=>p && p.length>=4);
     if (POOL.length<2){
@@ -202,7 +216,7 @@ function pickLine(rd, line, dest, op){
       $('picked').style.display='block'; $('fromSel').innerHTML=''; $('toSel').innerHTML='';
       return;
     }
-    $('pline').innerHTML=`<b>${line}</b> · ${dest} <span style="font-weight:600;color:var(--sub)">(${op})</span>`;
+    $('pline').innerHTML=`${CURKIND[0]} <b>${line}</b> · ${dest} <span style="font-weight:600;color:var(--sub)">(${op})</span>`;
     const opts=POOL.map((p,i)=>`<option value="${i}">${p[1]} · מס' ${p[0]}</option>`).join('');
     $('fromSel').innerHTML=opts; $('toSel').innerHTML=opts;
     $('fromSel').selectedIndex=0; $('toSel').selectedIndex=POOL.length-1;
@@ -227,7 +241,7 @@ function computeLine(){
   const lo=Math.min(i,j), hi=Math.max(i,j);
   let km=0;
   for (let k=lo;k<hi;k++) km += hav([POOL[k][2],POOL[k][3]], [POOL[k+1][2],POOL[k+1][3]]);
-  renderResult(km, 'מרחק הנסיעה בפועל לאורך הקו');
+  renderResult(km, 'מרחק הנסיעה בפועל לאורך הקו', CURKIND && CURKIND[2]);
 }
 
 /* ---------- מצב 2: לפי תחנות ---------- */

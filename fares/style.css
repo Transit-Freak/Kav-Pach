@@ -72,6 +72,7 @@ html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;backgrou
 .pricegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pcard{background:#2b2725;border-radius:6px;padding:10px 12px;border-inline-start:3px solid var(--gold)}
 .pcard.na{opacity:.4;border-inline-start-color:#6b5f52}
+.pcard.hl{background:#3a2f1c;border-inline-start-width:5px;box-shadow:0 0 0 1px rgba(217,119,6,.5) inset}
 .pcard .pn{font-size:23px;font-weight:900;color:var(--gold-lt);line-height:1.1}
 .pcard .pn small{font-size:12px;font-weight:800}
 .pcard .pt{font-size:11px;font-weight:700;color:#c9b8a4;margin-top:3px;line-height:1.35}
