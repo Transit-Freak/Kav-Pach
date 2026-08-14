@@ -14,14 +14,17 @@ INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
 
 
 def main():
+    # next-station/stops-names.json נבנה מחדש כל יום ישירות מ-stops.txt
+    # הטרי של משרד התחבורה (ראו update-weekly.yml) — זה השם הכי עדכני
+    # שיש. ה-pool של line-history הוא הרבה פעמים תמונת-מצב ישנה יותר
+    # שלא בהכרח מתעדכנת בכל סריקה, ולכן שם משם משמש רק כגיבוי לתחנות
+    # שעדיין לא הגיעו לסנאפשוט הארצי.
     try:
-        cities = {sid: v[1] for sid, v in
-                  json.load(open('next-station/stops-names.json', encoding='utf-8')).items()}
+        snap = json.load(open('next-station/stops-names.json', encoding='utf-8'))
     except Exception:
-        cities = {}
-    # תיקונים ידניים: לפעמים line-history שומר שם ישן של תחנה שכבר
-    # השתנה (רואים את שני השמות בו-זמנית באותו קובץ קו, אז אין דרך
-    # אוטומטית אמינה להכריע ביניהם) — ראו tools/fares-stop-overrides.json
+        snap = {}
+    # תיקונים ידניים לתחנות ספציפיות שגם המקור הטרי טועה בהן (נדיר) —
+    # ראו tools/fares-stop-overrides.json
     try:
         overrides = json.load(open('tools/fares-stop-overrides.json', encoding='utf-8'))
     except Exception:
@@ -46,7 +49,8 @@ def main():
                 continue
             sid, name, la, lo = p[0], p[1], p[2], p[3]
             if sid not in stops:
-                stops[sid] = [name, cities.get(sid, ''), la, lo]
+                fresh = snap.get(sid)
+                stops[sid] = [fresh[0] if fresh else name, fresh[1] if fresh else '', la, lo]
 
     for sid, ov in overrides.items():
         if sid in stops:
