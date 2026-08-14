@@ -18,7 +18,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <div class="top">
@@ -74,6 +75,8 @@
                 <div class="stchip" id="chipTo"><span></span><button data-clear="to">✕</button></div>
                 <div class="reslist" id="resTo" style="display:none"></div>
               </div>
+              <div class="stmap-hint">אפשר גם ללחוץ על המפה כדי לבחור את התחנה הקרובה — קודם מוצא, אח"כ יעד</div>
+              <div id="stmap" class="stmap"></div>
             </div>
           </div>
 
@@ -196,7 +199,7 @@ function pickLine(rd, line, dest, op){
       return;
     }
     $('pline').innerHTML=`<b>${line}</b> · ${dest} <span style="font-weight:600;color:var(--sub)">(${op})</span>`;
-    const opts=POOL.map((p,i)=>`<option value="${i}">${p[1]}</option>`).join('');
+    const opts=POOL.map((p,i)=>`<option value="${i}">${p[1]} · מס' ${p[0]}</option>`).join('');
     $('fromSel').innerHTML=opts; $('toSel').innerHTML=opts;
     $('fromSel').selectedIndex=0; $('toSel').selectedIndex=POOL.length-1;
     $('picked').style.display='block';
@@ -229,6 +232,10 @@ function loadStops(){
   if (!stopsPromise) stopsPromise=fetch('data/stops.json').then(r=>r.json()).then(d=>{ STOPS=d.stops; });
   return stopsPromise;
 }
+// מנטרל גרשיים/גרש (״ ' '' " חד-תו) לפני השוואה — בנתוני התחנות גרשיים
+// מסומנים כשני גרשים בודדים ('') וזה לא תמיד מה שהמקלדת מקלידה
+function norm(s){ return (s||'').normalize('NFKC').replace(/["'׳״]/g,'').toLowerCase(); }
+
 const picked={from:null, to:null}; // [id,name,city,lat,lon]
 
 function stopSearch(inputId, boxId, key){
@@ -236,36 +243,45 @@ function stopSearch(inputId, boxId, key){
   $(inputId).addEventListener('input', ()=>{
     const v=$(inputId).value.trim();
     if (v.length<2 || !STOPS){ box.style.display='none'; box.innerHTML=''; return; }
-    const vv=v.toLowerCase();
+    const nv=norm(v);
     const out=[];
     for (const sid in STOPS){
       const s=STOPS[sid];
-      if (s[0].includes(v) || (s[1]&&s[1].includes(v))){ out.push([sid,s]); if (out.length>=25) break; }
+      if (norm(s[0]).includes(nv) || (s[1]&&norm(s[1]).includes(nv)) || sid.includes(v)){
+        out.push([sid,s]); if (out.length>=25) break;
+      }
     }
     if (!out.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצאה תחנה תואמת</div>'; return; }
     box.style.display='block';
     box.innerHTML=out.map(([sid,s])=>
-      `<div class="resitem" data-sid="${sid}"><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
+      `<div class="resitem" data-sid="${sid}"><span class="rn">${sid}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
     ).join('');
-    box.querySelectorAll('.resitem').forEach(el=>el.addEventListener('click', ()=>{
-      const sid=el.dataset.sid, s=STOPS[sid];
-      picked[key]=[sid,s[0],s[1],s[2],s[3]];
-      box.style.display='none'; $(inputId).style.display='none';
-      const chip=$('chip'+(key==='from'?'From':'To'));
-      chip.style.display='flex';
-      chip.querySelector('span').textContent=s[0]+(s[1]?' · '+s[1]:'');
-      computeStops();
-    }));
+    box.querySelectorAll('.resitem').forEach(el=>el.addEventListener('click', ()=>selectStop(key, el.dataset.sid)));
   });
 }
 stopSearch('qFrom','resFrom','from');
 stopSearch('qTo','resTo','to');
+
+function selectStop(key, sid){
+  const s=STOPS[sid];
+  if (!s) return;
+  picked[key]=[sid,s[0],s[1],s[2],s[3]];
+  $('res'+(key==='from'?'From':'To')).style.display='none';
+  const inputId=key==='from'?'qFrom':'qTo';
+  $(inputId).style.display='none';
+  const chip=$('chip'+(key==='from'?'From':'To'));
+  chip.style.display='flex';
+  chip.querySelector('span').innerHTML=`<span class="rn">${sid}</span>${s[0]}${s[1]?' · '+s[1]:''}`;
+  placeMarker(key, s);
+  computeStops();
+}
 document.querySelectorAll('.stchip button').forEach(b=>b.addEventListener('click', ()=>{
   const key=b.dataset.clear;
   picked[key]=null;
   const inputId=key==='from'?'qFrom':'qTo';
   $(inputId).style.display='block'; $(inputId).value='';
   b.parentElement.style.display='none';
+  removeMarker(key);
   emptyResult('בחרו קו ותחנות, או שתי תחנות — והמחיר יופיע כאן');
 }));
 function computeStops(){
@@ -273,6 +289,47 @@ function computeStops(){
   if (picked.from[0]===picked.to[0]){ emptyResult('בחרו שתי תחנות שונות'); return; }
   const km=hav([picked.from[3],picked.from[4]], [picked.to[3],picked.to[4]]);
   renderResult(km, 'מרחק אווירי בין התחנות');
+}
+
+/* מפה לבחירת תחנה בלחיצה — נטענת רק כשנכנסים למצב "לפי תחנות" */
+let MAP=null, MK={from:null, to:null};
+function ensureMap(){
+  if (MAP){ setTimeout(()=>MAP.invalidateSize(), 60); return; }
+  setTimeout(()=>{
+    MAP=L.map('stmap').setView([31.6,34.9], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:'&copy; OpenStreetMap', maxZoom:18
+    }).addTo(MAP);
+    MAP.on('click', e=>{
+      if (!STOPS) return;
+      const key = !picked.from ? 'from' : (!picked.to ? 'to' : 'from');
+      const other = key==='from' ? picked.to : picked.from;
+      const sid=nearestStop(e.latlng.lat, e.latlng.lng, other ? other[0] : null);
+      if (!sid) return; // אין תחנה קרובה מספיק ללחיצה (או שזו התחנה השנייה שכבר נבחרה)
+      selectStop(key, sid);
+    });
+  }, 0);
+}
+function nearestStop(lat, lon, excludeSid){
+  let best=null, bd=1.0; // עד ק"מ מהלחיצה
+  for (const sid in STOPS){
+    if (sid===excludeSid) continue;
+    const s=STOPS[sid];
+    const d=hav([lat,lon], [s[2],s[3]]);
+    if (d<bd){ bd=d; best=sid; }
+  }
+  return best;
+}
+function placeMarker(key, s){
+  if (!MAP) return;
+  removeMarker(key);
+  MK[key]=L.marker([s[2],s[3]]).addTo(MAP).bindPopup((key==='from'?'מוצא: ':'יעד: ')+s[0]);
+  const pts=[MK.from,MK.to].filter(Boolean).map(m=>m.getLatLng());
+  if (pts.length===1) MAP.setView(pts[0], 14);
+  else if (pts.length===2) MAP.fitBounds(L.latLngBounds(pts), {padding:[30,30]});
+}
+function removeMarker(key){
+  if (MAP && MK[key]){ MAP.removeLayer(MK[key]); MK[key]=null; }
 }
 
 /* ---------- מעבר בין המצבים ---------- */
@@ -285,9 +342,11 @@ $('modeStop').addEventListener('click', ()=>{
   $('modeStop').classList.add('on'); $('modeLine').classList.remove('on');
   $('paneStop').classList.add('on'); $('paneLine').classList.remove('on');
   loadStops();
+  ensureMap();
   if (picked.from&&picked.to) computeStops(); else emptyResult('בחרו שתי תחנות — והמחיר יופיע כאן');
 });
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="../a11y.js" defer></script>
 </body>
 </html>
