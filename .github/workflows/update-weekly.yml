@@ -79,6 +79,9 @@ jobs:
             SNAPSHOT=next-station/stops-names.json \
             OUT=next-station/data.json python3 tools/classify.py
 
+      - name: Build המחירון stops index (from fresh line-history + stop names)
+        run: GEN_DATE=$(date -u +%F) OUTDIR=fares/data python3 tools/build_fares_stops.py
+
       - name: Detect English-translation errors (טעויות תרגום — קטגוריה באפליקציה)
         run: |
           set -euo pipefail
@@ -99,6 +102,7 @@ jobs:
           cp next-station/catdiff.json /tmp/out-catd.json 2>/dev/null || true
           cp next-station/translation-errors.json /tmp/out-trans.json 2>/dev/null || true
           cp next-station/stops-names.json /tmp/out-snap.json 2>/dev/null || true
+          cp fares/data/stops.json /tmp/out-fares.json 2>/dev/null || true
           for i in 1 2 3 4; do
             git fetch origin main && git reset --hard origin/main
             cp /tmp/out-data.json next-station/data.json
@@ -107,14 +111,17 @@ jobs:
             [ -f /tmp/out-catd.json ] && cp /tmp/out-catd.json next-station/catdiff.json
             [ -f /tmp/out-trans.json ] && cp /tmp/out-trans.json next-station/translation-errors.json
             [ -f /tmp/out-snap.json ] && cp /tmp/out-snap.json next-station/stops-names.json
+            mkdir -p fares/data
+            [ -f /tmp/out-fares.json ] && cp /tmp/out-fares.json fares/data/stops.json
             git add next-station/data.json next-station/history.json
             git add next-station/changes.json 2>/dev/null || true
             git add next-station/catdiff.json 2>/dev/null || true
             git add next-station/translation-errors.json 2>/dev/null || true
             git add next-station/stops-names.json 2>/dev/null || true
+            git add fares/data/stops.json 2>/dev/null || true
             if git diff --cached --quiet; then
               echo "data unchanged — nothing to commit"; break; fi
-            git commit -m "weekly: refresh stop names & classification from GTFS"
+            git commit -m "weekly: refresh stop names & classification from GTFS + fares stops index"
             if git push origin HEAD:main; then break; fi
             echo "push rejected (main moved) — retry $i"; sleep 10
           done

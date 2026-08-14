@@ -1,68 +1,95 @@
-/* המחירון — עיצוב בשפה המשפחתית (כותרת דקה, כרטיס מחשבון קודם, פוטר),
-   בפלטת סגול-כרטיס. */
-html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#f5f3f9;color:#1e1030}
-.top{background:#4c1d95;color:#fff;padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:1100}
-.top,.foot{padding-inline:max(18px,calc((100vw - 1500px)/2 + 10px))}
-.top h1{font-size:17px;font-weight:900;margin:0;white-space:nowrap}
-.tag{background:#e9d5ff;color:#4c1d95;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
-.introbar{background:#faf5ff;border-bottom:1px solid #e9d5ff;color:#4c1d95;font-size:13px;font-weight:700;padding:8px max(18px,calc((100vw - 1500px)/2 + 10px));line-height:1.6}
-@media(max-width:760px){.introbar{display:none}}
+/* המחירון — עיצוב עצמאי: "דוכן כרטיסים" — אבן כהה + זהב, על רקע נייר חם,
+   פריסת שתי-עמודות (לא עמודה בודדת כמו שאר כלי המשפחה). */
+:root{
+  --ink:#1c1917; --ink2:#2b2725; --gold:#d97706; --gold-dp:#b45309;
+  --gold-lt:#fef3c7; --paper:#faf7f2; --card:#fff; --line:#eee3d3;
+  --txt:#241f1c; --sub:#8a7a68;
+}
+html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:var(--paper);color:var(--txt)}
 
-.wrap{max-width:980px;margin:16px auto;padding:0 12px;display:flex;flex-direction:column;gap:16px}
+/* כותרת — שלד כהה עם פס זהב תחתון, בלי משפט-הסבר עליון (בניגוד לשאר הכלים) */
+.top{background:var(--ink);color:#fff;padding:14px max(18px,calc((100vw - 1180px)/2 + 14px));border-bottom:3px solid var(--gold);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{font-size:19px;font-weight:900;margin:0;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.tag{background:var(--gold-lt);color:#92400e;padding:3px 12px;border-radius:9999px;font-size:11px;font-weight:900}
 
-/* כרטיס המחשבון */
-.calc{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(76,29,149,.10);padding:16px 18px}
-.calc h2{margin:0 0 10px;font-size:16px;font-weight:900;color:#4c1d95}
-.searchrow{position:relative}
-.searchrow input{width:100%;font-family:inherit;font-weight:700;font-size:15px;padding:10px 14px;border-radius:12px;border:1.5px solid #e2d4f5;box-sizing:border-box}
-.searchrow input:focus{outline:none;border-color:#a855f7}
-.reslist{margin-top:6px;border-radius:12px;overflow:hidden;border:1px solid #eee2fb}
-.resitem{padding:9px 12px;cursor:pointer;font-size:13.5px;font-weight:700;border-top:1px solid #f3edfb;display:flex;gap:8px;align-items:baseline}
+.shell{max-width:1180px;margin:0 auto;padding:22px 14px 8px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:900px){.grid{grid-template-columns:1.05fr 1fr;align-items:start}}
+
+/* כרטיס הבחירה */
+.calc{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;overflow:hidden;box-shadow:0 1px 0 var(--line)}
+.calc-head{padding:16px 18px 12px;border-bottom:1px dashed var(--line)}
+.step{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:900;color:var(--ink)}
+.step i{width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--gold-lt);font-style:normal;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.calc-head .how{font-size:12px;font-weight:600;color:var(--sub);margin-top:5px;line-height:1.5}
+
+.modeSeg{display:flex;gap:0;margin:0 18px;margin-top:14px;border:1.5px solid var(--ink);border-radius:9px;overflow:hidden;width:fit-content}
+.modeSeg button{font-family:inherit;font-weight:800;font-size:12.5px;padding:7px 15px;border:none;background:#fff;color:var(--ink);cursor:pointer}
+.modeSeg button.on{background:var(--ink);color:var(--gold-lt)}
+
+.calc-body{padding:14px 18px 18px}
+.mpane{display:none}
+.mpane.on{display:block}
+
+.searchrow{position:relative;margin-top:2px}
+.searchrow input{width:100%;font-family:inherit;font-weight:700;font-size:14.5px;padding:10px 13px;border-radius:8px;border:1.5px solid var(--line);box-sizing:border-box;background:#fffdf9}
+.searchrow input:focus{outline:none;border-color:var(--gold)}
+.reslist{margin-top:5px;border-radius:8px;overflow:hidden;border:1px solid var(--line);max-height:280px;overflow-y:auto}
+.resitem{padding:9px 12px;cursor:pointer;font-size:13px;font-weight:700;border-top:1px solid #f6efe4;display:flex;gap:8px;align-items:baseline}
 .resitem:first-child{border-top:none}
-.resitem:hover{background:#faf5ff}
-.resitem .rn{background:#4c1d95;color:#fff;border-radius:7px;padding:1px 8px;font-size:12px;min-width:26px;text-align:center}
-.resitem .rd2{color:#6b7280;font-weight:600;font-size:12.5px}
+.resitem:hover{background:var(--gold-lt)}
+.resitem .rn{background:var(--ink);color:var(--gold-lt);border-radius:5px;padding:1px 8px;font-size:11.5px;min-width:24px;text-align:center;flex:none}
+.resitem .rd2{color:var(--sub);font-weight:600;font-size:12px}
+.msg{padding:12px 4px;color:var(--sub);font-weight:700;font-size:12.5px}
 
-.picked{margin-top:12px;padding-top:12px;border-top:1.5px dashed #e9d5ff}
-.picked .pline{font-size:14px;font-weight:800;color:#1e1030;margin-bottom:10px}
-.picked .pline b{color:#7e22ce}
-.selrow{display:flex;gap:10px;flex-wrap:wrap}
-.selrow .fld{flex:1;min-width:180px;display:flex;flex-direction:column;gap:4px}
-.selrow label{font-size:11.5px;font-weight:800;color:#7c6a91}
-.selrow select{font-family:inherit;font-weight:700;font-size:13.5px;padding:9px 10px;border-radius:10px;border:1.5px solid #e2d4f5;background:#fff}
-.selrow select:disabled{opacity:.5}
-.swapbtn{align-self:flex-end;background:#f3e8ff;border:none;border-radius:10px;width:38px;height:38px;font-size:16px;cursor:pointer;color:#7e22ce}
+.picked{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.picked .pline{font-size:13.5px;font-weight:800;color:var(--txt);margin-bottom:10px}
+.picked .pline b{color:var(--gold-dp)}
+.selrow{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end}
+.selrow .fld{flex:1;min-width:170px;display:flex;flex-direction:column;gap:4px}
+.selrow label{font-size:11px;font-weight:800;color:var(--sub)}
+.selrow select{font-family:inherit;font-weight:700;font-size:13px;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);background:#fffdf9}
+.swapbtn{background:var(--gold-lt);border:1.5px solid var(--gold);border-radius:8px;width:36px;height:36px;font-size:15px;cursor:pointer;color:var(--gold-dp);flex:none}
 
-.result{margin-top:14px}
-.zonebadge{display:inline-flex;align-items:center;gap:7px;font-weight:900;font-size:14px;padding:6px 14px;border-radius:9999px;margin-bottom:10px}
-.zonebadge i{display:inline-block;width:12px;height:12px;border-radius:50%}
-.distnote{font-size:12px;font-weight:700;color:#7c6a91;margin-bottom:10px}
-.pricegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px}
-.pcard{background:#faf5ff;border-radius:12px;padding:10px 12px;border-right:4px solid #a855f7}
-.pcard.na{opacity:.45}
-.pcard .pn{font-size:26px;font-weight:900;color:#4c1d95;line-height:1.1}
-.pcard .pn small{font-size:13px;font-weight:800}
-.pcard .pt{font-size:11.5px;font-weight:700;color:#6b5480;margin-top:3px;line-height:1.4}
-.msg{padding:14px 4px;color:#7c6a91;font-weight:700;font-size:13px}
+.stpick{display:flex;flex-direction:column;gap:10px}
+.stfld{position:relative}
+.stfld label{font-size:11px;font-weight:800;color:var(--sub);display:block;margin-bottom:4px}
+.stchip{display:none;align-items:center;justify-content:space-between;background:var(--gold-lt);border:1.5px solid var(--gold);border-radius:8px;padding:8px 11px;font-size:13px;font-weight:800;color:#78350f}
+.stchip button{background:none;border:none;color:#92400e;font-weight:900;cursor:pointer;font-size:14px}
+
+/* פאנל התוצאה — עמודה ימנית, נצמד למעלה */
+.result-wrap{background:var(--ink);border-radius:4px;padding:20px;color:#fff;min-height:220px;display:flex;flex-direction:column;justify-content:center}
+@media(min-width:900px){.result-wrap{position:sticky;top:16px}}
+.result-wrap.empty{align-items:center;text-align:center;color:#a8998a;font-weight:700;font-size:13px;gap:8px}
+.result-wrap.empty .big{font-size:30px}
+.zonebadge{display:inline-flex;align-items:center;gap:7px;font-weight:900;font-size:13.5px;padding:5px 13px;border-radius:9999px;margin-bottom:10px;align-self:flex-start}
+.zonebadge i{display:inline-block;width:11px;height:11px;border-radius:50%}
+.distnote{font-size:12px;font-weight:700;color:#c9b8a4;margin-bottom:12px}
+.pricegrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pcard{background:#2b2725;border-radius:6px;padding:10px 12px;border-inline-start:3px solid var(--gold)}
+.pcard.na{opacity:.4;border-inline-start-color:#6b5f52}
+.pcard .pn{font-size:23px;font-weight:900;color:var(--gold-lt);line-height:1.1}
+.pcard .pn small{font-size:12px;font-weight:800}
+.pcard .pt{font-size:11px;font-weight:700;color:#c9b8a4;margin-top:3px;line-height:1.35}
 
 /* טבלת התעריפים המלאה */
-.reftbl{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(76,29,149,.10);overflow:hidden}
-.reftbl .rt-head{padding:14px 18px 4px;font-size:16px;font-weight:900;color:#4c1d95}
-.reftbl .rt-sub{padding:0 18px 12px;font-size:12.5px;font-weight:700;color:#7c6a91;line-height:1.6}
-.reftbl table{width:100%;border-collapse:collapse;font-size:13px}
-.reftbl th{background:#faf5ff;color:#4c1d95;font-weight:900;padding:9px 10px;border-bottom:2px solid #e9d5ff;white-space:nowrap}
-.reftbl td{padding:9px 10px;border-bottom:1px solid #f3edfb;font-weight:700;text-align:center;white-space:nowrap}
-.reftbl td:first-child{text-align:right;display:flex;align-items:center;gap:7px;font-weight:900}
-.reftbl td:first-child i{display:inline-block;width:11px;height:11px;border-radius:50%;flex:none}
-.reftbl .zn{font-size:11px;font-weight:700;color:#9ca3af}
+.reftbl{background:var(--card);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:16px}
+.reftbl .rt-head{padding:14px 18px 3px;font-size:14.5px;font-weight:900;color:var(--ink)}
+.reftbl .rt-sub{padding:0 18px 12px;font-size:12px;font-weight:600;color:var(--sub);line-height:1.6}
 .reftbl .tblwrapx{overflow-x:auto}
+.reftbl table{width:100%;border-collapse:collapse;font-size:12.5px}
+.reftbl th{background:var(--paper);color:var(--ink);font-weight:900;padding:9px 10px;border-bottom:2px solid var(--gold);white-space:nowrap}
+.reftbl td{padding:9px 10px;border-bottom:1px solid var(--line);font-weight:700;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
+.reftbl td:first-child{text-align:right;display:flex;align-items:center;gap:7px;font-weight:900}
+.reftbl td:first-child i{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}
+.reftbl .zn{font-size:10.5px;font-weight:700;color:var(--sub)}
 
 /* פוטר */
-.foot{background:#4c1d95;color:#fff;margin-top:8px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
-.foot .sub{font-size:13px;font-weight:500;opacity:.95;line-height:1.6}
-.srcs{margin-top:2px;font-size:12.5px}
+.foot{background:var(--ink);color:#fff;margin-top:22px;padding:16px max(18px,calc((100vw - 1180px)/2 + 14px));display:flex;flex-direction:column;gap:10px}
+.foot .sub{font-size:12.5px;font-weight:500;opacity:.92;line-height:1.6}
+.srcs{margin-top:2px;font-size:12px}
 .srcs summary{cursor:pointer;font-weight:800;display:inline-block}
-.srcs .src-l{margin-top:5px;background:rgba(255,255,255,.10);border-radius:8px;padding:6px 10px;line-height:1.6;font-weight:500}
+.srcs .src-l{margin-top:5px;background:rgba(255,255,255,.08);border-radius:6px;padding:6px 10px;line-height:1.6;font-weight:500}
 .srcs .src-l b{font-weight:800}
-.foot a{color:#e9d5ff;font-weight:800}
-.foot .credits{font-size:12px;opacity:.85}
+.foot a{color:var(--gold-lt);font-weight:800}
+.foot .credits{font-size:11.5px;opacity:.8}
