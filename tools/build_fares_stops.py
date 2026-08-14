@@ -14,6 +14,84 @@ OUT = os.environ.get('OUTDIR', 'fares/data')
 LH = 'line-history/data/lines'
 # מוניות שירות וכבלים לא בטבלת התעריפים הזאת בכלל — נשארים בחוץ
 INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
+# route_type -> סוג: אוטובוס (כולל תתי-הסוגים 700+), רק"ל, דרישה
+BUSX = {'700', '701', '702', '703', '704', '705', '706', '707', '708', '709',
+        '710', '711', '712', '3'}
+SCHED_TYPES = BUSX | {'0', '715'}
+
+
+def sched_rds():
+    """הרשימה הסופית של "קו שקיים ויש לו לוז": קווים עם נסיעה מתוכננת
+    ב-7 הימים הקרובים, ישירות מה-GTFS הטרי של היום. שני מסלולים:
+    SCHED_JSON = רשימה מחושבת מראש; או ROUTES_TXT+TRIPS_TXT+CAL_TXT
+    מתוך ה-zip שריצת update-weekly כבר מורידה ממילא."""
+    p = os.environ.get('SCHED_JSON')
+    if p:
+        try:
+            return set(json.load(open(p, encoding='utf-8')))
+        except Exception:
+            return None
+    routes_p, trips_p, cal_p = (os.environ.get(k) for k in ('ROUTES_TXT', 'TRIPS_TXT', 'CAL_TXT'))
+    if not (routes_p and trips_p and cal_p):
+        return None
+    try:
+        today = datetime.date.today()
+        win = [today + datetime.timedelta(days=i) for i in range(7)]
+        win_s = {d.strftime('%Y%m%d') for d in win}
+        daycol = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        svc = set()
+        rd_ = csv.reader(open(cal_p, encoding='utf-8-sig'))
+        c = {h.strip(): i for i, h in enumerate(next(rd_))}
+        for r in rd_:
+            try:
+                s, e = r[c['start_date']], r[c['end_date']]
+                for d in win:
+                    if s <= d.strftime('%Y%m%d') <= e and r[c[daycol[d.weekday()]]].strip() == '1':
+                        svc.add(r[c['service_id']])
+                        break
+            except IndexError:
+                continue
+        cald_p = os.environ.get('CALD_TXT')
+        if cald_p and os.path.exists(cald_p):
+            rd_ = csv.reader(open(cald_p, encoding='utf-8-sig'))
+            c = {h.strip(): i for i, h in enumerate(next(rd_))}
+            for r in rd_:
+                try:
+                    if r[c['date']] in win_s and r[c['exception_type']].strip() == '1':
+                        svc.add(r[c['service_id']])
+                except IndexError:
+                    continue
+        active_rids = set()
+        rd_ = csv.reader(open(trips_p, encoding='utf-8-sig'))
+        c = {h.strip(): i for i, h in enumerate(next(rd_))}
+        for r in rd_:
+            try:
+                if r[c['service_id']] in svc:
+                    active_rids.add(r[c['route_id']])
+            except IndexError:
+                continue
+        out = set()
+        rd_ = csv.reader(open(routes_p, encoding='utf-8-sig'))
+        c = {h.strip(): i for i, h in enumerate(next(rd_))}
+        for r in rd_:
+            try:
+                if r[c['route_id']] not in active_rids:
+                    continue
+                if r[c['route_type']].strip() not in SCHED_TYPES:
+                    continue
+                parts = r[c['route_desc']].strip().split('-')
+                if len(parts) < 3:
+                    continue
+                mkt = parts[0].lstrip('0')
+                if mkt:
+                    out.add(f'{mkt}-{parts[1]}-{parts[2]}')
+            except IndexError:
+                continue
+        print(f'לוז מה-GTFS הטרי: {len(out):,} קווים עם נסיעות בשבוע הקרוב')
+        return out
+    except Exception as e:
+        print('חישוב הלוז נכשל — נופלים לסריקות:', e)
+        return None
 
 
 def route_state():
@@ -107,6 +185,14 @@ def main():
     except Exception:
         overrides = {}
 
+    # מקור העדיפות הראשונה: לוז אמיתי מה-GTFS הטרי (נכתב גם לאתר,
+    # שישתמש בו כמבחן הקיום היחיד). נפילה: שתי הסריקות היומיות.
+    os.makedirs(OUT, exist_ok=True)
+    sched = sched_rds()
+    if sched:
+        json.dump({'gen': os.environ.get('GEN_DATE', ''), 'rds': sorted(sched)},
+                  open(f'{OUT}/current.json', 'w', encoding='utf-8'),
+                  ensure_ascii=False, separators=(',', ':'))
     seen_all, current = route_state()
 
     stops = {}
@@ -120,7 +206,9 @@ def main():
         rd = d.get('rd')
         vs = d.get('versions') or []
         not_removed = bool(vs) and vs[-1].get('k') != 'removed'
-        if current is None:
+        if sched is not None:
+            is_current = rd in sched
+        elif current is None:
             is_current = not_removed
         elif rd in seen_all:
             is_current = rd in current

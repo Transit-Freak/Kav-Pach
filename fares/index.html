@@ -193,7 +193,16 @@ const KIND={
 };
 function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
-let LINES=null, LINES_ERR=false, POOL=null, CURKIND=null, CURRENT_RDS=null, SEEN_RDS=null;
+let LINES=null, LINES_ERR=false, POOL=null, CURKIND=null, CURRENT_RDS=null, SEEN_RDS=null, SCHED=null;
+// המקור המוסמך ביותר: data/current.json — קווים עם נסיעה מתוכננת בשבוע
+// הקרוב, מחושב כל יום ישירות מה-GTFS הטרי בריצת update-weekly. אם הקובץ
+// טרי (עד 10 ימים) הוא מבחן הקיום היחיד; אחרת נופלים לסריקות היומיות
+dfetch('data/current.json').then(r=>r.json()).then(d=>{
+  if (d && d.rds && d.gen && (Date.now()-new Date(d.gen).getTime())/864e5<=10){
+    SCHED=new Set(d.rds);
+    onSearchLine();
+  }
+}).catch(()=>{});
 // כשהטעינה מסתיימת (או נכשלת) מריצים מחדש את החיפוש — שמשתמש שהקליד
 // בזמן הטעינה יקבל תוצאות בלי להקליד תו נוסף
 dfetch(LH+'lines.json').then(r=>{if(!r.ok)throw 0;return r.json()})
@@ -224,6 +233,7 @@ Promise.all([
   if (any){ SEEN_RDS=seen; CURRENT_RDS=cur; }
 });
 function isCurrent(l){
+  if (SCHED && l.tt!=='rail') return SCHED.has(l.rd);
   if (!CURRENT_RDS) return l.lk!=='removed';
   if (SEEN_RDS.has(l.rd)) return CURRENT_RDS.has(l.rd);
   return l.lk!=='removed' && l.ld && (Date.now()-new Date(l.ld).getTime())/864e5<=60;
