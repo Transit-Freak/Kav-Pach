@@ -32,8 +32,15 @@ html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;backgrou
 .mpane.on{display:block}
 
 .searchrow{position:relative;margin-top:2px}
-.searchrow input{width:100%;font-family:inherit;font-weight:700;font-size:14.5px;padding:10px 13px;border-radius:8px;border:1.5px solid var(--line);box-sizing:border-box;background:#fffdf9}
-.searchrow input:focus{outline:none;border-color:var(--gold)}
+.searchrow input,.stfld input{width:100%;font-family:inherit;font-weight:700;font-size:14.5px;padding:10px 13px;border-radius:8px;border:1.5px solid var(--line);box-sizing:border-box;background:#fffdf9}
+.searchrow input:focus,.stfld input:focus{outline:none;border-color:var(--gold)}
+/* תווית מוסתרת-חזותית לקוראי מסך */
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* פוקוס מקלדת נראה — לתוצאות החיפוש ולכפתורי המצב (שקטומים ע"י overflow) */
+.resitem:focus-visible{outline:2px solid var(--gold-dp);outline-offset:-2px;background:var(--gold-lt)}
+.modeSeg button:focus-visible{outline:2px solid var(--gold-dp);outline-offset:-3px}
+/* גופן 16px לפקדים במובייל — מתחת לזה ספארי iOS מבצע זום אוטומטי שנתקע */
+@media(max-width:760px){.searchrow input,.stfld input,.selrow select{font-size:16px}}
 .reslist{margin-top:5px;border-radius:8px;overflow:hidden;border:1px solid var(--line);max-height:280px;overflow-y:auto}
 .resitem{padding:9px 12px;cursor:pointer;font-size:13px;font-weight:700;border-top:1px solid #f6efe4;display:flex;gap:8px;align-items:baseline}
 .resitem:first-child{border-top:none}
@@ -92,7 +99,8 @@ html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;backgrou
 .reftbl .zn{font-size:10.5px;font-weight:700;color:var(--sub)}
 
 /* פוטר */
-.foot{background:var(--ink);color:#fff;margin-top:22px;padding:16px max(18px,calc((100vw - 1180px)/2 + 14px));display:flex;flex-direction:column;gap:10px}
+/* padding-bottom מוגדל: כפתור הנגישות הצף (46px, פינה תחתונה) לא יכסה את הקרדיטים */
+.foot{background:var(--ink);color:#fff;margin-top:22px;padding:16px max(18px,calc((100vw - 1180px)/2 + 14px)) 76px;display:flex;flex-direction:column;gap:10px}
 .foot .sub{font-size:12.5px;font-weight:500;opacity:.92;line-height:1.6}
 .srcs{margin-top:2px;font-size:12px}
 .srcs summary{cursor:pointer;font-weight:800;display:inline-block}

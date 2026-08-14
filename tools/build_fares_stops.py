@@ -16,32 +16,40 @@ LH = 'line-history/data/lines'
 INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
 
 
-def current_rds():
+def route_state():
     # לא ניחוש לפי תאריך אירוע אחרון (lk/ld יכולים להישאר תקועים בלי
     # אירוע ביטול רשמי) — routes-daily-state.json של הקו בזמן עצמו הוא
-    # המקור הסופי. חשוב: seen שומר כל קו שנראה אי-פעם עם תאריך last,
-    # אז לוקחים רק מי שנראה ב-30 הימים שלפני הסריקה האחרונה (סולח לקו
-    # של שישי/שבת בלבד, זורק וריאנטים שנעלמו לפני שנה)
+    # המקור הסופי. seen שומר כל קו שנראה אי-פעם עם תאריך last, אז
+    # מחזירים שני סטים: כל מי שהסריקה מכירה, ומי שנראה ב-30 הימים
+    # האחרונים שלה (סולח לקו של שישי/שבת, זורק וריאנטים שנעלמו מזמן).
+    # קו שהסריקה לא מכירה בכלל (רק"ל/רכבת/דרישה, או אוטובוס חדש) נשפט
+    # לפי versions שלו — הסריקה עוקבת רק אחרי אוטובוסים.
     try:
         st = json.load(open('line-history/data/routes-daily-state.json', encoding='utf-8'))
         last = datetime.date.fromisoformat(st['last_date'])
-        return {rd for rd, e in (st.get('seen') or {}).items()
-                if e.get('last') and (last - datetime.date.fromisoformat(e['last'])).days <= 30}
+        seen = st.get('seen') or {}
+        cur = {rd for rd, e in seen.items()
+               if e.get('last') and (last - datetime.date.fromisoformat(e['last'])).days <= 30}
+        return set(seen), cur
     except Exception:
-        return None
+        return None, None
 
 
 def current_seq(d):
     # ה-pool הוא איחוד היסטורי של כל תחנה שהקו עצר בה אי-פעם — הרצף
-    # הנוכחי הוא הגרסה האחרונה שיש לה רשימת תחנות (אינדקסים ל-pool)
+    # הנוכחי הוא הגרסה האחרונה שיש לה רשימת תחנות. גרסה טרייה עלולה
+    # להישמר עם תחנות "פתוחות" (מערכים מלאים) עד שהדחיסה היומית תהפוך
+    # אותן לאינדקסים — תומכים בשני המצבים
     pool = d.get('pool') or []
     for v in reversed(d.get('versions') or []):
         st = v.get('stops')
-        if st and isinstance(st[0], int):
-            seq = [pool[i] for i in st if i < len(pool)]
-            seq = [p for p in seq if p and len(p) >= 4]
-            if len(seq) > 1:
-                return seq
+        if not st:
+            continue
+        seq = [pool[i] if isinstance(i, int) else i for i in st
+               if not isinstance(i, int) or i < len(pool)]
+        seq = [p for p in seq if isinstance(p, list) and len(p) >= 4]
+        if len(seq) > 1:
+            return seq
     return None
 
 
@@ -62,15 +70,20 @@ def fresh_names_from_gtfs(path):
     except Exception:
         return {}
     ix = {h: i for i, h in enumerate(rows[0])}
-    need = ('stop_id', 'stop_name', 'stop_desc')
+    # המפתח חייב להיות stop_code — זה המספר שעל השלט, וזה מה שה-pool של
+    # line-history שומר. stop_id הוא מספר רץ פנימי אחר לגמרי, ומיפתוח
+    # לפיו מחזיר שם ועיר של תחנה לא קשורה בכל התנגשות מספרים
+    need = ('stop_code', 'stop_name', 'stop_desc')
     if not all(k in ix for k in need):
         return {}
-    si, sn, sd = ix['stop_id'], ix['stop_name'], ix['stop_desc']
+    sc, sn, sd = ix['stop_code'], ix['stop_name'], ix['stop_desc']
     out = {}
     for r in rows[1:]:
-        if len(r) <= sd:
+        if len(r) <= max(sc, sn, sd):
             continue
-        out[r[si]] = [r[sn].strip(), city_from_desc(r[sd])]
+        code = r[sc].strip()
+        if code:
+            out[code] = [r[sn].strip(), city_from_desc(r[sd])]
     return out
 
 
@@ -90,7 +103,7 @@ def main():
     except Exception:
         overrides = {}
 
-    current = current_rds()
+    seen_all, current = route_state()
 
     stops = {}
     n_files = n_active = 0
@@ -100,11 +113,13 @@ def main():
             d = json.load(open(path, encoding='utf-8'))
         except Exception:
             continue
-        if current is not None:
-            is_current = d.get('rd') in current
+        rd = d.get('rd')
+        vs = d.get('versions') or []
+        not_removed = bool(vs) and vs[-1].get('k') != 'removed'
+        if current is not None and seen_all and rd in seen_all:
+            is_current = rd in current
         else:
-            vs = d.get('versions') or []
-            is_current = bool(vs) and vs[-1].get('k') != 'removed'
+            is_current = not_removed
         if d.get('tt') not in INCLUDE_TT or not is_current:
             continue
         seq = current_seq(d)

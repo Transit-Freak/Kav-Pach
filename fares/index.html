@@ -26,6 +26,9 @@
 <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
+<!-- העטיפה .wrap נדרשת לכפתור הנגישות: a11y.js מגדיל תצוגה דרך
+     הסלקטור body > .wrap (או #root) — בלעדיה "הגדלת טקסט" לא עושה כלום -->
+<div class="wrap">
   <div class="top">
     <h1>🎫 המחירון</h1>
     <span class="tag">מחיר נסיעה אמיתי, לא מחיר קו</span>
@@ -46,19 +49,20 @@
 
           <div class="mpane on" id="paneLine">
             <div class="searchrow">
+              <label for="q" class="vh">חיפוש קו</label>
               <input id="q" type="search" placeholder="הקלידו מספר קו… (למשל 351)" autocomplete="off">
-              <div class="reslist" id="reslist" style="display:none"></div>
+              <div class="reslist" id="reslist" role="listbox" style="display:none"></div>
             </div>
             <div class="picked" id="picked" style="display:none">
               <div class="pline" id="pline"></div>
               <div class="selrow">
                 <div class="fld">
-                  <label>תחנת עלייה</label>
+                  <label for="fromSel">תחנת עלייה</label>
                   <select id="fromSel"></select>
                 </div>
-                <button class="swapbtn" id="swapBtn" title="החלפת כיוון">⇄</button>
+                <button class="swapbtn" id="swapBtn" title="החלפת כיוון" aria-label="החלפת כיוון הנסיעה">⇄</button>
                 <div class="fld">
-                  <label>תחנת ירידה</label>
+                  <label for="toSel">תחנת ירידה</label>
                   <select id="toSel"></select>
                 </div>
               </div>
@@ -68,16 +72,16 @@
           <div class="mpane" id="paneStop">
             <div class="stpick">
               <div class="stfld">
-                <label>מתחנת…</label>
+                <label for="qFrom">מתחנת…</label>
                 <input id="qFrom" type="search" placeholder="שם תחנה או עיר…" autocomplete="off">
-                <div class="stchip" id="chipFrom"><span></span><button data-clear="from">✕</button></div>
-                <div class="reslist" id="resFrom" style="display:none"></div>
+                <div class="stchip" id="chipFrom"><span></span><button data-clear="from" aria-label="ניקוי תחנת המוצא">✕</button></div>
+                <div class="reslist" id="resFrom" role="listbox" style="display:none"></div>
               </div>
               <div class="stfld">
-                <label>עד תחנת…</label>
+                <label for="qTo">עד תחנת…</label>
                 <input id="qTo" type="search" placeholder="שם תחנה או עיר…" autocomplete="off">
-                <div class="stchip" id="chipTo"><span></span><button data-clear="to">✕</button></div>
-                <div class="reslist" id="resTo" style="display:none"></div>
+                <div class="stchip" id="chipTo"><span></span><button data-clear="to" aria-label="ניקוי תחנת היעד">✕</button></div>
+                <div class="reslist" id="resTo" role="listbox" style="display:none"></div>
               </div>
               <div class="stmap-hint">אפשר גם ללחוץ על המפה כדי לבחור את התחנה הקרובה — קודם מוצא, אח"כ יעד</div>
               <div id="stmap" class="stmap"></div>
@@ -113,6 +117,7 @@
     </div>
     <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · חלק ממשפחת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · <a href="mailto:shlomihartman@gmail.com">מצאתם טעות? כתבו לנו</a></div>
   </div>
+</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -188,48 +193,71 @@ const KIND={
 };
 function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
-let LINES=null, POOL=null, CURKIND=null, CURRENT_RDS=null;
-dfetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
+let LINES=null, LINES_ERR=false, POOL=null, CURKIND=null, CURRENT_RDS=null, SEEN_RDS=null;
+// כשהטעינה מסתיימת (או נכשלת) מריצים מחדש את החיפוש — שמשתמש שהקליד
+// בזמן הטעינה יקבל תוצאות בלי להקליד תו נוסף
+dfetch(LH+'lines.json').then(r=>{if(!r.ok)throw 0;return r.json()})
+  .then(d=>{ LINES=d.lines; onSearchLine(); })
+  .catch(()=>{ LINES_ERR=true; onSearchLine(); });
 // המקור הסופי ל"האם הקו הזה קיים היום" — routes-daily-state.json של
-// הקו בזמן. חשוב: seen שומר כל קו שנראה אי-פעם עם תאריך last —
-// לוקחים רק קווים שנראו ב-30 הימים שלפני הסריקה האחרונה (חלון שסולח
-// לקו שנוסע רק בשישי/שבת, אבל זורק וריאנטים שנעלמו לפני שנה)
+// הקו בזמן. שני סטים: SEEN_RDS = כל מי שהסריקה מכירה אי-פעם;
+// CURRENT_RDS = מי שנראה ב-30 הימים שלפני הסריקה האחרונה (סולח לקו
+// שישי/שבת). מבחן ה-30-יום חל רק על קווים שהסריקה בכלל עוקבת אחריהם —
+// רק"ל/רכבת/דרישה (וקו אוטובוס חדש שטרם נסרק) לא נמצאים ב-seen בכלל,
+// ועבורם נופלים לסימון של line-history (lk!=removed)
 dfetch(LH+'routes-daily-state.json').then(r=>r.json()).then(d=>{
   const last=new Date(d.last_date).getTime();
+  SEEN_RDS=new Set(Object.keys(d.seen||{}));
   CURRENT_RDS=new Set(Object.entries(d.seen||{})
     .filter(([,e])=>e&&e.last&&(last-new Date(e.last).getTime())/864e5<=30)
     .map(([rd])=>rd));
 }).catch(()=>{});
-function isCurrent(l){ return CURRENT_RDS ? CURRENT_RDS.has(l.rd) : l.lk!=='removed'; }
+function isCurrent(l){
+  if (!CURRENT_RDS || !SEEN_RDS.has(l.rd)) return l.lk!=='removed';
+  return CURRENT_RDS.has(l.rd);
+}
 
 $('q').addEventListener('input', onSearchLine);
 function onSearchLine(){
   const v=$('q').value.trim();
   const box=$('reslist');
-  if (!v || !LINES){ box.style.display='none'; box.innerHTML=''; return; }
+  if (!v){ box.style.display='none'; box.innerHTML=''; return; }
+  if (!LINES){
+    box.style.display='block';
+    box.innerHTML=LINES_ERR
+      ? '<div class="msg">⚠ שגיאה בטעינת רשימת הקווים — רעננו את הדף ונסו שוב</div>'
+      : '<div class="msg">⏳ טוען את רשימת הקווים…</div>';
+    return;
+  }
   // אפשר להוסיף מילת יעד לסינון ("142 אשדוד") — כל מילה שהוקלדה חייבת
   // להימצא איפשהו במספר הקו/היעד/המפעילה, בלי קשר לסדר (כמו בחיפוש
   // תחנות). התאמה מדויקת למספר קודם, אחר כך סוגים נדירים (רכבת/רק"ל/
   // דרישה) לפני אוטובוס — אחרת קו רק"ל "1" נטבע מתחת לעשרות אוטובוס "1"
   const qt=tokens(v);
+  if (!qt.length){ box.style.display='none'; box.innerHTML=''; return; }
   const matches=LINES.filter(l=>{
     if (!kindOf(l.tt) || !isCurrent(l) || !l.line) return false;
     const hay=norm(l.line)+' '+norm(l.dest||'')+' '+norm(l.op||'');
     return qt.every(t=>hay.includes(t));
   })
-    .sort((a,b)=> (a.line===v?0:1)-(b.line===v?0:1) || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1))
+    .sort((a,b)=> (a.line===v?0:1)-(b.line===v?0:1) || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1)
+      || (b.ld||'').localeCompare(a.ld||''))   // וריאנט שעודכן לאחרונה לפני וריאנט רדום
     .slice(0,40);
   if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם</div>'; return; }
   box.style.display='block';
   box.innerHTML=matches.map(l=>{
     const k=kindOf(l.tt);
-    return `<div class="resitem" data-rd="${l.rd}" data-line="${l.line}" data-dest="${(l.dest||'').replace(/<->/g,' ↔ ')}" data-op="${l.op||''}" data-tt="${l.tt||''}">`+
+    return `<div class="resitem" tabindex="0" role="option" data-rd="${l.rd}" data-line="${l.line}" data-dest="${(l.dest||'').replace(/<->/g,' ↔ ')}" data-op="${l.op||''}" data-tt="${l.tt||''}">`+
     `<span title="${k[1]}">${k[0]}</span><span class="rn">${l.line}</span><span>${(l.dest||'').replace(/<->/g,' ↔ ')}</span><span class="rd2">${l.op||''}</span></div>`;
   }).join('');
-  box.querySelectorAll('.resitem').forEach(el=>el.addEventListener('click', ()=>{
-    box.style.display='none'; $('q').value=el.dataset.line+' · '+el.dataset.dest;
-    pickLine(el.dataset.rd, el.dataset.line, el.dataset.dest, el.dataset.op, el.dataset.tt);
-  }));
+  box.querySelectorAll('.resitem').forEach(el=>{
+    const act=()=>{
+      box.style.display='none'; $('q').value=el.dataset.line+' · '+el.dataset.dest;
+      pickLine(el.dataset.rd, el.dataset.line, el.dataset.dest, el.dataset.op, el.dataset.tt);
+    };
+    el.addEventListener('click', act);
+    el.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
+  });
 }
 
 function pickLine(rd, line, dest, op, tt){
@@ -250,15 +278,17 @@ function pickLine(rd, line, dest, op, tt){
     const vs=d.versions||[];
     for (let i=vs.length-1;i>=0;i--){
       const st=vs[i].stops;
-      if (st && st.length>1 && typeof st[0]==='number'){
-        const s=st.map(x=>pool[x]).filter(p=>p && p.length>=4);
-        if (s.length>1){ seq=s; break; }
-      }
+      if (!st || st.length<2) continue;
+      // גרסה חדשה עלולה להישמר עם התחנות "פתוחות" (מערכים מלאים) עד
+      // שהדחיסה היומית תהפוך אותן לאינדקסים — תומכים בשני המצבים
+      const s=st.map(x=>typeof x==='number'?pool[x]:x).filter(p=>Array.isArray(p) && p.length>=4);
+      if (s.length>1){ seq=s; break; }
     }
     POOL=seq || (pool.filter(p=>p && p.length>=4));
     if (POOL.length<2){
+      POOL=null;
       emptyResult('אין מספיק נתוני תחנות לקו הזה כדי לחשב מרחק');
-      $('picked').style.display='block'; $('fromSel').innerHTML=''; $('toSel').innerHTML='';
+      $('picked').style.display='none'; $('fromSel').innerHTML=''; $('toSel').innerHTML=''; $('pline').innerHTML='';
       return;
     }
     $('pline').innerHTML=`${CURKIND[0]} <b>${line}</b> · ${dest} <span style="font-weight:600;color:var(--sub)">(${op})</span>`;
@@ -271,8 +301,12 @@ function pickLine(rd, line, dest, op, tt){
     $('picked').style.display='block';
     computeLine();
   }).catch(()=>{
-    emptyResult('שגיאה בטעינת נתוני הקו — נסו שוב');
-    $('picked').style.display='block';
+    // בלי ניקוי, פאנל התחנות של הקו הקודם היה נשאר פתוח וכל שינוי
+    // select היה מחשב מחיר של הקו הלא-נכון
+    POOL=null;
+    $('fromSel').innerHTML=''; $('toSel').innerHTML=''; $('pline').innerHTML='';
+    $('picked').style.display='none';
+    emptyResult('⚠ שגיאה בטעינת נתוני הקו — נסו שוב');
   });
 }
 $('fromSel').addEventListener('change', computeLine);
@@ -293,10 +327,19 @@ function computeLine(){
 }
 
 /* ---------- מצב 2: לפי תחנות ---------- */
-let STOPS=null, stopsPromise=null;
+let STOPS=null, STOPS_ERR=false, stopsPromise=null;
 function loadStops(){
-  if (!stopsPromise) stopsPromise=dfetch('data/stops.json').then(r=>r.json()).then(d=>{ STOPS=d.stops; });
+  // כישלון לא נשמר ב-cache — הלחיצה הבאה על הלשונית מנסה שוב, במקום
+  // שמצב "לפי תחנות" יישאר מת עד רענון מלא של הדף
+  if (!stopsPromise) stopsPromise=dfetch('data/stops.json')
+    .then(r=>{ if(!r.ok) throw 0; return r.json(); })
+    .then(d=>{ STOPS=d.stops; STOPS_ERR=false; rerunStopSearch(); })
+    .catch(e=>{ stopsPromise=null; STOPS_ERR=true; rerunStopSearch(); throw e; });
   return stopsPromise;
+}
+// מריץ מחדש חיפוש שהוקלד בזמן שהקובץ עוד נטען
+function rerunStopSearch(){
+  ['qFrom','qTo'].forEach(id=>{ if ($(id).value.trim()) $(id).dispatchEvent(new Event('input')); });
 }
 // מנטרל גרשיים/גרש (״ ' '' " חד-תו) לפני השוואה — בנתוני התחנות גרשיים
 // מסומנים כשני גרשים בודדים ('') וזה לא תמיד מה שהמקלדת מקלידה
@@ -311,8 +354,16 @@ function stopSearch(inputId, boxId, key){
   const box=$(boxId);
   $(inputId).addEventListener('input', ()=>{
     const v=$(inputId).value.trim();
-    if (v.length<2 || !STOPS){ box.style.display='none'; box.innerHTML=''; return; }
+    if (v.length<2){ box.style.display='none'; box.innerHTML=''; return; }
+    if (!STOPS){
+      box.style.display='block';
+      box.innerHTML=STOPS_ERR
+        ? '<div class="msg">⚠ שגיאה בטעינת רשימת התחנות — עברו לשונית וחזרו כדי לנסות שוב</div>'
+        : '<div class="msg">⏳ טוען את רשימת התחנות…</div>';
+      return;
+    }
     const qt=tokens(v);
+    if (!qt.length){ box.style.display='none'; box.innerHTML=''; return; }
     const out=[];
     for (const sid in STOPS){
       const s=STOPS[sid];
@@ -324,9 +375,13 @@ function stopSearch(inputId, boxId, key){
     if (!out.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצאה תחנה תואמת</div>'; return; }
     box.style.display='block';
     box.innerHTML=out.map(([sid,s])=>
-      `<div class="resitem" data-sid="${sid}"><span class="rn">${sid}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
+      `<div class="resitem" tabindex="0" role="option" data-sid="${sid}"><span class="rn">${sid}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
     ).join('');
-    box.querySelectorAll('.resitem').forEach(el=>el.addEventListener('click', ()=>selectStop(key, el.dataset.sid)));
+    box.querySelectorAll('.resitem').forEach(el=>{
+      const act=()=>selectStop(key, el.dataset.sid);
+      el.addEventListener('click', act);
+      el.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
+    });
   });
 }
 stopSearch('qFrom','resFrom','from');
@@ -408,7 +463,13 @@ function refreshDots(){
     n++;
     const m=L.circleMarker([s[2],s[3]], {radius:5, weight:1.5, color:'#78350f', fillColor:'#d97706', fillOpacity:.85})
       .bindTooltip(s[0]+(s[1]?' · '+s[1]:'')+' · מס\' '+sid, {direction:'top'});
-    m.on('click', e=>{ L.DomEvent.stopPropagation(e); selectStop(nextKey(), sid); });
+    m.on('click', e=>{
+      L.DomEvent.stopPropagation(e);
+      const key=nextKey();
+      const other=key==='from'?picked.to:picked.from;
+      if (other && other[0]===sid) return; // אותה תחנה כבר נבחרה לצד השני
+      selectStop(key, sid);
+    });
     DOTS.addLayer(m);
   }
 }
@@ -443,7 +504,7 @@ $('modeLine').addEventListener('click', ()=>{
 $('modeStop').addEventListener('click', ()=>{
   $('modeStop').classList.add('on'); $('modeLine').classList.remove('on');
   $('paneStop').classList.add('on'); $('paneLine').classList.remove('on');
-  loadStops().then(refreshDots);
+  loadStops().then(refreshDots).catch(()=>{});
   ensureMap();
   if (picked.from&&picked.to) computeStops(); else emptyResult('בחרו שתי תחנות — והמחיר יופיע כאן');
 });
