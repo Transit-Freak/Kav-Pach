@@ -79,8 +79,8 @@ jobs:
             SNAPSHOT=next-station/stops-names.json \
             OUT=next-station/data.json python3 tools/classify.py
 
-      - name: Build המחירון stops index (from fresh line-history + stop names)
-        run: GEN_DATE=$(date -u +%F) OUTDIR=fares/data python3 tools/build_fares_stops.py
+      - name: Build המחירון stops index (from fresh line-history + stops.txt)
+        run: GEN_DATE=$(date -u +%F) OUTDIR=fares/data STOPS_TXT=stops.txt python3 tools/build_fares_stops.py
 
       - name: Detect English-translation errors (טעויות תרגום — קטגוריה באפליקציה)
         run: |
