@@ -199,22 +199,34 @@ let LINES=null, LINES_ERR=false, POOL=null, CURKIND=null, CURRENT_RDS=null, SEEN
 dfetch(LH+'lines.json').then(r=>{if(!r.ok)throw 0;return r.json()})
   .then(d=>{ LINES=d.lines; onSearchLine(); })
   .catch(()=>{ LINES_ERR=true; onSearchLine(); });
-// המקור הסופי ל"האם הקו הזה קיים היום" — routes-daily-state.json של
-// הקו בזמן. שני סטים: SEEN_RDS = כל מי שהסריקה מכירה אי-פעם;
-// CURRENT_RDS = מי שנראה ב-30 הימים שלפני הסריקה האחרונה (סולח לקו
-// שישי/שבת). מבחן ה-30-יום חל רק על קווים שהסריקה בכלל עוקבת אחריהם —
-// רק"ל/רכבת/דרישה (וקו אוטובוס חדש שטרם נסרק) לא נמצאים ב-seen בכלל,
-// ועבורם נופלים לסימון של line-history (lk!=removed)
-dfetch(LH+'routes-daily-state.json').then(r=>r.json()).then(d=>{
-  const last=new Date(d.last_date).getTime();
-  SEEN_RDS=new Set(Object.keys(d.seen||{}));
-  CURRENT_RDS=new Set(Object.entries(d.seen||{})
-    .filter(([,e])=>e&&e.last&&(last-new Date(e.last).getTime())/864e5<=30)
-    .map(([rd])=>rd));
-}).catch(()=>{});
+// המקור הסופי ל"האם הקו הזה קיים היום" — שתי הסריקות היומיות של הקו
+// בזמן יחד: routes-daily-state (אוטובוסים) + routes-tt-2026-state
+// (רק"ל/דרישה/מוניות/כבלים). קו שמופיע באחת מהן נשפט לפי תאריך
+// ה-last שלו (חלון 30 יום שסולח לקווי שישי/שבת); קו שאף סריקה לא
+// מכירה מוצג רק אם האירוע האחרון שלו טרי (60 יום) — קו חדש באמת
+// שהסריקות עוד לא הספיקו לתפוס, לא וריאנט-רפאים מ-2023
+Promise.all([
+  dfetch(LH+'routes-daily-state.json').then(r=>r.json()).catch(()=>null),
+  dfetch(LH+'routes-tt-2026-state.json').then(r=>r.json()).catch(()=>null),
+]).then(states=>{
+  let any=false;
+  const seen=new Set(), cur=new Set();
+  for (const d of states){
+    if (!d || !d.seen) continue;
+    any=true;
+    const last=new Date(d.last_date).getTime();
+    for (const rd in d.seen){
+      seen.add(rd);
+      const e=d.seen[rd];
+      if (e&&e.last&&(last-new Date(e.last).getTime())/864e5<=30) cur.add(rd);
+    }
+  }
+  if (any){ SEEN_RDS=seen; CURRENT_RDS=cur; }
+});
 function isCurrent(l){
-  if (!CURRENT_RDS || !SEEN_RDS.has(l.rd)) return l.lk!=='removed';
-  return CURRENT_RDS.has(l.rd);
+  if (!CURRENT_RDS) return l.lk!=='removed';
+  if (SEEN_RDS.has(l.rd)) return CURRENT_RDS.has(l.rd);
+  return l.lk!=='removed' && l.ld && (Date.now()-new Date(l.ld).getTime())/864e5<=60;
 }
 
 $('q').addEventListener('input', onSearchLine);

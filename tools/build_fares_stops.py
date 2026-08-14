@@ -18,21 +18,25 @@ INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
 
 def route_state():
     # לא ניחוש לפי תאריך אירוע אחרון (lk/ld יכולים להישאר תקועים בלי
-    # אירוע ביטול רשמי) — routes-daily-state.json של הקו בזמן עצמו הוא
-    # המקור הסופי. seen שומר כל קו שנראה אי-פעם עם תאריך last, אז
-    # מחזירים שני סטים: כל מי שהסריקה מכירה, ומי שנראה ב-30 הימים
-    # האחרונים שלה (סולח לקו של שישי/שבת, זורק וריאנטים שנעלמו מזמן).
-    # קו שהסריקה לא מכירה בכלל (רק"ל/רכבת/דרישה, או אוטובוס חדש) נשפט
-    # לפי versions שלו — הסריקה עוקבת רק אחרי אוטובוסים.
-    try:
-        st = json.load(open('line-history/data/routes-daily-state.json', encoding='utf-8'))
-        last = datetime.date.fromisoformat(st['last_date'])
-        seen = st.get('seen') or {}
-        cur = {rd for rd, e in seen.items()
-               if e.get('last') and (last - datetime.date.fromisoformat(e['last'])).days <= 30}
-        return set(seen), cur
-    except Exception:
-        return None, None
+    # אירוע ביטול רשמי) — שתי הסריקות היומיות של הקו בזמן הן המקור
+    # הסופי: routes-daily-state (אוטובוסים) + routes-tt-2026-state
+    # (רק"ל/דרישה/מוניות/כבלים). seen שומר כל קו שנראה אי-פעם עם תאריך
+    # last, אז מחזירים שני סטים: כל מי שאיזושהי סריקה מכירה, ומי שנראה
+    # ב-30 הימים שלפני הסריקה האחרונה (סולח לקו של שישי/שבת בלבד).
+    seen_all, cur = set(), set()
+    found = False
+    for name in ('routes-daily-state.json', 'routes-tt-2026-state.json'):
+        try:
+            st = json.load(open(f'line-history/data/{name}', encoding='utf-8'))
+            last = datetime.date.fromisoformat(st['last_date'])
+        except Exception:
+            continue
+        found = True
+        for rd, e in (st.get('seen') or {}).items():
+            seen_all.add(rd)
+            if e.get('last') and (last - datetime.date.fromisoformat(e['last'])).days <= 30:
+                cur.add(rd)
+    return (seen_all, cur) if found else (None, None)
 
 
 def current_seq(d):
@@ -116,10 +120,18 @@ def main():
         rd = d.get('rd')
         vs = d.get('versions') or []
         not_removed = bool(vs) and vs[-1].get('k') != 'removed'
-        if current is not None and seen_all and rd in seen_all:
+        if current is None:
+            is_current = not_removed
+        elif rd in seen_all:
             is_current = rd in current
         else:
-            is_current = not_removed
+            # קו שאף סריקה לא מכירה — רק אם האירוע האחרון שלו טרי (קו
+            # חדש באמת), לא וריאנט-רפאים שנשאר "לא מבוטל" משנת 2023
+            try:
+                age = (datetime.date.today() - datetime.date.fromisoformat(vs[-1]['d'])).days
+            except Exception:
+                age = 999
+            is_current = not_removed and age <= 60
         if d.get('tt') not in INCLUDE_TT or not is_current:
             continue
         seq = current_seq(d)
