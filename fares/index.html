@@ -202,9 +202,16 @@ function onSearchLine(){
   const v=$('q').value.trim();
   const box=$('reslist');
   if (!v || !LINES){ box.style.display='none'; box.innerHTML=''; return; }
-  // התאמה מדויקת למספר הקו קודם, אחר כך סוגים נדירים (רכבת/רק"ל/דרישה)
-  // לפני אוטובוס רגיל — אחרת קו רק"ל "1" נטבע מתחת לעשרות קווי אוטובוס "1"
-  const matches=LINES.filter(l=> kindOf(l.tt) && isCurrent(l) && l.line && l.line.startsWith(v))
+  // אפשר להוסיף מילת יעד לסינון ("142 אשדוד") — כל מילה שהוקלדה חייבת
+  // להימצא איפשהו במספר הקו/היעד/המפעילה, בלי קשר לסדר (כמו בחיפוש
+  // תחנות). התאמה מדויקת למספר קודם, אחר כך סוגים נדירים (רכבת/רק"ל/
+  // דרישה) לפני אוטובוס — אחרת קו רק"ל "1" נטבע מתחת לעשרות אוטובוס "1"
+  const qt=tokens(v);
+  const matches=LINES.filter(l=>{
+    if (!kindOf(l.tt) || !isCurrent(l) || !l.line) return false;
+    const hay=norm(l.line)+' '+norm(l.dest||'')+' '+norm(l.op||'');
+    return qt.every(t=>hay.includes(t));
+  })
     .sort((a,b)=> (a.line===v?0:1)-(b.line===v?0:1) || (kindOf(a.tt)[2]?0:1)-(kindOf(b.tt)[2]?0:1))
     .slice(0,40);
   if (!matches.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצא קו תואם</div>'; return; }
