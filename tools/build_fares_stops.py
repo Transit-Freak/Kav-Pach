@@ -4,6 +4,7 @@
 # stop_id -> [שם,עיר,lat,lon]. רץ פעם בשבוע (אותו קצב כמו רענון שמות
 # התחנות הארצי) כי מיקומי תחנות משתנים לעיתים רחוקות מאוד.
 import csv
+import datetime
 import glob
 import json
 import os
@@ -18,13 +19,30 @@ INCLUDE_TT = {None, 'demand', 'rail', 'lightrail'}
 def current_rds():
     # לא ניחוש לפי תאריך אירוע אחרון (lk/ld יכולים להישאר תקועים בלי
     # אירוע ביטול רשמי) — routes-daily-state.json של הקו בזמן עצמו הוא
-    # המקור הסופי: seen היא בדיוק רשימת הקווים שהסריקה האחרונה שלו
-    # מצאה בפועל ב-GTFS
+    # המקור הסופי. חשוב: seen שומר כל קו שנראה אי-פעם עם תאריך last,
+    # אז לוקחים רק מי שנראה ב-30 הימים שלפני הסריקה האחרונה (סולח לקו
+    # של שישי/שבת בלבד, זורק וריאנטים שנעלמו לפני שנה)
     try:
-        return set(json.load(open('line-history/data/routes-daily-state.json',
-                                   encoding='utf-8')).get('seen') or {})
+        st = json.load(open('line-history/data/routes-daily-state.json', encoding='utf-8'))
+        last = datetime.date.fromisoformat(st['last_date'])
+        return {rd for rd, e in (st.get('seen') or {}).items()
+                if e.get('last') and (last - datetime.date.fromisoformat(e['last'])).days <= 30}
     except Exception:
         return None
+
+
+def current_seq(d):
+    # ה-pool הוא איחוד היסטורי של כל תחנה שהקו עצר בה אי-פעם — הרצף
+    # הנוכחי הוא הגרסה האחרונה שיש לה רשימת תחנות (אינדקסים ל-pool)
+    pool = d.get('pool') or []
+    for v in reversed(d.get('versions') or []):
+        st = v.get('stops')
+        if st and isinstance(st[0], int):
+            seq = [pool[i] for i in st if i < len(pool)]
+            seq = [p for p in seq if p and len(p) >= 4]
+            if len(seq) > 1:
+                return seq
+    return None
 
 
 def city_from_desc(desc):
@@ -89,13 +107,11 @@ def main():
             is_current = bool(vs) and vs[-1].get('k') != 'removed'
         if d.get('tt') not in INCLUDE_TT or not is_current:
             continue
-        pool = d.get('pool') or []
-        if len(pool) < 2:
+        seq = current_seq(d)
+        if not seq:
             continue
         n_active += 1
-        for p in pool:
-            if len(p) < 4:
-                continue
+        for p in seq:
             sid, name, la, lo = p[0], p[1], p[2], p[3]
             if sid not in stops:
                 fn = fresh.get(sid)

@@ -190,11 +190,16 @@ function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
 let LINES=null, POOL=null, CURKIND=null, CURRENT_RDS=null;
 dfetch(LH+'lines.json').then(r=>r.json()).then(d=>{ LINES=d.lines; }).catch(()=>{});
-// המקור הסופי ל"האם הקו הזה קיים היום" — לא ניחוש לפי תאריך אירוע
-// אחרון (lk/ld יכולים להישאר תקועים בלי אירוע ביטול רשמי), אלא
-// routes-daily-state.json של הקו בזמן עצמו: המפה seen היא בדיוק
-// הרשימה שהסריקה האחרונה שלו מצאה בפועל ב-GTFS
-dfetch(LH+'routes-daily-state.json').then(r=>r.json()).then(d=>{ CURRENT_RDS=new Set(Object.keys(d.seen||{})); }).catch(()=>{});
+// המקור הסופי ל"האם הקו הזה קיים היום" — routes-daily-state.json של
+// הקו בזמן. חשוב: seen שומר כל קו שנראה אי-פעם עם תאריך last —
+// לוקחים רק קווים שנראו ב-30 הימים שלפני הסריקה האחרונה (חלון שסולח
+// לקו שנוסע רק בשישי/שבת, אבל זורק וריאנטים שנעלמו לפני שנה)
+dfetch(LH+'routes-daily-state.json').then(r=>r.json()).then(d=>{
+  const last=new Date(d.last_date).getTime();
+  CURRENT_RDS=new Set(Object.entries(d.seen||{})
+    .filter(([,e])=>e&&e.last&&(last-new Date(e.last).getTime())/864e5<=30)
+    .map(([rd])=>rd));
+}).catch(()=>{});
 function isCurrent(l){ return CURRENT_RDS ? CURRENT_RDS.has(l.rd) : l.lk!=='removed'; }
 
 $('q').addEventListener('input', onSearchLine);
@@ -235,7 +240,22 @@ function pickLine(rd, line, dest, op, tt){
   // השם מהאינדקס הארצי כשיש, ורק נופלים חזרה לשם מה-pool כשאין
   Promise.all([dfetch(LH+'lines/'+fsafe(rd)+'.json').then(r=>r.json()), loadStops().catch(()=>{})])
     .then(([d])=>{
-    POOL=(d.pool||[]).filter(p=>p && p.length>=4);
+    // ה-pool הוא איחוד היסטורי של כל תחנה שהקו עצר בה אי-פעם — לא
+    // המסלול של היום. הרצף הנוכחי הוא הגרסה האחרונה שיש לה רשימת
+    // תחנות (אינדקסים לתוך ה-pool), כמו שהקו בזמן עצמו מציג אותו.
+    // בלי זה המרחקים יוצאים הזויים (351 "נסע" 437 ק"מ) ותחנות עבר
+    // מופיעות כאילו הקו עדיין עוצר בהן.
+    const pool=d.pool||[];
+    let seq=null;
+    const vs=d.versions||[];
+    for (let i=vs.length-1;i>=0;i--){
+      const st=vs[i].stops;
+      if (st && st.length>1 && typeof st[0]==='number'){
+        const s=st.map(x=>pool[x]).filter(p=>p && p.length>=4);
+        if (s.length>1){ seq=s; break; }
+      }
+    }
+    POOL=seq || (pool.filter(p=>p && p.length>=4));
     if (POOL.length<2){
       emptyResult('אין מספיק נתוני תחנות לקו הזה כדי לחשב מרחק');
       $('picked').style.display='block'; $('fromSel').innerHTML=''; $('toSel').innerHTML='';
