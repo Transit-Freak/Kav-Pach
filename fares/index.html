@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- מונע מהדפדפן להגיש גרסה ישנה של הדף מה-cache (אותו דפוס כמו בדף הבית ובהקו בזמן) -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>המחירון — כמה עולה כל קו בתחבורה הציבורית</title>
 <meta name="description" content="המחירון — בחרו קו או שתי תחנות, וקבלו את מחיר הנסיעה בפועל: נסיעה בודדת, חופשי יומי וחופשי חודשי, לפי אזורי התעריף של משרד התחבורה.">
 <meta property="og:type" content="website">
@@ -234,7 +238,7 @@ function loadStops(){
 }
 // מנטרל גרשיים/גרש (״ ' '' " חד-תו) לפני השוואה — בנתוני התחנות גרשיים
 // מסומנים כשני גרשים בודדים ('') וזה לא תמיד מה שהמקלדת מקלידה
-function norm(s){ return (s||'').normalize('NFKC').replace(/["'׳״]/g,'').toLowerCase(); }
+function norm(s){ return (s||'').normalize('NFKC').replace(/["'׳״‘’“”´`]/g,'').toLowerCase(); }
 
 const picked={from:null, to:null}; // [id,name,city,lat,lon]
 
