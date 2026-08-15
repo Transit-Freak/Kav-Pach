@@ -23,6 +23,10 @@ STOPS_TXT = os.environ.get('STOPS_TXT', 'stops.txt')
 ROUTES_TXT = os.environ.get('ROUTES_TXT', 'routes.txt')
 OUT = os.environ.get('OUT', 'fares/data/fixes.json')
 GEN_DATE = os.environ.get('GEN_DATE', '')
+# אינדקס תחנה->קווים למצב "לפי תחנות": אילו קווים עוצרים בשתי התחנות
+# שנבחרו — ובפרט האם ביניהן נוסע קו בתעריף אחיד (שאז המרחק לא קובע)
+LH_DIR = os.environ.get('LH_DIR', 'line-history/data/lines')
+CURRENT_JSON = os.environ.get('CURRENT_JSON', 'fares/data/current.json')
 
 # גבולות האזורים, כמו ב-ZONES של fares/index.html
 BOUNDS = [15.0, 40.0, 75.0, 120.0, 225.0]
@@ -153,11 +157,46 @@ def main():
                     continue
                 pairs[key] = val
 
-    out = {'gen': GEN_DATE, 'pairs': pairs, 'rail': rail, 'flat': flat}
+    # האינדקס: lines = [[מספר קו, מחיר אחיד או null], ...] לפי הקווים
+    # הפעילים השבוע; serve = {קוד תחנה: [אינדקסים לתוך lines]}. הרצף
+    # הנוכחי של כל קו נקרא כמו שהאתר עצמו קורא אותו (הגרסה האחרונה
+    # שיש לה רשימת תחנות, אינדקסים לתוך ה-pool)
+    serve, ln_tab = {}, []
+    try:
+        rds = json.load(open(CURRENT_JSON, encoding='utf-8')).get('rds') or []
+    except Exception:
+        rds = []
+    for rd in rds:
+        fp = os.path.join(LH_DIR, rd.replace('#', 'H').replace('/', '_') + '.json')
+        try:
+            d2 = json.load(open(fp, encoding='utf-8'))
+        except Exception:
+            continue
+        pool = d2.get('pool') or []
+        seq = None
+        for v in reversed(d2.get('versions') or []):
+            st = v.get('stops')
+            if not st or len(st) < 2:
+                continue
+            s = [pool[x] if isinstance(x, int) and x < len(pool) else x for x in st]
+            s = [p for p in s if isinstance(p, list) and len(p) >= 4]
+            if len(s) > 1:
+                seq = s
+                break
+        if not seq:
+            continue
+        idx = len(ln_tab)
+        ln_tab.append([d2.get('line') or '', flat.get(rd)])
+        for p in seq:
+            serve.setdefault(str(p[0]), []).append(idx)
+
+    out = {'gen': GEN_DATE, 'pairs': pairs, 'rail': rail, 'flat': flat,
+           'lines': ln_tab, 'serve': serve}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     print(f'fixes.json: {len(pairs)} pairs ({n_mm} mismatch + {n_edge} edge-band), '
           f'{len(rail)} rail pairs, {len(flat)} flat routes, '
+          f'{len(ln_tab)} lines indexed over {len(serve)} stops, '
           f'{n_conflict} conflicts skipped, {n_od} od rules read', file=sys.stderr)
 
 
