@@ -108,9 +108,11 @@
     <div class="sub">האתר מחשב עבורכם לאיזה אזור תעריף נופלת נסיעה מסוימת, על בסיס נתוני ה-GTFS הרשמיים של משרד התחבורה שכל כלי הקו הבוחן מבוססים עליהם.
       <details class="srcs">
         <summary>📚 מאיפה המידע ומה המגבלות?</summary>
-        <div class="src-l">💰 <b>טבלת התעריפים</b> — פורסמה על ידי הרשות הארצית לתחבורה ציבורית, משרד התחבורה. <a href="https://bus.gov.il/FaresDistance" target="_blank" rel="noopener">bus.gov.il/FaresDistance ›</a> — נבדק ידנית ב-14.8.2026, ובנוסף אומת מול נתוני התעריפים הרשמיים שבקובצי ה-GTFS (fare_rules) על 4,000 זוגות תחנות אמיתיים: 99.9% התאמה מלאה.</div>
+        <div class="src-l">💰 <b>טבלת התעריפים</b> — פורסמה על ידי הרשות הארצית לתחבורה ציבורית, משרד התחבורה. <a href="https://bus.gov.il/FaresDistance" target="_blank" rel="noopener">bus.gov.il/FaresDistance ›</a> — נבדק ידנית ב-14.8.2026, ובנוסף אומת מול טבלת התעריפים הרשמית שבקובצי ה-GTFS (fare_rules) על כל 968 אלף זוגות התחנות המתומחרים בה: 99.85% התאמה מלאה, והשאר — זוגות שהמשרד סיווג אחרת (רובם צמודים ממש לגבול אזור) — מיושרים אוטומטית לפי הטבלה הרשמית, שמתעדכנת כאן כל שבוע.</div>
         <div class="src-l">📏 <b>איך נמדד המרחק</b> — בשני המצבים: קו אווירי ישיר בין תחנת העלייה לתחנת הירידה. זו לא הפשטה שלנו — כך משרד התחבורה עצמו קובע את אזור התעריף (נבדק אמפירית מול המחירים הרשמיים; מדידה לאורך המסלול דווקא טועה בכ-6% מהמקרים, כי היא מענישה קווים מפותלים).</div>
-        <div class="src-l">🏝️ <b>אזור אילת והערבה</b> — שם המחירים נמוכים בכ-15% (פטור ממע"מ): נסיעה עירונית באילת עולה 6.77 ₪ במקום 8 ₪, וכן הלאה. הטבלה כאן מציגה את המחיר הארצי; באזור האפור (מעל 225 ק"מ) המחיר 74 ₪ שמוצג הוא כבר מחיר קווי אילת בפועל.</div>
+        <div class="src-l">🎫 <b>קווים בתעריף אחיד</b> — יותר ממחצית הקווים בארץ (עירוניים, שאטלים ועוד) מתומחרים רשמית במחיר קבוע לכל הקו, בלי תלות במרחק. הכלי מזהה אותם ומציג את המחיר האחיד — עם הערה מתחת לתוצאה.</div>
+        <div class="src-l">🚆 <b>רכבת ישראל</b> — מתומחרת רשמית לפי מחירון תחנות ולא לפי מרחק אווירי, שנוטה מעט לטובת הנוסע. כשבוחרים שתי תחנות רכבת, מוצג המחיר המדויק מהמחירון הרשמי.</div>
+        <div class="src-l">🏝️ <b>אזור אילת</b> — נסיעות שנוגעות בליבת אילת (העיר, אילות, באר אורה ונמל רמון) זולות בכ-15% (פטור ממע"מ): 6.77 ₪ במקום 8 ₪ בעירוני, וכן הלאה — המחיר הארצי חלקי 1.18. ההנחה חלה רק על נסיעות מאילת ואליה: נסיעות פנים-ערבה (יטבתה, קטורה וכו') הן במחיר ארצי מלא, כולל 87.32 ₪ לנסיעות הארוכות מעל 225 ק"מ. כשהכלי מזהה זוג תחנות שמתומחר רשמית במחירי אילת, הוא מציג את מחיר הפטור.</div>
         <div class="src-l">🚌🚆 <b>סוגי קווים</b> — אוטובוס, קווי דרישה, רכבת ורכבת קלה נכללים במחשבון (בקווי רכבת/רק"ל מוצג מחיר הרכבת, לא האוטובוס). מוניות שירות וכבלים לא נכללים — יש להם מבנה תעריפים נפרד לגמרי.</div>
         <div class="src-l">🎟️ הנחות (ילד/נוער, אזרח ותיק, גיל 67+ ועוד) לא מחושבות כאן — מוצג המחיר המלא בלבד. <a href="https://bus.gov.il/FaresDiscounts" target="_blank" rel="noopener">פירוט הנחות ›</a></div>
       </details>
@@ -136,45 +138,115 @@ const ZONES=[
   {n:'תכלת', c:'#06b6d4', lbl:'40–75 ק"מ',   max:75,       bus:19,   train:27,   daily:37.5, mb:315, mt:464},
   {n:'כחול', c:'#3b82f6', lbl:'75–120 ק"מ',  max:120,      bus:19,   train:30.5, daily:37.5, mb:315, mt:684},
   {n:'סגול', c:'#a855f7', lbl:'120–225 ק"מ', max:225,      bus:30.5, train:52.5, daily:60.5, mb:315, mt:684},
-  {n:'אפור', c:'#6b7280', lbl:'מעל 225 ק"מ', max:Infinity, bus:74,   train:null, daily:79.5, mb:null,mt:684},
+  {n:'אפור', c:'#6b7280', lbl:'מעל 225 ק"מ', max:Infinity, bus:87.32,train:null, daily:79.5, mb:684, mt:684},
 ];
 function zoneFor(km){ for (const z of ZONES) if (km<=z.max) return z; return ZONES[ZONES.length-1]; }
+// מרחק אווירי על אליפסואיד WGS84 (קירוב Andoyer-Lambert) — לא כדור:
+// כדור R=6371 מנפח מרחקים צפון-דרום בכ-0.3%, וזה מספיק כדי לסווג לאזור
+// היקר בטעות עשרות זוגות שיושבים ממש על גבול (נמדד: המעבר ל-WGS84 לבדו
+// מוריד את שגיאות הסיווג מול הטבלה הרשמית מ-1,405 ל-453 מתוך 968 אלף).
+// חייב להישאר זהה 1:1 ל-dist_wgs84 שב-tools/build_fare_fixes.py
 function hav(a,b){
-  const R=6371, toRad=x=>x*Math.PI/180;
-  const dLat=toRad(b[0]-a[0]), dLon=toRad(b[1]-a[1]);
-  const s=Math.sin(dLat/2)**2 + Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLon/2)**2;
-  return R*2*Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+  const A=6378.137, F=1/298.257223563, toRad=x=>x*Math.PI/180;
+  const b1=Math.atan((1-F)*Math.tan(toRad(a[0]))), b2=Math.atan((1-F)*Math.tan(toRad(b[0])));
+  const dl=toRad(b[1]-a[1]);
+  const s=Math.acos(Math.min(1,Math.max(-1,Math.sin(b1)*Math.sin(b2)+Math.cos(b1)*Math.cos(b2)*Math.cos(dl))));
+  if (!s) return 0;
+  const P=(b2+b1)/2, Q=(b2-b1)/2;
+  const X=(s-Math.sin(s))*(Math.sin(P)**2*Math.cos(Q)**2)/Math.cos(s/2)**2;
+  const Y=(s+Math.sin(s))*(Math.cos(P)**2*Math.sin(Q)**2)/Math.sin(s/2)**2;
+  return A*(s-F/2*(X+Y));
 }
-function money(v){ return v==null ? null : ('₪'+(v%1?v.toFixed(1):v)); }
+function fmt(v){ return v%1 ? (v*10%1 ? v.toFixed(2) : v.toFixed(1)) : ''+v; }
+function money(v){ return v==null ? null : ('₪'+fmt(v)); }
+// מחיר אילת (פטור מע"מ): המחיר הארצי חלקי 1.18, קטום לאגורה — כך בדיוק
+// בנויה סדרת המחירים הרשמית של אילת (8→6.77, 14.5→12.28, 19→16.10...)
+function eilatPrice(v){ return v==null ? null : Math.floor(v/1.18*100)/100; }
+
+// תיקוני-מחיר מהטבלה הרשמית (נבנה שבועית מ-fare_rules): pairs = זוגות
+// שהמשרד סיווג אחרת מהנוסחה או שיושבים ממש על גבול אזור, rail = מחירון
+// הרכבת המלא לפי זוג תחנות, flat = קווים בתעריף אחיד לכל הקו
+let FIX=null;
+dfetch('data/fixes.json').then(r=>{ if(!r.ok) throw 0; return r.json(); })
+  .then(d=>{ FIX=d; computeLine(); computeStops(); }).catch(()=>{});
+function pairKey(a,b){ return (a.length<b.length || (a.length===b.length && a<b)) ? a+'|'+b : b+'|'+a; }
 
 // טבלת הייחוס הסטטית
 $('reftable').innerHTML =
   '<thead><tr><th>אזור / מרחק</th><th>נסיעה בודדת<br>אוטובוס</th><th>נסיעה בודדת<br>רכבת</th><th>חופשי יומי</th><th>חופשי חודשי<br>ארצי</th><th>חופשי חודשי<br>+ רכבת</th></tr></thead><tbody>'+
   ZONES.map(z=>`<tr><td><i style="background:${z.c}"></i>${z.n}<span class="zn">${z.lbl}</span></td>`+
-    `<td>${money(z.bus)}</td><td>${z.train==null?'—':money(z.train)}</td><td>${money(z.daily)}</td>`+
+    `<td>${money(z.bus)}${z.bus===87.32?'<span class="zn">נוגע באילת: ₪74</span>':''}</td><td>${z.train==null?'—':money(z.train)}</td><td>${money(z.daily)}</td>`+
     `<td>${z.mb==null?'—':money(z.mb)}</td><td>${money(z.mt)}</td></tr>`).join('')+
   '</tbody>';
 
-function renderResult(km, note, isTrain){
-  const z=zoneFor(km);
+// fx (לא חובה) — תיקונים מהטבלה הרשמית שגוברים על הנוסחה:
+//   z=אינדקס אזור רשמי, eilat=סדרת פטור-מע"מ, flat=תעריף אחיד לקו,
+//   railExact=מחיר רכבת מדויק לזוג התחנות, edge=על גבול אזור בלי נתון מדויק
+function renderResult(km, note, isTrain, fx){
+  fx=fx||{};
+  const zCalc=zoneFor(km);
+  const z=(fx.z!=null && ZONES[fx.z]) ? ZONES[fx.z] : zCalc;
+  let bus=z.bus, train=(fx.railExact!=null)?fx.railExact:z.train;
+  if (fx.eilat) bus=eilatPrice(bus);
+  if (fx.flat!=null) bus=fx.flat;
   const cards=[
-    ['נסיעה בודדת · אוטובוס', z.bus, !isTrain],
-    ['נסיעה בודדת · רכבת', z.train, !!isTrain],
+    ['נסיעה בודדת · אוטובוס', bus, !isTrain],
+    ['נסיעה בודדת · רכבת', train, !!isTrain],
     ['חופשי יומי', z.daily, false],
     ['חופשי חודשי ארצי', z.mb, false],
     ['חופשי חודשי + רכבת', z.mt, !!isTrain],
   ];
   const wrap=$('resultWrap');
   wrap.classList.remove('empty');
+  const extraNotes=[];
+  if (fx.flat!=null)
+    extraNotes.push('🎫 לקו הזה תעריף רשמי אחיד: מחיר הנסיעה קבוע לכל אורכו, בלי תלות במרחק.');
+  if (fx.z!=null && z!==zCalc)
+    extraNotes.push('📋 האזור הותאם לטבלת התעריפים הרשמית — משרד התחבורה מסווג את זוג התחנות הזה ל'+
+      'אזור ה'+z.n+', למרות שלפי המרחק לבדו הוא היה נופל לאזור ה'+zCalc.n+'.');
+  if (fx.eilat)
+    extraNotes.push('🏝️ הנסיעה נוגעת באזור אילת — מוצג מחיר הפטור ממע"מ (המחיר הארצי חלקי 1.18).');
+  if (fx.railExact!=null)
+    extraNotes.push('🚆 מחיר הרכבת נלקח ישירות מהמחירון הרשמי לזוג התחנות הזה.');
+  if (fx.edge)
+    extraNotes.push('⚖️ המרחק כמעט בדיוק על גבול בין שני אזורים — במקרים כאלה המחיר בפועל נקבע לפי מדידת משרד התחבורה, שיכולה ליפול לכל צד של הגבול.');
   const trainNote = isTrain
     ? `<div class="distnote">🚆 קו רכבת/רק"ל — המנוי "חופשי חודשי ארצי" הרגיל לא כולל רכבת, צריך את המנוי "+ רכבת".</div>` : '';
   wrap.innerHTML=
     `<div class="zonebadge" style="background:${z.c}33;color:${z.c}"><i style="background:${z.c}"></i>אזור ${z.n} · ${z.lbl}</div>`+
     `<div class="distnote">${note}: כ-${km.toFixed(1)} ק"מ</div>`+trainNote+
+    extraNotes.map(t=>`<div class="distnote">${t}</div>`).join('')+
     `<div class="pricegrid">`+cards.map(([t,v,hl])=>
       v==null ? `<div class="pcard na"><div class="pn"><small>לא זמין</small></div><div class="pt">${t}</div></div>`
-              : `<div class="pcard${hl?' hl':''}"><div class="pn"><small>₪</small>${v%1?v.toFixed(1):v}</div><div class="pt">${t}</div></div>`
+              : `<div class="pcard${hl?' hl':''}"><div class="pn"><small>₪</small>${fmt(v)}</div><div class="pt">${t}</div></div>`
     ).join('')+`</div>`;
+}
+// חיפוש התיקון הרלוונטי לזוג תחנות: תעריף-קו גובר (כך רשמית — כלל עם
+// route_id גובר על כללי אזורים), אחריו זוג מדויק מהטבלה, ואם אין כלום
+// ורק הנוסחה קובעת — מסמנים זוגות שכמעט על גבול אזור
+function fixFor(codeA, codeB, km, rd, latA, latB){
+  const fx={};
+  // ליבת הפטור ממע"מ של אילת: העיר, אילות, באר אורה ונמל רמון — כל
+  // הזוגות הרשמיים במחירי הפטור מעוגנים בקצה אחד שם (קו רוחב 29.72 ומטה).
+  // משמש כשהזוג הספציפי לא נמצא בטבלה הרשמית (למשל רציף אחות שלא תומחר)
+  const geoEilat=(latA!=null && latA<=29.72) || (latB!=null && latB<=29.72);
+  if (!FIX){ fx.eilat=geoEilat; return fx; }
+  if (rd && FIX.flat && FIX.flat[rd]!=null){
+    const fp=FIX.flat[rd];
+    // שורת המנויים מוצגת לפי מחלקת המחיר של התעריף האחיד (8=צהוב;
+    // 6.77 = אותו צהוב בסדרת אילת)
+    fx.flat=fp; fx.z=0; fx.eilat=fp<8 && Math.abs(fp-eilatPrice(8))<0.02;
+    return fx;
+  }
+  const key=pairKey(''+codeA, ''+codeB);
+  if (FIX.rail && FIX.rail[key]!=null) fx.railExact=FIX.rail[key];
+  const v=FIX.pairs ? FIX.pairs[key] : null;
+  if (v!=null){ fx.z=v%8; fx.eilat=v>=8; return fx; }
+  fx.eilat=geoEilat;
+  if (fx.railExact==null){
+    for (const z of ZONES) if (z.max!==Infinity && Math.abs(km-z.max)<=0.25){ fx.edge=true; break; }
+  }
+  return fx;
 }
 function emptyResult(msg){
   const wrap=$('resultWrap');
@@ -193,7 +265,7 @@ const KIND={
 };
 function kindOf(tt){ return KIND[tt==null?'null':tt] || null; }
 
-let LINES=null, LINES_ERR=false, POOL=null, CURKIND=null, CURRENT_RDS=null, SEEN_RDS=null, SCHED=null;
+let LINES=null, LINES_ERR=false, POOL=null, CURKIND=null, CURRD=null, CURRENT_RDS=null, SEEN_RDS=null, SCHED=null;
 // המקור המוסמך ביותר: data/current.json — קווים עם נסיעה מתוכננת בשבוע
 // הקרוב, מחושב כל יום ישירות מה-GTFS הטרי בריצת update-weekly. אם הקובץ
 // טרי (עד 10 ימים) הוא מבחן הקיום היחיד; אחרת נופלים לסריקות היומיות
@@ -293,6 +365,7 @@ function onSearchLine(){
 function pickLine(rd, line, dest, op, tt){
   $('picked').style.display='none';
   CURKIND=kindOf(tt||null);
+  CURRD=rd;
   // אינדקס התחנות הארצי (data/stops.json) עבר עיבוד לשמות עדכניים —
   // ה-pool של הקו עצמו יכול להיות תמונת-מצב ישנה יותר, אז מציגים את
   // השם מהאינדקס הארצי כשיש, ורק נופלים חזרה לשם מה-pool כשאין
@@ -351,11 +424,12 @@ function computeLine(){
   const i=+$('fromSel').value, j=+$('toSel').value;
   if (i===j){ emptyResult('בחרו שתי תחנות שונות'); return; }
   // מרחק אווירי ישיר בין תחנות העלייה והירידה — כך משרד התחבורה קובע
-  // את אזור התעריף בפועל: אומת מול fare_rules הרשמי על 4,000 זוגות
-  // תחנות אמיתיים — 99.9% התאמה, לעומת 93.8% בלבד לסכימת המרחק לאורך
-  // המסלול (שמעניש נסיעות מפותלות באזור גבוה מדי)
+  // את אזור התעריף בפועל: אומת מול fare_rules הרשמי על כל 968 אלף זוגות
+  // התחנות המתומחרים — 99.85% התאמה מלאה (לעומת 93.8% בלבד לסכימת
+  // המרחק לאורך המסלול), והשארית מטופלת דרך fixes.json
   const km=hav([POOL[i][2],POOL[i][3]], [POOL[j][2],POOL[j][3]]);
-  renderResult(km, 'מרחק אווירי בין תחנות העלייה והירידה (כך נקבע התעריף הרשמי)', CURKIND && CURKIND[2]);
+  const fx=fixFor(POOL[i][0], POOL[j][0], km, CURRD, +POOL[i][2], +POOL[j][2]);
+  renderResult(km, 'מרחק אווירי בין תחנות העלייה והירידה (כך נקבע התעריף הרשמי)', CURKIND && CURKIND[2], fx);
 }
 
 /* ---------- מצב 2: לפי תחנות ---------- */
@@ -445,7 +519,9 @@ function computeStops(){
   if (!picked.from || !picked.to) return;
   if (picked.from[0]===picked.to[0]){ emptyResult('בחרו שתי תחנות שונות'); return; }
   const km=hav([picked.from[3],picked.from[4]], [picked.to[3],picked.to[4]]);
-  renderResult(km, 'מרחק אווירי בין התחנות');
+  const fx=fixFor(picked.from[0], picked.to[0], km, null, +picked.from[3], +picked.to[3]);
+  // שתי תחנות רכבת — מחיר הרכבת המדויק ידוע, והוא כנראה מה שחיפשו
+  renderResult(km, 'מרחק אווירי בין התחנות', fx.railExact!=null, fx);
 }
 
 /* מפה לבחירת תחנה בלחיצה — נטענת רק כשנכנסים למצב "לפי תחנות" */
