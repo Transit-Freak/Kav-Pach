@@ -508,7 +508,7 @@ function ChoiceScreen({ onPick }) {
             <svg viewBox="0 0 120 120" className="w-11 h-11 md:w-14 md:h-14 flex-none"><rect width="120" height="120" rx="26" fill="#0f172a"/><path d="M14 60 Q60 20 106 60 Q60 100 14 60 Z" stroke="#38bdf8" strokeWidth="6" fill="none" strokeLinejoin="round"/><circle cx="60" cy="60" r="20" fill="#38bdf8"/><circle cx="60" cy="60" r="9.5" fill="#0f172a"/><circle cx="66" cy="54" r="3.5" fill="#fff"/><path d="M22 60 H34 M86 60 H98" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" strokeDasharray="1 7"/></svg>
             <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
           </div>
-          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שישה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
+          <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שבעה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -641,9 +641,28 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
+          {/* המחירון — מחשבון מחיר הנסיעה (אפליקציה עצמאית בתיקיית fares/) */}
+          <a
+            href="fares/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#022c22 0%,#065f46 52%,#059669 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#34d399' }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28">
+                <span className="bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
+                {/* הסמל של "המחירון" — כרטיס נסיעה (זהה לכותרת הכלי עצמו) */}
+                <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🎫</span>
+              </div>
+              <h2 className="text-3xl font-[900] text-emerald-200">המחירון</h2>
+              <p className="text-emerald-100/80 font-bold mt-2 text-sm leading-relaxed">כמה עולה הנסיעה — בודדת, יומי וחודשי, לכל קו או בין שתי תחנות</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-emerald-300 text-emerald-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
+
         </div>
 
-        <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן</p>
+        <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן · <a href="mailto:shlomihartman@gmail.com" className="hover:underline" dir="ltr">shlomihartman@gmail.com</a></p>
       </div>
     </div>
   );
@@ -4524,7 +4543,7 @@ const DAYS_FILTER = [
                   </p>
                   <div className="bg-white border-2 border-indigo-100 text-slate-700 px-6 py-3 rounded-xl font-black shadow-sm flex flex-col md:flex-row items-center gap-2">
                     <span>להצעות ולשיפורים:</span>
-                    <span className="text-indigo-600" dir="ltr">ahlomihartman@gmail.com</span>
+                    <a href="mailto:shlomihartman@gmail.com" className="text-indigo-600 hover:underline" dir="ltr">shlomihartman@gmail.com</a>
                   </div>
                 </div>
               </div>
