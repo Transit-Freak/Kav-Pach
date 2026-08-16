@@ -431,8 +431,11 @@ document.getElementById('sabtn').onclick=async()=>{
 // ומופיע מקרא צבעי 1–10
 function saMode(on){
   document.getElementById('heatmap').classList.toggle('samode',on);
+  // מקרא ממוספר: כל צבע עם מספר האשכול שלו (בקשת איריס)
   document.getElementById('saleg').innerHTML=on
-    ? ' · אשכול חברתי-כלכלי: 1 (חלש) '+[1,2,3,4,5,6,7,8,9,10].map(c=>`<i style="background:${SACOL(c)}"></i>`).join('')+' 10 (חזק)'
+    ? ' · <b>אשכול חברתי-כלכלי:</b> '+[1,2,3,4,5,6,7,8,9,10].map(c=>
+        `<b style="display:inline-block;min-width:18px;text-align:center;background:${SACOL(c)};color:#fff;border-radius:4px;padding:1px 3px;margin:0 1px;font-size:10.5px" title="אשכול ${c} מתוך 10${c<=3?' — חלש':(c>=8?' — חזק':'')}">${c}</b>`).join('')
+      +' <span style="color:#64748b">1 = החלש ביותר · 10 = החזק ביותר · לחיצה על אזור במפה מציגה את האשכול שלו</span>'
     : '';
 }
 // מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
