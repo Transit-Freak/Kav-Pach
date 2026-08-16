@@ -38,9 +38,9 @@
       <button class="btn" id="ztinfra" style="display:none" title="נמלים, שדות תעופה, בתי זיקוק, מחזור">⚙️ תשתית</button>
       <button class="btn" id="stplan" style="display:none" title="אזורים שעדיין לא נבנו">🏗️ כולל אזורים בהקמה</button>
       <div class="lp-sec">סמל המפה הארצית</div>
-      <button class="btn on" id="symlines" title="גודל וצבע העיגול לפי מספר קווי האוטובוס שמגיעים לאזור">🚌 קווים · עיגול</button>
+      <button class="btn" id="symlines" title="גודל וצבע העיגול לפי מספר קווי האוטובוס שמגיעים לאזור">🚌 קווים · עיגול</button>
       <button class="btn" id="symstops" title="משולש שגודלו לפי מספר תחנות האוטובוס הפעילות בתוך האזור">🚏 תחנות · משולש</button>
-      <button class="btn" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
+      <button class="btn on" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
       <button class="btn" id="symscore" title="כוכב בצבע ובגודל לפי ציון השירות הרשמי של משרד התחבורה (0–100)">⭐ ציון משרד התחבורה · כוכב</button>
       <div class="lp-sec">שכבות מפה</div>
       <button class="btn" id="sabtn" title="צביעת המפה לפי המדד החברתי-כלכלי (למ״ס 2021)">🗺️ אשכולות חברתי-כלכלי</button>
@@ -444,8 +444,10 @@ document.getElementById('modebtn').onclick=()=>{
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(wrap.style.display!=='none' && h) openPark(h,false);
 };
-// סמל המפה הארצית: קווים (עיגול) / תחנות (משולש) / תדירות (עיגול) / ציון המשרד (כוכב)
-let SYMMODE='lines';
+// סמל המפה הארצית: קווים (עיגול) / תחנות (משולש) / תדירות (עיגול) / ציון המשרד (כוכב).
+// ברירת המחדל (בקשת איריס): אזורי התעשייה עם תדירות הקווים — שאר
+// השכבות והסמלים בבחירה ידנית, כדי לא להציף את הגולש במידע
+let SYMMODE='freq';
 for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score']])
   document.getElementById(id).onclick=()=>{
     SYMMODE=mode;
