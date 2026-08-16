@@ -34,7 +34,7 @@
 
 **מזהים (id) שהסקריפט תלוי בהם — לא לשנות ולא למחוק:**
 `backbtn` `csvbtn` `gapbox` `hday` `heatbtn` `heatview` `hleg` `hpeak`
-`hscope` `layersbtn` `layerspanel` `msg` `panel` `q`
+`hscope` `layersbtn` `layerspanel` `modebtn` `msg` `panel` `q` `sabtn`
 `stplan` `symfreq` `symlines` `symscore` `symstops` `tbl` `tblview`
 `walkrng` `walkval` `wrap`
 

@@ -145,8 +145,16 @@ jobs:
           for i in 1 2 3 4; do
             git fetch origin "$BR" && git reset --hard "origin/$BR"
             mkdir -p parks
+            # קובצי האשכולות נבנים בריצה נפרדת (socio-fetch) — בלי השימור
+            # הזה ה-rm -rf מוחק אותם בכל רענון ושכבת האשכולות באתר מתה
+            for f in socio.json socio-sa.json socio-sa-polys.json; do
+              [ -f "parks/data/$f" ] && cp "parks/data/$f" "/tmp/keep-$f" || true
+            done
             rm -rf parks/data
             cp -r /tmp/parksout parks/data
+            for f in socio.json socio-sa.json socio-sa-polys.json; do
+              [ -f "/tmp/keep-$f" ] && cp "/tmp/keep-$f" "parks/data/$f" || true
+            done
             git add parks/data
             if git diff --cached --quiet; then
               echo "unchanged — nothing to commit"; break; fi
