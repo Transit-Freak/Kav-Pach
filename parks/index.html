@@ -19,8 +19,10 @@
 </head>
 <body>
   <div class="top">
-    <!-- הכותרת היא קישור הביתה — לדף שמרכז את כל כלי הקו הבוחן -->
-    <h1><a href="../" style="color:inherit;text-decoration:none" title="לדף שמרכז את כל כלי הקו הבוחן">🏭 נגישות אזורי תעשייה <span style="font-size:.55em;font-weight:700;color:#0f766e;white-space:nowrap">— גרסת בטא</span></a></h1>
+    <!-- לחיצה על הכותרת חוזרת למסך הראשי של הכלי (המפה הארצית) —
+         מכל מקום: מתוך אזור, מהטבלה, מכל מצב. הקישור לשאר הכלים בפוטר -->
+    <h1 id="homebtn" style="cursor:pointer" title="חזרה למסך הראשי — המפה הארצית">🏭 נגישות אזורי תעשייה</h1>
+    <span class="tag">גרסת בטא</span>
     <span class="vseg">
       <button class="btn" id="heatbtn" title="מפת המצב הארצית">🗺️ מפה</button>
       <button class="btn" id="backbtn" title="טבלת כל האזורים">📋 רשימה</button>
@@ -112,7 +114,7 @@
     </div>
     <div class="footrow">
       <div class="logorow"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"></div>
-      <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · © כל הזכויות שמורות למחלקת קידום תחבורה ציבורית בהסתדרות העובדים הכללית · <a href="../" target="_blank" rel="noopener">→ לכל כלי הקו הבוחן</a></div>
+      <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · © כל הזכויות שמורות למחלקת קידום תחבורה ציבורית בהסתדרות העובדים הכללית · <a href="../" target="_blank" rel="noopener">🚌 לעוד כלים ליעילות התחבורה הציבורית ›</a></div>
     </div>
   </div>
 
@@ -382,6 +384,8 @@ function openHeatmap(fit=true){
   if(bounds && (fit || f)) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
 }
 heatbtn.onclick=()=>{openHeatmap(true);if(location.hash) history.replaceState(null,'',location.pathname+location.search);};
+// הכותרת = "הביתה" של הכלי: חזרה למפה הארצית מכל מקום (בקשת שלמה ואיריס)
+document.getElementById('homebtn').onclick=()=>{openHeatmap(true);if(location.hash) history.replaceState(null,'',location.pathname+location.search);};
 const layerspanel=document.getElementById('layerspanel');
 document.getElementById('layersbtn').onclick=(e)=>{
   e.stopPropagation();

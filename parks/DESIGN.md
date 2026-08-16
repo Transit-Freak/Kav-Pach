@@ -33,7 +33,7 @@
 משלך. אסור לשנות או למחוק את השמות שהסקריפט מחפש:
 
 **מזהים (id) שהסקריפט תלוי בהם — לא לשנות ולא למחוק:**
-`backbtn` `csvbtn` `gapbox` `hday` `heatbtn` `heatview` `hleg` `hpeak`
+`backbtn` `csvbtn` `gapbox` `hday` `heatbtn` `heatview` `hleg` `homebtn` `hpeak`
 `hsall` `hscopeseg` `hsin` `layersbtn` `layerspanel` `lyRoutes` `lyStops`
 `modebtn` `msg` `panel` `q` `sabtn` `stplan` `symfreq` `symlines`
 `symscore` `symstops` `tbl` `tblview` `walkrng` `walkrow` `walkval`
