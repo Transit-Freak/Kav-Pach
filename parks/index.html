@@ -19,8 +19,8 @@
 </head>
 <body>
   <div class="top">
-    <!-- הכותרת היא קישור הביתה — לחיצה מחזירה לדף הבית של הקו הבוחן -->
-    <h1><a href="../" style="color:inherit;text-decoration:none" title="חזרה לדף הבית של הקו הבוחן">🏭 נגישות אזורי תעשייה</a></h1>
+    <!-- הכותרת היא קישור הביתה — לדף שמרכז את כל כלי הקו הבוחן -->
+    <h1><a href="../" style="color:inherit;text-decoration:none" title="לדף שמרכז את כל כלי הקו הבוחן">🏭 נגישות אזורי תעשייה <span style="font-size:.55em;font-weight:700;color:#0f766e;white-space:nowrap">— גרסת בטא</span></a></h1>
     <span class="vseg">
       <button class="btn" id="heatbtn" title="מפת המצב הארצית">🗺️ מפה</button>
       <button class="btn" id="backbtn" title="טבלת כל האזורים">📋 רשימה</button>
@@ -44,6 +44,7 @@
       <button class="btn" id="sabtn" title="צביעת המפה לפי המדד החברתי-כלכלי (למ״ס 2021)">🗺️ אשכולות חברתי-כלכלי</button>
       <div class="lp-sec">מדידה</div>
       <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
+      <div style="font-size:11px;font-weight:600;color:#64748b;max-width:230px;line-height:1.45">עד לאן נמדד זמן ההליכה מהתחנה: <b>מרכז</b> = ללב האזור ("להגיע לעבודה") · <b>כניסה</b> = לקצה הקרוב. לחיצה מחליפה ומעדכנת את כל המספרים.</div>
     </div>
     </span>
   </div>
@@ -74,16 +75,15 @@
   <div class="wrap" id="wrap" style="display:none">
     <div class="mapwrap2">
       <div class="mapctl">
-      <div class="legend">
-        <span><i style="background:#16a34a"></i> בתוך האזור</span>
-        <span><i style="background:#84cc16"></i> נגיש · עד ~5 דק׳ הליכה</span>
-        <span><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>
+      <div class="legend" style="gap:7px">
+        <button class="btn on" id="lyStops" title="הצגת תחנות האוטובוס סביב האזור, צבועות לפי מרחק ההליכה">🚏 תחנות</button>
+        <button class="btn" id="lyRoutes" title="הצגת מסלולי כל הקווים שמשרתים את האזור, צבועים לפי התדירות">🚌 מסלולי הקווים</button>
       </div>
-      <div class="legend" style="align-items:center;gap:9px">
+      <div class="legend" id="zlegend"></div>
+      <div class="legend" id="walkrow" style="align-items:center;gap:9px">
         <span>🚶 מציג תחנות עד <b id="walkval">10</b> דק׳ הליכה</span>
         <input type="range" id="walkrng" title="גררו כדי להציג על המפה רק תחנות עד מספר דקות ההליכה שתבחרו (0–20)" min="0" max="20" value="10" style="flex:1;min-width:120px;max-width:280px;accent-color:#0f766e">
       </div>
-      <div class="legend maphint">🚌 לחיצה על קו ברשימה מציגה את מסלולו על המפה · צבע מספר הקו = תדירות: ירוק=גבוהה, אדום=נמוכה</div>
       </div>
       <div id="map"></div>
     </div>
@@ -93,7 +93,7 @@
   <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
     <div class="legend" style="margin:0;align-items:center">
       <span class="seg"><button class="btn on" id="hpeak" title="רק הגעות בשעות ההגעה והחזרה מהעבודה: 06:00–09:00 ו-15:00–19:00 ביום חול">⏰ שעות שיא</button><button class="btn" id="hday" title="כל ההגעות לאורך היום כולו">🗓️ כל היום</button></span>
-      <button class="btn ghost dark" id="hscope" title="לספור רק קווים שנכנסים פנימה, או גם קווים שעוצרים בשערי הכניסה">🏭 נכנסים פנימה בלבד</button>
+      <span class="seg" id="hscopeseg"><button class="btn on" id="hsin" title="סופרים רק קווים שנכנסים לתוך שטח האזור עצמו">🏭 נכנסים פנימה</button><button class="btn" id="hsall" title="סופרים גם קווים שעוצרים בשערי הכניסה, עד 5 דקות הליכה">🚪 גם שערי כניסה</button></span>
     </div>
     <div class="mapwrap"><div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div><div class="maplegend"><span id="hleg"></span></div></div>
     <div class="legend" id="gapbox" style="margin:0"></div>
@@ -183,7 +183,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='23';
+const PK_BUILD='24';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -325,7 +325,9 @@ function openHeatmap(fit=true){
   const scol=(sf)=>sf==null?'#94a3b8':(sf<30?'#dc2626':(sf<55?'#eab308':'#16a34a'));
   // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
   document.getElementById('hpeak').parentElement.style.visibility=SYMMODE=='lines'?'visible':'hidden';
-  document.getElementById('hscope').style.visibility=(SYMMODE=='lines'||SYMMODE=='freq')?'visible':'hidden';
+  document.getElementById('hscopeseg').style.visibility=(SYMMODE=='lines'||SYMMODE=='freq')?'visible':'hidden';
+  document.getElementById('hsin').classList.toggle('on',HEATSCOPE=='in');
+  document.getElementById('hsall').classList.toggle('on',HEATSCOPE=='all');
   document.getElementById('hleg').innerHTML=
     SYMMODE=='score'
       ? `⭐ ציון משרד התחבורה: <i style="background:#dc2626"></i> עד 30 · <i style="background:#eab308"></i> 30–55 · <i style="background:#16a34a"></i> 55+ · <i style="background:#94a3b8"></i> אין ציון`
@@ -456,11 +458,9 @@ function gapStats(){
 }
 document.getElementById('hpeak').onclick=()=>{HEATMODE='peak';openHeatmap(false);};
 document.getElementById('hday').onclick=()=>{HEATMODE='day';openHeatmap(false);};
-document.getElementById('hscope').onclick=()=>{
-  HEATSCOPE=HEATSCOPE=='all'?'in':'all';
-  document.getElementById('hscope').textContent=HEATSCOPE=='all'?'🚪 כולל שערי כניסה':'🏭 נכנסים פנימה בלבד';
-  openHeatmap(false);
-};
+// שתי האופציות גלויות זו לצד זו, כמו שעות שיא/כל היום (בקשת איריס)
+document.getElementById('hsin').onclick=()=>{HEATSCOPE='in';openHeatmap(false);};
+document.getElementById('hsall').onclick=()=>{HEATSCOPE='all';openHeatmap(false);};
 // כפתורי השכבות: מציגים/מסתירים כל שכבה בטבלה ובמפת החום
 document.getElementById('stplan').onclick=()=>{
   SHOWPLAN=!SHOWPLAN;
@@ -476,9 +476,59 @@ for(const k of ['ind','emp','infra']) document.getElementById('zt'+k).onclick=()
 // מחוון ההליכה (0–20 דק') — מציג/מסתיר תחנות בדף האזור לפי זמן ההליכה
 const walkrng=document.getElementById('walkrng'), walkval=document.getElementById('walkval');
 walkrng.oninput=()=>{ walkval.textContent=walkrng.value; if(curPark) drawStops(curPark); };
+// שכבות בתוך אזור (בקשת איריס): תחנות ומסלולי קווים נפרדים, מקרא לפי הבחירה
+let SHOWSTOPS=true, SHOWROUTES=false;
+function zLegend(){
+  const parts=[];
+  if(SHOWSTOPS) parts.push(
+    `<span title="תחנות שנמצאות בתוך גבולות האזור עצמו"><i style="background:#16a34a"></i> בתוך האזור</span>`,
+    `<span title="תחנות עד 5 דקות הליכה אמיתית מהאזור — מרחק נוח יומיומית"><i style="background:#84cc16"></i> נגיש · עד ~5 דק׳ הליכה</span>`,
+    `<span title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית"><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>`);
+  if(SHOWROUTES) parts.push(
+    `<span style="font-weight:800">🚌 צבע מסלול = תדירות:</span>`,
+    `<span title="אוטובוס כל 20 דקות או פחות ביום חול"><i style="background:#16a34a"></i> ≤20 דק׳</span>`,
+    `<span><i style="background:#4d7c0f"></i> ≤35</span>`,
+    `<span><i style="background:#ca8a04"></i> ≤50</span>`,
+    `<span><i style="background:#ea580c"></i> ≤70</span>`,
+    `<span title="אוטובוס בתדירות נמוכה מדי — המתנה של יותר משעה ועשר דקות"><i style="background:#dc2626"></i> מעל 70</span>`,
+    `<span title="מעט מדי נסיעות ביום חול לחישוב תדירות"><i style="background:#334155"></i> מעט נסיעות</span>`);
+  document.getElementById('zlegend').innerHTML=parts.join('');
+  document.getElementById('zlegend').style.display=parts.length?'flex':'none';
+  document.getElementById('walkrow').style.display=SHOWSTOPS?'flex':'none';
+}
+function drawAllRoutes(d){
+  if(window._allRoutes){window._allRoutes.remove();window._allRoutes=null;}
+  if(!SHOWROUTES||!map) return;
+  const al=window._allRoutes=L.layerGroup().addTo(map);
+  const lines=(WALKMODE=='c'?d.lines:(d.linesE||d.lines))||[];
+  const seen=new Set();
+  for(const L2 of lines){
+    if(!L2.rid||seen.has(L2.rid)) continue;
+    seen.add(L2.rid);
+    const col=headCol(medHead(L2.wd||[]));
+    fetch('data/shp/'+L2.rid+'.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(sh=>{
+      if(window._allRoutes!==al) return;   // כבר עברו לאזור אחר
+      L.polyline(decPoly(sh.e),{color:col,weight:3.5,opacity:.75})
+        .bindPopup(`<b>קו ${esc(L2.num)}</b><br>${esc(L2.dest)}`).addTo(al);
+    }).catch(()=>{});
+  }
+}
+document.getElementById('lyStops').onclick=()=>{
+  SHOWSTOPS=!SHOWSTOPS;
+  document.getElementById('lyStops').classList.toggle('on',SHOWSTOPS);
+  if(curPark) drawStops(curPark);
+  zLegend();
+};
+document.getElementById('lyRoutes').onclick=()=>{
+  SHOWROUTES=!SHOWROUTES;
+  document.getElementById('lyRoutes').classList.toggle('on',SHOWROUTES);
+  if(curPark) drawAllRoutes(curPark);
+  zLegend();
+};
 function drawStops(d){
   if(window._stopsLayer) window._stopsLayer.remove();
   const sl=window._stopsLayer=L.layerGroup().addTo(map);
+  if(!SHOWSTOPS) return;
   const lim=+walkrng.value;
   const cen=polyCentroid(d.polys);
   for(const s of d.stops){
@@ -569,17 +619,20 @@ function openPark(f,push=true){
     }
     curPark=d;
     drawStops(d);   // התחנות בשכבה נפרדת — מסוננות לפי מחוון ההליכה
+    drawAllRoutes(d);   // מסלולי הקווים — אם שכבת המסלולים דלוקה
+    zLegend();
     // תיבת סיכום צפה על מפת האזור: כמה תחנות יש ובאיזה מרחק
     if(window._stopCtl){window._stopCtl.remove();window._stopCtl=null;}
     {
       const ni=d.stops.filter(s=>sTier(s)=='in').length,
             ng=d.stops.filter(s=>sTier(s)=='gate').length,
             nn2=d.stops.filter(s=>sTier(s)=='near').length;
-      const ctl=L.control({position:'topright'});
+      // בפינה התחתונה — למעלה היא מסתירה את כפתורי השכבות והמקרא
+      const ctl=L.control({position:'bottomright'});
       ctl.onAdd=()=>{
         const el=L.DomUtil.create('div');
         el.style.cssText='background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:7px 11px;font:700 12px Assistant,Heebo,sans-serif;color:#0f172a;direction:rtl';
-        el.innerHTML=`🚏 <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f">${ng}</b> נגיש · <b style="color:#a16207">${nn2}</b> רחוק`;
+        el.innerHTML=`🚏 <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">${ng}</b> <span title="תחנות עד 5 דקות הליכה אמיתית מהאזור">נגיש</span> · <b style="color:#a16207" title="תחנות במרחק 5–10 דקות הליכה">${nn2}</b> <span title="תחנות במרחק 5–10 דקות הליכה">רחוק</span>`;
         return el;
       };
       ctl.addTo(map);
