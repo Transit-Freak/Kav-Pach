@@ -34,8 +34,9 @@
 
 **מזהים (id) שהסקריפט תלוי בהם — לא לשנות ולא למחוק:**
 `backbtn` `csvbtn` `gapbox` `hday` `heatbtn` `heatview` `hleg` `hpeak`
-`hscope` `layersbtn` `layerspanel` `modebtn` `msg` `panel` `q` `sabtn`
-`stplan` `tbl` `tblview` `walkrng` `walkval` `wrap`
+`hscope` `layersbtn` `layerspanel` `msg` `panel` `q`
+`stplan` `symfreq` `symlines` `symscore` `symstops` `tbl` `tblview`
+`walkrng` `walkval` `wrap`
 
 **מחלקות שהסקריפט מוסיף/מסיר בזמן ריצה:** `on`, `open` — העיצוב שלהן
 ב-style.css קובע איך נראה מצב "דלוק"/"פתוח". אפשר לעצב אותן, אסור

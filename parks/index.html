@@ -19,8 +19,8 @@
 </head>
 <body>
   <div class="top">
-    <h1>🏭 נגישות אזורי תעשייה</h1>
-    <span class="tag">ניסוי</span>
+    <!-- הכותרת היא קישור הביתה — לחיצה מחזירה לדף הבית של הקו הבוחן -->
+    <h1><a href="../" style="color:inherit;text-decoration:none" title="חזרה לדף הבית של הקו הבוחן">🏭 נגישות אזורי תעשייה</a></h1>
     <span class="vseg">
       <button class="btn" id="heatbtn" title="מפת המצב הארצית">🗺️ מפה</button>
       <button class="btn" id="backbtn" title="טבלת כל האזורים">📋 רשימה</button>
@@ -35,10 +35,11 @@
       <button class="btn" id="ztemp" style="display:none" title="פארקי הייטק, מתחמי משרדים ומסחר, מע&quot;ר">🏢 תעסוקה</button>
       <button class="btn" id="ztinfra" style="display:none" title="נמלים, שדות תעופה, בתי זיקוק, מחזור">⚙️ תשתית</button>
       <button class="btn" id="stplan" style="display:none" title="אזורים שעדיין לא נבנו">🏗️ כולל אזורים בהקמה</button>
-      <div class="lp-sec">שכבות מפה</div>
-      <button class="btn" id="sabtn" title="צביעת המפה לפי המדד החברתי-כלכלי (למ״ס 2021)">🗺️ אשכולות חברתי-כלכלי</button>
-      <div class="lp-sec">מדידה</div>
-      <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
+      <div class="lp-sec">סמל המפה הארצית</div>
+      <button class="btn on" id="symlines" title="גודל וצבע העיגול לפי מספר קווי האוטובוס שמגיעים לאזור">🚌 קווים · עיגול</button>
+      <button class="btn" id="symstops" title="משולש שגודלו לפי מספר תחנות האוטובוס הפעילות בתוך האזור">🚏 תחנות · משולש</button>
+      <button class="btn" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
+      <button class="btn" id="symscore" title="כוכב בצבע ובגודל לפי ציון השירות הרשמי של משרד התחבורה (0–100)">⭐ ציון משרד התחבורה · כוכב</button>
     </div>
     </span>
   </div>
@@ -60,7 +61,6 @@
           <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או בשערי הכניסה">שעות שיא ⏰ <span class="arr"></span></th>
           <th data-k="sf" class="num" style="display:none" title="הציון המשוקלל של משרד התחבורה לאזור הסטטיסטי (זמינות, נגישות, תחרותיות, אמינות)">ציון משרד התחבורה 📈 <span class="arr"></span></th>
           <th data-k="in" class="num" title="מספר תחנות האוטובוס שבתוך גבולות האזור · לחיצה ממיינת">תחנות בפנים <span class="arr"></span></th>
-          <th data-k="cov" class="num" title="אחוז משטח האזור שנמצא עד 100 מ׳ משביל הולכי-רגל ממופה — כמה נוח להגיע ברגל מהתחנה למפעלים · לחיצה ממיינת">כיסוי הליכה <span class="arr"></span></th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -74,7 +74,6 @@
         <span><i style="background:#16a34a"></i> בתוך האזור</span>
         <span><i style="background:#84cc16"></i> נגיש · עד ~5 דק׳ הליכה</span>
         <span><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>
-        <span><i style="background:#14b8a6;border-radius:2px;width:14px;height:4px"></i> שבילי הולכי רגל בתוך האזור</span>
       </div>
       <div class="legend" style="align-items:center;gap:9px">
         <span>🚶 מציג תחנות עד <b id="walkval">10</b> דק׳ הליכה</span>
@@ -180,25 +179,15 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='22';
+const PK_BUILD='23';
 const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
-let SOCIO=null,SOCIOSA=null;
-function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
-function socioOf(city){
-  if(!SOCIO||!SOCIO.by_city) return null;
-  if(!SOCIO._n){SOCIO._n={};for(const k in SOCIO.by_city)SOCIO._n[normCity(k)]=SOCIO.by_city[k];}
-  return SOCIO._n[normCity(city)]||null;
-}
-fetch('data/socio.json'+DV).then(r=>r.ok?r.json():null).catch(()=>null).then(sd=>{SOCIO=sd});
-fetch('data/socio-sa.json'+DV).then(r=>r.ok?r.json():null).catch(()=>null).then(sd=>{SOCIOSA=sd})
-  .finally(()=>
 fetch('data/parks.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(idx=>{
   IDX=idx;
   renderTable();
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(h && idx.some(p=>p.f===h)) openPark(h,false);
   else openHeatmap(true);   // מפת החום היא מסך הפתיחה; "חזרה לרשימה" מוביל לטבלה
-}).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'}));
+}).catch(()=>{msg.style.display='block';msg.textContent='הנתונים עדיין בהפקה ראשונה — נסו שוב בעוד כמה דקות 🚧'});
 
 function renderTable(){
   const f=(q.value||'').trim();
@@ -241,7 +230,6 @@ function renderTable(){
 ${sv?`
       <td class="num">${p.sf==null?'<span class="pill p0">—</span>':`<span class="pill" style="background:${p.sf<30?'#fee2e2':(p.sf<55?'#fef9c3':'#dcfce7')};color:${p.sf<30?'#7f1d1d':(p.sf<55?'#713f12':'#14532d')}">${p.sf}</span>`}</td>`:''}
       <td class="num">${pill(p.in??0,'pi')}</td>
-      <td class="num">${Math.round((p.cov||0)*100)}%<span class="covmini"><i style="width:${Math.round((p.cov||0)*100)}%"></i></span></td>
     </tr>`}).join('');
   document.querySelectorAll('#tbl th').forEach(th=>{
     th.querySelector('.arr').textContent = th.dataset.k===sortK ? (sortDir<0?'▼':'▲') : '';
@@ -315,29 +303,60 @@ function openHeatmap(fit=true){
     const i=cnt(p,'li'), g=cnt(p,'lg'), n=cnt(p,'ln');
     return HEATSCOPE=='in'? i : i+g+n;
   };
+  // סף לכל מצב סמל: קווים / תחנות בפנים / יציאות ביום / ציון המשרד
   const TH=HEATMODE=='peak'?[3,8,20]:[5,15,40];
-  const hcol=(tot)=>{if(!tot)return'#dc2626';if(tot<=TH[0])return'#fde047';if(tot<=TH[1])return'#84cc16';if(tot<=TH[2])return'#16a34a';return'#065f46'};
-  const hsiz=(tot)=>{if(!tot)return 8;if(tot<=TH[0])return 9;if(tot<=TH[1])return 13;if(tot<=TH[2])return 18;return 24};
+  const THMAP={lines:TH, stops:[2,6,15], freq:[15,60,180]};
+  const T=THMAP[SYMMODE]||TH;
+  const hcol=(v)=>{if(!v)return'#dc2626';if(v<=T[0])return'#fde047';if(v<=T[1])return'#84cc16';if(v<=T[2])return'#16a34a';return'#065f46'};
+  const hsiz=(v)=>{if(!v)return 8;if(v<=T[0])return 9;if(v<=T[1])return 13;if(v<=T[2])return 18;return 24};
+  const scol=(sf)=>sf==null?'#94a3b8':(sf<30?'#dc2626':(sf<55?'#eab308':'#16a34a'));
+  // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
+  document.getElementById('hpeak').parentElement.style.visibility=SYMMODE=='lines'?'visible':'hidden';
+  document.getElementById('hscope').style.visibility=(SYMMODE=='lines'||SYMMODE=='freq')?'visible':'hidden';
   document.getElementById('hleg').innerHTML=
-    `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${TH[0]} · `+
-    `<i style="background:#84cc16"></i> ${TH[0]+1}–${TH[1]} · <i style="background:#16a34a"></i> ${TH[1]+1}–${TH[2]} · `+
-    `<i style="background:#065f46"></i> ${TH[2]}+`;
+    SYMMODE=='score'
+      ? `⭐ ציון משרד התחבורה: <i style="background:#dc2626"></i> עד 30 · <i style="background:#eab308"></i> 30–55 · <i style="background:#16a34a"></i> 55+ · <i style="background:#94a3b8"></i> אין ציון`
+      : (SYMMODE=='stops'?'🚏 תחנות בתוך האזור: ':SYMMODE=='freq'?'🕐 יציאות אוטובוס ביום חול: ':'')+
+        `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${T[0]} · `+
+        `<i style="background:#84cc16"></i> ${T[0]+1}–${T[1]} · <i style="background:#16a34a"></i> ${T[1]+1}–${T[2]} · `+
+        `<i style="background:#065f46"></i> ${T[2]}+`;
+  const triIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+    html:`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20"><polygon points="10,2 19,18 1,18" fill="${c}" stroke="#fff" stroke-width="1.6"/></svg>`});
+  const starIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+    html:`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20"><path d="M10 1.5 12.6 7.2 18.8 7.9 14.2 12.1 15.5 18.2 10 15.1 4.5 18.2 5.8 12.1 1.2 7.9 7.4 7.2 Z" fill="${c}" stroke="#fff" stroke-width="1.2"/></svg>`});
   for(const p of IDX){
     if(!ZTYPES[ztOf(p)]) continue;
     if(!SHOWPLAN&&isPlan(p)) continue;
     if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
     const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln');
     const tot=zcount(p);
-    const modeTxt=WALKMODE=='c'?'עד מרכז':'עד כניסה';
-    const pkI=WALKMODE=='e'?(p.pkie||0):(p.pki||0), pkG=WALKMODE=='e'?(p.pkge||0):(p.pkg||0);
-    const body=HEATMODE=='peak'
-      ?(tot?`קווים בשעות השיא (${modeTxt}): <b>${tot}</b><br>נכנסים פנימה: ${pkI} · בשערי הכניסה: ${pkG}<br><span style="color:#64748b">בכל היום: ${li+lg+ln}</span>`
-           :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
-      :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
-           :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
-    const marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
-      .bindPopup(`<b>${esc(p.name)}</b>${isPlan(p)?' <span style="color:#b45309">🏗️ טרם נבנה</span>':''}${p.city?'<br>'+esc(p.city):''}<br>`+body)
-      .addTo(heatLayer);
+    const head=`<b>${esc(p.name)}</b>${isPlan(p)?' <span style="color:#b45309">🏗️ טרם נבנה</span>':''}${p.city?'<br>'+esc(p.city):''}<br>`;
+    let marker;
+    if(SYMMODE=='stops'){
+      const v=p.in||0;
+      marker=L.marker([p.la,p.lo],{icon:triIcon(Math.max(12,hsiz(v)*1.5),hcol(v)),opacity:isPlan(p)?.5:1})
+        .bindPopup(head+(v?`תחנות אוטובוס בתוך האזור: <b>${v}</b>`:`<b style="color:#dc2626">אין אף תחנה בתוך האזור</b>`));
+    }else if(SYMMODE=='freq'){
+      const v=HEATSCOPE=='in'?(p.dwi||0):((p.dwi||0)+(p.dwg||0));
+      marker=L.circleMarker([p.la,p.lo],{radius:hsiz(v),color:'#fff',weight:2.5,fillColor:hcol(v),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
+        .bindPopup(head+(v?`יציאות אוטובוס ביום חול: <b>${v}</b><br><span style="color:#64748b">${HEATSCOPE=='in'?'קווים שנכנסים פנימה':'כולל שערי הכניסה'} · קווים: ${li+lg}</span>`:`<b style="color:#dc2626">אפס יציאות ביום חול</b>`));
+    }else if(SYMMODE=='score'){
+      const sf=p.sf;
+      marker=L.marker([p.la,p.lo],{icon:starIcon(sf==null?12:Math.max(14,10+sf/4),scol(sf)),opacity:isPlan(p)?.5:1})
+        .bindPopup(head+(sf==null?'אין ציון משרד התחבורה לאזור הזה'
+          :`⭐ ציון השירות של משרד התחבורה<div style="text-align:center;font-size:26px;font-weight:900;color:${scol(sf)}">${sf}%</div><span style="color:#64748b">0–100 · משקלל זמינות, נגישות, תחרותיות ואמינות</span>`));
+    }else{
+      const modeTxt=WALKMODE=='c'?'עד מרכז':'עד כניסה';
+      const pkI=WALKMODE=='e'?(p.pkie||0):(p.pki||0), pkG=WALKMODE=='e'?(p.pkge||0):(p.pkg||0);
+      const body=HEATMODE=='peak'
+        ?(tot?`קווים בשעות השיא (${modeTxt}): <b>${tot}</b><br>נכנסים פנימה: ${pkI} · בשערי הכניסה: ${pkG}<br><span style="color:#64748b">בכל היום: ${li+lg+ln}</span>`
+             :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
+        :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
+             :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
+      marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
+        .bindPopup(head+body);
+    }
+    marker.addTo(heatLayer);
     if(!bounds){bounds=L.latLngBounds([p.la,p.lo],[p.la,p.lo]);}
     else bounds.extend([p.la,p.lo]);
     marker.on('click',()=>{FROM='heat';openPark(p.f,true);});
@@ -363,28 +382,16 @@ document.getElementById('layersbtn').onclick=(e)=>{
   }
 };
 document.addEventListener('click',(e)=>{if(!layerspanel.contains(e.target)&&e.target.id!=='layersbtn')layerspanel.style.display='none'});
-// שכבת האשכולות: פוליגוני האזורים הסטטיסטיים צבועים לפי המדד (למ"ס 2021)
-let SALAYER=null,SAON=false;
-const SACOL=c=>['#7f1d1d','#b91c1c','#dc2626','#ea580c','#d97706','#ca8a04','#84cc16','#4d7c0f','#16a34a','#15803d'][c-1]||'#64748b';
 function decPoly(str){const pts=[];let i=0,la=0,lo=0;while(i<str.length){for(const w of [0,1]){let b,sh=0,r=0;do{b=str.charCodeAt(i++)-63;r|=(b&0x1f)<<sh;sh+=5}while(b>=0x20);const d=(r&1)?~(r>>1):(r>>1);if(w===0)la+=d;else lo+=d}pts.push([la/1e5,lo/1e5])}return pts}
-document.getElementById('sabtn').onclick=async()=>{
-  const btn=document.getElementById('sabtn');
-  if(SAON){SAON=false;btn.classList.remove('on');if(SALAYER)SALAYER.remove();return}
-  if(heatview.style.display==='none')openHeatmap(true);   // השכבה חיה על המפה הארצית
-  if(!SALAYER){
-    btn.textContent='⏳ טוען אשכולות…';
-    try{
-      const d=await fetch('data/socio-sa-polys.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()});
-      SALAYER=L.layerGroup((d.feats||[]).map(([c,enc])=>
-        L.polygon(decPoly(enc),{weight:0,fillColor:SACOL(c),fillOpacity:.38})
-          .bindPopup('אשכול חברתי-כלכלי <b>'+c+'</b> מתוך 10 (למ״ס '+(d.year||'')+')')));
-    }catch(e){btn.textContent='🗺️ אשכולות — הנתונים בהכנה';return}
-    btn.textContent='🗺️ אשכולות חברתי-כלכלי';
-  }
-  SAON=true;btn.classList.add('on');
-  SALAYER.addTo(heatmap);
-  heatLayer.remove();heatLayer.addTo(heatmap);   // העיגולים תמיד מעל
-};
+// סמל המפה הארצית: קווים (עיגול) / תחנות (משולש) / תדירות (עיגול) / ציון המשרד (כוכב)
+let SYMMODE='lines';
+for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score']])
+  document.getElementById(id).onclick=()=>{
+    SYMMODE=mode;
+    for(const [id2,m2] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score']])
+      document.getElementById(id2).classList.toggle('on',m2===mode);
+    if(heatview.style.display==='none')openHeatmap(true); else openHeatmap(false);
+  };
 // פער מרכז–פריפריה: מחושב מכל האזורים הפעילים; "מרכז" = עד 45 ק"מ מתל אביב
 function gapStats(){
   const dKm=p=>{const dy=(p.la-32.08)*110.5,dx=(p.lo-34.78)*93.0;return Math.hypot(dx,dy)};
@@ -455,15 +462,6 @@ function drawRouteEl(el){
     try{map.fitBounds(window._routeLayer.getBounds().pad(0.1));}catch(e){}
   }).catch(()=>{/* אין קובץ מסלול לקו הזה — פשוט לא מציירים */});
 }
-// מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
-document.getElementById('modebtn').onclick=()=>{
-  WALKMODE = WALKMODE=='c'?'e':'c';
-  document.getElementById('modebtn').textContent = WALKMODE=='c'?'🎯 מדידה: מרכז':'🚪 מדידה: כניסה';
-  renderTable();
-  if(heatview.style.display!=='none') openHeatmap(false);   // שמור תצוגה בהחלפת מצב
-  const h=decodeURIComponent((location.hash||'').slice(1));
-  if(wrap.style.display!=='none' && h) openPark(h,false);
-};
 // "חזרה לרשימה" מציג את הרשימה עצמה תמיד. history.back() היה נכון רק למי
 // שהגיע מהרשימה — מי שנכנס ישירות לקישור של אזור נזרק לדף הקודם בדפדפן.
 function goList(){
@@ -499,8 +497,8 @@ wrap.addEventListener('touchend',e=>{
 document.getElementById('csvbtn').onclick=()=>{
   const pk=hasPk();
   const ly=hasLy();
-  const head=['אזור תעשייה','יישוב',...(ly?['סוג']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים','כיסוי הליכה %'];
-  const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[ZTLBL[ztOf(p)]]:[]),...(hasPlan()?[p.st=='planned'?'טרם נבנה':(p.st=='partial'?'בנוי חלקית':'פעיל')]:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),...(hasSv()?[p.sf??'',p.sa??'',p.sr??'']:[]),p.in??0,Math.round((p.cov||0)*100)]);
+  const head=['אזור תעשייה','יישוב',...(ly?['סוג']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים'];
+  const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[ZTLBL[ztOf(p)]]:[]),...(hasPlan()?[p.st=='planned'?'טרם נבנה':(p.st=='partial'?'בנוי חלקית':'פעיל')]:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),...(hasSv()?[p.sf??'',p.sa??'',p.sr??'']:[]),p.in??0]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
@@ -524,9 +522,24 @@ function openPark(f,push=true){
       const pg=L.polygon(poly,{color:'#134e4a',weight:2.5,fillColor:'#14b8a6',fillOpacity:.10}).addTo(layer);
       bounds=bounds?bounds.extend(pg.getBounds()):pg.getBounds();
     }
-    for(const seg of d.foot) L.polyline(seg,{color:'#14b8a6',weight:2,opacity:.8}).addTo(layer);
     curPark=d;
     drawStops(d);   // התחנות בשכבה נפרדת — מסוננות לפי מחוון ההליכה
+    // תיבת סיכום צפה על מפת האזור: כמה תחנות יש ובאיזה מרחק
+    if(window._stopCtl){window._stopCtl.remove();window._stopCtl=null;}
+    {
+      const ni=d.stops.filter(s=>sTier(s)=='in').length,
+            ng=d.stops.filter(s=>sTier(s)=='gate').length,
+            nn2=d.stops.filter(s=>sTier(s)=='near').length;
+      const ctl=L.control({position:'topright'});
+      ctl.onAdd=()=>{
+        const el=L.DomUtil.create('div');
+        el.style.cssText='background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:7px 11px;font:700 12px Assistant,Heebo,sans-serif;color:#0f172a;direction:rtl';
+        el.innerHTML=`🚏 <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f">${ng}</b> נגיש · <b style="color:#a16207">${nn2}</b> רחוק`;
+        return el;
+      };
+      ctl.addTo(map);
+      window._stopCtl=ctl;
+    }
     if(bounds){ setTimeout(()=>map.fitBounds(bounds.pad(0.25)),80); }
     const lines=(WALKMODE=='c'?d.lines:(d.linesE||d.lines));
     const nin=d.stops.filter(s=>sTier(s)=='in').length, ngate=d.stops.filter(s=>sTier(s)=='gate').length,
@@ -541,10 +554,7 @@ function openPark(f,push=true){
       <span class="stat" title="תחנות אוטובוס שנמצאות בתוך גבולות האזור עצמו">תחנות בפנים <b>${nin}</b></span>
       <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">נגיש 🚶 <b>${ngate}</b></span>
       <span class="stat" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
-      <span class="stat" title="אורך כולל של שבילי הולכי הרגל והמדרכות הממופים בתוך האזור (OpenStreetMap) — התשתית להגיע ברגל מהתחנה למקום העבודה">שבילים באזור <b>${(d.footlen/1000).toFixed(1)}</b> ק"מ</span>
-    </div>
-    <div style="font-size:12px;font-weight:800;color:#334155">כיסוי הליכתיות: ${Math.round(d.cov400*100)}% מהשטח במרחק 100 מ' משביל הולכי-רגל ממופה (OSM)</div>
-    <div class="covbar"><i style="width:${Math.round(d.cov400*100)}%"></i></div>`;
+    </div>`;
     let boxes='';if(d.official){
       const o=d.official, nf=v=>(v==null?'—':Number(v).toLocaleString('he'));
       const ostats=[
@@ -575,20 +585,6 @@ function openPark(f,push=true){
         <div class="note" style="margin:6px 0 0">הציונים הם של האזור${v.n>1?`ים הסטטיסטיים (${v.n}) שהאזור חופף`:' הסטטיסטי שבו האזור נמצא'}${v.sa_city?` · ${esc(v.sa_city)}`:''} — לא של האזור עצמו, אך מייצגים את איכות השירות בסביבתו לפי המשרד.</div>
       </div>`;
     }
-    const se=socioOf(d.city);
-    const sa2=(SOCIOSA&&SOCIOSA.zones&&SOCIOSA.zones[f])||null;
-    if(se||sa2){
-      const scol=x=>x<=3?'#b91c1c':(x<=6?'#b45309':'#15803d');
-      boxes+=`<div class="offbox" style="background:#fefce8;border-color:#fde68a">
-        <div class="offh" style="color:#854d0e">🏘️ מדד חברתי-כלכלי · הלמ"ס${((SOCIOSA&&SOCIOSA.year)||(SOCIO&&SOCIO.year))?` · ${(SOCIOSA&&SOCIOSA.year)||SOCIO.year}`:''}</div>
-        <div class="stats" style="margin:6px 0 0">
-          ${sa2?`<span class="stat" title="האשכול של האזור הסטטיסטי המסוים שאזור התעשייה יושב בו — מתוך שכבת הלמ״ס לאזורים סטטיסטיים (מדד 2021). מדויק יותר מהנתון של היישוב כולו">אשכול האזור עצמו <b style="color:${scol(sa2.c)};font-size:15px">${sa2.c}</b> / 10</span>`:''}
-          ${se?`<span class="stat" title="אשכול 1–10 של הלמ״ס ליישוב כולו — 1 הנמוך ביותר, 10 הגבוה ביותר. נגישות תחבורתית חלשה באשכול נמוך פוגעת במי שתלויים בתחבורה ציבורית">אשכול היישוב <b style="color:${scol(se.c)};font-size:15px">${se.c}</b> / 10</span>`:''}
-          ${se&&se.r?`<span class="stat" title="דירוג היישוב מתוך כלל היישובים בישראל">דירוג ארצי <b>${se.r}</b></span>`:''}
-        </div>
-        <div class="note" style="margin:6px 0 0">${sa2?'"אשכול האזור עצמו" = האזור הסטטיסטי שבו אזור התעשייה יושב; ':''}${se?`אשכול היישוב = ${esc(d.city)} כולו. `:''}ההקשר החברתי-כלכלי של הנגישות: באשכולות נמוכים התלות בתחבורה הציבורית גבוהה יותר.</div>
-      </div>`;
-    }
     if(!lines.length&&!_plan) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהכניסה/הסביבה</div>`;
     if(lines.length) h+=`<h2>קווים (${lines.length}) — לחצו לשעות המלאות</h2>`;
@@ -608,7 +604,7 @@ function openPark(f,push=true){
         </div>
       </div>`;
     }
-    h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות</b> (מרווח חציוני בין נסיעות ביום חול): ירוק ≤20 דק׳ · ירוק-כהה ≤35 · צהוב ≤50 · כתום ≤70 · אדום מעל · אפור = מעט נסיעות מדי.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. הכפתור <b>"מדידה"</b> למעלה מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "כיסוי הליכתיות" = % שטח במרחק 100מ׳ משביל ממופה. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות</b> (מרווח חציוני בין נסיעות ביום חול): ירוק ≤20 דק׳ · ירוק-כהה ≤35 · צהוב ≤50 · כתום ≤70 · אדום מעל · אפור = מעט נסיעות מדי.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM) עד מרכז האזור: נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{
     // באג: ההודעה נכתבה לפאנל שנשאר מוסתר כשהטעינה נכשלה — המשתמש לחץ
