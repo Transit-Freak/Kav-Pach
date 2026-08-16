@@ -70,12 +70,21 @@ def rows(path):
         yield head, r
 
 
+# המחירים שטבלת ZONES שב-fares/index.html מציגה — אם המשרד מעדכן תעריף,
+# הריצה השבועית תצעק ותזכיר לעדכן את הטבלה ידנית
+EXPECTED = {'201': 8.0, '202': 14.5, '204': 19.0, '205': 30.5, '206': 87.32,
+            '211': 11.5, '212': 21.0, '213': 27.0, '214': 30.5, '215': 52.5}
+
+
 def main():
     # fare_id -> (אינדקס אזור, סדרת אילת?) לפי מבנה המחלקות הרשמי
     fare_zone, fare_price = {}, {}
     for h, r in rows(FARE_ATTRS):
         fid = r[h['fare_id']].strip()
         fare_price[fid] = float(r[h['price']])
+        if fid in EXPECTED and abs(fare_price[fid] - EXPECTED[fid]) > 0.001:
+            print(f'::warning::תעריף השתנה! fare_id {fid}: {fare_price[fid]} במקום '
+                  f'{EXPECTED[fid]} — יש לעדכן את טבלת ZONES ב-fares/index.html', file=sys.stderr)
         if len(fid) == 3 and fid[0] == '2' and int(fid[2]) in UNIT_TO_ZONE:
             fare_zone[fid] = (UNIT_TO_ZONE[int(fid[2])], fid[1] == '2')
 
@@ -139,8 +148,12 @@ def main():
                 same = (pz == oz) or (oz == 2 and pz == 3)
                 edge = min(abs(km - b) for b in BOUNDS) <= EDGE_KM
                 # זוגות אילת נכנסים תמיד: בלי הדגל האתר יציג את המחיר
-                # הארצי המלא במקום מחיר הפטור ממע"מ שנגבה בפועל
-                if same and not edge and not eilat:
+                # הארצי המלא במקום מחיר הפטור ממע"מ שנגבה בפועל.
+                # ובכיוון ההפוך — זוג במחיר ארצי מלא שאחד מקצותיו דרומי
+                # לקו רוחב 29.72 (מחנות צבא, עובדה): בלעדיו העוגן הגאוגרפי
+                # של האתר היה מעניק לו הנחת אילת שלא קיימת רשמית
+                south = la1 <= 29.72 or la2 <= 29.72
+                if same and not edge and not eilat and not south:
                     continue
                 if not same:
                     n_mm += 1
