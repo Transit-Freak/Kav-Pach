@@ -97,7 +97,7 @@
       <span class="seg"><button class="btn on" id="hpeak" title="רק הגעות בשעות ההגעה והחזרה מהעבודה: 06:00–09:00 ו-15:00–19:00 ביום חול">⏰ שעות שיא</button><button class="btn" id="hday" title="כל ההגעות לאורך היום כולו">🗓️ כל היום</button></span>
       <span class="seg" id="hscopeseg"><button class="btn on" id="hsin" title="סופרים רק קווים שנכנסים לתוך שטח האזור עצמו">🏭 נכנסים פנימה</button><button class="btn" id="hsall" title="סופרים גם קווים שעוצרים בשערי הכניסה, עד 5 דקות הליכה">🚪 גם שערי כניסה</button></span>
     </div>
-    <div class="mapwrap"><div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div><div class="maplegend"><span id="hleg"></span></div></div>
+    <div class="mapwrap"><div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div><div class="maplegend"><span id="hleg"></span><span id="saleg"></span></div></div>
     <div class="legend" id="gapbox" style="margin:0"></div>
   </div>
 
@@ -410,14 +410,14 @@ let SALAYER=null,SAON=false;
 const SACOL=c=>['#7f1d1d','#b91c1c','#dc2626','#ea580c','#d97706','#ca8a04','#84cc16','#4d7c0f','#16a34a','#15803d'][c-1]||'#64748b';
 document.getElementById('sabtn').onclick=async()=>{
   const btn=document.getElementById('sabtn');
-  if(SAON){SAON=false;btn.classList.remove('on');if(SALAYER)SALAYER.remove();return}
+  if(SAON){SAON=false;btn.classList.remove('on');if(SALAYER)SALAYER.remove();saMode(false);return}
   if(heatview.style.display==='none')openHeatmap(true);   // השכבה חיה על המפה הארצית
   if(!SALAYER){
     btn.textContent='⏳ טוען אשכולות…';
     try{
       const d=await fetch('data/socio-sa-polys.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()});
       SALAYER=L.layerGroup((d.feats||[]).map(([c,enc])=>
-        L.polygon(decPoly(enc),{weight:0,fillColor:SACOL(c),fillOpacity:.38})
+        L.polygon(decPoly(enc),{weight:.7,color:'#fff',opacity:.45,fillColor:SACOL(c),fillOpacity:.52})
           .bindPopup('אשכול חברתי-כלכלי <b>'+c+'</b> מתוך 10 (למ״ס '+(d.year||'')+')')));
     }catch(e){btn.textContent='🗺️ אשכולות — שגיאה בטעינה, נסו שוב';return}
     btn.textContent='🗺️ אשכולות חברתי-כלכלי';
@@ -425,7 +425,16 @@ document.getElementById('sabtn').onclick=async()=>{
   SAON=true;btn.classList.add('on');
   SALAYER.addTo(heatmap);
   heatLayer.remove();heatLayer.addTo(heatmap);   // הסמלים תמיד מעל
+  saMode(true);
 };
+// כשהאשכולות דולקים: מפת הרקע הופכת אפורה כדי שהצבעים יבלטו,
+// ומופיע מקרא צבעי 1–10
+function saMode(on){
+  document.getElementById('heatmap').classList.toggle('samode',on);
+  document.getElementById('saleg').innerHTML=on
+    ? ' · אשכול חברתי-כלכלי: 1 (חלש) '+[1,2,3,4,5,6,7,8,9,10].map(c=>`<i style="background:${SACOL(c)}"></i>`).join('')+' 10 (חזק)'
+    : '';
+}
 // מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
 document.getElementById('modebtn').onclick=()=>{
   WALKMODE = WALKMODE=='c'?'e':'c';

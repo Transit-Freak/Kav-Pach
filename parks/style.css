@@ -162,3 +162,6 @@ tbody tr:nth-child(even){background:#fafcff}
 @media(max-width:760px){.introbar{display:none}}
 /* מקרא מעודכן בכרטיס הצף שעל מפת האזור */
 .maphint{font-size:10.5px;color:#64748b;border-top:1px solid #f1f5f9;padding-top:4px;margin-top:2px}
+
+/* שכבת האשכולות דולקת: הרקע אפור כדי שצבעי המדד יבלטו */
+.samode .leaflet-tile-pane{filter:grayscale(.85) brightness(1.05) contrast(.92)}
