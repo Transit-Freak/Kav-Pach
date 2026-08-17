@@ -882,9 +882,10 @@ $('modeStop').addEventListener('click', ()=>{
 });
 
 /* ---------- טופס דיווח על טעות — שליחה מתוך האתר ---------- */
-// Web3Forms מעביר את הטופס לתיבת המייל של שלמה בלי לפתוח אפליקציית
-// מייל אצל המדווח. עד שהמפתח מוגדר (או אם השליחה נכשלת) — נפתח מייל.
-const W3K='';
+// FormSubmit מעביר את הטופס לתיבת המייל של שלמה בלי לפתוח אפליקציית
+// מייל אצל המדווח. המזהה הוא כינוי לתיבה (לא כתובת גלויה); אם השליחה
+// נכשלת — נפילה למייל מובנה.
+const FSURL='https://formsubmit.co/ajax/ea03c6e126249e4fc11c3949c3c4237b';
 function tripContext(){
   const r=$('resultWrap');
   return (r && !r.classList.contains('empty'))
@@ -915,15 +916,14 @@ $('repcancel').addEventListener('click', ev=>{ ev.preventDefault(); $('repdlg').
 $('repsend').addEventListener('click', ev=>{
   ev.preventDefault();
   if (!$('reptxt').value.trim()){ $('repstat').textContent='כתבו מה שגוי ואז שלחו'; return; }
-  if (!W3K){ location.href=mailtoReport(); $('repdlg').close(); return; }
   $('repstat').textContent='⏳ שולח…';
-  fetch('https://api.web3forms.com/submit', {method:'POST',
+  fetch(FSURL, {method:'POST',
     headers:{'Content-Type':'application/json', 'Accept':'application/json'},
-    body:JSON.stringify({access_key:W3K, subject:'דיווח על טעות במחירון',
-      from_name:'המחירון — טופס דיווח', message:reportBody(), botcheck:''})})
+    body:JSON.stringify({_subject:'דיווח על טעות במחירון',
+      message:reportBody(), _honey:''})})
     .then(r=>r.json())
     .then(d=>{
-      if (!d.success) throw 0;
+      if (String(d.success)!=='true') throw 0;
       $('repstat').textContent='✅ נשלח — תודה רבה!';
       $('reptxt').value='';
       setTimeout(()=>$('repdlg').close(), 1500);
