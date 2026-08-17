@@ -1,9 +1,9 @@
 {
- "generated": "2026-08-17 11:10 UTC",
+ "generated": "2026-08-17 11:11 UTC",
  "steps": {
   "test_submit": {
    "status": 200,
-   "body": "{\"success\":\"false\",\"message\":\"Make sure you open this page through a web server, FormSubmit will not work in pages browsed as HTML files.\"}"
+   "body": "{\"success\":\"false\",\"message\":\"This form needs Activation. We've sent you an email containing an 'Activate Form' link. Just click it and your form will be actived!\"}"
   }
  }
 }
