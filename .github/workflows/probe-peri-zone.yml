@@ -1,0 +1,47 @@
+name: probe-peri-zone
+
+# חיפוש הגדרת אזורי התעריף של "דרך שווה" (גבול תקרת הפריפריה של המחירון)
+# ב-data.gov.il — הוא חסום מסביבת הפיתוח ונגיש רק מכאן. דוח בלבד.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-peri-zone.yml'
+      - 'tools/probe_peri_zone.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-peri-zone-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: סריקת data.gov.il
+        run: |
+          mkdir -p fares/checks
+          python3 tools/probe_peri_zone.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp fares/checks/peri-zone-probe.json /tmp/probe.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p fares/checks && cp /tmp/probe.json fares/checks/peri-zone-probe.json
+            git add fares/checks/peri-zone-probe.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: סריקת אזורי התעריף של דרך שווה ב-data.gov.il'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
