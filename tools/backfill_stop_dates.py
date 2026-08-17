@@ -133,7 +133,9 @@ for _, fn, i, prev_i in targets:
     if (time.time() - T0) / 60 > MAX_MIN:
         print('תקרת זמן — ממשיכים בריצה הבאה'); break
     p = f'{OUTDIR}/lines/{fn}'
-    lf = json.load(open(p, encoding='utf-8'))
+    # materialize חובה: בקבצים דחוסים stops הוא רשימת אינדקסים למאגר,
+    # ובלעדיו bisect מקבל מספרים במקום תחנות (הפיל את הריצה הלילית)
+    lf = materialize(json.load(open(p, encoding='utf-8')))
     vs = lf.get('versions', [])
     v, pv = vs[i], vs[prev_i]
     rd = lf.get('rd', '')
