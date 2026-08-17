@@ -1,31 +1,11 @@
 {
- "generated": "2026-08-17 09:48 UTC",
+ "generated": "2026-08-17 09:50 UTC",
  "pages": {
   "https://bus.gov.il/FaresDistance": {
    "bytes": 8482,
    "key_hits": [],
    "city_hits": [],
    "assets": {
-    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
-     "bytes": 34585,
-     "key_hits": [
-      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
-      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
-      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
-      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
-      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
-      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
-     ],
-     "city_hits": [],
-     "api_paths": [
-      "Zone",
-      "ZoneAwarePromise",
-      "__Zone_disable_",
-      "__zone_symbol__",
-      "forceDuplicateZoneCheck",
-      "zoneTask"
-     ]
-    },
     "https://bus.gov.il/main-UTY26XAG.js": {
      "bytes": 1583590,
      "key_hits": [
@@ -58,6 +38,26 @@
       "taxiCalculator.privateRidePrice",
       "taxiCalculator.sharedRidePrice",
       "zone_99_902_merged"
+     ]
+    },
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
      ]
     }
    }
@@ -67,26 +67,6 @@
    "key_hits": [],
    "city_hits": [],
    "assets": {
-    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
-     "bytes": 34585,
-     "key_hits": [
-      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
-      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
-      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
-      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
-      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
-      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
-     ],
-     "city_hits": [],
-     "api_paths": [
-      "Zone",
-      "ZoneAwarePromise",
-      "__Zone_disable_",
-      "__zone_symbol__",
-      "forceDuplicateZoneCheck",
-      "zoneTask"
-     ]
-    },
     "https://bus.gov.il/main-UTY26XAG.js": {
      "bytes": 1583590,
      "key_hits": [
@@ -119,6 +99,26 @@
       "taxiCalculator.privateRidePrice",
       "taxiCalculator.sharedRidePrice",
       "zone_99_902_merged"
+     ]
+    },
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
      ]
     }
    }
@@ -128,26 +128,6 @@
    "key_hits": [],
    "city_hits": [],
    "assets": {
-    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
-     "bytes": 34585,
-     "key_hits": [
-      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
-      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
-      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
-      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
-      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
-      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
-     ],
-     "city_hits": [],
-     "api_paths": [
-      "Zone",
-      "ZoneAwarePromise",
-      "__Zone_disable_",
-      "__zone_symbol__",
-      "forceDuplicateZoneCheck",
-      "zoneTask"
-     ]
-    },
     "https://bus.gov.il/main-UTY26XAG.js": {
      "bytes": 1583590,
      "key_hits": [
@@ -181,6 +161,26 @@
       "taxiCalculator.sharedRidePrice",
       "zone_99_902_merged"
      ]
+    },
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
     }
    }
   },
@@ -189,6 +189,16 @@
    "key_hits": [],
    "city_hits": [],
    "assets": {
+    "https://cdn.enable.co.il/licenses/enable-L1004613qd0tjrpg-1121-24770/init.js": {
+     "bytes": 393646,
+     "key_hits": [
+      "ad:u,td:c,th:c},f=[\\\"circle\\\",\\\"clipPath\\\",\\\"defs\\\",\\\"ellipse\\\",\\\"g\\\",\\\"image\\\",\\\"line\\\",\\\"linearGradient\\\",\\\"mask\\\",\\\"path\\\",\\\"pattern\\\",\\\"polygon\\\",\\\"polyline\\\",\\\"radialGradient\\\",\\\"rect\\\",\\\"stop\\\",\\\"text\\\",\\\"tspan\\\"];f.forEach(function(e){p[e]=d,s[e]=!0}),e.exports=r},function(e,t){\\",
+      ":o(\\\"g\\\"),image:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text",
+      "age:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text\\\"),tspan:o("
+     ],
+     "city_hits": [],
+     "api_paths": []
+    },
     "https://api.w.org/": {
      "bytes": 167679,
      "key_hits": [],
@@ -202,24 +212,24 @@
       "priceRangeFromTo",
       "priceRangeUpTo"
      ]
-    },
-    "https://cdn.enable.co.il/licenses/enable-L1004613qd0tjrpg-1121-24770/init.js": {
-     "bytes": 393646,
-     "key_hits": [
-      "ad:u,td:c,th:c},f=[\\\"circle\\\",\\\"clipPath\\\",\\\"defs\\\",\\\"ellipse\\\",\\\"g\\\",\\\"image\\\",\\\"line\\\",\\\"linearGradient\\\",\\\"mask\\\",\\\"path\\\",\\\"pattern\\\",\\\"polygon\\\",\\\"polyline\\\",\\\"radialGradient\\\",\\\"rect\\\",\\\"stop\\\",\\\"text\\\",\\\"tspan\\\"];f.forEach(function(e){p[e]=d,s[e]=!0}),e.exports=r},function(e,t){\\",
-      ":o(\\\"g\\\"),image:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text",
-      "age:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text\\\"),tspan:o("
-     ],
-     "city_hits": [],
-     "api_paths": []
     }
    }
   },
   "https://ravpass.co.il/%D7%A6%D7%93%D7%A7-%D7%AA%D7%97%D7%91%D7%95%D7%A8%D7%AA%D7%99/": {
-   "bytes": 86571,
+   "bytes": 86544,
    "key_hits": [],
    "city_hits": [],
    "assets": {
+    "https://cdn.enable.co.il/licenses/enable-L1004613qd0tjrpg-1121-24770/init.js": {
+     "bytes": 393646,
+     "key_hits": [
+      "ad:u,td:c,th:c},f=[\\\"circle\\\",\\\"clipPath\\\",\\\"defs\\\",\\\"ellipse\\\",\\\"g\\\",\\\"image\\\",\\\"line\\\",\\\"linearGradient\\\",\\\"mask\\\",\\\"path\\\",\\\"pattern\\\",\\\"polygon\\\",\\\"polyline\\\",\\\"radialGradient\\\",\\\"rect\\\",\\\"stop\\\",\\\"text\\\",\\\"tspan\\\"];f.forEach(function(e){p[e]=d,s[e]=!0}),e.exports=r},function(e,t){\\",
+      ":o(\\\"g\\\"),image:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text",
+      "age:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text\\\"),tspan:o("
+     ],
+     "city_hits": [],
+     "api_paths": []
+    },
     "https://api.w.org/": {
      "bytes": 167679,
      "key_hits": [],
@@ -233,16 +243,6 @@
       "priceRangeFromTo",
       "priceRangeUpTo"
      ]
-    },
-    "https://cdn.enable.co.il/licenses/enable-L1004613qd0tjrpg-1121-24770/init.js": {
-     "bytes": 393646,
-     "key_hits": [
-      "ad:u,td:c,th:c},f=[\\\"circle\\\",\\\"clipPath\\\",\\\"defs\\\",\\\"ellipse\\\",\\\"g\\\",\\\"image\\\",\\\"line\\\",\\\"linearGradient\\\",\\\"mask\\\",\\\"path\\\",\\\"pattern\\\",\\\"polygon\\\",\\\"polyline\\\",\\\"radialGradient\\\",\\\"rect\\\",\\\"stop\\\",\\\"text\\\",\\\"tspan\\\"];f.forEach(function(e){p[e]=d,s[e]=!0}),e.exports=r},function(e,t){\\",
-      ":o(\\\"g\\\"),image:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text",
-      "age:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text\\\"),tspan:o("
-     ],
-     "city_hits": [],
-     "api_paths": []
     }
    }
   },
@@ -262,5 +262,142 @@
    "city_hits": [],
    "assets": {}
   }
+ },
+ "bundle": {
+  "url": "https://bus.gov.il/main-UTY26XAG.js",
+  "bytes": 1583590,
+  "map_of_areas_ctx": [
+   "\",icons:\"icons\",\"html-editor\":\"htmlBox\",faq:\"faq\",\"image-gallery\":\"carousel\",video:\"videoBlock\",\"downloadable-file\":\"downloads\",banner:\"homepageTitle\",\"message-ticker\":\"notifications\",cta:\"pathfinderLinks\",\"tabs-small\":\"ourServices\",\"tabs-large\":\"bigCards\",bi:\"counters\",news:\"newsBlock\",\"small-content-block\":\"smallContent\",\"rav-kav-charging-station-map\":\"ravKavChargingStationMap\",\"map-of-areas\":\"mapOfAreas\",\"list-of-accessible-lines\":\"linesList\",\"night-lines-list\":\"linesList\",\"taxi-calculator\":\"taxiCalculator\",\"public-transport-discount-calculator\":\"component-26-tbd\",\"gtfs-rt-sa\":\"gtfsRtSa\"};COMPONENT_ID_TO_MODULE_MAP={1:\"title\",2:\"pagePathfinderLinks\",6:\"carousel\",7:\"videoBlock\",9:\"downloads\",10:\"faq\",11:\"htmlBox\",14:\"icons\",3:\"homepageTitle\",4:\"strip\",5:\"smallContent\",12:\"bigCards\",13:\"ourService",
+   ",\"taxi-calculator\":\"taxiCalculator\",\"public-transport-discount-calculator\":\"component-26-tbd\",\"gtfs-rt-sa\":\"gtfsRtSa\"};COMPONENT_ID_TO_MODULE_MAP={1:\"title\",2:\"pagePathfinderLinks\",6:\"carousel\",7:\"videoBlock\",9:\"downloads\",10:\"faq\",11:\"htmlBox\",14:\"icons\",3:\"homepageTitle\",4:\"strip\",5:\"smallContent\",12:\"bigCards\",13:\"ourServices\",15:\"counters\",16:\"notifications\",17:\"newsBlock\",18:\"newsBlock\",20:\"mapOfAreas\",21:\"ravKavChargingStationMap\",25:\"linesList\",27:\"linesList\",19:\"taxiCalculator\",26:\"component-26-tbd\",22:\"gtfsRtSa\"};mapPageDataToResolvedPageWithTemplate(t){return this.pageDataService.getTemplateInfo(t.templateId).pipe(Q(e=>{let i=this.determineLayout(t.templateId),o=this.mapComponentsToModulesWithTemplate(t.pageComponents,e,t.templateId),r=this.mapComponentsToContentWithTemplate(t.pageCompone",
+   "mplicit,i=t.index,o=g(2);V(\"is-highlighted\",i===o.searchActiveIndex),f(\"id\",\"mapofareas-opt-\"+i),I(\"aria-selected\",i===o.searchActiveIndex)(\"aria-label\",e.title+(e.addressDetails&&e.addressDetails.city?\", \"+e.addressDetails.city:\"\")),c(5),P(e.title),c(),f(\"ngIf\",e.addressDetails.city)}}function bL(n,t){if(n&1&&(d(0,\"div\",20),y(1,CL,7,7,\"button\",21),p()),n&2){let e=g();I(\"aria-label\",e.translate(\"mapOfAreas.searchPlaceholder\")),c(),f(\"ngForOf\",e.searchResults)}}function wL(n,t){if(n&1&&(d(0,\"div\",31),C(1,\"div\",32),d(2,\"span\",33),x(3),p()()),n&2){let e=t.$implicit,i=g(2);c(),ue(\"background\",i.getZoneColor(e.colorIndex)),c(2),P(i.translate(e.nameKey))}}function ML(n,t){if(n&1&&(d(0,\"div\",29),y(1,wL,4,3,\"div\",30),p()),n&2){let e=g();c(),f(\"ngForOf\",e.legendItems)}}var b3=class n{constructor(t,e,i,o){th",
+   "-green-30, #54B7A0)\"},{fill:[240,114,118],stroke:[240,114,118],hex:\"#F07276\",cssVar:\"var(--Primitive-Secondary-Red-sec-red-30, #F07276)\"},{fill:[252,195,61],stroke:[252,195,61],hex:\"#FCC33D\",cssVar:\"var(--Primitive-Secondary-Yellow-sec-yellow-40, #FCC33D)\"},{fill:[255,163,102],stroke:[255,163,102],hex:\"#FFA366\",cssVar:\"#FFA366\"}];zoneIdToColorIndex={901:2,902:0,99:0,905:3};legendItems=[{nameKey:\"mapOfAreas.zone1\",colorIndex:0},{nameKey:\"mapOfAreas.zone1NoVat\",colorIndex:2},{nameKey:\"mapOfAreas.zone2\",colorIndex:3}];pricingZones=[];israelBoundsWgs84={north:33.35,south:29.45,east:35.95,west:34.2};enforcingPan=!1;enforcingZoom=!1;lastKnownLevel=6;minLevel=1;maxLevel=14;israelExtentItmCache=null;panSubscription=null;extentSubscription=null;ngOnInit(){}ngAfterViewInit(){this.initGovMapScript()}ngOnDestr",
+   "stroke:[240,114,118],hex:\"#F07276\",cssVar:\"var(--Primitive-Secondary-Red-sec-red-30, #F07276)\"},{fill:[252,195,61],stroke:[252,195,61],hex:\"#FCC33D\",cssVar:\"var(--Primitive-Secondary-Yellow-sec-yellow-40, #FCC33D)\"},{fill:[255,163,102],stroke:[255,163,102],hex:\"#FFA366\",cssVar:\"#FFA366\"}];zoneIdToColorIndex={901:2,902:0,99:0,905:3};legendItems=[{nameKey:\"mapOfAreas.zone1\",colorIndex:0},{nameKey:\"mapOfAreas.zone1NoVat\",colorIndex:2},{nameKey:\"mapOfAreas.zone2\",colorIndex:3}];pricingZones=[];israelBoundsWgs84={north:33.35,south:29.45,east:35.95,west:34.2};enforcingPan=!1;enforcingZoom=!1;lastKnownLevel=6;minLevel=1;maxLevel=14;israelExtentItmCache=null;panSubscription=null;extentSubscription=null;ngOnInit(){}ngAfterViewInit(){this.initGovMapScript()}ngOnDestroy(){this.searchDebounceTimer&&clearTimeou",
+   "--Primitive-Secondary-Red-sec-red-30, #F07276)\"},{fill:[252,195,61],stroke:[252,195,61],hex:\"#FCC33D\",cssVar:\"var(--Primitive-Secondary-Yellow-sec-yellow-40, #FCC33D)\"},{fill:[255,163,102],stroke:[255,163,102],hex:\"#FFA366\",cssVar:\"#FFA366\"}];zoneIdToColorIndex={901:2,902:0,99:0,905:3};legendItems=[{nameKey:\"mapOfAreas.zone1\",colorIndex:0},{nameKey:\"mapOfAreas.zone1NoVat\",colorIndex:2},{nameKey:\"mapOfAreas.zone2\",colorIndex:3}];pricingZones=[];israelBoundsWgs84={north:33.35,south:29.45,east:35.95,west:34.2};enforcingPan=!1;enforcingZoom=!1;lastKnownLevel=6;minLevel=1;maxLevel=14;israelExtentItmCache=null;panSubscription=null;extentSubscription=null;ngOnInit(){}ngAfterViewInit(){this.initGovMapScript()}ngOnDestroy(){this.searchDebounceTimer&&clearTimeout(this.searchDebounceTimer),this.mapCenterAnnou",
+   "aded=!0,this.initMap())},100);return}let t=document.createElement(\"script\");t.src=\"https://www.govmap.gov.il/govmap/api/govmap.api.js\",t.async=!0,t.onload=()=>{this.govmapLoaded=!0,this.initMap()},t.onerror=()=>{console.error(\"[MAP] Failed to load GovMap script\")},document.head.appendChild(t)}initMap(){if(!this.mapContainer?.nativeElement){setTimeout(()=>this.initMap(),100);return}this.mapDivId=`mapOfAreas_${Date.now()}`,this.mapContainer.nativeElement.id=this.mapDivId,setTimeout(()=>{this.createGovmap()},100)}createGovmap(){if(!window.govmap||!this.mapDivId)return;let t=this.wgs84ToItm(this.centerWgs84),e=this.clampLevel(this.level),i=document.getElementById(this.mapDivId);i&&(i.innerHTML=\"\"),this.mapReady=!1,this.unbindGovmapEvents(),window.govmap.createMap(this.mapDivId,{token:le.govmapApiKey,ba",
+   "Finite(e)){this.mapCenterZoneAnnouncement=\"\";return}if(this.pricingZones?.length){for(let i of this.zoneAnnouncementPriority){let o=this.pricingZones.filter(r=>this.zoneNumberFromPricingZone(r)===i);for(let r of o)if(this.pointInZoneGeomWgs84(t,e,r.geom)){let a=this.translationKeyForZoneNumber(i),s=this.translateService.translate(a);this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"",
+   "cementPriority){let o=this.pricingZones.filter(r=>this.zoneNumberFromPricingZone(r)===i);for(let r of o)if(this.pointInZoneGeomWgs84(t,e,r.geom)){let a=this.translationKeyForZoneNumber(i),s=this.translateService.translate(a);this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeomWgs84(t,e,i){let o=(i||\"\").trim(),r=o.toUpperCase();if(r.startsWith(\"MULTIPOLYGON\")){let a=o.r",
+   "pCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeomWgs84(t,e,i){let o=(i||\"\").trim(),r=o.toUpperCase();if(r.startsWith(\"MULTIPOLYGON\")){let a=o.replace(/^MULTIPOLYGON\\s*/i,\"\").trim();a.startsWith(\"(\")&&(a=a.slice(1,-1).trim());let s=this.splitMultipolygonContent(a);for(let l of s){let u=this.extractRingsFromPolygonPart(l.trim());if(this.pointInRingsWithHolesLngLat(t,e,u))ret",
+   "nslateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeomWgs84(t,e,i){let o=(i||\"\").trim(),r=o.toUpperCase();if(r.startsWith(\"MULTIPOLYGON\")){let a=o.replace(/^MULTIPOLYGON\\s*/i,\"\").trim();a.startsWith(\"(\")&&(a=a.slice(1,-1).trim());let s=this.splitMultipolygonContent(a);for(let l of s){let u=this.extractRingsFromPolygonPart(l.trim());if(this.pointInRingsWithHolesLngLat(t,e,u))return!0}return!1}if(r.startsWith(\"",
+   "late(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeomWgs84(t,e,i){let o=(i||\"\").trim(),r=o.toUpperCase();if(r.startsWith(\"MULTIPOLYGON\")){let a=o.replace(/^MULTIPOLYGON\\s*/i,\"\").trim();a.startsWith(\"(\")&&(a=a.slice(1,-1).trim());let s=this.splitMultipolygonContent(a);for(let l of s){let u=this.extractRingsFromPolygonPart(l.trim());if(this.pointInRingsWithHolesLngLat(t,e,u))return!0}return!1}if(r.startsWith(\"POLYGON\")){let a=o.",
+   "\"text\",\"role\",\"combobox\",\"aria-controls\",\"mapofareas-search-listbox\",\"aria-autocomplete\",\"list\",\"autocomplete\",\"off\",1,\"search-input\",3,\"ngModelChange\",\"focus\",\"keydown\",\"ngModel\",\"placeholder\"],[\"type\",\"button\",\"class\",\"search-clear-btn\",3,\"click\",4,\"ngIf\"],[\"id\",\"mapofareas-search-listbox\",\"class\",\"search-results\",\"role\",\"listbox\",4,\"ngIf\"],[\"class\",\"legend-bar\",4,\"ngIf\"],[1,\"map-area\"],[\"id\",\"mapOfAreas\",1,\"map-view\"],[\"type\",\"button\",1,\"search-clear-btn\",3,\"click\"],[\"width\",\"20\",\"height\",\"20\",\"viewBox\",\"0 0 20 20\",\"fill\",\"none\",\"xmlns\",\"http://www.w3.org/2000/svg\"],[\"d\",\"M15 5L5 15M5 5L15 15\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\",\"stroke-linecap\",\"round\"],[\"id\",\"mapofareas-search-listbox\",\"role\",\"listbox\",1,\"search-results\"],[\"type\",\"button\",\"class\",\"search-result-item\",\"role\",\"option\",\"ta",
+   "))})(\"focus\",function(){return b(o),w(i.onSearchChange())})(\"keydown\",function(a){return b(o),w(i.onSearchKeydown(a))}),p(),y(13,xL,3,1,\"button\",12)(14,bL,2,2,\"div\",13),p(),y(15,ML,2,1,\"div\",14),p()(),d(16,\"div\",15),C(17,\"div\",16,1),p()()}e&2&&(ue(\"background\",i.backgroundColor),I(\"dir\",i.textDirection),c(2),P(i.mapCenterZoneAnnouncement),c(2),A(\" \",(i.data==null?null:i.data.title)||i.translate(\"mapOfAreas.title\"),\" \"),c(7),f(\"ngModel\",i.searchQuery)(\"placeholder\",i.translate(\"mapOfAreas.searchPlaceholder\")),I(\"aria-expanded\",i.showSearchResults&&i.searchResults.length>0?\"true\":\"false\")(\"aria-activedescendant\",i.searchActiveDescendantId)(\"aria-label\",i.translate(\"common.search\")),c(2),f(\"ngIf\",i.searchQuery),c(),f(\"ngIf\",i.showSearchResults&&i.searchResults.length>0),c(),f(\"ngIf\",i.pricingZones.len",
+   "eturn b(o),w(i.onSearchKeydown(a))}),p(),y(13,xL,3,1,\"button\",12)(14,bL,2,2,\"div\",13),p(),y(15,ML,2,1,\"div\",14),p()(),d(16,\"div\",15),C(17,\"div\",16,1),p()()}e&2&&(ue(\"background\",i.backgroundColor),I(\"dir\",i.textDirection),c(2),P(i.mapCenterZoneAnnouncement),c(2),A(\" \",(i.data==null?null:i.data.title)||i.translate(\"mapOfAreas.title\"),\" \"),c(7),f(\"ngModel\",i.searchQuery)(\"placeholder\",i.translate(\"mapOfAreas.searchPlaceholder\")),I(\"aria-expanded\",i.showSearchResults&&i.searchResults.length>0?\"true\":\"false\")(\"aria-activedescendant\",i.searchActiveDescendantId)(\"aria-label\",i.translate(\"common.search\")),c(2),f(\"ngIf\",i.searchQuery),c(),f(\"ngIf\",i.showSearchResults&&i.searchResults.length>0),c(),f(\"ngIf\",i.pricingZones.length>0))},dependencies:[W,ce,Z,qt,Nt,$t,Ft],styles:[\".map-of-areas-module[_ngcontent",
+   "eB(n,t){if(n&1&&C(0,\"app-rav-kav-charging-station-map-view\",12),n&2){let e=g(),i=e.$implicit,o=e.index,r=g(2);f(\"data\",r.page.content==null?null:r.page.content.ravKavChargingStationMap)(\"backgroundColor\",r.getModuleBackground(i.id,o,\"#F3F5F7\"))}}function tB(n,t){if(n&1&&C(0,\"app-map-of-areas-view\",12),n&2){let e=g(),i=e.$implicit,o=e.index,r=g(2);f(\"data\",r.page.content==null?null:r.page.content.mapOfAreas)(\"backgroundColor\",r.getModuleBackground(i.id,o,\"#F3F5F7\"))}}function nB(n,t){if(n&1&&C(0,\"app-lines-list-view\",12),n&2){let e=g(),i=e.$implicit,o=e.index,r=g(2);f(\"data\",r.page.content==null?null:r.page.content[i.id])(\"backgroundColor\",r.getModuleBackground(i.id,o,\"#F3F5F7\"))}}function iB(n,t){if(n&1&&C(0,\"app-taxi-calculator-view\",12),n&2){let e=g(),i=e.$implicit,o=e.index,r=g(2);f(\"data\",r.pag",
+   "rds\"),c(),f(\"ngIf\",e.id===\"bigCards\"),c(),f(\"ngIf\",e.id===\"newsBlock\"),c(),f(\"ngIf\",o.moduleIdMatchesBase(e.id,\"title\")),c(),f(\"ngIf\",o.moduleIdMatchesBase(e.id,\"pagePathfinderLinks\")),c(),f(\"ngIf\",e.id===\"carousel\"),c(),f(\"ngIf\",e.id===\"videoBlock\"),c(),f(\"ngIf\",e.id===\"cards\"),c(),f(\"ngIf\",o.moduleIdMatchesBase(e.id,\"icons\")),c(),f(\"ngIf\",e.id===\"ravKavChargingStationMap\"),c(),f(\"ngIf\",e.id===\"mapOfAreas\"),c(),f(\"ngIf\",e.id===\"linesList\"||e.id===\"component-27-tbd\"||e.id===\"component-25-tbd\"),c(),f(\"ngIf\",e.id===\"taxiCalculator\"||e.id===\"component-19-tbd\"),c(),f(\"ngIf\",e.id===\"component-26-tbd\"),c(),f(\"ngIf\",e.id===\"gtfsRtSa\"||e.id.startsWith(\"gtfsRtSa-\")),c(),f(\"ngIf\",e.id.startsWith(\"component-\")&&e.id.endsWith(\"-tbd\")&&e.id!==\"component-19-tbd\"&&e.id!==\"component-26-tbd\"&&e.id!==\"component-22-t",
+   "o.moduleIdMatchesBase(e.id,\"pathfinderLinks\")&&e.id!==\"homepageTitle\"&&e.id!==\"counters\"&&e.id!==\"ourServices\"&&e.id!==\"smallCards\"&&e.id!==\"bigCards\"&&e.id!==\"newsBlock\"&&!o.moduleIdMatchesBase(e.id,\"title\")&&!o.moduleIdMatchesBase(e.id,\"pagePathfinderLinks\")&&e.id!==\"carousel\"&&e.id!==\"videoBlock\"&&e.id!==\"cards\"&&!o.moduleIdMatchesBase(e.id,\"icons\")&&e.id!==\"ravKavChargingStationMap\"&&e.id!==\"mapOfAreas\"&&e.id!==\"linesList\"&&e.id!==\"component-27-tbd\"&&e.id!==\"component-25-tbd\"&&e.id!==\"taxiCalculator\"&&e.id!==\"component-19-tbd\"&&e.id!==\"component-26-tbd\"&&e.id!==\"gtfsRtSa\"&&!e.id.startsWith(\"gtfsRtSa-\")&&!e.id.startsWith(\"component-\")&&!e.id.endsWith(\"-tbd\"))}}function pB(n,t){if(n&1&&(ge(0),d(1,\"div\",3),y(2,uB,28,28,\"section\",4),p(),he()),n&2){let e=g();c(2),f(\"ngForOf\",e.fullModules)(\"ngForTra",
+   "s\",t===\"smallCards\"),i(\"bigCards\",t===\"bigCards\"),i(\"newsBlock\",t===\"newsBlock\"),i(\"title\",this.moduleIdMatchesBase(t,\"title\")),i(\"pagePathfinderLinks\",this.moduleIdMatchesBase(t,\"pagePathfinderLinks\")),i(\"carousel\",t===\"carousel\"),i(\"videoBlock\",t===\"videoBlock\"),i(\"cards\",t===\"cards\"),i(\"icons\",this.moduleIdMatchesBase(t,\"icons\")),i(\"ravKavChargingStationMap\",t===\"ravKavChargingStationMap\"),i(\"mapOfAreas\",t===\"mapOfAreas\"),i(\"linesList\",t===\"linesList\"||t===\"component-27-tbd\"||t===\"component-25-tbd\"),i(\"taxiCalculator\",t===\"taxiCalculator\"||t===\"component-19-tbd\"),i(\"component-26-tbd\",t===\"component-26-tbd\"),i(\"gtfsRtSa\",t===\"gtfsRtSa\"||t.startsWith(\"gtfsRtSa-\")),i(\"component-tbd-placeholder\",t.startsWith(\"component-\")&&t.endsWith(\"-tbd\")&&t!==\"component-19-tbd\"&&t!==\"component-26-tbd\"&&t!==\"comp",
+   "s\"),i(\"bigCards\",t===\"bigCards\"),i(\"newsBlock\",t===\"newsBlock\"),i(\"title\",this.moduleIdMatchesBase(t,\"title\")),i(\"pagePathfinderLinks\",this.moduleIdMatchesBase(t,\"pagePathfinderLinks\")),i(\"carousel\",t===\"carousel\"),i(\"videoBlock\",t===\"videoBlock\"),i(\"cards\",t===\"cards\"),i(\"icons\",this.moduleIdMatchesBase(t,\"icons\")),i(\"ravKavChargingStationMap\",t===\"ravKavChargingStationMap\"),i(\"mapOfAreas\",t===\"mapOfAreas\"),i(\"linesList\",t===\"linesList\"||t===\"component-27-tbd\"||t===\"component-25-tbd\"),i(\"taxiCalculator\",t===\"taxiCalculator\"||t===\"component-19-tbd\"),i(\"component-26-tbd\",t===\"component-26-tbd\"),i(\"gtfsRtSa\",t===\"gtfsRtSa\"||t.startsWith(\"gtfsRtSa-\")),i(\"component-tbd-placeholder\",t.startsWith(\"component-\")&&t.endsWith(\"-tbd\")&&t!==\"component-19-tbd\"&&t!==\"component-26-tbd\"&&t!==\"component-22-tbd\"&&t!",
+   ",n&2){let e=g().$implicit;c(),A(\" \",e.addressDetails.city,\" \")}}function CL(n,t){if(n&1){let e=N();d(0,\"button\",22),S(\"click\",function(){let o=b(e).$implicit,r=g(2);return w(r.selectSearchResult(o))}),R(),d(1,\"svg\",23),C(2,\"path\",24),p(),Y(),d(3,\"div\",25)(4,\"div\",26),x(5),p(),y(6,yL,2,1,\"div\",27),p()()}if(n&2){let e=t.$implicit,i=t.index,o=g(2);V(\"is-highlighted\",i===o.searchActiveIndex),f(\"id\",\"mapofareas-opt-\"+i),I(\"aria-selected\",i===o.searchActiveIndex)(\"aria-label\",e.title+(e.addressDetails&&e.addressDetails.city?\", \"+e.addressDetails.city:\"\")),c(5),P(e.title),c(),f(\"ngIf\",e.addressDetails.city)}}function bL(n,t){if(n&1&&(d(0,\"div\",20),y(1,CL,7,7,\"button\",21),p()),n&2){let e=g();I(\"aria-label\",e.translate(\"mapOfAreas.searchPlaceholder\")),c(),f(\"ngForOf\",e.searchResults)}}function wL(n,t){if(n&",
+   "o=>{o.success&&o.data?(this.searchResults=o.data,this.showSearchResults=!0,this.searchActiveIndex=-1):(this.searchResults=[],this.showSearchResults=!1,this.searchActiveIndex=-1)},error:o=>{console.error(\"[MAP] Search error:\",o),this.searchResults=[],this.showSearchResults=!1,this.searchActiveIndex=-1}})}get searchActiveDescendantId(){return this.searchActiveIndex>=0&&this.searchResults.length>0?`mapofareas-opt-${this.searchActiveIndex}`:null}selectSearchResult(t,e){this.selectedSearchResult=t,this.searchQuery=t.title,this.showSearchResults=!1,this.searchActiveIndex=-1,this.centerWgs84={lat:t.coordinates.lat,lng:t.coordinates.lng},this.level=12;let i=this.wgs84ToItm(this.centerWgs84),o=this.clampLevel(this.level);if(!this.mapReady||!window.govmap||typeof window.govmap.zoomToXY!=\"function\"){this.pend",
+   "pen:e,activeIndex:this.searchActiveIndex,length:this.searchResults.length},{selectIndex:(i,o)=>this.selectSearchResult(this.searchResults[i],o),close:()=>this.closeSearchResults(),setActiveIndex:i=>{this.searchActiveIndex=i},scrollActiveIntoView:()=>this.scrollMapSearchOptionIntoView()})}scrollMapSearchOptionIntoView(){requestAnimationFrame(()=>{this.searchActiveIndex<0||document.getElementById(`mapofareas-opt-${this.searchActiveIndex}`)?.scrollIntoView({block:\"nearest\"})})}closeSearchResults(){this.showSearchResults=!1,this.searchActiveIndex=-1}clearSearch(){this.searchQuery=\"\",this.searchResults=[],this.showSearchResults=!1,this.searchActiveIndex=-1,this.selectedSearchResult=null,this.mapCenterZoneAnnouncement=\"\",this.searchDebounceTimer&&(clearTimeout(this.searchDebounceTimer),this.searchDebounc",
+   "-of-areas-view\"]],viewQuery:function(e,i){if(e&1&&(se(vL,5),se(_L,5)),e&2){let o;oe(o=re())&&(i.mapContainer=o.first),oe(o=re())&&(i.searchInputRef=o.first)}},hostBindings:function(e,i){e&1&&S(\"click\",function(r){return i.onDocumentClick(r)},ft)},inputs:{data:\"data\",backgroundColor:\"backgroundColor\"},decls:19,vars:13,consts:[[\"searchInput\",\"\"],[\"mapContainer\",\"\"],[1,\"map-of-areas-module\"],[\"id\",\"mapofareas-center-zone-announce\",\"role\",\"status\",\"aria-live\",\"polite\",\"aria-atomic\",\"true\",1,\"sr-only\"],[1,\"map-title\"],[1,\"top-bar\"],[1,\"top-bar-content\"],[1,\"search-wrapper\"],[\"width\",\"20\",\"height\",\"20\",\"viewBox\",\"0 0 20 20\",\"fill\",\"none\",\"xmlns\",\"http://www.w3.org/2000/svg\",1,\"search-icon\"],[\"cx\",\"9\",\"cy\",\"9\",\"r\",\"6\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\"],[\"d\",\"M13 13L17 17\",\"stroke\",\"currentColor\",",
+   ",\"map-title\"],[1,\"top-bar\"],[1,\"top-bar-content\"],[1,\"search-wrapper\"],[\"width\",\"20\",\"height\",\"20\",\"viewBox\",\"0 0 20 20\",\"fill\",\"none\",\"xmlns\",\"http://www.w3.org/2000/svg\",1,\"search-icon\"],[\"cx\",\"9\",\"cy\",\"9\",\"r\",\"6\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\"],[\"d\",\"M13 13L17 17\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\",\"stroke-linecap\",\"round\"],[\"type\",\"text\",\"role\",\"combobox\",\"aria-controls\",\"mapofareas-search-listbox\",\"aria-autocomplete\",\"list\",\"autocomplete\",\"off\",1,\"search-input\",3,\"ngModelChange\",\"focus\",\"keydown\",\"ngModel\",\"placeholder\"],[\"type\",\"button\",\"class\",\"search-clear-btn\",3,\"click\",4,\"ngIf\"],[\"id\",\"mapofareas-search-listbox\",\"class\",\"search-results\",\"role\",\"listbox\",4,\"ngIf\"],[\"class\",\"legend-bar\",4,\"ngIf\"],[1,\"map-area\"],[\"id\",\"mapOfAreas\",1,\"map-view\"],[\"type\",\"button\",1,\"search-",
+   ",\"currentColor\",\"stroke-width\",\"2\"],[\"d\",\"M13 13L17 17\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\",\"stroke-linecap\",\"round\"],[\"type\",\"text\",\"role\",\"combobox\",\"aria-controls\",\"mapofareas-search-listbox\",\"aria-autocomplete\",\"list\",\"autocomplete\",\"off\",1,\"search-input\",3,\"ngModelChange\",\"focus\",\"keydown\",\"ngModel\",\"placeholder\"],[\"type\",\"button\",\"class\",\"search-clear-btn\",3,\"click\",4,\"ngIf\"],[\"id\",\"mapofareas-search-listbox\",\"class\",\"search-results\",\"role\",\"listbox\",4,\"ngIf\"],[\"class\",\"legend-bar\",4,\"ngIf\"],[1,\"map-area\"],[\"id\",\"mapOfAreas\",1,\"map-view\"],[\"type\",\"button\",1,\"search-clear-btn\",3,\"click\"],[\"width\",\"20\",\"height\",\"20\",\"viewBox\",\"0 0 20 20\",\"fill\",\"none\",\"xmlns\",\"http://www.w3.org/2000/svg\"],[\"d\",\"M15 5L5 15M5 5L15 15\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\",\"stroke-linecap\",\"round\"],[\"i",
+   "ch-listbox\",\"class\",\"search-results\",\"role\",\"listbox\",4,\"ngIf\"],[\"class\",\"legend-bar\",4,\"ngIf\"],[1,\"map-area\"],[\"id\",\"mapOfAreas\",1,\"map-view\"],[\"type\",\"button\",1,\"search-clear-btn\",3,\"click\"],[\"width\",\"20\",\"height\",\"20\",\"viewBox\",\"0 0 20 20\",\"fill\",\"none\",\"xmlns\",\"http://www.w3.org/2000/svg\"],[\"d\",\"M15 5L5 15M5 5L15 15\",\"stroke\",\"currentColor\",\"stroke-width\",\"2\",\"stroke-linecap\",\"round\"],[\"id\",\"mapofareas-search-listbox\",\"role\",\"listbox\",1,\"search-results\"],[\"type\",\"button\",\"class\",\"search-result-item\",\"role\",\"option\",\"tabindex\",\"-1\",3,\"is-highlighted\",\"id\",\"click\",4,\"ngFor\",\"ngForOf\"],[\"type\",\"button\",\"role\",\"option\",\"tabindex\",\"-1\",1,\"search-result-item\",3,\"click\",\"id\"],[\"width\",\"24\",\"height\",\"24\",\"viewBox\",\"0 0 24 24\",\"fill\",\"none\",\"xmlns\",\"http://www.w3.org/2000/svg\",\"aria-hidden\",\"true\",1,\"se"
+  ],
+  "zone_ctx": [
+   "0,114,118],hex:\"#F07276\",cssVar:\"var(--Primitive-Secondary-Red-sec-red-30, #F07276)\"},{fill:[252,195,61],stroke:[252,195,61],hex:\"#FCC33D\",cssVar:\"var(--Primitive-Secondary-Yellow-sec-yellow-40, #FCC33D)\"},{fill:[255,163,102],stroke:[255,163,102],hex:\"#FFA366\",cssVar:\"#FFA366\"}];zoneIdToColorIndex={901:2,902:0,99:0,905:3};legendItems=[{nameKey:\"mapOfAreas.zone1\",colorIndex:0},{nameKey:\"mapOfAreas.zone1NoVat\",colorIndex:2},{nameKey:\"mapOfAreas.zone2\",colorIndex:3}];pricingZones=[];israelBoundsWgs84={north:33.35,south:29.45,east:35.95,west:34.2};enforcingPan=!1;enforcingZoom=!1;lastKnownLevel=6;minLevel=1;maxLevel=14;israelExtentItmCache=null;panSubscription=null;extentSubscription=null;ngOnInit(){}ngAfterViewInit(){this.initGovMapScript()}ngOnDestroy(){this.searchDebounceTimer&&clearTimeout(this.sear",
+   "eAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeomWgs84(t,e,i){let o=(i||\"\").trim(),r=o.toUpperCase();if(r.startsWith(\"MULTIPOLYGON\")){let a=o.replace(/^MULTIPOLYGON\\s*/i,\"\").trim();a.startsWith(\"(\")&&(a=a.slice(1,-1).trim());let s=this.splitMultipolygonContent(a);for(let l of s){let u=this.extractRingsFromPolygonPart(l.trim());if(this.pointInRingsWithHolesLngLat(t,e,u))return!0}retur",
+   "o=this.pricingZones.filter(r=>this.zoneNumberFromPricingZone(r)===i);for(let r of o)if(this.pointInZoneGeomWgs84(t,e,r.geom)){let a=this.translationKeyForZoneNumber(i),s=this.translateService.translate(a);this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeomWgs84(t,e,i){let o=(i||\"\").trim(),r=o.toUpperCase();if(r.startsWith(\"MULTIPOLYGON\")){let a=o.replace(/^MULTIPOLYGON\\",
+   "is.mapCenterZoneAnnouncement=\"\";return}if(this.pricingZones?.length){for(let i of this.zoneAnnouncementPriority){let o=this.pricingZones.filter(r=>this.zoneNumberFromPricingZone(r)===i);for(let r of o)if(this.pointInZoneGeomWgs84(t,e,r.geom)){let a=this.translationKeyForZoneNumber(i),s=this.translateService.translate(a);this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterInZone\",{zone:s});return}}this.mapCenterZoneAnnouncement=this.translateService.translate(\"mapOfAreas.mapCenterOutsideZones\")}}zoneNumberFromPricingZone(t){let e=Number(t.zone);if(Number.isFinite(e))return e;let i=Number(t.internalId);return Number.isFinite(i)?i:Number(t.id)}translationKeyForZoneNumber(t){return t===901?\"mapOfAreas.zone1NoVat\":t===905?\"mapOfAreas.zone2\":\"mapOfAreas.zone1\"}pointInZoneGeom"
+  ],
+  "urls": [
+   "http://www.w3.org/1998/Math/MathML",
+   "http://www.w3.org/1999/xhtml",
+   "http://www.w3.org/1999/xlink",
+   "http://www.w3.org/2000/svg",
+   "http://www.w3.org/2000/xmlns/",
+   "http://www.w3.org/XML/1998/namespace",
+   "https://angular.dev/best-practices/security",
+   "https://api.bus.gov.il/prod/bo-be-prod",
+   "https://api.bus.gov.il/prod/mot-scheduler-prod",
+   "https://api.bus.gov.il/prod/route-planner-prod/api",
+   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+   "https://data.gov.il/api/3/action/datastore_search",
+   "https://facebook.com",
+   "https://govforms.gov.il/mw/forms/PniotPublicTransport",
+   "https://govforms.gov.il/mw/forms/PublicTransportRequest",
+   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop",
+   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop",
+   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+   "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=300&h=300&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=100&h=100&fit=crop",
+   "https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=1200&h=600&fit=crop",
+   "https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=1280&h=720&fit=crop",
+   "https://images.unsplash.com/photo-1545459720-aac8509eb02c?w=800&h=600&fit=crop",
+   "https://images.unsplash.com/photo-1551434678-e076c223a692?w=100&h=100&fit=crop",
+   "https://images.unsplash.com/photo-1551434678-e076c223a692?w=300&h=300&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=600&fit=crop",
+   "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&h=100&fit=crop",
+   "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=300&h=300&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=600&fit=crop",
+   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+   "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=100&h=100&fit=crop",
+   "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=300&h=300&fit=crop&crop=center",
+   "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=800&h=600&fit=crop",
+   "https://instagram.com",
+   "https://js.api.here.com/v3/3.2/mapsjs-core.js",
+   "https://js.api.here.com/v3/3.2/mapsjs-mapevents.js",
+   "https://js.api.here.com/v3/3.2/mapsjs-service.js",
+   "https://js.api.here.com/v3/3.2/mapsjs-ui.css",
+   "https://js.api.here.com/v3/3.2/mapsjs-ui.js",
+   "https://mot-content-bucket.s3.il-central-1.amazonaws.com/images/018c5ef0-8ce2-4c73-9ab4-dbce4b03c668_autobus.png",
+   "https://mot-content-bucket.s3.il-central-1.amazonaws.com/images/70d44237-30f3-40d1-94b9-e5a00af115cf_autobus.png",
+   "https://player.vimeo.com/video/",
+   "https://route.bus.gov.il",
+   "https://t.me/",
+   "https://twitter.com",
+   "https://via.placeholder.com/300x200/E6F0FE/549AF8?text=Card1",
+   "https://via.placeholder.com/300x200/E6F0FE/549AF8?text=Card4",
+   "https://via.placeholder.com/300x200/E6F4F1/54B7A0?text=Card3",
+   "https://via.placeholder.com/300x200/FFF8E7/FBB40C?text=Card2",
+   "https://via.placeholder.com/96x96/E6F0FE/549AF8?text=Chat",
+   "https://via.placeholder.com/96x96/E6F0FE/549AF8?text=Taxi",
+   "https://via.placeholder.com/96x96/E6F4F1/54B7A0?text=Discount",
+   "https://via.placeholder.com/96x96/E6F4F1/54B7A0?text=RavKav",
+   "https://via.placeholder.com/96x96/FFF8E7/FBB40C?text=Pay",
+   "https://wa.me/",
+   "https://www.gov.il",
+   "https://www.gov.il/govil-landing-page-api/",
+   "https://www.gov.il/he/collectors/news/?officeId=c7db667a-4697-48af-a432-70f213c4e74e&UnitId=&TopicId=&SubTopicId=&TargetAudienceId=&subTargetAudienceId=",
+   "https://www.gov.il/he/government-service-branches/?officeId=c7db667a-4697-48af-a432-70f213c4e74e",
+   "https://www.gov.il/he/pages/pt-news-1412",
+   "https://www.govmap.gov.il/govmap/api/govmap.api.js",
+   "https://www.youtube.com/embed/"
+  ],
+  "json_refs": [
+   "/home/anatoly.s/Documents/Projects/MOT/jordan-fixed.geojson",
+   "normal.day.json"
+  ],
+  "api_ctx": [
+   "-item[_ngcontent-%COMP%]   .notification-separator[_ngcontent-%COMP%]{height:auto;align-self:stretch}.notification-item[_ngcontent-%COMP%]   .notification-icon-section[_ngcontent-%COMP%]{flex-shrink:0}}\"]})};var le={production:!0,apiBaseUrl:\"https://api.bus.gov.il/prod/bo-be-prod\",routePlannerApiUrl:\"https://api.bus.gov.il/prod/route-planner-prod/api\",motSchedulerApiUrl:\"https://api.bus.gov.il/prod/mot-scheduler-prod\",routePlannerClient:\"https://route.bus.gov.il\",complaintUrl:\"https://govforms.gov.il/mw/forms",
+   "t-%COMP%]{height:auto;align-self:stretch}.notification-item[_ngcontent-%COMP%]   .notification-icon-section[_ngcontent-%COMP%]{flex-shrink:0}}\"]})};var le={production:!0,apiBaseUrl:\"https://api.bus.gov.il/prod/bo-be-prod\",routePlannerApiUrl:\"https://api.bus.gov.il/prod/route-planner-prod/api\",motSchedulerApiUrl:\"https://api.bus.gov.il/prod/mot-scheduler-prod\",routePlannerClient:\"https://route.bus.gov.il\",complaintUrl:\"https://govforms.gov.il/mw/forms/PublicTransportRequest@mot.gov.il?gbxid=0\",complaintUrlMult",
+   "COMP%]   .notification-icon-section[_ngcontent-%COMP%]{flex-shrink:0}}\"]})};var le={production:!0,apiBaseUrl:\"https://api.bus.gov.il/prod/bo-be-prod\",routePlannerApiUrl:\"https://api.bus.gov.il/prod/route-planner-prod/api\",motSchedulerApiUrl:\"https://api.bus.gov.il/prod/mot-scheduler-prod\",routePlannerClient:\"https://route.bus.gov.il\",complaintUrl:\"https://govforms.gov.il/mw/forms/PublicTransportRequest@mot.gov.il?gbxid=0\",complaintUrlMultiLanguage:\"https://govforms.gov.il/mw/forms/PniotPublicTransport@mot.gov",
+   "d=0\",complaintUrlMultiLanguage:\"https://govforms.gov.il/mw/forms/PniotPublicTransport@mot.gov.il\",newsUrl:\"https://www.gov.il/he/pages/pt-news-1412\",govIlBaseUrl:\"https://www.gov.il\",govIlNewsApiUrl:\"https://www.gov.il/govil-landing-page-api/{locale}/api/offices/get/public_transportion_authority\",allNewsUrl:\"https://www.gov.il/he/collectors/news/?officeId=c7db667a-4697-48af-a432-70f213c4e74e&UnitId=&TopicId=&SubTopicId=&TargetAudienceId=&subTargetAudienceId=\",publicReceptionUrl:\"https://www.gov.il/he",
+   "4o8N_fTgFg66d4O8E\",surveyDelaySeconds:2,debugLogDynamicPageModules:!1,navigationFocusTarget:\"skipLink\"};var Ti=class n{constructor(t,e){this.http=t;this.localeService=e}http;localeService;apiBaseUrl=le.apiBaseUrl;getRoutes(){let t=`${this.apiBaseUrl}/api/content-management/slugs`;return this.http.get(t).pipe(De(e=>{}),_e(e=>(console.error(\"Error fetching routes:\",e),U([]))))}getPageData(t){let e=`${this.apiBaseUrl}/api/content-management/${t}`;return this.http.get(e).pipe(De(i=>{}),_e(i=>(console.err",
+   "}http;localeService;apiBaseUrl=le.apiBaseUrl;getRoutes(){let t=`${this.apiBaseUrl}/api/content-management/slugs`;return this.http.get(t).pipe(De(e=>{}),_e(e=>(console.error(\"Error fetching routes:\",e),U([]))))}getPageData(t){let e=`${this.apiBaseUrl}/api/content-management/${t}`;return this.http.get(e).pipe(De(i=>{}),_e(i=>(console.error(\"Error fetching page data for ID\",t,\":\",i),U({}))))}getPageIdBySlug(t,e){let i=e.find(o=>o.urlSlug===t);return i?i.id:null}getPageDataBySlug(t){return new ve(e=>{thi",
+   "}getPageDataBySlug(t){return new ve(e=>{this.getRoutes().subscribe(i=>{let o=this.getPageIdBySlug(t,i);o?this.getPageData(o).subscribe(r=>{e.next(r),e.complete()}):(e.next(null),e.complete())})})}getTranslationsByLanguage(t){let e=`${this.apiBaseUrl}/api/content-management/translations/language/${t}`;return this.http.get(e).pipe(De(i=>{}),_e(i=>(console.error(\"Error fetching translations for language ID\",t,\":\",i),U([]))))}getPageTranslationById(t){let e=`${this.apiBaseUrl}/api/content-management/tran",
+   "t e=`${this.apiBaseUrl}/api/content-management/translations/language/${t}`;return this.http.get(e).pipe(De(i=>{}),_e(i=>(console.error(\"Error fetching translations for language ID\",t,\":\",i),U([]))))}getPageTranslationById(t){let e=`${this.apiBaseUrl}/api/content-management/translations/${t}`;return console.log(\"Fetching page translation for ID:\",t,\"from:\",e),this.http.get(e).pipe(De(i=>{console.log(\"Page translation received for ID\",t,\":\",i)}),_e(i=>(console.error(\"Error fetching page translation for",
+   "translation for ID:\",t,\"from:\",e),this.http.get(e).pipe(De(i=>{console.log(\"Page translation received for ID\",t,\":\",i)}),_e(i=>(console.error(\"Error fetching page translation for ID\",t,\":\",i),U({}))))}getPageTranslations(t){let e=`${this.apiBaseUrl}/api/messages/translations/${t}/active`;return console.log(\"Fetching page translations for ID:\",t,\"from:\",e),this.http.get(e).pipe(De(i=>{console.log(\"Page translations received for ID\",t,\":\",i)}),_e(i=>(console.error(\"Error fetching page translations for",
+   "g page translations for ID:\",t,\"from:\",e),this.http.get(e).pipe(De(i=>{console.log(\"Page translations received for ID\",t,\":\",i)}),_e(i=>(console.error(\"Error fetching page translations for ID\",t,\":\",i),U([]))))}getMessages(){let t=`${this.apiBaseUrl}/api/messages`;return this.http.get(t).pipe(Q(e=>e?.items??[]),_e(e=>(console.error(\"Error fetching messages:\",e),U([]))))}getRegions(){let t=`${this.apiBaseUrl}/api/regions`;return this.http.get(t).pipe(_e(e=>(console.error(\"Error fetching regions:\",e),U",
+   "ching page translations for ID\",t,\":\",i),U([]))))}getMessages(){let t=`${this.apiBaseUrl}/api/messages`;return this.http.get(t).pipe(Q(e=>e?.items??[]),_e(e=>(console.error(\"Error fetching messages:\",e),U([]))))}getRegions(){let t=`${this.apiBaseUrl}/api/regions`;return this.http.get(t).pipe(_e(e=>(console.error(\"Error fetching regions:\",e),U([]))))}getSpecialMessages(t){let i=`${le.motSchedulerApiUrl}/api/he/ServiceAlert/GetSpecialMessagesByTransportType`;return this.http.get(i,{params:{transportTyp",
+   "e=>(console.error(\"Error fetching messages:\",e),U([]))))}getRegions(){let t=`${this.apiBaseUrl}/api/regions`;return this.http.get(t).pipe(_e(e=>(console.error(\"Error fetching regions:\",e),U([]))))}getSpecialMessages(t){let i=`${le.motSchedulerApiUrl}/api/he/ServiceAlert/GetSpecialMessagesByTransportType`;return this.http.get(i,{params:{transportTypes:t}}).pipe(Q(o=>o?.data??[]),_e(o=>(console.error(\"Error fetching special messages:\",o),U([]))))}getPageTranslationForCurrentLanguage(t){let e=this.local",
+   "slug:\",t,\"(normalized:\",a,\")\"),console.log(\"Available slugs:\",r.map(l=>l.urlSlug)),e.next({translationsList:r,translation:null,messages:[]}),e.complete())})})}getLanguageId(t){return{he:1,en:2,ar:3}[t]||1}getTemplateInfo(t){let e=`${this.apiBaseUrl}/api/content-management/templates/${t}`;return console.log(\"\\u{1F50D} Fetching template info for ID:\",t,\"from:\",e),this.http.get(e).pipe(De(i=>{i.templateComponents?.forEach((o,r)=>{o.component.cmsComponentKeys&&o.component.cmsComponentKeys.length>0})}),_",
+   ",excerpt:\"\"}]}}}};fetchMenu(){let t=this.localeService.getCurrentLocale(),e=this.getLanguageId(t),i=this.fallbackMenu;if(this.menuCache.has(e))return console.log(\"\\u2705 Menu cache HIT for language ID:\",e),this.menuCache.get(e);let o=`${this.baseUrl}/api/menu/language/${e}/detailed`;console.log(\"\\u{1F504} Fetching menu for language ID:\",e,\"URL:\",o);let r=this.http.get(o).pipe(Q(a=>this.mapApiMenuToMenuDto(a)),ta(i),_e(a=>(console.error(\"Menu API error:\",a),U(i))),Yt(1));return this.menuCache.set(e,r)",
+   "===\"\"||e===\"/\")&&(e=\"home\"),e}fetchFooter(){let t=this.localeService.getCurrentLocale(),e=this.getLanguageId(t);if(this.footerCache.has(e))return console.log(\"\\u2705 Footer cache HIT for language ID:\",e),this.footerCache.get(e);let i=`${this.baseUrl}/api/footer`;console.log(\"\\u{1F504} Fetching footer for language ID:\",e,\"URL:\",i);let o=this.http.get(i).pipe(Q(r=>{let s=(Array.isArray(r)?r:[r]).find(h=>h.languageId===e)||this.fallbackFooter,l=s.socialLinks??s.SocialLinks??s.socialLinks??[],u=Array.isA",
+   "this.fallbackFooter),_e(()=>U(this.fallbackFooter)),Yt(1));return this.footerCache.set(e,o),o}fetchStaticVariables(){if(this.staticVariablesCache)return console.log(\"\\u2705 Static variables cache HIT\"),this.staticVariablesCache;let t=`${this.baseUrl}/api/cms-static-variables`;return console.log(\"\\u{1F504} Fetching static variables, URL:\",t),this.staticVariablesCache=this.http.get(t).pipe(De(e=>console.log(\"\\u2705 Loaded static variables:\",e.length)),_e(e=>(console.error(\"Static variables API error:\",",
+   "D \\u05DE\\u05DC\\u05D0\",imageUrl:\"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&crop=center\",excerpt:\"\"}]}}}}getPageByTranslationId(t){console.log(\"\\u{1F50D} Getting page by translation ID:\",t);let e=`${this.baseUrl}/api/content-management/translations/${t}`;return console.log(\"\\u{1F50D} API URL:\",e),this.http.get(e).pipe(Ue(i=>(console.log(\"\\u{1F50D} API Response:\",i),this.pageDataMapper.mapPageDataToResolvedPageWithTemplate(i))),De(i=>{console.log(\"\\u{1F50D} Mapped",
+   "ionId:t}}}))))}pagesCache=new Map;fetchPages(){let t=this.localeService.getCurrentLocale(),e=this.getLanguageId(t);if(this.pagesCache.has(e))return console.log(\"\\u2705 Pages cache HIT for language ID:\",e),this.pagesCache.get(e);let i=`${this.baseUrl}/api/content-management/translations/language/${e}`;console.log(\"\\u{1F504} Fetching pages for language ID:\",e,\"URL:\",i);let o=this.http.get(i).pipe(Q(r=>r.filter(a=>a.isPublished&&!a.isDeleted)),De(r=>console.log(\"\\u2705 Loaded pages:\",r.length)),_e(r=>(c",
+   "console.log(\"\\u23ED\\uFE0F [searchPages] Returning empty - searchTerm too short\"),U({results:[],totalCount:0,page:1,limit:i,totalPages:0});let a=new it().set(\"searchTerm\",t.trim()).set(\"page\",e.toString()).set(\"limit\",i.toString()),s=`${this.baseUrl}/api/content-management/search/language/${r}`;console.log(\"\\u{1F310} [searchPages] Making HTTP request:\",s,a.toString());let l=t.trim().toLowerCase();return this.http.get(s,{params:a}).pipe(De(()=>console.log(\"\\u2705 [searchPages] HTTP request completed\")",
+   ">{let i=document.querySelector('script[data-govmap=\"1\"]');if(i){i.addEventListener(\"load\",()=>t()),i.addEventListener(\"error\",()=>e(new Error(\"GovMap load error\")));return}let o=document.createElement(\"script\");o.src=\"https://www.govmap.gov.il/govmap/api/govmap.api.js\",o.defer=!0,o.dataset.govmap=\"1\",o.onload=()=>t(),o.onerror=()=>e(new Error(\"GovMap load error\")),document.head.appendChild(o)})}clampLevel(t){let e=Number.isFinite(t)?Math.round(t):this.lastKnownLevel;return Math.max(cx,Math.min(dx,e))",
+   "tMap();return}if(document.querySelector('script[src*=\"govmap\"]')){let e=setInterval(()=>{window.govmap&&(clearInterval(e),this.govmapLoaded=!0,this.initMap())},100);return}let t=document.createElement(\"script\");t.src=\"https://www.govmap.gov.il/govmap/api/govmap.api.js\",t.async=!0,t.onload=()=>{this.govmapLoaded=!0,this.initMap()},t.onerror=()=>{console.error(\"[MAP] Failed to load GovMap script\")},document.head.appendChild(t)}initMap(){if(!this.mapContainer?.nativeElement){setTimeout(()=>this.initMap(",
+   "backgroundColor===\"#F3F5F7\"||this.backgroundColor===\"rgb(243, 245, 247)\"?\"#FFFFFF\":\"#F3F5F7\"}loadLineRegions(){let t=this.isNightLines,e=!this.isNightLines,i=new URLSearchParams({onlyNightLines:String(t),onlyAccessible:String(e)}),o=`${le.apiBaseUrl}/api/lists/line-regions/lines-with-regions?${i.toString()}`;this.http.get(o).subscribe({next:r=>{this.routeIdToRegionIds.clear(),r.forEach(a=>{let s=(a.regions||[]).map(l=>l.id);s.length>0&&this.routeIdToRegionIds.set(a.routeId,s)}),this.applyFilters()},e",
+   "ions||[]).map(l=>l.id);s.length>0&&this.routeIdToRegionIds.set(a.routeId,s)}),this.applyFilters()},error:r=>{console.warn(\"Line regions API failed, region filter disabled:\",r),this.routeIdToRegionIds.clear()}})}loadOperators(){let t=`${le.apiBaseUrl}/api/lists/operators`;this.http.get(t).subscribe({next:e=>{this.operatorsFromApi=e,this.applyResolvedOperatorsAndRefreshSections()},error:e=>{console.error(\"Error loading operators:\",e),this.operatorsFromApi=[],this.operators=[]}})}applyResolvedOperatorsA",
+   "==this.selectedOperator.agencyId);e&&(this.selectedOperator=e)}this.rawApiLines.length>0&&(this.data=this.transformApiDataToComponentData(this.rawApiLines),this.applyFilters())}loadNightLinesFromApi(){this.isLoading=!0;let t=`${le.motSchedulerApiUrl}/api/Routes/GetNightLines`;this.http.get(t).subscribe({next:e=>{this.rawApiLines=e.data,this.data=this.transformApiDataToComponentData(e.data),this.applyFilters(),this.isLoading=!1},error:e=>{console.error(\"Error loading night lines from API:\",e),this.loa",
+   "ataToComponentData(e.data),this.applyFilters(),this.isLoading=!1},error:e=>{console.error(\"Error loading night lines from API:\",e),this.loadMockData(),this.isLoading=!1}})}loadAccessibleLinesFromApi(){this.isLoading=!0;let t=`${le.motSchedulerApiUrl}/api/Routes/GetAccessibleLines`;this.http.get(t).subscribe({next:e=>{let i=e.data.length,o=e.data.filter(l=>l.isCallNeeded===!0).length,r=e.data.filter(l=>l.isMunicipal===!0).length,a=e.data.filter(l=>l.isCallNeeded===!1).length,s=e.data.filter(l=>l.isCal"
+  ]
  }
 }
