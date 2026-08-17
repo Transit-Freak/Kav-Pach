@@ -1,0 +1,33 @@
+{
+ "generated": "2026-08-17 11:08 UTC",
+ "steps": {
+  "home": {
+   "status": 200,
+   "endpoints_found": []
+  },
+  "https://api.web3forms.com/keys [json]": {
+   "status": 403,
+   "body": "{\"message\":\"Missing Authentication Token\"}"
+  },
+  "https://api.web3forms.com/keys [x-www-form-urlencoded]": {
+   "status": 403,
+   "body": "{\"message\":\"Missing Authentication Token\"}"
+  },
+  "https://api.web3forms.com/key [json]": {
+   "status": 403,
+   "body": "{\"message\":\"Missing Authentication Token\"}"
+  },
+  "https://api.web3forms.com/key [x-www-form-urlencoded]": {
+   "status": 403,
+   "body": "{\"message\":\"Missing Authentication Token\"}"
+  },
+  "https://api.web3forms.com/access-keys [json]": {
+   "status": 403,
+   "body": "{\"message\":\"Missing Authentication Token\"}"
+  },
+  "https://api.web3forms.com/access-keys [x-www-form-urlencoded]": {
+   "status": 403,
+   "body": "{\"message\":\"Missing Authentication Token\"}"
+  }
+ }
+}
