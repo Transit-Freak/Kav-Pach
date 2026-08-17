@@ -95,23 +95,18 @@ def dissect_bundle(report):
     b['endpoints'] = endpoints[:200]
     report['bundle'] = b
 
-    # ניסיון למשוך את האזורים עצמם מכל endpoint שנשמע קשור
-    bases = ['https://api.bus.gov.il/prod/bo-be-prod',
-             'https://api.bus.gov.il/prod/route-planner-prod/api',
-             'https://api.bus.gov.il/prod/mot-scheduler-prod']
-    cands = [e for e in endpoints if re.search(r'zone|pricing|area|fare|tariff', e, re.I)]
+    # ה-endpoint המדויק חולץ מהקוד: routePlannerApiUrl/{locale}/Location/GetPricingZones
     tries = {}
     got_zones = False
-    for c in cands[:12]:
-        for base in bases:
-            url = base + (c if c.startswith('/') else '/' + c)
-            body2 = get(url, limit=30_000_000)
-            ok = not body2.startswith('__ERR__')
-            tries[url] = {'ok': ok, 'bytes': len(body2), 'head': body2[:300]}
-            if ok and ('geom' in body2[:5000] or 'coordinates' in body2[:5000]) and not got_zones:
-                open('fares/checks/pricing-zones.json', 'w', encoding='utf-8').write(body2)
-                tries[url]['saved'] = 'fares/checks/pricing-zones.json'
-                got_zones = True
+    for loc in ('he', 'en'):
+        url = f'https://api.bus.gov.il/prod/route-planner-prod/api/{loc}/Location/GetPricingZones'
+        body2 = get(url, limit=60_000_000)
+        ok = not body2.startswith('__ERR__')
+        tries[url] = {'ok': ok, 'bytes': len(body2), 'head': body2[:300]}
+        if ok and ('geom' in body2[:5000] or 'coordinates' in body2[:5000]) and not got_zones:
+            open('fares/checks/pricing-zones.json', 'w', encoding='utf-8').write(body2)
+            tries[url]['saved'] = 'fares/checks/pricing-zones.json'
+            got_zones = True
     report['endpoint_tries'] = tries
 
 
