@@ -69,8 +69,32 @@ def asset_urls(html, base):
     return list(urls)[:25]
 
 
+def dissect_bundle(report):
+    """ניתוח ממוקד של ה-bundle של bus.gov.il: רכיב mapOfAreas נמצא שם —
+    מחלצים את ההקשר סביבו, ואת כל הכתובות שהקוד טוען, כדי לאתר את
+    קובץ/שירות הנתונים של אזורי התעריף."""
+    html = get('https://bus.gov.il/')
+    m = re.search(r'src=["\']((?:[^"\']*/)?main-[\w]+\.js)["\']', html or '')
+    if not m:
+        report['bundle'] = {'error': 'main bundle לא נמצא'}
+        return
+    burl = urllib.parse.urljoin('https://bus.gov.il/', m.group(1))
+    body = get(burl, limit=20_000_000)
+    if body.startswith('__ERR__'):
+        report['bundle'] = {'error': body[:150]}
+        return
+    b = {'url': burl, 'bytes': len(body)}
+    b['map_of_areas_ctx'] = snippets(body, ['apOfAreas', 'apofareas'], ctx=400, cap=40)
+    b['zone_ctx'] = snippets(body, ['zone1NoVat', 'OutsideZones', 'CenterInZone'], ctx=400, cap=20)
+    b['urls'] = sorted(set(re.findall(r'https?://[\w.-]+[\w./?=&%-]*', body)))[:120]
+    b['json_refs'] = sorted(set(re.findall(r'["\']([\w./-]+\.(?:geo)?json)["\']', body)))[:60]
+    b['api_ctx'] = snippets(body, ['api.bus.gov.il', '/api/', 'arcgis', 'ArcGIS'], ctx=250, cap=25)
+    report['bundle'] = b
+
+
 def main():
     report = {'generated': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), 'pages': {}}
+    dissect_bundle(report)
     for page in PAGES:
         html = get(page)
         entry = {'bytes': len(html)}
