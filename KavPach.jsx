@@ -499,6 +499,7 @@ const TrashBin = ({ className = '' }) => (
 
 // ── ChoiceScreen — מסך פתיחה: בחירה בין קו פח להקו המוזהב ──────────────
 function ChoiceScreen({ onPick }) {
+  const [aboutMe, setAboutMe] = useState(false);
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center p-4" dir="rtl" style={{ fontFamily: "'Heebo', sans-serif" }}>
       <div className="max-w-7xl w-full">
@@ -509,6 +510,18 @@ function ChoiceScreen({ onPick }) {
             <h1 className="text-4xl md:text-5xl font-[900] text-slate-900 tracking-tight">הקו הבוחן</h1>
           </div>
           <p className="text-slate-500 font-bold mt-3 text-base md:text-lg">שבעה כלים לניתוח התחבורה הציבורית — במה לבחור?</p>
+          <button onClick={() => setAboutMe(v => !v)} className="mt-3 text-sm font-black text-sky-700 hover:text-sky-900 hover:underline">
+            👋 קצת עליי {aboutMe ? '▲' : '▼'}
+          </button>
+          {aboutMe && (
+            <div className="max-w-2xl mx-auto mt-4 bg-white rounded-2xl shadow-md border border-slate-200 p-6 text-right leading-relaxed text-slate-700 font-medium text-sm md:text-base">
+              <p>שלום, שמי שלמה (שלומי) הרטמן, בן 20 מקריית מלאכי. תחבורה ציבורית זורמת אצלי בדם מגיל קטן.</p>
+              <p className="mt-3">בין 2023 ל־2025 ערכתי המון בוויקיפדיה תחת השם "פריק התח"צ". ב־2026, כשנמאס לי מהתשובות הקבועות של משרד התחבורה — "אין תקציב" — חשבתי לעצמי: למה שלא אבנה אתר שמראה את כל הבזבוז? כך נולד קו פח.</p>
+              <p className="mt-3">בהתחלה הוא היה האתר היחיד, אבל לאט לאט הגיעו עוד רעיונות: קו באג, התחנה הבאה והקו המוזהב. כשנכנסה התחנה הבאה אמרתי לעצמי — למה לא אתר אחד שמרכז את כולם? וכך נוצר הקו הבוחן.</p>
+              <p className="mt-3">בזכות האתר פנו אליי אנשים מההסתדרות ומהמכון הטכנולוגי חולון — הרגע המאושר בחיי. אולי בעתיד ייצאו איתם אתרים חדשים.</p>
+              <p className="mt-3">יש לכם רעיון לאתר? אשמח לשמוע — <a href="mailto:shlomihartman@gmail.com" className="text-sky-700 font-black hover:underline">כתבו לי</a>. לך תדעו, אולי דווקא הרעיון שלכם יצא לפועל.</p>
+            </div>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
