@@ -1,9 +1,9 @@
 {
- "generated": "2026-08-17 11:13 UTC",
+ "generated": "2026-08-17 11:14 UTC",
  "steps": {
-  "activate": {
+  "test_submit": {
    "status": 200,
-   "body_head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta content=\"IE=edge,chrome=1\" http-equiv=\"X-UA-Compatible\">\n    <meta http-equiv=\"Content-Type\" content=\"text/html\" charset=utf-8\">\n\n            <meta name=\"description\" content=\"F"
+   "body": "{\"success\":\"true\",\"message\":\"The form was submitted successfully.\"}"
   }
  }
 }
