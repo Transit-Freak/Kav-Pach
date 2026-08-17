@@ -30,6 +30,10 @@ jobs:
           mkdir -p fares/checks
           python3 tools/probe_fare_zone_src.py
 
+      - name: בניית קובץ האזורים לאתר
+        run: |
+          [ -f fares/checks/pricing-zones.json ] && python3 tools/build_fare_zones.py || echo "אין פוליגונים — מדלגים"
+
       - name: Commit
         run: |
           set -euo pipefail
@@ -37,11 +41,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp fares/checks/fare-zone-src.json /tmp/probe.json
           cp fares/checks/pricing-zones.json /tmp/zones.json 2>/dev/null || true
+          cp fares/data/fare-zones.json /tmp/fz.json 2>/dev/null || true
           for i in 1 2 3; do
             git fetch origin main && git reset --hard origin/main
-            mkdir -p fares/checks && cp /tmp/probe.json fares/checks/fare-zone-src.json
+            mkdir -p fares/checks fares/data
+            cp /tmp/probe.json fares/checks/fare-zone-src.json
             [ -f /tmp/zones.json ] && cp /tmp/zones.json fares/checks/pricing-zones.json
-            git add fares/checks/fare-zone-src.json fares/checks/pricing-zones.json 2>/dev/null || git add fares/checks/fare-zone-src.json
+            [ -f /tmp/fz.json ] && cp /tmp/fz.json fares/data/fare-zones.json
+            git add fares/checks/fare-zone-src.json fares/checks/pricing-zones.json fares/data/fare-zones.json 2>/dev/null || git add fares/checks/fare-zone-src.json
             if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
             git commit -m 'data: ציד מקור אזורי התעריף — bus.gov.il ורב-פס'
             if git push origin HEAD:main; then break; fi

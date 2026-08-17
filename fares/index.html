@@ -164,6 +164,45 @@ function outMetroPoint(city, la, lo){
   }
   return outMetros(la,lo);
 }
+// פוליגוני אזורי התעריף הרשמיים — אותם נתונים שאתר משרד התחבורה טוען
+// (GetPricingZones): 99+902 = אזור 1 · 905 = רצועת המרכז · 901 = אילת.
+// זה המקור המחייב; מיפוי הערים והרדיוסים נשארים רק כגיבוי לטעינה שנכשלה.
+let ZPOLY=null;
+dfetch('data/fare-zones.json').then(r=>{ if(!r.ok) throw 0; return r.json(); })
+  .then(d=>{ ZPOLY={}; for(const z in d.zones) ZPOLY[z]=d.zones[z].map(decPoly); }).catch(()=>{});
+function decPoly(s){
+  const pts=[]; let i=0, la=0, lo=0;
+  while(i<s.length){
+    for(const w of [0,1]){
+      let b=0x20, sh=0, r=0;
+      while(b>=0x20){ b=s.charCodeAt(i++)-63; r|=(b&0x1f)<<sh; sh+=5; }
+      const d=(r&1)?~(r>>1):(r>>1);
+      if(w===0) la+=d; else lo+=d;
+    }
+    pts.push([la/1e5, lo/1e5]);
+  }
+  return pts;
+}
+function pip(la, lo, ring){
+  let inside=false;
+  for(let i=0, j=ring.length-1; i<ring.length; j=i++){
+    const yi=ring[i][0], xi=ring[i][1], yj=ring[j][0], xj=ring[j][1];
+    if((yi>la)!==(yj>la) && lo<(xj-xi)*(la-yi)/(yj-yi)+xi) inside=!inside;
+  }
+  return inside;
+}
+function zoneAt(la, lo){
+  if (!ZPOLY) return null;
+  if (ZPOLY['901'].some(r=>pip(la,lo,r))) return 'eilat';
+  if (ZPOLY['905'].some(r=>pip(la,lo,r))) return 'center';
+  if (ZPOLY['99'].some(r=>pip(la,lo,r)) || ZPOLY['902'].some(r=>pip(la,lo,r))) return 'peri';
+  return 'none';
+}
+function periPoint(city, la, lo){
+  const z=zoneAt(la, lo);
+  if (z) return z==='peri' || z==='eilat';
+  return outMetroPoint(city, la, lo);
+}
 function zoneFor(km){ for (const z of ZONES) if (km<=z.max) return z; return ZONES[ZONES.length-1]; }
 // מרחק אווירי על אליפסואיד WGS84 (קירוב Andoyer-Lambert) — לא כדור:
 // כדור R=6371 מנפח מרחקים צפון-דרום בכ-0.3%, וזה מספיק כדי לסווג לאזור
@@ -249,7 +288,7 @@ function renderResult(km, note, isTrain, fx){
   if (fx.eilat)
     extraNotes.push('🏝️ הנסיעה נוגעת באזור אילת — מוצג מחיר הפטור ממע"מ (המחיר הארצי חלקי 1.18).');
   if (fx.peri && !isTrain)
-    extraNotes.push(`🏘️ שתי התחנות מחוץ למטרופולינים ת"א, ירושלים וחיפה (לפי סיווג משרד התחבורה) — לנוסעים קבועים בפריפריה יש תקרה חודשית מוזלת של ${money(PERI.m)} לנסיעות עד 40 ק"מ בלי רכבת (${money(PERI.eilat)} באזור אילת).`);
+    extraNotes.push(`🏘️ שתי התחנות באזור 1 לפי מפת האזורים הרשמית — לנוסעים קבועים בפריפריה יש תקרה חודשית מוזלת של ${money(PERI.m)} לנסיעות עד 40 ק"מ בלי רכבת (${money(PERI.eilat)} באזור אילת).`);
   if (fx.railExact!=null)
     extraNotes.push('🚆 מחיר הרכבת נלקח ישירות מהמחירון הרשמי לזוג התחנות הזה.');
   if (fx.edge)
@@ -476,8 +515,8 @@ function computeLine(){
   const km=hav([POOL[i][2],POOL[i][3]], [POOL[j][2],POOL[j][3]]);
   const fx=fixFor(POOL[i][0], POOL[j][0], km, CURRD, +POOL[i][2], +POOL[j][2]);
   const cityOf=sid=>(STOPS && STOPS[sid]) ? STOPS[sid][1] : '';
-  if (km<=40 && outMetroPoint(cityOf(POOL[i][0]),+POOL[i][2],+POOL[i][3])
-             && outMetroPoint(cityOf(POOL[j][0]),+POOL[j][2],+POOL[j][3])) fx.peri=true;
+  if (km<=40 && periPoint(cityOf(POOL[i][0]),+POOL[i][2],+POOL[i][3])
+             && periPoint(cityOf(POOL[j][0]),+POOL[j][2],+POOL[j][3])) fx.peri=true;
   renderResult(km, 'מרחק אווירי בין תחנות העלייה והירידה (כך נקבע התעריף הרשמי)', CURKIND && CURKIND[2], fx);
 }
 
@@ -639,8 +678,8 @@ function computeStops(){
   if (picked.from[0]===picked.to[0]){ emptyResult('בחרו שתי תחנות שונות'); return; }
   const km=hav([picked.from[3],picked.from[4]], [picked.to[3],picked.to[4]]);
   const fx=fixFor(picked.from[0], picked.to[0], km, null, +picked.from[3], +picked.to[3]);
-  if (km<=40 && outMetroPoint(picked.from[2],+picked.from[3],+picked.from[4])
-             && outMetroPoint(picked.to[2],+picked.to[3],+picked.to[4])) fx.peri=true;
+  if (km<=40 && periPoint(picked.from[2],+picked.from[3],+picked.from[4])
+             && periPoint(picked.to[2],+picked.to[3],+picked.to[4])) fx.peri=true;
   // הצלבה מול אינדקס תחנה->קווים: אילו קווים עוצרים בשתי התחנות. אם
   // ביניהן נוסעים רק קווים בתעריף אחיד — זה המחיר, לא המרחק; אם יש
   // גם וגם — מציגים את שניהם עם מספרי הקווים
