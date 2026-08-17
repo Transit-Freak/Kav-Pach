@@ -216,12 +216,16 @@ function renderResult(km, note, isTrain, fx){
   let bus=z.bus, train=(fx.railExact!=null)?fx.railExact:z.train;
   if (fx.eilat) bus=eilatPrice(bus);
   if (fx.flat!=null) bus=fx.flat;
+  // נסיעת פריפריה (עד 40 ק"מ, בלי רכבת, מחוץ למטרופולינים) — החופשי
+  // החודשי הרלוונטי הוא תקרת הפריפריה, לא המחיר הארצי
+  const periM=fx.peri && !isTrain;
   const cards=[
     ['נסיעה בודדת · אוטובוס', bus, !isTrain],
     ['נסיעה בודדת · רכבת', train, !!isTrain],
     ['חופשי יומי', z.daily, false],
     ['חופשי יומי + רכבת', z.dt, false],
-    ['חופשי חודשי ארצי', z.mb, false],
+    periM ? ['חופשי חודשי · פריפריה', (fx.eilat||fx.eilatRegion)?PERI.eilat:PERI.m, false]
+          : ['חופשי חודשי ארצי', z.mb, false],
     ['חופשי חודשי + רכבת', z.mt, !!isTrain],
   ];
   const wrap=$('resultWrap');

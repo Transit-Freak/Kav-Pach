@@ -139,6 +139,13 @@ def main():
     both = inside & outside
     inside -= both
     outside -= both
+    # תיקונים מול מפת התעריפים: שדה MetropolinName הוא הגדרה תכנונית,
+    # ובחומרי "דרך שווה" הרשמיים קריית מלאכי מופיעה במפורש באזור 1
+    # ("מקרית גת אפשר לנסוע בחופשי אזור 1 לבאר שבע, קרית מלאכי ואשקלון").
+    # צומת מלאכי הוא אותו אזור תעריף.
+    FORCE_OUT = {cnorm('קריית מלאכי'), cnorm('מפעלי צומת מלאכי')}
+    inside -= FORCE_OUT
+    outside |= FORCE_OUT
     json.dump({'gen': time.strftime('%Y-%m-%d'),
                'src': 'משרד התחבורה, מאגר תחנות תחבורה ציבורית (data.gov.il) — שדה MetropolinName',
                'in': sorted(inside), 'out': sorted(outside)},
