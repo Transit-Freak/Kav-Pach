@@ -1,0 +1,47 @@
+name: probe-w3form
+
+# בקשת מפתח Web3Forms לטופס הדיווח של המחירון. דוח בלבד — המפתח
+# נשלח למייל של בעל האתר, לא נשמר כאן.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-w3form.yml'
+      - 'tools/probe_w3form.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-w3form-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: בקשה
+        run: |
+          mkdir -p fares/checks
+          python3 tools/probe_w3form.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp fares/checks/w3form-probe.json /tmp/probe.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p fares/checks && cp /tmp/probe.json fares/checks/w3form-probe.json
+            git add fares/checks/w3form-probe.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: בקשת מפתח Web3Forms לטופס הדיווח'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done

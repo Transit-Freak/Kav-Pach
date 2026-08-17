@@ -116,12 +116,28 @@
         <div class="src-l">🚌🚆 <b>סוגי קווים</b> — אוטובוס, קווי דרישה, רכבת ורכבת קלה נכללים במחשבון (בקווי רכבת/רק"ל מוצג מחיר הרכבת, לא האוטובוס). מוניות שירות וכבלים לא נכללים — יש להם מבנה תעריפים נפרד לגמרי.</div>
         <div class="src-l">🎟️ הנחות (ילד/נוער, אזרח ותיק, גיל 67+ ועוד) לא מחושבות כאן — מוצג המחיר המלא בלבד. מחירי המנויים (חופשי יומי וחודשי) לא קיימים בקובצי ה-GTFS, ולכן הם מושווים אוטומטית כל שבוע למחירון הרשמי של רב-פס. <a href="https://bus.gov.il/FaresDiscounts" target="_blank" rel="noopener">פירוט הנחות ›</a></div>
         <div class="src-l">📍 <b>חיפוש כתובות</b> — במצב "לפי תחנות" אפשר להקליד גם כתובת; האיתור נעשה מול מרשם הכתובות הארצי (GovMap, מרכז מיפוי ישראל), עם Nominatim של OpenStreetMap כגיבוי. הכתובת שהוקלדה נשלחת לשירותים האלה בלבד.</div>
-        <div class="src-l">✉️ <b>מצאתם מחיר שגוי?</b> — למרות כל הבדיקות, יכולות להיות טעויות: תעריפים מתעדכנים, ונתוני המקור לא תמיד מושלמים. אשמח מאוד שתכתבו לי — <a href="mailto:shlomihartman@gmail.com">shlomihartman@gmail.com</a> — ואתקן.</div>
+        <div class="src-l">✉️ <b>מצאתם מחיר שגוי?</b> — למרות כל הבדיקות, יכולות להיות טעויות: תעריפים מתעדכנים, ונתוני המקור לא תמיד מושלמים. <a href="#" class="replink">דווחו בטופס קצר</a> ואתקן (או במייל: <a href="mailto:shlomihartman@gmail.com">shlomihartman@gmail.com</a>).</div>
       </details>
     </div>
-    <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · רעיון האתר: קובי משה · חלק ממשפחת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · יכולות להיות טעויות — <a href="mailto:shlomihartman@gmail.com">מצאתם? כתבו לי ואתקן</a></div>
+    <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · רעיון האתר: קובי משה · חלק ממשפחת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · יכולות להיות טעויות — <a href="#" class="replink">מצאתם? דווחו ואתקן</a></div>
   </div>
 </div>
+
+<dialog id="repdlg" class="repdlg">
+  <h3>🛠️ דיווח על טעות</h3>
+  <div class="repctx" id="repctx"></div>
+  <label class="replbl">מה שגוי?
+    <textarea id="reptxt" rows="4" placeholder="למשל: נסעתי בקו הזה אתמול ושילמתי 14.5 ₪, לא 8 ₪"></textarea>
+  </label>
+  <label class="replbl">איך לחזור אליכם? (לא חובה)
+    <input id="repcontact" type="text" autocomplete="email" placeholder="מייל או טלפון">
+  </label>
+  <div class="repbtns">
+    <button id="repsend" class="repsendbtn">שליחה</button>
+    <button id="repcancel">ביטול</button>
+  </div>
+  <div class="repstat" id="repstat"></div>
+</dialog>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -281,6 +297,7 @@ function renderResult(km, note, isTrain, fx){
       (fx.flatAlt.nums.length>1?'קווים ':'קו ')+fx.flatAlt.nums.join(', ')+
       ': ₪'+fmt(fx.flatAlt.p)+' בלי תלות במרחק. המחיר שלמעלה הוא לקווים המתומחרים לפי מרחק.');
   // fx.noDirect לא מוצג — המשתמשים רוצים מחיר, לא תכנון מסלול
+
   if (fx.z!=null && z!==zCalc)
     extraNotes.push('📋 האזור הותאם לטבלת התעריפים הרשמית — משרד התחבורה מסווג את זוג התחנות הזה ל'+
       'אזור ה'+z.n+', למרות שלפי המרחק לבדו הוא היה נופל לאזור ה'+zCalc.n+'.');
@@ -862,6 +879,56 @@ $('modeStop').addEventListener('click', ()=>{
   loadStops().then(refreshDots).catch(()=>{});
   ensureMap();
   if (picked.from&&picked.to) computeStops(); else emptyResult('בחרו שתי תחנות — והמחיר יופיע כאן');
+});
+
+/* ---------- טופס דיווח על טעות — שליחה מתוך האתר ---------- */
+// Web3Forms מעביר את הטופס לתיבת המייל של שלמה בלי לפתוח אפליקציית
+// מייל אצל המדווח. עד שהמפתח מוגדר (או אם השליחה נכשלת) — נפתח מייל.
+const W3K='';
+function tripContext(){
+  const r=$('resultWrap');
+  return (r && !r.classList.contains('empty'))
+    ? r.textContent.replace(/\s+/g,' ').trim().slice(0,300) : '';
+}
+function reportBody(){
+  return 'דיווח מהמחירון · '+new Date().toLocaleString('he-IL')+'\n\n'
+    +($('reptxt').value.trim()||'(בלי תיאור)')+'\n\n'
+    +'הנסיעה שנבדקה: '+(tripContext()||'לא חושבה נסיעה')+'\n'
+    +'חזרה אל: '+($('repcontact').value.trim()||'לא צוין');
+}
+function mailtoReport(){
+  return 'mailto:shlomihartman@gmail.com?subject='+encodeURIComponent('דיווח על טעות במחירון')
+    +'&body='+encodeURIComponent(reportBody());
+}
+function openReport(ev){
+  if (ev) ev.preventDefault();
+  const ctx=tripContext();
+  $('repctx').textContent=ctx
+    ? '🎫 מצורף לדיווח אוטומטית: '+ctx
+    : '💡 טיפ: חשבו קודם את הנסיעה הבעייתית — והדיווח יכלול אותה אוטומטית.';
+  $('repstat').textContent='';
+  const dlg=$('repdlg');
+  if (dlg.showModal) dlg.showModal(); else location.href=mailtoReport();
+}
+document.querySelectorAll('.replink').forEach(a=>a.addEventListener('click', openReport));
+$('repcancel').addEventListener('click', ev=>{ ev.preventDefault(); $('repdlg').close(); });
+$('repsend').addEventListener('click', ev=>{
+  ev.preventDefault();
+  if (!$('reptxt').value.trim()){ $('repstat').textContent='כתבו מה שגוי ואז שלחו'; return; }
+  if (!W3K){ location.href=mailtoReport(); $('repdlg').close(); return; }
+  $('repstat').textContent='⏳ שולח…';
+  fetch('https://api.web3forms.com/submit', {method:'POST',
+    headers:{'Content-Type':'application/json', 'Accept':'application/json'},
+    body:JSON.stringify({access_key:W3K, subject:'דיווח על טעות במחירון',
+      from_name:'המחירון — טופס דיווח', message:reportBody(), botcheck:''})})
+    .then(r=>r.json())
+    .then(d=>{
+      if (!d.success) throw 0;
+      $('repstat').textContent='✅ נשלח — תודה רבה!';
+      $('reptxt').value='';
+      setTimeout(()=>$('repdlg').close(), 1500);
+    })
+    .catch(()=>{ $('repstat').innerHTML='⚠ השליחה נכשלה — <a href="'+mailtoReport()+'">שלחו במייל במקום</a>'; });
 });
 </script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
