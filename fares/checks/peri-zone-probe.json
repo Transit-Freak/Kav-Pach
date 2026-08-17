@@ -1,0 +1,2031 @@
+{
+ "generated": "2026-08-17 09:10 UTC",
+ "queries": {
+  "דרך שווה": "אין תוצאות רלוונטיות",
+  "אזורי תעריף": "אין תוצאות רלוונטיות",
+  "צדק תחבורתי": "אין תוצאות רלוונטיות",
+  "רפורמת התעריפים": "אין תוצאות רלוונטיות",
+  "תעריפי תחבורה ציבורית": [
+   {
+    "id": "bus_stops",
+    "title": "תחנות תחבורה ציבורית",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "e873e6a2-66c1-494f-a677-f5e77348edb0",
+      "name": "תחנות תחבורה ציבורית",
+      "format": "CSV",
+      "datastore": true
+     }
+    ]
+   },
+   {
+    "id": "tahaz_clusters",
+    "title": "אשכולות תח\"צ",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "adfcbe30-8184-4123-97ad-fe1b4cb3342b",
+      "name": "TAHAZ_CLUSTERS_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "d1bc0096-0acf-4828-be57-5636df25a670",
+      "name": "TAHAZ_CLUSTERS_KML",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "7b6171ba-bbe7-471f-8a03-ec49ac8ad7a4",
+      "name": "TAHAZ_CLUSTERS_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "205a68cf-95e3-41bb-908e-90f8b35cfd76",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   }
+  ],
+  "חופשי חודשי": "אין תוצאות רלוונטיות",
+  "פריפריה תחבורה": "אין תוצאות רלוונטיות",
+  "מטרופולין": [
+   {
+    "id": "mataan_tlv",
+    "title": "אסטרטגית למתע\"ן מטרופולין ת\"א - 2050",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "d3c3bf16-317c-4d8b-9188-16a65d895607",
+      "name": "MATAAN_TLV_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "e1ce0334-8394-47e1-b3f1-ec056a8a056c",
+      "name": "MATAAN_TLV_KML",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "bd11e899-65c0-43aa-8264-c07434da22aa",
+      "name": "MATAAN_TLV_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "261ffc6a-c34e-4e65-9bcc-f308069d8791",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "mataan_tlv_2040",
+    "title": "אסטרטגית למתע\"ן מטרופולין ת\"א 2040",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "dfcb95c6-efd0-4429-8dc7-b657c8743f55",
+      "name": "MATAAN_TLV_2040_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "30d45f07-00e5-4137-abae-b430f1344cf9",
+      "name": "MATAAN_TLV_2040_KML",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "b7293036-84a2-40c3-b67c-b433298e2e0f",
+      "name": "MATAAN_TLV_2040_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "d932f873-4e70-439a-8c11-1b5ad27438c6",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "metro_line_jlm",
+    "title": "מטרו - קווים במטרופולין ירושלים",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "f717c289-d5a4-45c2-854a-0289af973314",
+      "name": "METRO_LINE_JLM_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "75c78018-3e9b-42d1-8711-4cb3768f45fc",
+      "name": "METRO_LINE_JLM_KML",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "138a1a7f-3b83-4e3b-acc3-e191565ae619",
+      "name": "METRO_LINE_JLM_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "8689afdd-6df5-4610-9f3d-9c36ad35f16c",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   },
+   {
+    "id": "mataan_haifa",
+    "title": "אסטרטגית למתע\"ן מטרופולין חיפה 2040",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "a957b958-43d5-4daf-b9b1-46cca4cf1e65",
+      "name": "MATAAN_HAIFA_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "248dc8e0-9249-4614-9047-507d7380c8f5",
+      "name": "MATAAN_HAIFA_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "b9c0d3b2-2660-4bb9-b253-76b15f1e3d7b",
+      "name": "MATAAN_HAIFA_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "19eddc47-e8e5-44db-9ca3-baa722e04a2f",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   },
+   {
+    "id": "metro_line",
+    "title": "קווי מטרו",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "ed60769d-a772-4894-860a-db289f21e612",
+      "name": "METRO_LINE_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "82b85a1b-0e8e-455a-8575-89e3eb8452d0",
+      "name": "METRO_LINE_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "438c4cc5-a3aa-4db1-b203-525c52535259",
+      "name": "METRO_LINE_csv",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "31bf5dd1-07a7-4207-b727-8b2643c611cf",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": false
+     },
+     {
+      "id": "02026117-311a-4fc4-87df-b77280f54963",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "metro_stat",
+    "title": "תחנות מטרו",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "2d0c5425-c1d8-4932-9995-3ccf6b8a24f2",
+      "name": "METRO_STAT_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "418fd678-5285-4e4a-b5b6-25671d509240",
+      "name": "METRO_STAT_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "aaea25c0-1478-4ae6-9c61-1cce3cff5ae7",
+      "name": "METRO_STAT_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "c8267957-853c-4956-954a-697e59624c6a",
+      "name": "מטאדאטה",
+      "format": "PDF",
+      "datastore": false
+     },
+     {
+      "id": "f79002e2-a81f-4353-b98e-5df644646c7a",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "mataan_brshva",
+    "title": "הסעת המונים מטרופולין באר שבע - 2050",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "f243a1c4-40cd-45e5-b9da-ff39e4412401",
+      "name": "MATAAN_BRSHVA_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "ff279e10-04b3-4704-bfa1-f6259324cecd",
+      "name": "MATAAN_BRSHVA_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "cbceb2be-59fa-48bd-859c-cacbd18ad4a9",
+      "name": "MATAAN_BRSHVA_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "b1a76e0a-fa6d-43f4-a469-5ff20f10ef5b",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   },
+   {
+    "id": "mataan_jlm",
+    "title": "הסעת המונים מטרופולין ירושלים - 2050",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "dd72c058-7e92-4a1c-be85-207b7a637022",
+      "name": "MATAAN_JLM_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "66db8417-e87a-4be4-9351-0a1a716d22c1",
+      "name": "MATAAN_JLM_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "2a4ebc87-c35d-4ba0-a58f-383975a69ae2",
+      "name": "MATAAN_JLM_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "699fc843-7c9b-495e-8c5f-2f76c366304e",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "taz_ta_popdens_2017",
+    "title": "צפיפות אוכלוסיה במטרופולין תל אביב",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "d124dea7-813e-4ad7-b5b7-199c929034b0",
+      "name": "TAZ_TA_POPDENS_2017_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "fba0b2a8-e12b-42c6-9b96-ea8c555d8c4a",
+      "name": "TAZ_TA_POPDENS_2017_KML",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "98d177d7-d34d-4f8b-a9b6-358199869ba1",
+      "name": "TAZ_TA_POPDENS_2017_csv",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "6d415457-2487-4b62-a303-8d0ee5a04f64",
+      "name": "מטאדאטה",
+      "format": "PDF",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "tma_23a4_dipo",
+    "title": "תמ\"א 23-א-4 - דיפו",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "dd5f8c61-e32e-40f4-ad83-217526fb6693",
+      "name": "TMA_23A4_DIPO_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "97d3192a-0ad9-4544-a89b-71e2e6023f29",
+      "name": "TMA_23A4_DIPO_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "f4ed636a-79db-49a9-a322-dbcacf0a5652",
+      "name": "TMA_23A4_DIPO_csv",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "e1f513eb-e7ff-4fcd-b04d-0e7968856656",
+      "name": "מטאדאטה",
+      "format": "PDF",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "tma_23a4_lines",
+    "title": "תמ\"א 23_א_4 - קווי מתע\"ן",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "9451dc6f-da70-47f0-a576-334c25e1a4c5",
+      "name": "TMA_23A4_LINES_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "83b44dbc-785a-49e3-b49c-bfe169a35a26",
+      "name": "TMA_23A4_LINES_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "556cb2f9-5b71-4041-a460-922bf05b91b1",
+      "name": "TMA_23A4_LINES_csv",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "78bceb61-2283-4f4c-887e-6de9aac45746",
+      "name": "מטאדאטה",
+      "format": "PDF",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "mimshakim_2023",
+    "title": "ממשקים אגף תכנון 2023",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "83c999e2-71ef-4c04-be34-81a1a3c78b1d",
+      "name": "MIMSHAKIM_2023_SHP",
+      "format": "SHP",
+      "datastore": false
+     },
+     {
+      "id": "1bc3c615-9ba7-440e-b450-5b3d70f01355",
+      "name": "MIMSHAKIM_2023_KMZ",
+      "format": "KMZ",
+      "datastore": false
+     },
+     {
+      "id": "376d2bcb-8815-4a64-a5c4-ed7be94b3816",
+      "name": "MIMSHAKIM_2023_csv",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "34d35560-6a89-476b-a137-0ec7b59e1087",
+      "name": "מטאדאטה",
+      "format": "PDF",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "cong_tax_rings",
+    "title": "טבעות סל גודש",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "788a953a-5090-495b-a43d-4c2acce5ce71",
+      "name": "CONG_TAX_RINGS_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "4e25cc62-40cb-4d6a-b52c-61d8884ac567",
+      "name": "CONG_TAX_RINGS_KMZ",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "2e727979-7555-48f4-a5d8-3da29b392ffc",
+      "name": "CONG_TAX_RINGS_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "3ec1fd23-a72e-42ae-9d94-32332c13a793",
+      "name": "מטאדאטה",
+      "format": "PDF",
+      "datastore": false
+     }
+    ]
+   },
+   {
+    "id": "2010-2019",
+    "title": "קובץ אחוד ארצי של סקרי הרגלי נסיעה 2010-2019",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "86e3ea80-66f8-48f9-97bd-f58c20d7bfbd",
+      "name": "NTHS2019_version_1.zip",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "64154387-9269-474a-a20d-7d273031ac95",
+      "name": "תקציר.pdf",
+      "format": "PDF",
+      "datastore": false
+     },
+     {
+      "id": "6fbfb540-45fa-49db-b962-6ea87310cc83",
+      "name": "NTHS-meta_version_1.pdf",
+      "format": "PDF",
+      "datastore": false
+     }
+    ]
+   }
+  ],
+  "רב קו": [
+   {
+    "id": "tahaz_clusters",
+    "title": "אשכולות תח\"צ",
+    "org": "משרד התחבורה והבטיחות בדרכים",
+    "resources": [
+     {
+      "id": "adfcbe30-8184-4123-97ad-fe1b4cb3342b",
+      "name": "TAHAZ_CLUSTERS_SHP",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "d1bc0096-0acf-4828-be57-5636df25a670",
+      "name": "TAHAZ_CLUSTERS_KML",
+      "format": "ZIP",
+      "datastore": false
+     },
+     {
+      "id": "7b6171ba-bbe7-471f-8a03-ec49ac8ad7a4",
+      "name": "TAHAZ_CLUSTERS_CSV",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "205a68cf-95e3-41bb-908e-90f8b35cfd76",
+      "name": "מטאדאטה",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   }
+  ],
+  "אזור תעריף 1": [
+   {
+    "id": "crime_records_data",
+    "title": "נתוני פשיעה",
+    "org": "משטרת ישראל",
+    "resources": [
+     {
+      "id": "b53b64f8-57ed-4213-9191-a7401c0cf436",
+      "name": "רשימת העבירות עם קבוצת העבירה סוג העבירה ורגישות",
+      "format": "XLSX",
+      "datastore": true
+     },
+     {
+      "id": "e311b6a1-be5a-4a82-8298-f3afbee07b6b",
+      "name": "פירוט של תיקי פשיעה לפי אזור, רבעון וסוגי עבירות ב2025",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "5fc13c50-b6f3-4712-b831-a75e0f91a17e",
+      "name": "פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2024",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "32aacfc9-3524-4fba-a282-3af052380244",
+      "name": "פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2023",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "a59f3e9e-a7fe-4375-97d0-76cea68382c1",
+      "name": "פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2022",
+      "format": "CSV",
+      "datastore": true
+     },
+     {
+      "id": "3f71fd16-25b8-4cfe-8661-e6199db3eb12",
+      "name": "פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2021",
+      "format": "CSV",
+      "datastore": true
+     }
+    ]
+   },
+   {
+    "id": "beneficiary_recipients",
+    "title": "מקבלי הטבה לפי ספק",
+    "org": "הרשות הממשלתית למים ולביוב",
+    "resources": [
+     {
+      "id": "375a0352-081d-49e4-ab47-680ee917da45",
+      "name": "מקבלי הטבה לפי ספק - אפריל 2022",
+      "format": "XLSX",
+      "datastore": true
+     },
+     {
+      "id": "005248b9-0a61-4c04-8c6a-c7bcd9bd72bd",
+      "name": "מקבלי הטבה לפי ספק - מאי 2024",
+      "format": "XLSX",
+      "datastore": true
+     },
+     {
+      "id": "4f1dfc0b-f39f-4995-bf4c-7ad53f6867ca",
+      "name": "מקבלי הטבה לפי ספק - מאי 2025",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   },
+   {
+    "id": "cleanliness",
+    "title": "מדידות הניקיון במרחב הציבורי",
+    "org": "המשרד להגנת הסביבה",
+    "resources": [
+     {
+      "id": "3436bb7f-8b67-49be-94a4-3c34c9cc1e7a",
+      "name": "מאגר פחים",
+      "format": "XLSX",
+      "datastore": true
+     },
+     {
+      "id": "ece44fa9-f47c-4116-a16e-9477e0d4d2dc",
+      "name": "התנהגויות",
+      "format": "XLSX",
+      "datastore": true
+     },
+     {
+      "id": "7b32b590-d130-4f41-bb63-1ca462d91f3a",
+      "name": "תשתיות",
+      "format": "XLSX",
+      "datastore": true
+     },
+     {
+      "id": "94400680-6a74-4c4b-be55-704e20ca4e76",
+      "name": "פרטי לכלוך",
+      "format": "XLSX",
+      "datastore": true
+     }
+    ]
+   }
+  ]
+ },
+ "mot_packages": [
+  {
+   "org": "ministry_of_transport",
+   "packages": [
+    "מספרי רישוי של כלי רכב פרטיים ומסחריים",
+    "מספרי רישוי של כלי הרכב הציבוריים הפעילים",
+    "כמות כלי רכב חשמליים לפי נפה",
+    "היסטוריית כלי רכב פרטיים",
+    "כלי רכב שמותקנים בהם מסננים לצמצום פליטת מזהמים",
+    "הודעות יצרני הרכב RECALL",
+    "מוסכים ומכוני רישוי",
+    "כלי רכב שלא ביצעו ריקול (קריאת שירות)",
+    "סחר, יבוא וייצור מוצרי תעבורה",
+    "מספרי רישוי של כלי רכב לא פעילים עם קוד דגם"
+   ]
+  }
+ ],
+ "samples": {
+  "bus_stops/תחנות תחבורה ציבורית": {
+   "fields": [
+    "_id",
+    "StationId",
+    "CityCode",
+    "CityName",
+    "MetropolinCode",
+    "MetropolinName",
+    "StationTypeCode",
+    "StationTypeName",
+    "StationOperatorTypeCode",
+    "StationOperatorTypeName",
+    "Lat",
+    "Long"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "StationId": 2228,
+     "CityCode": 472,
+     "CityName": "אבו גוש",
+     "MetropolinCode": 4,
+     "MetropolinName": "ירושלים",
+     "StationTypeCode": 1,
+     "StationTypeName": "תחנה רגילה",
+     "StationOperatorTypeCode": 1,
+     "StationOperatorTypeName": "מפעילי אוטובוסים",
+     "Lat": 31.806622,
+     "Long": 35.114168
+    },
+    {
+     "_id": 2,
+     "StationId": 2229,
+     "CityCode": 472,
+     "CityName": "אבו גוש",
+     "MetropolinCode": 4,
+     "MetropolinName": "ירושלים",
+     "StationTypeCode": 1,
+     "StationTypeName": "תחנה רגילה",
+     "StationOperatorTypeCode": 1,
+     "StationOperatorTypeName": "מפעילי אוטובוסים",
+     "Lat": 31.810908,
+     "Long": 35.10752
+    }
+   ]
+  },
+  "tahaz_clusters/TAHAZ_CLUSTERS_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "OBJECTID",
+    "ID",
+    "OPERATORID",
+    "CLUSTERID",
+    "WEEKRIDERS",
+    "WEEKTRIPS",
+    "Shape_Leng",
+    "AREA_KMR",
+    "CLUSTER_",
+    "OPERATOR",
+    "Shape_Length",
+    "Shape_Area"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "OBJECTID": 1,
+     "ID": 21560.0,
+     "OPERATORID": 9,
+     "CLUSTERID": 81,
+     "WEEKRIDERS": 855100,
+     "WEEKTRIPS": 29410,
+     "Shape_Leng": 70450.4484479,
+     "AREA_KMR": 66.0729771299,
+     "CLUSTER_": "חיפה עירוני",
+     "OPERATOR": "אגד",
+     "Shape_Length": 70450.44844791497,
+     "Shape_Area": 66072977.129929036
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "OBJECTID": 2,
+     "ID": 21582.0,
+     "OPERATORID": 48,
+     "CLUSTERID": 215,
+     "WEEKRIDERS": 423820,
+     "WEEKTRIPS": 6723,
+     "Shape_Leng": 78181.4118021,
+     "AREA_KMR": 4.32336527548,
+     "CLUSTER_": "מטרונית - חיפה",
+     "OPERATOR": "סופרבוס",
+     "Shape_Length": 78181.41180208095,
+     "Shape_Area": 4323365.275483026
+    }
+   ]
+  },
+  "tahaz_clusters/מטאדאטה": {
+   "fields": [
+    "_id",
+    "Author",
+    "הרשות הארצית לתחבורה ציבורית"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "Author": "Publisher",
+     "הרשות הארצית לתחבורה ציבורית": "משרד התחבורה"
+    },
+    {
+     "_id": 2,
+     "Author": "Contact",
+     "הרשות הארצית לתחבורה ציבורית": "צוות חצב"
+    }
+   ]
+  },
+  "mataan_tlv/MATAAN_TLV_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "TYPE",
+    "YEAR",
+    "Shape_Length",
+    "SEGMENT",
+    "NAME"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "TYPE": "METRO",
+     "YEAR": 2050,
+     "Shape_Length": 45742.80220272391,
+     "SEGMENT": "רעננה לרחובות",
+     "NAME": "M1"
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "TYPE": "METRO",
+     "YEAR": 2050,
+     "Shape_Length": 6936.669656947551,
+     "SEGMENT": "מקטע דרומי",
+     "NAME": "M2"
+    }
+   ]
+  },
+  "mataan_tlv_2040/MATAAN_TLV_2040_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "PROJECT",
+    "NAME",
+    "Shape_Length"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "PROJECT": 3,
+     "NAME": "מטרו רדיאלי 1+2",
+     "Shape_Length": 83498.98355473852
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "PROJECT": 4,
+     "NAME": "מטרו רדיאלי 3",
+     "Shape_Length": 20500.78908966206
+    }
+   ]
+  },
+  "metro_line_jlm/METRO_LINE_JLM_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "LINE_ID",
+    "LINE_NAME",
+    "YEAR",
+    "Shape_Length",
+    "LENGT"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "LINE_ID": 7,
+     "LINE_NAME": "X_2",
+     "YEAR": 2050,
+     "Shape_Length": 15738.91703490264,
+     "LENGT": 16
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "LINE_ID": 8,
+     "LINE_NAME": "X_Extension1",
+     "YEAR": 2050,
+     "Shape_Length": 4479.942898493623,
+     "LENGT": 4
+    }
+   ]
+  },
+  "metro_line_jlm/מטאדאטה": {
+   "fields": [
+    "_id",
+    "Author",
+    "צתאל ירושלים"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "Author": "Publisher",
+     "צתאל ירושלים": "משרד התחבורה"
+    },
+    {
+     "_id": 2,
+     "Author": "Contact",
+     "צתאל ירושלים": "צוות חצב"
+    }
+   ]
+  },
+  "mataan_haifa/MATAAN_HAIFA_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "ORIGIN",
+    "STATUS",
+    "TYPE",
+    "LENGT",
+    "DESTNATION",
+    "Shape_Length"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "ORIGIN": "חוף הכרמל",
+     "STATUS": "מתוכנן",
+     "TYPE": "רכבת",
+     "LENGT": 11,
+     "DESTNATION": "מרכזית המפרץ",
+     "Shape_Length": 10620.263633327731
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "ORIGIN": "נצרת",
+     "STATUS": "מתוכנן",
+     "TYPE": "BRT",
+     "LENGT": 14,
+     "DESTNATION": "רמת דוד",
+     "Shape_Length": 14215.087339936807
+    }
+   ]
+  },
+  "mataan_haifa/מטאדאטה": {
+   "fields": [
+    "_id",
+    "Author",
+    "משרד התחבורה"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "Author": "Publisher",
+     "משרד התחבורה": "משרד התחבורה"
+    },
+    {
+     "_id": 2,
+     "Author": "Contact",
+     "משרד התחבורה": "צוות חצב"
+    }
+   ]
+  },
+  "metro_line/METRO_LINE_csv": {
+   "fields": [
+    "_id",
+    "OID",
+    "OBJECTID",
+    "NAME",
+    "DESCRPTION",
+    "YEARMONTH",
+    "LENGT",
+    "Shape_Leng",
+    "Shape_Length"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "OBJECTID": 1,
+     "NAME": "M1",
+     "DESCRPTION": "M1-north",
+     "YEARMONTH": 202512,
+     "LENGT": 41427.9641212,
+     "Shape_Leng": 41427.9641212,
+     "Shape_Length": 41547.98505762803
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "OBJECTID": 2,
+     "NAME": "M2",
+     "DESCRPTION": "M2",
+     "YEARMONTH": 202405,
+     "LENGT": 26822.5795944,
+     "Shape_Leng": 24032.41237,
+     "Shape_Length": 24087.848993072108
+    }
+   ]
+  },
+  "metro_stat/METRO_STAT_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "OBJECTID",
+    "ID",
+    "NAMEENG",
+    "LINE",
+    "MASAD",
+    "NAME",
+    "YEARMONTH"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "OBJECTID": 1,
+     "ID": 1,
+     "NAMEENG": "KIRYAT SHALOM",
+     "LINE": "M1",
+     "MASAD": "M1N-31",
+     "NAME": "קריית שלום",
+     "YEARMONTH": 202112
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "OBJECTID": 2,
+     "ID": 2,
+     "NAMEENG": "KFAR SABA - EAST",
+     "LINE": "M1",
+     "MASAD": "M1N-10",
+     "NAME": "כפר סבא מזרח",
+     "YEARMONTH": 202112
+    }
+   ]
+  },
+  "mataan_brshva/MATAAN_BRSHVA_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "NAME",
+    "STATUS",
+    "COMP",
+    "DESTNATION",
+    "START_",
+    "Shape_Length"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "NAME": "ערד - באר שבע מערב",
+     "STATUS": "מוקדם",
+     "COMP": "נתיבי איילון",
+     "DESTNATION": "באר שבע מערב",
+     "START_": "ערד",
+     "Shape_Length": 51810.72467961326
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "NAME": "רהט מערב - באר שבע דרום מערב",
+     "STATUS": "מוקדם",
+     "COMP": "נתיבי איילון",
+     "DESTNATION": "באר שבע דרום מערב",
+     "START_": "רהט",
+     "Shape_Length": 27621.997220979043
+    }
+   ]
+  },
+  "mataan_brshva/מטאדאטה": {
+   "fields": [
+    "_id",
+    "Author",
+    "נתיבי איילון"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "Author": "Publisher",
+     "נתיבי איילון": "משרד התחבורה"
+    },
+    {
+     "_id": 2,
+     "Author": "Contact",
+     "נתיבי איילון": "צוות חצב"
+    }
+   ]
+  },
+  "mataan_jlm/MATAAN_JLM_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "Shape_Length",
+    "LINE_ID",
+    "TYPE",
+    "LINE_NAME",
+    "YEAR"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": -1,
+     "Shape_Length": 17506.878314177735,
+     "LINE_ID": 122,
+     "TYPE": "LRT",
+     "LINE_NAME": "BLUE",
+     "YEAR": 2028
+    },
+    {
+     "_id": 2,
+     "OID": -1,
+     "Shape_Length": 13285.072476734164,
+     "LINE_ID": 126,
+     "TYPE": "LRT",
+     "LINE_NAME": "LIGHT GREEN",
+     "YEAR": 2040
+    }
+   ]
+  },
+  "taz_ta_popdens_2017/TAZ_TA_POPDENS_2017_csv": {
+   "fields": [
+    "_id",
+    "FID",
+    "SHAPE_LENG",
+    "POP_DENS",
+    "SHAPE_Le_1",
+    "SHAPE_Area"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "FID": "0",
+     "SHAPE_LENG": "0.191105",
+     "POP_DENS": "0",
+     "SHAPE_Le_1": "19465.043382",
+     "SHAPE_Area": "12776672.7619"
+    },
+    {
+     "_id": 2,
+     "FID": "1",
+     "SHAPE_LENG": "0.11751118",
+     "POP_DENS": "426",
+     "SHAPE_Le_1": "11928.8036389",
+     "SHAPE_Area": "7634612.9565"
+    }
+   ]
+  },
+  "tma_23a4_dipo/TMA_23A4_DIPO_csv": {
+   "fields": [
+    "_id",
+    "OBJECTID",
+    "ID",
+    "AREA",
+    "Shape_Length",
+    "Shape_Area"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OBJECTID": "1",
+     "ID": "1",
+     "AREA": "0.071133",
+     "Shape_Length": "1105.019641",
+     "Shape_Area": "71086.56337"
+    },
+    {
+     "_id": 2,
+     "OBJECTID": "2",
+     "ID": "2",
+     "AREA": "0.073425",
+     "Shape_Length": "1108.291764",
+     "Shape_Area": "73376.83811"
+    }
+   ]
+  },
+  "tma_23a4_lines/TMA_23A4_LINES_csv": {
+   "fields": [
+    "_id",
+    "OBJECTID",
+    "ID",
+    "LENGTH",
+    "DIR",
+    "LINE",
+    "Shape_Length"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OBJECTID": "1",
+     "ID": "1",
+     "LENGTH": "0.55",
+     "DIR": "0",
+     "LINE": "קו אדום",
+     "Shape_Length": "549.066168"
+    },
+    {
+     "_id": 2,
+     "OBJECTID": "2",
+     "ID": "2",
+     "LENGTH": "21.61",
+     "DIR": "0",
+     "LINE": "קו אדום",
+     "Shape_Length": "21613.64415"
+    }
+   ]
+  },
+  "mimshakim_2023/MIMSHAKIM_2023_csv": {
+   "fields": [
+    "_id",
+    "OBJECTID",
+    "id",
+    "NAME",
+    "INTENSITY",
+    "TYPE",
+    "is_2023",
+    "is_2030",
+    "TRANSHOUR"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OBJECTID": "1",
+     "id": "1",
+     "NAME": "נורדאו",
+     "INTENSITY": "רגיל",
+     "TYPE": "אזורי",
+     "is_2023": "כן",
+     "is_2030": "כן",
+     "TRANSHOUR": "פחות מ-900"
+    },
+    {
+     "_id": 2,
+     "OBJECTID": "2",
+     "id": "2",
+     "NAME": "סוקולוב",
+     "INTENSITY": "רגיל",
+     "TYPE": "אזורי",
+     "is_2023": "כן",
+     "is_2030": "כן",
+     "TRANSHOUR": "פחות מ-900"
+    }
+   ]
+  },
+  "cong_tax_rings/CONG_TAX_RINGS_CSV": {
+   "fields": [
+    "_id",
+    "OID",
+    "NAME",
+    "YEARMONTH",
+    "SHAPE_Length",
+    "SHAPE_Area"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "OID": "-1",
+     "NAME": "טבעת חיצונית",
+     "YEARMONTH": "202110",
+     "SHAPE_Length": "128475.284231042314786",
+     "SHAPE_Area": "196311669.359583824872971"
+    },
+    {
+     "_id": 2,
+     "OID": "-1",
+     "NAME": "טבעת תיכונה",
+     "YEARMONTH": "202110",
+     "SHAPE_Length": "63606.795734819483187",
+     "SHAPE_Area": "91954519.171925812959671"
+    }
+   ]
+  },
+  "crime_records_data/רשימת העבירות עם קבוצת העבירה סוג העבירה ורגישות": {
+   "fields": [
+    "_id",
+    "StatisticCrimeGroupCode",
+    "StatisticCrimeGroupName",
+    "StatisticCrimeTypeCode",
+    "StatisticCrimeTypeName",
+    "CrimeName",
+    "SensitivityFlag"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "StatisticCrimeGroupCode": 100,
+     "StatisticCrimeGroupName": " עבירות בטחון",
+     "StatisticCrimeTypeCode": 100,
+     "StatisticCrimeTypeName": " עבירות בטחון",
+     "CrimeName": "מסירת מידע לשם פגיעה בבטחון",
+     "SensitivityFlag": null
+    },
+    {
+     "_id": 2,
+     "StatisticCrimeGroupCode": 100,
+     "StatisticCrimeGroupName": " עבירות בטחון",
+     "StatisticCrimeTypeCode": 100,
+     "StatisticCrimeTypeName": " עבירות בטחון",
+     "CrimeName": "החזקת ואיסוף מידע סודי",
+     "SensitivityFlag": null
+    }
+   ]
+  },
+  "crime_records_data/פירוט של תיקי פשיעה לפי אזור, רבעון וסוגי עבירות ב2025": {
+   "fields": [
+    "_id",
+    "FictiveIDNumber",
+    "Year",
+    "Quarter",
+    "YeshuvKod",
+    "Yeshuv",
+    "PoliceDistrictKod",
+    "PoliceDistrict",
+    "PoliceMerhavKod",
+    "PoliceMerhav",
+    "PoliceStationKod",
+    "PoliceStation",
+    "municipalKod",
+    "municipalName",
+    "StatisticAreaKod",
+    "StatisticArea",
+    "StatisticGroupKod",
+    "StatisticGroup",
+    "StatisticTypeKod",
+    "StatisticType"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "FictiveIDNumber": "E3C7117A6366ACC3060290CCBC1D713C",
+     "Year": 2025,
+     "Quarter": "Q1",
+     "YeshuvKod": 7400,
+     "Yeshuv": "נתניה",
+     "PoliceDistrictKod": 40000000,
+     "PoliceDistrict": "מחוז מרכז",
+     "PoliceMerhavKod": 41100000,
+     "PoliceMerhav": "מרחב שרון",
+     "PoliceStationKod": 41110000,
+     "PoliceStation": "תחנת נתניה שרון",
+     "municipalKod": null,
+     "municipalName": "",
+     "StatisticAreaKod": 74000352,
+     "StatisticArea": "בן ציון (מזרח) רמת חן",
+     "StatisticGroupKod": 700,
+     "StatisticGroup": "עבירות כלפי הרכוש",
+     "StatisticTypeKod": 711,
+     "StatisticType": "גניבה שמוש רכב ללא רשות"
+    },
+    {
+     "_id": 2,
+     "FictiveIDNumber": "110DA536234B73CD5F46B938F9E8CDC5",
+     "Year": 2025,
+     "Quarter": "Q1",
+     "YeshuvKod": 70,
+     "Yeshuv": "אשדוד",
+     "PoliceDistrictKod": 30000000,
+     "PoliceDistrict": "מחוז דרומי",
+     "PoliceMerhavKod": 31200000,
+     "PoliceMerhav": "מרחב לכיש",
+     "PoliceStationKod": 31214000,
+     "PoliceStation": "תחנת אשדוד",
+     "municipalKod": null,
+     "municipalName": "",
+     "StatisticAreaKod": 700211,
+     "StatisticArea": "רובע ז' (מזרח)",
+     "StatisticGroupKod": 800,
+     "StatisticGroup": "עבירות מרמה",
+     "StatisticTypeKod": 803,
+     "StatisticType": "מרמה ועושק"
+    }
+   ]
+  },
+  "crime_records_data/פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2024": {
+   "fields": [
+    "_id",
+    "FictiveIDNumber",
+    "Year",
+    "Quarter",
+    "YeshuvKod",
+    "Yeshuv",
+    "PoliceDistrictKod",
+    "PoliceDistrict",
+    "PoliceMerhavKod",
+    "PoliceMerhav",
+    "PoliceStationKod",
+    "PoliceStation",
+    "municipalKod",
+    "municipalName",
+    "StatisticAreaKod",
+    "StatisticArea",
+    "StatisticGroupKod",
+    "StatisticGroup",
+    "StatisticTypeKod",
+    "StatisticType"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "FictiveIDNumber": "B72E65C9569F991582A0CE1938600579",
+     "Year": 2024,
+     "Quarter": "Q3",
+     "YeshuvKod": 9600,
+     "Yeshuv": "קרית ים",
+     "PoliceDistrictKod": 80000000,
+     "PoliceDistrict": "מחוז חוף",
+     "PoliceMerhavKod": 15002761,
+     "PoliceMerhav": "מרחב אשר חוף",
+     "PoliceStationKod": 81200000,
+     "PoliceStation": "תחנת זבולון מחוז חוף",
+     "municipalKod": null,
+     "municipalName": "",
+     "StatisticAreaKod": 96000034,
+     "StatisticArea": "שכ' א'",
+     "StatisticGroupKod": 200,
+     "StatisticGroup": "עבירות סדר ציבורי",
+     "StatisticTypeKod": 206,
+     "StatisticType": "איומים"
+    },
+    {
+     "_id": 2,
+     "FictiveIDNumber": "A3CE9870099C350304808EE60F31F32B",
+     "Year": 2024,
+     "Quarter": "Q3",
+     "YeshuvKod": 6400,
+     "Yeshuv": "הרצליה",
+     "PoliceDistrictKod": 20000000,
+     "PoliceDistrict": "מחוז תא",
+     "PoliceMerhavKod": 21700000,
+     "PoliceMerhav": "מרחב ירקון תא",
+     "PoliceStationKod": 21702000,
+     "PoliceStation": "תחנת גלילות ירקון",
+     "municipalKod": null,
+     "municipalName": "",
+     "StatisticAreaKod": null,
+     "StatisticArea": "",
+     "StatisticGroupKod": 700,
+     "StatisticGroup": "עבירות כלפי הרכוש",
+     "StatisticTypeKod": 711,
+     "StatisticType": "גניבה שמוש רכב ללא רשות"
+    }
+   ]
+  },
+  "crime_records_data/פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2023": {
+   "fields": [
+    "_id",
+    "FictiveIDNumber",
+    "Year",
+    "Quarter",
+    "YeshuvKod",
+    "Yeshuv",
+    "PoliceDistrictKod",
+    "PoliceDistrict",
+    "PoliceMerhavKod",
+    "PoliceMerhav",
+    "PoliceStationKod",
+    "PoliceStation",
+    "municipalKod",
+    "municipalName",
+    "StatisticAreaKod",
+    "StatisticArea",
+    "StatisticGroupKod",
+    "StatisticGroup",
+    "StatisticTypeKod",
+    "StatisticType"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "FictiveIDNumber": "A89ADD8E97F7EC4E7CFC39E857837739",
+     "Year": 2023,
+     "Quarter": "Q4",
+     "YeshuvKod": 4000,
+     "Yeshuv": "חיפה",
+     "PoliceDistrictKod": 80000000,
+     "PoliceDistrict": "מחוז חוף",
+     "PoliceMerhavKod": 15002761,
+     "PoliceMerhav": "מרחב אשר חוף",
+     "PoliceStationKod": 81200000,
+     "PoliceStation": "תחנת זבולון מחוז חוף",
+     "municipalKod": null,
+     "municipalName": "",
+     "StatisticAreaKod": 40000211,
+     "StatisticArea": "אזור תעשייה מפרץ חיפה (צפון - מזרח)",
+     "StatisticGroupKod": 700,
+     "StatisticGroup": "עבירות כלפי הרכוש",
+     "StatisticTypeKod": 706,
+     "StatisticType": "התפרצות לבתי עסק ומוסדות"
+    },
+    {
+     "_id": 2,
+     "FictiveIDNumber": "8535E4E6BAAD6C7D615D896018B6E7F8",
+     "Year": 2023,
+     "Quarter": "Q4",
+     "YeshuvKod": null,
+     "Yeshuv": "",
+     "PoliceDistrictKod": 50000000,
+     "PoliceDistrict": "מחוז ירושלים",
+     "PoliceMerhavKod": 51200000,
+     "PoliceMerhav": "מרחב ציון ירושלים",
+     "PoliceStationKod": 61628000,
+     "PoliceStation": "תחנת מטה יהודה מגב י-ם",
+     "municipalKod": null,
+     "municipalName": "מקום אחר",
+     "StatisticAreaKod": null,
+     "StatisticArea": "",
+     "StatisticGroupKod": 400,
+     "StatisticGroup": "עבירות נגד גוף",
+     "StatisticTypeKod": 404,
+     "StatisticType": "(תקיפה (למעט עובדי ציבור"
+    }
+   ]
+  },
+  "crime_records_data/פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2022": {
+   "fields": [
+    "_id",
+    "FictiveIDNumber",
+    "Year",
+    "Quarter",
+    "YeshuvKod",
+    "Yeshuv",
+    "PoliceDistrictKod",
+    "PoliceDistrict",
+    "PoliceMerhavKod",
+    "PoliceMerhav",
+    "PoliceStationKod",
+    "PoliceStation",
+    "municipalKod",
+    "municipalName",
+    "StatisticAreaKod",
+    "StatisticArea",
+    "StatisticGroupKod",
+    "StatisticGroup",
+    "StatisticTypeKod",
+    "StatisticType"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "FictiveIDNumber": "FDAAC8B6CC30B15157C517483B4AB8DA",
+     "Year": 2022,
+     "Quarter": "Q1",
+     "YeshuvKod": 2560,
+     "Yeshuv": "ערד",
+     "PoliceDistrictKod": 30000000,
+     "PoliceDistrict": "מחוז דרומי",
+     "PoliceMerhavKod": 15007099,
+     "PoliceMerhav": "מרחב רותם דרום",
+     "PoliceStationKod": 31312000,
+     "PoliceStation": "תחנת ערד רותם",
+     "municipalKod": null,
+     "municipalName": null,
+     "StatisticAreaKod": 25600002,
+     "StatisticArea": "טללים לבאות",
+     "StatisticGroupKod": 600,
+     "StatisticGroup": "עבירות כלפי המוסר",
+     "StatisticTypeKod": 608,
+     "StatisticType": "שמוש בסמים מסוכנים"
+    },
+    {
+     "_id": 2,
+     "FictiveIDNumber": "AC3B2704B47A453C9D265D21F407D9D3",
+     "Year": 2022,
+     "Quarter": "Q4",
+     "YeshuvKod": 9000,
+     "Yeshuv": "באר שבע",
+     "PoliceDistrictKod": 30000000,
+     "PoliceDistrict": "מחוז דרומי",
+     "PoliceMerhavKod": 31300000,
+     "PoliceMerhav": "מרחב נגב",
+     "PoliceStationKod": 31311000,
+     "PoliceStation": "תחנת באר שבע נגב",
+     "municipalKod": null,
+     "municipalName": null,
+     "StatisticAreaKod": 90000212,
+     "StatisticArea": "שכ' ו' (מרכז)",
+     "StatisticGroupKod": 200,
+     "StatisticGroup": "עבירות סדר ציבורי",
+     "StatisticTypeKod": 206,
+     "StatisticType": "איומים"
+    }
+   ]
+  },
+  "crime_records_data/פירוט של תיקי פשיעה לפי אזור רבעון וסוגי עבירות ב-2021": {
+   "fields": [
+    "_id",
+    "FictiveIDNumber",
+    "Year",
+    "Quarter",
+    "YeshuvKod",
+    "Yeshuv",
+    "PoliceDistrictKod",
+    "PoliceDistrict",
+    "PoliceMerhavKod",
+    "PoliceMerhav",
+    "PoliceStationKod",
+    "PoliceStation",
+    "municipalKod",
+    "municipalName",
+    "StatisticAreaKod",
+    "StatisticArea",
+    "StatisticGroupKod",
+    "StatisticGroup",
+    "StatisticTypeKod",
+    "StatisticType"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "FictiveIDNumber": "9E69C4306ED43B75842658635716F6DF",
+     "Year": 2021,
+     "Quarter": "Q1",
+     "YeshuvKod": 7900,
+     "Yeshuv": "פתח תקווה",
+     "PoliceDistrictKod": 40000000,
+     "PoliceDistrict": "מחוז מרכז",
+     "PoliceMerhavKod": 41100000,
+     "PoliceMerhav": "מרחב שרון",
+     "PoliceStationKod": 41111000,
+     "PoliceStation": "תחנת פתח תקוה שרון",
+     "municipalKod": null,
+     "municipalName": null,
+     "StatisticAreaKod": 79000236,
+     "StatisticArea": "רחובות פרנקפורטר דוד ביס סלומון",
+     "StatisticGroupKod": 200,
+     "StatisticGroup": "עבירות סדר ציבורי",
+     "StatisticTypeKod": 215,
+     "StatisticType": "עבירות נגד הסדר הצבורי"
+    },
+    {
+     "_id": 2,
+     "FictiveIDNumber": "E5A5F0CF6E03A1A9D945749EB6A8EB58",
+     "Year": 2021,
+     "Quarter": "Q4",
+     "YeshuvKod": 6600,
+     "Yeshuv": "חולון",
+     "PoliceDistrictKod": 20000000,
+     "PoliceDistrict": "מחוז תא",
+     "PoliceMerhavKod": 21800000,
+     "PoliceMerhav": "מרחב איילון החדש תא",
+     "PoliceStationKod": 15005645,
+     "PoliceStation": "תחנת חולון איילון החדש",
+     "municipalKod": null,
+     "municipalName": null,
+     "StatisticAreaKod": 66000216,
+     "StatisticArea": "קרית שרת (צפון)",
+     "StatisticGroupKod": 700,
+     "StatisticGroup": "עבירות כלפי הרכוש",
+     "StatisticTypeKod": 706,
+     "StatisticType": "התפרצות לבתי עסק ומוסדות"
+    }
+   ]
+  },
+  "beneficiary_recipients/מקבלי הטבה לפי ספק - אפריל 2022": {
+   "fields": [
+    "_id",
+    "מספר ספק ברשות המים",
+    "שם ספק",
+    "מספר זכאים ביטוח לאומי",
+    "מספר זכאים משרד הבטחון",
+    "מספר זכאים רשות ניצולי שואה",
+    "סך כל הזכאים נכון לאפריל 2022"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "מספר ספק ברשות המים": 54,
+     "שם ספק": "בית יוסף מושב",
+     "מספר זכאים ביטוח לאומי": 40,
+     "מספר זכאים משרד הבטחון": 0,
+     "מספר זכאים רשות ניצולי שואה": 0,
+     "סך כל הזכאים נכון לאפריל 2022": 40
+    },
+    {
+     "_id": 2,
+     "מספר ספק ברשות המים": 66,
+     "שם ספק": "טירת צבי קבוץ",
+     "מספר זכאים ביטוח לאומי": 26,
+     "מספר זכאים משרד הבטחון": 1,
+     "מספר זכאים רשות ניצולי שואה": 0,
+     "סך כל הזכאים נכון לאפריל 2022": 26
+    }
+   ]
+  },
+  "beneficiary_recipients/מקבלי הטבה לפי ספק - מאי 2024": {
+   "fields": [
+    "_id",
+    "מספר ספק ברשות המים",
+    "שם ספק",
+    "מספר זכאים ביטוח לאומי",
+    "מספר זכאים משרד הבטחון",
+    "מספר זכאים רשות ניצולי שואה",
+    "סך הכל הזכאים נכון למאי 2024"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "מספר ספק ברשות המים": 54,
+     "שם ספק": "בית יוסף מושב",
+     "מספר זכאים ביטוח לאומי": 46,
+     "מספר זכאים משרד הבטחון": 0,
+     "מספר זכאים רשות ניצולי שואה": 0,
+     "סך הכל הזכאים נכון למאי 2024": 46
+    },
+    {
+     "_id": 2,
+     "מספר ספק ברשות המים": 63,
+     "שם ספק": "קבוץ חמדיה",
+     "מספר זכאים ביטוח לאומי": 35,
+     "מספר זכאים משרד הבטחון": 2,
+     "מספר זכאים רשות ניצולי שואה": 1,
+     "סך הכל הזכאים נכון למאי 2024": 38
+    }
+   ]
+  },
+  "beneficiary_recipients/מקבלי הטבה לפי ספק - מאי 2025": {
+   "fields": [
+    "_id",
+    "מספר ספק",
+    "שם ספק",
+    "מספר זכאים ביטוח לאומי",
+    "מספר זכאים משרד הבטחון",
+    "מספר זכאים רשות ניצולי שואה",
+    "סך הכל הזכאים נכון למאי 2025"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "מספר ספק": 54,
+     "שם ספק": "בית יוסף מושב",
+     "מספר זכאים ביטוח לאומי": 43,
+     "מספר זכאים משרד הבטחון": 1,
+     "מספר זכאים רשות ניצולי שואה": 0,
+     "סך הכל הזכאים נכון למאי 2025": 44
+    },
+    {
+     "_id": 2,
+     "מספר ספק": 63,
+     "שם ספק": "קבוץ חמדיה",
+     "מספר זכאים ביטוח לאומי": 39,
+     "מספר זכאים משרד הבטחון": 2,
+     "מספר זכאים רשות ניצולי שואה": 1,
+     "סך הכל הזכאים נכון למאי 2025": 42
+    }
+   ]
+  },
+  "cleanliness/מאגר פחים": {
+   "fields": [
+    "_id",
+    "זמן סיום מהמערכת",
+    "יישוב",
+    "סמל_יישוב",
+    "שעת הגעה לנקודה",
+    "נ.צ כתובת",
+    "כתובת תיאור מיקום נקודת המדידה",
+    "סוגנ קודת המדידה",
+    "האם יש פחים בנקודת המדידה",
+    "כמה פחים יש בנקודת המדידה",
+    "סוג",
+    "מצב הפח",
+    "מפלס הפסולת בפח",
+    "מפלס הפסולת בפח במספר"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "זמן סיום מהמערכת": "2021-07-12T08:23:34",
+     "יישוב": "מגדל העמק",
+     "סמל_יישוב": 874,
+     "שעת הגעה לנקודה": "06:00:00",
+     "נ.צ כתובת": "",
+     "כתובת תיאור מיקום נקודת המדידה": "רחוב הראשונים מגדל העמק מגורים",
+     "סוגנ קודת המדידה": "רחוב מגורים",
+     "האם יש פחים בנקודת המדידה": "כן",
+     "כמה פחים יש בנקודת המדידה": 8,
+     "סוג": "אשפתון רחוב ללא פתרון לסיגריות",
+     "מצב הפח": "שבור",
+     "מפלס הפסולת בפח": "ריק",
+     "מפלס הפסולת בפח במספר": 0
+    },
+    {
+     "_id": 2,
+     "זמן סיום מהמערכת": "2021-07-12T08:23:34",
+     "יישוב": "מגדל העמק",
+     "סמל_יישוב": 874,
+     "שעת הגעה לנקודה": "06:00:00",
+     "נ.צ כתובת": "",
+     "כתובת תיאור מיקום נקודת המדידה": "רחוב הראשונים מגדל העמק מגורים",
+     "סוגנ קודת המדידה": "רחוב מגורים",
+     "האם יש פחים בנקודת המדידה": "כן",
+     "כמה פחים יש בנקודת המדידה": 5,
+     "סוג": "מכולת אשפה",
+     "מצב הפח": "בלוי",
+     "מפלס הפסולת בפח": "3/4",
+     "מפלס הפסולת בפח במספר": 0.75
+    }
+   ]
+  },
+  "cleanliness/התנהגויות": {
+   "fields": [
+    "_id",
+    "id",
+    "זמןסיוםמהמערכת",
+    "יישוב",
+    "סמל_יישוב",
+    "שעתהגעהלנקודה",
+    "נ.צכתובת",
+    "כתובתתיאורמיקוםנקודתהמדידה",
+    "סוגנקודתהמדידהתשובה",
+    "Index1",
+    "time",
+    "parit",
+    "teorshlilihiyuvi",
+    "teortext",
+    "gender",
+    "age",
+    "point_type",
+    "heged1",
+    "heged2",
+    "heged3",
+    "heged4",
+    "heged5",
+    "heged6",
+    "heged7",
+    "heged8",
+    "heged9",
+    "heged10",
+    "heged11",
+    "heged12",
+    "heged13"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "id": 1,
+     "זמןסיוםמהמערכת": "2021-07-07T10:22:27",
+     "יישוב": "רמלה",
+     "סמל_יישוב": 8500,
+     "שעתהגעהלנקודה": "09:20:00",
+     "נ.צכתובת": "31.9224141,34.8685917",
+     "כתובתתיאורמיקוםנקודתהמדידה": "רחוב זכריה",
+     "סוגנקודתהמדידהתשובה": "רחוב מגורים",
+     "Index1": 1,
+     "time": "09:38:00",
+     "parit": "בשעות בהם בוצעה הסקירה לא נכחו אנשים",
+     "teorshlilihiyuvi": "חיובית",
+     "teortext": "אין",
+     "gender": "נקבה",
+     "age": "50-69",
+     "point_type": "רחוב מגורים",
+     "heged1": "",
+     "heged2": "",
+     "heged3": "",
+     "heged4": "",
+     "heged5": "",
+     "heged6": "",
+     "heged7": "",
+     "heged8": "",
+     "heged9": "",
+     "heged10": "",
+     "heged11": "",
+     "heged12": "",
+     "heged13": ""
+    },
+    {
+     "_id": 2,
+     "id": 1,
+     "זמןסיוםמהמערכת": "2021-07-07T10:22:27",
+     "יישוב": "רמלה",
+     "סמל_יישוב": 8500,
+     "שעתהגעהלנקודה": "09:20:00",
+     "נ.צכתובת": "31.9224141,34.8685917",
+     "כתובתתיאורמיקוםנקודתהמדידה": "רחוב זכריה",
+     "סוגנקודתהמדידהתשובה": "רחוב מגורים",
+     "Index1": 2,
+     "time": "09:50:00",
+     "parit": "אין",
+     "teorshlilihiyuvi": "חיובית",
+     "teortext": "אדם שהלך עם צידנית",
+     "gender": "זכר",
+     "age": "50-69",
+     "point_type": "רחוב מגורים",
+     "heged1": "",
+     "heged2": "",
+     "heged3": "",
+     "heged4": "",
+     "heged5": "",
+     "heged6": "",
+     "heged7": "",
+     "heged8": "",
+     "heged9": "",
+     "heged10": "",
+     "heged11": "",
+     "heged12": "",
+     "heged13": ""
+    }
+   ]
+  },
+  "cleanliness/תשתיות": {
+   "fields": [
+    "_id",
+    "זמןסיוםמהמערכת",
+    "יישוב",
+    "סמל_יישוב",
+    "שעתהגעהלנקודה",
+    "נ.צכתובת",
+    "כתובתתיאורמיקוםנקודתהמדידה",
+    "התרשמותכלליתמנקודתהמדידה",
+    "מדרכה",
+    "אבנישפה",
+    "גדרות",
+    "צמחייה",
+    "הערות",
+    "point_type"
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "זמןסיוםמהמערכת": "2021-07-07T10:22:27",
+     "יישוב": "רמלה",
+     "סמל_יישוב": 8500,
+     "שעתהגעהלנקודה": "09:20:00",
+     "נ.צכתובת": "31.9224141,34.8685917",
+     "כתובתתיאורמיקוםנקודתהמדידה": "רחוב זכריה",
+     "התרשמותכלליתמנקודתהמדידה": 3,
+     "מדרכה": "סביר",
+     "אבנישפה": "סביר",
+     "גדרות": "סביר",
+     "צמחייה": "סביר",
+     "הערות": "בהמשך רחוב זכריה נמצאה המון פסולת \r\nאין מספיק פחים בסביבה \r\nהצמחייה לא מטופלת כראוי \r\nכמו כן חלק משפת המדרכות לא תיקני",
+     "point_type": "רחוב מגורים"
+    },
+    {
+     "_id": 2,
+     "זמןסיוםמהמערכת": "2021-07-08T13:43:58",
+     "יישוב": "מגדל העמק",
+     "סמל_יישוב": 874,
+     "שעתהגעהלנקודה": "11:20:00",
+     "נ.צכתובת": "32.6753736,35.2392182",
+     "כתובתתיאורמיקוםנקודתהמדידה": "מגדל העמק רחוב הזית",
+     "התרשמותכלליתמנקודתהמדידה": 4,
+     "מדרכה": "לא תקין (מוזנח)",
+     "אבנישפה": "לא תקין (מוזנח)",
+     "גדרות": "לא רלוונטי",
+     "צמחייה": "לא תקין (מוזנח)",
+     "הערות": "",
+     "point_type": "רחוב מסחרי"
+    }
+   ]
+  },
+  "cleanliness/פרטי לכלוך": {
+   "fields": [
+    "_id",
+    "זמן סיום מהמערכת",
+    "יישוב",
+    "סמל יישוב",
+    "שעת הגעה לנקודה",
+    "נ.צ כתובת",
+    "כתובת תיאור מיקום נקודת המדידה",
+    "סוג נקודת המדידה",
+    "בדלי סיגריות",
+    "קופסאות סיגריות",
+    "מסכות כירורגיות",
+    "מכלי משקה למיניהם",
+    "פקקים של מכלי משקה",
+    "אריזות מזון Take Away נייר",
+    "אריזות מזון Take Away פלסטיק",
+    "צלחות חדפ",
+    "סכום חדפ",
+    "כוסות שתייה קרה חדפ",
+    "כוסות שתייה חמה חדפ",
+    "אריזות של חטיפים",
+    "זכוכית לא מכלי משקה או לא ניתן לזיה",
+    "נייר אחר לא אריזות מזון",
+    "פלסטיק אחר שקיות פלסטיק ורכיבי פלס",
+    "פסולת אורגנית",
+    "פסולת בלתי חוקית שקית אשפה מלאה שה",
+    "פסולת אחרת למשל בגדים סוללות חומרי",
+    "צואת כלבים",
+    "כתמי מסטיק",
+    "פריט פסולת גדול",
+    "אריזות קרטון",
+    "גרפיטי",
+    "אחר1",
+    "אחר2",
+    "בנקודת המדידה נאספו x שקיות של פרטי",
+    "כמה אנשים עברו בנקודת המדידה בזמן "
+   ],
+   "sample": [
+    {
+     "_id": 1,
+     "זמן סיום מהמערכת": "27/09/2021",
+     "יישוב": "שפרעם",
+     "סמל יישוב": "8800",
+     "שעת הגעה לנקודה": "08:20:00",
+     "נ.צ כתובת": null,
+     "כתובת תיאור מיקום נקודת המדידה": "רחוב תלחמי ליד העירייה",
+     "סוג נקודת המדידה": "מבנה ציבור",
+     "בדלי סיגריות": "500",
+     "קופסאות סיגריות": "1",
+     "מסכות כירורגיות": "50",
+     "מכלי משקה למיניהם": "20",
+     "פקקים של מכלי משקה": "7",
+     "אריזות מזון Take Away נייר": "0",
+     "אריזות מזון Take Away פלסטיק": "0",
+     "צלחות חדפ": "2",
+     "סכום חדפ": "0",
+     "כוסות שתייה קרה חדפ": "10",
+     "כוסות שתייה חמה חדפ": "3",
+     "אריזות של חטיפים": "5",
+     "זכוכית לא מכלי משקה או לא ניתן לזיה": "0",
+     "נייר אחר לא אריזות מזון": "4",
+     "פלסטיק אחר שקיות פלסטיק ורכיבי פלס": "3",
+     "פסולת אורגנית": "0",
+     "פסולת בלתי חוקית שקית אשפה מלאה שה": "0",
+     "פסולת אחרת למשל בגדים סוללות חומרי": "10",
+     "צואת כלבים": "0",
+     "כתמי מסטיק": "40",
+     "פריט פסולת גדול": "11",
+     "אריזות קרטון": "13",
+     "גרפיטי": "0",
+     "אחר1": "כסא משרדי ליד הכביש",
+     "אחר2": "משטח עץ ליד המדריכה",
+     "בנקודת המדידה נאספו x שקיות של פרטי": "1",
+     "כמה אנשים עברו בנקודת המדידה בזמן ": "78"
+    },
+    {
+     "_id": 2,
+     "זמן סיום מהמערכת": "27/09/2021",
+     "יישוב": "שפרעם",
+     "סמל יישוב": "8800",
+     "שעת הגעה לנקודה": "08:30:00",
+     "נ.צ כתובת": null,
+     "כתובת תיאור מיקום נקודת המדידה": "רח תופיק זיאד",
+     "סוג נקודת המדידה": "רחוב מסחרי",
+     "בדלי סיגריות": "128",
+     "קופסאות סיגריות": "15",
+     "מסכות כירורגיות": "41",
+     "מכלי משקה למיניהם": "27",
+     "פקקים של מכלי משקה": "36",
+     "אריזות מזון Take Away נייר": "8",
+     "אריזות מזון Take Away פלסטיק": "3",
+     "צלחות חדפ": "2",
+     "סכום חדפ": "2",
+     "כוסות שתייה קרה חדפ": "2",
+     "כוסות שתייה חמה חדפ": "11",
+     "אריזות של חטיפים": "7",
+     "זכוכית לא מכלי משקה או לא ניתן לזיה": "17",
+     "נייר אחר לא אריזות מזון": "24",
+     "פלסטיק אחר שקיות פלסטיק ורכיבי פלס": "12",
+     "פסולת אורגנית": "8",
+     "פסולת בלתי חוקית שקית אשפה מלאה שה": "1",
+     "פסולת אחרת למשל בגדים סוללות חומרי": "1",
+     "צואת כלבים": "2",
+     "כתמי מסטיק": "23",
+     "פריט פסולת גדול": "2",
+     "אריזות קרטון": "3",
+     "גרפיטי": "1",
+     "אחר1": "אין",
+     "אחר2": "אין",
+     "בנקודת המדידה נאספו x שקיות של פרטי": "1",
+     "כמה אנשים עברו בנקודת המדידה בזמן ": "42"
+    }
+   ]
+  }
+ }
+}
