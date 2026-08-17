@@ -1,11 +1,31 @@
 {
- "generated": "2026-08-17 09:52 UTC",
+ "generated": "2026-08-17 09:54 UTC",
  "pages": {
   "https://bus.gov.il/FaresDistance": {
    "bytes": 8482,
    "key_hits": [],
    "city_hits": [],
    "assets": {
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
+    },
     "https://bus.gov.il/main-UTY26XAG.js": {
      "bytes": 1583590,
      "key_hits": [
@@ -38,26 +58,6 @@
       "taxiCalculator.privateRidePrice",
       "taxiCalculator.sharedRidePrice",
       "zone_99_902_merged"
-     ]
-    },
-    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
-     "bytes": 34585,
-     "key_hits": [
-      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
-      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
-      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
-      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
-      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
-      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
-     ],
-     "city_hits": [],
-     "api_paths": [
-      "Zone",
-      "ZoneAwarePromise",
-      "__Zone_disable_",
-      "__zone_symbol__",
-      "forceDuplicateZoneCheck",
-      "zoneTask"
      ]
     }
    }
@@ -67,6 +67,26 @@
    "key_hits": [],
    "city_hits": [],
    "assets": {
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
+    },
     "https://bus.gov.il/main-UTY26XAG.js": {
      "bytes": 1583590,
      "key_hits": [
@@ -99,26 +119,6 @@
       "taxiCalculator.privateRidePrice",
       "taxiCalculator.sharedRidePrice",
       "zone_99_902_merged"
-     ]
-    },
-    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
-     "bytes": 34585,
-     "key_hits": [
-      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
-      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
-      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
-      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
-      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
-      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
-     ],
-     "city_hits": [],
-     "api_paths": [
-      "Zone",
-      "ZoneAwarePromise",
-      "__Zone_disable_",
-      "__zone_symbol__",
-      "forceDuplicateZoneCheck",
-      "zoneTask"
      ]
     }
    }
@@ -128,6 +128,26 @@
    "key_hits": [],
    "city_hits": [],
    "assets": {
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
+    },
     "https://bus.gov.il/main-UTY26XAG.js": {
      "bytes": 1583590,
      "key_hits": [
@@ -160,26 +180,6 @@
       "taxiCalculator.privateRidePrice",
       "taxiCalculator.sharedRidePrice",
       "zone_99_902_merged"
-     ]
-    },
-    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
-     "bytes": 34585,
-     "key_hits": [
-      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
-      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
-      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
-      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
-      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
-      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
-     ],
-     "city_hits": [],
-     "api_paths": [
-      "Zone",
-      "ZoneAwarePromise",
-      "__Zone_disable_",
-      "__zone_symbol__",
-      "forceDuplicateZoneCheck",
-      "zoneTask"
      ]
     }
    }
@@ -216,7 +216,7 @@
    }
   },
   "https://ravpass.co.il/%D7%A6%D7%93%D7%A7-%D7%AA%D7%97%D7%91%D7%95%D7%A8%D7%AA%D7%99/": {
-   "bytes": 86571,
+   "bytes": 86544,
    "key_hits": [],
    "city_hits": [],
    "assets": {
@@ -415,5 +415,17 @@
    "/api/lists/cities"
   ]
  },
- "endpoint_tries": {}
+ "endpoint_tries": {
+  "https://api.bus.gov.il/prod/route-planner-prod/api/he/Location/GetPricingZones": {
+   "ok": true,
+   "bytes": 102716,
+   "head": "{\"data\":[{\"id\":5,\"name\":\"אזור 99\",\"description\":\"אזור 99\",\"area\":0,\"zone\":99,\"internalId\":0,\"geom\":\"POLYGON((35.351891 33.058407,35.354926 33.05793,35.357677 33.05793,35.360427 33.05642,35.377594 33.055069,35.380818 33.059599,35.384797 33.061786,35.396079 33.060463,35.419772 33.064622,35.43128 33.06",
+   "saved": "fares/checks/pricing-zones.json"
+  },
+  "https://api.bus.gov.il/prod/route-planner-prod/api/en/Location/GetPricingZones": {
+   "ok": true,
+   "bytes": 102716,
+   "head": "{\"data\":[{\"id\":5,\"name\":\"אזור 99\",\"description\":\"אזור 99\",\"area\":0,\"zone\":99,\"internalId\":0,\"geom\":\"POLYGON((35.351891 33.058407,35.354926 33.05793,35.357677 33.05793,35.360427 33.05642,35.377594 33.055069,35.380818 33.059599,35.384797 33.061786,35.396079 33.060463,35.419772 33.064622,35.43128 33.06"
+  }
+ }
 }
