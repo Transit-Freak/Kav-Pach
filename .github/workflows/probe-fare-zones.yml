@@ -1,0 +1,47 @@
+name: probe-fare-zones
+
+# ציד מקור הנתונים של אזורי התעריף: מאיפה אפליקציות התשלום יודעות מה
+# "אזור 1"? סריקת bus.gov.il, רב-פס והופ-און וקובצי ה-JS שלהם. דוח בלבד.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-fare-zones.yml'
+      - 'tools/probe_fare_zone_src.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-fare-zones-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: סריקה
+        run: |
+          mkdir -p fares/checks
+          python3 tools/probe_fare_zone_src.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp fares/checks/fare-zone-src.json /tmp/probe.json
+          for i in 1 2 3; do
+            git fetch origin main && git reset --hard origin/main
+            mkdir -p fares/checks && cp /tmp/probe.json fares/checks/fare-zone-src.json
+            git add fares/checks/fare-zone-src.json
+            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
+            git commit -m 'data: ציד מקור אזורי התעריף — bus.gov.il ורב-פס'
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected — retry $i"; sleep 10
+          done
