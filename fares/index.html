@@ -115,7 +115,7 @@
         <div class="src-l">🏝️ <b>אזור אילת</b> — נסיעות שנוגעות בליבת אילת (העיר, אילות, באר אורה ונמל רמון) זולות בכ-15% (פטור ממע"מ): 6.77 ₪ במקום 8 ₪ בעירוני, וכן הלאה — המחיר הארצי חלקי 1.18. ההנחה חלה בשני הכיוונים, גם ביציאה מאילת וגם בכניסה אליה (בדקנו: מתוך 4,261 זוגות מחירי אילת רשמיים — אפס עם מחיר שונה בין הכיוונים). הקווים העירוניים של אילת והאזוריים של חבל אילות הם בתעריף אחיד 6.77 ₪ לכל הקו. נסיעות פנים-ערבה שלא נוגעות באילת (יטבתה↔קטורה וכו') הן במחיר ארצי מלא, כולל 87.32 ₪ לנסיעות הארוכות מעל 225 ק"מ.</div>
         <div class="src-l">🚌🚆 <b>סוגי קווים</b> — אוטובוס, קווי דרישה, רכבת ורכבת קלה נכללים במחשבון (בקווי רכבת/רק"ל מוצג מחיר הרכבת, לא האוטובוס). מוניות שירות וכבלים לא נכללים — יש להם מבנה תעריפים נפרד לגמרי.</div>
         <div class="src-l">🎟️ הנחות (ילד/נוער, אזרח ותיק, גיל 67+ ועוד) לא מחושבות כאן — מוצג המחיר המלא בלבד. מחירי המנויים (חופשי יומי וחודשי) לא קיימים בקובצי ה-GTFS, ולכן הם מושווים אוטומטית כל שבוע למחירון הרשמי של רב-פס. <a href="https://bus.gov.il/FaresDiscounts" target="_blank" rel="noopener">פירוט הנחות ›</a></div>
-        <div class="src-l">📍 <b>חיפוש כתובות</b> — במצב "לפי תחנות" אפשר להקליד גם כתובת; האיתור נעשה בשירות Nominatim של OpenStreetMap, והכתובת שהוקלדה נשלחת לשירות הזה בלבד.</div>
+        <div class="src-l">📍 <b>חיפוש כתובות</b> — במצב "לפי תחנות" אפשר להקליד גם כתובת; האיתור נעשה מול מרשם הכתובות הארצי (GovMap, מרכז מיפוי ישראל), עם Nominatim של OpenStreetMap כגיבוי. הכתובת שהוקלדה נשלחת לשירותים האלה בלבד.</div>
         <div class="src-l">✉️ <b>מצאתם מחיר שגוי?</b> — למרות כל הבדיקות, יכולות להיות טעויות: תעריפים מתעדכנים, ונתוני המקור לא תמיד מושלמים. אשמח מאוד שתכתבו לי — <a href="mailto:shlomihartman@gmail.com">shlomihartman@gmail.com</a> — ואתקן.</div>
       </details>
     </div>
@@ -601,6 +601,32 @@ function addrLabel(a){
   if (city && !parts.includes(city)) parts.push(city);
   return parts.join(', ') || first;
 }
+// המרת רשת ישראל (ITM) ל-WGS84 — טרנסבר מרקטור הפוך על GRS80 + כיול
+// דאטום קבוע (נבדק מול pyproj על 6 נקודות בפריסה ארצית: סטייה ≤2.5 מ')
+function itm2wgs(x, y){
+  const a=6378137, f=1/298.257222101, k0=1.0000067;
+  const lat0=31.73439361111*Math.PI/180, lon0=35.20451694444*Math.PI/180;
+  const FE=219529.584, FN=626907.39;
+  const e2=f*(2-f), ep2=e2/(1-e2), e1=(1-Math.sqrt(1-e2))/(1+Math.sqrt(1-e2));
+  const Mf=p=>a*((1-e2/4-3*e2*e2/64-5*e2*e2*e2/256)*p
+    -(3*e2/8+3*e2*e2/32+45*e2*e2*e2/1024)*Math.sin(2*p)
+    +(15*e2*e2/256+45*e2*e2*e2/1024)*Math.sin(4*p)
+    -(35*e2*e2*e2/3072)*Math.sin(6*p));
+  const M=Mf(lat0)+(y-FN)/k0;
+  const mu=M/(a*(1-e2/4-3*e2*e2/64-5*e2*e2*e2/256));
+  const p1=mu+(3*e1/2-27*Math.pow(e1,3)/32)*Math.sin(2*mu)
+    +(21*e1*e1/16-55*Math.pow(e1,4)/32)*Math.sin(4*mu)
+    +(151*Math.pow(e1,3)/96)*Math.sin(6*mu)
+    +(1097*Math.pow(e1,4)/512)*Math.sin(8*mu);
+  const s=Math.sin(p1), c=Math.cos(p1), t=Math.tan(p1);
+  const C1=ep2*c*c, T1=t*t, N1=a/Math.sqrt(1-e2*s*s), R1=a*(1-e2)/Math.pow(1-e2*s*s,1.5);
+  const D=(x-FE)/(N1*k0);
+  const lat=p1-(N1*t/R1)*(D*D/2-(5+3*T1+10*C1-4*C1*C1-9*ep2)*Math.pow(D,4)/24
+    +(61+90*T1+298*C1+45*T1*T1-252*ep2-3*C1*C1)*Math.pow(D,6)/720);
+  const lon=lon0+(D-(1+2*T1+C1)*Math.pow(D,3)/6
+    +(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*Math.pow(D,5)/120)/c;
+  return [lat*180/Math.PI+0.0003702, lon*180/Math.PI+0.0006982];
+}
 function autoAddr(key, q, box){
   const seq=++ADDR.seq[key];
   const done=list=>{
@@ -615,13 +641,29 @@ function autoAddr(key, q, box){
       wire(el, ()=>nearAddr(key, list[el.dataset.i], box)));
   };
   if (ADDR.cache[q]) return done(ADDR.cache[q]);
-  fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=4&accept-language=he&addressdetails=1&q='+encodeURIComponent(q))
+  // מקור ראשי: GovMap — מרשם הכתובות הארצי של מרכז מיפוי ישראל
+  // (אותו שירות שאתר bus.gov.il משתמש בו). גיבוי: Nominatim/OSM.
+  const fallback=()=>fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=4&accept-language=he&addressdetails=1&q='+encodeURIComponent(q))
     .then(r=>r.ok?r.json():[])
     .then(raw=>{
       const list=(raw||[]).map(a=>({lat:+a.lat, lon:+a.lon, label:addrLabel(a)}));
       ADDR.cache[q]=list; done(list);
     })
     .catch(()=>done([]));
+  fetch('https://es.govmap.gov.il/TldSearch/api/DetailsByQuery?query='+encodeURIComponent(q)+'&lyrs=276267023&gid=govmap')
+    .then(r=>r.ok?r.json():Promise.reject(0))
+    .then(d=>{
+      const list=[];
+      for (const typ of ['ADDRESS','STREET','NEIGHBORHOOD','SETTLEMENT','POI_MID_POINT'])
+        for (const a of (d.data&&d.data[typ])||[]){
+          if (list.length>=5) break;
+          const [la,lo]=itm2wgs(+a.X,+a.Y);
+          list.push({lat:la, lon:lo, label:a.ResultLable||''});
+        }
+      if (!list.length) return fallback();
+      ADDR.cache[q]=list; done(list);
+    })
+    .catch(fallback);
 }
 function nearAddr(key, addr, box){
   const la=addr.lat, lo=addr.lon;
