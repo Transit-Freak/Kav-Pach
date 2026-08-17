@@ -4,7 +4,7 @@
 #   [{name, eng, district, avail, occ, cur_emp, fut_emp, open, polys:[[[la,lo],...],...]}]
 # משמש את parks.py כדי (א) להשלים אזורים רשמיים שחסרים ב-OSM, (ב) להעשיר את
 # הקיימים בנתוני עובדים/שטח. best-effort — כישלון לא מפיל את ה-pipeline.
-import json, os, re, urllib.request, urllib.parse
+import json, os, re, time, urllib.request, urllib.parse
 from pyproj import Transformer
 
 RID = os.environ.get('OFFICIAL_RID', '30af8da4-7586-4b00-ac88-c5ee75251632')
@@ -35,8 +35,18 @@ def rings_wgs84(wkt):
 def main():
     u = BASE + 'datastore_search?' + urllib.parse.urlencode({'resource_id': RID, 'limit': 1000})
     req = urllib.request.Request(u, headers={'user-agent': UA, 'accept': 'application/json'})
-    with urllib.request.urlopen(req, timeout=90) as r:
-        recs = json.load(r).get('result', {}).get('records', [])
+    # data.gov.il נעלם לפעמים לדקות ארוכות (timeout בודד הפיל את הריצה
+    # השבועית ב-9.8) — ניסיונות חוזרים על פני ~10 דקות לפני ויתור
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                recs = json.load(r).get('result', {}).get('records', [])
+            break
+        except Exception as e:
+            if attempt == 5:
+                raise
+            print(f'ניסיון {attempt + 1} נכשל ({e}) — ממתין 2 דקות')
+            time.sleep(120)
     zones = []
     for rec in recs:
         polys = rings_wgs84(rec.get('geom') or '')

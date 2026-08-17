@@ -102,7 +102,7 @@ jobs:
           # שרת OSRM מקומי עם פרופיל-רגל על מפת ישראל+פלסטין. ניתוב מקומי מיידי
           # (בלי הגבלת-קצב) => כל התחנות נבדקות בריצה אחת.
           mkdir -p osrm && cd osrm
-          curl -fSL --connect-timeout 20 --max-time 600 --retry 6 --retry-all-errors --retry-delay 10 \
+          curl -fSL --connect-timeout 20 --max-time 600 --retry 15 --retry-all-errors --retry-delay 60 \
             -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
           echo "pbf: $(du -h map.osm.pbf | cut -f1)"
           IMG=osrm/osrm-backend:latest

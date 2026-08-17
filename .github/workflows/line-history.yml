@@ -49,7 +49,7 @@ jobs:
         run: |
           set -euo pipefail
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-          curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" \
+          curl -fSL --connect-timeout 20 --max-time 1200 --retry 15 --retry-all-errors --retry-delay 60 -A "$UA" \
             -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt calendar.txt
 

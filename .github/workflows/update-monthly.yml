@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-          curl -fSL --connect-timeout 30 --max-time 900 --retry 2 --retry-delay 10 -A "$UA" \
+          curl -fSL --connect-timeout 30 --max-time 900 --retry 15 --retry-all-errors --retry-delay 60 -A "$UA" \
             -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
           unzip -o gtfs.zip stops.txt
           unzip -o gtfs.zip stop_times.txt
@@ -143,7 +143,7 @@ jobs:
       - name: Build OSRM (foot) and compute real walking times
         run: |
           set -euo pipefail
-          curl -fSL --connect-timeout 30 --max-time 1200 --retry 3 --retry-delay 10 \
+          curl -fSL --connect-timeout 30 --max-time 1200 --retry 15 --retry-all-errors --retry-delay 60 \
             -o region.osm.pbf https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf
           IMG=ghcr.io/project-osrm/osrm-backend
           docker run --rm -v "$PWD:/data" $IMG osrm-extract -p /opt/foot.lua /data/region.osm.pbf

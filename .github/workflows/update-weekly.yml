@@ -52,7 +52,7 @@ jobs:
           if [ ! -f gtfs.zip ]; then
             UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
             URL="https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
-            curl -fSL --connect-timeout 20 --max-time 1200 --retry 6 --retry-all-errors --retry-delay 15 -A "$UA" -o gtfs.zip "$URL"
+            curl -fSL --connect-timeout 20 --max-time 1200 --retry 15 --retry-all-errors --retry-delay 60 -A "$UA" -o gtfs.zip "$URL"
           else
             echo "משתמשים ב-GTFS מהצינור המאוחד"
           fi
