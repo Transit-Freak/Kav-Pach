@@ -528,14 +528,15 @@ function stopSearch(inputId, boxId, key){
       ? out.map(([sid,s])=>
           `<div class="resitem" tabindex="0" role="option" data-sid="${sid}"><span class="rn">${sid}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
         ).join('')
-      : '<div class="msg">לא נמצאה תחנה תואמת</div>')+
-      `<div class="resitem addrgo" tabindex="0" role="option">📍<span>חיפוש "${esc(v)}" ככתובת</span><span class="rd2">OpenStreetMap</span></div>`;
+      : '<div class="msg">לא נמצאה תחנה תואמת</div><div class="msg addrwait">⏳ מחפש כתובות…</div>');
     box.querySelectorAll('.resitem[data-sid]').forEach(el=>{
       const act=()=>selectStop(key, el.dataset.sid);
       el.addEventListener('click', act);
       el.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
     });
-    wire(box.querySelector('.addrgo'), ()=>addrSearch(key, v, box));
+    // כתובות מחפשים תמיד, אוטומטית — ברגע שההקלדה נרגעת
+    clearTimeout(ADDR.t[key]);
+    ADDR.t[key]=setTimeout(()=>autoAddr(key, v, box), out.length?700:350);
   });
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -544,23 +545,52 @@ function wire(el, act){
   el.addEventListener('click', act);
   el.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
 }
-// חיפוש כתובת — Nominatim של OpenStreetMap, ישירות מהדפדפן. הכתובת
-// מזוהה כנקודה, ואז מוצעות התחנות הקרובות אליה לבחירה
-function addrSearch(key, q, box){
-  box.style.display='block';
-  box.innerHTML='<div class="msg">⏳ מחפש את הכתובת…</div>';
-  fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=5&accept-language=he&q='+encodeURIComponent(q))
-    .then(r=>r.ok?r.json():Promise.reject(0))
-    .then(list=>{
-      if (!list.length){ box.innerHTML='<div class="msg">הכתובת לא נמצאה — נסו לצרף עיר, למשל "הרצל 10 חדרה"</div>'; return; }
-      box.innerHTML='<div class="msg">בחרו כתובת:</div>'+list.map((a,i)=>
-        `<div class="resitem addr" tabindex="0" role="option" data-i="${i}">📍<span>${esc(a.display_name.split(',').slice(0,3).join(', '))}</span></div>`).join('');
-      box.querySelectorAll('.resitem.addr').forEach(el=>
-        wire(el, ()=>nearAddr(key, +list[el.dataset.i].lat, +list[el.dataset.i].lon, box)));
-    })
-    .catch(()=>{ box.innerHTML='<div class="msg">⚠ חיפוש הכתובת נכשל — נסו שוב בעוד רגע</div>'; });
+// חיפוש כתובות — Nominatim של OpenStreetMap, ישירות מהדפדפן: רץ תמיד
+// לצד חיפוש התחנות, והתוצאות מצטרפות לתחתית הרשימה
+const ADDR={t:{from:null,to:null}, seq:{from:0,to:0}, cache:{}};
+// תווית קצרה: רחוב ועיר בלבד — בלי שכונה ובלי "ישראל"
+function addrLabel(a){
+  const ad=a.address||{};
+  const street=[ad.road||ad.pedestrian||ad.square||'', ad.house_number||''].filter(Boolean).join(' ');
+  const city=ad.city||ad.town||ad.village||ad.municipality||'';
+  const first=(a.display_name||'').split(',')[0].trim();
+  const parts=[];
+  if (first && first!==street && !street.includes(first) && !/^\d+$/.test(first)) parts.push(first);
+  if (street) parts.push(street);
+  if (city && !parts.includes(city)) parts.push(city);
+  return parts.join(', ') || first;
 }
-function nearAddr(key, la, lo, box){
+function autoAddr(key, q, box){
+  const seq=++ADDR.seq[key];
+  const done=list=>{
+    if (seq!==ADDR.seq[key]) return;   // הוקלד משהו חדש מאז
+    if ($(key==='from'?'qFrom':'qTo').value.trim()!==q) return;
+    const wait=box.querySelector('.addrwait');
+    if (wait) wait.remove();
+    if (!list.length) return;
+    box.insertAdjacentHTML('beforeend', '<div class="msg">📍 כתובות:</div>'+list.map((a,i)=>
+      `<div class="resitem addr" tabindex="0" role="option" data-i="${i}">📍<span>${esc(a.label)}</span></div>`).join(''));
+    box.querySelectorAll('.resitem.addr').forEach(el=>
+      wire(el, ()=>nearAddr(key, list[el.dataset.i], box)));
+  };
+  if (ADDR.cache[q]) return done(ADDR.cache[q]);
+  fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=4&accept-language=he&addressdetails=1&q='+encodeURIComponent(q))
+    .then(r=>r.ok?r.json():[])
+    .then(raw=>{
+      const list=(raw||[]).map(a=>({lat:+a.lat, lon:+a.lon, label:addrLabel(a)}));
+      ADDR.cache[q]=list; done(list);
+    })
+    .catch(()=>done([]));
+}
+function nearAddr(key, addr, box){
+  const la=addr.lat, lo=addr.lon;
+  // סימון הכתובת על המפה + התמקדות
+  if (MAP){
+    if (ADDRMK) MAP.removeLayer(ADDRMK);
+    ADDRMK=L.marker([la,lo], {icon:L.divIcon({className:'addrpin', html:'📍', iconSize:[26,26], iconAnchor:[13,24]})})
+      .addTo(MAP).bindPopup(esc(addr.label||'הכתובת'));
+    MAP.setView([la,lo], 15);
+  }
   const out=[];
   for (const sid in STOPS){
     const s=STOPS[sid];
@@ -659,7 +689,7 @@ function computeStops(){
 }
 
 /* מפה לבחירת תחנה בלחיצה — נטענת רק כשנכנסים למצב "לפי תחנות" */
-let MAP=null, MK={from:null, to:null}, DOTS=null, DOTHINT=null;
+let MAP=null, MK={from:null, to:null}, DOTS=null, DOTHINT=null, ADDRMK=null;
 const DOT_ZOOM=14, DOT_CAP=350; // מתחת לזום הזה יש יותר מדי תחנות להציג בבת אחת
 function nextKey(){ return !picked.from ? 'from' : (!picked.to ? 'to' : 'from'); }
 function ensureMap(){
