@@ -18,8 +18,12 @@ UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126.0 Safari/537
 EMAIL = 'shlomihartman@gmail.com'
 
 
+SITE = 'https://transit-freak.github.io'
+
+
 def req(url, method='GET', payload=None):
-    headers = {'User-Agent': UA, 'Accept': 'application/json, text/html'}
+    headers = {'User-Agent': UA, 'Accept': 'application/json, text/html',
+               'Origin': SITE, 'Referer': SITE + '/kav-bochan/fares/'}
     data = None
     if payload is not None:
         data = json.dumps(payload).encode()
