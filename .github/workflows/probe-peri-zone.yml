@@ -36,10 +36,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           cp fares/checks/peri-zone-probe.json /tmp/probe.json
+          cp fares/data/metro-cities.json /tmp/metro-cities.json
           for i in 1 2 3; do
             git fetch origin main && git reset --hard origin/main
-            mkdir -p fares/checks && cp /tmp/probe.json fares/checks/peri-zone-probe.json
-            git add fares/checks/peri-zone-probe.json
+            mkdir -p fares/checks fares/data
+            cp /tmp/probe.json fares/checks/peri-zone-probe.json
+            cp /tmp/metro-cities.json fares/data/metro-cities.json
+            git add fares/checks/peri-zone-probe.json fares/data/metro-cities.json
             if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
             git commit -m 'data: סריקת אזורי התעריף של דרך שווה ב-data.gov.il'
             if git push origin HEAD:main; then break; fi

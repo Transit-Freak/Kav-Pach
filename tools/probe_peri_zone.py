@@ -124,6 +124,27 @@ def main():
         'city_to_metropolin': dict(sorted(flat.items())),
     }
 
+    # קובץ הנתונים לאתר: אילו ערים בתוך שלושת המטרופולינים ואילו מחוץ,
+    # בשמות מנורמלים (בלי מקפים/רווחים/גרשיים, יו"ד כפולה מאוחדת) כדי
+    # לגשר בין איות משרד התחבורה לאיות ה-GTFS
+    import re as _re
+
+    def cnorm(s):
+        s = _re.sub(r'[^א-תa-z]', '', (s or '').lower())
+        return s.replace('יי', 'י')
+
+    BIG3 = ('תל אביב', 'ירושלים', 'חיפה')
+    inside = {cnorm(c) for c, m in flat.items() if m in BIG3} - {''}
+    outside = {cnorm(c) for c, m in flat.items() if m not in BIG3} - {''}
+    both = inside & outside
+    inside -= both
+    outside -= both
+    json.dump({'gen': time.strftime('%Y-%m-%d'),
+               'src': 'משרד התחבורה, מאגר תחנות תחבורה ציבורית (data.gov.il) — שדה MetropolinName',
+               'in': sorted(inside), 'out': sorted(outside)},
+              open('fares/data/metro-cities.json', 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+
     json.dump(report, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     n = sum(len(v) for v in report['queries'].values() if isinstance(v, list))
     print(f'נסרקו {len(QUERIES)} שאילתות · {n} מאגרים רלוונטיים · '
