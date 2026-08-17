@@ -644,32 +644,33 @@ function itm2wgs(x, y){
     +(5-2*C1+28*T1-3*C1*C1+8*ep2+24*T1*T1)*Math.pow(D,5)/120)/c;
   return [lat*180/Math.PI+0.0003702, lon*180/Math.PI+0.0006982];
 }
-function autoAddr(key, q, box){
+async function autoAddr(key, q, box){
   const seq=++ADDR.seq[key];
-  const done=list=>{
+  const finish=list=>{
     if (seq!==ADDR.seq[key]) return;   // הוקלד משהו חדש מאז
     if ($(key==='from'?'qFrom':'qTo').value.trim()!==q) return;
     const wait=box.querySelector('.addrwait');
     if (wait) wait.remove();
-    if (!list.length) return;
+    if (!list.length){
+      // גם תחנה וגם כתובת לא נמצאו — אומרים את זה, עם טיפ מעשי
+      if (!box.querySelector('.resitem[data-sid]'))
+        box.insertAdjacentHTML('beforeend', '<div class="msg">📍 גם כתובת לא נמצאה — כדאי לכתוב רחוב + עיר (למשל "הרצל 10 חדרה") ולבדוק את האיות</div>');
+      return;
+    }
     box.insertAdjacentHTML('beforeend', '<div class="msg">📍 כתובות:</div>'+list.map((a,i)=>
       `<div class="resitem addr" tabindex="0" role="option" data-i="${i}">📍<span>${esc(a.label)}</span></div>`).join(''));
     box.querySelectorAll('.resitem.addr').forEach(el=>
       wire(el, ()=>nearAddr(key, list[el.dataset.i], box)));
   };
-  if (ADDR.cache[q]) return done(ADDR.cache[q]);
-  // מקור ראשי: GovMap — מרשם הכתובות הארצי של מרכז מיפוי ישראל
-  // (אותו שירות שאתר bus.gov.il משתמש בו). גיבוי: Nominatim/OSM.
-  const fallback=()=>fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=4&accept-language=he&addressdetails=1&q='+encodeURIComponent(q))
-    .then(r=>r.ok?r.json():[])
-    .then(raw=>{
-      const list=(raw||[]).map(a=>({lat:+a.lat, lon:+a.lon, label:addrLabel(a)}));
-      ADDR.cache[q]=list; done(list);
-    })
-    .catch(()=>done([]));
-  fetch('https://es.govmap.gov.il/TldSearch/api/DetailsByQuery?query='+encodeURIComponent(q)+'&lyrs=276267023&gid=govmap')
-    .then(r=>r.ok?r.json():Promise.reject(0))
-    .then(d=>{
+  if (ADDR.cache[q]) return finish(ADDR.cache[q]);
+  // מקור ראשי: GovMap — מרשם הכתובות הארצי (השירות של bus.gov.il).
+  // אם אין תוצאה, מנסים שוב עם העיר של התחנה שכבר נבחרה בצד השני —
+  // מי שמקליד "שם רחוב" בלבד בדרך כלל מתכוון לאותה עיר. גיבוי: OSM.
+  const govmap=async qq=>{
+    try{
+      const r=await fetch('https://es.govmap.gov.il/TldSearch/api/DetailsByQuery?query='+encodeURIComponent(qq)+'&lyrs=276267023&gid=govmap');
+      if (!r.ok) return null;
+      const d=await r.json();
       const list=[];
       for (const typ of ['ADDRESS','STREET','NEIGHBORHOOD','SETTLEMENT','POI_MID_POINT'])
         for (const a of (d.data&&d.data[typ])||[]){
@@ -677,10 +678,24 @@ function autoAddr(key, q, box){
           const [la,lo]=itm2wgs(+a.X,+a.Y);
           list.push({lat:la, lon:lo, label:a.ResultLable||''});
         }
-      if (!list.length) return fallback();
-      ADDR.cache[q]=list; done(list);
-    })
-    .catch(fallback);
+      return list;
+    }catch(e){ return null; }
+  };
+  const qs=[q];
+  const other=key==='from'?picked.to:picked.from;
+  if (other && other[2] && !cnorm(q).includes(cnorm(other[2]))) qs.push(q+' '+other[2]);
+  let list=null;
+  for (const qq of qs){
+    const r=await govmap(qq);
+    if (r && r.length){ list=r; break; }
+  }
+  if (!list){
+    try{
+      const raw=await (await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=4&accept-language=he&addressdetails=1&q='+encodeURIComponent(qs[qs.length-1]))).json();
+      list=(raw||[]).map(a=>({lat:+a.lat, lon:+a.lon, label:addrLabel(a)}));
+    }catch(e){ list=[]; }
+  }
+  ADDR.cache[q]=list; finish(list);
 }
 function nearAddr(key, addr, box){
   const la=addr.lat, lo=addr.lon;
