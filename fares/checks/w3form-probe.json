@@ -1,9 +1,9 @@
 {
- "generated": "2026-08-17 11:11 UTC",
+ "generated": "2026-08-17 11:13 UTC",
  "steps": {
-  "test_submit": {
+  "activate": {
    "status": 200,
-   "body": "{\"success\":\"false\",\"message\":\"This form needs Activation. We've sent you an email containing an 'Activate Form' link. Just click it and your form will be actived!\"}"
+   "body_head": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta content=\"IE=edge,chrome=1\" http-equiv=\"X-UA-Compatible\">\n    <meta http-equiv=\"Content-Type\" content=\"text/html\" charset=utf-8\">\n\n            <meta name=\"description\" content=\"F"
   }
  }
 }
