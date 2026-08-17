@@ -9,6 +9,11 @@ on:
       - '.github/workflows/probe-w3form.yml'
       - 'tools/probe_w3form.py'
   workflow_dispatch:
+    inputs:
+      activate_url:
+        description: 'קישור האישור ממייל FormSubmit'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -26,6 +31,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: בקשה
+        env:
+          ACTIVATE_URL: ${{ inputs.activate_url }}
         run: |
           mkdir -p fares/checks
           python3 tools/probe_w3form.py
