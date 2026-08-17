@@ -96,6 +96,9 @@ jobs:
             STOPS_TXT=stops.txt ROUTES_TXT=routes.txt OUT=fares/data/fixes.json \
             python3 tools/build_fare_fixes.py
 
+      - name: משמר מחירי מנויים — חופשי יומי/חודשי מול המחירון הרשמי של רב-פס
+        run: python3 tools/check_pass_prices.py || true
+
       - name: Detect English-translation errors (טעויות תרגום — קטגוריה באפליקציה)
         run: |
           set -euo pipefail
