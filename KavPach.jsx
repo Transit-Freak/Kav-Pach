@@ -516,7 +516,7 @@ function ChoiceScreen({ onPick }) {
           {aboutMe && (
             <div className="max-w-2xl mx-auto mt-4 bg-white rounded-2xl shadow-md border border-slate-200 p-6 text-right leading-relaxed text-slate-700 font-medium text-sm md:text-base">
               <p>שלום, שמי שלמה (שלומי) הרטמן, בן 20 מקריית מלאכי. תחבורה ציבורית זורמת אצלי בדם מגיל קטן.</p>
-              <p className="mt-3">בין 2023 ל־2025 ערכתי המון בוויקיפדיה תחת השם "פריק התח"צ". ב־2026, כשנמאס לי מהתשובות הקבועות של משרד התחבורה — "אין תקציב" — חשבתי לעצמי: למה שלא אבנה אתר שמראה את כל הבזבוז? כך נולד קו פח.</p>
+              <p className="mt-3">בין 2023 ל־2025 ערכתי המון בוויקיפדיה תחת השם <a href="https://he.wikipedia.org/wiki/%D7%9E%D7%A9%D7%AA%D7%9E%D7%A9:%D7%A4%D7%A8%D7%99%D7%A7_%D7%94%D7%AA%D7%97%D7%A6" target="_blank" rel="noopener" className="text-sky-700 font-black hover:underline">פריק התחצ</a>. ב־2026, כשנמאס לי מהתשובות הקבועות של משרד התחבורה — "אין תקציב" — חשבתי לעצמי: למה שלא אבנה אתר שמראה את כל הבזבוז? כך נולד קו פח.</p>
               <p className="mt-3">בהתחלה הוא היה האתר היחיד, אבל לאט לאט הגיעו עוד רעיונות: קו באג, התחנה הבאה והקו המוזהב. כשנכנסה התחנה הבאה אמרתי לעצמי — למה לא אתר אחד שמרכז את כולם? וכך נוצר הקו הבוחן.</p>
               <p className="mt-3">בזכות האתר פנו אליי אנשים מההסתדרות ומהמכון הטכנולוגי חולון — הרגע המאושר בחיי. אולי בעתיד ייצאו איתם אתרים חדשים.</p>
               <p className="mt-3">יש לכם רעיון לאתר? אשמח לשמוע — <a href="mailto:shlomihartman@gmail.com" className="text-sky-700 font-black hover:underline">כתבו לי</a>. לך תדעו, אולי דווקא הרעיון שלכם יצא לפועל.</p>
