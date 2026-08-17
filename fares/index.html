@@ -73,13 +73,13 @@
             <div class="stpick">
               <div class="stfld">
                 <label for="qFrom">מתחנת…</label>
-                <input id="qFrom" type="search" placeholder="שם תחנה או עיר…" autocomplete="off">
+                <input id="qFrom" type="search" placeholder="שם תחנה, עיר או כתובת…" autocomplete="off">
                 <div class="stchip" id="chipFrom"><span></span><button data-clear="from" aria-label="ניקוי תחנת המוצא">✕</button></div>
                 <div class="reslist" id="resFrom" role="listbox" style="display:none"></div>
               </div>
               <div class="stfld">
                 <label for="qTo">עד תחנת…</label>
-                <input id="qTo" type="search" placeholder="שם תחנה או עיר…" autocomplete="off">
+                <input id="qTo" type="search" placeholder="שם תחנה, עיר או כתובת…" autocomplete="off">
                 <div class="stchip" id="chipTo"><span></span><button data-clear="to" aria-label="ניקוי תחנת היעד">✕</button></div>
                 <div class="reslist" id="resTo" role="listbox" style="display:none"></div>
               </div>
@@ -115,6 +115,7 @@
         <div class="src-l">🏝️ <b>אזור אילת</b> — נסיעות שנוגעות בליבת אילת (העיר, אילות, באר אורה ונמל רמון) זולות בכ-15% (פטור ממע"מ): 6.77 ₪ במקום 8 ₪ בעירוני, וכן הלאה — המחיר הארצי חלקי 1.18. ההנחה חלה בשני הכיוונים, גם ביציאה מאילת וגם בכניסה אליה (בדקנו: מתוך 4,261 זוגות מחירי אילת רשמיים — אפס עם מחיר שונה בין הכיוונים). הקווים העירוניים של אילת והאזוריים של חבל אילות הם בתעריף אחיד 6.77 ₪ לכל הקו. נסיעות פנים-ערבה שלא נוגעות באילת (יטבתה↔קטורה וכו') הן במחיר ארצי מלא, כולל 87.32 ₪ לנסיעות הארוכות מעל 225 ק"מ.</div>
         <div class="src-l">🚌🚆 <b>סוגי קווים</b> — אוטובוס, קווי דרישה, רכבת ורכבת קלה נכללים במחשבון (בקווי רכבת/רק"ל מוצג מחיר הרכבת, לא האוטובוס). מוניות שירות וכבלים לא נכללים — יש להם מבנה תעריפים נפרד לגמרי.</div>
         <div class="src-l">🎟️ הנחות (ילד/נוער, אזרח ותיק, גיל 67+ ועוד) לא מחושבות כאן — מוצג המחיר המלא בלבד. מחירי המנויים (חופשי יומי וחודשי) לא קיימים בקובצי ה-GTFS, ולכן הם מושווים אוטומטית כל שבוע למחירון הרשמי של רב-פס. <a href="https://bus.gov.il/FaresDiscounts" target="_blank" rel="noopener">פירוט הנחות ›</a></div>
+        <div class="src-l">📍 <b>חיפוש כתובות</b> — במצב "לפי תחנות" אפשר להקליד גם כתובת; האיתור נעשה בשירות Nominatim של OpenStreetMap, והכתובת שהוקלדה נשלחת לשירות הזה בלבד.</div>
         <div class="src-l">✉️ <b>מצאתם מחיר שגוי?</b> — למרות כל הבדיקות, יכולות להיות טעויות: תעריפים מתעדכנים, ונתוני המקור לא תמיד מושלמים. אשמח מאוד שתכתבו לי — <a href="mailto:shlomihartman@gmail.com">shlomihartman@gmail.com</a> — ואתקן.</div>
       </details>
     </div>
@@ -506,17 +507,57 @@ function stopSearch(inputId, boxId, key){
         out.push([sid,s]); if (out.length>=25) break;
       }
     }
-    if (!out.length){ box.style.display='block'; box.innerHTML='<div class="msg">לא נמצאה תחנה תואמת</div>'; return; }
     box.style.display='block';
-    box.innerHTML=out.map(([sid,s])=>
-      `<div class="resitem" tabindex="0" role="option" data-sid="${sid}"><span class="rn">${sid}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
-    ).join('');
-    box.querySelectorAll('.resitem').forEach(el=>{
+    box.innerHTML=(out.length
+      ? out.map(([sid,s])=>
+          `<div class="resitem" tabindex="0" role="option" data-sid="${sid}"><span class="rn">${sid}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`
+        ).join('')
+      : '<div class="msg">לא נמצאה תחנה תואמת</div>')+
+      `<div class="resitem addrgo" tabindex="0" role="option">📍<span>חיפוש "${esc(v)}" ככתובת</span><span class="rd2">OpenStreetMap</span></div>`;
+    box.querySelectorAll('.resitem[data-sid]').forEach(el=>{
       const act=()=>selectStop(key, el.dataset.sid);
       el.addEventListener('click', act);
       el.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
     });
+    wire(box.querySelector('.addrgo'), ()=>addrSearch(key, v, box));
   });
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function wire(el, act){
+  if (!el) return;
+  el.addEventListener('click', act);
+  el.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } });
+}
+// חיפוש כתובת — Nominatim של OpenStreetMap, ישירות מהדפדפן. הכתובת
+// מזוהה כנקודה, ואז מוצעות התחנות הקרובות אליה לבחירה
+function addrSearch(key, q, box){
+  box.style.display='block';
+  box.innerHTML='<div class="msg">⏳ מחפש את הכתובת…</div>';
+  fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=il&limit=5&accept-language=he&q='+encodeURIComponent(q))
+    .then(r=>r.ok?r.json():Promise.reject(0))
+    .then(list=>{
+      if (!list.length){ box.innerHTML='<div class="msg">הכתובת לא נמצאה — נסו לצרף עיר, למשל "הרצל 10 חדרה"</div>'; return; }
+      box.innerHTML='<div class="msg">בחרו כתובת:</div>'+list.map((a,i)=>
+        `<div class="resitem addr" tabindex="0" role="option" data-i="${i}">📍<span>${esc(a.display_name.split(',').slice(0,3).join(', '))}</span></div>`).join('');
+      box.querySelectorAll('.resitem.addr').forEach(el=>
+        wire(el, ()=>nearAddr(key, +list[el.dataset.i].lat, +list[el.dataset.i].lon, box)));
+    })
+    .catch(()=>{ box.innerHTML='<div class="msg">⚠ חיפוש הכתובת נכשל — נסו שוב בעוד רגע</div>'; });
+}
+function nearAddr(key, la, lo, box){
+  const out=[];
+  for (const sid in STOPS){
+    const s=STOPS[sid];
+    const d=hav([la,lo],[s[2],s[3]]);
+    if (out.length<8 || d<out[out.length-1][0]){
+      out.push([d,sid,s]); out.sort((a,b)=>a[0]-b[0]);
+      if (out.length>8) out.pop();
+    }
+  }
+  box.innerHTML='<div class="msg">התחנות הקרובות לכתובת:</div>'+out.map(([d,sid,s])=>
+    `<div class="resitem" tabindex="0" role="option" data-sid="${sid}"><span class="rn">${d<1?Math.round(d*1000)+' מ׳':d.toFixed(1)+' ק"מ'}</span><span>${s[0]}</span><span class="rd2">${s[1]||''}</span></div>`).join('');
+  box.querySelectorAll('.resitem[data-sid]').forEach(el=>
+    wire(el, ()=>selectStop(key, el.dataset.sid)));
 }
 stopSearch('qFrom','resFrom','from');
 stopSearch('qTo','resTo','to');
