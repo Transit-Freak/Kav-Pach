@@ -88,10 +88,47 @@ def main():
             sample = result.get('records') or []
             report['samples'][f"{pid}/{r['name']}"] = {'fields': fields, 'sample': sample[:2]}
 
+    # מאגר תחנות התחבורה הציבורית של המשרד מסמן לכל תחנה השתייכות
+    # למטרופולין (MetropolinCode/Name) — ההגדרה הרשמית שחסרה לתקרת
+    # הפריפריה. מושכים את כל הרשומות ובונים מיפוי עיר→מטרופולין.
+    BUS_STOPS_RID = 'e873e6a2-66c1-494f-a677-f5e77348edb0'
+    metros, city2met, conflicts, total = {}, {}, {}, 0
+    offset = 0
+    while True:
+        s = api('datastore_search', resource_id=BUS_STOPS_RID, limit=10000,
+                offset=offset, fields='StationId,CityName,MetropolinCode,MetropolinName')
+        recs = ((s or {}).get('result') or {}).get('records') or []
+        if not recs:
+            break
+        for r in recs:
+            total += 1
+            met = (r.get('MetropolinName') or '').strip()
+            city = (r.get('CityName') or '').strip()
+            metros[met] = metros.get(met, 0) + 1
+            if city:
+                city2met.setdefault(city, {})
+                city2met[city][met] = city2met[city].get(met, 0) + 1
+        offset += len(recs)
+        if len(recs) < 10000:
+            break
+    # עיר שמופיעה תחת יותר ממטרופולין אחד — לתעד, ולבחור את הרוב
+    flat = {}
+    for city, d in city2met.items():
+        if len(d) > 1:
+            conflicts[city] = d
+        flat[city] = max(d, key=d.get)
+    report['bus_stops_metropolin'] = {
+        'total_stations': total,
+        'by_metropolin': metros,
+        'city_conflicts': conflicts,
+        'city_to_metropolin': dict(sorted(flat.items())),
+    }
+
     json.dump(report, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     n = sum(len(v) for v in report['queries'].values() if isinstance(v, list))
     print(f'נסרקו {len(QUERIES)} שאילתות · {n} מאגרים רלוונטיים · '
-          f'{len(report["samples"])} משאבים נדגמו → {OUT}')
+          f'{len(report["samples"])} משאבים נדגמו · {total} תחנות '
+          f'ב-{len(flat)} ערים → {OUT}')
 
 
 if __name__ == '__main__':
