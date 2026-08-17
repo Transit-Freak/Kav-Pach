@@ -1,0 +1,266 @@
+{
+ "generated": "2026-08-17 09:48 UTC",
+ "pages": {
+  "https://bus.gov.il/FaresDistance": {
+   "bytes": 8482,
+   "key_hits": [],
+   "city_hits": [],
+   "assets": {
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
+    },
+    "https://bus.gov.il/main-UTY26XAG.js": {
+     "bytes": 1583590,
+     "key_hits": [
+      "ss{dirtyEffectCount=0;queues=new Map;add(t){this.enqueue(t),this.schedule(t)}schedule(t){t.dirty&&this.dirtyEffectCount++}remove(t){let e=t.zone,i=this.queues.get(e);i.has(t)&&(i.delete(t),t.dirty&&this.dirtyEffectCount--)}enqueue(t){let e=t.zone;this.queues.has(e)||this.queues.set(e",
+      ".dirtyEffectCount++}remove(t){let e=t.zone,i=this.queues.get(e);i.has(t)&&(i.delete(t),t.dirty&&this.dirtyEffectCount--)}enqueue(t){let e=t.zone;this.queues.has(e)||this.queues.set(e,new Set);let i=this.queues.get(e);i.has(t)||i.add(t)}flush(){for(;this.dirtyEffectCount>0;){let t=!1;",
+      "d(t,e,i){return t.apply(e,i)}runOutsideAngular(t){return t()}runTask(t,e,i,o){return t.apply(e,i)}};function mb(n){return A6(n,\"__ignore_ng_zone__\")}function vb(n){return A6(n,\"__scheduler_tick__\")}function A6(n,t){return!Array.isArray(n)||n.length!==1?!1:n[0]?.data?.[t]===!0}var jg=",
+      "is}});function W6(n){return n.type!==2}function Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFacto",
+      "type!==2}function Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFactory,o=!1;o||i.begin?.();try{a9(",
+      "on Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFactory,o=!1;o||i.begin?.();try{a9(n,t)}finally{o|"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "/fares",
+      "__ignore_ng_zone__",
+      "isAngularZone",
+      "mapOfAreas.mapCenterInZone",
+      "mapOfAreas.mapCenterOutsideZones",
+      "mapOfAreas.zone1",
+      "mapOfAreas.zone1NoVat",
+      "mapOfAreas.zone2",
+      "mapofareas-center-zone-announce",
+      "mapofareas-opt-",
+      "mapofareas-search-listbox",
+      "price-amount",
+      "price-card",
+      "price-card-title",
+      "price-cards",
+      "price-disclaimer",
+      "taxiCalculator.priceDisclaimer",
+      "taxiCalculator.privateRidePrice",
+      "taxiCalculator.sharedRidePrice",
+      "zone_99_902_merged"
+     ]
+    }
+   }
+  },
+  "https://bus.gov.il/FaresDiscounts": {
+   "bytes": 8482,
+   "key_hits": [],
+   "city_hits": [],
+   "assets": {
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
+    },
+    "https://bus.gov.il/main-UTY26XAG.js": {
+     "bytes": 1583590,
+     "key_hits": [
+      "ss{dirtyEffectCount=0;queues=new Map;add(t){this.enqueue(t),this.schedule(t)}schedule(t){t.dirty&&this.dirtyEffectCount++}remove(t){let e=t.zone,i=this.queues.get(e);i.has(t)&&(i.delete(t),t.dirty&&this.dirtyEffectCount--)}enqueue(t){let e=t.zone;this.queues.has(e)||this.queues.set(e",
+      ".dirtyEffectCount++}remove(t){let e=t.zone,i=this.queues.get(e);i.has(t)&&(i.delete(t),t.dirty&&this.dirtyEffectCount--)}enqueue(t){let e=t.zone;this.queues.has(e)||this.queues.set(e,new Set);let i=this.queues.get(e);i.has(t)||i.add(t)}flush(){for(;this.dirtyEffectCount>0;){let t=!1;",
+      "d(t,e,i){return t.apply(e,i)}runOutsideAngular(t){return t()}runTask(t,e,i,o){return t.apply(e,i)}};function mb(n){return A6(n,\"__ignore_ng_zone__\")}function vb(n){return A6(n,\"__scheduler_tick__\")}function A6(n,t){return!Array.isArray(n)||n.length!==1?!1:n[0]?.data?.[t]===!0}var jg=",
+      "is}});function W6(n){return n.type!==2}function Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFacto",
+      "type!==2}function Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFactory,o=!1;o||i.begin?.();try{a9(",
+      "on Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFactory,o=!1;o||i.begin?.();try{a9(n,t)}finally{o|"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "/fares",
+      "__ignore_ng_zone__",
+      "isAngularZone",
+      "mapOfAreas.mapCenterInZone",
+      "mapOfAreas.mapCenterOutsideZones",
+      "mapOfAreas.zone1",
+      "mapOfAreas.zone1NoVat",
+      "mapOfAreas.zone2",
+      "mapofareas-center-zone-announce",
+      "mapofareas-opt-",
+      "mapofareas-search-listbox",
+      "price-amount",
+      "price-card",
+      "price-card-title",
+      "price-cards",
+      "price-disclaimer",
+      "taxiCalculator.priceDisclaimer",
+      "taxiCalculator.privateRidePrice",
+      "taxiCalculator.sharedRidePrice",
+      "zone_99_902_merged"
+     ]
+    }
+   }
+  },
+  "https://bus.gov.il/": {
+   "bytes": 8482,
+   "key_hits": [],
+   "city_hits": [],
+   "assets": {
+    "https://bus.gov.il/polyfills-5CFQRCPP.js": {
+     "bytes": 34585,
+     "key_hits": [
+      "var ce=globalThis;function te(t){return(ce.__Zone_symbol_prefix||\"__zone_symbol__\")+t}function ht(){let t=ce.performance;function n(I){t&&t.mark&&t.mark(I)}function a(I,s){t&&t.measure&&t.measure(I,s)}n(\"Zone\");c",
+      "een overwritten.\\nMost likely cause is that a Promise polyfill has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}s",
+      "has been loaded after Zone.js (Polyfilling Promise api is not necessary when zone.js is loaded. If you must load one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){ret",
+      "ad one, do so before loading zone.js.)\")}static get root(){let s=e.current;for(;s.parent;)s=s.parent;return s}static get current(){return b.zone}static get currentTask(){return D}static __load_patch(s,i,r=!1){if(S.hasOwnProperty(s)){let E=ce[te(\"forceDuplicateZoneCheck\")]===!0;if(!r&",
+      "_\"+s]){let E=\"Zone:\"+s;n(E),S[s]=i(ce,e,R),a(E,E)}}get parent(){return this._parent}get name(){return this._name}_parent;_name;_properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new",
+      "properties;_zoneDelegate;constructor(s,i){this._parent=s,this._name=i?i.name||\"unnamed\":\"<root>\",this._properties=i&&i.properties||{},this._zoneDelegate=new f(this,this._parent&&this._parent._zoneDelegate,i)}get(s){let i=this.getZoneWith(s);if(i)return i._properties[s]}getZoneWith(s)"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "Zone",
+      "ZoneAwarePromise",
+      "__Zone_disable_",
+      "__zone_symbol__",
+      "forceDuplicateZoneCheck",
+      "zoneTask"
+     ]
+    },
+    "https://bus.gov.il/main-UTY26XAG.js": {
+     "bytes": 1583590,
+     "key_hits": [
+      "ss{dirtyEffectCount=0;queues=new Map;add(t){this.enqueue(t),this.schedule(t)}schedule(t){t.dirty&&this.dirtyEffectCount++}remove(t){let e=t.zone,i=this.queues.get(e);i.has(t)&&(i.delete(t),t.dirty&&this.dirtyEffectCount--)}enqueue(t){let e=t.zone;this.queues.has(e)||this.queues.set(e",
+      ".dirtyEffectCount++}remove(t){let e=t.zone,i=this.queues.get(e);i.has(t)&&(i.delete(t),t.dirty&&this.dirtyEffectCount--)}enqueue(t){let e=t.zone;this.queues.has(e)||this.queues.set(e,new Set);let i=this.queues.get(e);i.has(t)||i.add(t)}flush(){for(;this.dirtyEffectCount>0;){let t=!1;",
+      "d(t,e,i){return t.apply(e,i)}runOutsideAngular(t){return t()}runTask(t,e,i,o){return t.apply(e,i)}};function mb(n){return A6(n,\"__ignore_ng_zone__\")}function vb(n){return A6(n,\"__scheduler_tick__\")}function A6(n,t){return!Array.isArray(n)||n.length!==1?!1:n[0]?.data?.[t]===!0}var jg=",
+      "is}});function W6(n){return n.type!==2}function Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFacto",
+      "type!==2}function Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFactory,o=!1;o||i.begin?.();try{a9(",
+      "on Z6(n){if(n[Ds]===null)return;let t=!0;for(;t;){let e=!1;for(let i of n[Ds])i.dirty&&(e=!0,i.zone===null||Zone.current===i.zone?i.run():i.zone.run(()=>i.run()));t=e&&!!(n[ye]&8192)}}var r9=100;function K6(n,t=0){let i=n[gi].rendererFactory,o=!1;o||i.begin?.();try{a9(n,t)}finally{o|"
+     ],
+     "city_hits": [],
+     "api_paths": [
+      "/fares",
+      "__ignore_ng_zone__",
+      "isAngularZone",
+      "mapOfAreas.mapCenterInZone",
+      "mapOfAreas.mapCenterOutsideZones",
+      "mapOfAreas.zone1",
+      "mapOfAreas.zone1NoVat",
+      "mapOfAreas.zone2",
+      "mapofareas-center-zone-announce",
+      "mapofareas-opt-",
+      "mapofareas-search-listbox",
+      "price-amount",
+      "price-card",
+      "price-card-title",
+      "price-cards",
+      "price-disclaimer",
+      "taxiCalculator.priceDisclaimer",
+      "taxiCalculator.privateRidePrice",
+      "taxiCalculator.sharedRidePrice",
+      "zone_99_902_merged"
+     ]
+    }
+   }
+  },
+  "https://ravpass.co.il/calculator/": {
+   "bytes": 64323,
+   "key_hits": [],
+   "city_hits": [],
+   "assets": {
+    "https://api.w.org/": {
+     "bytes": 167679,
+     "key_hits": [],
+     "city_hits": [],
+     "api_paths": [
+      "Price",
+      "priceCurrencySymbol",
+      "priceLabel",
+      "priceRange",
+      "priceRangeFrom",
+      "priceRangeFromTo",
+      "priceRangeUpTo"
+     ]
+    },
+    "https://cdn.enable.co.il/licenses/enable-L1004613qd0tjrpg-1121-24770/init.js": {
+     "bytes": 393646,
+     "key_hits": [
+      "ad:u,td:c,th:c},f=[\\\"circle\\\",\\\"clipPath\\\",\\\"defs\\\",\\\"ellipse\\\",\\\"g\\\",\\\"image\\\",\\\"line\\\",\\\"linearGradient\\\",\\\"mask\\\",\\\"path\\\",\\\"pattern\\\",\\\"polygon\\\",\\\"polyline\\\",\\\"radialGradient\\\",\\\"rect\\\",\\\"stop\\\",\\\"text\\\",\\\"tspan\\\"];f.forEach(function(e){p[e]=d,s[e]=!0}),e.exports=r},function(e,t){\\",
+      ":o(\\\"g\\\"),image:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text",
+      "age:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text\\\"),tspan:o("
+     ],
+     "city_hits": [],
+     "api_paths": []
+    }
+   }
+  },
+  "https://ravpass.co.il/%D7%A6%D7%93%D7%A7-%D7%AA%D7%97%D7%91%D7%95%D7%A8%D7%AA%D7%99/": {
+   "bytes": 86571,
+   "key_hits": [],
+   "city_hits": [],
+   "assets": {
+    "https://api.w.org/": {
+     "bytes": 167679,
+     "key_hits": [],
+     "city_hits": [],
+     "api_paths": [
+      "Price",
+      "priceCurrencySymbol",
+      "priceLabel",
+      "priceRange",
+      "priceRangeFrom",
+      "priceRangeFromTo",
+      "priceRangeUpTo"
+     ]
+    },
+    "https://cdn.enable.co.il/licenses/enable-L1004613qd0tjrpg-1121-24770/init.js": {
+     "bytes": 393646,
+     "key_hits": [
+      "ad:u,td:c,th:c},f=[\\\"circle\\\",\\\"clipPath\\\",\\\"defs\\\",\\\"ellipse\\\",\\\"g\\\",\\\"image\\\",\\\"line\\\",\\\"linearGradient\\\",\\\"mask\\\",\\\"path\\\",\\\"pattern\\\",\\\"polygon\\\",\\\"polyline\\\",\\\"radialGradient\\\",\\\"rect\\\",\\\"stop\\\",\\\"text\\\",\\\"tspan\\\"];f.forEach(function(e){p[e]=d,s[e]=!0}),e.exports=r},function(e,t){\\",
+      ":o(\\\"g\\\"),image:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text",
+      "age:o(\\\"image\\\"),line:o(\\\"line\\\"),linearGradient:o(\\\"linearGradient\\\"),mask:o(\\\"mask\\\"),path:o(\\\"path\\\"),pattern:o(\\\"pattern\\\"),polygon:o(\\\"polygon\\\"),polyline:o(\\\"polyline\\\"),radialGradient:o(\\\"radialGradient\\\"),rect:o(\\\"rect\\\"),stop:o(\\\"stop\\\"),svg:o(\\\"svg\\\"),text:o(\\\"text\\\"),tspan:o("
+     ],
+     "city_hits": [],
+     "api_paths": []
+    }
+   }
+  },
+  "https://s3-eu-west-1.amazonaws.com/static.hopon.co.il/mot/ravPassPrices.html": {
+   "bytes": 23952,
+   "key_hits": [
+    ">\r   <p><span>* כולל רכבת קלה, מטרונית, כרמלית ורכבלית<br />\r       ** כולל חופשי ארצי מלא לנסיעות באוטובוסים (למעט אילת)<br />\r       *** באזור 1 (פריפריה מחוץ לשלושת המטרופולינים הגדולים) תקרה חודשית לנסיעות עד 40 ק״מ ללא רכבות היא ₪139 ו- ₪117.79\r       באזור אילת</span></p>\r \r   <h",
+    "<span>* כולל רכבת קלה, מטרונית, כרמלית ורכבלית<br />\r       ** כולל חופשי ארצי מלא לנסיעות באוטובוסים (למעט אילת)<br />\r       *** באזור 1 (פריפריה מחוץ לשלושת המטרופולינים הגדולים) תקרה חודשית לנסיעות עד 40 ק״מ ללא רכבות היא ₪139 ו- ₪117.79\r       באזור אילת</span></p>\r \r   <h2>הנחות",
+    ", מטרונית, כרמלית ורכבלית<br />\r       ** כולל חופשי ארצי מלא לנסיעות באוטובוסים (למעט אילת)<br />\r       *** באזור 1 (פריפריה מחוץ לשלושת המטרופולינים הגדולים) תקרה חודשית לנסיעות עד 40 ק״מ ללא רכבות היא ₪139 ו- ₪117.79\r       באזור אילת</span></p>\r \r   <h2>הנחות לזכאים (פרופיל מיטיב)<"
+   ],
+   "city_hits": [],
+   "assets": {}
+  },
+  "https://s3-eu-west-1.amazonaws.com/static.hopon.co.il/mot/profiles.html": {
+   "bytes": 5944,
+   "key_hits": [],
+   "city_hits": [],
+   "assets": {}
+  }
+ }
+}
