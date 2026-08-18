@@ -127,6 +127,15 @@
         <option value="a">אוורירית</option>
       </select></div>
 
+    <h2 style="margin-top:14px">הסתרת כפתורים</h2>
+    <div id="hides" style="display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700">
+      <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" data-h="tabs" style="accent-color:#0f766e">לשוניות מפה/רשימה בכותרת</label>
+      <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" data-h="layers" style="accent-color:#0f766e">כפתור השכבות</label>
+      <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" data-h="lyrow" style="accent-color:#0f766e">כפתורי תחנות/מסלולים שעל המפה</label>
+      <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" data-h="walk" style="accent-color:#0f766e">מחוון דקות ההליכה</label>
+      <label style="display:flex;align-items:center;gap:7px"><input type="checkbox" data-h="csv" style="accent-color:#0f766e">כפתור ההורדה לאקסל</label>
+    </div>
+
     <h2 style="margin-top:14px">שולחים את ההצעה</h2>
     <input class="nm" id="nm" placeholder="שם (לא חובה)">
     <div style="height:6px"></div>
@@ -151,7 +160,7 @@
 (function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='4';
+var VER='5';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
@@ -183,6 +192,7 @@ try{
       bg:$('c-bg').value, th:$('c-th').value, font:$('f-font').value, tint:$('f-tint').value,
       leg:$('p-leg').value, ctl:$('p-ctl').value, pan:$('p-pan').value, den:$('p-den').value,
       q:$('p-q').value, tabs:$('p-tabs').value, beta:$('p-beta').value,
+      hide:[].map.call(document.querySelectorAll('#hides input:checked'),function(x){return x.dataset.h}),
       rad:+$('r-rad').value, fs:+$('r-fs').value, sh:+$('r-sh').value };
   }
   function css(v){
@@ -208,6 +218,11 @@ try{
        v.q==='qend'?'.top>#q{order:9}':'')+
       (v.tabs==='end'?'.top>.vseg{order:8}':'')+
       (v.beta==='off'?'.top>.tag{display:none!important}':'')+
+      ((v.hide||[]).indexOf('tabs')>-1?'.top>.vseg{display:none!important}':'')+
+      ((v.hide||[]).indexOf('layers')>-1?'.top>.lp-wrap{display:none!important}':'')+
+      ((v.hide||[]).indexOf('lyrow')>-1?'#lyStops{display:none!important}#lyRoutes{display:none!important}':'')+
+      ((v.hide||[]).indexOf('walk')>-1?'#walkrow{display:none!important}':'')+
+      ((v.hide||[]).indexOf('csv')>-1?'#csvbtn{display:none!important}':'')+
       (v.pan==='r'?'.wrap{grid-template-columns:430px 1fr!important}.wrap .mapwrap2{order:2}.wrap .panel{order:1}':
        v.pan==='b'?'.wrap{grid-template-columns:1fr!important}':'')+
       (v.den==='c'?'td{padding:4px 8px!important}th{padding:6px 8px!important}':
@@ -235,7 +250,9 @@ try{
     $('c-on').value=v.on||'#0f766e'; $('c-bg').value=v.bg; $('c-th').value=v.th;
     if(v.font)$('f-font').value=v.font; $('f-tint').value=v.tint||'none';
     $('p-leg').value=v.leg||'lb'; $('p-ctl').value=v.ctl||'r'; $('p-pan').value=v.pan||'l'; $('p-den').value=v.den||'n';
-    $('p-q').value=v.q||'n'; $('p-tabs').value=v.tabs||'n'; $('p-beta').value=v.beta||'on'; collide();
+    $('p-q').value=v.q||'n'; $('p-tabs').value=v.tabs||'n'; $('p-beta').value=v.beta||'on';
+    [].forEach.call(document.querySelectorAll('#hides input'),function(x){ x.checked=(v.hide||[]).indexOf(x.dataset.h)>-1; });
+    collide();
     $('r-rad').value=v.rad; $('r-fs').value=v.fs; $('r-sh').value=v.sh;
     labels(); if(typeof syncAllHex==='function')syncAllHex(); apply();
   }
@@ -275,6 +292,7 @@ try{
   });
   function syncHex(id){ if(hexes[id]) hexes[id].value=$(id).value; }
   function syncAllHex(){ ids.forEach(syncHex); }
+  [].forEach.call(document.querySelectorAll('#hides input'),function(x){ x.addEventListener('change',apply); });
   $('pf').addEventListener('load',apply);
   if(location.hash.length>1){
     try{ load(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))); }catch(e){}
