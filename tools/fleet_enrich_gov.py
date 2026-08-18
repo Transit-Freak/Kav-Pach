@@ -154,6 +154,12 @@ def main():
     reg = load_registry(find_resources(), wanted)
 
     hit = miss = 0
+    total = sum(len(op['vehicles']) for op in data['operators'])
+    # הגנה: אם ההצלבה נכשלה כמעט לגמרי (מאגר חסר/שינוי שדות) — לא מסננים,
+    # כדי שהאתר לא יתרוקן בגלל תקלה במקור הממשלתי
+    strict = len(reg) >= max(100, total // 20)
+    if not strict:
+        print(f'אזהרה: רק {len(reg)} התאמות — מדלגים על סינון לא-מאומתים', flush=True)
     base = 4 if data.get('v') == 2 else 3   # v2: ההעשרה אחרי ממוצע הנסיעות
     for op in data['operators']:
         kept = []
@@ -168,6 +174,8 @@ def main():
             else:
                 # רכב שאינו במאגר הרישוי הממשלתי — לא מוצג באתר
                 # (מזהה פנימי של המפעיל, רכב שנגרט, או שידור שגוי)
+                if not strict:
+                    kept.append(v)
                 miss += 1
         op['vehicles'] = kept
     # חברה שנשארה בלי רכבים מאומתים — לא מוצגת
