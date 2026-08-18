@@ -155,6 +155,8 @@ jobs:
             OUTDIR=line-history/data python3 tools/build_stop_shards.py
             OUTDIR=line-history/data python3 tools/compact_lines.py
             OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+            # היסטוריה לפי תחנה: אילו קווים עצרו בכל תחנה ומתי זה השתנה
+            OUTDIR=line-history/data python3 tools/build_stop_history.py
             # הדלתא לקו פח ולקו המוזהב: קווים שבוטלו, נסיעות עדכניות,
             # צמצומים — נגזר מהארכיון ונטען באתר הראשי
             OUTDIR=line-history/data python3 tools/build_kavpach_live.py

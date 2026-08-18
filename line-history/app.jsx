@@ -647,6 +647,23 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
     return null;
   };
   const withCode = (name, i, isAdd) => { const c = codeOf(name, i, isAdd); return c ? `${name} (${c})` : name; };
+  // תחנה שירדה ותחנה שנוספה עם אותו שם ורק רציף שונה — זה מעבר רציף,
+  // לא "תחנה חדשה": מזווגים אותן ומציגים שורת מעבר אחת ברורה
+  const platOf = (n) => {
+    const m = /רציף\s*([^\s/,]+)/.exec(n || "");
+    return m ? { plat: m[1], base: (n.replace(/\s*\/?\s*רציף\s*[^\s/,]+/, "").trim() || n) } : null;
+  };
+  const splitPlatformMoves = (add, rem) => {
+    const a = (add || []).map((n) => ({ n, p: platOf(n), used: false }));
+    const r = (rem || []).map((n) => ({ n, p: platOf(n), used: false }));
+    const moves = [];
+    for (const x of a) {
+      if (!x.p) continue;
+      const y = r.find((y2) => y2.p && !y2.used && y2.p.base === x.p.base);
+      if (y) { x.used = y.used = true; moves.push({ base: x.p.base, from: y.p.plat, to: x.p.plat }); }
+    }
+    return { moves, add: a.filter((x) => !x.used).map((x) => x.n), rem: r.filter((y) => !y.used).map((y) => y.n) };
+  };
   const v = vs[sel] || vs[vs.length - 1];
   // ברירת המחדל היא הגרסה הקודמת הסמוכה; במצב השוואה חופשית המשתמש בוחר
   // גרסת בסיס אחרת וכל ההפרש — הרשימה, המפה והמסלול — נמדד מולה.
@@ -956,12 +973,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
               {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
                   בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
               <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
-              {(x.add || x.rem) && (
-                <div className="sub">
-                  {x.add && <div>➕ נוספו: {x.add.map((n) => withCode(n, i, true)).join(", ")}</div>}
-                  {x.rem && <div>➖ ירדו: {x.rem.map((n) => withCode(n, i, false)).join(", ")}</div>}
-                </div>
-              )}
+              {(x.add || x.rem) && (() => {
+                const pm = splitPlatformMoves(x.add, x.rem);
+                return (
+                  <div className="sub">
+                    {pm.moves.map((m, k) => <div key={k}>🔀 מעבר רציף: {m.base} — מרציף {m.from} לרציף {m.to}</div>)}
+                    {pm.add.length > 0 && <div>➕ נוספו: {pm.add.map((n) => withCode(n, i, true)).join(", ")}</div>}
+                    {pm.rem.length > 0 && <div>➖ ירדו: {pm.rem.map((n) => withCode(n, i, false)).join(", ")}</div>}
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -1483,6 +1504,68 @@ function RecentChanges({ idx, openLine, onAll }) {
 }
 
 /* ---------- טאב תחנות ---------- */
+// ציר הקווים של תחנה בודדת: אילו קווים עצרו בה, מי נוסף ומי ירד ומתי
+// (בקשת המשתמש). הנתונים: data/stopev/XX.json — נגזרים יומית מקובצי
+// הקווים, כך ששינוי אצל קו נרשם אוטומטית גם אצל כל תחנה שהושפעה.
+function LinesAtStop({ code }) {
+  const [d, setD] = useState(null);
+  const [err, setErr] = useState(false);
+  const [all, setAll] = useState(false);
+  useEffect(() => {
+    setD(null); setErr(false); setAll(false);
+    dfetch("data/stopev/" + (code.length >= 2 ? code.slice(0, 2) : "0x") + ".json")
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((m) => setD(m[code] || { ev: [] }))
+      .catch(() => setErr(true));
+  }, [code]);
+  if (err || (d && !(d.ev || []).length)) return null;
+  if (!d) return <div className="lat"><div className="empty">⏳ טוען את קווי התחנה…</div></div>;
+  const ev = d.ev;
+  // מצב נוכחי: האירוע האחרון של כל וריאנט קובע אם הוא עוצר כאן היום
+  const lastByRd = {};
+  ev.forEach((e) => { lastByRd[e[2]] = e; });
+  const nowMap = new Map();
+  Object.values(lastByRd).forEach((e) => { if (e[3] !== "out" && e[1]) nowMap.set(e[1], e[2]); });
+  const now = [...nowMap.entries()].sort((a, b) => (parseInt(a[0]) || 9e9) - (parseInt(b[0]) || 9e9) || String(a[0]).localeCompare(b[0]));
+  // ציר הזמן: אירועי "התיעוד הראשון" של אותו תאריך מקובצים לשורה אחת,
+  // וחלופות של אותו קו באותו יום לא מוצגות פעמיים
+  const rows = [];
+  const baseByDate = {};
+  ev.forEach((e) => { if (e[3] === "base" && e[1]) (baseByDate[e[0]] = baseByDate[e[0]] || new Set()).add(e[1]); });
+  Object.entries(baseByDate).forEach(([dte, lines]) => rows.push({ d: dte, k: "base", lines: [...lines] }));
+  const seen = new Set();
+  ev.forEach((e) => {
+    if (e[3] === "base") return;
+    const key = e[0] + "|" + e[1] + "|" + e[3];
+    if (seen.has(key)) return;
+    seen.add(key);
+    rows.push({ d: e[0], k: e[3], line: e[1] || "—", rd: e[2] });
+  });
+  rows.sort((a, b) => b.d.localeCompare(a.d));
+  const shown = all ? rows : rows.slice(0, 30);
+  return (
+    <div className="lat">
+      <div className="lathead">🚌 הקווים בתחנה הזו לאורך זמן</div>
+      {now.length > 0 && (
+        <div className="latnow">עוצרים בה כיום לפי התיעוד:{" "}
+          {now.slice(0, 40).map(([l, rd2]) => <a key={l} className="badge sm latb" href={lineHref(rd2)}>{l}</a>)}
+        </div>
+      )}
+      <div className="latlist">
+        {shown.map((r, i) => r.k === "base"
+          ? <div className="latrow" key={i}><span className="latd">{fmtD(r.d)}</span> {r.lines.length === 1
+              ? <>🚏 קו <b>{r.lines[0]}</b> תועד בתחנה לראשונה</>
+              : <>🚏 בתיעוד הראשון עצרו כאן {r.lines.length} קווים: {r.lines.slice(0, 25).join(", ")}{r.lines.length > 25 ? "…" : ""}</>}</div>
+          : <div className="latrow" key={i}><span className="latd">{fmtD(r.d)}</span> {r.k === "in"
+              ? <>🆕 קו <a href={lineHref(r.rd)}><b>{r.line}</b></a> התחיל לעצור בתחנה</>
+              : <>➖ קו <a href={lineHref(r.rd)}><b>{r.line}</b></a> הפסיק לעצור בתחנה</>}</div>)}
+      </div>
+      {rows.length > shown.length && <button className="morebtn" onClick={() => setAll(true)}>⌄ כל {rows.length.toLocaleString()} האירועים</button>}
+      <div className="latnote">מחושב מהשוואת רצפי התחנות של כל הקווים לאורך התקופה. מעבר רציף נראה כאן כקו שירד — ועלה באותו תאריך ברציף השכן.</div>
+    </div>
+  );
+}
+
 function StopsTab({ sel }) {
   const [months, setMonths] = useState(null);
   const [mon, setMon] = useState("");
@@ -1679,6 +1762,7 @@ function StopsTab({ sel }) {
           </div>
         )}
       </div>
+      {sel && <LinesAtStop code={sel} />}
       {source === null ? "טוען…" : (
         <div className="slist">
           {(() => {
@@ -1704,6 +1788,8 @@ function StopsTab({ sel }) {
                     <span className="nm">
                       {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
                       <StopCode code={c.c} />
+                      <a className="latlink" href={"#stop=" + c.c} title="אילו קווים עצרו בתחנה ומה השתנה"
+                        onClick={(e) => e.stopPropagation()}>🚌 קווים</a>
                     </span>
                   ) : (c.k === "renamed" && <span className="nm"><s>{c.on}</s> ← <b>{c.nn}</b></span>)}
                   {/* רשומה ברישום שאף קו לא עצר בה. בלי הסימון "תחנה חדשה"
@@ -1742,7 +1828,9 @@ function StopsTab({ sel }) {
                 <div className="sgroup" key={g.code}>
                   <div className="srow ghead">
                     <span className="nm"><b>{nm}</b>
-                      <StopCode code={g.code} /></span>
+                      <StopCode code={g.code} />
+                      <a className="latlink" href={"#stop=" + g.code} title="אילו קווים עצרו בתחנה ומה השתנה"
+                        onClick={(e) => e.stopPropagation()}>🚌 קווים</a></span>
                     <span className="meta">{head.t ? head.t + " · " : ""}{g.evs.length} שינויים</span>
                   </div>
                   {g.evs.map((c) => evRow(c, false))}
