@@ -187,6 +187,9 @@ def flush_site(state):
     except Exception as e:  # noqa: BLE001
         print(f'  העשרת-ביניים נכשלה: {e}', flush=True)
     try:
+        # ניקוי rebase שנקטע בעדכון קודם — אחרת כל פעולות ה-git ייתקעו
+        subprocess.run(['git', 'rebase', '--abort'],
+                       check=False, capture_output=True)
         subprocess.run(['git', 'add', 'fleet/data'], check=True)
         subprocess.run(['git', '-c', 'user.name=fleet-bot',
                         '-c', 'user.email=noreply@github.com',
@@ -196,7 +199,9 @@ def flush_site(state):
         subprocess.run(['git', 'push'], check=True)
         print('  עדכון ביניים נדחף לאתר ✓', flush=True)
     except Exception as e:  # noqa: BLE001
-        print(f'  דחיפת-ביניים לא בוצעה: {e}', flush=True)
+        subprocess.run(['git', 'rebase', '--abort'],
+                       check=False, capture_output=True)
+        print(f'  דחיפת-ביניים לא בוצעה ({e}) — יתאחד בעדכון הבא', flush=True)
 
 
 def main():
