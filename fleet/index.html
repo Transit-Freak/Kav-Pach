@@ -105,6 +105,7 @@
       <input id="q" type="search" placeholder="חיפוש חברה…">
       <div class="modes">
         <button class="mode on" data-m="op">חברה</button>
+        <button class="mode" data-m="city">עיר</button>
         <button class="mode" data-m="plate">מספר רכב</button>
       </div>
     </div>
@@ -118,7 +119,7 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, STATF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, STATF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null;
 const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>v[6+OFF],gR=v=>OFF?v[3]:null;
 const fmt=n=>n.toLocaleString('he-IL');
 const fd=s=>s?s.split('-').reverse().join('.'):'—';
@@ -142,6 +143,7 @@ function kpis(){
 
 function home(){
   const f=Q.trim();
+  if(MODE==='city') return cityHome(f);
   if(MODE==='plate'&&f){
     const clean=f.replace(/-/g,'');
     const hits=[];
@@ -157,6 +159,48 @@ function home(){
       <h2>${esc(o.name)}</h2><div class="n">${fmt(o.vehicles.length)}</div>
       <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו</span>`:''}</div>
     </button>`;}).join('')||'<div class="empty">לא נמצאה חברה</div>'}</div>`;
+}
+
+/* ── מצב עיר: אילו רכבים פועלים בכל עיר (נבנה מהקווים ששידר כל רכב) ── */
+async function loadCities(){
+  if(CITIES!==null) return;
+  try{const r=await fetch('data/fleet-cities.json');CITIES=r.ok?await r.json():{cities:{}};}
+  catch(e){CITIES={cities:{}};}
+  render();
+}
+function opName(ref){const o=op(+ref);return o?o.name:'מפעיל '+ref;}
+function cityHome(f){
+  if(CITIES===null){loadCities();return kpis()+'<div class="msg">⏳ טוען נתוני ערים…</div>';}
+  const all=Object.entries(CITIES.cities||{});
+  if(!all.length) return kpis()+'<div class="panel"><div class="empty">נתוני הערים ייבנו בריצת האיסוף הקרובה — הסריקה החלה לשמור את הקווים של כל רכב רק עכשיו. חזרו מחר.</div></div>';
+  if(CITYSEL&&CITIES.cities[CITYSEL]) return cityView(CITYSEL);
+  const hits=all.filter(([c])=>!f||c.includes(f)).sort((a,b)=>b[1].total-a[1].total).slice(0,30);
+  return kpis()+`<div class="cards">${hits.map(([c,d])=>
+    `<button class="card" style="background:#10172A" onclick="CITYSEL=${JSON.stringify(c).replace(/"/g,'&quot;')};render();window.scrollTo({top:0})">
+      <h2>${esc(c)}</h2><div class="n">${fmt(d.total)}</div>
+      <div class="pills"><span>רכבים פועלים בעיר</span></div>
+    </button>`).join('')||'<div class="empty">לא נמצאה עיר</div>'}</div>`;
+}
+function cityView(c){
+  const d=CITIES.cities[c];
+  const mx=d.ops.length?d.ops[0][1]:1;
+  const yk=Object.keys(d.years).map(Number).sort((a,b)=>b-a);
+  const ymax=yk.length?Math.max(...Object.values(d.years)):1;
+  const y0=+DATA.updated.slice(0,4);
+  return `<button class="back" onclick="CITYSEL=null;render()">→ חזרה לכל הערים</button>
+  <div class="ophead" style="background:#10172A">
+    <div><h2>${esc(c)}</h2><div class="sub2">${fmt(d.total)} רכבים שונים פועלים בעיר · עדכון ${fd(CITIES.updated)}</div></div>
+  </div>
+  <div class="cols2">
+    <div class="panel"><p class="ptitle">החברות שפועלות בעיר</p>
+      ${d.ops.slice(0,12).map(([ref,n])=>`<div class="yrow" style="grid-template-columns:110px 1fr 52px"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
+    </div>
+    ${yk.length?`<div class="panel"><p class="ptitle">כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר</p>
+      ${yk.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';
+        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,d.years[y]/ymax*100)}%;background:${col}"></i></div><span class="c">${fmt(d.years[y])}</span></div>`;}).join('')}
+    </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>'}
+  </div>
+  <p class="note">שיוך רכב לעיר נגזר מהקווים שבהם שידר (דאטאבוס) — רכב נספר בכל עיר שהקו שלו משרת. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
 }
 
 function table(vs,opsArr){
@@ -290,10 +334,10 @@ function go(ref){VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;STATF=null;S
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
-  $('#q').placeholder=MODE==='op'?'חיפוש חברה…':'חיפוש מספר רכב…';
-  VIEW={t:'home'};LIMIT=200;render();
+  $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':'חיפוש מספר רכב…';
+  VIEW={t:'home'};CITYSEL=null;LIMIT=200;render();
 }));
-$('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};LIMIT=200;render();});
+$('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{DATA=d;OFF=d.v===2?1:0;render();})
