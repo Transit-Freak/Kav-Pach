@@ -68,13 +68,13 @@ def get(path, **params):
 
 
 def route_operator_map():
-    """מיפוי siri_route.id → operator_ref (עמוד אחר עמוד, פעם אחת לריצה)."""
+    """מיפוי siri_route.id → (operator_ref, line_ref) — פעם אחת לריצה."""
     m = {}
     offset = 0
     while True:
         rows = get('/siri_routes/list', limit=PAGE, offset=offset)
         for r in rows:
-            m[r['id']] = r.get('operator_ref')
+            m[r['id']] = (r.get('operator_ref'), r.get('line_ref'))
         if len(rows) < PAGE:
             break
         offset += PAGE
@@ -96,20 +96,26 @@ def scan_day(day, routes, state):
             v = (r.get('vehicle_ref') or '').strip()
             if not v or v == '0':
                 continue
-            op = routes.get(r.get('siri_route_id'))
+            ent = routes.get(r.get('siri_route_id'))
+            if ent is None:
+                continue
+            op, line = ent
             if op is None:
                 continue
             key = f'{op}:{v}'
             cur = state.get(key)
             if cur is None:
-                state[key] = [day, day, 0, 0]
+                cur = state[key] = [day, day, 0, 0, []]
             else:
-                if len(cur) < 4:      # מצב ישן [ראשון, אחרון] — הרחבה
-                    cur += [0, 0]
+                while len(cur) < 5:   # מצב ישן — הרחבה הדרגתית
+                    cur.append(0 if len(cur) < 4 else [])
                 if day < cur[0]:
                     cur[0] = day
                 if day > cur[1]:
                     cur[1] = day
+            # אילו קווים הרכב שירת (עד 40 — מספיק לשיוך ערים)
+            if line and line not in cur[4] and len(cur[4]) < 40:
+                cur[4].append(line)
             today[key] = today.get(key, 0) + 1
         n += len(rows)
         if len(rows) < PAGE:
