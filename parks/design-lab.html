@@ -61,6 +61,7 @@
     <div class="row"><label>צבע הכותרת</label><input type="color" id="c-top" value="#134e4a"></div>
     <div class="row"><label>צבע ההדגשה (כפתורים ותגים)</label><input type="color" id="c-acc" value="#5eead4"></div>
     <div class="row"><label>טקסט על ההדגשה</label><input type="color" id="c-accink" value="#134e4a"></div>
+    <div class="row"><label>כפתור פעיל (לשונית נבחרת)</label><input type="color" id="c-on" value="#0f766e"></div>
     <div class="row"><label>רקע העמוד</label><input type="color" id="c-bg" value="#eef1f5"></div>
     <div class="row"><label>רקע כותרות הטבלה</label><input type="color" id="c-th" value="#f0fdfa"></div>
     <div class="row"><label>גופן</label>
@@ -74,7 +75,41 @@
       </select></div>
     <div class="row"><label>עיגול פינות</label><input type="range" id="r-rad" min="0" max="26" value="14"><span class="val" id="v-rad">14px</span></div>
     <div class="row"><label>גודל טקסט</label><input type="range" id="r-fs" min="90" max="115" value="100"><span class="val" id="v-fs">100%</span></div>
-    <div class="row" style="border-bottom:none"><label>צלליות</label><input type="range" id="r-sh" min="0" max="100" value="100"><span class="val" id="v-sh">100%</span></div>
+    <div class="row"><label>צלליות</label><input type="range" id="r-sh" min="0" max="100" value="100"><span class="val" id="v-sh">100%</span></div>
+    <div class="row" style="border-bottom:none"><label>גוון המפה</label>
+      <select id="f-tint">
+        <option value="none" selected>רגיל (הנוכחי)</option>
+        <option value="grayscale(.6)">מעודן — פחות צבע</option>
+        <option value="grayscale(1)">אפור מלא</option>
+        <option value="sepia(.45) saturate(1.2)">חם</option>
+        <option value="invert(.92) hue-rotate(180deg) contrast(.9)">כהה (לילה)</option>
+      </select></div>
+
+    <h2 style="margin-top:14px">פריסה — מזיזים תבניות</h2>
+    <div class="row"><label>מקרא המפה</label>
+      <select id="p-leg">
+        <option value="lb" selected>שמאל למטה (הנוכחי)</option>
+        <option value="rb">ימין למטה</option>
+        <option value="lt">שמאל למעלה</option>
+        <option value="rt">ימין למעלה</option>
+      </select></div>
+    <div class="row"><label>לוח כפתורי המפה</label>
+      <select id="p-ctl">
+        <option value="r" selected>ימין (הנוכחי)</option>
+        <option value="l">שמאל</option>
+      </select></div>
+    <div class="row"><label>פאנל פרטי האזור</label>
+      <select id="p-pan">
+        <option value="l" selected>משמאל למפה (הנוכחי)</option>
+        <option value="r">מימין למפה</option>
+        <option value="b">מתחת למפה, ברוחב מלא</option>
+      </select></div>
+    <div class="row" style="border-bottom:none"><label>צפיפות הטבלה</label>
+      <select id="p-den">
+        <option value="n" selected>רגילה (הנוכחית)</option>
+        <option value="c">צפופה</option>
+        <option value="a">אוורירית</option>
+      </select></div>
 
     <h2 style="margin-top:14px">שולחים את ההצעה</h2>
     <input class="nm" id="nm" placeholder="שם (לא חובה)">
@@ -98,6 +133,18 @@
 
 <script>
 (function(){
+// עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
+// (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
+var VER='3';
+try{
+  fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
+    var m=t.match(/var VER='(\d+)'/);
+    if(m&&m[1]!==VER){
+      var q=new URLSearchParams(location.search);
+      if(q.get('v')!==m[1]) location.replace(location.pathname+'?v='+m[1]+location.hash);
+    }
+  }).catch(function(){});
+}catch(e){}
   var $=function(id){return document.getElementById(id)};
   var FSURL='https://formsubmit.co/ajax/ea03c6e126249e4fc11c3949c3c4237b';
   var FONTS={
@@ -107,17 +154,18 @@
     "'David Libre',serif":'David+Libre:wght@400;700'
   };
   var PRESETS=[
-    ['הנוכחי','#134e4a','#5eead4','#134e4a','#eef1f5','#f0fdfa'],
-    ['כחול עמוק','#1e3a8a','#93c5fd','#1e3a8a','#eff3f9','#eff6ff'],
-    ['סגול הקו בזמן','#4c1d95','#ddd6fe','#4c1d95','#eef1f5','#f5f3ff'],
-    ['חום תעשייתי','#7c2d12','#fdba74','#7c2d12','#f5f2ee','#fff7ed'],
-    ['כהה','#0f172a','#5eead4','#0f172a','#dde3ea','#e2e8f0']
+    ['הנוכחי','#134e4a','#5eead4','#134e4a','#eef1f5','#f0fdfa','#0f766e'],
+    ['כחול עמוק','#1e3a8a','#93c5fd','#1e3a8a','#eff3f9','#eff6ff','#1d4ed8'],
+    ['סגול הקו בזמן','#4c1d95','#ddd6fe','#4c1d95','#eef1f5','#f5f3ff','#6d28d9'],
+    ['חום תעשייתי','#7c2d12','#fdba74','#7c2d12','#f5f2ee','#fff7ed','#9a3412'],
+    ['כהה','#0f172a','#5eead4','#0f172a','#dde3ea','#e2e8f0','#0f766e','invert(.92) hue-rotate(180deg) contrast(.9)']
   ];
-  var ids=['c-top','c-acc','c-accink','c-bg','c-th','f-font','r-rad','r-fs','r-sh'];
+  var ids=['c-top','c-acc','c-accink','c-on','c-bg','c-th','f-font','f-tint','r-rad','r-fs','r-sh','p-leg','p-ctl','p-pan','p-den'];
 
   function vals(){
-    return { top:$('c-top').value, acc:$('c-acc').value, accink:$('c-accink').value,
-      bg:$('c-bg').value, th:$('c-th').value, font:$('f-font').value,
+    return { top:$('c-top').value, acc:$('c-acc').value, accink:$('c-accink').value, on:$('c-on').value,
+      bg:$('c-bg').value, th:$('c-th').value, font:$('f-font').value, tint:$('f-tint').value,
+      leg:$('p-leg').value, ctl:$('p-ctl').value, pan:$('p-pan').value, den:$('p-den').value,
       rad:+$('r-rad').value, fs:+$('r-fs').value, sh:+$('r-sh').value };
   }
   function css(v){
@@ -125,12 +173,25 @@
     return 'html,body{background:'+v.bg+'!important;font-family:'+v.font+'!important;font-size:'+v.fs+'%!important}'+
       '.top{background:'+v.top+'!important}'+
       '.tag,.btn{background:'+v.acc+'!important;color:'+v.accink+'!important}'+
-      '.btn.on{background:'+v.top+'!important;color:#fff!important}'+
+      '.btn.on:not(.layers-panel .btn){background:'+v.on+'!important;color:#fff!important}'+
       'th{background:'+v.th+'!important;color:'+v.top+'!important}'+
       '.lp-title{color:'+v.top+'!important}'+
       '.tblcard,.layers-panel,.panelcard{border-radius:'+v.rad+'px!important}'+
       '.btn{border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
-      '.tblcard{box-shadow:'+shadow+'!important}';
+      '.tblcard{box-shadow:'+shadow+'!important}'+
+      '.maplegend{border-radius:'+Math.round(v.rad*0.7)+'px!important}'+
+      '.mapctl{border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
+      (v.tint&&v.tint!=='none'?'.leaflet-tile-pane{filter:'+v.tint+'!important}':'')+
+      // פריסה: הזזת התבניות בין מיקומים — הכל ב-CSS, ניתן להטמעה כמו שהוא
+      (v.leg==='rb'?'.maplegend{left:auto!important;right:10px!important}':
+       v.leg==='lt'?'.maplegend{bottom:auto!important;top:10px!important}':
+       v.leg==='rt'?'.maplegend{left:auto!important;bottom:auto!important;right:10px!important;top:10px!important}':'')+
+      (v.ctl==='l'?'.mapctl{right:auto!important;left:10px!important}':'')+
+      (v.leg&&v.leg[0]==='l'&&v.ctl==='l'?'.mapctl{top:10px!important}':'')+
+      (v.pan==='r'?'.wrap{grid-template-columns:430px 1fr!important}.wrap .mapwrap2{order:2}.wrap .panel{order:1}':
+       v.pan==='b'?'.wrap{grid-template-columns:1fr!important}':'')+
+      (v.den==='c'?'td{padding:4px 8px!important}th{padding:6px 8px!important}':
+       v.den==='a'?'td{padding:11px 12px!important}th{padding:12px 12px!important}':'');
   }
   function fontLink(v){
     var g=FONTS[v.font];
@@ -151,10 +212,11 @@
   }
   function load(v){
     $('c-top').value=v.top; $('c-acc').value=v.acc; $('c-accink').value=v.accink;
-    $('c-bg').value=v.bg; $('c-th').value=v.th;
-    if(v.font)$('f-font').value=v.font;
+    $('c-on').value=v.on||'#0f766e'; $('c-bg').value=v.bg; $('c-th').value=v.th;
+    if(v.font)$('f-font').value=v.font; $('f-tint').value=v.tint||'none';
+    $('p-leg').value=v.leg||'lb'; $('p-ctl').value=v.ctl||'r'; $('p-pan').value=v.pan||'l'; $('p-den').value=v.den||'n';
     $('r-rad').value=v.rad; $('r-fs').value=v.fs; $('r-sh').value=v.sh;
-    labels(); apply();
+    labels(); if(typeof syncAllHex==='function')syncAllHex(); apply();
   }
   function labels(){
     $('v-rad').textContent=$('r-rad').value+'px';
@@ -164,10 +226,25 @@
   PRESETS.forEach(function(p){
     var b=document.createElement('button'); b.className='preset';
     b.innerHTML='<span class="sw" style="background:'+p[1]+'"></span><span class="sw" style="background:'+p[2]+'"></span> '+p[0];
-    b.onclick=function(){ load({top:p[1],acc:p[2],accink:p[3],bg:p[4],th:p[5],font:$('f-font').value,rad:+$('r-rad').value,fs:+$('r-fs').value,sh:+$('r-sh').value}); };
+    b.onclick=function(){ load({top:p[1],acc:p[2],accink:p[3],bg:p[4],th:p[5],on:p[6],tint:p[7]||'none',font:$('f-font').value,rad:+$('r-rad').value,fs:+$('r-fs').value,sh:+$('r-sh').value}); };
     $('presets').appendChild(b);
   });
-  ids.forEach(function(id){ $(id).addEventListener('input',function(){ labels(); apply(); }); });
+  ids.forEach(function(id){ $(id).addEventListener('input',function(){ labels(); syncHex(id); apply(); }); });
+  // "כל סוג צבע": שדה hex חופשי ליד כל בוחר — אפשר להדביק כל ערך
+  var hexes={};
+  ids.filter(function(id){return id.slice(0,2)==='c-'}).forEach(function(id){
+    var t=document.createElement('input');
+    t.type='text'; t.value=$(id).value; t.spellcheck=false;
+    t.style.cssText='width:74px;border:1px solid #e2e8f0;border-radius:8px;padding:4px 6px;font-family:monospace;font-size:12px;direction:ltr;text-align:center';
+    t.addEventListener('input',function(){
+      var x=t.value.trim(); if(x[0]!=='#') x='#'+x;
+      if(/^#[0-9a-fA-F]{6}$/.test(x)){ $(id).value=x; apply(); }
+    });
+    $(id).parentNode.insertBefore(t,$(id));
+    hexes[id]=t;
+  });
+  function syncHex(id){ if(hexes[id]) hexes[id].value=$(id).value; }
+  function syncAllHex(){ ids.forEach(syncHex); }
   $('pf').addEventListener('load',apply);
   if(location.hash.length>1){
     try{ load(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))); }catch(e){}
