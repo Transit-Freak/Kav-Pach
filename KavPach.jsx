@@ -625,7 +625,6 @@ function ChoiceScreen({ onPick }) {
             <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#f59e0b' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-amber-400 text-amber-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
                 {/* הסמל של "הקו המדלג" — אוטובוס מקפץ מעל תחנה (זהה ל-favicon של הכלי) */}
                 <svg viewBox="4 4 26 26" style={{ width: '96px', height: '96px' }} className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 26 L10 26 Q17 15 24 26 L30 26" stroke="#fde68a" strokeWidth="2" fill="none" strokeDasharray="2.5 2" strokeLinecap="round" />
@@ -654,7 +653,6 @@ function ChoiceScreen({ onPick }) {
             <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#a78bfa' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-violet-300 text-violet-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
                 <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🕰️</span>
               </div>
               <h2 className="text-3xl font-[900] text-violet-200">הקו בזמן</h2>
@@ -672,7 +670,6 @@ function ChoiceScreen({ onPick }) {
             <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#34d399' }} />
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
-                <span className="bg-emerald-300 text-emerald-950 px-3 py-1 rounded-full text-[11px] font-black self-start">חדש</span>
                 {/* הסמל של "המחירון" — כרטיס נסיעה (זהה לכותרת הכלי עצמו) */}
                 <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🎫</span>
               </div>

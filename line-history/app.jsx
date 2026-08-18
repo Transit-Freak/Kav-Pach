@@ -1883,51 +1883,6 @@ function StopsTab({ sel, selN }) {
 }
 
 
-/* "מה חדש" — חלון לקוראי האתר (בקשת שלמה): מה השתפר לאחרונה, בדגש
-   על הקו בזמן. נסגר בלחיצה בחוץ, ב-Esc או בכפתור. */
-function WhatsNew({ onClose }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  return (
-    <div className="wnover" onClick={onClose}>
-      <div className="wncard" role="dialog" aria-modal="true" aria-label="מה חדש באתר" onClick={(e) => e.stopPropagation()}>
-        <div className="wnhead">
-          <b>מה חדש</b>
-          <button className="wnx" aria-label="סגירה" onClick={onClose}>×</button>
-        </div>
-        <div className="wnbody">
-          <div className="wnhero">
-            <div className="wnht">🚌 כלי חדש: הקו בזמן 🕰️</div>
-            רציתם אי פעם לראות איך קו נראה פעם? איזה תחנות היו לו, איפה הוא עבר,
-            מתי קיצרו או האריכו אותו?
-          </div>
-          <ul className="wnmain">
-            <li>⏪ <b>חוזרים אחורה בזמן עם כל קו בישראל</b> — עד 2017, ואפשר להציץ אפילו איך הוא נראה ב-2012 (בערך). ואל תדאגו — המידע ההיסטורי נשמר באתרי ארכיון שאוספים את פרסומי הרישוי של משרד התחבורה לאורך השנים.</li>
-            <li>🗺️ <b>כל שינוי על מפה</b> — המסלול הישן מול החדש, לפני ואחרי.</li>
-            <li>🚆 <b>לא רק אוטובוסים:</b> גם רכבת ישראל, הרכבת הקלה, הכרמלית ומוניות השירות.</li>
-            <li>🚏 <b>כל תחנה עם קורות חיים משלה</b> — מתי נפתחה, אם הוזזה ואיך קראו לה פעם.</li>
-          </ul>
-          <p className="wnmore">ויש עוד: מעקב תגבורים, וכל המידע ישירות מהפרסומים הרשמיים של משרד התחבורה.</p>
-
-          <div className="wnsec">🗑️ קו פח והמוזהב</div>
-          <p className="wnline">חיבור לארכיון החי — תגי "הקו כבר בוטל", "הושבת וחזר" והגנת קו חדש · עלות עודפת בשקלים · הסימולטור נהיה אמין (לא ממליץ לבטל קווים שלא קיימים) · ניתוח הרחבה לפי כיוון · שיתוף קו בודד</p>
-          <div className="wnsec">🚌 הקו המדלג</div>
-          <p className="wnline">"מה חדש מאז הביקור הקודם" עם תגי חדש · שיתוף וקישור ישיר · טעינה מהירה</p>
-          <div className="wnsec">🐛 קו באג</div>
-          <p className="wnline">טעינה מהירה פי 20 · גרף מגמה של 18 ימים · קישור ישיר לכל עיקוף</p>
-          <div className="wnsec">♿ נגישות בכל האתרים</div>
-          <p className="wnline">כפתור נגישות תקני צף (אם יש תקלות — תגידו לי!) · התאמה לת"י 5568: מקלדת, קוראי מסך וניגודיות · הצהרת נגישות עם מייל לדיווח</p>
-          <div className="wnsec">🌐 רוחבי</div>
-          <p className="wnline">כל הכלים מהירים משמעותית וביקור חוזר נפתח כמעט מיד · עדכון אחד ב-10:30 לכל הכלים, בלי סתירות ביניהם</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ---------- אפליקציה ---------- */
 // סוגי תחבורה שאינם אוטובוס. עד יולי 2026 הסורק סינן כל route_type שאינו 3,
 // ולכן הרכבת, מוניות השירות והרכבת הקלה לא היו באתר כלל — למרות שהם יושבים
@@ -2111,7 +2066,6 @@ function App() {
   };
   const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [rty, setRty] = useState(0);
-  const [showNews, setShowNews] = useState(false);
   useEffect(() => {
     dfetch("data/lines.json")
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
@@ -2194,8 +2148,7 @@ function App() {
   return (
     <div className="wrap">
       <header>
-        <h1>🕰️ הקו בזמן <span className="beta">ניסוי</span>{" "}
-          <button className="newsbtn" onClick={() => setShowNews(true)}>מה חדש</button></h1>
+        <h1>🕰️ הקו בזמן</h1>
         <p className="tag">כל שינוי שנכנס לתוקף במסלולי הקווים ובתחנות — מסלול, שרטוט, תחנות ושמות. מהשוואת ה-GTFS של משרד התחבורה, יום מול יום, ממרץ 2017 ועד היום.</p>
         <div className="stats">
           {idx ? (<>
@@ -2308,7 +2261,6 @@ function App() {
           )}
         </div>
       )}
-      {showNews && <WhatsNew onClose={() => setShowNews(false)} />}
       <details className="srcbox">
         <summary>📚 המקורות — מאיפה מגיע כל פרט, ועד לאן הוא מגיע</summary>
         <div className="srclist">
@@ -2327,7 +2279,7 @@ function App() {
         </div>
       </details>
       <footer>
-        ניסוי במסגרת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · הנתונים: GTFS משרד התחבורה ·
+        במסגרת <a href="../" target="_blank" rel="noopener">הקו הבוחן</a> · הנתונים: GTFS משרד התחבורה ·
         היסטוריה: TransitFeeds/OpenMobilityData (2017–2022), אופן באס — הסדנא לידע ציבורי (2022–2026), מגיעים (2012)
       </footer>
     </div>
