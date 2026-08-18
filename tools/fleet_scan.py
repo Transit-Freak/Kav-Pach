@@ -33,8 +33,7 @@ RETIRE_DAYS = int(os.environ.get('RETIRE_DAYS', '60'))
 FLUSH_DAYS = int(os.environ.get('FLUSH_DAYS', '0'))
 PAGE = 1000
 
-# שמות המפעילים לפי operator_ref של משרד התחבורה (כמו ב-GTFS agency_id).
-# מזהה שאינו ברשימה יוצג כ"מפעיל N" — ואפשר להשלים אותו כאן בעתיד.
+# שמות מפעילים מובנים (גיבוי) — הרשימה המלאה נטענת בזמן ריצה מ-agency.txt
 OPERATORS = {
     2: 'רכבת ישראל', 3: 'אגד', 4: 'אגד תעבורה', 5: 'דן', 6: 'ש.א.מ',
     7: 'נסיעות ותיירות', 8: 'גי.בי. טורס', 10: 'מועצה אזורית אילות',
@@ -45,8 +44,27 @@ OPERATORS = {
     38: 'אקסטרה ירושלים', 91: 'מוניות שירות',
 }
 
-# לא חברות אוטובוסים — לא מוצגים באתר: רכבת ישראל, כרמלית, סיטיפס (רק"ל)
-EXCLUDE = {2, 20, 21}
+# לא חברות אוטובוסים — מסוננים לפי שם: רכבות, רק"ל, רכבל ומוניות
+EXCLUDE_WORDS = ('רכבת', 'כרמלית', 'סיטיפס', 'רכבל', 'מוניות', 'כביש 6')
+S3GTFS = ('https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
+          '/gtfs_archive/{y}/{m}/{d}/israel-public-transportation.zip')
+NAMES = dict(OPERATORS)   # מועשר בזמן ריצה מ-agency.txt
+
+
+def load_agency_names():
+    """agency_id → שם המפעיל מתוך ה-GTFS היומי — הרשימה הרשמית המלאה."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from backfill_geo import central_dir, member_rows
+        day = TODAY - datetime.timedelta(days=1)
+        url = S3GTFS.format(y=day.year, m=f'{day.month:02d}', d=f'{day.day:02d}')
+        c, rows = member_rows(url, central_dir(url), 'agency.txt')
+        got = {int(r[c['agency_id']]): (r[c['agency_name']] or '').strip()
+               for r in rows if (r[c['agency_id']] or '').strip().isdigit()}
+        NAMES.update({k: v for k, v in got.items() if v})
+        print(f'agency.txt: {len(got)} מפעילים רשמיים', flush=True)
+    except Exception as e:  # noqa: BLE001 — נופלים לרשימה המובנית
+        print(f'agency.txt לא נטען ({e}) — הרשימה המובנית בשימוש', flush=True)
 
 
 def jdump(obj, path):
@@ -144,14 +162,15 @@ def build_output(state):
         avg = round(rides / dcount, 1) if dcount else None
         op_s, v = key.split(':', 1)
         op = int(op_s)
-        # מזהה לא מוכר או מפעיל שאינו חברת אוטובוסים — לא מוצג
-        if op in EXCLUDE or op not in OPERATORS:
+        # רק מפעיל שמופיע ברשימה הרשמית, ושאינו רכבת/רק"ל/מונית
+        name = NAMES.get(op)
+        if not name or any(w in name for w in EXCLUDE_WORDS):
             continue
         ops.setdefault(op, []).append([v, first, last, avg])
     out = []
     for op, vehicles in sorted(ops.items()):
         vehicles.sort(key=lambda x: x[0])
-        out.append({'ref': op, 'name': OPERATORS.get(op, f'מפעיל {op}'),
+        out.append({'ref': op, 'name': NAMES.get(op, f'מפעיל {op}'),
                     'vehicles': vehicles})
     return {'updated': TODAY.isoformat(), 'retire_days': RETIRE_DAYS,
             'v': 2, 'operators': out}
@@ -188,6 +207,7 @@ def main():
             state = json.load(f).get('vehicles', {})
     print(f'סריקה {FROM} → {TO} · מצב קיים: {len(state)} רכבים', flush=True)
 
+    load_agency_names()
     routes = route_operator_map()
     t0 = time.time()
     day = datetime.date.fromisoformat(FROM)
