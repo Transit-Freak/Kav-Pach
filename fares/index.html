@@ -287,14 +287,18 @@ function renderResult(km, note, isTrain, fx){
   wrap.classList.remove('empty');
   const extraNotes=[];
   if (fx.flat!=null && fx.flatLines)
-    extraNotes.push('🎫 בין שתי התחנות נוסעים רק קווים בתעריף אחיד ('+
-      (fx.flatLines.length>1?'קווים ':'קו ')+fx.flatLines.join(', ')+
-      ') — המחיר קבוע לכל הקו, בלי תלות במרחק.');
+    extraNotes.push('🎫 בין שתי התחנות '+
+      (fx.flatLines.length>1
+        ? 'נוסעים רק קווים בתעריף אחיד (קווים '+fx.flatLines.join(', ')+')'
+        : 'נוסע רק קו אחד, בתעריף אחיד (קו '+fx.flatLines[0]+')')+
+      ' — המחיר קבוע לכל הקו, בלי תלות במרחק.');
   else if (fx.flat!=null)
     extraNotes.push('🎫 לקו הזה תעריף רשמי אחיד: מחיר הנסיעה קבוע לכל אורכו, בלי תלות במרחק.');
   if (fx.flatAlt)
-    extraNotes.push('🎫 בין התחנות נוסעים גם קווים בתעריף אחיד — '+
-      (fx.flatAlt.nums.length>1?'קווים ':'קו ')+fx.flatAlt.nums.join(', ')+
+    extraNotes.push('🎫 בין התחנות '+
+      (fx.flatAlt.nums.length>1
+        ? 'נוסעים גם קווים בתעריף אחיד — קווים '
+        : 'נוסע גם קו בתעריף אחיד — קו ')+fx.flatAlt.nums.join(', ')+
       ': ₪'+fmt(fx.flatAlt.p)+' בלי תלות במרחק. המחיר שלמעלה הוא לקווים המתומחרים לפי מרחק.');
   // fx.noDirect לא מוצג — המשתמשים רוצים מחיר, לא תכנון מסלול
 
@@ -756,22 +760,27 @@ function computeStops(){
   // ביניהן נוסעים רק קווים בתעריף אחיד — זה המחיר, לא המרחק; אם יש
   // גם וגם — מציגים את שניהם עם מספרי הקווים
   if (FIX && FIX.serve && FIX.lines){
-    // תחנה = גם הרציפים התאומים שלה: עד 150 מ' תמיד, ועד 400 מ' כשהשם
-    // זהה — צומת בינעירוני עם רציף לכל כיוון משני צידי הכביש (צומת סמר:
-    // 274 מ' בין הרציפים) הוא אותו מקום מבחינת הנוסע
+    // תחנה = גם הרציפים התאומים שלה: עד 80 מ' תמיד, ועד 400 מ' רק כשהשם
+    // מתאר את אותו צומת — אותן מילים בלי תלות בסדר ובכתיב ("הנשיא/התשבי"
+    // = "התשבי/שד' הנשיא"), כי צומת בינעירוני עם רציף לכל כיוון משני צידי
+    // הכביש (צומת סמר: 274 מ' בין הרציפים) הוא אותו מקום מבחינת הנוסע.
+    // רדיוס גורף רחב יותר שאב צמתים שכנים באותו רחוב והציג קווים שכלל לא
+    // עוצרים בתחנה (בקרית מלאכי: 10/10א דלפו לוייצמן/הרצל מוייצמן/בר
+    // יהודה, צומת אחר במרחק 146 מ')
+    const twinKey=s=>tokens(s).filter(w=>w!=='שד'&&w!=='שדרות').map(w=>w.replace(/יי/g,'י')).sort().join(' ');
     const nearIdx=(code,lat,lon)=>{
       const out=new Set(FIX.serve[code]||[]);
       const me=STOPS && STOPS[code];
       // הקואורדינטות מהאינדקס הארצי — לא מהבחירה — כדי שהרדיוס יימדד
       // מהמיקום האמיתי של התחנה
       if (me){ lat=me[2]; lon=me[3]; }
-      const nm=me ? norm(me[0]) : null;
+      const nm=me ? twinKey(me[0]) : null;
       if (STOPS) for (const sid in STOPS){
         if (sid===code || !FIX.serve[sid]) continue;
         const s=STOPS[sid];
         if (Math.abs(s[2]-lat)>0.004 || Math.abs(s[3]-lon)>0.005) continue;
         const d=hav([lat,lon],[s[2],s[3]]);
-        if (d<=0.15 || (d<=0.4 && nm && norm(s[0])===nm)) FIX.serve[sid].forEach(i=>out.add(i));
+        if (d<=0.08 || (d<=0.4 && nm && twinKey(s[0])===nm)) FIX.serve[sid].forEach(i=>out.add(i));
       }
       return out;
     };
