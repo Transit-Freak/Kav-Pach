@@ -104,6 +104,22 @@
         <option value="r">מימין למפה</option>
         <option value="b">מתחת למפה, ברוחב מלא</option>
       </select></div>
+    <div class="row"><label>מיקום החיפוש בכותרת</label>
+      <select id="p-q">
+        <option value="n" selected>במקום הנוכחי</option>
+        <option value="q1">צמוד לשם האתר</option>
+        <option value="qend">בקצה השמאלי</option>
+      </select></div>
+    <div class="row"><label>לשוניות מפה/רשימה</label>
+      <select id="p-tabs">
+        <option value="n" selected>במקום הנוכחי</option>
+        <option value="end">בקצה השמאלי</option>
+      </select></div>
+    <div class="row"><label>תג ״גרסת בטא״</label>
+      <select id="p-beta">
+        <option value="on" selected>מוצג</option>
+        <option value="off">מוסתר</option>
+      </select></div>
     <div class="row" style="border-bottom:none"><label>צפיפות הטבלה</label>
       <select id="p-den">
         <option value="n" selected>רגילה (הנוכחית)</option>
@@ -135,7 +151,7 @@
 (function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='3';
+var VER='4';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
@@ -160,12 +176,13 @@ try{
     ['חום תעשייתי','#7c2d12','#fdba74','#7c2d12','#f5f2ee','#fff7ed','#9a3412'],
     ['כהה','#0f172a','#5eead4','#0f172a','#dde3ea','#e2e8f0','#0f766e','invert(.92) hue-rotate(180deg) contrast(.9)']
   ];
-  var ids=['c-top','c-acc','c-accink','c-on','c-bg','c-th','f-font','f-tint','r-rad','r-fs','r-sh','p-leg','p-ctl','p-pan','p-den'];
+  var ids=['c-top','c-acc','c-accink','c-on','c-bg','c-th','f-font','f-tint','r-rad','r-fs','r-sh','p-leg','p-ctl','p-pan','p-den','p-q','p-tabs','p-beta'];
 
   function vals(){
     return { top:$('c-top').value, acc:$('c-acc').value, accink:$('c-accink').value, on:$('c-on').value,
       bg:$('c-bg').value, th:$('c-th').value, font:$('f-font').value, tint:$('f-tint').value,
       leg:$('p-leg').value, ctl:$('p-ctl').value, pan:$('p-pan').value, den:$('p-den').value,
+      q:$('p-q').value, tabs:$('p-tabs').value, beta:$('p-beta').value,
       rad:+$('r-rad').value, fs:+$('r-fs').value, sh:+$('r-sh').value };
   }
   function css(v){
@@ -177,7 +194,7 @@ try{
       'th{background:'+v.th+'!important;color:'+v.top+'!important}'+
       '.lp-title{color:'+v.top+'!important}'+
       '.tblcard,.layers-panel,.panelcard{border-radius:'+v.rad+'px!important}'+
-      '.btn{border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
+      '.btn:not(.layers-panel .btn){border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
       '.tblcard{box-shadow:'+shadow+'!important}'+
       '.maplegend{border-radius:'+Math.round(v.rad*0.7)+'px!important}'+
       '.mapctl{border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
@@ -186,8 +203,11 @@ try{
       (v.leg==='rb'?'.maplegend{left:auto!important;right:10px!important}':
        v.leg==='lt'?'.maplegend{bottom:auto!important;top:10px!important}':
        v.leg==='rt'?'.maplegend{left:auto!important;bottom:auto!important;right:10px!important;top:10px!important}':'')+
-      (v.ctl==='l'?'.mapctl{right:auto!important;left:10px!important}':'')+
-      (v.leg&&v.leg[0]==='l'&&v.ctl==='l'?'.mapctl{top:10px!important}':'')+
+      (v.ctl==='l'?'.mapctl{right:auto!important;left:10px!important}#map .leaflet-top.leaflet-left{left:auto!important;right:0!important}':'')+
+      (v.q==='q1'?'.top>h1{order:0}.top>.tag{order:2}.top>.vseg{order:3}.top>#q{order:1}.top>.lp-wrap{order:4}':
+       v.q==='qend'?'.top>#q{order:9}':'')+
+      (v.tabs==='end'?'.top>.vseg{order:8}':'')+
+      (v.beta==='off'?'.top>.tag{display:none!important}':'')+
       (v.pan==='r'?'.wrap{grid-template-columns:430px 1fr!important}.wrap .mapwrap2{order:2}.wrap .panel{order:1}':
        v.pan==='b'?'.wrap{grid-template-columns:1fr!important}':'')+
       (v.den==='c'?'td{padding:4px 8px!important}th{padding:6px 8px!important}':
@@ -215,6 +235,7 @@ try{
     $('c-on').value=v.on||'#0f766e'; $('c-bg').value=v.bg; $('c-th').value=v.th;
     if(v.font)$('f-font').value=v.font; $('f-tint').value=v.tint||'none';
     $('p-leg').value=v.leg||'lb'; $('p-ctl').value=v.ctl||'r'; $('p-pan').value=v.pan||'l'; $('p-den').value=v.den||'n';
+    $('p-q').value=v.q||'n'; $('p-tabs').value=v.tabs||'n'; $('p-beta').value=v.beta||'on'; collide();
     $('r-rad').value=v.rad; $('r-fs').value=v.fs; $('r-sh').value=v.sh;
     labels(); if(typeof syncAllHex==='function')syncAllHex(); apply();
   }
@@ -229,7 +250,16 @@ try{
     b.onclick=function(){ load({top:p[1],acc:p[2],accink:p[3],bg:p[4],th:p[5],on:p[6],tint:p[7]||'none',font:$('f-font').value,rad:+$('r-rad').value,fs:+$('r-fs').value,sh:+$('r-sh').value}); };
     $('presets').appendChild(b);
   });
-  ids.forEach(function(id){ $(id).addEventListener('input',function(){ labels(); syncHex(id); apply(); }); });
+  // התנגשויות: המקרא ולוח הכפתורים לא יושבים באותה פינה — האפשרות
+  // המתנגשת ננעלת, ובחירה קיימת מוזזת לפינה התחתונה של אותו צד
+  function collide(){
+    var ctl=$('p-ctl').value, leg=$('p-leg');
+    var bad = ctl==='r' ? 'rt' : 'lt';
+    for(var i=0;i<leg.options.length;i++) leg.options[i].disabled = (leg.options[i].value===bad);
+    if(leg.value===bad){ leg.value = bad==='rt' ? 'rb' : 'lb'; }
+  }
+  ids.forEach(function(id){ $(id).addEventListener('input',function(){ if(id==='p-ctl'||id==='p-leg')collide(); labels(); syncHex(id); apply(); }); });
+  collide();
   // "כל סוג צבע": שדה hex חופשי ליד כל בוחר — אפשר להדביק כל ערך
   var hexes={};
   ids.filter(function(id){return id.slice(0,2)==='c-'}).forEach(function(id){
