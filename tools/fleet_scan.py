@@ -83,10 +83,11 @@ def route_operator_map():
 
 
 def scan_day(day, routes, state):
-    """כל נסיעות ה-SIRI של יום אחד → עדכון ראשון/אחרון לכל רכב."""
+    """כל נסיעות ה-SIRI של יום אחד → ראשון/אחרון + ספירת נסיעות לכל רכב."""
     frm = f'{day}T00:00:00+02:00'
     to = f'{day}T23:59:59+02:00'
     offset, n = 0, 0
+    today = {}   # key -> מספר נסיעות היום
     while True:
         rows = get('/siri_rides/list', limit=PAGE, offset=offset,
                    scheduled_start_time_from=frm, scheduled_start_time_to=to,
@@ -101,33 +102,45 @@ def scan_day(day, routes, state):
             key = f'{op}:{v}'
             cur = state.get(key)
             if cur is None:
-                state[key] = [day, day]
+                state[key] = [day, day, 0, 0]
             else:
+                if len(cur) < 4:      # מצב ישן [ראשון, אחרון] — הרחבה
+                    cur += [0, 0]
                 if day < cur[0]:
                     cur[0] = day
                 if day > cur[1]:
                     cur[1] = day
+            today[key] = today.get(key, 0) + 1
         n += len(rows)
         if len(rows) < PAGE:
             break
         offset += PAGE
+    for key, cnt in today.items():   # צבירה: סך נסיעות + ימי פעילות שנמדדו
+        cur = state[key]
+        cur[2] += cnt
+        cur[3] += 1
     print(f'{day}: {n} נסיעות', flush=True)
 
 
 def build_output(state):
-    """קיבוץ לפי מפעיל לקובץ שהאתר קורא."""
+    """קיבוץ לפי מפעיל לקובץ שהאתר קורא. פורמט v2:
+    [לוחית, ראשון, אחרון, ממוצע-נסיעות-ליום] + העשרה שנוספת אחר כך."""
     ops = {}
-    for key, (first, last) in state.items():
+    for key, vals in state.items():
+        first, last = vals[0], vals[1]
+        rides = vals[2] if len(vals) > 2 else 0
+        dcount = vals[3] if len(vals) > 3 else 0
+        avg = round(rides / dcount, 1) if dcount else None
         op_s, v = key.split(':', 1)
         op = int(op_s)
-        ops.setdefault(op, []).append([v, first, last])
+        ops.setdefault(op, []).append([v, first, last, avg])
     out = []
     for op, vehicles in sorted(ops.items()):
         vehicles.sort(key=lambda x: x[0])
         out.append({'ref': op, 'name': OPERATORS.get(op, f'מפעיל {op}'),
                     'vehicles': vehicles})
     return {'updated': TODAY.isoformat(), 'retire_days': RETIRE_DAYS,
-            'operators': out}
+            'v': 2, 'operators': out}
 
 
 def main():
