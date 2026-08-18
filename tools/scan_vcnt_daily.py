@@ -155,6 +155,31 @@ def main():
     n_slots = sum(len(m) for bk in cur.values() for m in bk.values())
     print(f'מפת תגבורים להיום: {n_routes} וריאנטים, {n_slots} דקות מרובות-רכבים')
 
+    def vcnt_parts(changed):
+        """אותו מעבר (למשל 2 ← 1) בכמה שעות — משפט אחד עם רשימת השעות,
+        במקום שורה נפרדת לכל שעה (בקשת המשתמש)."""
+        groups = {}
+        for t, o, n in changed:
+            groups.setdefault((o, n), []).append(t)
+        parts = []
+        for (o, n), ts in sorted(groups.items(), key=lambda kv: kv[1][0]):
+            times = ', '.join(ts[:12]) + (f' ועוד {len(ts) - 12}' if len(ts) > 12 else '')
+            if len(ts) == 1:
+                t = ts[0]
+                if o == 1:
+                    parts.append(f'ב-{t} מתוכננים עכשיו {n} אוטובוסים (תגבור חדש)')
+                elif n == 1:
+                    parts.append(f'התגבור של {t} בוטל ({o} ← 1 אוטובוסים)')
+                else:
+                    parts.append(f'ב-{t} — {o} ← {n} אוטובוסים (תגבור)')
+            elif o == 1:
+                parts.append(f'תגבור חדש ביציאות {times} — {n} אוטובוסים בכל אחת')
+            elif n == 1:
+                parts.append(f'התגבור ביציאות {times} בוטל ({o} ← 1 אוטובוסים)')
+            else:
+                parts.append(f'ביציאות {times} — {o} ← {n} אוטובוסים (תגבור)')
+        return parts
+
     events = []
     if prev is None:
         print('ריצה ראשונה — נזרע בסיס ההשוואה; אירועים יירשמו מהריצה הבאה')
@@ -182,14 +207,7 @@ def main():
                     else:
                         parts = [f'בכל {total} היציאות — {o} ← {n} אוטובוסים (תגבור)']
                 else:
-                    parts = []
-                    for t, o, n in changed:
-                        if o == 1:
-                            parts.append(f'ב-{t} מתוכננים עכשיו {n} אוטובוסים (תגבור חדש)')
-                        elif n == 1:
-                            parts.append(f'התגבור של {t} בוטל ({o} ← 1 אוטובוסים)')
-                        else:
-                            parts.append(f'ב-{t} — {o} ← {n} אוטובוסים (תגבור)')
+                    parts = vcnt_parts(changed)
                 events.append((rd2, f'שינוי תגבור ({BH[b]}): ' + ' · '.join(parts[:6])))
 
     n_written = 0
