@@ -362,3 +362,13 @@ button.kbtn { border: 0; cursor: pointer; font: inherit; }
 .lat .lathead{display:flex;align-items:center;justify-content:space-between}
 .lat .latx{border:none;background:#f1f5f9;color:#64748b;border-radius:99px;width:26px;height:26px;font-size:13px;font-weight:900;cursor:pointer;flex:none}
 .lat .latx:hover{background:#e2e8f0;color:#0f172a}
+
+/* טבלת הלו"ז המלא בעמוד הקו — כל שעות היציאה, תגבור מסומן ×N */
+.schedbox{margin:10px 0;background:#faf8ff;border:1px solid #e4defc;border-radius:10px;padding:8px 12px}
+.schedbox summary{cursor:pointer;font-weight:700;color:#4c1d95}
+.schednote{font-size:.85em;color:#6b7280;margin:6px 0}
+.schedtbl{border-collapse:collapse;width:100%}
+.schedtbl th{white-space:nowrap;text-align:right;vertical-align:top;padding:4px 0 4px 10px;color:#4c1d95;font-size:.9em}
+.schedtbl td{padding:3px 0}
+.tchip{display:inline-block;background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:1px 6px;margin:2px 3px 2px 0;font-size:.85em;font-variant-numeric:tabular-nums}
+.tchip.tb{background:#fef3c7;border-color:#f59e0b;font-weight:700}

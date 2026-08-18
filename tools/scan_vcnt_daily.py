@@ -121,6 +121,8 @@ def build_map(zpath, rid2rd):
     out = collections.defaultdict(lambda: collections.defaultdict(dict))
     # סך היציאות (שעות שונות) לכל וריאנט+יום — כדי לדעת אם תגבור חל על כל הקו
     tot = collections.defaultdict(dict)
+    # הלו"ז המלא (כל השעות, גם רכב בודד) — לטבלת הלו"ז שבעמוד הקו
+    full = collections.defaultdict(lambda: collections.defaultdict(dict))
     for (rd2, ds), ts in per_date.items():
         d = datetime.datetime.strptime(ds, '%Y%m%d').date()
         bucket = DAY_HE[d.weekday()]
@@ -129,12 +131,42 @@ def build_map(zpath, rid2rd):
         if ndist > tot[rd2].get(bucket, 0):
             tot[rd2][bucket] = ndist
         for t, n in cnt.items():
+            f = full[rd2][bucket]
+            if n > f.get(t, 0):
+                f[t] = n
             if n >= 2:
                 cur = out[rd2][bucket].get(t, 0)
                 if n > cur:
                     out[rd2][bucket][t] = n
     return ({rd2: {b: dict(sorted(m.items())) for b, m in bk.items()} for rd2, bk in out.items()},
-            {rd2: dict(bk) for rd2, bk in tot.items()})
+            {rd2: dict(bk) for rd2, bk in tot.items()},
+            {rd2: {b: dict(sorted(m.items())) for b, m in bk.items()} for rd2, bk in full.items()})
+
+
+def write_sched(full):
+    """טבלת הלו"ז המלאה לאתר (בקשת המשתמש): sched/XX.json לפי שתי
+    התווים הראשונים של המק"ט — {rd: {יום: [שעות]}}; שעה עם תגבור
+    נשמרת כ-[שעה, מספר רכבים] כדי שהעמוד יציג "N אוטובוסים יוצאים
+    בשעה זו". הנתונים מ-10 הימים הקרובים ברישוי — הלו"ז הנוכחי."""
+    outdir = f'{OUT}/sched'
+    os.makedirs(outdir, exist_ok=True)
+    shards = {}
+    for rd2, bk in full.items():
+        ent = {}
+        for b, times in bk.items():
+            ent[b] = [[t, n] if n >= 2 else t for t, n in sorted(times.items())]
+        shards.setdefault(fsafe(rd2)[:2], {})[rd2] = ent
+    old = set(os.listdir(outdir))
+    for pre, lines in shards.items():
+        fn = f'{pre}.json'
+        json.dump({'g': TODAY, 'lines': lines},
+                  open(f'{outdir}/{fn}', 'w', encoding='utf-8'),
+                  ensure_ascii=False, separators=(',', ':'))
+        old.discard(fn)
+    for fn in old:      # קידומות שהתרוקנו
+        os.remove(f'{outdir}/{fn}')
+    print(f'לו"ז מלא: {sum(len(v) for v in shards.values())} וריאנטים '
+          f'ב-{len(shards)} קבצים')
 
 
 def main():
@@ -149,11 +181,12 @@ def main():
     if not zpath:
         print('הורדת Gtfs_10_days נכשלה — מדלגים על היום')
         sys.exit(0)
-    cur, cur_tot = build_map(zpath, rid2rd)
+    cur, cur_tot, cur_full = build_map(zpath, rid2rd)
     os.unlink(zpath)
     n_routes = len(cur)
     n_slots = sum(len(m) for bk in cur.values() for m in bk.values())
     print(f'מפת תגבורים להיום: {n_routes} וריאנטים, {n_slots} דקות מרובות-רכבים')
+    write_sched(cur_full)
 
     def vcnt_parts(changed):
         """אותו מעבר (למשל 2 ← 1) בכמה שעות — משפט אחד עם רשימת השעות,

@@ -539,6 +539,49 @@ function AltCompare({ rd, altRd, label, onClose }) {
   );
 }
 
+/* טבלת הלו"ז המלא של החלופה (בקשת שלמה): כל שעות היציאה לפי יום,
+   מפרסום הרישוי של 10 הימים הקרובים — אותו קובץ שמזין את מעקב
+   התגבורים, ולכן שעה שמתוכננים בה 2+ אוטובוסים מסומנת בה במפורש.
+   יושבת בכרטיס הצד ולכן מוצגת בכל גרסה שנבחרת — גם שינוי מסלול
+   וכל שינוי שאינו שינוי לו"ז. */
+const SCHED_DAYS = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
+const SCHED_LBL = { "א": "ראשון", "ב": "שני", "ג": "שלישי", "ד": "רביעי", "ה": "חמישי", "ו": "שישי", "ש": "שבת" };
+function SchedBox({ rd }) {
+  const [d, setD] = useState(null);
+  useEffect(() => {
+    let ok = true;
+    setD(null);
+    dfetch("data/sched/" + fsafe(rd).slice(0, 2) + ".json")
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((j) => { if (ok) setD(j.lines && j.lines[rd] ? { g: j.g, days: j.lines[rd] } : false); })
+      .catch(() => { if (ok) setD(false); });
+    return () => { ok = false; };
+  }, [rd]);
+  // אין נתונים — קו שאינו פעיל היום, או שקובצי הלו"ז טרם נבנו: שקט
+  if (!d) return null;
+  const hasTb = SCHED_DAYS.some((b) => (d.days[b] || []).some((t) => Array.isArray(t)));
+  return (
+    <details className="schedbox">
+      <summary>🕐 הלו"ז המלא של החלופה — כל שעות היציאה{hasTb ? " · יש תגבורים" : ""}</summary>
+      <div className="schednote">
+        מפרסום הרישוי ל-10 הימים הקרובים (נכון ל-{d.g.split("-").reverse().join(".")}) —
+        זה הלו"ז הנוכחי, והוא מוצג בכל גרסה שנבחרת. שעה מודגשת עם ×N
+        פירושה ש-N אוטובוסים יוצאים באותה שעה (תגבור).
+      </div>
+      <table className="schedtbl"><tbody>
+        {SCHED_DAYS.filter((b) => (d.days[b] || []).length).map((b) => (
+          <tr key={b}>
+            <th>{SCHED_LBL[b]}</th>
+            <td>{(d.days[b] || []).map((t, i) => Array.isArray(t)
+              ? <span key={i} className="tchip tb" title={`${t[1]} אוטובוסים יוצאים בשעה זו (תגבור)`}>{t[0]} ×{t[1]}</span>
+              : <span key={i} className="tchip">{t}</span>)}</td>
+          </tr>
+        ))}
+      </tbody></table>
+    </details>
+  );
+}
+
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
@@ -654,7 +697,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     for (let j = i + 1; j < vs.length; j++) { const c = scan(vs[j].stops); if (c) return c; }
     return null;
   };
-  const withCode = (name, i, isAdd) => { const c = codeOf(name, i, isAdd); return c ? `${name} (${c})` : name; };
+  // v.nc — מק"טים שהצנרת פענחה מראש לשמות שאינם בקובץ (תחנה שירדה
+  // בגרסה הראשונה של קו ארכיוני, למשל) — נבדק לפני החיפוש הרגיל
+  const withCode = (name, i, isAdd) => {
+    const nv = vs[Math.min(i, vs.length - 1)];
+    const c = (nv && nv.nc && nv.nc[name]) || codeOf(name, i, isAdd);
+    return c ? `${name} (${c})` : name;
+  };
   // תחנה שירדה ותחנה שנוספה עם אותו שם ורק רציף שונה — זה מעבר רציף,
   // לא "תחנה חדשה": מזווגים אותן ומציגים שורת מעבר אחת ברורה
   const platOf = (n) => {
@@ -811,6 +860,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             מפורסם להם לוח זמנים, ולכן כדאי לבדוק מול המפעיל איך הנסיעה מוזמנת בפועל.
           </div>
         )}
+        <SchedBox rd={rd} />
         {anc && !NO_2012.has(lf.tt || "") && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
