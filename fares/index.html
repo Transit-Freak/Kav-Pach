@@ -760,32 +760,13 @@ function computeStops(){
   // ביניהן נוסעים רק קווים בתעריף אחיד — זה המחיר, לא המרחק; אם יש
   // גם וגם — מציגים את שניהם עם מספרי הקווים
   if (FIX && FIX.serve && FIX.lines){
-    // תחנה = גם הרציפים התאומים שלה: עד 80 מ' תמיד, ועד 400 מ' רק כשהשם
-    // מתאר את אותו צומת — אותן מילים בלי תלות בסדר ובכתיב ("הנשיא/התשבי"
-    // = "התשבי/שד' הנשיא"), כי צומת בינעירוני עם רציף לכל כיוון משני צידי
-    // הכביש (צומת סמר: 274 מ' בין הרציפים) הוא אותו מקום מבחינת הנוסע.
-    // רדיוס גורף רחב יותר שאב צמתים שכנים באותו רחוב והציג קווים שכלל לא
-    // עוצרים בתחנה (בקרית מלאכי: 10/10א דלפו לוייצמן/הרצל מוייצמן/בר
-    // יהודה, צומת אחר במרחק 146 מ')
-    const twinKey=s=>tokens(s).filter(w=>w!=='שד'&&w!=='שדרות').map(w=>w.replace(/יי/g,'י')).sort().join(' ');
-    const nearIdx=(code,lat,lon)=>{
-      const out=new Set(FIX.serve[code]||[]);
-      const me=STOPS && STOPS[code];
-      // הקואורדינטות מהאינדקס הארצי — לא מהבחירה — כדי שהרדיוס יימדד
-      // מהמיקום האמיתי של התחנה
-      if (me){ lat=me[2]; lon=me[3]; }
-      const nm=me ? twinKey(me[0]) : null;
-      if (STOPS) for (const sid in STOPS){
-        if (sid===code || !FIX.serve[sid]) continue;
-        const s=STOPS[sid];
-        if (Math.abs(s[2]-lat)>0.004 || Math.abs(s[3]-lon)>0.005) continue;
-        const d=hav([lat,lon],[s[2],s[3]]);
-        if (d<=0.08 || (d<=0.4 && nm && twinKey(s[0])===nm)) FIX.serve[sid].forEach(i=>out.add(i));
-      }
-      return out;
-    };
-    const A=nearIdx(picked.from[0], +picked.from[3], +picked.from[4]);
-    const B=nearIdx(picked.to[0], +picked.to[3], +picked.to[4]);
+    // לפי הרישוי בלבד: קו נספר רק אם קוד התחנה מופיע ברצף התחנות הרשמי
+    // שלו — בלי שום קירוב מרחק. שני הכיוונים של אותו רישיון מאוחדים כבר
+    // בבניית האינדקס (ברישוי כל כיוון רשום בנפרד). רדיוס "רציפים
+    // תאומים" שהיה כאן שאב קווים מצמתים שכנים והציג קווים שלא עוצרים
+    // בתחנה (בקרית מלאכי: 10/10א דלפו לוייצמן/הרצל מוייצמן/בר יהודה)
+    const A=new Set(FIX.serve[picked.from[0]]||[]);
+    const B=new Set(FIX.serve[picked.to[0]]||[]);
     const cand=[...A].filter(i=>B.has(i));
     if (cand.length){
       const flats=cand.filter(i=>FIX.lines[i][1]!=null);

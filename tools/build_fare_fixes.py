@@ -173,12 +173,19 @@ def main():
     # האינדקס: lines = [[מספר קו, מחיר אחיד או null], ...] לפי הקווים
     # הפעילים השבוע; serve = {קוד תחנה: [אינדקסים לתוך lines]}. הרצף
     # הנוכחי של כל קו נקרא כמו שהאתר עצמו קורא אותו (הגרסה האחרונה
-    # שיש לה רשימת תחנות, אינדקסים לתוך ה-pool)
+    # שיש לה רשימת תחנות, אינדקסים לתוך ה-pool).
+    # ההצלבה באתר היא לפי הרישוי בלבד: קו נחשב עוצר בתחנה רק אם היא
+    # מופיעה ברצף התחנות הרשמי שלו. ברישוי כל כיוון רשום כרשומה נפרדת
+    # (מקט-כיוון-חלופה), ולכן שני הכיוונים של אותו רישיון מאוחדים כאן
+    # לרשומה אחת — בלעדיו קו שעוצר בתחנה א' בהלוך ובתחנה ב' בחזור לא
+    # היה נחשב עובר בין שתיהן. חלופות (10 מול 10א) נשארות נפרדות —
+    # מספרי קו שונים עם רצפי תחנות שונים.
     serve, ln_tab = {}, []
     try:
         rds = json.load(open(CURRENT_JSON, encoding='utf-8')).get('rds') or []
     except Exception:
         rds = []
+    groups = {}   # מקט-חלופה -> [מספר קו, מחירים אחידים, קודי תחנות]
     for rd in rds:
         fp = os.path.join(LH_DIR, rd.replace('#', 'H').replace('/', '_') + '.json')
         try:
@@ -198,10 +205,22 @@ def main():
                 break
         if not seq:
             continue
+        p = rd.split('-')
+        gk = p[0] + '-' + (p[2] if len(p) >= 3 else '')
+        g = groups.setdefault(gk, [d2.get('line') or '', [], {}])
+        fl = flat.get(rd)
+        if fl is not None:
+            g[1].append(fl)
+        for q in seq:
+            g[2][str(q[0])] = 1    # dict כסט שומר-סדר — פלט דטרמיניסטי
+    for line, fls, codes in groups.values():
         idx = len(ln_tab)
-        ln_tab.append([d2.get('line') or '', flat.get(rd)])
-        for p in seq:
-            serve.setdefault(str(p[0]), []).append(idx)
+        # תעריף אחיד אם רשום לפחות לכיוון אחד: במקרים הבודדים שכיוון
+        # אחד חסר בטבלה (3 מתוך 3,258) זו השמטה בנתוני המשרד — מחיר
+        # אחיד סותר בין כיוונים לא קיים בנתונים בכלל
+        ln_tab.append([line, min(fls) if fls else None])
+        for c in codes:
+            serve.setdefault(c, []).append(idx)
 
     out = {'gen': GEN_DATE, 'pairs': pairs, 'rail': rail, 'flat': flat,
            'lines': ln_tab, 'serve': serve}
