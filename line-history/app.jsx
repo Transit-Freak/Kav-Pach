@@ -1531,8 +1531,8 @@ function LinesAtStop({ code }) {
   // וחלופות של אותו קו באותו יום לא מוצגות פעמיים
   const rows = [];
   const baseByDate = {};
-  ev.forEach((e) => { if (e[3] === "base" && e[1]) (baseByDate[e[0]] = baseByDate[e[0]] || new Set()).add(e[1]); });
-  Object.entries(baseByDate).forEach(([dte, lines]) => rows.push({ d: dte, k: "base", lines: [...lines] }));
+  ev.forEach((e) => { if (e[3] === "base" && e[1]) (baseByDate[e[0]] = baseByDate[e[0]] || new Map()).set(e[1], e[2]); });
+  Object.entries(baseByDate).forEach(([dte, lines]) => rows.push({ d: dte, k: "base", lines: [...lines.entries()] }));
   const seen = new Set();
   ev.forEach((e) => {
     if (e[3] === "base") return;
@@ -1554,8 +1554,9 @@ function LinesAtStop({ code }) {
       <div className="latlist">
         {shown.map((r, i) => r.k === "base"
           ? <div className="latrow" key={i}><span className="latd">{fmtD(r.d)}</span> {r.lines.length === 1
-              ? <>🚏 קו <b>{r.lines[0]}</b> תועד בתחנה לראשונה</>
-              : <>🚏 בתיעוד הראשון עצרו כאן {r.lines.length} קווים: {r.lines.slice(0, 25).join(", ")}{r.lines.length > 25 ? "…" : ""}</>}</div>
+              ? <>🚏 קו <a href={lineHref(r.lines[0][1])}><b>{r.lines[0][0]}</b></a> תועד בתחנה לראשונה</>
+              : <>🚏 בתיעוד הראשון עצרו כאן {r.lines.length} קווים: {r.lines.slice(0, 25).map(([l, rd2], j) =>
+                  <React.Fragment key={l + rd2}>{j > 0 ? ", " : ""}<a href={lineHref(rd2)}><b>{l}</b></a></React.Fragment>)}{r.lines.length > 25 ? "…" : ""}</>}</div>
           : <div className="latrow" key={i}><span className="latd">{fmtD(r.d)}</span> {r.k === "in"
               ? <>🆕 קו <a href={lineHref(r.rd)}><b>{r.line}</b></a> התחיל לעצור בתחנה</>
               : <>➖ קו <a href={lineHref(r.rd)}><b>{r.line}</b></a> הפסיק לעצור בתחנה</>}</div>)}
