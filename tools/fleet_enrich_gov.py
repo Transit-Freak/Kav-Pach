@@ -156,15 +156,22 @@ def main():
     hit = miss = 0
     base = 4 if data.get('v') == 2 else 3   # v2: ההעשרה אחרי ממוצע הנסיעות
     for op in data['operators']:
+        kept = []
         for v in op['vehicles']:
             plate = str(v[0]).strip().replace('-', '')
             rec = reg.get(plate)
             del v[base:]  # ניקוי העשרה קודמת אם הסקריפט רץ שוב
             if rec:
                 v.extend(short_info(rec))
+                kept.append(v)
                 hit += 1
             else:
+                # רכב שאינו במאגר הרישוי הממשלתי — לא מוצג באתר
+                # (מזהה פנימי של המפעיל, רכב שנגרט, או שידור שגוי)
                 miss += 1
+        op['vehicles'] = kept
+    # חברה שנשארה בלי רכבים מאומתים — לא מוצגת
+    data['operators'] = [op for op in data['operators'] if op['vehicles']]
     data['enriched'] = True
     jdump(data, OUT)
     # הפרטים המלאים נחתכים ל-10 קבצים לפי הספרה האחרונה של הלוחית —
