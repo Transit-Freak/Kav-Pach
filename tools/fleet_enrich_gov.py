@@ -154,11 +154,12 @@ def main():
     reg = load_registry(find_resources(), wanted)
 
     hit = miss = 0
+    base = 4 if data.get('v') == 2 else 3   # v2: ההעשרה אחרי ממוצע הנסיעות
     for op in data['operators']:
         for v in op['vehicles']:
             plate = str(v[0]).strip().replace('-', '')
             rec = reg.get(plate)
-            del v[3:]  # ניקוי העשרה קודמת אם הסקריפט רץ שוב
+            del v[base:]  # ניקוי העשרה קודמת אם הסקריפט רץ שוב
             if rec:
                 v.extend(short_info(rec))
                 hit += 1
@@ -168,12 +169,12 @@ def main():
     jdump(data, OUT)
     # הפרטים המלאים נחתכים ל-10 קבצים לפי הספרה האחרונה של הלוחית —
     # האתר טוען רק את הקובץ הרלוונטי בלחיצה על רכב (במקום קובץ ענק אחד)
-    base = DETAILS.rsplit('.json', 1)[0]
+    base_path = DETAILS.rsplit('.json', 1)[0]
     shards = {str(d): {} for d in range(10)}
     for plate, rec in reg.items():
         shards[plate[-1]][plate] = rec
     for d, shard in shards.items():
-        jdump(shard, f'{base}-{d}.json')
+        jdump(shard, f'{base_path}-{d}.json')
     print(f'העשרה: {hit} נמצאו · {miss} לא נמצאו · פרטים מלאים: {DETAILS}', flush=True)
 
 
