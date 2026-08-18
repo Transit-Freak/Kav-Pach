@@ -51,12 +51,26 @@ def compact(lf):
     lf = materialize(lf)
     vs = lf.get('versions') or []
 
-    # שדרוג צילומים: תחנות זהות לגרסה עוקבת עם גאומטריה → הפניה למסלול שלה
+    # השאלת שרטוט: גרסה בלי גאומטריה (מילוי מארכיון הסדנא, שאינו מחזיר
+    # מסלולים) מקבלת את השרטוט של כל גרסה אחרת — מוקדמת או מאוחרת — שרצף
+    # התחנות שלה זהה: אותן תחנות באותו סדר ⇒ אותו מסלול. עדיפות לקרובה
+    # בזמן. בלי זה קווים שלמים הוצגו במפה כנקודות בלבד.
     for i, v in enumerate(vs):
-        if v.get('k') != 'snapshot' or v.get('shp') or not v.get('stops'):
+        if v.get('shp') or not v.get('stops'):
             continue
-        donor = next((w for w in vs[i + 1:] if w.get('shp') and w.get('stops')), None)
-        if donor and _codes(v['stops']) == _codes(donor['stops']):
+        codes = _codes(v['stops'])
+        donor = None
+        for dist in range(1, len(vs)):
+            for j in (i + dist, i - dist):
+                if 0 <= j < len(vs):
+                    w = vs[j]
+                    if w.get('shp') and w.get('stops') and not w.get('shpref') \
+                            and _codes(w['stops']) == codes:
+                        donor = w
+                        break
+            if donor:
+                break
+        if donor:
             v['shp'] = donor['shp']
             v['shpref'] = 1
 
