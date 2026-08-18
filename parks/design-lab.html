@@ -56,6 +56,12 @@
     <h2>מכוונים את הערכה</h2>
     <p class="hint">כל שינוי מופיע מיד על האתר האמיתי משמאל. שום דבר לא נשמר באתר — כשמרוצים, שולחים את ההצעה למטה והיא תיבחן ותוטמע ידנית.</p>
 
+    <div style="display:flex;gap:6px;margin:2px 0 6px">
+      <button id="mobilebtn" style="flex:1;background:#fff;border:1.5px solid #e2e8f0;color:#475569;border-radius:10px;padding:8px;font-family:inherit;font-weight:900;font-size:12.5px;cursor:pointer">📱 תצוגת נייד</button>
+      <button id="resetbtn" style="flex:1;background:#fff;border:1.5px solid #e2e8f0;color:#dc2626;border-radius:10px;padding:8px;font-family:inherit;font-weight:900;font-size:12.5px;cursor:pointer">↩︎ איפוס לעיצוב הנוכחי</button>
+    </div>
+    <button id="dragmode" style="width:100%;margin:2px 0 8px;background:#fff;border:2px dashed #0f766e;color:#0f766e;border-radius:12px;padding:10px 12px;font-family:inherit;font-weight:900;font-size:14px;cursor:pointer">✋ הזזה חופשית: כבויה — לחצו להפעלה</button>
+
     <div class="presets" id="presets"></div>
 
     <div class="row"><label>צבע הכותרת</label><input type="color" id="c-top" value="#134e4a"></div>
@@ -64,6 +70,14 @@
     <div class="row"><label>כפתור פעיל (לשונית נבחרת)</label><input type="color" id="c-on" value="#0f766e"></div>
     <div class="row"><label>רקע העמוד</label><input type="color" id="c-bg" value="#eef1f5"></div>
     <div class="row"><label>רקע כותרות הטבלה</label><input type="color" id="c-th" value="#f0fdfa"></div>
+    <div class="row"><label>גופן כותרות</label>
+      <select id="f-hfont">
+        <option value="same" selected>כמו הטקסט (הנוכחי)</option>
+        <option value="'Secular One','Heebo',sans-serif">Secular One</option>
+        <option value="'Rubik',system-ui,sans-serif">Rubik</option>
+        <option value="'David Libre',serif">David Libre</option>
+        <option value="'Heebo',system-ui,sans-serif">Heebo</option>
+      </select></div>
     <div class="row"><label>גופן</label>
       <select id="f-font">
         <option value="'Assistant','Heebo',system-ui,sans-serif" selected>Assistant (הנוכחי)</option>
@@ -160,7 +174,7 @@
 (function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='5';
+var VER='8';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
@@ -171,6 +185,11 @@ try{
   }).catch(function(){});
 }catch(e){}
   var $=function(id){return document.getElementById(id)};
+  var FREE={leg:null,ctl:null};   // מיקומים חופשיים שנגררו ביד
+  var SIZE={};                    // רוחבים שנמתחו ביד: leg/ctl/q/pan
+  var ELCOL={};                   // צבע רקע פר-רכיב שנבחר מהידית
+  var HDRORD=null;                // סדר הכותרת אחרי גרירה
+  var DRAGON=false;
   var FSURL='https://formsubmit.co/ajax/ea03c6e126249e4fc11c3949c3c4237b';
   var FONTS={
     "'Rubik',system-ui,sans-serif":'Rubik:wght@400;700;900',
@@ -185,11 +204,12 @@ try{
     ['חום תעשייתי','#7c2d12','#fdba74','#7c2d12','#f5f2ee','#fff7ed','#9a3412'],
     ['כהה','#0f172a','#5eead4','#0f172a','#dde3ea','#e2e8f0','#0f766e','invert(.92) hue-rotate(180deg) contrast(.9)']
   ];
-  var ids=['c-top','c-acc','c-accink','c-on','c-bg','c-th','f-font','f-tint','r-rad','r-fs','r-sh','p-leg','p-ctl','p-pan','p-den','p-q','p-tabs','p-beta'];
+  var ids=['c-top','c-acc','c-accink','c-on','c-bg','c-th','f-font','f-hfont','f-tint','r-rad','r-fs','r-sh','p-leg','p-ctl','p-pan','p-den','p-q','p-tabs','p-beta'];
 
   function vals(){
     return { top:$('c-top').value, acc:$('c-acc').value, accink:$('c-accink').value, on:$('c-on').value,
       bg:$('c-bg').value, th:$('c-th').value, font:$('f-font').value, tint:$('f-tint').value,
+      legF:FREE.leg, ctlF:FREE.ctl, hdr:HDRORD, size:SIZE, elc:ELCOL, hfont:$('f-hfont').value,
       leg:$('p-leg').value, ctl:$('p-ctl').value, pan:$('p-pan').value, den:$('p-den').value,
       q:$('p-q').value, tabs:$('p-tabs').value, beta:$('p-beta').value,
       hide:[].map.call(document.querySelectorAll('#hides input:checked'),function(x){return x.dataset.h}),
@@ -223,14 +243,33 @@ try{
       ((v.hide||[]).indexOf('lyrow')>-1?'#lyStops{display:none!important}#lyRoutes{display:none!important}':'')+
       ((v.hide||[]).indexOf('walk')>-1?'#walkrow{display:none!important}':'')+
       ((v.hide||[]).indexOf('csv')>-1?'#csvbtn{display:none!important}':'')+
+      // מיקום חופשי שנגרר ביד — גובר על בחירת הפינה
+      (v.legF?'.maplegend{left:'+v.legF.x+'px!important;top:'+v.legF.y+'px!important;right:auto!important;bottom:auto!important}':'')+
+      (v.ctlF?'.mapctl{left:'+v.ctlF.x+'px!important;top:'+v.ctlF.y+'px!important;right:auto!important}':'')+
+      // סדר פריטי הכותרת אחרי גרירה
+      (v.hdr?v.hdr.map(function(k,i){var m={h1:'h1',tag:'.tag',vseg:'.vseg',q:'#q',lp:'.lp-wrap',a:'a'};return '.top>'+m[k]+'{order:'+i+'}';}).join(''):'')+
+      // רוחבים שנמתחו בידית הגודל
+      (v.size&&v.size.leg?'.maplegend{width:'+v.size.leg+'px!important;max-width:none!important}':'')+
+      (v.size&&v.size.ctl?'.mapctl{width:'+v.size.ctl+'px!important;max-width:none!important}':'')+
+      (v.size&&v.size.q?'.top #q{min-width:0!important;width:'+v.size.q+'px!important}':'')+
+      (v.size&&v.size.pan&&v.pan!=='b'?'.wrap{grid-template-columns:'+(v.pan==='r'?v.size.pan+'px 1fr':'1fr '+v.size.pan+'px')+'!important}':'')+
+      // צבע רקע פר-רכיב (נבחר מ-🎨 שעל הידית)
+      (v.elc&&v.elc.leg?'.maplegend{background:'+v.elc.leg+'!important}':'')+
+      (v.elc&&v.elc.ctl?'.mapctl{background:'+v.elc.ctl+'!important}':'')+
+      (v.elc&&v.elc.pan?'.panel{background:'+v.elc.pan+'!important}':'')+
+      // גופן נפרד לכותרות
+      (v.hfont&&v.hfont!=='same'?'.top h1,th,.lp-title,.panel h2,.panel h3{font-family:'+v.hfont+'!important}':'')+
       (v.pan==='r'?'.wrap{grid-template-columns:430px 1fr!important}.wrap .mapwrap2{order:2}.wrap .panel{order:1}':
        v.pan==='b'?'.wrap{grid-template-columns:1fr!important}':'')+
       (v.den==='c'?'td{padding:4px 8px!important}th{padding:6px 8px!important}':
        v.den==='a'?'td{padding:11px 12px!important}th{padding:12px 12px!important}':'');
   }
   function fontLink(v){
-    var g=FONTS[v.font];
-    return g?'https://fonts.googleapis.com/css2?family='+g+'&display=swap':null;
+    var fams=[];
+    if(FONTS[v.font]) fams.push(FONTS[v.font]);
+    var HF={"'Secular One','Heebo',sans-serif":'Secular+One',"'Rubik',system-ui,sans-serif":'Rubik:wght@400;700;900',"'David Libre',serif":'David+Libre:wght@400;700'};
+    if(v.hfont&&HF[v.hfont]&&fams.indexOf(HF[v.hfont])<0) fams.push(HF[v.hfont]);
+    return fams.length?'https://fonts.googleapis.com/css2?'+fams.map(function(f){return 'family='+f}).join('&')+'&display=swap':null;
   }
   function apply(){
     var f=$('pf'); var d=f.contentDocument;
@@ -248,8 +287,10 @@ try{
   function load(v){
     $('c-top').value=v.top; $('c-acc').value=v.acc; $('c-accink').value=v.accink;
     $('c-on').value=v.on||'#0f766e'; $('c-bg').value=v.bg; $('c-th').value=v.th;
-    if(v.font)$('f-font').value=v.font; $('f-tint').value=v.tint||'none';
+    if(v.font)$('f-font').value=v.font; $('f-hfont').value=v.hfont||'same'; $('f-tint').value=v.tint||'none';
+    ELCOL=v.elc||{};
     $('p-leg').value=v.leg||'lb'; $('p-ctl').value=v.ctl||'r'; $('p-pan').value=v.pan||'l'; $('p-den').value=v.den||'n';
+    FREE.leg=v.legF||null; FREE.ctl=v.ctlF||null; HDRORD=v.hdr||null; SIZE=v.size||{};
     $('p-q').value=v.q||'n'; $('p-tabs').value=v.tabs||'n'; $('p-beta').value=v.beta||'on';
     [].forEach.call(document.querySelectorAll('#hides input'),function(x){ x.checked=(v.hide||[]).indexOf(x.dataset.h)>-1; });
     collide();
@@ -298,6 +339,142 @@ try{
     try{ load(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))); }catch(e){}
   }
   labels();
+
+  // ---- הזזה חופשית: לוחצים על רכיב וגוררים אותו על המסך ----
+  function clearDrag(){
+    var d=$('pf').contentDocument; if(!d) return;
+    [].forEach.call(d.querySelectorAll('.lab-ov'),function(x){x.remove();});
+  }
+  function makeOv(d,el,label,onDrop,reorderKey){
+    var r=el.getBoundingClientRect();
+    var ov=d.createElement('div'); ov.className='lab-ov';
+    ov.style.cssText='position:fixed;z-index:99999;border:2px dashed #0f766e;border-radius:8px;background:rgba(15,118,110,.07);cursor:grab;display:flex;align-items:flex-start;justify-content:center;touch-action:none';
+    ov.style.left=r.left+'px'; ov.style.top=r.top+'px'; ov.style.width=r.width+'px'; ov.style.height=r.height+'px';
+    var h=d.createElement('div');
+    h.textContent='⠿ '+label;
+    h.style.cssText='background:#0f766e;color:#fff;font-size:10px;font-weight:900;border-radius:0 0 7px 7px;padding:1px 8px;font-family:Assistant,Heebo,sans-serif;pointer-events:none';
+    ov.appendChild(h);
+    if(onDrop.colorKey){
+      var ci=d.createElement('input'); ci.type='color';
+      ci.style.cssText='position:absolute;right:-2px;bottom:-2px;width:26px;height:24px;border:none;padding:0;background:#fff;border-radius:0 7px 0 7px;cursor:pointer';
+      ci.title='צבע הרקע של הרכיב';
+      ci.addEventListener('pointerdown',function(e){e.stopPropagation();});
+      ci.addEventListener('input',function(){ ELCOL[onDrop.colorKey]=ci.value; apply(); });
+      ov.appendChild(ci);
+    }
+    if(onDrop.resize){
+      var g=d.createElement('div');
+      g.textContent='⤢';
+      g.style.cssText='position:absolute;left:-2px;bottom:-2px;width:22px;height:22px;background:#0f766e;color:#fff;border-radius:7px 0 7px 0;font-size:13px;line-height:22px;text-align:center;cursor:nwse-resize;font-weight:900';
+      ov.appendChild(g);
+      g.addEventListener('pointerdown',function(e){
+        e.preventDefault(); e.stopPropagation(); g.setPointerCapture(e.pointerId);
+        var r0=el.getBoundingClientRect();
+        function mv(e2){
+          var w=Math.round(Math.max(80,onDrop.fromLeft? e2.clientX-r0.left : r0.right-e2.clientX));
+          el.style.width=w+'px'; el.style.maxWidth='none';
+          ov.style.width=Math.abs(el.getBoundingClientRect().width)+'px';
+          ov.style.left=el.getBoundingClientRect().left+'px';
+          onDrop.resize(w,false);
+        }
+        function up(e2){ g.removeEventListener('pointermove',mv); g.removeEventListener('pointerup',up);
+          var w=Math.round(Math.max(80,onDrop.fromLeft? e2.clientX-r0.left : r0.right-e2.clientX));
+          onDrop.resize(w,true); }
+        g.addEventListener('pointermove',mv); g.addEventListener('pointerup',up);
+      });
+    }
+    d.body.appendChild(ov);
+    ov.addEventListener('pointerdown',function(e){
+      e.preventDefault(); ov.setPointerCapture(e.pointerId);
+      var sx=e.clientX,sy=e.clientY,ol=r.left,ot=r.top,moved=false;
+      function mv(e2){
+        var dx=e2.clientX-sx,dy=e2.clientY-sy;
+        if(Math.abs(dx)+Math.abs(dy)>4)moved=true;
+        ov.style.left=(ol+dx)+'px'; ov.style.top=(ot+dy)+'px';
+        el.style.transition='none';
+        if(!reorderKey){ el.style.position='fixed'; el.style.left=(ol+dx)+'px'; el.style.top=(ot+dy)+'px'; el.style.right='auto'; el.style.bottom='auto'; }
+        else { el.style.transform='translate('+dx+'px,'+dy+'px)'; el.style.opacity=.75; }
+      }
+      function up(e2){
+        ov.removeEventListener('pointermove',mv); ov.removeEventListener('pointerup',up);
+        if(moved) onDrop(e2.clientX-sx,e2.clientY-sy,e2);
+        if(reorderKey){ el.style.transform=''; el.style.opacity=''; }
+      }
+      ov.addEventListener('pointermove',mv); ov.addEventListener('pointerup',up);
+    });
+    return ov;
+  }
+  function initDrag(){
+    clearDrag();
+    var d=$('pf').contentDocument; if(!d||!d.body) return;
+    // המקרא ולוח הכפתורים: גרירה חופשית על המפה, יחסית למכל המפה
+    [['maplegend','מקרא','leg'],['mapctl','כפתורי המפה','ctl']].forEach(function(t){
+      var el=d.querySelector('.'+t[0]); if(!el||el.offsetParent===null) return;
+      var drop=function(){
+        var host=el.closest('.mapwrap2')||el.closest('.mapwrap')||d.body;
+        var hr=host.getBoundingClientRect(), er=el.getBoundingClientRect();
+        el.style.position='absolute';
+        FREE[t[2]]={x:Math.round(er.left-hr.left),y:Math.round(er.top-hr.top)};
+        el.style.left=FREE[t[2]].x+'px'; el.style.top=FREE[t[2]].y+'px';
+        apply(); setTimeout(initDrag,80);
+      };
+      drop.resize=function(w,done){ SIZE[t[2]]=w; if(done){ apply(); setTimeout(initDrag,80); } };
+      drop.colorKey=t[2];
+      makeOv(d,el,t[1],drop);
+    });
+    // פריטי הכותרת: גרירה אופקית מסדרת מחדש
+    var keys=[['h1','h1'],['tag','.tag'],['vseg','.vseg'],['q','#q'],['lp','.lp-wrap'],['a','a']];
+    var items=keys.map(function(k){var el=d.querySelector('.top>'+k[1]);return el?{k:k[0],el:el}:null;}).filter(Boolean);
+    items.forEach(function(it){
+      var hd=function(dx,dy,e2){
+        var order=items.slice().sort(function(a,b){return b.el.getBoundingClientRect().left-a.el.getBoundingClientRect().left;});
+        var me=order.indexOf(order.filter(function(o){return o.k===it.k})[0]);
+        order.splice(me,1);
+        var x=e2.clientX, idx=order.length;
+        for(var i=0;i<order.length;i++){ var rr=order[i].el.getBoundingClientRect();
+          if(x>rr.left+rr.width/2){ idx=i; break; } }
+        order.splice(idx,0,items.filter(function(o){return o.k===it.k})[0]);
+        HDRORD=order.map(function(o){return o.k});
+        apply(); setTimeout(initDrag,80);
+      };
+      if(it.k==='q'){ hd.resize=function(w,done){ SIZE.q=w; if(done){ apply(); setTimeout(initDrag,80); } }; }
+      makeOv(d,it.el,'גררו הצידה',hd,true);
+    });
+    // פאנל פרטי האזור: גרירה לצד השני או למטה
+    var pn=d.querySelector('.panel');
+    if(pn&&pn.offsetParent!==null){
+      var pd=function(dx,dy){
+        if(dy>140){ $('p-pan').value='b'; }
+        else if(Math.abs(dx)>120){ $('p-pan').value=($('p-pan').value==='r')?'l':'r'; }
+        apply(); setTimeout(initDrag,80);
+      };
+      pd.fromLeft=($('p-pan').value!=='r');
+      pd.resize=function(w,done){ SIZE.pan=Math.min(760,w); if(done){ apply(); setTimeout(initDrag,80); } };
+      pd.colorKey='pan';
+      makeOv(d,pn,'פאנל האזור — גררו לצד/למטה · ⤢ מותח רוחב',pd,true);
+    }
+  }
+  $('dragmode').onclick=function(){
+    DRAGON=!DRAGON;
+    this.textContent=DRAGON?'✋ הזזה חופשית: פעילה — גררו רכיבים בתצוגה':'✋ הזזה חופשית: כבויה — לחצו להפעלה';
+    this.style.background=DRAGON?'#0f766e':'#fff'; this.style.color=DRAGON?'#fff':'#0f766e';
+    if(DRAGON) initDrag(); else clearDrag();
+  };
+  // אחרי כל החלה מחדש של העיצוב — אם מצב ההזזה פעיל, הידיות נבנות מחדש
+  var _apply0=apply; apply=function(){ _apply0(); if(DRAGON) setTimeout(initDrag,150); };
+
+  $('mobilebtn').onclick=function(){
+    var f=$('pf'), on=f.style.maxWidth==='390px';
+    f.style.maxWidth=on?'':'390px'; f.style.margin=on?'':'0 auto'; f.style.display='block';
+    this.style.background=on?'#fff':'#0f766e'; this.style.color=on?'#475569':'#fff';
+  };
+  $('resetbtn').onclick=function(){
+    FREE={leg:null,ctl:null}; SIZE={}; ELCOL={}; HDRORD=null;
+    load({top:'#134e4a',acc:'#5eead4',accink:'#134e4a',on:'#0f766e',bg:'#eef1f5',th:'#f0fdfa',
+      font:"'Assistant','Heebo',system-ui,sans-serif",hfont:'same',tint:'none',
+      leg:'lb',ctl:'r',pan:'l',den:'n',q:'n',tabs:'n',beta:'on',hide:[]});
+    $('pf').contentWindow.location.reload();
+  };
 
   $('share').onclick=function(){
     apply();
