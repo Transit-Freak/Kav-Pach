@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""צי הרכבים — העשרה מהמאגר הממשלתי: שנת ייצור, יצרן ודגם לכל לוחית.
+"""צי הרכבים — העשרה מהמאגר הממשלתי: כל פרט קיים על כל רכב.
 
-קורא את fleet/data/fleet.json שנבנה בסריקת דאטאבוס, מצליב כל רכב מול
-מאגר "כלי רכב ציבוריים פעילים" ב-data.gov.il לפי מספר הרכב, ומוסיף
-לכל רכב שנמצא: [שנת ייצור, "יצרן דגם"]. רכב שלא נמצא נשאר כמות שהוא.
+שני תוצרים:
+1. fleet/data/fleet.json — לכל רכב מתווספים [שנת ייצור, "יצרן דגם"]
+   (קומפקטי, לכרטיסים ולטבלה).
+2. fleet/data/gov-details.json — לכל לוחית: *כל* השדות כפי שהם במאגר
+   הממשלתי, בלי לוותר על אף אחד. האתר טוען אותו רק בלחיצה על רכב.
 
 הצעד הזה הוא best-effort: אם המאגר הממשלתי לא זמין — הסריקה עדיין
 תקפה והאתר עובד בלעדיו (הצעד רץ עם continue-on-error ב-workflow).
@@ -18,6 +20,7 @@ import urllib.request
 
 CKAN = 'https://data.gov.il/api/3/action'
 OUT = os.environ.get('OUT', 'fleet/data/fleet.json')
+DETAILS = os.environ.get('DETAILS', 'fleet/data/gov-details.json')
 PAGE = 5000
 
 
@@ -38,92 +41,118 @@ def get(action, **params):
             time.sleep(5 * (attempt + 1))
 
 
-def find_resource():
-    """איתור דינמי של משאב 'כלי רכב ציבוריים פעילים' — בלי מזהה קשיח."""
-    res = get('package_search', q='רכב ציבורי פעיל', rows=10)
-    for pkg in res.get('results', []):
-        title = (pkg.get('title') or '')
-        if 'ציבורי' not in title:
-            continue
-        for r in pkg.get('resources', []):
-            if r.get('datastore_active'):
-                print(f"משאב: {title} · {r.get('name')} · {r['id']}", flush=True)
-                return r['id']
-    raise RuntimeError('לא נמצא משאב רכב ציבורי עם datastore')
-
-
-def field_names(sample_record):
-    """שמות השדות משתנים בין מאגרים — מזהים לפי מילות מפתח."""
-    keys = {k.lower(): k for k in sample_record}
-
-    def pick(*subs):
-        for lk, k in keys.items():
-            if any(s in lk for s in subs):
-                return k
-        return None
-
-    return {
-        'plate': pick('mispar_rechev', 'mispar rechev', 'license'),
-        'year': pick('shnat_yitzur', 'shnat'),
-        'maker': pick('tozeret_nm', 'tozeret'),
-        'model': pick('degem_nm', 'kinuy', 'degem'),
-    }
-
-
-def load_registry(rid):
-    """כל המאגר → מפה לוחית ← [שנה, "יצרן דגם"]."""
-    reg, offset, fields = {}, 0, None
-    while True:
-        res = get('datastore_search', resource_id=rid, limit=PAGE, offset=offset)
-        rows = res.get('records', [])
-        if not rows:
-            break
-        if fields is None:
-            fields = field_names(rows[0])
-            print(f'שדות: {fields}', flush=True)
-            if not fields['plate']:
-                raise RuntimeError('לא זוהה שדה מספר רכב')
-        for r in rows:
-            plate = str(r.get(fields['plate']) or '').strip().replace('-', '')
-            if not plate.isdigit():
+def find_resources():
+    """כל משאבי ה-datastore שקשורים לרכב ציבורי — יכולים להיות כמה מאגרים
+    (פעילים, מבוטלים, הסעות) ואנחנו רוצים את כולם."""
+    seen, out = set(), []
+    for q in ('רכב ציבורי פעיל', 'אוטובוסים', 'רכב ציבורי'):
+        res = get('package_search', q=q, rows=10)
+        for pkg in res.get('results', []):
+            title = pkg.get('title') or ''
+            if 'ציבורי' not in title and 'אוטובוס' not in title:
                 continue
-            year = r.get(fields['year']) if fields['year'] else None
-            maker = str(r.get(fields['maker']) or '').strip() if fields['maker'] else ''
-            model = str(r.get(fields['model']) or '').strip() if fields['model'] else ''
-            name = ' '.join(x for x in (maker, model) if x)
-            try:
-                year = int(year)
-            except (TypeError, ValueError):
-                year = None
-            reg[plate] = [year, name]
-        offset += PAGE
-        if offset >= res.get('total', 0):
-            break
-    print(f'מאגר ממשלתי: {len(reg)} כלי רכב', flush=True)
+            for r in pkg.get('resources', []):
+                if r.get('datastore_active') and r['id'] not in seen:
+                    seen.add(r['id'])
+                    out.append((title, r['id']))
+                    print(f"משאב: {title} · {r.get('name')} · {r['id']}", flush=True)
+    if not out:
+        raise RuntimeError('לא נמצא משאב רכב ציבורי עם datastore')
+    return out
+
+
+def plate_key(record):
+    """שם שדה מספר הרכב ברשומה."""
+    for k in record:
+        lk = k.lower()
+        if 'mispar_rechev' in lk or lk == 'mispar rechev' or 'license' in lk:
+            return k
+    return None
+
+
+def load_registry(resources, wanted):
+    """כל המאגרים → מפה לוחית ← רשומה מלאה (כל השדות, ללא ריקים).
+    נשמרות רק לוחיות שמופיעות בסריקה (wanted) — לא כל 65 אלף כלי הרכב."""
+    reg = {}
+    for title, rid in resources:
+        offset, pk = 0, None
+        while True:
+            res = get('datastore_search', resource_id=rid, limit=PAGE, offset=offset)
+            rows = res.get('records', [])
+            if not rows:
+                break
+            if pk is None:
+                pk = plate_key(rows[0])
+                if not pk:
+                    print(f'  {rid}: אין שדה מספר רכב — דילוג', flush=True)
+                    break
+            for r in rows:
+                plate = str(r.get(pk) or '').strip().replace('-', '')
+                if not plate.isdigit() or plate not in wanted:
+                    continue
+                clean = {k: v for k, v in r.items()
+                         if k != '_id' and v not in (None, '', 'NULL')}
+                clean['_source'] = title
+                # מאגר שני לא דורס — רק משלים שדות חסרים
+                if plate in reg:
+                    for k, v in clean.items():
+                        reg[plate].setdefault(k, v)
+                else:
+                    reg[plate] = clean
+            offset += PAGE
+            if offset >= res.get('total', 0):
+                break
+    print(f'מאגר ממשלתי: {len(reg)} התאמות ללוחיות מהסריקה', flush=True)
     return reg
+
+
+def short_info(rec):
+    """[שנה, "יצרן דגם"] לתצוגה הקומפקטית."""
+    def pick(*subs):
+        for k, v in rec.items():
+            lk = k.lower()
+            if any(s in lk for s in subs):
+                return str(v).strip()
+        return ''
+    year = pick('shnat_yitzur', 'shnat')
+    maker = pick('tozeret_nm', 'tozeret')
+    model = pick('kinuy', 'degem_nm', 'degem')
+    try:
+        year = int(float(year))
+    except (TypeError, ValueError):
+        year = None
+    return [year, ' '.join(x for x in (maker, model) if x)]
+
+
+def jdump(obj, path):
+    tmp = f'{path}.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(obj, f, ensure_ascii=False, separators=(',', ':'))
+    os.replace(tmp, path)
 
 
 def main():
     with open(OUT, encoding='utf-8') as f:
         data = json.load(f)
-    reg = load_registry(find_resource())
+    wanted = {str(v[0]).strip().replace('-', '')
+              for op in data['operators'] for v in op['vehicles']}
+    reg = load_registry(find_resources(), wanted)
+
     hit = miss = 0
     for op in data['operators']:
         for v in op['vehicles']:
             plate = str(v[0]).strip().replace('-', '')
-            info = reg.get(plate)
+            rec = reg.get(plate)
             del v[3:]  # ניקוי העשרה קודמת אם הסקריפט רץ שוב
-            if info:
-                v.extend(info)
+            if rec:
+                v.extend(short_info(rec))
                 hit += 1
             else:
                 miss += 1
     data['enriched'] = True
-    tmp = f'{OUT}.tmp'
-    with open(tmp, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, separators=(',', ':'))
-    os.replace(tmp, OUT)
-    print(f'העשרה: {hit} נמצאו · {miss} לא נמצאו במאגר', flush=True)
+    jdump(data, OUT)
+    jdump(reg, DETAILS)
+    print(f'העשרה: {hit} נמצאו · {miss} לא נמצאו · פרטים מלאים: {DETAILS}', flush=True)
 
 
 if __name__ == '__main__':
