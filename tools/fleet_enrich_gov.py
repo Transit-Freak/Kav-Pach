@@ -113,7 +113,7 @@ def load_registry(resources, wanted):
 
 
 def short_info(rec):
-    """[שנה, "יצרן דגם"] לתצוגה הקומפקטית."""
+    """[שנה, "יצרן דגם", דלתות, סוג] לתצוגה בטבלה בלי לטעון את הפרטים המלאים."""
     def pick(*subs):
         for k, v in rec.items():
             lk = k.lower()
@@ -123,11 +123,20 @@ def short_info(rec):
     year = pick('shnat_yitzur', 'shnat')
     maker = pick('tozeret_nm', 'tozeret')
     model = pick('kinuy', 'degem_nm', 'degem')
+    doors = pick('dlatot')
+    vtype = pick('sug_rechev_nm', 'sug_rechev').replace('אוטובוס', '').strip() or None
+    fuel = pick('sug_delek')
+    if vtype and 'חשמל' in fuel and 'חשמל' not in vtype:
+        vtype += ' חשמלי'
     try:
         year = int(float(year))
     except (TypeError, ValueError):
         year = None
-    return [year, ' '.join(x for x in (maker, model) if x)]
+    try:
+        doors = int(float(doors))
+    except (TypeError, ValueError):
+        doors = None
+    return [year, ' '.join(x for x in (maker, model) if x), doors, vtype]
 
 
 def jdump(obj, path):
@@ -157,7 +166,14 @@ def main():
                 miss += 1
     data['enriched'] = True
     jdump(data, OUT)
-    jdump(reg, DETAILS)
+    # הפרטים המלאים נחתכים ל-10 קבצים לפי הספרה האחרונה של הלוחית —
+    # האתר טוען רק את הקובץ הרלוונטי בלחיצה על רכב (במקום קובץ ענק אחד)
+    base = DETAILS.rsplit('.json', 1)[0]
+    shards = {str(d): {} for d in range(10)}
+    for plate, rec in reg.items():
+        shards[plate[-1]][plate] = rec
+    for d, shard in shards.items():
+        jdump(shard, f'{base}-{d}.json')
     print(f'העשרה: {hit} נמצאו · {miss} לא נמצאו · פרטים מלאים: {DETAILS}', flush=True)
 
 
