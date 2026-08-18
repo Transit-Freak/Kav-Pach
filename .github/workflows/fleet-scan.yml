@@ -1,0 +1,56 @@
+name: fleet-scan
+
+# צי הרכבים: סריקת דאטאבוס (Stride API) — אילו רכבים פעלו אצל כל מפעיל
+# ומתי נצפו לראשונה ולאחרונה, בתוספת העשרה מהמאגר הממשלתי (שנה/יצרן/דגם).
+# שבועי: מרחיב את החלון ב-8 הימים האחרונים. Backfill ידני: הפעלה עם FROM/TO.
+
+on:
+  schedule:
+    - cron: '30 3 * * 5'   # שישי 03:30 UTC — אחרי שהצינורות היומיים סיימו
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'FROM (YYYY-MM-DD) — ריק = 8 ימים אחורה'
+        required: false
+      to:
+        description: 'TO (YYYY-MM-DD) — ריק = היום'
+        required: false
+      max_min:
+        description: 'עצירה נקייה אחרי X דקות (0 = בלי מגבלה)'
+        required: false
+        default: '300'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fleet-scan
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: סריקת דאטאבוס
+        env:
+          FROM: ${{ github.event.inputs.from }}
+          TO: ${{ github.event.inputs.to }}
+          MAX_MIN: ${{ github.event.inputs.max_min || '300' }}
+        run: python3 tools/fleet_scan.py
+
+      - name: העשרה מהמאגר הממשלתי (best-effort)
+        continue-on-error: true
+        run: python3 tools/fleet_enrich_gov.py
+
+      - name: commit
+        run: |
+          git config user.name 'fleet-bot'
+          git config user.email 'noreply@github.com'
+          git add fleet/data
+          git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
+          git commit -m 'data: fleet — עדכון צי הרכבים מדאטאבוס'
+          git pull --rebase origin main
+          git push
