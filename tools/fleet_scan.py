@@ -29,6 +29,8 @@ FROM = os.environ.get('FROM') or (TODAY - datetime.timedelta(days=8)).isoformat(
 TO = os.environ.get('TO') or TODAY.isoformat()
 MAX_MIN = float(os.environ.get('MAX_MIN', '0'))
 RETIRE_DAYS = int(os.environ.get('RETIRE_DAYS', '60'))
+# עדכון-ביניים לאתר כל X ימים סרוקים (0 = רק בסוף); נקבע ב-workflow
+FLUSH_DAYS = int(os.environ.get('FLUSH_DAYS', '0'))
 PAGE = 1000
 
 # שמות המפעילים לפי operator_ref של משרד התחבורה (כמו ב-GTFS agency_id).
@@ -155,6 +157,29 @@ def build_output(state):
             'v': 2, 'operators': out}
 
 
+def flush_site(state):
+    """עדכון ביניים באמצע ריצה ארוכה: בנייה, העשרה, קומיט ודחיפה לאתר.
+    כל כשל כאן אינו מפיל את הסריקה — הנתונים ממשיכים להצטבר."""
+    import subprocess
+    jdump(build_output(state), OUT)
+    try:
+        subprocess.run([sys.executable, 'tools/fleet_enrich_gov.py'],
+                       check=True, timeout=1500)
+    except Exception as e:  # noqa: BLE001
+        print(f'  העשרת-ביניים נכשלה: {e}', flush=True)
+    try:
+        subprocess.run(['git', 'add', 'fleet/data'], check=True)
+        subprocess.run(['git', '-c', 'user.name=fleet-bot',
+                        '-c', 'user.email=noreply@github.com',
+                        'commit', '-m', 'data: fleet — עדכון ביניים תוך כדי סריקה'],
+                       check=True)
+        subprocess.run(['git', 'pull', '--rebase', 'origin', 'main'], check=True)
+        subprocess.run(['git', 'push'], check=True)
+        print('  עדכון ביניים נדחף לאתר ✓', flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f'  דחיפת-ביניים לא בוצעה: {e}', flush=True)
+
+
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
     state = {}
@@ -176,6 +201,9 @@ def main():
         scanned.append(day.isoformat())
         # שמירת ביניים כל יום — ריצה שנקטעת לא מאבדת כלום
         jdump({'vehicles': state}, STATE)
+        # דחיפת עדכון חי לאתר תוך כדי הריצה
+        if FLUSH_DAYS and len(scanned) % FLUSH_DAYS == 0:
+            flush_site(state)
         day += datetime.timedelta(days=1)
 
     jdump({'vehicles': state}, STATE)
