@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<!-- מוסתר ממנועי חיפוש עד להחלטה על השקה -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>צי הרכבים — הקו הבוחן</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="3" y="8" width="26" height="14" rx="4" fill="%230f766e"/><rect x="6" y="11" width="5" height="4" rx="1" fill="%2399f6e4"/><rect x="13" y="11" width="5" height="4" rx="1" fill="%2399f6e4"/><rect x="20" y="11" width="5" height="4" rx="1" fill="%2399f6e4"/><circle cx="9" cy="24" r="3" fill="%230f172a"/><circle cx="23" cy="24" r="3" fill="%230f172a"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Heebo:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#eef1f5;color:#0f172a}
+  .top{background:#134e4a;color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .top h1{font-size:19px;font-weight:900;margin:0}
+  .tag{background:#5eead4;color:#134e4a;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
+  .top input{font-family:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:12px;border:none;min-width:220px}
+  .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
+  .top .sub{font-size:14px;opacity:.95;font-weight:700;flex-basis:100%;margin-top:4px;line-height:1.6}
+  .wrap{max-width:1250px;margin:14px auto;padding:0 10px}
+  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .kpi{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:12px 18px;min-width:130px}
+  .kpi b{font-size:22px;color:#134e4a;display:block}
+  .kpi span{font-size:12.5px;font-weight:800;color:#64748b}
+  .kpi.red b{color:#b91c1c}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .card{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:14px 16px;cursor:pointer;border:2px solid transparent}
+  .card:hover{border-color:#5eead4}
+  .card.sel{border-color:#0f766e}
+  .card h2{font-size:16.5px;font-weight:900;margin:0 0 6px;color:#134e4a}
+  .crow{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:800}
+  .pill{border-radius:8px;padding:2px 9px}
+  .pa{background:#dcfce7;color:#14532d}.pr{background:#fee2e2;color:#7f1d1d}.py{background:#f0fdfa;color:#0f766e}
+  .bars{display:flex;align-items:flex-end;gap:2px;height:38px;margin-top:10px}
+  .bars i{flex:1;background:#14b8a6;border-radius:3px 3px 0 0;min-height:2px}
+  .bars i.old{background:#cbd5e1}
+  .blbl{display:flex;justify-content:space-between;font-size:10.5px;font-weight:800;color:#94a3b8;margin-top:2px}
+  .tblcard{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);overflow:auto;margin-top:14px;max-height:70vh}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{position:sticky;top:0;background:#f0fdfa;color:#134e4a;font-weight:900;padding:9px 10px;border-bottom:2px solid #99f6e4;cursor:pointer;white-space:nowrap;user-select:none}
+  td{padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;white-space:nowrap}
+  tr.off td{color:#991b1b;background:#fff7f7}
+  .st{font-size:11px;font-weight:900;border-radius:9999px;padding:2px 9px}
+  .st.on{background:#dcfce7;color:#14532d}.st.off{background:#fee2e2;color:#7f1d1d}
+  .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
+  .note{font-size:12px;color:#64748b;font-weight:700;margin:10px 2px}
+  .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1>🚌 צי הרכבים</h1>
+    <span class="tag">ניסוי</span>
+    <input id="q" type="search" placeholder="חיפוש מספר רכב או חברה…">
+    <a href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
+    <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה מאז 2022 — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ומתי לאחרונה. רכב שלא שודר תקופה ארוכה מסומן כ"ירד מהשירות". מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי.</div>
+  </div>
+
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+    <div class="cards" id="cards"></div>
+    <div id="detail"></div>
+    <div class="msg" id="msg">⏳ טוען נתונים…</div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+let DATA=null, SEL=null, SORTK=2, SORTD=-1;
+
+const fmtD=s=>s?s.split('-').reverse().join('.'):'—';
+const days=(a,b)=>Math.round((new Date(a)-new Date(b))/864e5);
+
+function isActive(v){ return days(DATA.updated, v[2]) <= DATA.retire_days; }
+
+function kpis(){
+  let tot=0, act=0;
+  for(const op of DATA.operators) for(const v of op.vehicles){ tot++; if(isActive(v)) act++; }
+  $('kpis').innerHTML=`
+    <div class="kpi"><b>${tot.toLocaleString('he-IL')}</b><span>רכבים במעקב</span></div>
+    <div class="kpi"><b>${act.toLocaleString('he-IL')}</b><span>פעילים</span></div>
+    <div class="kpi red"><b>${(tot-act).toLocaleString('he-IL')}</b><span>ירדו מהשירות</span></div>
+    <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
+    <div class="kpi"><b>${fmtD(DATA.updated)}</b><span>עדכון אחרון</span></div>`;
+}
+
+function yearsBar(op){
+  const ys={}; let has=false;
+  for(const v of op.vehicles){ const y=v[3]; if(y){ has=true; ys[y]=(ys[y]||0)+1; } }
+  if(!has) return '';
+  const keys=Object.keys(ys).map(Number).sort((a,b)=>a-b);
+  const max=Math.max(...Object.values(ys));
+  const old=new Date(DATA.updated).getFullYear()-12; // בני 12+ שנים באפור
+  return `<div class="bars">${keys.map(y=>`<i class="${y<=old?'old':''}" style="height:${Math.max(5,ys[y]/max*100)}%" title="${y}: ${ys[y]} רכבים"></i>`).join('')}</div>
+    <div class="blbl"><span>${keys[0]}</span><span>${keys[keys.length-1]}</span></div>`;
+}
+
+function cards(filter){
+  const f=(filter||'').trim();
+  const ops=DATA.operators.filter(op=>!f||op.name.includes(f)||op.vehicles.some(v=>v[0].includes(f)))
+    .sort((a,b)=>b.vehicles.length-a.vehicles.length);
+  $('cards').innerHTML=ops.map(op=>{
+    const act=op.vehicles.filter(isActive).length, ret=op.vehicles.length-act;
+    const yrs=op.vehicles.map(v=>v[3]).filter(Boolean);
+    const avg=yrs.length?Math.round(yrs.reduce((s,y)=>s+y,0)/yrs.length*10)/10:null;
+    return `<div class="card${SEL===op.ref?' sel':''}" onclick="pick(${op.ref})">
+      <h2>${op.name}</h2>
+      <div class="crow">
+        <span class="pill py">${op.vehicles.length.toLocaleString('he-IL')} רכבים</span>
+        <span class="pill pa">${act.toLocaleString('he-IL')} פעילים</span>
+        ${ret?`<span class="pill pr">${ret.toLocaleString('he-IL')} ירדו</span>`:''}
+        ${avg?`<span class="pill py">שנתון ממוצע ${avg}</span>`:''}
+      </div>${yearsBar(op)}</div>`;
+  }).join('')||'<div class="msg">לא נמצאו תוצאות</div>';
+}
+
+function pick(ref){ SEL=SEL===ref?null:ref; cards($('q').value); detail(); }
+
+function detail(){
+  const el=$('detail');
+  if(SEL===null){ el.innerHTML=''; return; }
+  const op=DATA.operators.find(o=>o.ref===SEL);
+  const f=($('q').value||'').trim();
+  let vs=op.vehicles.filter(v=>!f||v[0].includes(f));
+  const key=v=>[v[0],v[1],v[2],v[3]||0,v[4]||''][SORTK];
+  vs=vs.slice().sort((a,b)=>{const x=key(a),y=key(b);return (x>y?1:x<y?-1:0)*SORTD;});
+  const enr=DATA.enriched;
+  const th=(i,t)=>`<th onclick="srt(${i})">${t}${SORTK===i?(SORTD>0?' ▲':' ▼'):''}</th>`;
+  el.innerHTML=`<div class="note">🚌 ${op.name} — ${vs.length.toLocaleString('he-IL')} רכבים · לחיצה על כותרת ממיינת</div>
+  <div class="tblcard"><table><thead><tr>
+    ${th(0,'מספר רכב')}${th(1,'נצפה לראשונה')}${th(2,'נצפה לאחרונה')}
+    ${enr?th(3,'שנת ייצור')+th(4,'יצרן ודגם'):''}<th>מצב</th>
+  </tr></thead><tbody>
+  ${vs.map(v=>{const on=isActive(v);
+    return `<tr${on?'':' class="off"'}><td dir="ltr">${v[0]}</td><td>${fmtD(v[1])}</td><td>${fmtD(v[2])}</td>
+    ${enr?`<td>${v[3]||'—'}</td><td>${v[4]||'—'}</td>`:''}
+    <td><span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span></td></tr>`;}).join('')}
+  </tbody></table></div>`;
+}
+
+function srt(i){ if(SORTK===i)SORTD*=-1; else{SORTK=i;SORTD=-1;} detail(); }
+
+$('q').addEventListener('input',()=>{cards($('q').value);detail();});
+
+fetch('data/fleet.json').then(r=>{
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}).then(d=>{
+  DATA=d; $('msg').style.display='none'; kpis(); cards('');
+}).catch(()=>{
+  $('msg').innerHTML='עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions כדי לאסוף את הסריקה הראשונה.';
+});
+</script>
+</body>
+</html>
