@@ -242,11 +242,6 @@ function opView(ref){
   const ymax=yk.length?Math.max(...Object.values(years)):1;
   const avgAge=yn?(new Date(DATA.updated).getFullYear()-ysum/yn).toFixed(1):null;
   const y0=+DATA.updated.slice(0,4);
-  const hist=[];
-  for(let y=2022;y<=y0;y++){
-    hist.push([y,o.vehicles.filter(v=>+v[1].slice(0,4)<=y&&+v[2].slice(0,4)>=y).length]);
-  }
-  const hmax=Math.max(...hist.map(h=>h[1]),1);
   let vs=o.vehicles;
   if(TYPEF) vs=vs.filter(v=>gT(v)===TYPEF);
   if(STATF!==null) vs=vs.filter(v=>(isActive(v)?1:0)===STATF);
@@ -259,16 +254,10 @@ function opView(ref){
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
       `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}</div></div>`:''}
-  <div class="cols2">
-    ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p>
+  ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p>
       ${yk.map(y=>{const c=y>=y0-6?color:y>=y0-10?'#9AA8B8':'#C4CAD4';
         return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,years[y]/ymax*100)}%;background:${c}"></i></div><span class="c">${fmt(years[y])}</span></div>`;}).join('')}
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
-    <div class="panel"><p class="ptitle">כמה רכבים נצפו בכל שנה</p>
-      ${hist.map(([y,c])=>`<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,c/hmax*100)}%;background:${color}"></i></div><span class="c">${fmt(c)}</span></div>`).join('')}
-      <p class="note">מבוסס על טווח הצפייה של כל רכב בדאטאבוס. שנים מוקדמות יתמלאו ככל שה-backfill ההיסטורי מתקדם אחורה.</p>
-    </div>
-  </div>
   <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}</p>
     <div class="filters">
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
