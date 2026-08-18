@@ -43,6 +43,9 @@ OPERATORS = {
     38: 'אקסטרה ירושלים', 91: 'מוניות שירות',
 }
 
+# לא חברות אוטובוסים — לא מוצגים באתר: רכבת ישראל, כרמלית, סיטיפס (רק"ל)
+EXCLUDE = {2, 20, 21}
+
 
 def jdump(obj, path):
     tmp = f'{path}.tmp'
@@ -139,6 +142,9 @@ def build_output(state):
         avg = round(rides / dcount, 1) if dcount else None
         op_s, v = key.split(':', 1)
         op = int(op_s)
+        # מזהה לא מוכר או מפעיל שאינו חברת אוטובוסים — לא מוצג
+        if op in EXCLUDE or op not in OPERATORS:
+            continue
         ops.setdefault(op, []).append([v, first, last, avg])
     out = []
     for op, vehicles in sorted(ops.items()):
