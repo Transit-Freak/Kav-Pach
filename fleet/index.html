@@ -118,7 +118,8 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, STATF=null, SORTK=null, SORTD=-1, LIMIT=200;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, STATF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0;
+const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>v[6+OFF],gR=v=>OFF?v[3]:null;
 const fmt=n=>n.toLocaleString('he-IL');
 const fd=s=>s?s.split('-').reverse().join('.'):'—';
 const days=(a,b)=>Math.round((new Date(a)-new Date(b))/864e5);
@@ -164,12 +165,13 @@ function table(vs,opsArr){
   const shown=vs.slice(0,LIMIT);
   return `<div class="tblbox"><table><thead><tr>${opsArr?'<th>חברה</th>':''}
     ${th('p','מספר רכב')}${enr?th('t','סוג הרכב')+th('y','שנתון')+th('d','דלתות')+th('m','יצרן ודגם'):''}
-    ${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
+    ${OFF?th('r','נסיעות ביום'):''}${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
   ${shown.map((v,i)=>{const on=isActive(v);
     return `<tr class="v ${on?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
     <td dir="ltr" style="text-align:right">${esc(v[0])}</td>
-    ${enr?`<td>${v[6]?`<span class="tg">${esc(v[6])}</span>`:'—'}</td><td>${v[3]||'—'}</td><td>${v[5]||'—'}</td><td>${esc(v[4]||'—')}</td>`:''}
+    ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${gD(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
+    ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     <td>${fd(v[1])}</td><td>${fd(v[2])}</td>
     <td><span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span></td></tr>`;}).join('')}
   </tbody></table></div>
@@ -182,9 +184,12 @@ function opView(ref){
   const act=o.vehicles.filter(isActive).length, ret=o.vehicles.length-act;
   const enr=DATA.enriched;
   const types={};
-  if(enr) o.vehicles.forEach(v=>{if(v[6])types[v[6]]=(types[v[6]]||0)+1;});
+  if(enr) o.vehicles.forEach(v=>{const t=gT(v);if(t)types[t]=(types[t]||0)+1;});
   const years={}; let ysum=0,yn=0;
-  o.vehicles.forEach(v=>{if(v[3]){years[v[3]]=(years[v[3]]||0)+1;ysum+=v[3];yn++;}});
+  o.vehicles.forEach(v=>{const y=gY(v);if(y){years[y]=(years[y]||0)+1;ysum+=y;yn++;}});
+  // ממוצע נסיעות יומי לצי (רק בפורמט v2)
+  const ravg=(()=>{if(!OFF)return null;const xs=o.vehicles.map(gR).filter(x=>x!=null);
+    return xs.length?(xs.reduce((a,b)=>a+b,0)/xs.length).toFixed(1):null;})();
   const yk=Object.keys(years).map(Number).sort((a,b)=>b-a);
   const ymax=yk.length?Math.max(...Object.values(years)):1;
   const avgAge=yn?(new Date(DATA.updated).getFullYear()-ysum/yn).toFixed(1):null;
@@ -195,13 +200,13 @@ function opView(ref){
   }
   const hmax=Math.max(...hist.map(h=>h[1]),1);
   let vs=o.vehicles;
-  if(TYPEF) vs=vs.filter(v=>v[6]===TYPEF);
+  if(TYPEF) vs=vs.filter(v=>gT(v)===TYPEF);
   if(STATF!==null) vs=vs.filter(v=>(isActive(v)?1:0)===STATF);
   vs=sortVs(vs);
   return `<button class="back" onclick="go(null)">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
-    <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו מהשירות</span>`:''}</div>
+    <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו מהשירות</span>`:''}${ravg?`<span>${ravg} נסיעות ביום לרכב בממוצע</span>`:''}</div>
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
@@ -229,7 +234,7 @@ function opView(ref){
 
 function sortVs(vs){
   if(!SORTK) return vs;
-  const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>v[3]||0,m:v=>v[4]||'',d:v=>v[5]||0,t:v=>v[6]||''}[SORTK];
+  const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',d:v=>gD(v)||0,t:v=>gT(v)||'',r:v=>gR(v)||0}[SORTK];
   return vs.slice().sort((a,b)=>{const x=key(a),y=key(b);return (x>y?1:x<y?-1:0)*SORTD;});
 }
 function srt(k){if(SORTK===k)SORTD*=-1;else{SORTK=k;SORTD=-1;}render();}
@@ -262,6 +267,7 @@ async function showV(plate){
     <div class="k">מפעיל</div><div class="v2">${esc(fo.name)}</div>
     <div class="k">נצפה לראשונה</div><div class="v2">${fd(fv[1])}</div>
     <div class="k">נצפה לאחרונה</div><div class="v2">${fd(fv[2])}</div>
+    ${gR(fv)!=null?`<div class="k">נסיעות ביום בממוצע</div><div class="v2">${gR(fv)} (בימים שנמדדו)</div>`:''}
     <div class="k">מצב</div><div class="v2">${on?'✅ פעיל':'🔴 ירד מהשירות'}</div></div>`;
   if(gov){
     const known=Object.keys(LBL).filter(k=>gov[k]!==undefined);
@@ -273,7 +279,7 @@ async function showV(plate){
   }
   const ovl=document.createElement('div');ovl.className='ovl';
   ovl.innerHTML=`<div class="modal"><div class="mhead"><span class="plate">${esc(plate)}</span>
-    ${fv[6]?`<span class="tg">${esc(fv[6])}</span>`:''}
+    ${gT(fv)?`<span class="tg">${esc(gT(fv))}</span>`:''}
     <span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span>
     <button class="x" aria-label="סגירה">✕</button></div>${rows}</div>`;
   ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
@@ -290,7 +296,7 @@ document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};LIMIT=200;render();});
 
 fetch('data/fleet.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-.then(d=>{DATA=d;render();})
+.then(d=>{DATA=d;OFF=d.v===2?1:0;render();})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>
