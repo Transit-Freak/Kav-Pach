@@ -340,7 +340,7 @@ document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-.then(d=>{DATA=d;OFF=d.v===2?1:0;render();})
+.then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;render();})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>
