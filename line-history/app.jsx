@@ -539,7 +539,7 @@ function AltCompare({ rd, altRd, label, onClose }) {
   );
 }
 
-function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
+function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
@@ -593,10 +593,18 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack }) {
     setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null); setOnlyCur(false);
     dfetch("data/lines/" + fsafe(rd) + ".json")
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((d) => { if (!ok) return; setLf(materializeLf(d)); setSel(d.versions.length - 1); })
+      .then((d) => { if (!ok) return; setLf(materializeLf(d));
+        // קישור מציר תחנה מגיע עם תאריך (‎#מקט@תאריך‎) — נוחתים ישר על
+        // הגרסה של אותו שינוי, לא על הגרסה האחרונה
+        let s = d.versions.length - 1;
+        if (initDate) {
+          const i = d.versions.findIndex((v) => v.d === initDate);
+          if (i >= 0) s = i;
+        }
+        setSel(s); })
       .catch((e) => { if (ok) setErr(e); });
     return () => { ok = false; };
-  }, [rd, rty]);
+  }, [rd, rty, initDate]);
   // הודעת שגיאה אחת לשני מצבים שונים הטעתה: כשל רשת רגעי בנייד הוצג
   // כ"לא נמצאו נתונים" והגולש הסיק שאין מה לראות. סטטוס HTTP (404) הוא
   // באמת קו שאין לו קובץ; כל השאר — תקלה, עם כפתור לנסות שוב.
@@ -1507,7 +1515,7 @@ function RecentChanges({ idx, openLine, onAll }) {
 // ציר הקווים של תחנה בודדת: אילו קווים עצרו בה, מי נוסף ומי ירד ומתי
 // (בקשת המשתמש). הנתונים: data/stopev/XX.json — נגזרים יומית מקובצי
 // הקווים, כך ששינוי אצל קו נרשם אוטומטית גם אצל כל תחנה שהושפעה.
-function LinesAtStop({ code }) {
+function LinesAtStop({ code, onClose }) {
   const [d, setD] = useState(null);
   const [err, setErr] = useState(false);
   const [all, setAll] = useState(false);
@@ -1545,7 +1553,9 @@ function LinesAtStop({ code }) {
   const shown = all ? rows : rows.slice(0, 30);
   return (
     <div className="lat">
-      <div className="lathead">🚌 הקווים בתחנה הזו לאורך זמן</div>
+      <div className="lathead">🚌 הקווים בתחנה הזו לאורך זמן
+        {onClose && <button className="latx" title="סגירת ציר הקווים" onClick={onClose}>✕</button>}
+      </div>
       {now.length > 0 && (
         <div className="latnow">עוצרים בה כיום לפי התיעוד:{" "}
           {now.slice(0, 40).map(([l, rd2]) => <a key={l} className="badge sm latb" href={lineHref(rd2)}>{l}</a>)}
@@ -1554,12 +1564,12 @@ function LinesAtStop({ code }) {
       <div className="latlist">
         {shown.map((r, i) => r.k === "base"
           ? <div className="latrow" key={i}><span className="latd">{fmtD(r.d)}</span> {r.lines.length === 1
-              ? <>🚏 קו <a href={lineHref(r.lines[0][1])}><b>{r.lines[0][0]}</b></a> תועד בתחנה לראשונה</>
+              ? <>🚏 קו <a href={lineHref(r.lines[0][1]) + "@" + r.d}><b>{r.lines[0][0]}</b></a> תועד בתחנה לראשונה</>
               : <>🚏 בתיעוד הראשון עצרו כאן {r.lines.length} קווים: {r.lines.slice(0, 25).map(([l, rd2], j) =>
-                  <React.Fragment key={l + rd2}>{j > 0 ? ", " : ""}<a href={lineHref(rd2)}><b>{l}</b></a></React.Fragment>)}{r.lines.length > 25 ? "…" : ""}</>}</div>
+                  <React.Fragment key={l + rd2}>{j > 0 ? ", " : ""}<a href={lineHref(rd2) + "@" + r.d}><b>{l}</b></a></React.Fragment>)}{r.lines.length > 25 ? "…" : ""}</>}</div>
           : <div className="latrow" key={i}><span className="latd">{fmtD(r.d)}</span> {r.k === "in"
-              ? <>🆕 קו <a href={lineHref(r.rd)}><b>{r.line}</b></a> התחיל לעצור בתחנה</>
-              : <>➖ קו <a href={lineHref(r.rd)}><b>{r.line}</b></a> הפסיק לעצור בתחנה</>}</div>)}
+              ? <>🆕 קו <a href={lineHref(r.rd) + "@" + r.d}><b>{r.line}</b></a> התחיל לעצור בתחנה</>
+              : <>➖ קו <a href={lineHref(r.rd) + "@" + r.d}><b>{r.line}</b></a> הפסיק לעצור בתחנה</>}</div>)}
       </div>
       {rows.length > shown.length && <button className="morebtn" onClick={() => setAll(true)}>⌄ כל {rows.length.toLocaleString()} האירועים</button>}
       <div className="latnote">מחושב מהשוואת רצפי התחנות של כל הקווים לאורך התקופה. מעבר רציף נראה כאן כקו שירד — ועלה באותו תאריך ברציף השכן.</div>
@@ -1567,7 +1577,7 @@ function LinesAtStop({ code }) {
   );
 }
 
-function StopsTab({ sel }) {
+function StopsTab({ sel, selN }) {
   const [months, setMonths] = useState(null);
   const [mon, setMon] = useState("");
   const [yr, setYr] = useState("");   // שנה נבחרת בבוחר החודשים
@@ -1578,13 +1588,27 @@ function StopsTab({ sel }) {
   const [katOpen, setKatOpen] = useState(false);
   const [q, setQ] = usePersistedQ("lh-q-stops");
   const [openKey, setOpenKey] = useState(null);   // שורת תחנה פתוחה עם מפה
+  // ציר הקווים נסגר ב-✕ או ברגע שהחיפוש כבר לא מציג את התחנה שלו;
+  // הסגירה מנקה גם את הכתובת, כדי שריענון לא יחזיר את הפאנל
+  const [latHide, setLatHide] = useState(false);
+  useEffect(() => setLatHide(false), [sel, selN]);
+  const closeLat = () => {
+    setLatHide(true);
+    if ((location.hash || "").includes("stop=")) history.replaceState(null, "", location.pathname + location.search);
+  };
+  // גם סגירה עקיפה — שינוי או מחיקה של החיפוש — מנקה את הכתובת, כדי
+  // שלחיצה חוזרת על קישור התחנה תיחשב לניווט חדש ותפתח את הפאנל
+  useEffect(() => {
+    if (sel && q.trim() !== sel && (location.hash || "").includes("stop="))
+      history.replaceState(null, "", location.pathname + location.search);
+  }, [q, sel]);
   const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
   useEffect(() => setLim(250), [q, mon, kinds, onlyNs]);
   // תחנה שהגיעה מהכתובת: כל קורות החיים שלה, ולא רק החודש שנבחר
   useEffect(() => {
     if (!sel) return;
     setMon("all"); setYr(""); setQ(sel); setKinds(new Set()); setOnlyNs(false);
-  }, [sel]);
+  }, [sel, selN]);
   const toggleKind = (k) => setKinds((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   // קורות החיים של כל התחנות הם 4.5 מגה, והם נדרשים רק ל"כל התקופה".
   // תצוגת חודש בודד מסתדרת עם קובץ של עשרות קילובייט כי הכללים שדרשו
@@ -1763,7 +1787,7 @@ function StopsTab({ sel }) {
           </div>
         )}
       </div>
-      {sel && <LinesAtStop code={sel} />}
+      {sel && !latHide && q.trim() === sel && <LinesAtStop code={sel} onClose={closeLat} />}
       {source === null ? "טוען…" : (
         <div className="slist">
           {(() => {
@@ -2041,8 +2065,14 @@ function App() {
   // ‎#2012/<k>‎ הוא כתובת של קו 2012 בלי מקבילה של היום — נפתח בפיד.
   const H0 = decodeURIComponent((location.hash || "").slice(1));
   const isStopH = (h) => h.startsWith("stop=");
-  const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? H0 : null));
+  // ‎#מקט@תאריך‎ — קישור מציר תחנה שנוחת ישר על גרסת השינוי
+  const splitRdDate = (h) => { const i = h.lastIndexOf("@"); return i > 0 ? [h.slice(0, i), h.slice(i + 1)] : [h, null]; };
+  const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? splitRdDate(H0)[0] : null));
+  const [rdDate, setRdDate] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? splitRdDate(H0)[1] : null));
   const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
+  // מונה פתיחות: לחיצה חוזרת על קישור לאותה תחנה חייבת לפתוח מחדש גם
+  // כשהמזהה עצמו לא השתנה
+  const [stopSelN, setStopSelN] = useState(0);
   const [byDay, setByDay] = useState(false);   // תצוגת "שינויים לפי יום"
   // ‎#2012/<k>‎ הוא עמוד לכל דבר, ולא שורה שנפתחת בתוך הפיד
   const [k12, setK12] = useState(() => (H0.startsWith("2012/") ? H0.slice(5) : null));
@@ -2062,17 +2092,17 @@ function App() {
     const onHash = () => {
       const h = decodeURIComponent((location.hash || "").slice(1));
       if (h.startsWith("2012/")) { setRd(null); setK12(h.slice(5)); return; }
-      if (isStopH(h)) { setRd(null); setStopSel(h.slice(5)); setTab("stops"); return; }
+      if (isStopH(h)) { setRd(null); setStopSel(h.slice(5)); setStopSelN((n) => n + 1); setTab("stops"); return; }
       // כתובת של קו נקראה רק בטעינה הראשונה: מי שהדביק קישור לקו בשורת
       // הכתובת של לשונית פתוחה, או ערך את הכתובת ידנית, נשאר במסך הקודם.
       // pushState/replaceState אינם מפעילים hashchange, ולכן אין כאן לולאה.
-      if (h) { setK12(null); setRd(h); }
+      if (h) { setK12(null); const [r, dt] = splitRdDate(h); setRd(r); setRdDate(dt); }
     };
     window.addEventListener("popstate", onPop);
     window.addEventListener("hashchange", onHash);
     return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("hashchange", onHash); };
   }, []);
-  const openLine = (r) => { setK12(null); history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
+  const openLine = (r) => { setK12(null); setRdDate(null); history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const open12 = (k) => { history.pushState({ k12: k }, "", "#2012/" + encodeURIComponent(k)); setK12(k); };
   const switchLine = (r) => { history.replaceState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const backToList = () => {
@@ -2186,7 +2216,7 @@ function App() {
       {k12 ? (
         <Line2012Page k12={k12} anchorRd={anc12[k12] || null} openLine={openLine}
           onBack={() => { setK12(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
-      ) : tab === "stops" ? <StopsTab sel={stopSel} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
+      ) : tab === "stops" ? <StopsTab sel={stopSel} selN={stopSelN} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
         idx ? <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
           : <div className="card">טוען את רשימת הקווים…</div>
       ) : rd ? (
@@ -2194,7 +2224,7 @@ function App() {
            קרס ללבן (הבאג ששלמה מצא): idx עדיין null ו-idx.lines התפוצץ */
         <LinePage rd={rd} lineGone={idx ? !mktAlive[rd.split("-")[0]] : false}
           sibs={((idx && idx.lines) || []).filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
-          onSwitch={switchLine} onBack={backToList} />
+          onSwitch={switchLine} onBack={backToList} initDate={rdDate} />
       ) : byDay ? (
         <DayFeed idx={idx} openLine={openLine} open12={open12} onBack={() => setByDay(false)} />
       ) : (
