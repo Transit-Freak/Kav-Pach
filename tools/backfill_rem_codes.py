@@ -99,14 +99,15 @@ def main():
         hit = miss = 0
         for path, d, rd, nm, is_rem in need[ds]:
             ent = snap.get(rd)
-            code = None
+            val = None
             if ent:
                 for s in ent[0]:
                     if s[1] == nm:
-                        code = str(s[0])
+                        # גם קואורדינטות — כדי שהמפה תצייר את התחנה שירדה
+                        val = [str(s[0]), s[2], s[3]]
                         break
-            if code:
-                resolved.setdefault((path, d), {})[nm] = code
+            if val:
+                resolved.setdefault((path, d), {})[nm] = val
                 hit += 1
             else:
                 miss += 1
@@ -127,9 +128,9 @@ def main():
                     continue
                 here = set((v.get('rem') or []) + (v.get('add') or []))
                 nc = dict(v.get('nc') or {})
-                for nm, code in m.items():
-                    if nm in here and nc.get(nm) != code:
-                        nc[nm] = code
+                for nm, val in m.items():
+                    if nm in here and nc.get(nm) != val:
+                        nc[nm] = val
                         n_set += 1
                         ch = True
                 if ch:

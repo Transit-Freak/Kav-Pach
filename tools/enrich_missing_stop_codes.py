@@ -23,14 +23,16 @@ import sys
 
 
 def stop_names(lf):
-    """שם -> קבוצת מק"טים מתוך מאגר התחנות של הקובץ (או הגרסאות בישן)."""
+    """שם -> {מק"ט: (lat, lon)} מתוך מאגר התחנות של הקובץ."""
     out = {}
     pool = lf.get('pool') or []
     src = pool if pool else [s for v in lf.get('versions') or []
                              for s in v.get('stops') or []]
     for s in src:
-        if isinstance(s, list) and len(s) >= 2:
-            out.setdefault(s[1], set()).add(str(s[0]))
+        if isinstance(s, list) and len(s) >= 4:
+            out.setdefault(s[1], {})[str(s[0])] = (s[2], s[3])
+        elif isinstance(s, list) and len(s) >= 2:
+            out.setdefault(s[1], {}).setdefault(str(s[0]), None)
     return out
 
 
@@ -49,26 +51,42 @@ def main():
         fam = os.path.basename(p).split('-')[0]
         f = fam_map.setdefault(fam, {})
         for nm, cs in names.items():
-            f.setdefault(nm, set()).update(cs)
-            nat_map.setdefault(nm, set()).update(cs)
+            f.setdefault(nm, {}).update(cs)
+            nat_map.setdefault(nm, {}).update(cs)
 
     n_res = n_left = n_files = 0
     for p, (lf, names) in per_file.items():
         fam = fam_map[os.path.basename(p).split('-')[0]]
         changed = False
+
+        def as_val(code, coords):
+            """[מק"ט, lat, lon] כשיש קואורדינטות — כדי שהמפה תצייר —
+            אחרת המק"ט לבדו."""
+            return [code, coords[0], coords[1]] if coords else code
+
         for v in lf.get('versions') or []:
             # ערכים קיימים נשמרים — backfill_rem_codes כותב מק"טים מדויקים
-            # מצילומי הארכיון, וההיסק כאן רק ממלא חורים שנותרו
-            nc = {k: c for k, c in (v.get('nc') or {}).items()
-                  if k in set((v.get('rem') or []) + (v.get('add') or []))}
+            # מצילומי הארכיון, וההיסק כאן רק ממלא חורים שנותרו. ערך ישן
+            # בפורמט מחרוזת משודרג לכלול קואורדינטות כשהן ידועות למק"ט.
+            here = set((v.get('rem') or []) + (v.get('add') or []))
+            nc = {}
+            for k, c in (v.get('nc') or {}).items():
+                if k not in here:
+                    continue
+                if isinstance(c, str):
+                    coords = (fam.get(k) or {}).get(c) or (nat_map.get(k) or {}).get(c)
+                    nc[k] = as_val(c, coords)
+                else:
+                    nc[k] = c
             for nm in (v.get('rem') or []) + (v.get('add') or []):
                 if nm in names or nm in nc:
                     continue        # הממשק מוצא לבד בתוך הקובץ / כבר פתור
-                cs = fam.get(nm) or set()
+                cs = fam.get(nm) or {}
                 if len(cs) != 1:
-                    cs = nat_map.get(nm) or set()
+                    cs = nat_map.get(nm) or {}
                 if len(cs) == 1:
-                    nc[nm] = next(iter(cs))
+                    code, coords = next(iter(cs.items()))
+                    nc[nm] = as_val(code, coords)
                     n_res += 1
                 else:
                     n_left += 1

@@ -308,7 +308,7 @@ function TimesDiff({ tl, tn }) {
   );
 }
 
-function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12 }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // הקטעים ששונו + התחנות ששונו — היעד של מצב "התמקדות" (בקשת המשתמש:
@@ -343,7 +343,8 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     }).addTo(map);
     const focused = canFocus && focus;
     const pts12 = (stops12 || []).map((s) => [s[1], s[2]]);
-    const all = focused ? focusPts : cur.concat(prev || []).concat(pts12);
+    const pinPts = (remPins || []).map((p) => [p[2], p[3]]);
+    const all = focused ? focusPts : cur.concat(prev || []).concat(pts12).concat(pinPts);
     map.fitBounds(L.latLngBounds(all.length ? all : [[32.08, 34.78]]).pad(focused ? 0.35 : 0.1), { maxZoom: 16 });
     if (prev && prev.length > 1) {
       L.polyline(prev, { color: "#dc2626", weight: focused ? 3 : 4, opacity: focused ? 0.25 : 0.75, dashArray: "8 7" }).addTo(map);
@@ -395,8 +396,16 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
         .addTo(map)
         .bindPopup(popHtml(s, "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
     });
+    // תחנות שירדו שאינן באף רשימה בקובץ (הצנרת פענחה מק"ט+מיקום מצילום
+    // הארכיון, v.nc) — בלעדיהן התחנה שירדה פשוט לא הופיעה במפה
+    (remPins || []).forEach((p) => {
+      if (curCodes.has(p[0]) || prevCodes.has(p[0])) return;
+      L.circleMarker([p[2], p[3]], { radius: 8, color: "#dc2626", weight: 3, fillColor: "#fff", fillOpacity: 1 })
+        .addTo(map)
+        .bindPopup(popHtml([p[0], p[1]], "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
+    });
     return () => { mapRef.current = null; map.remove(); };
-  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12]);
+  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12, remPins]);
   // סיכום טקסטואלי למי שלא רואה את המפה — המספרים כבר מחושבים ממילא
   const nAdd = (curStops || []).filter((s) => addedCodes && addedCodes.has(s[0])).length;
   const curC = new Set((curStops || []).map((s) => s[0]));
@@ -698,10 +707,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     return null;
   };
   // v.nc — מק"טים שהצנרת פענחה מראש לשמות שאינם בקובץ (תחנה שירדה
-  // בגרסה הראשונה של קו ארכיוני, למשל) — נבדק לפני החיפוש הרגיל
+  // בגרסה הראשונה של קו ארכיוני, למשל) — נבדק לפני החיפוש הרגיל.
+  // הערך: מחרוזת מק"ט, או [מק"ט, lat, lon] כשגם המיקום ידוע (למפה)
+  const ncOf = (nv, name) => {
+    const e = nv && nv.nc && nv.nc[name];
+    return Array.isArray(e) ? e[0] : e;
+  };
   const withCode = (name, i, isAdd) => {
     const nv = vs[Math.min(i, vs.length - 1)];
-    const c = (nv && nv.nc && nv.nc[name]) || codeOf(name, i, isAdd);
+    const c = ncOf(nv, name) || codeOf(name, i, isAdd);
     return c ? `${name} (${c})` : name;
   };
   // תחנה שירדה ותחנה שנוספה עם אותו שם ורק רציף שונה — זה מעבר רציף,
@@ -1106,7 +1120,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           prevStops={!onlyCur && pgv && (pgv.stops || []).length ? pgv.stops : null}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n) => codeOf(n, vi, true)).filter(Boolean)) : null}
-          stops12={onlyCur ? null : stops12} />
+          stops12={onlyCur ? null : stops12}
+          remPins={onlyCur || cmpOn ? null : (v.rem || []).map((n) => {
+            const e = v.nc && v.nc[n];
+            return Array.isArray(e) ? [String(e[0]), n, e[1], e[2]] : null;
+          }).filter(Boolean)} />
         <div className="legend">
           {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev && !onlyCur ? "#16a34a" : "#4c1d95" }} /> {prev && !onlyCur ? "המסלול החדש" : "המסלול"}</span>
