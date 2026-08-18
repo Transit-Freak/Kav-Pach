@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>סטודיו העיצוב — נגישות אזורי תעשייה</title>
+<meta name="robots" content="noindex" />
+<!-- סטודיו עיצוב פתוח: כל גולש/ת — בלי שום חשבון — מכוונים את ערכת העיצוב,
+     רואים את האתר האמיתי מתעדכן חי (iframe מאותו מקור), ושולחים את ההצעה
+     בטופס שבתוך הדף. השינויים לא נוגעים באתר עצמו עד שההצעה מאושרת. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23134e4a'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle'%3E🎨%3C/text%3E%3C/svg%3E" />
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#eef1f5;color:#0f172a}
+  .top{background:#134e4a;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .top h1{font-size:18px;font-weight:900;margin:0}
+  .tag{background:#5eead4;color:#134e4a;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
+  .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
+  .lab{display:grid;grid-template-columns:340px minmax(0,1fr);gap:12px;max-width:1500px;margin:12px auto;padding:0 10px}
+  @media (max-width:900px){.lab{grid-template-columns:1fr}}
+  .panel{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:14px 16px;align-self:start}
+  .panel h2{font-size:15px;font-weight:900;color:#134e4a;margin:0 0 4px}
+  .panel .hint{font-size:12.5px;color:#64748b;font-weight:700;line-height:1.6;margin:0 0 10px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9}
+  .row label{font-size:13.5px;font-weight:800}
+  .row input[type=color]{width:44px;height:30px;border:1px solid #e2e8f0;border-radius:8px;padding:2px;background:#fff;cursor:pointer}
+  .row input[type=range]{width:130px;accent-color:#0f766e}
+  .row select{font-family:inherit;font-weight:700;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid #e2e8f0}
+  .row .val{font-size:12px;color:#64748b;font-weight:800;min-width:34px;text-align:left}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
+  .preset{border:1.5px solid #e2e8f0;background:#fff;border-radius:9999px;padding:5px 12px;font-family:inherit;font-weight:800;font-size:12.5px;cursor:pointer}
+  .preset:hover{border-color:#0f766e}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:-1px;margin-left:5px}
+  textarea{width:100%;border:1px solid #e2e8f0;border-radius:10px;padding:9px 11px;font-family:inherit;font-size:13.5px;min-height:74px;resize:vertical}
+  input.nm{width:100%;border:1px solid #e2e8f0;border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13.5px;font-weight:700}
+  .send{width:100%;margin-top:8px;background:#0f766e;color:#fff;border:none;border-radius:12px;padding:11px 14px;font-family:inherit;font-weight:900;font-size:15px;cursor:pointer}
+  .send:hover{background:#115e59}
+  .send:disabled{opacity:.6;cursor:default}
+  .share{width:100%;margin-top:6px;background:#f0fdfa;color:#0f766e;border:1.5px solid #99f6e4;border-radius:12px;padding:9px 14px;font-family:inherit;font-weight:900;font-size:13.5px;cursor:pointer}
+  .ok{margin-top:8px;background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:10px;padding:8px 11px;font-size:13px;font-weight:800;display:none;line-height:1.6}
+  .prev{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);overflow:hidden;min-height:70vh;display:flex;flex-direction:column}
+  .prevbar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:12.5px;font-weight:800;color:#475569}
+  .prev iframe{border:none;width:100%;flex:1;min-height:66vh}
+  .foot{max-width:1500px;margin:6px auto 26px;padding:0 12px;font-size:12px;color:#64748b;font-weight:700;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>🎨 סטודיו העיצוב</h1>
+  <span class="tag">פתוח לכולם</span>
+  <a href="./">→ חזרה לאתר נגישות אזורי תעשייה</a>
+</div>
+
+<div class="lab">
+  <div class="panel">
+    <h2>מכוונים את הערכה</h2>
+    <p class="hint">כל שינוי מופיע מיד על האתר האמיתי משמאל. שום דבר לא נשמר באתר — כשמרוצים, שולחים את ההצעה למטה והיא תיבחן ותוטמע ידנית.</p>
+
+    <div class="presets" id="presets"></div>
+
+    <div class="row"><label>צבע הכותרת</label><input type="color" id="c-top" value="#134e4a"></div>
+    <div class="row"><label>צבע ההדגשה (כפתורים ותגים)</label><input type="color" id="c-acc" value="#5eead4"></div>
+    <div class="row"><label>טקסט על ההדגשה</label><input type="color" id="c-accink" value="#134e4a"></div>
+    <div class="row"><label>רקע העמוד</label><input type="color" id="c-bg" value="#eef1f5"></div>
+    <div class="row"><label>רקע כותרות הטבלה</label><input type="color" id="c-th" value="#f0fdfa"></div>
+    <div class="row"><label>גופן</label>
+      <select id="f-font">
+        <option value="'Assistant','Heebo',system-ui,sans-serif" selected>Assistant (הנוכחי)</option>
+        <option value="'Heebo',system-ui,sans-serif">Heebo</option>
+        <option value="'Rubik',system-ui,sans-serif">Rubik</option>
+        <option value="'Alef',system-ui,sans-serif">Alef</option>
+        <option value="'Secular One','Heebo',system-ui,sans-serif">Secular One</option>
+        <option value="'David Libre',serif">David Libre</option>
+      </select></div>
+    <div class="row"><label>עיגול פינות</label><input type="range" id="r-rad" min="0" max="26" value="14"><span class="val" id="v-rad">14px</span></div>
+    <div class="row"><label>גודל טקסט</label><input type="range" id="r-fs" min="90" max="115" value="100"><span class="val" id="v-fs">100%</span></div>
+    <div class="row" style="border-bottom:none"><label>צלליות</label><input type="range" id="r-sh" min="0" max="100" value="100"><span class="val" id="v-sh">100%</span></div>
+
+    <h2 style="margin-top:14px">שולחים את ההצעה</h2>
+    <input class="nm" id="nm" placeholder="שם (לא חובה)">
+    <div style="height:6px"></div>
+    <textarea id="notes" placeholder="הערות חופשיות — מה עוד הייתם משנים? פריסה, טקסטים, כל רעיון…"></textarea>
+    <button class="send" id="send">📨 שליחת הצעת העיצוב</button>
+    <button class="share" id="share">🔗 העתקת קישור שפותח את הסטודיו עם העיצוב הזה</button>
+    <div class="ok" id="ok"></div>
+  </div>
+
+  <div class="prev">
+    <div class="prevbar">👁️ תצוגה חיה של האתר האמיתי — אפשר לגלול וללחוץ בפנים כרגיל</div>
+    <iframe id="pf" src="./"></iframe>
+  </div>
+</div>
+
+<div class="foot">
+  ההצעות נשלחות לשלמה הרטמן ומוטמעות ידנית לאחר בחינה — לאף אחד אין כאן גישה לשנות את האתר עצמו.
+  הסטודיו משנה צבעים, גופן וצורה; הצעות לפריסה ולתוכן נכתבות בשדה ההערות.
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var FSURL='https://formsubmit.co/ajax/ea03c6e126249e4fc11c3949c3c4237b';
+  var FONTS={
+    "'Rubik',system-ui,sans-serif":'Rubik:wght@400;700;900',
+    "'Alef',system-ui,sans-serif":'Alef:wght@400;700',
+    "'Secular One','Heebo',system-ui,sans-serif":'Secular+One',
+    "'David Libre',serif":'David+Libre:wght@400;700'
+  };
+  var PRESETS=[
+    ['הנוכחי','#134e4a','#5eead4','#134e4a','#eef1f5','#f0fdfa'],
+    ['כחול עמוק','#1e3a8a','#93c5fd','#1e3a8a','#eff3f9','#eff6ff'],
+    ['סגול הקו בזמן','#4c1d95','#ddd6fe','#4c1d95','#eef1f5','#f5f3ff'],
+    ['חום תעשייתי','#7c2d12','#fdba74','#7c2d12','#f5f2ee','#fff7ed'],
+    ['כהה','#0f172a','#5eead4','#0f172a','#dde3ea','#e2e8f0']
+  ];
+  var ids=['c-top','c-acc','c-accink','c-bg','c-th','f-font','r-rad','r-fs','r-sh'];
+
+  function vals(){
+    return { top:$('c-top').value, acc:$('c-acc').value, accink:$('c-accink').value,
+      bg:$('c-bg').value, th:$('c-th').value, font:$('f-font').value,
+      rad:+$('r-rad').value, fs:+$('r-fs').value, sh:+$('r-sh').value };
+  }
+  function css(v){
+    var shadow=v.sh===0?'none':'0 8px 30px rgba(0,0,0,'+(0.08*v.sh/100).toFixed(3)+')';
+    return 'html,body{background:'+v.bg+'!important;font-family:'+v.font+'!important;font-size:'+v.fs+'%!important}'+
+      '.top{background:'+v.top+'!important}'+
+      '.tag,.btn{background:'+v.acc+'!important;color:'+v.accink+'!important}'+
+      '.btn.on{background:'+v.top+'!important;color:#fff!important}'+
+      'th{background:'+v.th+'!important;color:'+v.top+'!important}'+
+      '.lp-title{color:'+v.top+'!important}'+
+      '.tblcard,.layers-panel,.panelcard{border-radius:'+v.rad+'px!important}'+
+      '.btn{border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
+      '.tblcard{box-shadow:'+shadow+'!important}';
+  }
+  function fontLink(v){
+    var g=FONTS[v.font];
+    return g?'https://fonts.googleapis.com/css2?family='+g+'&display=swap':null;
+  }
+  function apply(){
+    var f=$('pf'); var d=f.contentDocument;
+    if(!d||!d.head) return;
+    var v=vals();
+    var st=d.getElementById('lab-style');
+    if(!st){ st=d.createElement('style'); st.id='lab-style'; d.head.appendChild(st); }
+    st.textContent=css(v);
+    var fl=fontLink(v);
+    var ln=d.getElementById('lab-font');
+    if(fl){ if(!ln){ ln=d.createElement('link'); ln.id='lab-font'; ln.rel='stylesheet'; d.head.appendChild(ln); } ln.href=fl; }
+    else if(ln){ ln.remove(); }
+    try{ history.replaceState(null,'','#'+btoa(unescape(encodeURIComponent(JSON.stringify(v))))); }catch(e){}
+  }
+  function load(v){
+    $('c-top').value=v.top; $('c-acc').value=v.acc; $('c-accink').value=v.accink;
+    $('c-bg').value=v.bg; $('c-th').value=v.th;
+    if(v.font)$('f-font').value=v.font;
+    $('r-rad').value=v.rad; $('r-fs').value=v.fs; $('r-sh').value=v.sh;
+    labels(); apply();
+  }
+  function labels(){
+    $('v-rad').textContent=$('r-rad').value+'px';
+    $('v-fs').textContent=$('r-fs').value+'%';
+    $('v-sh').textContent=$('r-sh').value+'%';
+  }
+  PRESETS.forEach(function(p){
+    var b=document.createElement('button'); b.className='preset';
+    b.innerHTML='<span class="sw" style="background:'+p[1]+'"></span><span class="sw" style="background:'+p[2]+'"></span> '+p[0];
+    b.onclick=function(){ load({top:p[1],acc:p[2],accink:p[3],bg:p[4],th:p[5],font:$('f-font').value,rad:+$('r-rad').value,fs:+$('r-fs').value,sh:+$('r-sh').value}); };
+    $('presets').appendChild(b);
+  });
+  ids.forEach(function(id){ $(id).addEventListener('input',function(){ labels(); apply(); }); });
+  $('pf').addEventListener('load',apply);
+  if(location.hash.length>1){
+    try{ load(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))); }catch(e){}
+  }
+  labels();
+
+  $('share').onclick=function(){
+    apply();
+    var b=$('share'), t=b.textContent;
+    var done=function(){ b.textContent='✓ הועתק — שלחו את הקישור למי שתרצו'; setTimeout(function(){b.textContent=t;},2200); };
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(location.href).then(done,function(){});
+  };
+  $('send').onclick=function(){
+    var v=vals(); var b=$('send'); b.disabled=true; b.textContent='שולח…';
+    var body={ _subject:'הצעת עיצוב — נגישות אזורי תעשייה',
+      'שם':$('nm').value||'אנונימי', 'הערות':$('notes').value||'—',
+      'ערכת העיצוב':JSON.stringify(v), 'קישור לעיצוב':location.href, _honey:'' };
+    fetch(FSURL,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(){ $('ok').style.display='block'; $('ok').textContent='✓ ההצעה נשלחה! היא תיבחן ואם תאומץ — האתר יתעדכן. תודה!'; b.textContent='📨 שליחת הצעת העיצוב'; b.disabled=false; })
+      .catch(function(){
+        b.disabled=false; b.textContent='📨 שליחת הצעת העיצוב';
+        $('ok').style.display='block';
+        $('ok').textContent='השליחה לא הצליחה — אפשר פשוט להעתיק את הקישור (הכפתור למטה) ולשלוח אותו לשלמה בכל דרך.';
+      });
+  };
+})();
+</script>
+</body>
+</html>
