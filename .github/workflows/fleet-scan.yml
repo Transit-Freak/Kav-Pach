@@ -1,8 +1,9 @@
 name: fleet-scan
 
 # צי הרכבים: סריקת דאטאבוס (Stride API) — אילו רכבים פעלו אצל כל מפעיל
-# ומתי נצפו לראשונה ולאחרונה, בתוספת העשרה מהמאגר הממשלתי (שנה/יצרן/דגם).
-# שבועי: מרחיב את החלון ב-8 הימים האחרונים. Backfill ידני: הפעלה עם FROM/TO.
+# ומתי נצפו לראשונה ולאחרונה, בתוספת העשרה מהמאגר הממשלתי (שנה/יצרן/דגם/דלתות/סוג).
+# שבועי: מרחיב את החלון ב-8 הימים האחרונים. Backfill: הפעלה עם chain=true —
+# כל ריצה סורקת פרק של עד 45 יום אחורה ומזניקה את הפרק הבא, עד 16.01.2022.
 
 on:
   schedule:
@@ -19,9 +20,14 @@ on:
         description: 'עצירה נקייה אחרי X דקות (0 = בלי מגבלה)'
         required: false
         default: '300'
+      chain:
+        description: 'backfill משורשר — בסיום, הזנקת הפרק הבא אחורה עד 2022'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: fleet-scan
@@ -54,3 +60,33 @@ jobs:
           git commit -m 'data: fleet — עדכון צי הרכבים מדאטאבוס'
           git pull --rebase origin main
           git push
+
+      - name: המשך backfill אוטומטי
+        if: github.event.inputs.chain == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - > /tmp/next.env <<'EOF'
+          import datetime
+          import json
+          st = json.load(open('fleet/data/fleet-state.json'))['vehicles']
+          earliest = min(v[0] for v in st.values())
+          target = datetime.date(2022, 1, 16)
+          e = datetime.date.fromisoformat(earliest)
+          if e <= target:
+              print('DONE=1')
+          else:
+              to = e - datetime.timedelta(days=1)
+              frm = max(target, to - datetime.timedelta(days=44))
+              print(f'FROM={frm}')
+              print(f'TO={to}')
+              print('DONE=')
+          EOF
+          cat /tmp/next.env
+          . /tmp/next.env
+          if [ -z "$DONE" ]; then
+            echo "מזניק פרק הבא: $FROM → $TO"
+            gh workflow run fleet-scan.yml --ref main -f from="$FROM" -f to="$TO" -f chain=true -f max_min=300
+          else
+            echo 'ה-backfill הושלם — הגענו ל-16.01.2022'
+          fi
