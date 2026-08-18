@@ -28,7 +28,13 @@ def get(action, **params):
     url = f'{CKAN}/{action}?' + urllib.parse.urlencode(params)
     for attempt in range(5):
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-fleet/1.0'})
+            # data.gov.il מחזיר 403 לבקשות בלי חתימת דפדפן מלאה
+            req = urllib.request.Request(url, headers={
+                'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                               'AppleWebKit/537.36 (KHTML, like Gecko) '
+                               'Chrome/126.0 Safari/537.36'),
+                'Accept': 'application/json',
+            })
             with urllib.request.urlopen(req, timeout=180) as r:
                 j = json.load(r)
             if not j.get('success'):
