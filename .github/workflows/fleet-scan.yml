@@ -60,6 +60,7 @@ jobs:
         run: |
           git config user.name 'fleet-bot'
           git config user.email 'noreply@github.com'
+          git rebase --abort 2>/dev/null || true
           git add fleet/data
           git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
           git commit -m 'data: fleet — עדכון צי הרכבים מדאטאבוס'
