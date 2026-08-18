@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 """צי הרכבים — העשרה מהמאגר הממשלתי: כל פרט קיים על כל רכב.
 
+מקור הנתונים: קובץ ה-CSV של "כלי הרכב הציבוריים הפעילים" שמועלה ידנית
+לריפו (fleet/data/*.csv) — כי data.gov.il חוסם שרתי ענן. אם אין קובץ
+מקומי, מנסים את ה-API הישיר כגיבוי.
+
 שני תוצרים:
 1. fleet/data/fleet.json — לכל רכב מתווספים [שנת ייצור, "יצרן דגם"]
    (קומפקטי, לכרטיסים ולטבלה).
@@ -67,6 +71,37 @@ def find_resources():
     return out
 
 
+def norm_plate(p):
+    """נרמול לוחית: בלי מקפים ואפסים מובילים — ככה משווים רישוי מול SIRI."""
+    p = str(p or '').strip().replace('-', '')
+    return p.lstrip('0') if p.strip('0') else p
+
+
+def load_local_csv(wanted):
+    """מאגר הרישוי מקובץ ה-CSV שבריפו (מופרד ב-|) → לוחית ← רשומה מלאה."""
+    import csv
+    import glob
+    outs = {os.path.basename(OUT)}
+    cands = [p for p in glob.glob(os.path.join(os.path.dirname(OUT), '*.csv'))
+             if os.path.basename(p) not in outs]
+    if not cands:
+        return None
+    path = max(cands, key=os.path.getsize)
+    reg = {}
+    with open(path, encoding='utf-8-sig', newline='') as f:
+        rd = csv.DictReader(f, delimiter='|')
+        for r in rd:
+            plate = norm_plate(r.get('mispar_rechev'))
+            if not plate.isdigit() or plate not in wanted:
+                continue
+            clean = {k: v.strip().strip('"') for k, v in r.items()
+                     if k and v and v.strip() and v.strip() != 'NULL'}
+            clean['_source'] = 'כלי רכב ציבוריים פעילים (קובץ בריפו)'
+            reg[plate] = clean
+    print(f'CSV מקומי {os.path.basename(path)}: {len(reg)} התאמות', flush=True)
+    return reg
+
+
 def plate_key(record):
     """שם שדה מספר הרכב ברשומה."""
     for k in record:
@@ -115,10 +150,10 @@ def load_registry(resources, wanted):
 def short_info(rec):
     """[שנה, "יצרן דגם", דלתות, סוג] לתצוגה בטבלה בלי לטעון את הפרטים המלאים."""
     def pick(*subs):
-        for k, v in rec.items():
-            lk = k.lower()
-            if any(s in lk for s in subs):
-                return str(v).strip()
+        for s in subs:                      # סדר העדיפות של המתקשר נשמר
+            for k, v in rec.items():
+                if s in k.lower():
+                    return str(v).strip()
         return ''
     year = pick('shnat_yitzur', 'shnat')
     maker = pick('tozeret_nm', 'tozeret')
@@ -149,9 +184,11 @@ def jdump(obj, path):
 def main():
     with open(OUT, encoding='utf-8') as f:
         data = json.load(f)
-    wanted = {str(v[0]).strip().replace('-', '')
+    wanted = {norm_plate(v[0])
               for op in data['operators'] for v in op['vehicles']}
-    reg = load_registry(find_resources(), wanted)
+    reg = load_local_csv(wanted)
+    if reg is None:
+        reg = load_registry(find_resources(), wanted)
 
     hit = miss = 0
     total = sum(len(op['vehicles']) for op in data['operators'])
@@ -164,7 +201,7 @@ def main():
     for op in data['operators']:
         kept = []
         for v in op['vehicles']:
-            plate = str(v[0]).strip().replace('-', '')
+            plate = norm_plate(v[0])
             rec = reg.get(plate)
             del v[base:]  # ניקוי העשרה קודמת אם הסקריפט רץ שוב
             if rec:
