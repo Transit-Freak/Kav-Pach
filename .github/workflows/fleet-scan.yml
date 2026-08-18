@@ -45,6 +45,7 @@ jobs:
           FROM: ${{ github.event.inputs.from }}
           TO: ${{ github.event.inputs.to }}
           MAX_MIN: ${{ github.event.inputs.max_min || '300' }}
+          FLUSH_DAYS: '1'   # עדכון חי לאתר אחרי כל יום סרוק
         run: python3 tools/fleet_scan.py
 
       - name: העשרה מהמאגר הממשלתי (best-effort)
