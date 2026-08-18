@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>צי הרכבים — אב-טיפוס</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap">
+<style>
+  :root{
+    --bg:#F2F4F8; --surface:#FFFFFF; --ink:#10172A; --mut:#6B7488; --dim:#8B93A7;
+    --line:#E6EAF0; --chipbg:#EEF1F6; --row:#F6F8FB;
+    --ok:#166534; --ok-bg:#DCFCE7; --bad:#991B1B; --bad-bg:#FEE2E2;
+    --shadow:0 1px 3px rgba(16,23,42,.08); --shadow-lg:0 14px 40px rgba(16,23,42,.18);
+  }
+  *{box-sizing:border-box}
+  html{direction:rtl}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .logo{width:42px;height:42px;border-radius:13px;background:var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  h1{font-size:21px;font-weight:800;margin:0}
+  .proto{font-size:10.5px;font-weight:700;background:#FEF3C7;color:#92400E;border-radius:999px;padding:3px 10px}
+  .searchrow{display:flex;gap:8px;flex:1;min-width:280px;align-items:center}
+  #q{flex:1;height:46px;border:none;border-radius:14px;background:var(--surface);box-shadow:var(--shadow);padding:0 16px;font:600 14px 'Rubik',sans-serif;color:var(--ink);outline:none}
+  #q:focus{box-shadow:0 0 0 2px #1B7A3D, var(--shadow)}
+  .modes{display:flex;gap:5px}
+  .mode{border:none;cursor:pointer;background:var(--surface);color:var(--mut);border-radius:999px;padding:11px 15px;font:700 12.5px 'Rubik',sans-serif;box-shadow:var(--shadow)}
+  .mode.on{background:var(--ink);color:#fff}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:12px 16px}
+  .kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+  .kpi span{font-size:12px;color:var(--mut);font-weight:700}
+  .kpi.bad b{color:var(--bad)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  .card{border:none;text-align:inherit;font-family:inherit;cursor:pointer;color:#fff;border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);transition:transform .12s}
+  .card:hover{transform:translateY(-2px)}
+  .card h2{margin:0;font-size:17px;font-weight:800}
+  .card .n{font-size:28px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums}
+  .card .pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:10.5px;font-weight:700}
+  .card .pills span{background:rgba(255,255,255,.2);border-radius:999px;padding:3px 9px}
+  .card .pills .r{background:rgba(0,0,0,.25)}
+  .panel{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-top:14px}
+  .ptitle{font-weight:800;font-size:14px;margin:0 0 10px}
+  .ophead{color:#fff;border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .ophead h2{margin:0;font-size:20px;font-weight:800}
+  .ophead .sub{font-size:12px;opacity:.85;font-weight:500}
+  .ophead .pills{margin-inline-start:auto;display:flex;gap:7px;flex-wrap:wrap;font-size:11.5px;font-weight:700}
+  .ophead .pills span{background:rgba(255,255,255,.16);border-radius:999px;padding:5px 12px}
+  .ophead .pills .r{background:rgba(0,0,0,.25)}
+  .back{border:none;background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 15px;font:700 13px 'Rubik',sans-serif;cursor:pointer;box-shadow:var(--shadow);margin-bottom:12px}
+  .types{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+  .type{background:var(--row);border:2px solid transparent;border-radius:14px;padding:10px 12px;cursor:pointer;text-align:inherit;font-family:inherit}
+  .type.on{border-color:currentColor}
+  .type b{display:block;font-size:19px;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .type span{font-size:11px;color:var(--mut);font-weight:700}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.cols2{grid-template-columns:1fr}}
+  .yrow{display:grid;grid-template-columns:64px 1fr 44px;align-items:center;gap:8px;font-size:12px;font-weight:600;margin-bottom:4px}
+  .ybar{height:12px;border-radius:4px;background:var(--chipbg);overflow:hidden}
+  .ybar i{display:block;height:100%;border-radius:4px}
+  .yrow .c{text-align:left;color:var(--mut);font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:separate;border-spacing:0 5px;font-size:12.5px}
+  th{text-align:right;font-size:11px;color:var(--dim);font-weight:700;padding:2px 10px;white-space:nowrap}
+  td{background:var(--row);padding:9px 10px;font-weight:600;white-space:nowrap}
+  tr.v{cursor:pointer}
+  tr.v:hover td{background:#EDF2F8}
+  tr.off td{background:#FDF2F2;color:var(--bad)}
+  td:first-child{border-radius:0 10px 10px 0}
+  td:last-child{border-radius:10px 0 0 10px}
+  .tag{border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:700}
+  .st{border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700}
+  .st.on{background:var(--ok-bg);color:var(--ok)}.st.off{background:var(--bad-bg);color:var(--bad)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+  .fchip{border:none;cursor:pointer;background:var(--chipbg);color:var(--mut);border-radius:999px;padding:6px 13px;font:700 11.5px 'Rubik',sans-serif}
+  .fchip.on{background:var(--ink);color:#fff}
+  .tblbox{overflow-x:auto}
+  .ovl{position:fixed;inset:0;background:rgba(16,23,42,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+  .modal{background:var(--surface);border-radius:18px;box-shadow:var(--shadow-lg);max-width:480px;width:100%;max-height:86vh;overflow-y:auto;padding:18px 20px}
+  .mhead{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .plate{direction:ltr;background:#F4F5F6;border:2px solid #B3B9C6;border-radius:8px;padding:3px 12px;font-weight:800;font-size:17px;color:var(--ink)}
+  .x{margin-inline-start:auto;border:none;background:var(--chipbg);border-radius:10px;width:34px;height:34px;font-size:15px;font-weight:800;cursor:pointer;color:var(--mut)}
+  .msec{font-size:11px;font-weight:800;color:#1B7A3D;margin:12px 0 6px}
+  .mgrid{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:12.5px}
+  .mgrid div{padding:7px 12px;border-bottom:1px solid var(--row)}
+  .mgrid .k{background:#F8FAFC;font-weight:800;color:var(--mut);white-space:nowrap}
+  .mgrid .v2{font-weight:600}
+  .yearpick{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+  .ypc{border:1px solid var(--line);background:var(--surface);color:var(--mut);border-radius:999px;padding:6px 13px;font:700 11.5px 'Rubik',sans-serif;cursor:pointer}
+  .ypc.on{background:#1B7A3D;border-color:#1B7A3D;color:#fff}
+  .cityres{background:#F0F7F3;border:1px solid #D9EFE2;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800}
+  .note{font-size:11px;color:var(--dim);font-weight:600;line-height:1.6;margin-top:10px}
+  .empty{padding:40px;text-align:center;color:var(--dim);font-weight:700}
+  button:focus-visible,input:focus-visible,tr:focus-visible{outline:2px solid #1B7A3D;outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="11" rx="2.5"></rect><path d="M3 11h18"></path><circle cx="8" cy="18.5" r="1.6"></circle><circle cx="16" cy="18.5" r="1.6"></circle></svg></div>
+    <h1>צי הרכבים</h1>
+    <span class="proto">אב-טיפוס · נתוני דוגמה</span>
+    <div class="searchrow">
+      <input id="q" type="search" placeholder="חיפוש…">
+      <div class="modes">
+        <button class="mode on" data-m="op">חברה</button>
+        <button class="mode" data-m="city">עיר</button>
+        <button class="mode" data-m="plate">מספר רכב</button>
+      </div>
+    </div>
+  </div>
+  <div id="view"></div>
+</div>
+
+<script>
+/* ── נתוני דוגמה — באתר האמיתי מגיעים מדאטאבוס + המאגר הממשלתי ── */
+const TYPES = {u:['עירוני','#E7F3EC','#1B7A3D'],a:['מפרקי (אקורדיון)','#E7F3EC','#1B7A3D'],i:['בין-עירוני','#E8F0FB','#1D4ED8'],m:['מיניבוס','#F3EBFB','#7C3AED'],e:['עירוני חשמלי','#E6F6FD','#0E7490']};
+const OPS = [
+ {id:'egged',name:'אגד',color:'#1B7A3D',hist:[1845,1902,1988,2065,2140],rides:5.8},
+ {id:'dan',name:'דן',color:'#1E5BC6',hist:[1150,1180,1224,1270,1312],rides:6.2},
+ {id:'metro',name:'מטרופולין',color:'#E87511',hist:[860,890,921,950,988],rides:6.9},
+ {id:'kavim',name:'קווים',color:'#7C3AED',hist:[905,880,872,868,870],rides:5.1},
+];
+const VEH = [
+ ['egged','318-42-701','a',2021,4,'מרצדס Citaro G','2021-03-14','2026-08-17',1,44,'דיזל','לבן','2027-03','חיפה'],
+ ['egged','227-55-102','i',2016,1,'וולוו B8RLE','2022-01-16','2026-08-17',1,51,'דיזל','ירוק','2026-11','תל אביב'],
+ ['egged','544-18-903','e',2024,3,'BYD K9UD','2024-06-02','2026-08-17',1,38,'חשמל','לבן','2027-06','חיפה'],
+ ['egged','96-231-33','u',2013,2,"מאן Lion's City",'2022-01-16','2026-03-02',0,40,'דיזל','לבן','2026-04','חיפה'],
+ ['egged','412-77-501','u',2019,3,'מרצדס Citaro','2022-01-16','2026-08-16',1,41,'דיזל','לבן','2027-01','תל אביב'],
+ ['dan','689-12-302','e',2023,3,'BYD K9UD','2023-04-11','2026-08-17',1,38,'חשמל','כחול','2027-04','תל אביב'],
+ ['dan','333-90-115','u',2018,3,'מאן NL323','2022-01-16','2026-08-17',1,42,'דיזל','כחול','2026-12','תל אביב'],
+ ['dan','708-33-204','a',2022,4,'מרצדס Citaro G','2022-05-20','2026-08-15',1,46,'דיזל','כחול','2027-05','תל אביב'],
+ ['metro','215-64-880','i',2020,1,'וולוו B11R','2022-01-16','2026-08-17',1,53,'דיזל','כתום','2026-10','חיפה'],
+ ['metro','577-28-409','u',2015,2,'מרצדס Citaro','2022-01-16','2025-11-30',0,41,'דיזל','כתום','2025-12','חיפה'],
+ ['kavim','801-45-663','u',2017,2,"מאן Lion's City",'2022-01-16','2026-08-17',1,40,'דיזל','לבן','2026-09','תל אביב'],
+ ['kavim','129-38-771','m',2024,1,'מרצדס ספרינטר','2024-02-08','2026-08-17',1,19,'דיזל','לבן','2027-02','חיפה'],
+];
+const CITY_YEARS = {'חיפה':{2026:31,2025:67,2024:90,2023:103,2022:22,2021:78,2020:56},'תל אביב':{2026:44,2025:96,2024:132,2023:150,2022:41,2021:104,2020:71}};
+const CITY_OPS = {'חיפה':[['egged',341],['metro',55],['kavim',20]],'תל אביב':[['dan',402],['egged',188],['kavim',96]]};
+
+const $=s=>document.querySelector(s);
+let MODE='op', Q='', VIEW={t:'home'};
+
+const byOp=id=>VEH.filter(v=>v[0]===id);
+const op=id=>OPS.find(o=>o.id===id);
+const fmt=n=>n.toLocaleString('he-IL');
+const fd=s=>s?s.split('-').reverse().join('.'):'—';
+const active=v=>v[8]===1;
+
+function kpis(){
+  return `<div class="kpis">
+    <div class="kpi"><b>${fmt(15329)}</b><span>רכבים במעקב</span></div>
+    <div class="kpi"><b>${fmt(13980)}</b><span>פעילים</span></div>
+    <div class="kpi bad"><b>${fmt(1349)}</b><span>ירדו מהשירות</span></div>
+    <div class="kpi"><b>24</b><span>מפעילים</span></div>
+  </div>`;
+}
+
+function home(){
+  const f=Q.trim();
+  let ops=OPS.filter(o=>!f||o.name.includes(f));
+  if(MODE==='city'){ return cityView(f); }
+  if(MODE==='plate'&&f){
+    const hits=VEH.filter(v=>v[1].replace(/-/g,'').includes(f.replace(/-/g,'')));
+    return kpis()+`<div class="panel"><p class="ptitle">תוצאות למספר רכב "${f}"</p>${hits.length?vehTable(hits,true):'<div class="empty">לא נמצא רכב מתאים</div>'}</div>`;
+  }
+  return kpis()+`<div class="cards">${ops.map(o=>{
+    return `<button class="card" style="background:${o.color}" onclick="go({t:'op',id:'${o.id}'})">
+      <h2>${o.name}</h2><div class="n">${fmt(o.hist[4])}</div>
+      <div class="pills"><span>${fmt(Math.round(o.hist[4]*0.93))} פעילים</span><span class="r">${fmt(Math.round(o.hist[4]*0.07))} ירדו</span></div>
+    </button>`;}).join('')}</div>
+    <p class="note">לחצו על חברה לעמוד המלא שלה · החליפו מצב חיפוש למעלה כדי לחפש עיר או מספר רכב.</p>`;
+}
+
+function typeChip(v){const t=TYPES[v[2]];return `<span class="tag" style="background:${t[1]};color:${t[2]}">${t[0]}</span>`;}
+
+function vehTable(vs,withOp){
+  return `<div class="tblbox"><table><thead><tr>${withOp?'<th>חברה</th>':''}<th>מספר רכב</th><th>סוג הרכב</th><th>שנתון</th><th>דלתות</th><th>יצרן ודגם</th><th>נצפה לאחרונה</th><th>מצב</th></tr></thead><tbody>
+  ${vs.map(v=>`<tr class="v ${active(v)?'':'off'}" tabindex="0" onclick="showV('${v[1]}')">
+    ${withOp?`<td>${op(v[0]).name}</td>`:''}
+    <td dir="ltr" style="text-align:right">${v[1]}</td><td>${typeChip(v)}</td><td>${v[3]}</td><td>${v[4]}</td><td>${v[5]}</td><td>${fd(v[7])}</td>
+    <td><span class="st ${active(v)?'on':'off'}">${active(v)?'פעיל':'ירד מהשירות'}</span></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+let TYPEF=null;
+function opView(id){
+  const o=op(id); let vs=byOp(id);
+  const counts={}; vs.forEach(v=>counts[v[2]]=(counts[v[2]]||0)+1);
+  if(TYPEF) vs=vs.filter(v=>v[2]===TYPEF);
+  const years={}; byOp(id).forEach(v=>years[v[3]]=(years[v[3]]||0)+1);
+  const yk=Object.keys(years).map(Number).sort((a,b)=>b-a);
+  const ymax=Math.max(...Object.values(years));
+  const now=2026;
+  const pts=o.hist.map((v,i)=>[i*80, 120-((v-o.hist[0])/(o.hist[4]-o.hist[0]+1))*90]);
+  return `<button class="back" onclick="go({t:'home'})">→ חזרה לכל החברות</button>
+  <div class="ophead" style="background:${o.color}">
+    <div><h2>${o.name} — עמוד חברה</h2><div class="sub">${fmt(o.hist[4])} רכבים · גיל ממוצע 8.4 · עדכון 17.08.2026</div></div>
+    <div class="pills"><span>${fmt(Math.round(o.hist[4]*0.93))} פעילים</span><span class="r">${fmt(Math.round(o.hist[4]*0.07))} ירדו</span><span>${o.rides} נסיעות ביום לרכב בממוצע</span></div>
+  </div>
+  <div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
+    <div class="types">${Object.entries(TYPES).map(([k,t])=>counts[k]?`<button class="type ${TYPEF===k?'on':''}" style="color:${t[2]}" onclick="TYPEF=TYPEF==='${k}'?null:'${k}';render()"><b>${counts[k]}</b><span>${t[0]}</span></button>`:'').join('')}</div>
+  </div>
+  <div class="cols2">
+    <div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p>
+      ${yk.map(y=>{const c=y>=now-6?o.color:y>=now-10?'#9AB8A6':'#B3B9C6';
+        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(6,years[y]/ymax*100)}%;background:${c}"></i></div><span class="c">${years[y]}</span></div>`;}).join('')}
+      <p class="note">בדוגמה מעט רכבים — באתר האמיתי כל שנתון עם מאות רכבים.</p>
+    </div>
+    <div class="panel"><p class="ptitle">גודל הצי לאורך זמן</p>
+      <svg viewBox="0 0 340 140" style="width:100%">
+        <path d="M${pts.map(p=>p.join(' ')).join(' L')}" fill="none" stroke="${o.color}" stroke-width="3" stroke-linecap="round"></path>
+        <circle cx="${pts[4][0]}" cy="${pts[4][1]}" r="4.5" fill="${o.color}"></circle>
+        <text x="${pts[4][0]-6}" y="${pts[4][1]-10}" text-anchor="end" font-size="12" font-weight="700" fill="#10172A" font-family="Rubik">${fmt(o.hist[4])}</text>
+        <text x="2" y="135" font-size="11" fill="#8B93A7" font-family="Rubik">2022</text>
+        <text x="320" y="135" font-size="11" fill="#8B93A7" font-family="Rubik">2026</text>
+      </svg>
+      <p class="note">נבנה מהסריקה ההיסטורית של דאטאבוס: כמה רכבים שונים שידרו בכל שנה.</p>
+    </div>
+  </div>
+  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+TYPES[TYPEF][0]:''}</p>
+    <div class="filters">
+      <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;render()">הכול</button>
+      <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;render()">פעילים</button>
+      <button class="fchip ${STATF===0?'on':''}" onclick="STATF=0;render()">ירדו מהשירות</button>
+    </div>
+    ${vehTable(vs.filter(v=>STATF===null||v[8]===STATF),false)}
+    <p class="note">לחיצה על רכב פותחת את כל הפרטים עליו — כולל כל שדות המאגר הממשלתי.</p>
+  </div>`;
+}
+let STATF=null;
+
+let CY=2022;
+function cityView(f){
+  const city=Object.keys(CITY_YEARS).find(c=>c.includes(f))|| (f? null:'חיפה');
+  if(!city) return kpis()+`<div class="panel"><div class="empty">לא נמצאה עיר "${f}" — נסו "חיפה" או "תל אביב"</div></div>`;
+  const ys=CITY_YEARS[city]; const ymax=Math.max(...Object.values(ys));
+  const now=2026;
+  return `<div class="ophead" style="background:#10172A">
+    <div><h2>${city} — מבט עירוני</h2><div class="sub">${fmt(612)} רכבים שונים פעלו בעיר בחודש האחרון</div></div>
+    <div class="pills"><span>גיל ממוצע 7.6</span><span>48 חשמליים</span><span>71 מפרקיים</span></div>
+  </div>
+  <div class="cols2">
+    <div class="panel"><p class="ptitle">החברות שפועלות בעיר</p>
+      ${CITY_OPS[city].map(([id,n])=>{const o=op(id);const mx=CITY_OPS[city][0][1];
+        return `<div class="yrow" style="grid-template-columns:100px 1fr 56px"><span style="font-weight:700">${o.name}</span><div class="ybar"><i style="width:${Math.max(6,n/mx*100)}%;background:${o.color}"></i></div><span class="c">${fmt(n)} רכבים</span></div>`;}).join('')}
+      <p class="ptitle" style="margin-top:14px">כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר</p>
+      ${Object.keys(ys).map(Number).sort((a,b)=>b-a).map(y=>{const c=y>=now-4?'#1B7A3D':y>=now-6?'#9AB8A6':'#B3B9C6';
+        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(5,ys[y]/ymax*100)}%;background:${c}"></i></div><span class="c">${ys[y]}</span></div>`;}).join('')}
+    </div>
+    <div class="panel"><p class="ptitle">בחירת שנה — מי פעל בעיר באותה שנה</p>
+      <div class="yearpick">${[2026,2025,2024,2023,2022].map(y=>`<button class="ypc ${CY===y?'on':''}" onclick="CY=${y};render()">${y}</button>`).join('')}</div>
+      <div class="cityres">בשנת ${CY} פעלו ב${city} ${fmt(CY===2022?548:430+CY%7*31)} אוטובוסים שונים</div>
+      <div style="margin-top:8px">
+      ${CITY_OPS[city].map(([id,n])=>{const o=op(id);const v=Math.round(n*(0.8+ (CY%5)*0.05));const mx=CITY_OPS[city][0][1];
+        return `<div class="yrow" style="grid-template-columns:100px 1fr 44px"><span style="font-weight:700">${o.name}</span><div class="ybar"><i style="width:${Math.max(6,v/mx*100)}%;background:${o.color}"></i></div><span class="c">${fmt(v)}</span></div>`;}).join('')}
+      </div>
+      <p class="note">שיוך רכב לעיר נגזר מהקווים שבהם שידר (דאטאבוס) — רכב נספר בכל עיר שהקו שלו משרת.</p>
+    </div>
+  </div>
+  <div class="panel"><p class="ptitle">רכבים שנצפו ב${city}</p>${vehTable(VEH.filter(v=>v[13]===city),true)}</div>`;
+}
+
+function showV(plate){
+  const v=VEH.find(x=>x[1]===plate); const o=op(v[0]); const t=TYPES[v[2]];
+  const ovl=document.createElement('div'); ovl.className='ovl';
+  ovl.innerHTML=`<div class="modal"><div class="mhead">
+      <span class="plate">${v[1]}</span>${typeChip(v)}
+      <span class="st ${active(v)?'on':'off'}">${active(v)?'פעיל':'ירד מהשירות'}</span>
+      <button class="x" aria-label="סגירה">✕</button></div>
+    <div class="msec">מהשידורים (דאטאבוס)</div>
+    <div class="mgrid"><div class="k">מפעיל</div><div class="v2">${o.name}</div>
+      <div class="k">נצפה לראשונה</div><div class="v2">${fd(v[6])}</div>
+      <div class="k">נצפה לאחרונה</div><div class="v2">${fd(v[7])}</div>
+      <div class="k">נסיעות ביום בממוצע</div><div class="v2">${o.rides}</div>
+      <div class="k">עיר עיקרית</div><div class="v2">${v[13]}</div></div>
+    <div class="msec">מהמאגר הממשלתי — כל השדות</div>
+    <div class="mgrid"><div class="k">יצרן ודגם</div><div class="v2">${v[5]}</div>
+      <div class="k">סוג הרכב</div><div class="v2">${t[0]}</div>
+      <div class="k">שנת ייצור</div><div class="v2">${v[3]}</div>
+      <div class="k">מספר דלתות</div><div class="v2">${v[4]}</div>
+      <div class="k">מספר מושבים</div><div class="v2">${v[9]}</div>
+      <div class="k">סוג דלק</div><div class="v2">${v[10]}</div>
+      <div class="k">צבע</div><div class="v2">${v[11]}</div>
+      <div class="k">תוקף רישיון</div><div class="v2">${v[12]}</div></div>
+    <p class="note">באתר האמיתי יופיעו כאן כל השדות שקיימים במאגר — גם כאלה שלא הוגדרו מראש.</p></div>`;
+  ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
+  document.body.appendChild(ovl);
+}
+
+function go(v){VIEW=v;TYPEF=null;STATF=null;render();window.scrollTo({top:0});}
+function render(){
+  const el=$('#view');
+  el.innerHTML = VIEW.t==='op' ? opView(VIEW.id) : home();
+}
+document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
+  MODE=b.dataset.m; document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
+  $('#q').placeholder = MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר… (נסו: חיפה)':'חיפוש מספר רכב… (נסו: 318)';
+  VIEW={t:'home'}; render();
+}));
+$('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};render();});
+render();
+</script>
+</body>
+</html>
