@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<!-- כמו בשאר הכלים: הדפדפן מאמת מול השרת בכל כניסה — עדכוני תכונה נראים מיד -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>צי הרכבים — הקו הבוחן</title>
 <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="3" y="8" width="26" height="14" rx="4" fill="%2310172A"/><rect x="6" y="11" width="5" height="4" rx="1" fill="%23ffffff"/><rect x="13" y="11" width="5" height="4" rx="1" fill="%23ffffff"/><rect x="20" y="11" width="5" height="4" rx="1" fill="%23ffffff"/><circle cx="9" cy="24" r="3" fill="%2310172A"/><circle cx="23" cy="24" r="3" fill="%2310172A"/></svg>'>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap">
@@ -164,7 +168,7 @@ function home(){
 /* ── מצב עיר: אילו רכבים פועלים בכל עיר (נבנה מהקווים ששידר כל רכב) ── */
 async function loadCities(){
   if(CITIES!==null) return;
-  try{const r=await fetch('data/fleet-cities.json');CITIES=r.ok?await r.json():{cities:{}};}
+  try{const r=await fetch('data/fleet-cities.json',{cache:'no-cache'});CITIES=r.ok?await r.json():{cities:{}};}
   catch(e){CITIES={cities:{}};}
   render();
 }
@@ -296,7 +300,7 @@ const LBL={mispar_rechev:'מספר רכב',tozeret_nm:'יצרן',tozeret_cd:'ק�
 const SHARDS={};
 async function shard(d){
   if(SHARDS[d]!==undefined) return SHARDS[d];
-  try{const r=await fetch(`data/gov-details-${d}.json`);SHARDS[d]=r.ok?await r.json():{};}
+  try{const r=await fetch(`data/gov-details-${d}.json`,{cache:'no-cache'});SHARDS[d]=r.ok?await r.json():{};}
   catch(e){SHARDS[d]={};}
   return SHARDS[d];
 }
@@ -339,7 +343,7 @@ document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;LIMIT=200;render();});
 
-fetch('data/fleet.json').then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;render();})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
