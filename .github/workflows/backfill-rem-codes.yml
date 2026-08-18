@@ -1,0 +1,48 @@
+name: backfill-rem-codes
+
+# השלמת מק"טים מדויקת לרשימות ➕/➖ בהקו בזמן — מצילומי ארכיון
+# TransitFeeds (2017–2022): המק"ט של תחנה שירדה נקרא מרשימת התחנות
+# של הקו עצמו בצילום שקדם לשינוי. ריצה ידנית בחוליות; המצב נשמר
+# ב-rc-state.json כך שדחיפה חוזרת ממשיכה מאיפה שנעצר.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_min:
+        description: 'תקציב זמן בדקות לחוליה'
+        default: '280'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-rem-codes
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: השלמת מק"טים מהארכיון
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data MAX_MIN="${{ github.event.inputs.max_min || '280' }}" \
+            python3 tools/backfill_rem_codes.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add line-history/data
+          if git diff --cached --quiet; then echo "אין שינויים"; exit 0; fi
+          git commit -m 'data: מק"טים מדויקים לרשימות ➕/➖ מצילומי הארכיון'
+          for i in 1 2 3 4; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main || true
+            sleep 10
+          done
+          exit 1
