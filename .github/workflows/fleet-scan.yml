@@ -39,6 +39,10 @@ jobs:
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
+        with:
+          # היסטוריה מלאה — כדי ש"עדכון מאגר הרישוי" יקבל את תאריך ההעלאה
+          # האמיתי של קובץ ה-CSV (בצ'קאאוט רדוד git מייחס אותו לקומיט האחרון)
+          fetch-depth: 0
 
       - name: סריקת דאטאבוס
         env:
