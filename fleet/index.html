@@ -233,8 +233,9 @@ function opView(ref){
   const enr=DATA.enriched;
   const types={};
   if(enr) o.vehicles.forEach(v=>{const t=gT(v);if(t)types[t]=(types[t]||0)+1;});
-  const years={}; let ysum=0,yn=0;
-  o.vehicles.forEach(v=>{const y=gY(v);if(y){years[y]=(years[y]||0)+1;ysum+=y;yn++;}});
+  const years={}, yearsAct={}; let ysum=0,yn=0;
+  o.vehicles.forEach(v=>{const y=gY(v);if(y){years[y]=(years[y]||0)+1;ysum+=y;yn++;
+    if(isActive(v))yearsAct[y]=(yearsAct[y]||0)+1;}});
   // ממוצע נסיעות יומי לצי (רק בפורמט v2)
   const ravg=(()=>{if(!OFF)return null;const xs=o.vehicles.map(gR).filter(x=>x!=null);
     return xs.length?(xs.reduce((a,b)=>a+b,0)/xs.length).toFixed(1):null;})();
@@ -254,9 +255,10 @@ function opView(ref){
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
       `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}</div></div>`:''}
-  ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p>
-      ${yk.map(y=>{const c=y>=y0-6?color:y>=y0-10?'#9AA8B8':'#C4CAD4';
-        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,years[y]/ymax*100)}%;background:${c}"></i></div><span class="c">${fmt(years[y])}</span></div>`;}).join('')}
+  ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם פעילים בפועל</p>
+      ${yk.map(y=>{const c=y>=y0-6?color:y>=y0-10?'#9AA8B8':'#C4CAD4';const act=yearsAct[y]||0;
+        return `<div class="yrow" style="grid-template-columns:44px 1fr 150px"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,years[y]/ymax*100)}%;background:${c}"></i></div><span class="c"><b style="color:var(--ok)">${fmt(act)} פעילים</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
+      <p class="note">"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.</p>
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
   <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}</p>
     <div class="filters">
@@ -285,7 +287,9 @@ const LBL={mispar_rechev:'מספר רכב',tozeret_nm:'יצרן',tozeret_cd:'ק�
   mispar_dlatot:'מספר דלתות',kvutzat_zihum:'קבוצת זיהום',ramat_gimur:'רמת גימור',
   mivchan_acharon_dt:'טסט אחרון',degem_manoa:'דגם מנוע',nefach_manoa:'נפח מנוע (סמ"ק)',
   koah_sus:'כוח סוס',hanaa_nm:'הנעה',mazgan_ind:'מיזוג',halonot_nm:'חלונות',
-  abs_ind:'ABS',mispar_kariot_avir:'כריות אוויר',_source:'מקור הנתון'};
+  abs_ind:'ABS',mispar_kariot_avir:'כריות אוויר',mispar_mekomot:'מספר מושבים',
+  mispar_mekomot_leyd_nahag:'מושבים ליד הנהג',sug_rechev_EU_nm:'סיווג אירופי',
+  bitul_nm:'סטטוס רישום',_source:'מקור הנתון'};
 const SHARDS={};
 async function shard(d){
   if(SHARDS[d]!==undefined) return SHARDS[d];
@@ -297,7 +301,7 @@ async function showV(plate){
   let fo=null,fv=null;
   for(const o of DATA.operators){const v=o.vehicles.find(x=>x[0]===plate);if(v){fo=o;fv=v;break;}}
   if(!fv) return;
-  const clean=plate.replace(/-/g,'');
+  const clean=plate.replace(/-/g,'').replace(/^0+/,'');
   const gov=(await shard(clean.slice(-1)))[clean];
   const on=isActive(fv);
   let rows=`<div class="msec">מהשידורים (דאטאבוס)</div><div class="mgrid">
