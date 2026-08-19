@@ -141,7 +141,8 @@ function kpis(){
     <div class="kpi"><b>${fmt(act)}</b><span>פעילים</span></div>
     <div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
-    <div class="kpi"><b>${fd(DATA.updated)}</b><span>עדכון אחרון</span></div>
+    <div class="kpi"><b>${fd(DATA.updated)}</b><span>עדכון נתוני נסיעה</span></div>
+    ${DATA.gov_updated?`<div class="kpi"><b>${fd(DATA.gov_updated)}</b><span>עדכון מאגר הרישוי</span></div>`:''}
   </div>`;
 }
 
@@ -204,7 +205,7 @@ function cityView(c){
         return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,d.years[y]/ymax*100)}%;background:${col}"></i></div><span class="c">${fmt(d.years[y])}</span></div>`;}).join('')}
     </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>'}
   </div>
-  <p class="note">שיוך רכב לעיר נגזר מהקווים שבהם שידר (דאטאבוס) — רכב נספר בכל עיר שהקו שלו משרת. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
+  <p class="note">רכב משויך לעיר רק אם היא מוצא או יעד של קו שבו שידר — קווים שרק חולפים דרך העיר אינם נספרים. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
 }
 
 function table(vs,opsArr){
@@ -313,7 +314,7 @@ async function showV(plate){
   if(gov){
     const known=Object.keys(LBL).filter(k=>gov[k]!==undefined);
     const rest=Object.keys(gov).filter(k=>!(k in LBL));
-    rows+=`<div class="msec">מהמאגר הממשלתי — כל השדות</div><div class="mgrid">`+
+    rows+=`<div class="msec">מהמאגר הממשלתי — כל השדות${DATA.gov_updated?` (נכון ל-${fd(DATA.gov_updated)})`:''}</div><div class="mgrid">`+
       [...known,...rest].map(k=>`<div class="k">${esc(LBL[k]||k)}</div><div class="v2">${esc(gov[k])}</div>`).join('')+`</div>`;
   }else{
     rows+=`<div class="msec">המאגר הממשלתי</div><div class="note">הרכב לא נמצא במאגר הרכב הציבורי — ייתכן שהוסר מהרישום, שההעשרה טרם רצה, או שהמזהה בשידור אינו לוחית.</div>`;
