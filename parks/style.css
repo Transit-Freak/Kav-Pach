@@ -138,13 +138,16 @@
 .mapwrap2{position:relative}
 .mapctl{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(255,255,255,.96);border-radius:12px;padding:8px 12px;box-shadow:0 2px 12px rgba(0,0,0,.18);max-width:330px;display:flex;flex-direction:column;gap:4px}
 .mapctl .legend{margin:0}
-/* הפוטר — "הכרטיסיה למטה" בכחול הכהה של הלוגו (הנחיית המעצב) */
+/* הפוטר — "הכרטיסיה למטה" בכחול הכהה של הלוגו (הנחיית המעצב).
+   במסך הבית אותו אלמנט יושב בעמודת הצד כרטיס (footHome ב-index) */
 .foot{background:var(--brand);color:#fff;margin-top:28px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
-.foot .sub{font-size:13px;font-weight:500;opacity:.95;line-height:1.6}
+.foot .sub{font-size:15px;font-weight:500;opacity:.95;line-height:1.65}
+.foot .srcs{font-size:13.5px}
+#gapbox .foot{margin:0;border-radius:12px;padding:14px 16px;flex:0 0 auto;box-shadow:0 2px 10px rgba(0,0,0,.15)}
 .footrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .foot .logorow{margin:0;flex-basis:auto}
-.foot .logorow img{height:44px;width:auto;background:#fff;border-radius:8px;padding:5px 9px}
-.foot .credits{font-size:12px;opacity:.85;margin:0;flex:1;min-width:200px}
+.foot .logorow img{height:72px;width:auto;background:#fff;border-radius:8px;padding:5px 9px}
+.foot .credits{font-size:13px;opacity:.9;margin:0;flex:1;min-width:200px}
 .foot a{color:var(--tintbrd);font-weight:800}
 .tbltools{display:flex;justify-content:flex-end;margin:0 0 8px}
 td{padding:10px;font-weight:600}
@@ -194,16 +197,17 @@ tbody tr:nth-child(even){background:#fafcff}
 .top #hscopeseg{display:none;order:6;flex:0 0 auto}
 body:has(#heatview[style*="display: flex"]) .top #hscopeseg{display:inline-flex}
 .top .logorow{order:7;flex-basis:auto;margin:0 0 0 0;margin-inline-start:auto}
-.top .logorow img{height:46px;padding:0;border-radius:0;background:transparent}
+.top .logorow img{height:72px;padding:0;border-radius:0;background:transparent}
 @media(max-width:1250px){.top .logorow{display:none}}
 @media(min-width:900px){
   /* מסך הבית בשתי עמודות: מפה מימין, כרטיסים משמאל. ה-JS מציג את
      heatview עם display:flex בסגנון inline — הסלקטור תופס רק את מצב
      "מוצג" והופך אותו ל-grid, כך שהסתרה (display:none) ממשיכה לעבוד */
-  #heatview[style*="display: flex"],#heatview[style*="display:flex"]{display:grid !important;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto minmax(0,1fr);gap:10px !important;align-items:stretch}
+  #heatview[style*="display: flex"],#heatview[style*="display:flex"]{display:grid !important;grid-template-columns:minmax(0,1fr) 400px;grid-template-rows:auto minmax(0,1fr);gap:10px !important;align-items:stretch}
   #heatview>.legend:first-child{grid-column:1/-1;margin:0;align-self:center}
   #heatview .mapwrap{grid-column:1;grid-row:2;min-width:0}
-  #gapbox{grid-column:2;grid-row:2;overflow-y:auto;margin:0}
+  /* nowrap — אחרת עמודת flex שנגמר לה הגובה שוברת את הפוטר לעמודה שנייה מחוץ למסך */
+  #gapbox{grid-column:2;grid-row:2;overflow-y:auto;margin:0;flex-wrap:nowrap}
   #gapbox .gapcards{flex-direction:column}
   #gapbox .gapcard{min-width:0}
 }

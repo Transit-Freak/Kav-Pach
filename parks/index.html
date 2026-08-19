@@ -109,7 +109,7 @@
 
   <div class="foot">
     <div class="sub">אילו קווי אוטובוס באמת מגיעים לכל אזור תעשייה בישראל, באילו שעות — ואיפה נשארים חורים בשירות. לחצו על אזור ברשימה או במפה לכל הפרטים · מתעדכן שבועית
-      <details class="srcs"><summary>📚 מאיפה המידע?</summary>
+      <details class="srcs" open><summary>📚 מאיפה המידע?</summary>
         <div class="src-l">🏛️ <b>רשימת האזורים</b> — המאגר הרשמי של משרד הכלכלה, בתוספת אזורים מ-OpenStreetMap שעברו בדיקת קיום (🗺️).</div>
         <div class="src-l">📐 <b>גבולות האזורים</b> — השכבה הרשמית של משרד התחבורה, בהצלבה עם הלמ״ס (📊).</div>
         <div class="src-l">🚌 <b>קווים ולוחות זמנים</b> — נתוני ה-GTFS הרשמיים של משרד התחבורה.</div>
@@ -117,7 +117,7 @@
       </details>
     </div>
     <div class="footrow">
-      <div class="logorow" style="display:flex;align-items:center;gap:10px"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" style="height:44px;background:#fff;border-radius:8px;padding:5px 9px" onerror="this.style.display='none'"></div>
+      <div class="logorow" style="display:flex;align-items:center;gap:10px"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" style="height:72px;background:#fff;border-radius:8px;padding:5px 9px" onerror="this.style.display='none'"></div>
       <div class="credits">נבנה ומתוחזק על ידי <a href="mailto:shlomihartman@gmail.com">שלמה הרטמן</a> · <a href="../" target="_blank" rel="noopener">🚌 הקו הבוחן — לעוד כלים ליעילות התחבורה הציבורית ›</a> · © כל הזכויות שמורות ל<a href="mailto:irisdor@gmail.com">מחלקת קידום תחבורה ציבורית</a> בהסתדרות העובדים הכללית</div>
     </div>
   </div>
@@ -269,12 +269,19 @@ tbody.onclick=e=>{
   const tr=e.target.closest('tr');
   if(tr){FROM='table';openPark(tr.dataset.f);}
 };
-function showTable(){wrap.style.display='none';heatview.style.display='none';tblview.style.display='block';backbtn.classList.add('on');heatbtn.classList.remove('on')}
+// משוב איריס: במסך הבית ההסברים והקרדיטים הם הכרטיס הכהה בעמודת הצד
+// (כמו ברפרנס של המעצב), ובשאר המסכים — פוטר רגיל בתחתית. אותו אלמנט זז,
+// כדי שכל עדכון תוכן עתידי יקרה במקום אחד.
+const FOOT=document.querySelector('.foot');
+function footHome(on){(on?document.getElementById('gapbox'):document.body).appendChild(FOOT);}
+function showTable(){wrap.style.display='none';heatview.style.display='none';tblview.style.display='block';backbtn.classList.add('on');heatbtn.classList.remove('on');footHome(false)}
 function openHeatmap(fit=true){
   if(!heatmap){
     heatmap=L.map('heatmap');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      {attribution:'© OpenStreetMap'}).addTo(heatmap);
+    // אריחים בעברית (Israel Hiking) — שמות היישובים בעברית בכל האזור,
+    // כולל שטחי הרשות והמדינות השכנות (משוב איריס)
+    L.tileLayer('https://israelhiking.osm.org.il/Hebrew/Tiles/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap · Israel Hiking',maxNativeZoom:16,maxZoom:18}).addTo(heatmap);
     heatLayer=L.layerGroup().addTo(heatmap);
   }
   tblview.style.display='none';wrap.style.display='none';heatview.style.display='flex';heatbtn.classList.add('on');backbtn.classList.remove('on');
@@ -302,6 +309,7 @@ function openHeatmap(fit=true){
     +(g.cSf!=null&&g.pSf!=null?'<div class="gw-l"><b>⭐ ציון השירות הכולל:</b> הציון המשוקלל הרשמי שמשרד התחבורה נותן לרמת השירות בכל אזור סטטיסטי (0–100, משקלל זמינות ואמינות). כאן מוצג הממוצע שלו בכל קבוצה — מדד חיצוני ובלתי תלוי שמאשש את אותה תמונה.</div>':'')
     +'<div class="gw-l">ההשוואה מחושבת מחדש בכל שינוי של כפתורי הספירה למעלה ושל מצב המדידה (מרכז/כניסה) בפאנל השכבות.</div>'
     +'</details>';}catch(e){}
+  footHome(true);
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
   let bounds=null, shown=0;
@@ -385,8 +393,12 @@ function openHeatmap(fit=true){
     marker.on('click',()=>{FROM='heat';openPark(p.f,true);});
     shown++;
   }
-  // fitBounds בפתיחה ראשונה או כשמחפשים (זום למיקום שחיפשת); בהחלפת מרכז↔כניסה שומרים תצוגה
-  if(bounds && (fit || f)) setTimeout(()=>heatmap.fitBounds(bounds.pad(0.15)),80);
+  // חיפוש = זום למיקום שחיפשת; פתיחה ראשונה בדסקטופ = מבט קרוב על ישראל
+  // (משוב איריס: פחות מדינות שכנות, יותר ישראל) — אילת נגישה בגלילה קלה
+  if(bounds && (fit || f)) setTimeout(()=>{
+    if(!f && window.innerWidth>760) heatmap.setView([31.9,35.0],8);
+    else heatmap.fitBounds(bounds.pad(0.15));
+  },80);
 }
 heatbtn.onclick=()=>{openHeatmap(true);if(location.hash) history.replaceState(null,'',location.pathname+location.search);};
 // הכותרת = "הביתה" של הכלי: חזרה למפה הארצית מכל מקום (בקשת שלמה ואיריס)
@@ -628,9 +640,10 @@ function openPark(f,push=true){
   fetch('data/'+f+DV).then(r=>r.json()).then(d=>{
     tblview.style.display='none'; wrap.style.display='grid';
     heatview.style.display='none'; heatbtn.classList.remove('on'); backbtn.classList.remove('on');
+    footHome(false);
     msg.style.display='none';
-    if(!map){ map=L.map('map'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      {attribution:'© OpenStreetMap'}).addTo(map); }
+    if(!map){ map=L.map('map'); L.tileLayer('https://israelhiking.osm.org.il/Hebrew/Tiles/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap · Israel Hiking',maxNativeZoom:16,maxZoom:18}).addTo(map); }
     setTimeout(()=>map.invalidateSize(),50);
     if(layer) layer.remove();
     if(window._routeLayer){window._routeLayer.remove();window._routeLayer=null;window._routeKey=null;}
@@ -745,6 +758,7 @@ function openPark(f,push=true){
     // באג: ההודעה נכתבה לפאנל שנשאר מוסתר כשהטעינה נכשלה — המשתמש לחץ
     // ושום דבר לא קרה. מציגים את התצוגה עם ההודעה וכפתור ניסיון חוזר.
     tblview.style.display='none';heatview.style.display='none';heatbtn.style.display='none';
+    footHome(false);
     wrap.style.display='grid';backbtn.style.display='inline-block';
     panel.innerHTML='<div class="msg">⚠ לא הצלחנו לטעון את האזור — בדקו את החיבור ונסו שוב<br><button class="btn" style="margin-top:12px" onclick="openPark(decodeURIComponent(location.hash.slice(1)),false)">🔄 נסו שוב</button></div>';
   });
@@ -753,7 +767,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='3';
+var VER='4';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
