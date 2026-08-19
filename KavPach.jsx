@@ -679,6 +679,24 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
+          {/* נגישות אזורי תעשייה — אפליקציה עצמאית בתיקיית parks/ (עדיין בבנייה) */}
+          <a
+            href="parks/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#1e1b4b 0%,#32318e 52%,#2084b5 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#60a5fa' }} />
+            <span className="absolute top-5 left-5 bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full font-black text-xs">🚧 בבנייה</span>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28">
+                <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🏭</span>
+              </div>
+              <h2 className="text-3xl font-[900] text-indigo-200">נגישות אזורי תעשייה</h2>
+              <p className="text-indigo-100/80 font-bold mt-2 text-sm leading-relaxed">אילו קווי אוטובוס באמת מגיעים לכל אזור תעשייה, באילו שעות — ואיפה נשארים חורים בשירות</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-blue-300 text-indigo-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
+
         </div>
 
         <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן · <a href="mailto:shlomihartman@gmail.com" className="hover:underline" dir="ltr">shlomihartman@gmail.com</a></p>
