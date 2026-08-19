@@ -64,12 +64,12 @@
 
     <div class="presets" id="presets"></div>
 
-    <div class="row"><label>צבע הכותרת</label><input type="color" id="c-top" value="#134e4a"></div>
-    <div class="row"><label>צבע ההדגשה (כפתורים ותגים)</label><input type="color" id="c-acc" value="#5eead4"></div>
-    <div class="row"><label>טקסט על ההדגשה</label><input type="color" id="c-accink" value="#134e4a"></div>
-    <div class="row"><label>כפתור פעיל (לשונית נבחרת)</label><input type="color" id="c-on" value="#0f766e"></div>
-    <div class="row"><label>רקע העמוד</label><input type="color" id="c-bg" value="#eef1f5"></div>
-    <div class="row"><label>רקע כותרות הטבלה</label><input type="color" id="c-th" value="#f0fdfa"></div>
+    <div class="row"><label>צבע הכותרת</label><input type="color" id="c-top" value="#ffffff"></div>
+    <div class="row"><label>צבע ההדגשה (כפתורים ותגים)</label><input type="color" id="c-acc" value="#ffffff"></div>
+    <div class="row"><label>טקסט על ההדגשה</label><input type="color" id="c-accink" value="#32318e"></div>
+    <div class="row"><label>כפתור פעיל (לשונית נבחרת)</label><input type="color" id="c-on" value="#32318e"></div>
+    <div class="row"><label>רקע העמוד</label><input type="color" id="c-bg" value="#2084b5"></div>
+    <div class="row"><label>רקע כותרות הטבלה</label><input type="color" id="c-th" value="#eef2fb"></div>
     <div class="row"><label>גופן כותרות</label>
       <select id="f-hfont">
         <option value="same" selected>כמו הטקסט (הנוכחי)</option>
@@ -174,7 +174,7 @@
 (function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='8';
+var VER='9';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
@@ -198,7 +198,7 @@ try{
     "'David Libre',serif":'David+Libre:wght@400;700'
   };
   var PRESETS=[
-    ['הנוכחי','#134e4a','#5eead4','#134e4a','#eef1f5','#f0fdfa','#0f766e'],
+    ['הנוכחי','#ffffff','#ffffff','#32318e','#2084b5','#eef2fb','#32318e'],
     ['כחול עמוק','#1e3a8a','#93c5fd','#1e3a8a','#eff3f9','#eff6ff','#1d4ed8'],
     ['סגול הקו בזמן','#4c1d95','#ddd6fe','#4c1d95','#eef1f5','#f5f3ff','#6d28d9'],
     ['חום תעשייתי','#7c2d12','#fdba74','#7c2d12','#f5f2ee','#fff7ed','#9a3412'],
@@ -221,8 +221,8 @@ try{
       '.top{background:'+v.top+'!important}'+
       '.tag,.btn{background:'+v.acc+'!important;color:'+v.accink+'!important}'+
       '.btn.on:not(.layers-panel .btn){background:'+v.on+'!important;color:#fff!important}'+
-      'th{background:'+v.th+'!important;color:'+v.top+'!important}'+
-      '.lp-title{color:'+v.top+'!important}'+
+      'th{background:'+v.th+'!important;color:'+v.accink+'!important}'+
+      '.lp-title{color:'+v.accink+'!important}'+
       '.tblcard,.layers-panel,.panelcard{border-radius:'+v.rad+'px!important}'+
       '.btn:not(.layers-panel .btn){border-radius:'+Math.round(v.rad*0.85)+'px!important}'+
       '.tblcard{box-shadow:'+shadow+'!important}'+

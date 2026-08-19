@@ -62,7 +62,8 @@ await page.route('**://fonts.g**/**', (r) => r.fulfill({ contentType: 'text/css'
 page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('integrity') && !m.text().includes('status of 404')) errs.push('console: ' + m.text().slice(0, 120)); });
 // socio*.json הם קבצים אופציונליים (הקוד עוטף אותם ב-catch); חתימות
 // SRI נכשלות בכוונה כשהסטאב מחליף את קובצי ה-CDN — שניהם אינם תקלה
-page.on('response', (r) => { if (r.status() >= 400 && !/socio[^/]*\.json/.test(r.url())) errs.push('HTTP ' + r.status() + ': ' + r.url().slice(-70)); });
+// rahokim-logo.png אופציונלי — מוסתר ב-onerror עד שהקובץ יועלה לריפו
+page.on('response', (r) => { if (r.status() >= 400 && !/socio[^/]*\.json|rahokim-logo\.png/.test(r.url())) errs.push('HTTP ' + r.status() + ': ' + r.url().slice(-70)); });
 await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'domcontentloaded' });
 // מסך הפתיחה הוא מפת החום — הטבלה מתמלאת ברקע ומוסתרת, לכן ההמתנה
 // היא ל-attached ולא ל-visible, ואז עוברים לרשימה בכפתור החזרה

@@ -1,68 +1,81 @@
 /* העיצוב של אתר נגישות אזורי תעשייה — כל ה-CSS של האתר, במקום אחד.
-   הקובץ הזה בטוח לשינוי: אין בו שום לוגיקה. ראו DESIGN.md לכללים. */
-  html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:#eef1f5;color:#0f172a}
-  .top{background:#134e4a;color:#fff;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+   הקובץ הזה בטוח לשינוי: אין בו שום לוגיקה. ראו DESIGN.md לכללים.
+
+   פלטת 08.2026 לפי הרפרנס של המעצב (אור, hastudio) בהתאמת איריס:
+   הצבעים נדגמו מלוגו ההסתדרות עצמו — אינדיגו 32318e, נייבי 043e7e
+   ותכלת 2084b5. כותרת לבנה, כרטיסים לבנים, רקע כחול. שינוי רקע
+   עתידי = החלפת --pagebg בלבד. */
+:root{
+  --brand:#32318e;        /* האינדיגו של לוגו ההסתדרות — צבע המותג */
+  --brand-deep:#043e7e;   /* הנייבי של הלוגו — טקסטים על רקע בהיר */
+  --tint:#eef2fb;         /* רקע מסומן/ריחוף בהיר */
+  --tintbrd:#c7d2f0;      /* מסגרות בהירות */
+  --pagebg:#2084b5;       /* רקע העמוד — התכלת של הלוגו */
+}
+  html,body{margin:0;font-family:'Assistant','Heebo',system-ui,sans-serif;background:var(--pagebg);color:#0f172a}
+  .top{background:#fff;color:#0f172a;border-bottom:1px solid #e2e8f0;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   .top h1{font-size:19px;font-weight:900;margin:0}
-  .tag{background:#5eead4;color:#134e4a;padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
-  .top input{font-family:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:12px;border:none;min-width:220px}
-  .top a{color:#99f6e4;font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
+  .tag{background:#fff;color:var(--brand);border:1.5px solid var(--brand);padding:3px 11px;border-radius:9999px;font-size:11px;font-weight:900}
+  .top input{font-family:inherit;font-weight:700;font-size:14px;padding:7px 12px;border-radius:12px;border:1.5px solid #cbd5e1;background:#fff;min-width:220px}
+  .top a{color:var(--brand);font-weight:800;font-size:13px;text-decoration:none;margin-right:auto}
   .top .sub{font-size:14px;opacity:.95;font-weight:700;flex-basis:100%;margin-top:4px;line-height:1.6}
   .srcs{margin-top:4px;font-size:12.5px}
   .srcs summary{cursor:pointer;font-weight:800;display:inline-block;opacity:.95}
   .srcs .src-l{margin-top:5px;background:rgba(255,255,255,.10);border-radius:8px;padding:6px 10px;line-height:1.55;font-weight:600}
   .srcs .src-l b{font-weight:800}
   .top .credits{font-size:12px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
-  /* באנר המחלקה — רקע לבן כדי שהלוגו הכהה ייראה על הכותרת הירוקה */
+  /* באנר המחלקה — רקע לבן כדי שהלוגו הכהה ייראה גם על רקע כהה (פוטר) */
   .logorow{flex-basis:100%;margin-top:6px}
   .logorow img{height:96px;width:auto;max-width:100%;background:#fff;border-radius:10px;padding:7px 12px;display:block}
   @media (max-width:600px){.logorow img{height:auto;width:100%;padding:6px 9px}}
-  .btn.on{background:#0f766e;color:#fff}
+  .btn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
   .top{position:relative}
   .lp-wrap{position:relative;display:inline-flex}
   .layers-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:1200;max-width:calc(100vw - 16px);max-height:calc(100vh - 130px);overflow-y:auto;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:265px}
   /* שורות שכבה בסגנון GIS: תיבת סימון ☑/☐ + שם השכבה */
-  .layers-panel .btn{width:100%;justify-content:flex-start;background:none;color:#0f172a;border-radius:8px;padding:6px 6px;font-size:13.5px;box-shadow:none}
-  .layers-panel .btn:hover{background:#f0fdfa}
+  .layers-panel .btn{width:100%;justify-content:flex-start;background:none;border:none;color:#0f172a;border-radius:8px;padding:6px 6px;font-size:13.5px;box-shadow:none}
+  .layers-panel .btn:hover{background:var(--tint)}
   .layers-panel .btn:not(#modebtn)::before{content:'☐';font-size:17px;line-height:1;color:#94a3b8;font-weight:400}
-  .layers-panel .btn.on:not(#modebtn)::before{content:'☑';color:#0f766e}
-  .layers-panel .btn.on{background:#f0fdfa;color:#0f172a}
-  .lp-title{font-weight:900;color:#134e4a;font-size:14px;margin-bottom:4px}
+  .layers-panel .btn.on:not(#modebtn)::before{content:'☑';color:var(--brand)}
+  .layers-panel .btn.on{background:var(--tint);color:#0f172a}
+  .lp-title{font-weight:900;color:var(--brand-deep);font-size:14px;margin-bottom:4px}
   .lp-sec{font-size:11px;font-weight:900;color:#64748b;margin-top:6px;border-top:1px solid #f1f5f9;padding-top:6px}
-  .btn{background:#5eead4;color:#134e4a;border:none;border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  /* כפתורים ב-outline — כמו בשאר האתרים (הנחיית המעצב) */
+  .btn{background:#fff;color:var(--brand);border:1.5px solid var(--brand);border-radius:12px;padding:7px 14px;font-family:inherit;font-weight:900;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .btn svg{flex:0 0 auto}
   .btn.big{font-size:16px;padding:10px 18px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
   /* ---- טבלה ---- */
   .tblwrap{max-width:1250px;margin:12px auto;padding:0 10px}
   .tblcard{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);overflow:auto}
   table{width:100%;border-collapse:collapse;font-size:13px}
-  th{position:sticky;top:0;background:#f0fdfa;color:#134e4a;font-weight:900;padding:9px 10px;border-bottom:2px solid #99f6e4;cursor:pointer;white-space:nowrap;user-select:none}
+  th{position:sticky;top:0;background:var(--tint);color:var(--brand-deep);font-weight:900;padding:9px 10px;border-bottom:2px solid var(--tintbrd);cursor:pointer;white-space:nowrap;user-select:none}
   th .arr{font-size:10px;opacity:.7}
   td{padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;white-space:nowrap}
   tbody tr{cursor:pointer}
-  tbody tr:hover{background:#f0fdfa}
+  tbody tr:hover{background:var(--tint)}
   tr.nosvc td{color:#b91c1c;background:#fff7f7}
   .num{text-align:center}
   .pill{display:inline-block;min-width:26px;text-align:center;border-radius:8px;padding:1px 7px;font-weight:900}
   .pi{background:#dcfce7;color:#14532d}.pg{background:#fef9c3;color:#713f12}.pn{background:#fee2e2;color:#7f1d1d}.p0{background:#f1f5f9;color:#94a3b8}
   .covmini{display:inline-block;width:54px;height:7px;border-radius:9999px;background:#e2e8f0;overflow:hidden;vertical-align:middle;margin-left:5px}
-  .covmini i{display:block;height:100%;background:#14b8a6}
+  .covmini i{display:block;height:100%;background:var(--brand)}
   /* ---- תצוגת פארק ---- */
   .wrap{max-width:1250px;margin:12px auto;padding:0 10px;display:grid;grid-template-columns:1fr 430px;gap:12px}
   @media (max-width:900px){.wrap{grid-template-columns:1fr}}
   #map{height:520px;border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08)}
   .panel{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:14px 16px;max-height:640px;overflow-y:auto}
   .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-  .stat{background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;padding:6px 12px;font-size:12.5px;font-weight:800;color:#134e4a}
+  .stat{background:var(--tint);border:1px solid var(--tintbrd);border-radius:10px;padding:6px 12px;font-size:12.5px;font-weight:800;color:var(--brand-deep)}
   .stat b{font-size:15px}
   .covbar{height:9px;border-radius:9999px;background:#e2e8f0;overflow:hidden;margin:2px 0 10px}
-  .covbar i{display:block;height:100%;background:linear-gradient(90deg,#14b8a6,#0d9488)}
+  .covbar i{display:block;height:100%;background:linear-gradient(90deg,#0d6bb4,var(--brand))}
   .offbox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:9px 12px;margin:4px 0 10px}
   .offh{font-size:12px;font-weight:900;color:#1e40af}
   .offbadge{font-size:11px}
   .note{font-size:11px;color:#64748b;font-weight:700;margin:8px 0}
   .line{border:1px solid #e2e8f0;border-radius:12px;padding:9px 12px;margin-bottom:8px}
   .lhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}
-  .lnum{background:#134e4a;color:#fff;border-radius:7px;padding:2px 10px;font-weight:900;font-size:14.5px}
+  .lnum{background:var(--brand);color:#fff;border-radius:7px;padding:2px 10px;font-weight:900;font-size:14.5px}
   .ldest{font-weight:800;font-size:13px;color:#334155;flex:1;min-width:120px}
   .tier{font-size:10.5px;font-weight:900;border-radius:9999px;padding:2px 9px}
   .tier.in{background:#dcfce7;color:#14532d}.tier.gate{background:#ecfccb;color:#3f6212}.tier.near{background:#fef9c3;color:#713f12}.tier.blocked{background:#e2e8f0;color:#475569}
@@ -71,17 +84,17 @@
   .gap{background:#fee2e2;color:#991b1b;border-radius:8px;padding:2px 9px;font-size:11.5px;font-weight:800}
   .times{display:none;margin-top:7px;font-size:12px;font-weight:700;color:#334155;line-height:1.9}
   .line.open .times{display:block}
-  .times b{color:#134e4a;margin-left:4px}
+  .times b{color:var(--brand-deep);margin-left:4px}
   .legend{display:flex;gap:12px;font-size:11.5px;font-weight:800;color:#475569;margin-bottom:8px;flex-wrap:wrap;align-items:center}
   .legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-left:4px;vertical-align:-1px}
-  .msg{padding:60px 20px;text-align:center;color:#475569;font-weight:800;font-size:17px}
+  .msg{padding:60px 20px;text-align:center;color:#fff;font-weight:800;font-size:17px}
   /* הערת אזור-בהקמה בעמוד האזור — כתום "בעבודות", לא אדום "תקלה" */
   .plannote{background:#fef3c7;border:1.5px solid #fde68a;border-radius:12px;padding:8px 14px;font-size:14px;font-weight:900;color:#92400e;margin:0 0 10px}
   h2{font-size:15px;margin:12px 0 8px}
 .zlink{color:inherit;text-decoration:none}.zlink:hover{text-decoration:underline}
   /* תיבת השוואת מרכז–פריפריה — כרטיס לכל צד + שורת מסקנה + הסבר נפתח */
   #gapbox{display:flex;flex-direction:column;gap:5px;align-items:stretch}
-  .gapsum{font-size:13px;color:#0f172a}
+  .gapsum{font-size:13px;color:#0f172a;background:#fff;border-radius:10px;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
   .gapcards{display:flex;gap:8px;flex-wrap:wrap}
   .gapcard{flex:1;min-width:215px;background:#fff;border-radius:10px;padding:7px 12px;border-right:5px solid;box-shadow:0 2px 10px rgba(0,0,0,.06);font-weight:800}
   .gc-c{border-color:#0d9488}.gc-p{border-color:#d97706}
@@ -94,9 +107,9 @@
   .gc-bar i{display:block;height:100%;border-radius:4px;width:0;margin:0}
   .gc-c .gc-bar i{background:#0d9488}.gc-p .gc-bar i{background:#d97706}
   .gc-no{font-size:11.5px;color:#b91c1c}
-  .gapwhy{font-size:11.5px;color:#475569;font-weight:700}
-  .gapwhy summary{cursor:pointer;font-weight:800;color:#0d9488;display:inline}
-  .gapwhy .gw-l{margin-top:5px;line-height:1.55;background:#fff;border-radius:8px;padding:6px 10px}
+  .gapwhy{font-size:11.5px;color:#475569;font-weight:700;background:#fff;border-radius:10px;padding:8px 12px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  .gapwhy summary{cursor:pointer;font-weight:800;color:var(--brand);display:inline}
+  .gapwhy .gw-l{margin-top:5px;line-height:1.55;background:var(--tint);border-radius:8px;padding:6px 10px}
   .gapwhy .gw-l b{color:#0f172a}
   /* בטלפון הדף פשוט מתארך: המפה בגובה קבוע וההשוואה המלאה מתחתיה, בגלילה */
   .gapmore{display:none}
@@ -110,28 +123,29 @@
 .top{position:sticky;top:0;z-index:1100;padding:8px 14px;gap:10px;flex-wrap:nowrap}
 .top h1{font-size:17px;white-space:nowrap}
 .top input{flex:1;min-width:110px}
-.vseg{display:inline-flex;background:rgba(255,255,255,.14);border-radius:12px;padding:3px;gap:3px}
-.vseg .btn{background:transparent;color:#ccfbf1;border-radius:9px;box-shadow:none}
-.vseg .btn.on{background:#5eead4;color:#134e4a}
+.vseg{display:inline-flex;background:#fff;border:1.5px solid var(--tintbrd);border-radius:12px;padding:3px;gap:3px}
+.vseg .btn{background:transparent;border:none;color:var(--brand);border-radius:9px;box-shadow:none}
+.vseg .btn.on{background:var(--brand);color:#fff}
 #heatbtn,#backbtn{display:inline-flex !important}
-.btn.ghost{background:transparent;border:1.5px solid #5eead4;color:#5eead4}
-.btn.ghost.dark{border-color:#0f766e;color:#0f766e}
-.btn.ghost.teal{border-color:#0f766e;color:#0f766e;background:#fff}
-.seg{display:inline-flex;background:#cbd5e1;border-radius:12px;padding:3px;gap:3px}
-.seg .btn{background:transparent;color:#134e4a;box-shadow:none;border-radius:9px}
-.seg .btn.on{background:#0f766e;color:#fff}
+.btn.ghost{background:#fff;border:1.5px solid var(--brand);color:var(--brand)}
+.btn.ghost.dark{border-color:var(--brand);color:var(--brand)}
+.btn.ghost.teal{border-color:var(--brand);color:var(--brand);background:#fff}
+.seg{display:inline-flex;background:#dfe6f5;border-radius:12px;padding:3px;gap:3px}
+.seg .btn{background:transparent;border:none;color:var(--brand-deep);box-shadow:none;border-radius:9px}
+.seg .btn.on{background:var(--brand);color:#fff}
 .mapwrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
 .maplegend{position:absolute;left:10px;bottom:10px;z-index:1000;background:rgba(255,255,255,.96);border-radius:10px;padding:6px 11px;font-size:11px;font-weight:800;color:#475569;box-shadow:0 2px 10px rgba(0,0,0,.18);max-width:78%}
 .mapwrap2{position:relative}
 .mapctl{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(255,255,255,.96);border-radius:12px;padding:8px 12px;box-shadow:0 2px 12px rgba(0,0,0,.18);max-width:330px;display:flex;flex-direction:column;gap:4px}
 .mapctl .legend{margin:0}
-.foot{background:#134e4a;color:#fff;margin-top:28px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+/* הפוטר — "הכרטיסיה למטה" בכחול הכהה של הלוגו (הנחיית המעצב) */
+.foot{background:var(--brand);color:#fff;margin-top:28px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
 .foot .sub{font-size:13px;font-weight:500;opacity:.95;line-height:1.6}
 .footrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .foot .logorow{margin:0;flex-basis:auto}
 .foot .logorow img{height:44px;width:auto;background:#fff;border-radius:8px;padding:5px 9px}
 .foot .credits{font-size:12px;opacity:.85;margin:0;flex:1;min-width:200px}
-.foot a{color:#99f6e4;font-weight:800}
+.foot a{color:var(--tintbrd);font-weight:800}
 .tbltools{display:flex;justify-content:flex-end;margin:0 0 8px}
 td{padding:10px;font-weight:600}
 tbody tr:nth-child(even){background:#fafcff}
@@ -139,10 +153,10 @@ tbody tr:nth-child(even){background:#fafcff}
 .gapcard{min-width:150px;padding:5px 11px}
 @media(max-width:760px){
   .top{flex-wrap:wrap}
-  .top h1{font-size:15.5px}
+  .top h1{font-size:16px}
   .top input{order:5;flex-basis:100%}
   #tbl th:first-child,#tbl td:first-child{position:sticky;right:0;background:#fff;z-index:2}
-  #tbl th:first-child{background:#f0fdfa;z-index:3}
+  #tbl th:first-child{background:var(--tint);z-index:3}
   #map{height:45vh;min-height:300px}
   #heatview{height:auto !important}
   .mapwrap{min-height:56vh}
@@ -154,14 +168,38 @@ tbody tr:nth-child(even){background:#fafcff}
 /* הכפתורים פוצלו לקצוות המסך ויש שטח מת — הכותרת והפוטר מיושרים לעמודת
    התוכן (עד 1500px), החיפוש מוגבל ברוחב, והתוכן מקבל יותר מהמסך */
 .top,.foot{padding-inline:max(18px,calc((100vw - 1500px)/2 + 10px))}
-.top input{max-width:540px}
+.top input{max-width:400px}
 #heatview{max-width:1500px !important}
 .tblwrap,.wrap{max-width:1500px}
 /* ההסברים נעלמו בדסקטופ — רצועת משפט-אחד מתחת לכותרת */
-.introbar{background:#f0fdfa;border-bottom:1px solid #99f6e4;color:#134e4a;font-size:13px;font-weight:700;padding:6px max(18px,calc((100vw - 1500px)/2 + 10px));line-height:1.5}
+.introbar{background:#fff;border-bottom:1px solid #e2e8f0;color:#0f172a;font-size:15px;font-weight:700;padding:7px max(18px,calc((100vw - 1500px)/2 + 10px));line-height:1.55}
 @media(max-width:760px){.introbar{display:none}}
 /* מקרא מעודכן בכרטיס הצף שעל מפת האזור */
 .maphint{font-size:10.5px;color:#64748b;border-top:1px solid #f1f5f9;padding-top:4px;margin-top:2px}
 
 /* שכבת האשכולות דולקת: הרקע אפור כדי שצבעי המדד יבלטו */
 .samode .leaflet-tile-pane{filter:grayscale(.85) brightness(1.05) contrast(.92)}
+
+/* ===== עיצוב אור (hastudio), 08.2026 — לפי הרפרנס במייל =====
+   כותרת לבנה, סדר כפתורים חדש, לוגו בכותרת, פונטים גדולים יותר,
+   ובדסקטופ: מסך הבית בשתי עמודות — מפה מימין, כרטיסי ההשוואה משמאל */
+.top h1{font-size:20px}
+.top .tag{order:2}
+.top h1{order:1}
+.top .vseg{order:3}
+.top .lp-wrap{order:4}
+.top input{order:5}
+.top .logorow{order:7;flex-basis:auto;margin:0 0 0 0;margin-inline-start:auto}
+.top .logorow img{height:46px;padding:0;border-radius:0;background:transparent}
+@media(max-width:1250px){.top .logorow{display:none}}
+@media(min-width:900px){
+  /* מסך הבית בשתי עמודות: מפה מימין, כרטיסים משמאל. ה-JS מציג את
+     heatview עם display:flex בסגנון inline — הסלקטור תופס רק את מצב
+     "מוצג" והופך אותו ל-grid, כך שהסתרה (display:none) ממשיכה לעבוד */
+  #heatview[style*="display: flex"],#heatview[style*="display:flex"]{display:grid !important;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto minmax(0,1fr);gap:10px !important;align-items:stretch}
+  #heatview>.legend:first-child{grid-column:1/-1;margin:0;align-self:center}
+  #heatview .mapwrap{grid-column:1;grid-row:2;min-width:0}
+  #gapbox{grid-column:2;grid-row:2;overflow-y:auto;margin:0}
+  #gapbox .gapcards{flex-direction:column}
+  #gapbox .gapcard{min-width:0}
+}
