@@ -38,7 +38,8 @@ def route_cities():
         name = (r[c['route_long_name']] or '')
         cities = set()
         for side in name.split('<->'):
-            side = re.sub(r'-\d+#?\s*$', '', side).strip()   # קיצוץ סיומת המק"ט
+            # קיצוץ סיומת מק"ט/כיוון/חלופה: "-12165-1#", "-2#", "-1ב" — לא ערים
+            side = re.sub(r'(-\d+[א-ת]?#?\s*)+$', '', side).strip()
             if '-' in side:
                 city = side.rsplit('-', 1)[1].strip()
                 if city:
@@ -57,15 +58,22 @@ def main():
     # שנת ייצור לפי לוחית (אחרי העשרה, פורמט v2: שנה במקום 4)
     ybase = 4 if fleet.get('v') == 2 else 3
     year_of = {}
+    # נספרים רק רכבים שמופיעים באתר עצמו (מפעילי אוטובוסים אמיתיים,
+    # מאומתים מול מאגר הרישוי) — בלי רכבת/רק"ל ובלי מזהים פנימיים
+    allowed = set()
     for op in fleet['operators']:
         for v in op['vehicles']:
+            key = f"{op['ref']}:{v[0]}"
+            allowed.add(key)
             if len(v) > ybase and v[ybase]:
-                year_of[f"{op['ref']}:{v[0]}"] = v[ybase]
+                year_of[key] = v[ybase]
 
     rc = route_cities()
     cities = {}
     linked = 0
     for key, vals in state.items():
+        if key not in allowed:
+            continue
         lines = vals[4] if len(vals) > 4 else []
         if not lines:
             continue
