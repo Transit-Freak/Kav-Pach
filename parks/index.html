@@ -28,6 +28,9 @@
       <button class="btn" id="backbtn" title="טבלת כל האזורים">📋 רשימה</button>
     </span>
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…" title="הקלידו שם אזור תעשייה או יישוב — הרשימה מסתננת תוך כדי הקלדה">
+    <!-- עיצוב אור 08.2026: מתג ההיקף עבר מהמפה אל הכותרת, כמו ברפרנס.
+         מוצג רק כשמסך המפה הארצית פתוח (כלל ה-:has שב-style.css) -->
+    <span class="seg" id="hscopeseg"><button class="btn on" id="hsin" title="סופרים רק קווים שנכנסים לתוך שטח האזור עצמו">🏭 נכנסים פנימה</button><button class="btn" id="hsall" title="סופרים גם קווים שעוצרים בשערי הכניסה, עד 5 דקות הליכה">🚪 גם שערי כניסה</button></span>
     <span class="lp-wrap">
     <button class="btn ghost" id="layersbtn" title="כל שכבות ומצבי התצוגה במקום אחד">🗂️ שכבות</button>
     <div id="layerspanel" class="layers-panel" style="display:none">
@@ -97,7 +100,6 @@
   <div style="max-width:1250px;margin:0 auto;padding:0 10px;display:none;flex-direction:column;gap:6px;height:calc(100vh - 100px)" id="heatview">
     <div class="legend" style="margin:0;align-items:center">
       <span class="seg"><button class="btn on" id="hpeak" title="רק הגעות בשעות ההגעה והחזרה מהעבודה: 06:00–09:00 ו-15:00–19:00 ביום חול">⏰ שעות שיא</button><button class="btn" id="hday" title="כל ההגעות לאורך היום כולו">🗓️ כל היום</button></span>
-      <span class="seg" id="hscopeseg"><button class="btn on" id="hsin" title="סופרים רק קווים שנכנסים לתוך שטח האזור עצמו">🏭 נכנסים פנימה</button><button class="btn" id="hsall" title="סופרים גם קווים שעוצרים בשערי הכניסה, עד 5 דקות הליכה">🚪 גם שערי כניסה</button></span>
     </div>
     <div class="mapwrap"><div id="heatmap" style="border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div><div class="maplegend"><span id="hleg"></span><span id="saleg"></span></div></div>
     <div class="legend" id="gapbox" style="margin:0"></div>

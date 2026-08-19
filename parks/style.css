@@ -189,6 +189,10 @@ tbody tr:nth-child(even){background:#fafcff}
 .top .vseg{order:3}
 .top .lp-wrap{order:4}
 .top input{order:5}
+/* מתג "נכנסים פנימה/גם שערי כניסה" יושב בכותרת (כמו ברפרנס) אבל שייך
+   רק למסך המפה הארצית — מוצג רק כשהוא פתוח */
+.top #hscopeseg{display:none;order:6;flex:0 0 auto}
+body:has(#heatview[style*="display: flex"]) .top #hscopeseg{display:inline-flex}
 .top .logorow{order:7;flex-basis:auto;margin:0 0 0 0;margin-inline-start:auto}
 .top .logorow img{height:46px;padding:0;border-radius:0;background:transparent}
 @media(max-width:1250px){.top .logorow{display:none}}
