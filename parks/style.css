@@ -198,7 +198,10 @@ tbody tr:nth-child(even){background:#fafcff}
 body:has(#heatview[style*="display: flex"]) .top #hscopeseg{display:inline-flex}
 .top .logorow{order:7;flex-basis:auto;margin:0 0 0 0;margin-inline-start:auto}
 .top .logorow img{height:72px;padding:0;border-radius:0;background:transparent}
+@media(max-width:1500px){.top .logorow img{height:48px}}
 @media(max-width:1250px){.top .logorow{display:none}}
+/* הלוגואים פעם אחת בלבד: כשהם בכותרת — לא חוזרים גם בכרטיס הקרדיטים שבמסך הבית */
+@media(min-width:1251px){#gapbox .foot .logorow{display:none}}
 @media(min-width:900px){
   /* מסך הבית בשתי עמודות: מפה מימין, כרטיסים משמאל. ה-JS מציג את
      heatview עם display:flex בסגנון inline — הסלקטור תופס רק את מצב
