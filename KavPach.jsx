@@ -697,6 +697,24 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
+          {/* צי הרכבים — אפליקציה עצמאית בתיקיית fleet/ (עדיין בבנייה) */}
+          <a
+            href="fleet/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#0b1220 0%,#10172a 52%,#475569 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#94a3b8' }} />
+            <span className="absolute top-5 left-5 bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full font-black text-xs">🚧 בבנייה</span>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28">
+                <span className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1" style={{ fontSize: '90px', lineHeight: 1 }}>🚌</span>
+              </div>
+              <h2 className="text-3xl font-[900] text-slate-200">צי הרכבים</h2>
+              <p className="text-slate-100/80 font-bold mt-2 text-sm leading-relaxed">כל האוטובוסים שנצפו בשידורי האיכון — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה ומה פרטיו במאגר הרישוי</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-slate-300 text-slate-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
+
         </div>
 
         <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן · <a href="mailto:shlomihartman@gmail.com" className="hover:underline" dir="ltr">shlomihartman@gmail.com</a></p>
