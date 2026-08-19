@@ -191,12 +191,21 @@ def main():
         reg, gov_date = load_registry(find_resources(), wanted), None
     else:
         reg, csv_path = loaded
-        # מתי קובץ הרישוי עודכן לאחרונה בריפו — מוצג באתר כ"עדכון מאגר הרישוי"
+        # מתי קובץ הרישוי הועלה לאחרונה לריפו — מוצג באתר כ"עדכון פרטי הרכב".
+        # בצ'קאאוט רדוד git מייחס את הקובץ לקומיט הגבול (של היום) — תאריך שקרי,
+        # ולכן במצב כזה עדיף לא לגעת בערך הקיים מאשר לדרוס אותו בתאריך שגוי.
         import subprocess
         try:
-            gov_date = subprocess.run(
-                ['git', 'log', '-1', '--format=%cs', '--', csv_path],
-                capture_output=True, text=True, timeout=30).stdout.strip() or None
+            shallow = subprocess.run(
+                ['git', 'rev-parse', '--is-shallow-repository'],
+                capture_output=True, text=True, timeout=30).stdout.strip()
+            if shallow == 'true':
+                print('אזהרה: צ׳קאאוט רדוד — תאריך העלאת הקובץ לא אמין, נשמר הערך הקודם', flush=True)
+                gov_date = None
+            else:
+                gov_date = subprocess.run(
+                    ['git', 'log', '-1', '--format=%cs', '--', csv_path],
+                    capture_output=True, text=True, timeout=30).stdout.strip() or None
         except Exception:  # noqa: BLE001
             gov_date = None
 

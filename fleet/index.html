@@ -147,8 +147,8 @@ function kpis(){
     <div class="kpi"><b>${fmt(act)}</b><span>פעילים</span></div>
     <div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
-    <div class="kpi"><b>${fd(DATA.updated)}</b><span>עדכון נתוני נסיעה</span></div>
-    ${DATA.gov_updated?`<div class="kpi"><b>${fd(DATA.gov_updated)}</b><span>עדכון מאגר הרישוי</span></div>`:''}
+    <div class="kpi"><b>${fd(DATA.updated)}</b><span>עדכון מאגר הרישוי ונתוני נסיעה</span></div>
+    ${DATA.gov_updated?`<div class="kpi" title="קובץ כלי הרכב הציבוריים ממאגר הרישוי הממשלתי — מועלה ידנית לריפו"><b>${fd(DATA.gov_updated)}</b><span>עדכון פרטי הרכב (קובץ ידני)</span></div>`:''}
   </div>`;
 }
 
