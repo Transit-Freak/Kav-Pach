@@ -118,7 +118,7 @@
     </div>
     <div class="footrow">
       <div class="logorow" style="display:flex;align-items:center;gap:10px"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" style="height:44px;background:#fff;border-radius:8px;padding:5px 9px" onerror="this.style.display='none'"></div>
-      <div class="credits">נבנה ומתוחזק על ידי שלמה הרטמן · © כל הזכויות שמורות ל<a href="mailto:irisdor@gmail.com">מחלקת קידום תחבורה ציבורית</a> בהסתדרות העובדים הכללית · <a href="../" target="_blank" rel="noopener">🚌 לעוד כלים ליעילות התחבורה הציבורית ›</a></div>
+      <div class="credits">נבנה ומתוחזק על ידי <a href="mailto:shlomihartman@gmail.com">שלמה הרטמן</a> · <a href="../" target="_blank" rel="noopener">🚌 הקו הבוחן — לעוד כלים ליעילות התחבורה הציבורית ›</a> · © כל הזכויות שמורות ל<a href="mailto:irisdor@gmail.com">מחלקת קידום תחבורה ציבורית</a> בהסתדרות העובדים הכללית</div>
     </div>
   </div>
 
@@ -753,7 +753,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='2';
+var VER='3';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
