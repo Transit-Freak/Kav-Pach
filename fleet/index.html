@@ -123,7 +123,7 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, STATF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null;
 const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>v[6+OFF],gR=v=>OFF?v[3]:null;
 const fmt=n=>n.toLocaleString('he-IL');
 const fd=s=>s?s.split('-').reverse().join('.'):'—';
@@ -234,9 +234,14 @@ function opView(ref){
   const enr=DATA.enriched;
   const types={};
   if(enr) o.vehicles.forEach(v=>{const t=gT(v);if(t)types[t]=(types[t]||0)+1;});
+  // באיזו שנה קלנדרית הרכב היה בשימוש: החלון שבין הצפייה הראשונה לאחרונה
+  const usedIn=(v,Y)=>v[1]<=Y+'-12-31'&&v[2]>=Y+'-01-01';
   const years={}, yearsAct={}; let ysum=0,yn=0;
   o.vehicles.forEach(v=>{const y=gY(v);if(y){years[y]=(years[y]||0)+1;ysum+=y;yn++;
-    if(isActive(v))yearsAct[y]=(yearsAct[y]||0)+1;}});
+    if(YEARF?usedIn(v,YEARF):isActive(v))yearsAct[y]=(yearsAct[y]||0)+1;}});
+  // אילו שנים קלנדריות מכוסות בנתוני השידור של החברה
+  let minSeen=9999; o.vehicles.forEach(v=>{const y=+v[1].slice(0,4);if(y<minSeen)minSeen=y;});
+  const calYears=[]; for(let y=+DATA.updated.slice(0,4);y>=minSeen;y--)calYears.push(y);
   // ממוצע נסיעות יומי לצי (רק בפורמט v2)
   const ravg=(()=>{if(!OFF)return null;const xs=o.vehicles.map(gR).filter(x=>x!=null);
     return xs.length?(xs.reduce((a,b)=>a+b,0)/xs.length).toFixed(1):null;})();
@@ -256,10 +261,14 @@ function opView(ref){
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
       `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}</div></div>`:''}
-  ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם פעילים בפועל</p>
+  ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם ${YEARF?`היו בשימוש בשנת ${YEARF}`:'פעילים בפועל'}</p>
+      ${calYears.length>1?`<div class="filters">
+        <button class="fchip ${YEARF===null?'on':''}" onclick="YEARF=null;render()">היום</button>
+        ${calYears.map(y=>`<button class="fchip ${YEARF===y?'on':''}" onclick="YEARF=${y};render()">${y}</button>`).join('')}
+      </div>`:''}
       ${yk.map(y=>{const c=y>=y0-6?color:y>=y0-10?'#9AA8B8':'#C4CAD4';const act=yearsAct[y]||0;
-        return `<div class="yrow" style="grid-template-columns:44px 1fr 150px"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,years[y]/ymax*100)}%;background:${c}"></i></div><span class="c"><b style="color:var(--ok)">${fmt(act)} פעילים</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
-      <p class="note">"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.</p>
+        return `<div class="yrow" style="grid-template-columns:44px 1fr 170px"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,years[y]/ymax*100)}%;background:${c}"></i></div><span class="c"><b style="color:var(--ok)">${fmt(act)} ${YEARF?`בשנת ${YEARF}`:'פעילים'}</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
+      <p class="note">${YEARF?`רכב נספר לשנת ${YEARF} אם שידר נסיעות במהלכה (לפי חלון הפעילות שנמדד בדאטאבוס). הנתונים מכסים מ-${minSeen} ואילך — ורק את התקופה שכבר נסרקה.`:'"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.'}</p>
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
   <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}</p>
     <div class="filters">
@@ -328,7 +337,7 @@ async function showV(plate){
   document.body.appendChild(ovl);
 }
 
-function go(ref){VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;STATF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0});}
+function go(ref){VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;STATF=null;YEARF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0});}
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
