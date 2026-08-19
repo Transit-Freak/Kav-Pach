@@ -10,7 +10,7 @@
 
 FROM/TO (YYYY-MM-DD) · ברירת מחדל: 8 הימים האחרונים · MAX_MIN — עצירה
 נקייה אחרי X דקות (0 = בלי מגבלה) · RETIRE_DAYS — כמה ימי היעדרות
-נחשבים "ירד מהשירות" (ברירת מחדל 60).
+נחשבים "ירד מהשירות" (ברירת מחדל 30 — חודש בלי פעילות).
 """
 import datetime
 import json
@@ -28,7 +28,7 @@ TODAY = datetime.date.today()
 FROM = os.environ.get('FROM') or (TODAY - datetime.timedelta(days=8)).isoformat()
 TO = os.environ.get('TO') or TODAY.isoformat()
 MAX_MIN = float(os.environ.get('MAX_MIN', '0'))
-RETIRE_DAYS = int(os.environ.get('RETIRE_DAYS', '60'))
+RETIRE_DAYS = int(os.environ.get('RETIRE_DAYS', '30'))
 # עדכון-ביניים לאתר כל X ימים סרוקים (0 = רק בסוף); נקבע ב-workflow
 FLUSH_DAYS = int(os.environ.get('FLUSH_DAYS', '0'))
 PAGE = 1000
