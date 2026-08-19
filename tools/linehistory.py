@@ -272,6 +272,7 @@ def dist_m(a_la,a_lo,b_la,b_lo):
     cl=math.cos(math.radians((a_la+b_la)/2))
     return math.hypot((a_la-b_la)*110540,(a_lo-b_lo)*111320*cl)
 
+n_tyfix=0
 month=TODAY[:7]
 chpath=f'{OUTDIR}/changes/{month}.json'
 chm=jload(chpath,{'month':month,'changes':[]})
@@ -351,13 +352,25 @@ for rdesc,c in cur.items():
     # אין לו ביטוי בתחנות או בשרטוט, ולכן בלי בדיקה מפורשת הוא היה עובר
     # בשקט — ומבחינת הנוסע זה שינוי מהותי יותר מהזזת תחנה.
     tt_changed=('tt' in pv) and pv.get('tt')!=c.get('tt')
+    # סיווג הקו (עירוני/בינעירוני/אזורי) יכול להשתנות בלי שום שינוי במסלול —
+    # בלי בדיקה מפורשת הוא היה עובר בשקט והעמוד היה מציג סיווג ישן לנצח
+    ty_changed=('ty' in pv) and pv.get('ty')!=c.get('ty')
     # נגישות לכיסא גלגלים ומגבלות עלייה/ירידה: שניהם אינם נראים בתחנות
     # ובשרטוט, ולכן בלי בדיקה מפורשת הם עוברים בשקט — ולנוסע שתלוי בהם
     # אלה השינויים החשובים ביותר בקו.
     wa_changed=bool(pv.get('wa')) and bool(c.get('wa')) and pv['wa']!=c['wa']
     pd_changed=('pd_h' in pv) and pv.get('pd_h')!=c.get('pd_h')
     if not geo and not stp and not op_changed and not tt_changed \
-       and not wa_changed and not pd_changed: continue
+       and not wa_changed and not pd_changed and not ty_changed:
+        # תיקון עבר: קבצים שהסיווג בהם התיישן לפני שנוסף המעקב — מרעננים
+        # בשקט את המטא-נתונים בלי להמציא אירוע על שינוי שקרה מזמן
+        p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+        lf=jload(p,None)
+        if lf and lf.get('ty')!=c.get('ty'):
+            lf['ty']=c.get('ty','')
+            json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+            n_tyfix+=1
+        continue
     old_codes=pv['codes']; add=[x for x in c['codes'] if x not in old_codes]
     rem=[x for x in old_codes if x not in c['codes']]
     name={x[0]:x[1] for x in c['stopinfo']}
@@ -383,6 +396,8 @@ for rdesc,c in cur.items():
         continue
     if tt_changed and not geo and not stp:
         kind='mode'
+    elif ty_changed and not geo and not stp and not op_changed:
+        kind='mode'
     elif wa_changed and not geo and not stp and not op_changed:
         kind='access'
     elif pd_changed and not geo and not stp and not op_changed:
@@ -398,6 +413,9 @@ for rdesc,c in cur.items():
         lbl={'rail':'רכבת','taxi':'מונית שירות','lightrail':'רכבת קלה',
              'cable':'רכבל/כרמלית','demand':'שירות לפי דרישה',None:'קו אוטובוס רגיל'}
         t=f"סוג הקו שוּנה: {lbl.get(pv.get('tt'),pv.get('tt'))} ← {lbl.get(c.get('tt'),c.get('tt'))}"
+        note=(note+' · '+t) if note else t
+    if ty_changed:
+        t=f"סיווג הקו שוּנה: {pv.get('ty') or '—'} ← {c.get('ty') or '—'}"
         note=(note+' · '+t) if note else t
     if wa_changed:
         lblw={'1':'נגיש לכיסא גלגלים','2':'אינו נגיש לכיסא גלגלים'}
@@ -483,7 +501,7 @@ for rdesc in registered:
         codes=[s0[0] for s0 in base.get('stops',[])]
         carry[rdesc]={'sh_h':h12(json.dumps(dec_shape(base['shp']))),'st_h':h12('|'.join(codes)),
                       'codes':codes,'line':lf.get('line',''),'op':lf.get('op','')}
-print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed} | רשומים בהמתנה {n_carry} | רופאו {n_heal}')
+print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed} | רשומים בהמתנה {n_carry} | רופאו {n_heal} | סיווג רוענן {n_tyfix}')
 
 # ---- שינויי תחנות (רישום ארצי) ----
 # כולל גם תחנות שמסומנות location_type!=0 — אלה תחנות אמיתיות עם קוד
@@ -588,7 +606,7 @@ json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_as
 # 'tt' נשמר כדי שאפשר יהיה לזהות שינוי בסוג הקו. במצב שנוצר לפני השדה הזה
 # הוא פשוט חסר, ולכן ההשוואה מדלגת בשקט בריצה הראשונה ולא ממציאה אירוע.
 state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],
-                  'op':c['op'],'tt':c.get('tt'),'wa':c.get('wa',''),'pd_h':c.get('pd_h','')}
+                  'op':c['op'],'tt':c.get('tt'),'ty':c.get('ty',''),'wa':c.get('wa',''),'pd_h':c.get('pd_h','')}
            for rdesc,c in cur.items()}
 state_out.update(carry)   # רשומים ללא נסיעות פעילות — נגררים קדימה
 json.dump(state_out,
