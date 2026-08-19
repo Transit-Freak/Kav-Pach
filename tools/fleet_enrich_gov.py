@@ -99,7 +99,7 @@ def load_local_csv(wanted):
             clean['_source'] = 'כלי רכב ציבוריים פעילים (קובץ בריפו)'
             reg[plate] = clean
     print(f'CSV מקומי {os.path.basename(path)}: {len(reg)} התאמות', flush=True)
-    return reg
+    return reg, path
 
 
 def plate_key(record):
@@ -186,9 +186,19 @@ def main():
         data = json.load(f)
     wanted = {norm_plate(v[0])
               for op in data['operators'] for v in op['vehicles']}
-    reg = load_local_csv(wanted)
-    if reg is None:
-        reg = load_registry(find_resources(), wanted)
+    loaded = load_local_csv(wanted)
+    if loaded is None:
+        reg, gov_date = load_registry(find_resources(), wanted), None
+    else:
+        reg, csv_path = loaded
+        # מתי קובץ הרישוי עודכן לאחרונה בריפו — מוצג באתר כ"עדכון מאגר הרישוי"
+        import subprocess
+        try:
+            gov_date = subprocess.run(
+                ['git', 'log', '-1', '--format=%cs', '--', csv_path],
+                capture_output=True, text=True, timeout=30).stdout.strip() or None
+        except Exception:  # noqa: BLE001
+            gov_date = None
 
     hit = miss = 0
     total = sum(len(op['vehicles']) for op in data['operators'])
@@ -218,6 +228,8 @@ def main():
     # חברה שנשארה בלי רכבים מאומתים — לא מוצגת
     data['operators'] = [op for op in data['operators'] if op['vehicles']]
     data['enriched'] = True
+    if gov_date:
+        data['gov_updated'] = gov_date
     jdump(data, OUT)
     # הפרטים המלאים נחתכים ל-10 קבצים לפי הספרה האחרונה של הלוחית —
     # האתר טוען רק את הקובץ הרלוונטי בלחיצה על רכב (במקום קובץ ענק אחד)
