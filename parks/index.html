@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <!-- כל העיצוב יושב בקובץ נפרד כדי שמעצב יוכל לעבוד עליו בלי
      לגעת בלוגיקה. ראו parks/DESIGN.md — כללי העבודה למעצב. -->
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <div class="top">
@@ -53,7 +53,7 @@
     </div>
     </span>
     <!-- עיצוב אור 08.2026: הלוגו עלה לכותרת הלבנה, בקצה השמאלי -->
-    <div class="logorow" style="display:flex;align-items:center;gap:10px"><img src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" onerror="this.style.display='none'"></div>
+    <div class="logorow"><img src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" onerror="this.style.display='none'"></div>
   </div>
   <!-- משוב איריס: בדסקטופ ההסבר נעלם לגמרי כשהוא ירד לפוטר — רצועת
        משפט-אחד גלויה מתחת לכותרת (במובייל המקום יקר והפוטר מספיק) -->
@@ -117,7 +117,7 @@
       </details>
     </div>
     <div class="footrow">
-      <div class="logorow" style="display:flex;align-items:center;gap:10px"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" style="height:72px;background:#fff;border-radius:8px;padding:5px 9px" onerror="this.style.display='none'"></div>
+      <div class="logorow"><img id="deptlogo" src="histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" onerror="this.closest('.logorow').style.display='none'"><img src="rahokim-logo.png" alt="רחוקים אבל שווים" style="height:72px;background:#fff;border-radius:8px;padding:5px 9px" onerror="this.style.display='none'"></div>
       <div class="credits">נבנה ומתוחזק על ידי <a href="mailto:shlomihartman@gmail.com">שלמה הרטמן</a> · <a href="../" target="_blank" rel="noopener">🚌 הקו הבוחן — לעוד כלים ליעילות התחבורה הציבורית ›</a> · © כל הזכויות שמורות ל<a href="mailto:irisdor@gmail.com">מחלקת קידום תחבורה ציבורית</a> בהסתדרות העובדים הכללית</div>
     </div>
   </div>
@@ -769,7 +769,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='9';
+var VER='10';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);

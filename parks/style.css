@@ -25,7 +25,7 @@
   .srcs .src-l b{font-weight:800}
   .top .credits{font-size:12px;opacity:.8;font-weight:700;flex-basis:100%;margin-top:2px}
   /* באנר המחלקה — רקע לבן כדי שהלוגו הכהה ייראה גם על רקע כהה (פוטר) */
-  .logorow{flex-basis:100%;margin-top:6px}
+  .logorow{flex-basis:100%;margin-top:6px;display:flex;align-items:center;gap:10px}
   .logorow img{height:96px;width:auto;max-width:100%;background:#fff;border-radius:10px;padding:7px 12px;display:block}
   @media (max-width:600px){.logorow img{height:auto;width:100%;padding:6px 9px}}
   .btn.on{background:var(--brand);color:#fff;border-color:var(--brand)}
