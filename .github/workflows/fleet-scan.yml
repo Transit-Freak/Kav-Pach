@@ -68,7 +68,9 @@ jobs:
           git add fleet/data
           git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
           git commit -m 'data: fleet — עדכון צי הרכבים מדאטאבוס'
-          git pull --rebase origin main
+          # סריקה ארוכה מול main שמתקדם: בקונפליקט על קובצי הנתונים שלנו
+          # התוצאה הטרייה של הסריקה גוברת (-X theirs ברבייס = הקומיט שלנו)
+          git pull --rebase -X theirs origin main
           git push
 
       - name: המשך backfill אוטומטי
