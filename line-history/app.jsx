@@ -308,6 +308,14 @@ function TimesDiff({ tl, tn }) {
   );
 }
 
+
+// קו מעגלי עוצר באותה תחנה בשני קטעי המסלול — ברשימות ➕/➖ השם הופיע
+// פעמיים ונראה כמו באג (קו 114 דן). מאחדים ומציינים ×N במקום לשכפל.
+const dedupCount = (arr) => {
+  const m = new Map();
+  (arr || []).forEach((x) => { const k = typeof x === "string" ? x : x[0] + "|" + x[1]; const e = m.get(k); if (e) e.n += 1; else m.set(k, { x, n: 1 }); });
+  return [...m.values()];
+};
 function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
@@ -964,8 +972,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             <button className="cmpx" title="סיום ההשוואה — חזרה להפרש מול הגרסה הקודמת" onClick={() => setCmpI(null)}>✕ סיום</button>
             {cmpDiff && (cmpDiff.add.length || cmpDiff.rem.length) ? (
               <div className="cmplist">
-                {cmpDiff.add.length ? <div className="ad">➕ {cmpDiff.add.map((x) => `${x[1]} (${x[0]})`).join(", ")}</div> : null}
-                {cmpDiff.rem.length ? <div className="rm">➖ {cmpDiff.rem.map((x) => `${x[1]} (${x[0]})`).join(", ")}</div> : null}
+                {cmpDiff.add.length ? <div className="ad">➕ {dedupCount(cmpDiff.add).map(({ x, n: c }) => `${x[1]} (${x[0]})` + (c > 1 ? ` ×${c}` : "")).join(", ")}</div> : null}
+                {cmpDiff.rem.length ? <div className="rm">➖ {dedupCount(cmpDiff.rem).map(({ x, n: c }) => `${x[1]} (${x[0]})` + (c > 1 ? ` ×${c}` : "")).join(", ")}</div> : null}
               </div>
             ) : null}
           </div>
@@ -1050,8 +1058,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                 return (
                   <div className="sub">
                     {pm.moves.map((m, k) => <div key={k}>🔀 מעבר רציף: {m.base} — מרציף {m.from} לרציף {m.to}</div>)}
-                    {pm.add.length > 0 && <div>➕ נוספו: {pm.add.map((n) => withCode(n, i, true)).join(", ")}</div>}
-                    {pm.rem.length > 0 && <div>➖ ירדו: {pm.rem.map((n) => withCode(n, i, false)).join(", ")}</div>}
+                    {pm.add.length > 0 && <div>➕ נוספו: {dedupCount(pm.add).map(({ x: n, n: c }) => withCode(n, i, true) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
+                    {pm.rem.length > 0 && <div>➖ ירדו: {dedupCount(pm.rem).map(({ x: n, n: c }) => withCode(n, i, false) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
                   </div>
                 );
               })()}
