@@ -1436,7 +1436,18 @@ function DayFeed({ idx, openLine, open12, onBack }) {
       })() : chs === null ? "טוען…" : chErr ? <NetErr onRetry={() => setRty((n) => n + 1)} />
         : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
         <div>
-          {dayF && <div className="katnote" style={{ marginBottom: 8 }}>📅 מוצג רק {fmtD(dayF)} · <button className="morebtn" style={{ padding: "2px 10px" }} onClick={() => setDayF(null)}>חזרה לכל החודש</button></div>}
+          {/* אינדקס הימים של החודש: רואים מראש באילו תאריכים יש שינויים,
+              ולחיצה קופצת ישר ליום — בלי לגלול ולגלות אותם אחד-אחד */}
+          {days.length > 1 && (
+            <div className="months">
+              <button className={"mchip" + (!dayF ? " on" : "")} aria-pressed={!dayF} title="כל ימי החודש ברצף" onClick={() => setDayF(null)}>כל החודש</button>
+              {days.map((d) => (
+                <button key={d} className={"mchip" + (dayF === d ? " on" : "")} aria-pressed={dayF === d}
+                  title={"יום " + WD[new Date(d).getDay()] + " · " + byd.get(d).length.toLocaleString() + " שינויים"}
+                  onClick={() => setDayF(dayF === d ? null : d)}>{d.slice(8, 10) + "." + d.slice(5, 7)}</button>
+              ))}
+            </div>
+          )}
           {days.filter((d) => !dayF || d === dayF).map((d) => shown >= lim ? null : (
             <React.Fragment key={d}>
               <div className="dayhead" role="button" tabIndex={0} style={{ cursor: "pointer" }}
