@@ -1339,10 +1339,13 @@ function DayFeed({ idx, openLine, open12, onBack }) {
     getMonths()
       .then((d) => {
         if (!ok) return;
-        const ms = d.months || []; setMonths(ms);
+        // ממיינים כאן במקום לסמוך על סדר הקובץ: ריצת שלב ב' הפכה את
+        // months ליורד, וההנחה "האיבר האחרון הוא הנוכחי" שלחה את הפיד
+        // למרץ 2017. מיון מקומי עולה מנתק את התלות בכיוון שבדיסק.
+        const ms = (d.months || []).slice().sort(); setMonths(ms);
         // לא דורסים בחירה שכבר נעשתה — כניסה מכתובת ‎#2012/<k>‎ קובעת
-        // את השנה לפני שהחודשים נטענים. months ממוין עולה, והאיבר האחרון
-        // הוא החודש הנוכחי: פתיחה על ms[0] נחתה על מרץ 2017.
+        // את השנה לפני שהחודשים נטענים. אחרי המיון האיבר האחרון הוא
+        // החודש הנוכחי.
         const last = ms[ms.length - 1] || "";
         if (ms.length) { setYr((cur) => cur || last.slice(0, 4)); setMon((cur) => cur || last); }
       })
@@ -1749,7 +1752,9 @@ function StopsTab({ sel, selN }) {
     let ok = true;
     setMErr(false);
     getMonths()
-      .then((d) => { if (!ok) return; const ms = d.stopMonths || [];
+      .then((d) => { if (!ok) return;
+        // מיון יורד מפורש — לא סומכים על הסדר שבדיסק (ראו הפיד של הקווים)
+        const ms = (d.stopMonths || []).slice().sort().reverse();
         setMonths(ms);
         // ברירת המחדל: החודש האחרון — נטען מיידית. "כל התקופה" (פירוק
         // ומיון של כל קורות-החיים, מאות אלפי אירועים) רק בבחירה מפורשת
