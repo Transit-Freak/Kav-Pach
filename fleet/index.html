@@ -131,7 +131,8 @@ let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=nu
 // מיישרים לעברית תקנית בתצוגה. התיקון יושב על gT ולכן הפילוח, המסננים
 // והטבלה מדברים כולם באותן תוויות.
 const fixT=t=>t&&t.replace(/\s+/g,' ').trim().replace('צבורי','ציבורי')
-  .replace('זעצ','זעיר ציבורי').replace('בע קומתים','בעל קומותיים').replace('עיר מפרק','עירוני מפרקי');
+  .replace('זעצ','זעיר ציבורי').replace('בע קומתים','בעל קומותיים').replace('עיר מפרק','עירוני מפרקי')
+  .replace('להסע מיוחד','להסעה מיוחדת');
 const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>fixT(v[6+OFF]),gR=v=>OFF?v[3]:null;
 const fmt=n=>n.toLocaleString('he-IL');
 const fd=s=>s?s.split('-').reverse().join('.'):'—';
@@ -156,7 +157,7 @@ function kpis(){
     <div class="kpi"><b>${fmt(act)}</b><span>פעילים</span></div>
     <div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
-    ${kab?`<div class="kpi" title="אוטובוסים הרשומים במאגר הרישוי כ'הסע מיוחד' — בדרך כלל רכבי קבלני הסעות שמופעלים על קווי החברות"><b>${fmt(kab)}</b><span>רכבי קבלן (הסע מיוחד)</span></div>`:''}
+    ${kab?`<div class="kpi" title="אוטובוסים הרשומים במאגר הרישוי כ'הסעה מיוחדת' — בדרך כלל רכבי קבלני הסעות שמופעלים על קווי החברות"><b>${fmt(kab)}</b><span>רכבי קבלן (הסעה מיוחדת)</span></div>`:''}
     <div class="kpi"><b>${fd(DATA.updated)}</b><span>עדכון מאגר הרישוי ונתוני נסיעה</span></div>
     ${DATA.gov_updated?`<div class="kpi" title="קובץ כלי הרכב הציבוריים ממאגר הרישוי הממשלתי — מועלה ידנית לריפו"><b>${fd(DATA.gov_updated)}</b><span>עדכון פרטי הרכב (קובץ ידני)</span></div>`:''}
   </div>`;
@@ -276,7 +277,7 @@ function opView(ref){
   return `<button class="back" onclick="go(null)">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
-    <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו מהשירות</span>`:''}${ravg?`<span>${ravg} נסיעות ביום לרכב בממוצע</span>`:''}${kab?`<span title="אוטובוסים הרשומים במאגר הרישוי כ'הסע מיוחד' — בדרך כלל רכבי קבלני הסעות">🚐 ${fmt(kab)} רכבי קבלן</span>`:''}</div>
+    <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו מהשירות</span>`:''}${ravg?`<span>${ravg} נסיעות ביום לרכב בממוצע</span>`:''}${kab?`<span title="אוטובוסים הרשומים במאגר הרישוי כ'הסעה מיוחדת' — בדרך כלל רכבי קבלני הסעות">🚐 ${fmt(kab)} רכבי קבלן</span>`:''}</div>
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
@@ -352,7 +353,7 @@ async function showV(plate){
     const known=Object.keys(LBL).filter(k=>gov[k]!==undefined);
     const rest=Object.keys(gov).filter(k=>!(k in LBL));
     rows+=`<div class="msec">מהמאגר הממשלתי — כל השדות${DATA.gov_updated?` (נכון ל-${fd(DATA.gov_updated)})`:''}</div><div class="mgrid">`+
-      [...known,...rest].map(k=>`<div class="k">${esc(LBL[k]||k)}</div><div class="v2">${esc(gov[k])}</div>`).join('')+`</div>`;
+      [...known,...rest].map(k=>`<div class="k">${esc(LBL[k]||k)}</div><div class="v2">${esc(k==='sug_rechev_nm'?fixT(gov[k]):gov[k])}</div>`).join('')+`</div>`;
   }else{
     rows+=`<div class="msec">המאגר הממשלתי</div><div class="note">הרכב לא נמצא במאגר הרכב הציבורי — ייתכן שהוסר מהרישום, שההעשרה טרם רצה, או שהמזהה בשידור אינו לוחית.</div>`;
   }
