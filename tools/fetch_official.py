@@ -59,6 +59,19 @@ def main():
                 return int(float(v))
             except (TypeError, ValueError):
                 return None
+        # רשימות המפעלים (בקשת איריס): המאגר מפריד שורות ב-<br> ולפעמים כמה
+        # חברות באותה שורה מופרדות ב-';'. מפרקים לשמות בודדים בלי כפילויות.
+        def facts(k):
+            raw = rec.get(k)
+            if not isinstance(raw, str):
+                return []
+            out = []
+            for part in raw.replace('\r', '').split('<br>'):
+                for q in part.split(';'):
+                    q = q.strip()
+                    if q and q not in out:
+                        out.append(q)
+            return out
         zones.append({
             'name': (rec.get('alina_name') or '').strip(),
             'eng': (rec.get('alina_eng_name') or '').strip(),
@@ -66,6 +79,9 @@ def main():
             'avail': num('available_space'), 'occ': num('occupied_space'),
             'cur_emp': num('current_employees'), 'fut_emp': num('future_employees'),
             'open': (rec.get('open_to_market') or '').strip(),
+            'website': (rec.get('website') or '').strip(),
+            'fs': facts('small_factories'), 'fm': facts('medium_factories'),
+            'fb': facts('big_factories'),
             'polys': polys,
         })
     json.dump(zones, open(OUT, 'w'), ensure_ascii=False, separators=(',', ':'))

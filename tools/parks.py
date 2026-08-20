@@ -292,7 +292,8 @@ if OFFICIAL and os.path.exists(OFFICIAL):
         zla = sum(p[0] for p in allpts) / len(allpts)
         zlo = sum(p[1] for p in allpts) / len(allpts)
         zcl = math.cos(math.radians(zla))
-        meta = {k: z.get(k) for k in ('district', 'avail', 'occ', 'cur_emp', 'fut_emp', 'open')}
+        meta = {k: z.get(k) for k in ('district', 'avail', 'occ', 'cur_emp', 'fut_emp', 'open',
+                                      'website', 'fs', 'fm', 'fb')}
         meta['oname'] = z.get('name')
         best = None
         for pk in parks:
@@ -814,7 +815,8 @@ for pi, pk in enumerate(parks):
         rec['svcmeta'] = _svc_meta
     off = pk.get('official')
     if off:
-        rec['official'] = {k: off.get(k) for k in ('oname', 'district', 'avail', 'occ', 'cur_emp', 'fut_emp')}
+        rec['official'] = {k: off.get(k) for k in ('oname', 'district', 'avail', 'occ', 'cur_emp', 'fut_emp',
+                                                   'website', 'fs', 'fm', 'fb')}
     for L in lines_c: used_rids.add(L['rid'])
     for L in lines_e: used_rids.add(L['rid'])
     fn = f'p{out_i}.json'

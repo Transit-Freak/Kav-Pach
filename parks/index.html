@@ -698,9 +698,22 @@ function openPark(f,push=true){
         o.avail?`<span class="stat" title="שטח שעדיין פנוי לשיווק לעסקים חדשים — אזור עם הרבה שטח פנוי צפוי לגדול">שטח פנוי לשיווק <b>${nf(o.avail)}</b> מ"ר</span>`:'',
         o.occ?`<span class="stat" title="שטח שכבר מאוכלס בעסקים פעילים">שטח תפוס <b>${nf(o.occ)}</b> מ"ר</span>`:''
       ].filter(Boolean).join('');
+      // רשימות המפעלים מהמאגר הרשמי (בקשת איריס) — מקובצות לפי גודל,
+      // בפירוט שנפתח בלחיצה כדי לא להאריך את העמוד לאזורים עתירי מפעלים
+      const fb=o.fb||[], fm=o.fm||[], fs=o.fs||[];
+      const nfact=fb.length+fm.length+fs.length;
+      const fgrp=(t,arr)=>arr.length?`<div style="margin-top:4px"><b>${t} (${arr.length}):</b> ${arr.map(esc).join(' · ')}</div>`:'';
+      const facts=nfact?`<details style="margin-top:6px;font-size:12px;line-height:1.6">
+          <summary style="cursor:pointer;font-weight:800;color:#1e40af">🏭 המפעלים באזור לפי המאגר הרשמי (${nfact})</summary>
+          ${fgrp('מפעלים גדולים',fb)}${fgrp('מפעלים בינוניים',fm)}${fgrp('מפעלים קטנים',fs)}
+          <div class="note" style="margin:4px 0 0">הרשימה כפי שמופיעה במאגר משרד הכלכלה — ייתכן שאינה מלאה או עדכנית</div>
+        </details>`:'';
+      const wsite=(o.website&&/^https?:\/\//.test(o.website))?` · <a href="${esc(o.website)}" target="_blank" rel="noopener">אתר האזור ›</a>`:'';
       boxes+=`<div class="offbox">
-        <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${(o.oname&&o.oname!==d.name)?` · שם רשמי: ${esc(o.oname)}`:''}${o.district?` · מחוז ${esc(o.district)}`:''}</div>
-        ${ostats?`<div class="stats" style="margin:6px 0 0">${ostats}</div>`:'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>'}
+        <div class="offh">🏛️ נתונים רשמיים · משרד הכלכלה${(o.oname&&o.oname!==d.name)?` · שם רשמי: ${esc(o.oname)}`:''}${o.district?` · מחוז ${esc(o.district)}`:''}${wsite}</div>
+        ${ostats?`<div class="stats" style="margin:6px 0 0">${ostats}</div>`:''}
+        ${facts}
+        ${(!ostats&&!facts)?'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>':''}
       </div>`;
     }
     if(d.svc){
@@ -768,7 +781,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='12';
+var VER='13';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
