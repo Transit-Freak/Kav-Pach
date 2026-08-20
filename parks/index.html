@@ -277,13 +277,12 @@ function footHome(on){(on?document.getElementById('gapbox'):document.body).appen
 function showTable(){wrap.style.display='none';heatview.style.display='none';tblview.style.display='block';backbtn.classList.add('on');heatbtn.classList.remove('on');footHome(false)}
 function openHeatmap(fit=true){
   if(!heatmap){
-    // אריחי המפה העברית מכסים רק את אזור ישראל — תוחמים את המפה לאזור
-    // המכוסה כדי שלא ייחשף רקע ריק, והרקע בגוון ים לקצוות שכן נגלים
+    // חזרה לאריחי OSM הרגילים (בקשת שלמה 20.08) — המראה המוכר, אבל המפה
+    // תחומה לישראל (maxBounds+minZoom) כך שאי אפשר לגלוש למדינות השכנות.
+    // בתוך ישראל התוויות ממילא בעברית (השם המקומי ב-OSM)
     heatmap=L.map('heatmap',{minZoom:7,maxZoom:16,maxBounds:[[29.2,33.6],[33.7,36.7]],maxBoundsViscosity:1.0});
-    // אריחים בעברית (Israel Hiking) — שמות היישובים בעברית בכל האזור,
-    // כולל שטחי הרשות והמדינות השכנות (משוב איריס)
-    L.tileLayer('https://israelhiking.osm.org.il/Hebrew/Tiles/{z}/{x}/{y}.png',
-      {attribution:'© OpenStreetMap · Israel Hiking',maxNativeZoom:16,maxZoom:18}).addTo(heatmap);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap',maxZoom:18}).addTo(heatmap);
     heatLayer=L.layerGroup().addTo(heatmap);
   }
   tblview.style.display='none';wrap.style.display='none';heatview.style.display='flex';heatbtn.classList.add('on');backbtn.classList.remove('on');
@@ -644,8 +643,8 @@ function openPark(f,push=true){
     heatview.style.display='none'; heatbtn.classList.remove('on'); backbtn.classList.remove('on');
     footHome(false);
     msg.style.display='none';
-    if(!map){ map=L.map('map',{minZoom:7,maxZoom:18,maxBounds:[[29.2,33.6],[33.7,36.7]],maxBoundsViscosity:1.0}); L.tileLayer('https://israelhiking.osm.org.il/Hebrew/Tiles/{z}/{x}/{y}.png',
-      {attribution:'© OpenStreetMap · Israel Hiking',maxNativeZoom:16,maxZoom:18}).addTo(map); }
+    if(!map){ map=L.map('map',{minZoom:7,maxZoom:18,maxBounds:[[29.2,33.6],[33.7,36.7]],maxBoundsViscosity:1.0}); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      {attribution:'© OpenStreetMap',maxZoom:18}).addTo(map); }
     setTimeout(()=>map.invalidateSize(),50);
     if(layer) layer.remove();
     if(window._routeLayer){window._routeLayer.remove();window._routeLayer=null;window._routeKey=null;}
@@ -769,7 +768,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='11';
+var VER='12';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
