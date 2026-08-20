@@ -1309,7 +1309,9 @@ function DayFeed({ idx, openLine, open12, onBack }) {
   const [chs, setChs] = useState(null);
   const [q, setQ] = usePersistedQ("lh-q-day");
   const [lim, setLim] = useState(300);
+  const [dayF, setDayF] = useState(null);   // לחיצה על כותרת יום מציגה רק אותו
   useEffect(() => setLim(300), [q, mon]);
+  useEffect(() => setDayF(null), [mon]);
   // יעד ומפעיל לא משוכפלים בקובצי החודש — נשלפים מהאינדקס לפי מק"ט
   const meta = useMemo(() => { const m = {}; ((idx && idx.lines) || []).forEach((l) => { m[l.rd] = l; }); return m; }, [idx]);
   // לשונית 2012: כל קווי הצילום. כל שורה מובילה לעמוד של אותו קו כפי
@@ -1434,9 +1436,14 @@ function DayFeed({ idx, openLine, open12, onBack }) {
       })() : chs === null ? "טוען…" : chErr ? <NetErr onRetry={() => setRty((n) => n + 1)} />
         : days.length === 0 ? <div className="empty">אין שינויים תואמים בחודש הזה.</div> : (
         <div>
-          {days.map((d) => shown >= lim ? null : (
+          {dayF && <div className="katnote" style={{ marginBottom: 8 }}>📅 מוצג רק {fmtD(dayF)} · <button className="morebtn" style={{ padding: "2px 10px" }} onClick={() => setDayF(null)}>חזרה לכל החודש</button></div>}
+          {days.filter((d) => !dayF || d === dayF).map((d) => shown >= lim ? null : (
             <React.Fragment key={d}>
-              <div className="dayhead">{fmtD(d)} · יום {WD[new Date(d).getDay()]} · {byd.get(d).length.toLocaleString()} שינויים</div>
+              <div className="dayhead" role="button" tabIndex={0} style={{ cursor: "pointer" }}
+                title={dayF === d ? "לחיצה חוזרת מציגה שוב את כל החודש" : "לחיצה מציגה רק את היום הזה"}
+                onClick={() => setDayF(dayF === d ? null : d)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDayF(dayF === d ? null : d); } }}>
+                {fmtD(d)} · יום {WD[new Date(d).getDay()]} · {byd.get(d).length.toLocaleString()} שינויים {dayF === d ? "· 📌" : ""}</div>
               {byd.get(d).map((c, i) => {
                 if (shown >= lim) return null;
                 shown++;
