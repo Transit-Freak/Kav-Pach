@@ -127,7 +127,12 @@ const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
 let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null;
-const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>v[6+OFF],gR=v=>OFF?v[3]:null;
+// מאגר הרישוי מאיית "צבורי" בלי י' ומקצר "זעצ"/"בע קומתים"/"עיר מפרק" —
+// מיישרים לעברית תקנית בתצוגה. התיקון יושב על gT ולכן הפילוח, המסננים
+// והטבלה מדברים כולם באותן תוויות.
+const fixT=t=>t&&t.replace(/\s+/g,' ').trim().replace('צבורי','ציבורי')
+  .replace('זעצ','זעיר ציבורי').replace('בע קומתים','בעל קומותיים').replace('עיר מפרק','עירוני מפרקי');
+const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>fixT(v[6+OFF]),gR=v=>OFF?v[3]:null;
 const fmt=n=>n.toLocaleString('he-IL');
 const fd=s=>s?s.split('-').reverse().join('.'):'—';
 const days=(a,b)=>Math.round((new Date(a)-new Date(b))/864e5);
