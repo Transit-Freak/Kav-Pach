@@ -163,7 +163,7 @@ function kpis(){
   return `<div class="kpis">
     <div class="kpi"><b>${fmt(tot)}</b><span>רכבים במעקב</span></div>
     <div class="kpi"><b>${fmt(act)}</b><span>פעילים</span></div>
-    <div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>
+    <div class="kpi bad" title="רכבים שלא שידרו מעל ${DATA.retire_days} יום. חלק גדול מהירידה הוא רכבי קבלן שהוחזרו בתום תקופת ההפעלה"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span>${kab?`<span style="display:block;color:var(--mut)">מהם ${fmt(kab-kabA)} רכבי קבלן · ${fmt(tot-act-(kab-kabA))} מהצי הסדיר</span>`:''}</div>
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
     ${kab?`<div class="kpi" title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות שמופעלים על קווי החברות. המספר הגדול: הפעילים כרגע; מתחתיו: כמה מאלה שנצפו אי-פעם כבר ירדו מהשירות"><b>${fmt(kabA)}</b><span>רכבי קבלן פעילים (רכבי הסעות)</span><span style="display:block;color:var(--bad)">${fmt(kab-kabA)} ירדו מהשירות</span></div>`:''}
     <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מתחילת המעקב ועד ריצת העדכון האחרונה"><b style="font-size:15px">${fd(first)} – ${fd(DATA.updated)}</b><span>טווח נתוני הנסיעה</span></div>
