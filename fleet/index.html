@@ -187,9 +187,10 @@ function home(){
   return kpis()+`<div class="cards">${ops.map((o,i)=>{
     const act=o.vehicles.filter(isActive).length, ret=o.vehicles.length-act;
     const kab=DATA.enriched?o.vehicles.filter(isKab).length:0;
+    const kabA=kab?o.vehicles.filter(v=>isKab(v)&&isActive(v)).length:0, retReg=ret-(kab-kabA);
     return `<button class="card" style="background:${opColor(o.ref,i)}" onclick="go(${o.ref})">
       <h2>${esc(o.name)}</h2><div class="n">${fmt(o.vehicles.length)}</div>
-      <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו</span>`:''}${kab?`<span>${fmt(kab)} רכבי קבלן</span>`:''}</div>
+      <div class="pills"><span>${fmt(act)} פעילים</span>${retReg?`<span class="r">${fmt(retReg)} ירדו</span>`:''}${kab?`<span>רכבי קבלן: ${fmt(kabA)} פעילים${kab-kabA?` · ${fmt(kab-kabA)} ירדו`:''}</span>`:''}</div>
     </button>`;}).join('')||'<div class="empty">לא נמצאה חברה</div>'}</div>`;
 }
 
@@ -260,6 +261,7 @@ function opView(ref){
   const act=o.vehicles.filter(isActive).length, ret=o.vehicles.length-act;
   const enr=DATA.enriched;
   const kab=enr?o.vehicles.filter(isKab).length:0;
+  const kabA=kab?o.vehicles.filter(v=>isKab(v)&&isActive(v)).length:0;
   const types={};
   if(enr) o.vehicles.forEach(v=>{const t=gT(v);if(t)types[t]=(types[t]||0)+1;});
   // באיזו שנה קלנדרית הרכב היה בשימוש: החלון שבין הצפייה הראשונה לאחרונה
@@ -286,7 +288,7 @@ function opView(ref){
   return `<button class="back" onclick="go(null)">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
-    <div class="pills"><span>${fmt(act)} פעילים</span>${ret?`<span class="r">${fmt(ret)} ירדו מהשירות</span>`:''}${ravg?`<span>${ravg} נסיעות ביום לרכב בממוצע</span>`:''}${kab?`<span title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות">🚐 ${fmt(kab)} רכבי קבלן</span>`:''}</div>
+    <div class="pills"><span>${fmt(act)} פעילים</span>${ret-(kab-kabA)?`<span class="r">${fmt(ret-(kab-kabA))} ירדו מהשירות</span>`:''}${ravg?`<span>${ravg} נסיעות ביום לרכב בממוצע</span>`:''}${kab?`<span title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות">🚐 רכבי קבלן: ${fmt(kabA)} פעילים${kab-kabA?` · ${fmt(kab-kabA)} ירדו`:''}</span>`:''}</div>
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
