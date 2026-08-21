@@ -239,13 +239,13 @@ function table(vs,opsArr){
   const th=(k,t)=>`<th onclick="srt('${k}')">${t}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
   const shown=vs.slice(0,LIMIT);
   return `<div class="tblbox"><table><thead><tr>${opsArr?'<th>חברה</th>':''}
-    ${th('p','מספר רכב')}${enr?th('t','סוג הרכב')+th('y','שנתון')+th('d','דלתות')+th('m','יצרן ודגם'):''}
+    ${th('p','מספר רכב')}${enr?th('t','סוג הרכב')+th('y','שנתון')+th('m','יצרן ודגם'):''}
     ${OFF?th('r','נסיעות ביום'):''}${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
   ${shown.map((v,i)=>{const on=isActive(v);const mv=on?null:movedTo(v);
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
     <td dir="ltr" style="text-align:right">${esc(v[0])}</td>
-    ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${gD(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
+    ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     <td>${fd(v[1])}</td><td>${fd(v[2])}</td>
     <td><span class="st ${on?'on':mv?'mv':'off'}">${on?'פעיל':mv?'עבר ל'+esc(mv.name):'ירד מהשירות'}</span></td></tr>`;}).join('')}
