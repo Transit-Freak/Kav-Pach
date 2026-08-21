@@ -158,8 +158,8 @@ const movedTo=v=>{const l=XPLATE[v[0]]||[];const hit=l.find(([o2,v2])=>v2!==v&&i
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function kpis(){
-  let tot=0,act=0,kab=0,kabA=0,first=null;
-  for(const o of DATA.operators) for(const v of o.vehicles){tot++;if(isActive(v))act++;if(DATA.enriched&&isKab(v)){kab++;if(isActive(v))kabA++;}if(!first||v[1]<first)first=v[1];}
+  let tot=0,act=0,kab=0,kabA=0,first=null,last=null;
+  for(const o of DATA.operators) for(const v of o.vehicles){tot++;if(isActive(v))act++;if(DATA.enriched&&isKab(v)){kab++;if(isActive(v))kabA++;}if(!first||v[1]<first)first=v[1];if(!last||v[2]>last)last=v[2];}
   return `<div class="kpis">
     <div class="kpi"><b>${fmt(tot)}</b><span>רכבים במעקב</span></div>
     <div class="kpi"><b>${fmt(act)}</b><span>פעילים</span></div>
@@ -167,7 +167,7 @@ function kpis(){
         :`<div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>`}
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
     ${kab?`<div class="kpi" title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות שמופעלים על קווי החברות. המספר הגדול: הפעילים כרגע; מתחתיו: כמה מאלה שנצפו אי-פעם כבר ירדו מהשירות"><b>${fmt(kabA)}</b><span>רכבי קבלן פעילים (רכבי הסעות)</span><span style="display:block;color:var(--bad)">${fmt(kab-kabA)} ירדו מהשירות</span></div>`:''}
-    <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מתחילת המעקב ועד ריצת העדכון האחרונה"><b style="font-size:15px">${fd(first)} – ${fd(DATA.updated)}</b><span>טווח נתוני הנסיעה</span></div>
+    <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מהצפייה הראשונה ועד הצפייה האחרונה שנקלטה. ארכיון השידורים מתעדכן בפיגור של כמה ימים"><b style="font-size:15px">${fd(first)} – ${fd(last)}</b><span>טווח נתוני הנסיעה</span></div>
     ${DATA.gov_updated?`<div class="kpi" title="קובץ כלי הרכב הציבוריים ממאגר הרישוי הממשלתי — מועלה ידנית לריפו"><b>${fd(DATA.gov_updated)}</b><span>עדכון פרטי הרכב (קובץ ידני)</span></div>`:''}
   </div>`;
 }
