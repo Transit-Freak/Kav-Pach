@@ -43,12 +43,21 @@ jobs:
             IFS=$'\t' read -r id name size created <<< "$line"
             del "$id" "$name" "$size" "$created"
           else
+            # בטיחות: כל קובץ מ-6 השעות האחרונות נשמר — מוחקים רק את הצבר הישן
+            cutoff=$(date -u -d '6 hours ago' +%Y-%m-%dT%H:%M:%SZ)
             newest_pages=$(grep -P '\tgithub-pages\t' all.tsv | sort -t$'\t' -k4 | tail -1 | cut -f1)
+            kept=0
             while IFS=$'\t' read -r id name size created; do
               case "$name" in
-                gtfs-daily|magihim-raw-*) del "$id" "$name" "$size" "$created";;
-                github-pages) [ "$id" != "$newest_pages" ] && del "$id" "$name" "$size" "$created" || echo "נשמרה חבילת הפריסה החדשה ביותר ($id)";;
+                magihim-raw-*) del "$id" "$name" "$size" "$created";;
+                gtfs-daily)
+                  if [ "$created" \< "$cutoff" ]; then del "$id" "$name" "$size" "$created"
+                  else echo "טרי — נשמר: $name ($created)"; kept=$((kept+1)); fi;;
+                github-pages)
+                  if [ "$id" != "$newest_pages" ] && [ "$created" \< "$cutoff" ]; then del "$id" "$name" "$size" "$created"
+                  else echo "נשמר: github-pages ($created)"; kept=$((kept+1)); fi;;
               esac
             done < all.tsv
+            echo "נשמרו מטעמי טריות/ביטחון: $kept"
           fi
           echo "שוחררו: $(awk -v f=$freed 'BEGIN{printf "%.2fGB", f/1e9}')"
