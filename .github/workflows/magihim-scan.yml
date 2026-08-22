@@ -72,4 +72,5 @@ jobs:
           name: magihim-raw-${{ github.run_id }}
           path: magihim-out/raw
           if-no-files-found: ignore
+          retention-days: 3
           compression-level: 0
