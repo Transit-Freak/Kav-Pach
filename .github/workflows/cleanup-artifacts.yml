@@ -8,6 +8,10 @@ name: cleanup-artifacts
 # בכל מצב מודפס בדיוק מה נמחק וכמה נפח שוחרר.
 
 on:
+  # יומי (בקשת שלמה): מחיקת הקבצים הישנים אחרי שהצינורות סיימו איתם —
+  # רק מה שכבר נוצל; כל קובץ טרי מ-6 השעות האחרונות נשמר
+  schedule:
+    - cron: '0 20 * * *'   # 23:00 ישראל — אחרי שכל הצינורות היומיים סיימו
   workflow_dispatch:
     inputs:
       mode:
@@ -27,7 +31,7 @@ jobs:
       - name: מחיקה לפי המצב שנבחר
         env:
           GH_TOKEN: ${{ github.token }}
-          MODE: ${{ inputs.mode }}
+          MODE: ${{ inputs.mode || 'full' }}   # בריצה המתוזמנת אין קלט — ניקוי מלא
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
