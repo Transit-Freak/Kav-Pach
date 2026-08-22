@@ -1,0 +1,54 @@
+name: cleanup-artifacts
+
+# ניקוי יזום של קבצים זמניים שמורים (artifacts) — בעקבות התראות האחסון
+# של גיטהאב. מופעל ידנית בלבד. שני מצבים:
+#   trial — ניסוי: מוחק בדיוק קובץ אחד, הישן ביותר של סורק המגיחים
+#   full  — מוחק את כל קובצי ה-GTFS היומיים, את תוצרי המגיחים, ואת כל
+#           חבילות הפריסה חוץ מהחדשה ביותר (שמורה ליתר ביטחון)
+# בכל מצב מודפס בדיוק מה נמחק וכמה נפח שוחרר.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'trial = קובץ אחד לניסוי · full = ניקוי מלא'
+        required: true
+        default: 'trial'
+        type: choice
+        options: [trial, full]
+
+permissions:
+  actions: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    steps:
+      - name: מחיקה לפי המצב שנבחר
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq '.artifacts[] | [.id,.name,.size_in_bytes,.created_at] | @tsv' > all.tsv
+          echo "לפני: $(wc -l < all.tsv) קבצים · $(awk -F'\t' '{s+=$3} END{printf "%.2fGB", s/1e9}' all.tsv)"
+          freed=0
+          del(){ gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$1" >/dev/null \
+                 && echo "נמחק: $2 ($3 bytes, נוצר $4)" && freed=$((freed+$3)); }
+          if [ "$MODE" = trial ]; then
+            # הניסוי: הקובץ הישן ביותר של סורק המגיחים — תוצר בדיקה שאיש אינו צורך
+            line=$(grep -P '\tmagihim-raw' all.tsv | sort -t$'\t' -k4 | head -1) || true
+            [ -n "${line:-}" ] || { echo "אין קובצי מגיחים — אין מה לנסות"; exit 0; }
+            IFS=$'\t' read -r id name size created <<< "$line"
+            del "$id" "$name" "$size" "$created"
+          else
+            newest_pages=$(grep -P '\tgithub-pages\t' all.tsv | sort -t$'\t' -k4 | tail -1 | cut -f1)
+            while IFS=$'\t' read -r id name size created; do
+              case "$name" in
+                gtfs-daily|magihim-raw-*) del "$id" "$name" "$size" "$created";;
+                github-pages) [ "$id" != "$newest_pages" ] && del "$id" "$name" "$size" "$created" || echo "נשמרה חבילת הפריסה החדשה ביותר ($id)";;
+              esac
+            done < all.tsv
+          fi
+          echo "שוחררו: $(awk -v f=$freed 'BEGIN{printf "%.2fGB", f/1e9}')"
