@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # מחיקת ה-GTFS המשותף אחרי ששני הצינורות סיימו
 
 concurrency:
   # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
@@ -94,5 +95,29 @@ jobs:
             if git push origin HEAD:main; then break; fi
             echo "push rejected (main moved) — retry $i"; sleep 10
           done
+
+      - name: מחיקת ה-GTFS המשותף — רק אחרי ששני הצינורות סיימו ותיעדו
+        if: github.event_name == 'workflow_run' && success()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SRC_RUN: ${{ github.event.workflow_run.id }}
+          SRC_START: ${{ github.event.workflow_run.run_started_at }}
+          OTHER: update-weekly.yml
+        run: |
+          # בטיחות: קובץ הביניים נמחק רק כששני הצינורות שניזונים ממנו סיימו
+          # בהצלחה את כל העיבוד ודחפו את התוצרים. מי שמסיים שני מוחק; בכל
+          # מצב אחר הקובץ נשאר, ונמחק ממילא לבד אחרי יום.
+          info=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$OTHER/runs?event=workflow_run&per_page=1" \
+                 --jq '.workflow_runs[0] | .created_at+" "+.status+" "+(.conclusion//"-")' 2>/dev/null || echo "")
+          echo "הצינור השני: ${info:-לא נמצא}"
+          [ -n "$info" ] || { echo "אין מידע — לא מוחקים"; exit 0; }
+          created=${info%% *}; rest=${info#* }
+          [ "$rest" = "completed success" ] || { echo "השני עוד לא סיים בהצלחה — לא מוחקים"; exit 0; }
+          { [ "$created" \> "$SRC_START" ] || [ "$created" = "$SRC_START" ]; } || { echo "הריצה שנמצאה ישנה מהלילה — לא מוחקים"; exit 0; }
+          ids=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SRC_RUN/artifacts" \
+                --jq '.artifacts[] | select(.name=="gtfs-daily") | .id' 2>/dev/null || true)
+          [ -n "$ids" ] || { echo "אין artifact למחוק"; exit 0; }
+          for id in $ids; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" >/dev/null && echo "נמחק gtfs-daily ($id)"; done
 
 # retry: MOT GTFS endpoint timeout at 08:55Z
