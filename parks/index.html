@@ -67,7 +67,7 @@
           <th data-k="name" title="שם אזור התעשייה · לחיצה על כל כותרת ממיינת את הטבלה לפיה">אזור תעשייה <span class="arr"></span></th>
           <th data-k="city" title="היישוב או הרשות שהאזור שייך אליהם · לחיצה ממיינת">יישוב <span class="arr"></span></th>
           <th data-k="area" class="num" title="שטח האזור בקילומטרים רבועים · לחיצה ממיינת">שטח קמ"ר <span class="arr"></span></th>
-          <th data-k="li" class="num" title="כמה קווי אוטובוס עוצרים בתוך שטח האזור עצמו · לחיצה ממיינת">קווים בפנים <span class="arr"></span></th>
+          <th data-k="li" class="num" title="כמה קווי אוטובוס עוצרים בתוך שטח האזור עצמו — כולל קווים שאינם פעילים בשעות השיא (ראו עמודת שעות שיא) · לחיצה ממיינת">קווים בפנים <span class="arr"></span></th>
           <th data-k="lg" class="num" title="קווים שהתחנה שלהם עד 5 דקות הליכה אמיתית מהאזור · לחיצה ממיינת">קרוב 🚶 <span class="arr"></span></th>
           <th data-k="ln" class="num" title="קווים שהתחנה שלהם במרחק 5–10 דקות הליכה — אפשרי אך לא נוח יומיומית · לחיצה ממיינת">רחוק 🚶 <span class="arr"></span></th>
           <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או בשערי הכניסה">שעות שיא ⏰ <span class="arr"></span></th>
@@ -781,15 +781,25 @@ function openPark(f,push=true){
       // פילוח בפנים/בהליכה בכותרת (בקשת איריס: שיהיה ברור כמה עוצרים בפנים)
       const linn=lines.filter(L=>L.t==='in').length;
       const inTxt=linn===lines.length?'כולם עוצרים בתוך האזור':linn===0?'כולם במרחק הליכה — אף אחד לא עוצר בפנים':`${linn} עוצרים בתוך האזור, השאר במרחק הליכה`;
-      h+=`<h2>קווים (${lines.length} — ${inTxt}) · לחצו לשעות המלאות</h2>`;
+      const _pkn=lines.filter(L=>(L.wd||[]).some(t=>('06:00'<=t&&t<'09:00')||('15:00'<=t&&t<'19:00'))).length;
+      h+=`<h2>קווים (${lines.length} — ${inTxt}${_pkn<lines.length?` · ${_pkn} פעילים בשעות השיא`:''}) · לחצו לשעות המלאות</h2>`;
     }
-    for(const L2 of lines){
+    // קווים לא-סדירים (בקשת איריס ושלמה): קו בלי אף יציאה בשעות השיא לא
+    // רלוונטי ליוממות — מוצג בקבוצה נפרדת ומקופלת. זיהוי קווי תלמידים:
+    // יעד/תחנה של מוסד חינוך, או דפוס שעות של צלצולים בלבד.
+    const isPkT=t=>('06:00'<=t&&t<'09:00')||('15:00'<=t&&t<'19:00');
+    const SCHOOL_RE=/בי"ס|ביה"ס|בית ספר|בית-ספר|תיכון|אולפנ|ישיב|תלמוד|מקיף|אורט |קרית חינוך|קריית חינוך|בית חינוך|אמית |דרכא/;
+    const isSchool=L=>{const wd=L.wd||[];return SCHOOL_RE.test((L.dest||'')+' '+(L.stop||''))||(wd.length>0&&wd.length<=6&&wd.every(t=>('05:45'<=t&&t<='08:15')||('12:00'<=t&&t<='16:45')));};
+    const pkLines=lines.filter(L=>(L.wd||[]).some(isPkT));
+    const noPkLines=lines.filter(L=>!(L.wd||[]).some(isPkT));
+    const rowOf=(L2)=>{
       const wd=L2.wd||[];
       const mh=medHead(wd);
-      h+=`<div class="line" data-rid="${L2.rid||''}" data-c="${headCol(mh)}" onclick="this.classList.toggle('open');drawRouteEl(this)">
+      const school=isSchool(L2);
+      return `<div class="line" data-rid="${L2.rid||''}" data-c="${headCol(mh)}" onclick="this.classList.toggle('open');drawRouteEl(this)">
         <div class="lhead"><span class="lnum" style="background:${headCol(mh)}" title="${mh!=null?`תדירות אופיינית ביום חול (06–20): אוטובוס כל ~${mh} דק׳`:'אין מספיק נסיעות ביום חול לחישוב תדירות'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
-          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span></div>
+          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span>${school?`<span class="tier" style="background:#fef3c7;color:#92400e" title="זיהוי אוטומטי: היעד/התחנה של מוסד חינוך, או שכל הנסיעות סביב שעות הצלצולים בלבד">🎒 כנראה קו תלמידים</span>`:''}</div>
         <div class="lsub">תחנה: ${esc(L2.stop)} · יום חול: ${wd.length? wd.length+' הגעות · ראשונה '+wd[0]+' · אחרונה '+wd[wd.length-1] : 'אין שירות'}</div>
         ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap" title="בין ${g[0]} ל-${g[1]} אין אף הגעה של הקו — המתנה של ${fmtGap(g).split('(')[1].replace(')','')} בלי אוטובוס (נחשב חור: 90 דק׳ ומעלה ביום חול 05:30–20:00)">⛔ חור בשירות ${fmtGap(g)}</span>`).join('')}</div>`:''}
         <div class="times">
@@ -798,6 +808,12 @@ function openPark(f,push=true){
           ${L2.sa&&L2.sa.length?`<div><b>שבת:</b> ${L2.sa.join(' · ')}</div>`:''}
         </div>
       </div>`;
+    };
+    for(const L2 of pkLines) h+=rowOf(L2);
+    if(noPkLines.length){
+      h+=`<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:800;color:#92400e;font-size:14px">⏰ עוד ${noPkLines.length} קווים ללא אף יציאה בשעות השיא (06–09, 15–19) — לא רלוונטיים ליוממות, אינם נספרים בתקן התדירות</summary>`;
+      for(const L2 of noPkLines) h+=rowOf(L2);
+      h+=`</details>`;
     }
     h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות</b> (מרווח חציוני בין נסיעות ביום חול): ירוק ≤20 דק׳ · ירוק-כהה ≤35 · צהוב ≤50 · כתום ≤70 · אדום מעל · אפור = מעט נסיעות מדי.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): נגיש ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה מוצגת/נספרת. הכפתור <b>"מדידה"</b> בפאנל השכבות מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
@@ -814,7 +830,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='16';
+var VER='17';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
