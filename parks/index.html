@@ -68,7 +68,7 @@
           <th data-k="city" title="היישוב או הרשות שהאזור שייך אליהם · לחיצה ממיינת">יישוב <span class="arr"></span></th>
           <th data-k="area" class="num" title="שטח האזור בקילומטרים רבועים · לחיצה ממיינת">שטח קמ"ר <span class="arr"></span></th>
           <th data-k="li" class="num" title="כמה קווי אוטובוס עוצרים בתוך שטח האזור עצמו · לחיצה ממיינת">קווים בפנים <span class="arr"></span></th>
-          <th data-k="lg" class="num" title="קווים שהתחנה שלהם עד 5 דקות הליכה אמיתית מהאזור · לחיצה ממיינת">נגיש 🚶 <span class="arr"></span></th>
+          <th data-k="lg" class="num" title="קווים שהתחנה שלהם עד 5 דקות הליכה אמיתית מהאזור · לחיצה ממיינת">קרוב 🚶 <span class="arr"></span></th>
           <th data-k="ln" class="num" title="קווים שהתחנה שלהם במרחק 5–10 דקות הליכה — אפשרי אך לא נוח יומיומית · לחיצה ממיינת">רחוק 🚶 <span class="arr"></span></th>
           <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או בשערי הכניסה">שעות שיא ⏰ <span class="arr"></span></th>
           <th data-k="sf" class="num" style="display:none" title="הציון המשוקלל של משרד התחבורה לאזור הסטטיסטי (זמינות, נגישות, תחרותיות, אמינות)">ציון משרד התחבורה 📈 <span class="arr"></span></th>
@@ -85,11 +85,14 @@
       <div class="legend" style="gap:7px">
         <button class="btn on" id="lyStops" title="הצגת תחנות האוטובוס סביב האזור, צבועות לפי מרחק ההליכה">🚏 תחנות</button>
         <button class="btn" id="lyRoutes" title="הצגת מסלולי כל הקווים שמשרתים את האזור, צבועים לפי התדירות">🚌 מסלולי הקווים</button>
+        <button class="btn" id="lgfold" title="כיווץ או פתיחה של המקרא — כדי לראות יותר מפה"></button>
       </div>
+      <div id="lgbody" style="display:contents">
       <div class="legend" id="zlegend"></div>
       <div class="legend" id="walkrow" style="align-items:center;gap:9px">
         <span>🚶 מציג תחנות עד <b id="walkval">10</b> דק׳ הליכה</span>
         <input type="range" id="walkrng" title="גררו כדי להציג על המפה רק תחנות עד מספר דקות ההליכה שתבחרו (0–20)" min="0" max="20" value="10" style="flex:1;min-width:120px;max-width:280px;accent-color:#32318e">
+      </div>
       </div>
       </div>
       <div id="map"></div>
@@ -134,7 +137,7 @@ let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מח�
 let HEATMODE='peak';   // מפת חום: 'peak'=שעות שיא של יום עבודה (ברירת-מחדל) · 'day'=כל היום
 let HEATSCOPE='in';   // 'in'=נכנסים פנימה בלבד (ברירת-מחדל) · 'all'=בפנים+שערי כניסה
 let curPark=null;      // האזור הפתוח — לרענון תחנות עם מחוון ההליכה
-const TIER={in:'בתוך האזור',gate:'נגיש · עד ~5 דק׳ הליכה',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
+const TIER={in:'בתוך האזור',gate:'קרוב · עד ~5 דק׳ הליכה מהאזור',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
 const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
 // לפי המצב: tier, זמן ומרחק הליכה, וספירת-קווים לאזור
 function sTier(s){return (WALKMODE=='c'?s.t:s.te)||s.t}
@@ -260,6 +263,14 @@ document.querySelectorAll('#tbl th').forEach(th=>th.onclick=()=>{
   renderTable();
 });
 q.oninput=()=>{renderTable(); if(heatview.style.display!=='none') openHeatmap(false);};
+// אנטר בחיפוש פותח את האזור המתאים ביותר (משוב איריס במובייל: "לא קורה כלום")
+q.addEventListener('keydown',e=>{
+  if(e.key!=='Enter') return;
+  const f=(q.value||'').trim(); if(!f||!IDX.length) return;
+  const m=IDX.filter(p=>(p.name+' '+(p.city||'')).includes(f))
+    .sort((a,b)=>((b.name===f)-(a.name===f)) || (b.name.startsWith(f)-a.name.startsWith(f)) || a.name.length-b.name.length);
+  if(m.length){e.preventDefault();q.blur();openPark(m[0].f,true);}
+});
 let FROM='heat';   // מאיפה נפתח האזור: 'heat' (מפה) או 'table'
 tbody.onclick=e=>{
   // Ctrl/Shift+קליק על שם האזור — הדפדפן פותח כרטיסייה חדשה, לא מתערבים
@@ -383,7 +394,7 @@ function openHeatmap(fit=true){
       const body=HEATMODE=='peak'
         ?(tot?`קווים בשעות השיא (${modeTxt}): <b>${tot}</b><br>נכנסים פנימה: ${pkI} · בשערי הכניסה: ${pkG}<br><span style="color:#64748b">בכל היום: ${li+lg+ln}</span>`
              :`<b style="color:#dc2626">אין קווים בשעות השיא</b> (06–09, 15–19)`)
-        :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · נגיש ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
+        :(tot?`נגישים ברגל (${modeTxt}): <b>${tot}</b><br>בתוך: ${li} · קרוב ≤5 דק׳: ${lg} · רחוק 5–10 דק׳: ${ln}`
              :`<b style="color:#dc2626">אין קווים נגישים ברגל</b> (${modeTxt})`);
       marker=L.circleMarker([p.la,p.lo],{radius:hsiz(tot),color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:hcol(tot),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
         .bindPopup(head+body);
@@ -512,13 +523,20 @@ for(const k of ['ind','emp','infra']) document.getElementById('zt'+k).onclick=()
 // מחוון ההליכה (0–20 דק') — מציג/מסתיר תחנות בדף האזור לפי זמן ההליכה
 const walkrng=document.getElementById('walkrng'), walkval=document.getElementById('walkval');
 walkrng.oninput=()=>{ walkval.textContent=walkrng.value; if(curPark) drawStops(curPark); };
+// מקרא מתקפל (משוב איריס במובייל): הכרטיס הסתיר את המפה — כפתור שמכווץ
+// אותו לשורת הכפתורים בלבד. במסכים צרים מתחיל מכווץ.
+let LGFOLD=window.innerWidth<=640;
+const lgfold=document.getElementById('lgfold'), lgbody=document.getElementById('lgbody');
+function applyFold(){lgbody.style.display=LGFOLD?'none':'contents';lgfold.textContent=LGFOLD?'▸ מקרא':'▾ מקרא';}
+lgfold.onclick=()=>{LGFOLD=!LGFOLD;applyFold();};
+applyFold();
 // שכבות בתוך אזור (בקשת איריס): תחנות ומסלולי קווים נפרדים, מקרא לפי הבחירה
 let SHOWSTOPS=true, SHOWROUTES=false;
 function zLegend(){
   const parts=[];
   if(SHOWSTOPS) parts.push(
     `<span title="תחנות שנמצאות בתוך גבולות האזור עצמו"><i style="background:#16a34a"></i> בתוך האזור</span>`,
-    `<span title="תחנות עד 5 דקות הליכה אמיתית מהאזור — מרחק נוח יומיומית"><i style="background:#84cc16"></i> נגיש · עד ~5 דק׳ הליכה</span>`,
+    `<span title="תחנות עד 5 דקות הליכה אמיתית מהאזור — מרחק נוח יומיומית"><i style="background:#84cc16"></i> קרוב · עד ~5 דק׳ הליכה</span>`,
     `<span title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית"><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>`);
   if(SHOWROUTES) parts.push(
     `<span style="font-weight:800">🚌 צבע מסלול = תדירות:</span>`,
@@ -628,7 +646,7 @@ wrap.addEventListener('touchend',e=>{
 document.getElementById('csvbtn').onclick=()=>{
   const pk=hasPk();
   const ly=hasLy();
-  const head=['אזור תעשייה','יישוב',...(ly?['סוג']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים נגיש (הליכה)','קווים רחוק (הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים'];
+  const head=['אזור תעשייה','יישוב',...(ly?['סוג']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים קרוב (עד 5 דק׳ הליכה)','קווים רחוק (5–10 דק׳ הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים'];
   const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[ZTLBL[ztOf(p)]]:[]),...(hasPlan()?[p.st=='planned'?'טרם נבנה':(p.st=='partial'?'בנוי חלקית':'פעיל')]:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),...(hasSv()?[p.sf??'',p.sa??'',p.sr??'']:[]),p.in??0]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
@@ -669,7 +687,7 @@ function openPark(f,push=true){
       ctl.onAdd=()=>{
         const el=L.DomUtil.create('div');
         el.style.cssText='background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:7px 11px;font:700 12px Assistant,Heebo,sans-serif;color:#0f172a;direction:rtl';
-        el.innerHTML=`🚏 <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">${ng}</b> <span title="תחנות עד 5 דקות הליכה אמיתית מהאזור">נגיש</span> · <b style="color:#a16207" title="תחנות במרחק 5–10 דקות הליכה">${nn2}</b> <span title="תחנות במרחק 5–10 דקות הליכה">רחוק</span>`;
+        el.innerHTML=`🚏 תחנות: <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f">${ng}</b> <span title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב (עד 5 דק׳)</span> · <b style="color:#a16207">${nn2}</b> <span title="תחנות במרחק 5–10 דקות הליכה">רחוק (5–10 דק׳)</span>`;
         return el;
       };
       ctl.addTo(map);
@@ -687,7 +705,7 @@ function openPark(f,push=true){
     <div class="stats">
       <span class="stat" title="שטח האזור בקילומטרים רבועים">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat" title="תחנות אוטובוס שנמצאות בתוך גבולות האזור עצמו">תחנות בפנים <b>${nin}</b></span>
-      <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">נגיש 🚶 <b>${ngate}</b></span>
+      <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב 🚶 <b>${ngate}</b></span>
       <span class="stat" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
     </div>`;
     let boxes='';if(d.official){
@@ -781,7 +799,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='13';
+var VER='14';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
