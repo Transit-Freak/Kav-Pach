@@ -22,46 +22,31 @@ jobs:
           YEAR: ${{ inputs.year || '2019' }}
         run: |
           set -uo pipefail
-          FEED="ministry-of-transport-and-road-safety/820"
-          echo "== אבחון: מה חי =="
-          for host in transitfeeds.com openmobilitydata.org; do
-            code=$(curl -s -o /tmp/pg.html -w "%{http_code}" -L --max-time 30 "https://$host/p/$FEED")
-            echo "$host → HTTP $code · $(wc -c </tmp/pg.html) bytes · title: $(grep -o '<title>[^<]*' /tmp/pg.html | head -1)"
-          done
-          echo "== ניסיון 1: רשימת גרסאות מהעמודים =="
-          found=""
-          for pg in 1 2 3 4 5 6; do
-            html=$(curl -sL --max-time 30 "https://transitfeeds.com/p/$FEED?p=$pg" || true)
-            dates=$(echo "$html" | grep -oE "820/20[0-9]{6}" | sed 's#820/##' | sort -u) || true
-            [ -n "$dates" ] && found="$found $dates"
-          done
-          echo "כל התאריכים שנמצאו: $(echo $found | tr ' ' '\n' | sort -u | head -30 | tr '\n' ' ')"
-          echo "== ניסיון 2: Wayback על עמוד הפיד =="
-          wb=$(curl -sL --max-time 40 "http://archive.org/wayback/available?url=transitfeeds.com/p/$FEED&timestamp=2019" || true)
-          echo "$wb"
-          snap=$(echo "$wb" | grep -oE '"url": *"[^"]+"' | head -1 | sed 's/.*"url": *"//;s/"$//')
-          if [ -n "$snap" ]; then
-            html=$(curl -sL --max-time 60 "$snap" || true)
-            dates=$(echo "$html" | grep -oE "820/20[0-9]{6}" | sed 's#820/##' | sort -u | head -30) || true
-            echo "תאריכים מ-Wayback: $dates"
-            found="$found $dates"
-          fi
-          echo "== ניסיון 3: ניחוש ישיר של הורדות 2019 =="
+          # הדלת שעבדה תמיד: דלי ה-S3 של OpenMobilityData (בלי Cloudflare) —
+          # אותו BASE שבו השתמש backfill_tf שבנה את כל ארכיון הקו בזמן
+          S3="https://openmobilitydata-data.s3-us-west-1.amazonaws.com/public/feeds/ministry-of-transport-and-road-safety/820"
+          YEAR="${YEAR:-2019}"
+          echo "== חיפוש סנפשוטים ב-S3 לשנת $YEAR =="
           got=""
-          for d in 20190101 20190201 20190304 20190401 20190506 20190603 20190701 20190805 20190902 20191007 20191104 20191202; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" -I -L --max-time 20 "https://transitfeeds.com/p/$FEED/$d/download" || echo 000)
+          for md in 0101 0115 0201 0301 0315 0401 0501 0601 0615 0701 0715 0801 0901 1001 1101 1201 1215; do
+            d="${YEAR}${md}"
+            code=$(curl -s -o /dev/null -w "%{http_code}" -I --max-time 20 "$S3/$d/gtfs.zip" || echo 000)
             printf '%s:%s ' "$d" "$code"
-            if [ "$code" = "200" ]; then got="$d"; break; fi
+            [ "$code" = "200" ] && { got="$d"; break; }
           done
           echo
-          [ -n "$got" ] || { echo "RESULT: אין גישה לסנפשוטים של 2019 — הארכיון לא זמין"; exit 0; }
-          echo "== מוריד סנפשוט $got =="
-          curl -sL --max-time 900 -o g.zip "https://transitfeeds.com/p/$FEED/$got/download"
+          [ -n "$got" ] || { echo "RESULT: אף תאריך לא ענה 200 — או שהדלי נסגר, או שאין סנפשוטים בתאריכים שנוסו"; exit 0; }
+          echo "== נמצא סנפשוט $got — מוריד =="
+          curl -sL --max-time 1200 -o g.zip "$S3/$got/gtfs.zip"
           ls -la g.zip
           unzip -o g.zip agency.txt routes.txt >/dev/null || { echo "zip פגום"; exit 0; }
-          echo "== מפעילים ב-2019 =="
+          echo "== כל המפעילים בסנפשוט $got =="
           cat agency.txt
           echo "== מופעי מוניות =="
-          grep -c "מוני" agency.txt routes.txt || echo "RESULT: אפס מוניות ב-GTFS של $got"
-          grep "מוני" agency.txt routes.txt | head -10 || true
+          grep -c "מוני" agency.txt routes.txt || echo "RESULT: אפס מוניות בסנפשוט $got"
+          grep "מוני" agency.txt | head -20 || true
+          echo "== קווי מוניות (שורות routes) =="
+          grep "מוני" routes.txt | head -15 || true
+          echo "== חיפוש טקסי המרכז / מוניות המרכז =="
+          grep -E "טקסי|המרכז" agency.txt || echo "אין תאגיד כזה בסנפשוט"
           echo "== סך קווים ==" ; wc -l routes.txt
