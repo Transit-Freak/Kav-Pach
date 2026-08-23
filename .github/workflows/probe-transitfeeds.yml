@@ -1,52 +1,17 @@
 name: probe-transitfeeds
 
-# בדיקה חד-פעמית (שאלת שלמה 23.08): האם קווי מוניות השירות היו ב-GTFS
-# ההיסטורי של 2019? מוריד סנפשוט מארכיון TransitFeeds/OpenMobilityData,
-# בודק agency+routes, ומדפיס ממצאים ליומן בלבד — בלי לשמור artifacts.
+# ארכיאולוגיית מוניות שירות: סריקת ארכיון TransitFeeds (S3) — אילו תאגידי
+# מוניות היו בפיד הארצי 2017–2022, אילו קווים, ומה חסר בארכיון הקו בזמן.
+# שלב א' = דיווח בלבד ליומן. הפעלה ידנית.
 
 on:
   workflow_dispatch:
-    inputs:
-      year:
-        description: 'שנה לבדיקה (ברירת מחדל 2019)'
-        required: false
-        default: '2019'
 
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
-      - name: איתור סנפשוט והורדה
-        env:
-          YEAR: ${{ inputs.year || '2019' }}
-        run: |
-          set -uo pipefail
-          # הדלת שעבדה תמיד: דלי ה-S3 של OpenMobilityData (בלי Cloudflare) —
-          # אותו BASE שבו השתמש backfill_tf שבנה את כל ארכיון הקו בזמן
-          S3="https://openmobilitydata-data.s3-us-west-1.amazonaws.com/public/feeds/ministry-of-transport-and-road-safety/820"
-          YEAR="${YEAR:-2019}"
-          echo "== חיפוש סנפשוטים ב-S3 לשנת $YEAR =="
-          got=""
-          for md in 0101 0115 0201 0301 0315 0401 0501 0601 0615 0701 0715 0801 0901 1001 1101 1201 1215; do
-            d="${YEAR}${md}"
-            code=$(curl -s -o /dev/null -w "%{http_code}" -I --max-time 20 "$S3/$d/gtfs.zip" || echo 000)
-            printf '%s:%s ' "$d" "$code"
-            [ "$code" = "200" ] && { got="$d"; break; }
-          done
-          echo
-          [ -n "$got" ] || { echo "RESULT: אף תאריך לא ענה 200 — או שהדלי נסגר, או שאין סנפשוטים בתאריכים שנוסו"; exit 0; }
-          echo "== נמצא סנפשוט $got — מוריד =="
-          curl -sL --max-time 1200 -o g.zip "$S3/$got/gtfs.zip"
-          ls -la g.zip
-          unzip -o g.zip agency.txt routes.txt >/dev/null || { echo "zip פגום"; exit 0; }
-          echo "== כל המפעילים בסנפשוט $got =="
-          cat agency.txt
-          echo "== מופעי מוניות =="
-          grep -c "מוני" agency.txt routes.txt || echo "RESULT: אפס מוניות בסנפשוט $got"
-          grep "מוני" agency.txt | head -20 || true
-          echo "== קווי מוניות (שורות routes) =="
-          grep "מוני" routes.txt | head -15 || true
-          echo "== חיפוש טקסי המרכז / מוניות המרכז =="
-          grep -E "טקסי|המרכז" agency.txt || echo "אין תאגיד כזה בסנפשוט"
-          echo "== סך קווים ==" ; wc -l routes.txt
+      - uses: actions/checkout@v4
+      - name: סריקת הארכיון ומיפוי החוסרים
+        run: python3 tools/taxi_archaeology.py
