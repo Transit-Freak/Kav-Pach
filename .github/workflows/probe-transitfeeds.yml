@@ -1,0 +1,53 @@
+name: probe-transitfeeds
+
+# בדיקה חד-פעמית (שאלת שלמה 23.08): האם קווי מוניות השירות היו ב-GTFS
+# ההיסטורי של 2019? מוריד סנפשוט מארכיון TransitFeeds/OpenMobilityData,
+# בודק agency+routes, ומדפיס ממצאים ליומן בלבד — בלי לשמור artifacts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'שנה לבדיקה (ברירת מחדל 2019)'
+        required: false
+        default: '2019'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: איתור סנפשוט והורדה
+        env:
+          YEAR: ${{ inputs.year || '2019' }}
+        run: |
+          set -euo pipefail
+          BASE="https://transitfeeds.com/p/ministry-of-transport-and-road-safety/820"
+          echo "== שליפת רשימת הגרסאות =="
+          # עמודי הגרסאות (מספר עמודים) — אוספים תאריכי סנפשוט של השנה המבוקשת
+          found=""
+          for pg in 1 2 3 4 5 6 7 8; do
+            html=$(curl -sL --max-time 60 "$BASE?p=$pg" || true)
+            dates=$(echo "$html" | grep -oE "820/${YEAR}[0-9]{4}" | sort -u | sed 's#820/##') || true
+            if [ -n "$dates" ]; then found="$found $dates"; fi
+          done
+          found=$(echo $found | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          echo "סנפשוטים של $YEAR: ${found:-לא נמצאו}"
+          [ -n "${found// /}" ] || { echo "אין סנפשוטים לשנה — אולי הארכיון לא מכסה אותה"; exit 0; }
+          d=$(echo $found | tr ' ' '\n' | sort | awk 'NR==1'); mid=$(echo $found | wc -w)
+          # לוקחים סנפשוט מאמצע השנה אם יש
+          d=$(echo $found | tr ' ' '\n' | sort | awk -v n=$(( (mid+1)/2 )) 'NR==n')
+          echo "== מוריד סנפשוט $d =="
+          curl -sL --max-time 900 -o gtfs2019.zip "$BASE/$d/download"
+          ls -la gtfs2019.zip
+          unzip -o gtfs2019.zip agency.txt routes.txt >/dev/null
+          echo "== agency.txt: מפעילים =="
+          cat agency.txt | head -40
+          echo "== חיפוש מוניות =="
+          grep -c "מוני" agency.txt routes.txt || echo "אפס מופעי מוניות"
+          grep "מוני" agency.txt || true
+          grep "מוני" routes.txt | head -10 || true
+          echo "== מק\"טים ארוכים (רישיונות מוניות 7 ספרות) ב-route_desc =="
+          awk -F',' 'NR>1{print $NF}' routes.txt | grep -oE "^[0-9]{7}-" | sort -u | head || echo "אין"
+          echo "== סטטיסטיקה: סך קווים בסנפשוט =="
+          wc -l routes.txt
