@@ -777,7 +777,12 @@ function openPark(f,push=true){
     }
     if(!lines.length&&!_plan) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהכניסה/הסביבה</div>`;
-    if(lines.length) h+=`<h2>קווים (${lines.length}) — לחצו לשעות המלאות</h2>`;
+    if(lines.length){
+      // פילוח בפנים/בהליכה בכותרת (בקשת איריס: שיהיה ברור כמה עוצרים בפנים)
+      const linn=lines.filter(L=>L.t==='in').length;
+      const inTxt=linn===lines.length?'כולם עוצרים בתוך האזור':linn===0?'כולם במרחק הליכה — אף אחד לא עוצר בפנים':`${linn} עוצרים בתוך האזור, השאר במרחק הליכה`;
+      h+=`<h2>קווים (${lines.length} — ${inTxt}) · לחצו לשעות המלאות</h2>`;
+    }
     for(const L2 of lines){
       const wd=L2.wd||[];
       const mh=medHead(wd);
@@ -809,7 +814,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='15';
+var VER='16';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
