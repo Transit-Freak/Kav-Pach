@@ -280,6 +280,19 @@ if os.path.exists(MOT):
 # כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
 # עם הפוליגון הרשמי. כך משלימים אזורים (בעיקר בפריפריה) ש-OSM לא מיפה, ומצרפים
 # נתוני עובדים/שטח/מחוז לכל אזור רשמי.
+# ייחודיות הקו מהקטלוג הרשמי (data-main.json — ההמרה של "מצומצם.xlsx"):
+# סדיר/תלמידים/לילה/קווים מזינים. קווי תלמידים מסומנים באתר (בקשת איריס ושלמה).
+LINESUB = {}
+try:
+    for _r in json.load(open('data-main.json', encoding='utf-8')):
+        _mk = str(_r[0]).strip().lstrip('0')
+        _sv = str(_r[7]).strip()
+        if _mk and _sv and _sv != 'סדיר':
+            LINESUB[_mk] = _sv
+    print('ייחודיות קווים מהקטלוג:', len(LINESUB))
+except Exception as _e:  # noqa: BLE001
+    print('קטלוג הייחודיות לא נטען:', _e)
+
 OFF_MATCH_M = 1500
 if OFFICIAL and os.path.exists(OFFICIAL):
     official = json.load(open(OFFICIAL, encoding='utf-8'))
@@ -664,6 +677,9 @@ def build_lines(stops_here, tk):
         dest = longnm.split('<->')[-1].split('-')[0].strip() if '<->' in longnm else longnm[:30]
         rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk], 'mk': mkt or num,
                'rid': rid}   # מזהה הקו — מפתח לקובץ המסלול (data/shp/<rid>.json)
+        _sub = LINESUB.get(str(mkt or num).strip().lstrip('0'))
+        if _sub:
+            rec['sub'] = _sub
         for gk, _ in DAYGROUPS:
             mins = sorted(set(deps.get((s['sid'], rid, gk), [])))
             rec[gk] = [hhmm(m) for m in mins]

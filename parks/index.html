@@ -799,7 +799,10 @@ function openPark(f,push=true){
       return `<div class="line" data-rid="${L2.rid||''}" data-c="${headCol(mh)}" onclick="this.classList.toggle('open');drawRouteEl(this)">
         <div class="lhead"><span class="lnum" style="background:${headCol(mh)}" title="${mh!=null?`תדירות אופיינית ביום חול (06–20): אוטובוס כל ~${mh} דק׳`:'אין מספיק נסיעות ביום חול לחישוב תדירות'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
-          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span>${school?`<span class="tier" style="background:#fef3c7;color:#92400e" title="זיהוי אוטומטי: היעד/התחנה של מוסד חינוך, או שכל הנסיעות סביב שעות הצלצולים בלבד">🎒 כנראה קו תלמידים</span>`:''}</div>
+          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span>${L2.sub&&L2.sub.includes('תלמיד')?`<span class="tier" style="background:#fde68a;color:#78350f" title="סימון רשמי מקטלוג הקווים של משרד התחבורה (ייחודיות: תלמידים)">🎒 קו תלמידים</span>`
+          :L2.sub&&L2.sub.includes('לילה')?`<span class="tier" style="background:#e0e7ff;color:#3730a3" title="סימון רשמי מקטלוג הקווים: קו לילה">🌙 קו לילה</span>`
+          :L2.sub&&L2.sub.includes('מזינ')?`<span class="tier" style="background:#dbeafe;color:#1e40af" title="סימון רשמי מקטלוג הקווים: קו מזין (לרכבת/למסוף)">🔗 קו מזין</span>`
+          :school?`<span class="tier" style="background:#fef3c7;color:#92400e" title="זיהוי אוטומטי (אין סימון רשמי לקו הזה): היעד/התחנה של מוסד חינוך, או שכל הנסיעות סביב שעות הצלצולים">🎒 כנראה קו תלמידים</span>`:''}</div>
         <div class="lsub">תחנה: ${esc(L2.stop)} · יום חול: ${wd.length? wd.length+' הגעות · ראשונה '+wd[0]+' · אחרונה '+wd[wd.length-1] : 'אין שירות'}</div>
         ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap" title="בין ${g[0]} ל-${g[1]} אין אף הגעה של הקו — המתנה של ${fmtGap(g).split('(')[1].replace(')','')} בלי אוטובוס (נחשב חור: 90 דק׳ ומעלה ביום חול 05:30–20:00)">⛔ חור בשירות ${fmtGap(g)}</span>`).join('')}</div>`:''}
         <div class="times">
@@ -830,7 +833,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='17';
+var VER='18';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);
