@@ -113,6 +113,7 @@
       <div class="modes">
         <button class="mode on" data-m="op">חברה</button>
         <button class="mode" data-m="city">עיר</button>
+        <button class="mode" data-m="type">סוג רכב</button>
         <button class="mode" data-m="plate">מספר רכב</button>
       </div>
     </div>
@@ -126,7 +127,7 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null;
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
 // ('צבורי להסע מיוחד', 'זעצ הסעות מיוחדות'...) — שם שכל אחד מבין.
 // המפתח אחרי ניקוי: גרש תקוע, רווחים כפולים ותחילית 'אוטובוס' (בקובץ
@@ -167,7 +168,7 @@ function kpis(){
         :`<div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>`}
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
     ${kab?`<div class="kpi" title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות שמופעלים על קווי החברות. המספר הגדול: הפעילים כרגע; מתחתיו: כמה מאלה שנצפו אי-פעם כבר ירדו מהשירות"><b>${fmt(kabA)}</b><span>רכבי קבלן פעילים (רכבי הסעות)</span><span style="display:block;color:var(--bad)">${fmt(kab-kabA)} ירדו מהשירות</span></div>`:''}
-    <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מהצפייה הראשונה ועד הצפייה האחרונה שנקלטה. ארכיון השידורים מתעדכן בפיגור של כמה ימים"><b style="font-size:15px">${fd(first)} – ${fd(last)}</b><span>טווח נתוני הנסיעה</span></div>
+    <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מהצפייה הראשונה ועד הצפייה האחרונה שנקלטה"><b style="font-size:15px">${fd(first)} – ${fd(last)}</b><span>טווח נתוני הנסיעה</span><span style="display:block;color:var(--mut)">הימים שמאז — טרם נקלטו (הארכיון מתעדכן בפיגור)</span></div>
     ${DATA.gov_updated?`<div class="kpi" title="קובץ כלי הרכב הציבוריים ממאגר הרישוי הממשלתי — מועלה ידנית לריפו"><b>${fd(DATA.gov_updated)}</b><span>עדכון פרטי הרכב (קובץ ידני)</span></div>`:''}
   </div>`;
 }
@@ -175,6 +176,7 @@ function kpis(){
 function home(){
   const f=Q.trim();
   if(MODE==='city') return cityHome(f);
+  if(MODE==='type') return typeHome(f);
   if(MODE==='plate'&&f){
     const clean=f.replace(/-/g,'');
     const hits=[];
@@ -209,7 +211,7 @@ function cityHome(f){
   if(CITYSEL&&CITIES.cities[CITYSEL]) return cityView(CITYSEL);
   const hits=all.filter(([c])=>!f||c.includes(f)).sort((a,b)=>b[1].total-a[1].total).slice(0,30);
   return kpis()+`<div class="cards">${hits.map(([c,d])=>
-    `<button class="card" style="background:#10172A" onclick="CITYSEL=${JSON.stringify(c).replace(/"/g,'&quot;')};render();window.scrollTo({top:0})">
+    `<button class="card" style="background:#10172A" onclick="history.pushState({sub:1},'');CITYSEL=${JSON.stringify(c).replace(/"/g,'&quot;')};render();window.scrollTo({top:0})">
       <h2>${esc(c)}</h2><div class="n">${fmt(d.total)}</div>
       <div class="pills"><span>רכבים פועלים בעיר</span></div>
     </button>`).join('')||'<div class="empty">לא נמצאה עיר</div>'}</div>`;
@@ -220,7 +222,7 @@ function cityView(c){
   const yk=Object.keys(d.years).map(Number).sort((a,b)=>b-a);
   const ymax=yk.length?Math.max(...Object.values(d.years)):1;
   const y0=+DATA.updated.slice(0,4);
-  return `<button class="back" onclick="CITYSEL=null;render()">→ חזרה לכל הערים</button>
+  return `<button class="back" onclick="history.back()">→ חזרה לכל הערים</button>
   <div class="ophead" style="background:#10172A">
     <div><h2>${esc(c)}</h2><div class="sub2">${fmt(d.total)} רכבים שונים פועלים בעיר · עדכון ${fd(CITIES.updated)}</div></div>
   </div>
@@ -234,6 +236,53 @@ function cityView(c){
     </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>'}
   </div>
   <p class="note">רכב משויך לעיר רק אם היא מוצא או יעד של קו שבו שידר — קווים שרק חולפים דרך העיר אינם נספרים. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
+}
+
+/* מצב "סוג רכב": כל סוגי האוטובוסים בארץ, ובלחיצה — כל הרכבים מהסוג ולמי הם שייכים */
+const TCOLORS=['#1B7A3D','#1E5BC6','#B45309','#7C3AED','#0E7490','#BE185D','#334155','#A16207','#0F766E','#B91C1C','#4D7C0F','#6D28D9'];
+function typeHome(f){
+  if(!DATA.enriched) return kpis()+'<div class="panel"><div class="empty">סוגי הרכב יגיעו עם ההעשרה מהמאגר הממשלתי</div></div>';
+  if(TYPESEL) return typeView(TYPESEL);
+  const agg={};
+  for(const o of DATA.operators) for(const v of o.vehicles){
+    const t=gT(v); if(!t) continue;
+    const g=agg[t]||(agg[t]={n:0,act:0,ops:new Set()});
+    g.n++; if(isActive(v))g.act++; g.ops.add(o.ref);
+  }
+  const rows=Object.entries(agg).filter(([t])=>!f||t.includes(f)).sort((a,b)=>b[1].n-a[1].n);
+  return kpis()+`<div class="cards">${rows.map(([t,g],i)=>
+    `<button class="card" style="background:${TCOLORS[i%TCOLORS.length]}" onclick="history.pushState({sub:1},'');TYPESEL=${JSON.stringify(t).replace(/"/g,'&quot;')};STATF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0})">
+      <h2>${esc(t)}</h2><div class="n">${fmt(g.n)}</div>
+      <div class="pills"><span>${fmt(g.act)} פעילים</span>${g.n-g.act?`<span class="r">${fmt(g.n-g.act)} ירדו</span>`:''}<span>${g.ops.size} חברות</span></div>
+    </button>`).join('')||'<div class="empty">לא נמצא סוג רכב</div>'}</div>`;
+}
+function typeView(t){
+  const all=[];
+  for(const o of DATA.operators) for(const v of o.vehicles) if(gT(v)===t) all.push([o,v]);
+  const act=all.filter(p=>isActive(p[1])).length;
+  const byOp={}; for(const [o] of all) byOp[o.ref]=(byOp[o.ref]||0)+1;
+  const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
+  let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
+  if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0}[SORTK];
+    if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
+  return `<button class="back" onclick="history.back()">→ חזרה לכל הסוגים</button>
+  <div class="ophead" style="background:#10172A">
+    <div><h2>${esc(t)}</h2><div class="sub2">${fmt(act)} פעילים מתוך ${fmt(all.length)} שנצפו · ${ops.length} חברות</div></div>
+  </div>
+  <div class="cols2">
+    <div class="panel"><p class="ptitle">אצל אילו חברות</p>
+      ${ops.slice(0,14).map(([ref,n])=>`<div class="yrow" style="grid-template-columns:150px 1fr 60px"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(4,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="panel"><p class="ptitle">כל הרכבים מהסוג הזה</p>
+    <div class="filters">
+      <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
+      <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
+      <button class="fchip ${STATF===0?'on':''}" onclick="STATF=0;LIMIT=200;render()">ירדו מהשירות</button>
+    </div>
+    ${table(pairs.map(p=>p[1]),pairs.map(p=>p[0]))}
+    <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו · עמודת החברה מראה למי כל רכב שייך.</p>
+  </div>`;
 }
 
 function table(vs,opsArr){
@@ -285,7 +334,7 @@ function opView(ref){
   if(KABF==='l') vs=vs.filter(v=>!isKab(v));
   if(STATF!==null) vs=vs.filter(v=>(isActive(v)?1:0)===STATF);
   vs=sortVs(vs);
-  return `<button class="back" onclick="go(null)">→ חזרה לכל החברות</button>
+  return `<button class="back" onclick="history.back()">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
     <div class="pills"><span>${fmt(act)} פעילים</span>${ret-(kab-kabA)?`<span class="r">${fmt(ret-(kab-kabA))} ירדו מהשירות</span>`:''}${ravg?`<span>${ravg} נסיעות ביום לרכב בממוצע</span>`:''}${kab?`<span title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות">🚐 רכבי קבלן: ${fmt(kabA)} פעילים${kab-kabA?` · ${fmt(kab-kabA)} ירדו`:''}</span>`:''}</div>
@@ -377,14 +426,16 @@ async function showV(plate){
   document.body.appendChild(ovl);
 }
 
-function go(ref){VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0});}
+function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0});}
+// חץ "אחורה" של הדפדפן מחזיר למסך הבית במקום לצאת מהאתר
+window.addEventListener('popstate',()=>{VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();window.scrollTo({top:0});});
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
-  $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':'חיפוש מספר רכב…';
-  VIEW={t:'home'};CITYSEL=null;LIMIT=200;render();
+  $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש סוג רכב…':'חיפוש מספר רכב…';
+  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();
 }));
-$('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;LIMIT=200;render();});
+$('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();})
