@@ -113,7 +113,7 @@
       <div class="modes">
         <button class="mode on" data-m="op">חברה</button>
         <button class="mode" data-m="city">עיר</button>
-        <button class="mode" data-m="type">סוג רכב</button>
+        <button class="mode" data-m="type">דגם</button>
         <button class="mode" data-m="plate">מספר רכב</button>
       </div>
     </div>
@@ -238,43 +238,48 @@ function cityView(c){
   <p class="note">רכב משויך לעיר רק אם היא מוצא או יעד של קו שבו שידר — קווים שרק חולפים דרך העיר אינם נספרים. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
 }
 
-/* מצב "סוג רכב": כל סוגי האוטובוסים בארץ, ובלחיצה — כל הרכבים מהסוג ולמי הם שייכים */
+/* מצב "דגם": כל דגמי האוטובוסים בארץ (יצרן+דגם מהרישוי), ובלחיצה —
+   כל הרכבים מהדגם ואצל אילו חברות הוא מועדף */
 const TCOLORS=['#1B7A3D','#1E5BC6','#B45309','#7C3AED','#0E7490','#BE185D','#334155','#A16207','#0F766E','#B91C1C','#4D7C0F','#6D28D9'];
+const MODELS_SHOWN=48;
 function typeHome(f){
-  if(!DATA.enriched) return kpis()+'<div class="panel"><div class="empty">סוגי הרכב יגיעו עם ההעשרה מהמאגר הממשלתי</div></div>';
+  if(!DATA.enriched) return kpis()+'<div class="panel"><div class="empty">דגמי הרכב יגיעו עם ההעשרה מהמאגר הממשלתי</div></div>';
   if(TYPESEL) return typeView(TYPESEL);
   const agg={};
   for(const o of DATA.operators) for(const v of o.vehicles){
-    const t=gT(v); if(!t) continue;
+    const t=gM(v); if(!t) continue;
     const g=agg[t]||(agg[t]={n:0,act:0,ops:new Set()});
     g.n++; if(isActive(v))g.act++; g.ops.add(o.ref);
   }
-  const rows=Object.entries(agg).filter(([t])=>!f||t.includes(f)).sort((a,b)=>b[1].n-a[1].n);
+  let rows=Object.entries(agg).filter(([t])=>!f||t.includes(f)).sort((a,b)=>b[1].n-a[1].n);
+  const total=rows.length;
+  if(!f) rows=rows.slice(0,MODELS_SHOWN);
   return kpis()+`<div class="cards">${rows.map(([t,g],i)=>
     `<button class="card" style="background:${TCOLORS[i%TCOLORS.length]}" onclick="history.pushState({sub:1},'');TYPESEL=${JSON.stringify(t).replace(/"/g,'&quot;')};STATF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0})">
-      <h2>${esc(t)}</h2><div class="n">${fmt(g.n)}</div>
+      <h2 style="font-size:1.05rem;word-break:break-word">${esc(t)}</h2><div class="n">${fmt(g.n)}</div>
       <div class="pills"><span>${fmt(g.act)} פעילים</span>${g.n-g.act?`<span class="r">${fmt(g.n-g.act)} ירדו</span>`:''}<span>${g.ops.size} חברות</span></div>
-    </button>`).join('')||'<div class="empty">לא נמצא סוג רכב</div>'}</div>`;
+    </button>`).join('')||'<div class="empty">לא נמצא דגם</div>'}</div>
+    ${!f&&total>MODELS_SHOWN?`<p class="note">מוצגים ${MODELS_SHOWN} הדגמים הנפוצים מתוך ${fmt(total)} — חיפוש למעלה מוצא כל דגם או יצרן</p>`:''}`;
 }
 function typeView(t){
   const all=[];
-  for(const o of DATA.operators) for(const v of o.vehicles) if(gT(v)===t) all.push([o,v]);
+  for(const o of DATA.operators) for(const v of o.vehicles) if(gM(v)===t) all.push([o,v]);
   const act=all.filter(p=>isActive(p[1])).length;
   const byOp={}; for(const [o] of all) byOp[o.ref]=(byOp[o.ref]||0)+1;
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
   if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0}[SORTK];
     if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
-  return `<button class="back" onclick="history.back()">→ חזרה לכל הסוגים</button>
+  return `<button class="back" onclick="history.back()">→ חזרה לכל הדגמים</button>
   <div class="ophead" style="background:#10172A">
     <div><h2>${esc(t)}</h2><div class="sub2">${fmt(act)} פעילים מתוך ${fmt(all.length)} שנצפו · ${ops.length} חברות</div></div>
   </div>
   <div class="cols2">
-    <div class="panel"><p class="ptitle">אצל אילו חברות</p>
+    <div class="panel"><p class="ptitle">אצל אילו חברות הדגם הזה נפוץ</p>
       ${ops.slice(0,14).map(([ref,n])=>`<div class="yrow" style="grid-template-columns:150px 1fr 60px"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(4,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
     </div>
   </div>
-  <div class="panel"><p class="ptitle">כל הרכבים מהסוג הזה</p>
+  <div class="panel"><p class="ptitle">כל הרכבים מהדגם הזה</p>
     <div class="filters">
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
@@ -432,7 +437,7 @@ window.addEventListener('popstate',()=>{VIEW={t:'home'};CITYSEL=null;TYPESEL=nul
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
-  $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש סוג רכב…':'חיפוש מספר רכב…';
+  $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש דגם או יצרן…':'חיפוש מספר רכב…';
   VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
