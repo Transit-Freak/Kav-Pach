@@ -21,17 +21,33 @@ while d <= datetime.date(2022, 1, 15):
     dates.append(d.strftime('%Y%m%d'))
     d = (d + datetime.timedelta(days=17)).replace(day=1 if d.day == 15 else 15)
 
+import urllib.request
+
+
+def exists(url):
+    # S3 מחזיר 403 גם על מפתח שלא קיים; HEAD זול מונע 4 ניסיונות-שווא
+    # של http() (שמסיים ב-SystemExit) על כל תאריך חסר
+    req = urllib.request.Request(url, method='HEAD')
+    try:
+        with urllib.request.urlopen(req, timeout=25) as r:
+            return r.status == 200
+    except Exception:  # noqa: BLE001
+        return False
+
+
 ops = {}      # op -> {rd: {'line','dest','ty','first','last'}}
 snaps_ok = 0
 for ds in dates:
     url = f'{BASE}/{ds}/gtfs.zip'
+    if not exists(url):
+        continue
     try:
         members = central_dir(url)
         c2, arows = member_rows(url, members, 'agency.txt')
         agency = {r[c2['agency_id']]: r[c2['agency_name']].strip() for r in arows}
         taxi_ag = {aid: nm for aid, nm in agency.items() if 'מוני' in nm or 'טקסי' in nm}
         c, rows = member_rows(url, members, 'routes.txt')
-    except Exception as e:  # noqa: BLE001
+    except BaseException:  # noqa: BLE001 — גם SystemExit של http()
         continue
     snaps_ok += 1
     if not taxi_ag:
