@@ -21,33 +21,47 @@ jobs:
         env:
           YEAR: ${{ inputs.year || '2019' }}
         run: |
-          set -euo pipefail
-          BASE="https://transitfeeds.com/p/ministry-of-transport-and-road-safety/820"
-          echo "== שליפת רשימת הגרסאות =="
-          # עמודי הגרסאות (מספר עמודים) — אוספים תאריכי סנפשוט של השנה המבוקשת
-          found=""
-          for pg in 1 2 3 4 5 6 7 8; do
-            html=$(curl -sL --max-time 60 "$BASE?p=$pg" || true)
-            dates=$(echo "$html" | grep -oE "820/${YEAR}[0-9]{4}" | sort -u | sed 's#820/##') || true
-            if [ -n "$dates" ]; then found="$found $dates"; fi
+          set -uo pipefail
+          FEED="ministry-of-transport-and-road-safety/820"
+          echo "== אבחון: מה חי =="
+          for host in transitfeeds.com openmobilitydata.org; do
+            code=$(curl -s -o /tmp/pg.html -w "%{http_code}" -L --max-time 30 "https://$host/p/$FEED")
+            echo "$host → HTTP $code · $(wc -c </tmp/pg.html) bytes · title: $(grep -o '<title>[^<]*' /tmp/pg.html | head -1)"
           done
-          found=$(echo $found | tr ' ' '\n' | sort -u | tr '\n' ' ')
-          echo "סנפשוטים של $YEAR: ${found:-לא נמצאו}"
-          [ -n "${found// /}" ] || { echo "אין סנפשוטים לשנה — אולי הארכיון לא מכסה אותה"; exit 0; }
-          d=$(echo $found | tr ' ' '\n' | sort | awk 'NR==1'); mid=$(echo $found | wc -w)
-          # לוקחים סנפשוט מאמצע השנה אם יש
-          d=$(echo $found | tr ' ' '\n' | sort | awk -v n=$(( (mid+1)/2 )) 'NR==n')
-          echo "== מוריד סנפשוט $d =="
-          curl -sL --max-time 900 -o gtfs2019.zip "$BASE/$d/download"
-          ls -la gtfs2019.zip
-          unzip -o gtfs2019.zip agency.txt routes.txt >/dev/null
-          echo "== agency.txt: מפעילים =="
-          cat agency.txt | head -40
-          echo "== חיפוש מוניות =="
-          grep -c "מוני" agency.txt routes.txt || echo "אפס מופעי מוניות"
-          grep "מוני" agency.txt || true
-          grep "מוני" routes.txt | head -10 || true
-          echo "== מק\"טים ארוכים (רישיונות מוניות 7 ספרות) ב-route_desc =="
-          awk -F',' 'NR>1{print $NF}' routes.txt | grep -oE "^[0-9]{7}-" | sort -u | head || echo "אין"
-          echo "== סטטיסטיקה: סך קווים בסנפשוט =="
-          wc -l routes.txt
+          echo "== ניסיון 1: רשימת גרסאות מהעמודים =="
+          found=""
+          for pg in 1 2 3 4 5 6; do
+            html=$(curl -sL --max-time 30 "https://transitfeeds.com/p/$FEED?p=$pg" || true)
+            dates=$(echo "$html" | grep -oE "820/20[0-9]{6}" | sed 's#820/##' | sort -u) || true
+            [ -n "$dates" ] && found="$found $dates"
+          done
+          echo "כל התאריכים שנמצאו: $(echo $found | tr ' ' '\n' | sort -u | head -30 | tr '\n' ' ')"
+          echo "== ניסיון 2: Wayback על עמוד הפיד =="
+          wb=$(curl -sL --max-time 40 "http://archive.org/wayback/available?url=transitfeeds.com/p/$FEED&timestamp=2019" || true)
+          echo "$wb"
+          snap=$(echo "$wb" | grep -oE '"url": *"[^"]+"' | head -1 | sed 's/.*"url": *"//;s/"$//')
+          if [ -n "$snap" ]; then
+            html=$(curl -sL --max-time 60 "$snap" || true)
+            dates=$(echo "$html" | grep -oE "820/20[0-9]{6}" | sed 's#820/##' | sort -u | head -30) || true
+            echo "תאריכים מ-Wayback: $dates"
+            found="$found $dates"
+          fi
+          echo "== ניסיון 3: ניחוש ישיר של הורדות 2019 =="
+          got=""
+          for d in 20190101 20190201 20190304 20190401 20190506 20190603 20190701 20190805 20190902 20191007 20191104 20191202; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" -I -L --max-time 20 "https://transitfeeds.com/p/$FEED/$d/download" || echo 000)
+            printf '%s:%s ' "$d" "$code"
+            if [ "$code" = "200" ]; then got="$d"; break; fi
+          done
+          echo
+          [ -n "$got" ] || { echo "RESULT: אין גישה לסנפשוטים של 2019 — הארכיון לא זמין"; exit 0; }
+          echo "== מוריד סנפשוט $got =="
+          curl -sL --max-time 900 -o g.zip "https://transitfeeds.com/p/$FEED/$got/download"
+          ls -la g.zip
+          unzip -o g.zip agency.txt routes.txt >/dev/null || { echo "zip פגום"; exit 0; }
+          echo "== מפעילים ב-2019 =="
+          cat agency.txt
+          echo "== מופעי מוניות =="
+          grep -c "מוני" agency.txt routes.txt || echo "RESULT: אפס מוניות ב-GTFS של $got"
+          grep "מוני" agency.txt routes.txt | head -10 || true
+          echo "== סך קווים ==" ; wc -l routes.txt
