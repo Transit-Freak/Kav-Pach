@@ -708,7 +708,17 @@ function openPark(f,push=true){
       <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב 🚶 <b>${ngate}</b></span>
       <span class="stat" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
     </div>`;
-    let boxes='';if(d.official){
+    let boxes='';
+    if(d.strict){
+      const st=d.strict, bad=st.cov10<100;
+      boxes+=`<div style="margin-top:8px;background:${bad?'#fef3c7':'#f0fdf4'};border:1px solid ${bad?'#fcd34d':'#bbf7d0'};border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.65">
+        <b>🚶 מדידה מחמירה — העובד בקצה האזור:</b>
+        התחנה הקרובה אליו ~<b>${st.worst}</b> דק׳ הליכה ·
+        <b>${st.cov10}%</b> משטח האזור נמצא בטווח 10 דקות מתחנה כלשהי
+        <div class="note" style="margin-top:2px">בניגוד לשאר המדדים (שנמדדים ממרכז האזור על רשת הרחובות), כאן נדגם כל היקף האזור — כי להולך הרגל לא אכפת הממוצע. הערכה לפי מרחק אווירי ×1.3; באתרים מגודרים המרחק בפועל גדול אף יותר</div>
+      </div>`;
+    }
+    if(d.official){
       const o=d.official, nf=v=>(v==null?'—':Number(v).toLocaleString('he'));
       const ostats=[
         o.cur_emp?`<span class="stat" title="מספר המועסקים באזור כיום — לפי מאגר אזורי התעשייה של משרד הכלכלה">עובדים כיום <b>${nf(o.cur_emp)}</b></span>`:'',
@@ -799,7 +809,7 @@ function openPark(f,push=true){
 <script>(function(){
 // עדכון מיידי: אם עלתה גרסה חדשה של הדף — טעינה מחדש עם עקיפת cache
 // (GitHub Pages מטמין עד 10 דקות; המבקר תמיד יקבל את העדכני)
-var VER='14';
+var VER='15';
 try{
   fetch(location.pathname,{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){
     var m=t.match(/var VER='(\d+)'/);

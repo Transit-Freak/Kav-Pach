@@ -804,12 +804,39 @@ for pi, pk in enumerate(parks):
                  'wte': s['wte'], 'wme': s['wme']}
                 for s in stops_here if not (s['tc'] == 'blocked' and s['te'] == 'blocked')]
     svc_sc = service_scores(pk)
+    # מדידה מחמירה (בקשת איריס 23.08): "להולך הרגל לא אכפת הממוצע" —
+    # דוגמים את היקף הפוליגון (קודקודים + כל ~150מ' לאורך צלע), ולכל נקודה
+    # מחשבים את התחנה הקרובה ביותר בזמן הליכה מוערך (אווירי ×1.3 ÷ 75 מ'/דק').
+    # worst = הקצה הגרוע ביותר; cov10 = אחוז הנקודות בטווח 10 דקות.
+    if outstops:
+        _pts = []
+        for _ring in pk['polys']:
+            for _i in range(len(_ring)):
+                _a, _b = _ring[_i], _ring[(_i + 1) % len(_ring)]
+                _pts.append(_a)
+                _dm = math.hypot((_a[0] - _b[0]) * 111000.0, (_a[1] - _b[1]) * 94000.0)
+                for _k in range(1, int(_dm // 150) + 1):
+                    _f = _k / (int(_dm // 150) + 1)
+                    _pts.append((_a[0] + (_b[0] - _a[0]) * _f, _a[1] + (_b[1] - _a[1]) * _f))
+        _worst = 0.0; _cov = 0
+        for _p in _pts:
+            _best = min(math.hypot((_p[0] - _s['la']) * 111000.0, (_p[1] - _s['lo']) * 94000.0)
+                        for _s in outstops)
+            _t = _best * 1.3 / 75.0
+            _worst = max(_worst, _t)
+            if _t <= 10:
+                _cov += 1
+        strict_m = {'worst': round(_worst, 1), 'cov10': round(_cov * 100 / len(_pts))}
+    else:
+        strict_m = None
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
            'polys': [[[round(a, 5), round(b, 5)] for a, b in pts] for pts in pk['polys']],
            'stops': outstops,
            'lines': lines_c, 'linesE': lines_e, 'cov400': cov,
            'foot': fw, 'footlen': int(flen), 'zt': zt,
            'gen': today.isoformat()}
+    if strict_m:
+        rec['strict'] = strict_m
     if svc_sc:
         rec['svc'] = svc_sc          # מדדי משרד התחבורה לאזור הסטטיסטי
         rec['svcmeta'] = _svc_meta
@@ -823,6 +850,7 @@ for pi, pk in enumerate(parks):
     json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     index.append({'f': fn, 'name': pk['name'], 'city': city, 'area': rec['area'],
+                  **({'ww': strict_m['worst'], 'cv': strict_m['cov10']} if strict_m else {}),
                   'lines': len(lines_c),
                   'li': lic, 'lg': lgc, 'ln': lnc,             # מרכז (ברירת-מחדל)
                   'lie': lie, 'lge': lge, 'lne': lne,          # קצה (כניסה)
