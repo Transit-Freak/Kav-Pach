@@ -280,18 +280,20 @@ if os.path.exists(MOT):
 # כל אזור רשמי מוצמד לפארק-OSM הקרוב (עד 1500מ'); אם אין קרוב — נוסף כפארק חדש
 # עם הפוליגון הרשמי. כך משלימים אזורים (בעיקר בפריפריה) ש-OSM לא מיפה, ומצרפים
 # נתוני עובדים/שטח/מחוז לכל אזור רשמי.
-# ייחודיות הקו מהקטלוג הרשמי (data-main.json — ההמרה של "מצומצם.xlsx"):
-# סדיר/תלמידים/לילה/קווים מזינים. קווי תלמידים מסומנים באתר (בקשת איריס ושלמה).
-LINESUB = {}
+# קווי תלמידים ולילה (הקטלוג הרשמי, data-main.json — הקובץ של קו פח):
+# מוחרגים לחלוטין מהאתר ומכל הספירות (הוראת שלמה ואיריס 23.08) — קו
+# שבנוי סביב צלצולי בית ספר או שירות לילה אינו נגישות-לעבודה. קווים
+# מזינים נשארים — הם שירות יוממות לכל דבר.
+EXCLUDE_MK = set()
 try:
     for _r in json.load(open('data-main.json', encoding='utf-8')):
         _mk = str(_r[0]).strip().lstrip('0')
         _sv = str(_r[7]).strip()
-        if _mk and _sv and _sv != 'סדיר':
-            LINESUB[_mk] = _sv
-    print('ייחודיות קווים מהקטלוג:', len(LINESUB))
+        if _mk and ('תלמיד' in _sv or _sv == 'לילה'):
+            EXCLUDE_MK.add(_mk)
+    print('קווי תלמידים/לילה מוחרגים מהקטלוג:', len(EXCLUDE_MK))
 except Exception as _e:  # noqa: BLE001
-    print('קטלוג הייחודיות לא נטען:', _e)
+    print('קטלוג ההחרגות לא נטען:', _e)
 
 OFF_MATCH_M = 1500
 if OFFICIAL and os.path.exists(OFFICIAL):
@@ -674,12 +676,11 @@ def build_lines(stops_here, tk):
     for rid in seen_rids:
         _, s = best_stop[rid]
         num, longnm, mkt = route_meta.get(rid, ('?', '', ''))
+        if str(mkt or num).strip().lstrip('0') in EXCLUDE_MK:
+            continue   # קו תלמידים/לילה — לא קיים מבחינת האתר
         dest = longnm.split('<->')[-1].split('-')[0].strip() if '<->' in longnm else longnm[:30]
         rec = {'num': num, 'dest': dest, 'stop': s['n'], 'code': s['c'], 't': s[tk], 'mk': mkt or num,
                'rid': rid}   # מזהה הקו — מפתח לקובץ המסלול (data/shp/<rid>.json)
-        _sub = LINESUB.get(str(mkt or num).strip().lstrip('0'))
-        if _sub:
-            rec['sub'] = _sub
         for gk, _ in DAYGROUPS:
             mins = sorted(set(deps.get((s['sid'], rid, gk), [])))
             rec[gk] = [hhmm(m) for m in mins]
