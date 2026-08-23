@@ -14,4 +14,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: סריקת הארכיון ומיפוי החוסרים
-        run: python3 tools/taxi_archaeology.py
+        run: python3 tools/probe_hadar.py
