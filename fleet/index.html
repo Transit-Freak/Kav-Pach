@@ -33,6 +33,8 @@
   .modes{display:flex;gap:5px}
   .mode{border:none;cursor:pointer;background:var(--surface);color:var(--mut);border-radius:999px;padding:11px 15px;font:700 12.5px 'Rubik',sans-serif;box-shadow:var(--shadow)}
   .mode.on{background:var(--ink);color:#fff}
+  .xlsbtn{border:none;cursor:pointer;background:#166534;color:#fff;border-radius:999px;padding:11px 15px;font:700 12.5px 'Rubik',sans-serif;box-shadow:var(--shadow);white-space:nowrap}
+  .xlsbtn:hover{background:#14532d}
   .sub{font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.6;margin:8px 0 14px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
   .kpi{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:12px 16px}
@@ -115,6 +117,7 @@
         <button class="mode" data-m="city">עיר</button>
         <button class="mode" data-m="type">דגם</button>
         <button class="mode" data-m="plate">מספר רכב</button>
+        <button class="xlsbtn" onclick="XDL()" title="מוריד את הטבלה של המסך הנוכחי כקובץ CSV שנפתח באקסל">⬇ אקסל</button>
       </div>
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
@@ -431,6 +434,59 @@ async function showV(plate){
   document.body.appendChild(ovl);
 }
 
+/* הורדת אקסל (CSV עם BOM — נפתח נכון בעברית) של המסך הנוכחי */
+function csvCell(x){x=String(x==null?'':x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;}
+function dlCSV(name,rows){
+  const csv='\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  let fn=name.replace(/[^ -~]+/g,' ').trim().replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'-');
+  if(fn.length<3) fn='kav-bochan-fleet';
+  a.download=fn+'.csv';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const VHEAD=['חברה','מספר רכב','סוג הרכב','שנתון','יצרן ודגם','נסיעות ביום','נצפה לראשונה','נצפה לאחרונה','מצב'];
+function vRow(v,o){const on=isActive(v);const mv=on?null:movedTo(v);
+  return [o?o.name:'',v[0],gT(v)||'',gY(v)||'',gM(v)||'',gR(v)!=null?gR(v):'',v[1],v[2],on?'פעיל':mv?'עבר ל'+mv.name:'ירד מהשירות'];}
+function XDL(){
+  if(!DATA) return;
+  const D=[]; let name='צי-הרכבים';
+  if(VIEW.t==='op'){const o=op(VIEW.ref); if(!o) return;
+    name='fleet-op-'+o.ref; D.push(VHEAD);
+    for(const v of o.vehicles) D.push(vRow(v,o));
+  }else if(MODE==='type'&&TYPESEL){
+    name='fleet-model '+TYPESEL; D.push(VHEAD);
+    for(const o of DATA.operators) for(const v of o.vehicles) if(gM(v)===TYPESEL) D.push(vRow(v,o));
+  }else if(MODE==='type'){
+    name='fleet-models'; D.push(['דגם','רכבים שנצפו','פעילים','ירדו','חברות']);
+    const agg={};
+    for(const o of DATA.operators) for(const v of o.vehicles){const t=gM(v);if(!t)continue;
+      const g=agg[t]||(agg[t]={n:0,a:0,s:new Set()});g.n++;if(isActive(v))g.a++;g.s.add(o.ref);}
+    Object.entries(agg).sort((x,y)=>y[1].n-x[1].n).forEach(([t,g])=>D.push([t,g.n,g.a,g.n-g.a,g.s.size]));
+  }else if(MODE==='city'&&CITYSEL&&CITIES&&CITIES.cities[CITYSEL]){
+    name='fleet-city '+CITYSEL; D.push(['חברה','רכבים שפעלו בעיר']);
+    (CITIES.cities[CITYSEL].ops||[]).forEach(([r,n])=>D.push([opName(r),n]));
+  }else if(MODE==='city'&&CITIES){
+    name='fleet-cities'; D.push(['עיר','רכבים שונים שפעלו בה']);
+    Object.entries(CITIES.cities||{}).sort((a,b)=>b[1].total-a[1].total).forEach(([c,d])=>D.push([c,d.total]));
+  }else if(MODE==='plate'&&Q.trim()){
+    name='fleet-search '+Q.trim(); D.push(VHEAD);
+    const clean=Q.trim().replace(/-/g,'');
+    for(const o of DATA.operators) for(const v of o.vehicles)
+      if(v[0].replace(/-/g,'').includes(clean)) D.push(vRow(v,o));
+  }else{
+    name='fleet-operators';
+    D.push(['חברה','רכבים במעקב','פעילים','ירדו (צי סדיר)','רכבי קבלן פעילים','רכבי קבלן שירדו']);
+    for(const o of DATA.operators){
+      const act=o.vehicles.filter(isActive).length;
+      const kab=DATA.enriched?o.vehicles.filter(isKab).length:0;
+      const kabA=kab?o.vehicles.filter(v=>isKab(v)&&isActive(v)).length:0;
+      D.push([o.name,o.vehicles.length,act,o.vehicles.length-act-(kab-kabA),kabA,kab-kabA]);
+    }
+  }
+  if(D.length>1) dlCSV(name,D);
+}
 function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0});}
 // חץ "אחורה" של הדפדפן מחזיר למסך הבית במקום לצאת מהאתר
 window.addEventListener('popstate',()=>{VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();window.scrollTo({top:0});});
