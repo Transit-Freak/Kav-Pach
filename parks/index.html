@@ -192,8 +192,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-const PK_BUILD='25';
-const DV='?v='+PK_BUILD+'-'+new Date().toISOString().slice(0,10);
+const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
 function socioOf(city){
@@ -420,6 +419,7 @@ function openHeatmap(fit=true){
     if(!f && window.innerWidth>760) heatmap.setView([31.9,35.0],8);
     else heatmap.fitBounds(bounds.pad(0.15));
   },80);
+  else if(heatmap._zoom===undefined) heatmap.setView([31.9,35.0],8);   // קריאה ראשונה בלי fit — שלא תישאר מפה אפורה
 }
 heatbtn.onclick=()=>{openHeatmap(true);if(location.hash) history.replaceState(null,'',location.pathname+location.search);};
 // הכותרת = "הביתה" של הכלי: חזרה למפה הארצית מכל מקום (בקשת שלמה ואיריס)
@@ -633,6 +633,7 @@ backbtn.onclick=()=>{showTable();if(location.hash) history.replaceState(null,'',
 // כפתור "אחורה" של הטלפון/דפדפן מחזיר לרשימה במקום לעזוב את העמוד
 window.addEventListener('popstate',e=>{
   if(e.state&&e.state.park) openPark(e.state.park,false);
+  else if(location.hash&&location.hash.length>2) openPark(location.hash.slice(1),false);
   else if(FROM=='heat') openHeatmap(false);
   else showTable();
 });
@@ -640,7 +641,7 @@ window.addEventListener('popstate',e=>{
 // המפה עצמה מוחרגת — החלקה עליה מזיזה את המפה.
 let _tx=null,_ty=null;
 wrap.addEventListener('touchstart',e=>{
-  if(e.target.closest('#map')){_tx=null;return}
+  if(e.target.closest('#map,.mapctl')){_tx=null;return}
   _tx=e.touches[0].clientX;_ty=e.touches[0].clientY;
 },{passive:true});
 wrap.addEventListener('touchend',e=>{
@@ -832,7 +833,7 @@ function openPark(f,push=true){
   }).catch(()=>{
     // באג: ההודעה נכתבה לפאנל שנשאר מוסתר כשהטעינה נכשלה — המשתמש לחץ
     // ושום דבר לא קרה. מציגים את התצוגה עם ההודעה וכפתור ניסיון חוזר.
-    tblview.style.display='none';heatview.style.display='none';heatbtn.style.display='none';
+    tblview.style.display='none';heatview.style.display='none';/* כשל זמני לא מעלים את הכפתור לצמיתות */;
     footHome(false);
     wrap.style.display='grid';backbtn.style.display='inline-block';
     panel.innerHTML='<div class="msg">⚠ לא הצלחנו לטעון את האזור — בדקו את החיבור ונסו שוב<br><button class="btn" style="margin-top:12px" onclick="openPark(decodeURIComponent(location.hash.slice(1)),false)">🔄 נסו שוב</button></div>';

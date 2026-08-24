@@ -113,7 +113,7 @@
   .gapwhy .gw-l b{color:#0f172a}
   /* בטלפון הדף פשוט מתארך: המפה בגובה קבוע וההשוואה המלאה מתחתיה, בגלילה */
   .gapmore{display:none}
-  @media(max-width:760px){
+  @media(max-width:899px){
     #heatview{height:auto !important}
     #heatmap{flex:none !important;height:66vh;min-height:380px}
   }
@@ -194,7 +194,7 @@ tbody tr:nth-child(even){background:#fafcff}
 .top input{order:5}
 /* מתג "נכנסים פנימה/גם שערי כניסה" יושב בכותרת (כמו ברפרנס) אבל שייך
    רק למסך המפה הארצית — מוצג רק כשהוא פתוח */
-.top #hscopeseg{display:none;order:6;flex:0 0 auto}
+.top #hscopeseg{display:none;order:6;flex:0 1 auto;min-width:0}
 body:has(#heatview[style*="display: flex"]) .top #hscopeseg{display:inline-flex}
 .top .logorow{order:7;flex-basis:auto;margin:0 0 0 0;margin-inline-start:auto}
 .top .logorow img{height:72px;padding:0;border-radius:0;background:transparent}
@@ -214,3 +214,6 @@ body:has(#heatview[style*="display: flex"]) .top #hscopeseg{display:inline-flex}
   #gapbox .gapcards{flex-direction:column}
   #gapbox .gapcard{min-width:0}
 }
+
+/* 761–1100: הכותרת נשברת לשורות במקום לגלוש אופקית */
+@media(max-width:1100px){.top{flex-wrap:wrap}}
