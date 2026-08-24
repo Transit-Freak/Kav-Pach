@@ -675,6 +675,16 @@ for sid, hits in stop_hits.items():
     for (pi, tier, d) in hits:
         _zone_walks.setdefault(pi, []).append((sid, _sla, _slo))
 
+# רמת האזור: לכל (אזור, מדד) — אם אין בו אף הליכה קצרה תקפה ויש ארוכות,
+# הערך הארוך המינימלי משמש ירושה לתחנות שהניתוב נכשל עליהן
+_zone_long = {}
+for _pi0, _sl in _zone_walks.items():
+    for _ix0 in (1, 3):
+        _vals = [walk[(_pi0, s0)][_ix0] for (s0, _, _) in _sl
+                 if walk.get((_pi0, s0)) and len(walk[(_pi0, s0)]) == 4 and walk[(_pi0, s0)][_ix0] is not None]
+        if _vals and min(_vals) > WALK_FAR_SEC:
+            _zone_long[(_pi0, _ix0)] = min(_vals)
+
 def _nb_long(pi, sid, sla, slo, ix):
     # שכנה עד 250מ' עם הליכה ארוכה תקפה (חסומה) — תחנה שהניתוב נכשל עליה
     # יורשת ממנה את החסימה במקום ליפול לגאומטרי האופטימי
@@ -708,13 +718,16 @@ for sid, hits in stop_hits.items():
     for (pi, tier, d) in hits:
         v = walk.get((pi, sid))
         em, es, cm, cs = v if (v and len(v) == 4) else (None, None, None, None)
-        # ניתוב שנכשל (לא נפסל בכוונה) יורש חסימה משכנה צמודה — אחרת אזור מגודר
-        # מקבל חצי מהתחנות חסומות באמת וחצי "נגישות" מהנפילה הגאומטרית
+        # ניתוב שנכשל (לא נפסל בכוונה) יורש חסימה: קודם משכנה צמודה (עד 250מ'),
+        # ואם אין — מהאזור כולו, כשאין בו אף מדידה קצרה ויש ארוכות (גדר עקבית).
+        # אחרת אזור מגודר מקבל חצי תחנות חסומות באמת וחצי "נגישות" מהנפילה הגאומטרית.
         if cs is None:
             _inh = _nb_long(pi, sid, _sla, _slo, 3)
+            if _inh is None: _inh = _zone_long.get((pi, 3))
             if _inh is not None: cs = _inh
         if es is None:
             _inh = _nb_long(pi, sid, _sla, _slo, 1)
+            if _inh is None: _inh = _zone_long.get((pi, 1))
             if _inh is not None: es = _inh
         _cen = parks[pi]['cen']
         _clp = math.cos(math.radians(_cen[0]))
