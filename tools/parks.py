@@ -476,14 +476,19 @@ for r in csv.DictReader(open(STOPTIMES, encoding='utf-8-sig')):
     sid = r.get('stop_id')
     if sid not in stop_hits:
         continue
-    seen_active.add(sid)
     tm = trip_meta.get(r.get('trip_id'))
     if not tm:
         continue
     rid, svc = tm
+    if rid in heavy_rail:
+        continue   # רכבת כבדה — גם התחנה אינה נחשבת פעילה בזכותה
+    _rm = route_meta.get(rid)
+    if _rm and str(_rm[2] or _rm[0]).strip().lstrip('0') in EXCLUDE_MK:
+        continue   # קו תלמידים/לילה — התחנה אינה נחשבת פעילה בזכותו
     days = svc_days.get(svc)
     if days is None:
-        days = {'sunday', 'monday', 'tuesday', 'wednesday', 'thursday'}
+        continue   # שירות שאינו בלוח התוקף — לא מניחים יום חול מלא
+    seen_active.add(sid)
     t = (r.get('departure_time') or r.get('arrival_time') or '').strip()
     m = re.match(r'^(\d+):(\d\d)', t)
     if not m:
@@ -833,17 +838,30 @@ for pi, pk in enumerate(parks):
     # worst = הקצה הגרוע ביותר; cov10 = אחוז הנקודות בטווח 10 דקות.
     if outstops:
         _pts = []
+        _cl2 = math.cos(math.radians(pk['cen'][0]))
         for _ring in pk['polys']:
             for _i in range(len(_ring)):
                 _a, _b = _ring[_i], _ring[(_i + 1) % len(_ring)]
                 _pts.append(_a)
-                _dm = math.hypot((_a[0] - _b[0]) * 111000.0, (_a[1] - _b[1]) * 94000.0)
+                _dm = math.hypot((_a[0] - _b[0]) * 110540.0, (_a[1] - _b[1]) * 111320.0 * _cl2)
                 for _k in range(1, int(_dm // 150) + 1):
                     _f = _k / (int(_dm // 150) + 1)
                     _pts.append((_a[0] + (_b[0] - _a[0]) * _f, _a[1] + (_b[1] - _a[1]) * _f))
+            # רשת פנימית ~75 מ' — cov10 מודד את כל השטח, לא רק את ההיקף
+            _la1 = min(a for a, b in _ring); _la2 = max(a for a, b in _ring)
+            _lo1 = min(b for a, b in _ring); _lo2 = max(b for a, b in _ring)
+            _sla = 75 / 110540.0; _slo = 75 / (111320.0 * _cl2)
+            _ga = _la1
+            while _ga <= _la2:
+                _go = _lo1
+                while _go <= _lo2:
+                    if in_poly(_ga, _go, _ring):
+                        _pts.append((_ga, _go))
+                    _go += _slo
+                _ga += _sla
         _worst = 0.0; _cov = 0
         for _p in _pts:
-            _best = min(math.hypot((_p[0] - _s['la']) * 111000.0, (_p[1] - _s['lo']) * 94000.0)
+            _best = min(math.hypot((_p[0] - _s['la']) * 110540.0, (_p[1] - _s['lo']) * 111320.0 * _cl2)
                         for _s in outstops)
             _t = _best * 1.3 / 75.0
             _worst = max(_worst, _t)
@@ -952,5 +970,57 @@ if used_rids and os.path.exists(SHAPES):
                   separators=(',', ':'))
         written += 1
     print('קובצי מסלול שנכתבו:', written, 'מתוך', len(used_rids), 'קווים בשימוש')
+
+    # ---- ספירה כיוונית (סיכום עם איריס 24.08): יציאות שיא בכיוון הנסיעה ----
+    # תחנת הליכה: בבוקר נספר כיוון "נכנס" (הקו ממשיך אל עבר האזור), אחה"צ
+    # כיוון "יוצא". בפנים/בשער — הכול נספר. הכיוון נקבע מקצות המסלול, ובשוויון
+    # לפי מיקום נקודת ההתקרבות המרבית לאורכו.
+    _AM = lambda t: '06:00' <= t < '09:00'
+    _PM = lambda t: '15:00' <= t < '19:00'
+    def _classify_dir(rid, sla, slo, cen, cl):
+        pts = pts_by_shape.get(rid_shape.get(rid))
+        if not pts or len(pts) < 3:
+            return '?'
+        bi = mi = 0; bd = md = 1e18
+        for i, (a, b) in enumerate(pts):
+            ds = math.hypot((a - sla) * 110540.0, (b - slo) * 111320.0 * cl)
+            if ds < bd: bd, bi = ds, i
+            dc = math.hypot((a - cen[0]) * 110540.0, (b - cen[1]) * 111320.0 * cl)
+            if dc < md: md, mi = dc, i
+        s_d = math.hypot((pts[0][0] - cen[0]) * 110540.0, (pts[0][1] - cen[1]) * 111320.0 * cl)
+        e_d = math.hypot((pts[-1][0] - cen[0]) * 110540.0, (pts[-1][1] - cen[1]) * 111320.0 * cl)
+        if e_d < s_d - 150: return 'in'
+        if s_d < e_d - 150: return 'out'
+        return 'in' if mi > bi else 'out'
+    for _e in index:
+        _fp = os.path.join(OUTDIR, _e['f'])
+        _d = json.load(open(_fp, encoding='utf-8'))
+        _cen = (_e['la'], _e['lo']); _cl = math.cos(math.radians(_cen[0]))
+        _sbc = {s['c']: s for s in _d.get('stops') or []}
+        for _key in ('lines', 'linesE'):
+            for _L in _d.get(_key) or []:
+                if _L['t'] == 'near':
+                    _s = _sbc.get(_L['code'])
+                    _L['dr'] = _classify_dir(_L['rid'], _s['la'], _s['lo'], _cen, _cl) if _s else '?'
+        _pkd = 0
+        for _L in _d.get('lines') or []:
+            _wd = _L.get('wd') or []
+            _am = sum(1 for t in _wd if _AM(t)); _pm = sum(1 for t in _wd if _PM(t))
+            if _L['t'] in ('in', 'gate'): _pkd += _am + _pm
+            elif _L.get('dr') == 'in': _pkd += _am
+            elif _L.get('dr') == 'out': _pkd += _pm
+            elif _L.get('dr') == '?': _pkd += _am + _pm
+        json.dump(_d, open(_fp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+        _e['pkd'] = _pkd
+    json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
+    print('ספירה כיוונית: pkd נכתב לכל האזורים')
 else:
     print('shapes.txt לא נמצא — מדלגים על קובצי המסלולים')
+    # בלי מסלולים אין סיווג כיוונים — נספרים שני הכיוונים כדי שלא יהיה אפס מלאכותי
+    for _e in index:
+        _d = json.load(open(os.path.join(OUTDIR, _e['f']), encoding='utf-8'))
+        _e['pkd'] = sum(1 for _L in _d.get('lines') or [] for t in (_L.get('wd') or [])
+                        if ('06:00' <= t < '09:00') or ('15:00' <= t < '19:00'))
+    json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
+              ensure_ascii=False, separators=(',', ':'))
