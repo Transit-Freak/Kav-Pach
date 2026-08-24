@@ -456,11 +456,15 @@ trip_meta = {}   # trip_id -> (route_id, service_id)
 for r in csv.DictReader(open(TRIPS, encoding='utf-8-sig')):
     trip_meta[r['trip_id']] = (r['route_id'], r.get('service_id', ''))
 route_meta = {}
+heavy_rail = set()   # רכבת כבדה מוחרגת מהאתר; רכבת קלה נשארת
 for r in csv.DictReader(open(ROUTES, encoding='utf-8-sig')):
+    if r.get('route_type') == '2':
+        heavy_rail.add(r['route_id'])
+        continue
     short = r.get('route_short_name', '')
-    if not short:   # לרכבות אין מספר קו — מתייגים לפי הסוג
+    if not short:   # לרק"ל אין לפעמים מספר קו — מתייגים לפי הסוג
         rt = r.get('route_type', '3')
-        short = 'רכבת' if rt == '2' else ('רק"ל' if rt in ('0', '1') else '?')
+        short = 'רק"ל' if rt in ('0', '1') else '?'
     mkt = (r.get('route_desc') or '').split('-')[0].lstrip('0')   # מק"ט = זהות הקו
     route_meta[r['route_id']] = (short, r.get('route_long_name', ''), mkt)
 
@@ -674,6 +678,8 @@ def build_lines(stops_here, tk):
                 best_stop[rid] = (rank, s)
     lines = []
     for rid in seen_rids:
+        if rid in heavy_rail:
+            continue   # רכבת כבדה — לא נספרת (בקשת ההסתדרות: רק אוטובוסים ורק"ל)
         _, s = best_stop[rid]
         num, longnm, mkt = route_meta.get(rid, ('?', '', ''))
         if str(mkt or num).strip().lstrip('0') in EXCLUDE_MK:
