@@ -718,17 +718,11 @@ for sid, hits in stop_hits.items():
     for (pi, tier, d) in hits:
         v = walk.get((pi, sid))
         em, es, cm, cs = v if (v and len(v) == 4) else (None, None, None, None)
-        # ניתוב שנכשל (לא נפסל בכוונה) יורש חסימה: קודם משכנה צמודה (עד 250מ'),
-        # ואם אין — מהאזור כולו, כשאין בו אף מדידה קצרה ויש ארוכות (גדר עקבית).
-        # אחרת אזור מגודר מקבל חצי תחנות חסומות באמת וחצי "נגישות" מהנפילה הגאומטרית.
-        if cs is None:
-            _inh = _nb_long(pi, sid, _sla, _slo, 3)
-            if _inh is None: _inh = _zone_long.get((pi, 3))
-            if _inh is not None: cs = _inh
-        if es is None:
-            _inh = _nb_long(pi, sid, _sla, _slo, 1)
-            if _inh is None: _inh = _zone_long.get((pi, 1))
-            if _inh is not None: es = _inh
+        # סדר הטיפול: קודם פסילת אבסורד/חוסר-עקביות, ואחר כך ירושה —
+        # תחנה בלי מדידה תקפה נופלת לגאומטרי רק כשיש שכנה קצרה שמצדיקה
+        # אופטימיות; אחרת היא יורשת את החסימה מהשכנות (עד 250מ') או מהאזור
+        # כולו כשאין בו אף מדידה קצרה. כך גדר עקבית חוסמת גם את מה שהניתוב
+        # פספס, ושגיאת הצמדה לא הופכת תחנה רחוקה ל"נגישה".
         _cen = parks[pi]['cen']
         _clp = math.cos(math.radians(_cen[0]))
         _air_c = math.hypot((_sla - _cen[0]) * 110540.0, (_slo - _cen[1]) * 111320.0 * _clp)
@@ -738,6 +732,14 @@ for sid, hits in stop_hits.items():
         if es is not None and es > WALK_FAR_SEC:
             if (em is not None and em > 10 * max(d, 50) + 1000) or _nb_ok(pi, sid, _sla, _slo, 1):
                 em = es = None
+        if cs is None and not _nb_ok(pi, sid, _sla, _slo, 3):
+            _inh = _nb_long(pi, sid, _sla, _slo, 3)
+            if _inh is None: _inh = _zone_long.get((pi, 3))
+            if _inh is not None: cs = _inh
+        if es is None and not _nb_ok(pi, sid, _sla, _slo, 1):
+            _inh = _nb_long(pi, sid, _sla, _slo, 1)
+            if _inh is None: _inh = _zone_long.get((pi, 1))
+            if _inh is not None: es = _inh
         nh.append((pi, d, _walk_tier(tier, cs), _walk_tier(tier, es),
                    cm, _mins(cs), em, _mins(es)))
     stop_hits[sid] = nh
