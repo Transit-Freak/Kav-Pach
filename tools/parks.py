@@ -514,15 +514,37 @@ WALK_OK_SEC, WALK_FAR_SEC = 300, 600   # 5 / 10 דקות הליכה
 OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
 OSRM_SLEEP = float(os.environ.get('OSRM_SLEEP', '0.4'))   # השהיה בין קריאות (קצב שרת ציבורי; מקומי=0)
 
+def _ring_len(r, cl):
+    L = 0.0
+    for i in range(len(r)):
+        a, b = r[i], r[(i + 1) % len(r)]
+        L += math.hypot((a[0] - b[0]) * 110540.0, (a[1] - b[1]) * 111320.0 * cl)
+    return L
+
 def _boundary_samples(pk, k=8):
-    # K נקודות פרוסות על גבול האזור — יעדי-ניתוב משותפים לכל תחנות האזור.
-    # כך מטריצת ה-OSRM היא N×K במקום N×N (פי ~6 פחות חישוב), ותחנה בוחרת
-    # את נקודת-הגבול הקרובה ביותר בהליכה.
-    pts = [p for ring in pk['polys'] for p in ring]
-    if len(pts) <= k:
-        return pts
-    step = len(pts) / k
-    return [pts[int(i * step)] for i in range(k)]
+    # נקודות פרוסות לפי אורך-קשת, לכל טבעת בנפרד — טבעת קטנה לא נבלעת
+    # בשרשור (היו 150 תתי-פוליגונים בלי אף נקודת דגימה). עד 16 טבעות גדולות.
+    cl = math.cos(math.radians(pk['cen'][0]))
+    rings = sorted(pk['polys'], key=lambda r: -_ring_len(r, cl))[:16]
+    lens = [_ring_len(r, cl) for r in rings]
+    tot = sum(lens) or 1.0
+    out = []
+    for r, L in zip(rings, lens):
+        kk = max(1, round(k * L / tot))
+        step = L / kk if kk else L
+        acc, nxt = 0.0, 0.0
+        got = 0
+        for i in range(len(r)):
+            a, b = r[i], r[(i + 1) % len(r)]
+            seg = math.hypot((a[0] - b[0]) * 110540.0, (a[1] - b[1]) * 111320.0 * cl)
+            while seg and nxt <= acc + seg and got < kk:
+                f = (nxt - acc) / seg
+                out.append((a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f))
+                got += 1; nxt += step
+            acc += seg
+        if not got:
+            out.append(r[0])
+    return out
 
 def _osrm_walk(origins, bdests, center):
     # קריאה אחת מחזירה לכל origin שני מדדים: עד הקצה הקרוב (min על bdests) ועד
@@ -640,9 +662,20 @@ def _mins(sec):
     return round(sec / 60) if sec is not None else None
 for sid, hits in stop_hits.items():
     nh = []
+    _nm0, _c0, _sla, _slo, _city0 = stop_info[sid]
     for (pi, tier, d) in hits:
         v = walk.get((pi, sid))
         em, es, cm, cs = v if (v and len(v) == 4) else (None, None, None, None)
+        # מסננת סבירות: כשמרכז האזור מוצמד לכביש רחוק, OSRM מחזיר מסלול-ענק
+        # לתחנה צמודה והיא מסווגת "חסומה" בטעות. הליכה מעל פי-4 מהאווירי
+        # (+400מ' רזרבה) = תוצאה לא סבירה — נופלים לסיווג הגאומטרי, לא לחסימה.
+        _cen = parks[pi]['cen']
+        _clp = math.cos(math.radians(_cen[0]))
+        _air_c = math.hypot((_sla - _cen[0]) * 110540.0, (_slo - _cen[1]) * 111320.0 * _clp)
+        if cm is not None and cm > 4 * _air_c + 400:
+            cm = cs = None
+        if em is not None and em > 4 * max(d, 50) + 400:
+            em = es = None
         nh.append((pi, d, _walk_tier(tier, cs), _walk_tier(tier, es),
                    cm, _mins(cs), em, _mins(es)))
     stop_hits[sid] = nh
@@ -844,13 +877,20 @@ for pi, pk in enumerate(parks):
         # שנכתבו ייתן בדיוק את אותם worst/cov10, בלי סחף סביב סף ה-90
         _rings5 = [[(round(_a, 5), round(_b, 5)) for _a, _b in _r] for _r in pk['polys']]
         for _ring in _rings5:
+            # היקף במרווח קבוע (~100מ' לאורך הקשת, מינימום 4 נקודות לטבעת) —
+            # דגימה לפי קודקודים תלויה בצפיפות הדיגיטציה של OSM ומעוותת את cov10
+            _RL = _ring_len(_ring, _cl2)
+            _np = max(4, int(_RL // 100))
+            _pstep = _RL / _np if _np else _RL
+            _acc, _nxt, _got = 0.0, 0.0, 0
             for _i in range(len(_ring)):
                 _a, _b = _ring[_i], _ring[(_i + 1) % len(_ring)]
-                _pts.append(_a)
-                _dm = math.hypot((_a[0] - _b[0]) * 110540.0, (_a[1] - _b[1]) * 111320.0 * _cl2)
-                for _k in range(1, int(_dm // 150) + 1):
-                    _f = _k / (int(_dm // 150) + 1)
+                _seg = math.hypot((_a[0] - _b[0]) * 110540.0, (_a[1] - _b[1]) * 111320.0 * _cl2)
+                while _seg and _nxt <= _acc + _seg and _got < _np:
+                    _f = (_nxt - _acc) / _seg
                     _pts.append((_a[0] + (_b[0] - _a[0]) * _f, _a[1] + (_b[1] - _a[1]) * _f))
+                    _got += 1; _nxt += _pstep
+                _acc += _seg
             # רשת פנימית ~75 מ' — cov10 מודד את כל השטח, לא רק את ההיקף
             _la1 = min(a for a, b in _ring); _la2 = max(a for a, b in _ring)
             _lo1 = min(b for a, b in _ring); _lo2 = max(b for a, b in _ring)
@@ -875,7 +915,10 @@ for pi, pk in enumerate(parks):
             _worst = max(_worst, _t)
             if _t <= 10:
                 _cov += 1
-        strict_m = {'worst': round(_worst, 1), 'cov10': round(_cov * 100 / len(_pts))}
+        _covp = _cov * 100.0 / len(_pts)
+        # 99.7% לא מתעגל ל"100% מהשטח" כשקיימת נקודה מעל 10 דק'
+        strict_m = {'worst': round(_worst, 1),
+                    'cov10': (min(99, int(_covp)) if _worst > 10 else round(_covp))}
     else:
         strict_m = None
     rec = {'name': pk['name'], 'city': city, 'area': round(pk['area'], 2),
