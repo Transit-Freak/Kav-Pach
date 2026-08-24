@@ -529,8 +529,11 @@ def _boundary_samples(pk, k=8):
     lens = [_ring_len(r, cl) for r in rings]
     tot = sum(lens) or 1.0
     out = []
+    cap = max(k, 12)   # תקרה קשיחה — מגבלת הטבלה של OSRM נאכפת גם בגודל ה-chunk
     for r, L in zip(rings, lens):
-        kk = max(1, round(k * L / tot))
+        if len(out) >= cap:
+            break
+        kk = max(1, min(round(k * L / tot), cap - len(out)))
         step = L / kk if kk else L
         acc, nxt = 0.0, 0.0
         got = 0
@@ -624,8 +627,9 @@ if OSRM_URL:
             continue
         dests = _boundary_samples(pk, 8)   # יעדי-גבול משותפים; +מרכז האזור בפנים
         center = (pk['cen'][0], pk['cen'][1])
-        for c0 in range(0, len(todo), 80):   # 80 מקורות + 9 יעדים ≤ מגבלת הטבלה
-            chunk = todo[c0:c0 + 80]
+        _csz = max(10, 96 - (len(dests) + 1))   # מקורות + יעדים ≤ מגבלת הטבלה (100)
+        for c0 in range(0, len(todo), _csz):
+            chunk = todo[c0:c0 + _csz]
             origins = [(sla, slo) for _, sla, slo in chunk]
             try:
                 res = _osrm_walk(origins, dests, center)
@@ -914,6 +918,8 @@ for pi, pk in enumerate(parks):
                     _pts.append((_a[0] + (_b[0] - _a[0]) * _f, _a[1] + (_b[1] - _a[1]) * _f))
                     _got += 1; _nxt += _pstep
                 _acc += _seg
+            if not _got and _ring:
+                _pts.append(_ring[0])   # טבעת מנוונת — נקודת גיבוי, שלא תפיל את הבנייה
             # רשת פנימית ~75 מ' — cov10 מודד את כל השטח, לא רק את ההיקף
             _la1 = min(a for a, b in _ring); _la2 = max(a for a, b in _ring)
             _lo1 = min(b for a, b in _ring); _lo2 = max(b for a, b in _ring)
@@ -938,6 +944,9 @@ for pi, pk in enumerate(parks):
             _worst = max(_worst, _t)
             if _t <= 10:
                 _cov += 1
+        if not _pts:
+            _pts = [pk['cen']]
+            _covp = 0.0
         _covp = _cov * 100.0 / len(_pts)
         # 99.7% לא מתעגל ל"100% מהשטח" כשקיימת נקודה מעל 10 דק'
         strict_m = {'worst': round(_worst, 1),
