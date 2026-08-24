@@ -1036,6 +1036,12 @@ json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8')
 print('פארקים שנכתבו:', out_i)
 print('מהם עם קווים:', sum(1 for x in index if x['lines']),
       '| בלי שירות בכלל:', sum(1 for x in index if not x['lines']))
+# שומר סף: שרת ה-GTFS של המשרד מגיש לפעמים קובץ מקוצץ אחרי נפילה.
+# נתונים בלתי-סבירים (כמעט אף אזור עם קווים) לא מתפרסמים — עדיף בנייה
+# שנכשלת מאתר שמתרוקן.
+_with_lines = sum(1 for x in index if x['lines'])
+if out_i >= 100 and _with_lines < out_i * 0.4:
+    raise SystemExit('שומר סף: רק %d מ-%d אזורים עם קווים — ה-GTFS כנראה פגום; לא מפרסמים' % (_with_lines, out_i))
 
 # ---- מסלולי הקווים (בקשת ההסתדרות): לחיצה על קו בעמוד אזור מציגה את ----
 # מסלולו על המפה. לכל route_id שמופיע באחד האזורים נבחר ה-shape השכיח
