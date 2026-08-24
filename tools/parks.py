@@ -675,6 +675,20 @@ for sid, hits in stop_hits.items():
     for (pi, tier, d) in hits:
         _zone_walks.setdefault(pi, []).append((sid, _sla, _slo))
 
+def _nb_long(pi, sid, sla, slo, ix):
+    # שכנה עד 250מ' עם הליכה ארוכה תקפה (חסומה) — תחנה שהניתוב נכשל עליה
+    # יורשת ממנה את החסימה במקום ליפול לגאומטרי האופטימי
+    _clp = math.cos(math.radians(sla))
+    for (sid2, la2, lo2) in _zone_walks.get(pi, ()):
+        if sid2 == sid:
+            continue
+        if math.hypot((sla - la2) * 110540.0, (slo - lo2) * 111320.0 * _clp) > 250:
+            continue
+        v2 = walk.get((pi, sid2))
+        if v2 and len(v2) == 4 and v2[ix] is not None and v2[ix] > WALK_FAR_SEC:
+            return v2[ix]
+    return None
+
 def _nb_ok(pi, sid, sla, slo, ix):
     # יש שכן עד 250מ' עם הליכה קצרה תקפה באותו מדד? (ix: 3=cs מרכז, 1=es קצה)
     _clp = math.cos(math.radians(sla))
@@ -694,6 +708,14 @@ for sid, hits in stop_hits.items():
     for (pi, tier, d) in hits:
         v = walk.get((pi, sid))
         em, es, cm, cs = v if (v and len(v) == 4) else (None, None, None, None)
+        # ניתוב שנכשל (לא נפסל בכוונה) יורש חסימה משכנה צמודה — אחרת אזור מגודר
+        # מקבל חצי מהתחנות חסומות באמת וחצי "נגישות" מהנפילה הגאומטרית
+        if cs is None:
+            _inh = _nb_long(pi, sid, _sla, _slo, 3)
+            if _inh is not None: cs = _inh
+        if es is None:
+            _inh = _nb_long(pi, sid, _sla, _slo, 1)
+            if _inh is not None: es = _inh
         _cen = parks[pi]['cen']
         _clp = math.cos(math.radians(_cen[0]))
         _air_c = math.hypot((_sla - _cen[0]) * 110540.0, (_slo - _cen[1]) * 111320.0 * _clp)
