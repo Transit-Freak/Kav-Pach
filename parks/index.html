@@ -41,9 +41,9 @@
       <button class="btn" id="ztinfra" style="display:none" title="נמלים, שדות תעופה, בתי זיקוק, מחזור">⚙️ תשתית</button>
       <button class="btn" id="stplan" style="display:none" title="אזורים שעדיין לא נבנו">🏗️ כולל אזורים בהקמה</button>
       <div class="lp-sec">סמל המפה הארצית</div>
-      <button class="btn" id="symlines" title="גודל וצבע העיגול לפי מספר קווי האוטובוס שמגיעים לאזור">🚌 קווים · עיגול</button>
+      <button class="btn on" id="symlines" title="צבע וגודל העיגול לפי עמידה בתקן הנגישות: תדירות בכיוון הנסיעה + כיסוי שטח">🎯 עמידה בתקן · עיגול</button>
       <button class="btn" id="symstops" title="משולש שגודלו לפי מספר תחנות האוטובוס הפעילות בתוך האזור">🚏 תחנות · משולש</button>
-      <button class="btn on" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
+      <button class="btn" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
       <button class="btn" id="symscore" title="כוכב בצבע ובגודל לפי ציון השירות הרשמי של משרד התחבורה (0–100)">⭐ ציון משרד התחבורה · כוכב</button>
       <div class="lp-sec">שכבות מפה</div>
       <button class="btn" id="sabtn" title="צביעת המפה לפי המדד החברתי-כלכלי (למ״ס 2021)">🗺️ אשכולות חברתי-כלכלי</button>
@@ -362,8 +362,8 @@ function openHeatmap(fit=true){
         `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${T[0]} · `+
         `<i style="background:#84cc16"></i> ${T[0]+1}–${T[1]} · <i style="background:#16a34a"></i> ${T[1]+1}–${T[2]} · `+
         `<i style="background:#065f46"></i> ${T[2]}+`
-      : `🎯 עמידה בתקן הנגישות לעבודה: <i style="background:#16a34a"></i> עומד — תדירות שימושית וכיסוי הליכה · `+
-        `<i style="background:#ea580c"></i> חלקי — נכשל באחד · <i style="background:#dc2626"></i> אין נגישות · הגודל לפי אותו מדד`;
+      : `🎯 עמידה בתקן: <i style="background:#16a34a"></i> עומד — 21+ יציאות בכיוון הנסיעה וגם 90%+ כיסוי · `+
+        `<i style="background:#ea580c"></i> חלקי — נכשל באחד · <i style="background:#dc2626"></i> אין נגישות (או כיסוי מתחת ל-60%) · הגודל לפי אותו מדד`;
   const triIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
     html:`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20"><polygon points="10,2 19,18 1,18" fill="${c}" stroke="#fff" stroke-width="1.6"/></svg>`});
   const starIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
@@ -405,7 +405,7 @@ function openHeatmap(fit=true){
       const body=`<b style="color:${VC}">${vTxt}</b><br>`+
         `יציאות שיא בכיוון הנסיעה (כל הקווים יחד): <b>${pkdV}</b> ${pkdV>=21?'✓':'✗ (התקן: 21)'}<br>`+
         `כיסוי הליכה: ${cvv!=null?`<b>${cvv}%</b> מהשטח עד 10 דק׳ מתחנה ${cvv>=90?'✓':'✗ (התקן: 90%)'}`:'לא חושב'}<br>`+
-        `<span style="color:#64748b">קווים בתקן ההליכה (${modeTxt}): ${tot?tot:'0'} · בפנים: ${li}</span>`;
+        `<span style="color:#64748b">קווים בתקן ההליכה: ${walkN} · מהם עוצרים בפנים: ${p.li||0}</span>`;
       marker=L.circleMarker([p.la,p.lo],{radius:VS,color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:VC,fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
         .bindPopup(head+body);
     }
@@ -486,9 +486,9 @@ document.getElementById('modebtn').onclick=()=>{
   if(wrap.style.display!=='none' && h) openPark(h,false);
 };
 // סמל המפה הארצית: קווים (עיגול) / תחנות (משולש) / תדירות (עיגול) / ציון המשרד (כוכב).
-// ברירת המחדל (בקשת איריס): אזורי התעשייה עם תדירות הקווים — שאר
-// השכבות והסמלים בבחירה ידנית, כדי לא להציף את הגולש במידע
-let SYMMODE='freq';
+// ברירת המחדל (סיכום איריס 24.08): פסק הדין — עמידה בתקן בשלושה צבעים;
+// שאר השכבות והסמלים בבחירה ידנית, כדי לא להציף את הגולש במידע
+let SYMMODE='lines';
 for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score']])
   document.getElementById(id).onclick=()=>{
     SYMMODE=mode;
@@ -723,7 +723,7 @@ function openPark(f,push=true){
         <b>🚶 מדידה מחמירה — העובד בקצה האזור:</b>
         התחנה הקרובה אליו ~<b>${st.worst}</b> דק׳ הליכה ·
         <b>${st.cov10}%</b> משטח האזור נמצא בטווח 10 דקות מתחנה כלשהי
-        <div class="note" style="margin-top:2px">בניגוד לשאר המדדים (שנמדדים ממרכז האזור על רשת הרחובות), כאן נדגם כל היקף האזור — כי להולך הרגל לא אכפת הממוצע. הערכה לפי מרחק אווירי ×1.3; באתרים מגודרים המרחק בפועל גדול אף יותר</div>
+        <div class="note" style="margin-top:2px">בניגוד לשאר המדדים (שנמדדים ממרכז האזור על רשת הרחובות), כאן נדגמת רשת צפופה על פני כל שטח האזור והיקפו — כי להולך הרגל לא אכפת הממוצע. הערכה לפי מרחק אווירי ×1.3; באתרים מגודרים המרחק בפועל גדול אף יותר</div>
       </div>`;
     }
     if(d.official){
@@ -823,7 +823,8 @@ function openPark(f,push=true){
     };
     for(const L2 of pkLines) h+=rowOf(L2);
     if(noPkLines.length){
-      h+=`<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:800;color:#92400e;font-size:14px">⏰ עוד ${noPkLines.length} קווים ללא אף יציאה בשעות השיא (06–09, 15–19) — לא רלוונטיים ליוממות, אינם נספרים בתקן התדירות</summary>`;
+      const _noPkMk=new Set(noPkLines.map(L=>L.mk||L.num)).size;
+      h+=`<details style="margin-top:12px"><summary style="cursor:pointer;font-weight:800;color:#92400e;font-size:14px">⏰ עוד ${_noPkMk} קווים ללא אף יציאה בשעות השיא (06–09, 15–19) — לא רלוונטיים ליוממות, אינם נספרים בתקן התדירות</summary>`;
       for(const L2 of noPkLines) h+=rowOf(L2);
       h+=`</details>`;
     }

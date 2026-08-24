@@ -838,6 +838,7 @@ for pi, pk in enumerate(parks):
     # worst = הקצה הגרוע ביותר; cov10 = אחוז הנקודות בטווח 10 דקות.
     if outstops:
         _pts = []
+        _seen_g = set()   # דה-דופ נקודות רשת בין טבעות חופפות
         _cl2 = math.cos(math.radians(pk['cen'][0]))
         for _ring in pk['polys']:
             for _i in range(len(_ring)):
@@ -856,7 +857,10 @@ for pi, pk in enumerate(parks):
                 _go = _lo1
                 while _go <= _lo2:
                     if in_poly(_ga, _go, _ring):
-                        _pts.append((_ga, _go))
+                        _key = (round(_ga / _sla), round(_go / _slo))
+                        if _key not in _seen_g:
+                            _seen_g.add(_key)
+                            _pts.append((_ga, _go))
                     _go += _slo
                 _ga += _sla
         _worst = 0.0; _cov = 0
@@ -991,7 +995,7 @@ if used_rids and os.path.exists(SHAPES):
         e_d = math.hypot((pts[-1][0] - cen[0]) * 110540.0, (pts[-1][1] - cen[1]) * 111320.0 * cl)
         if e_d < s_d - 150: return 'in'
         if s_d < e_d - 150: return 'out'
-        return 'in' if mi > bi else 'out'
+        return 'in' if mi >= bi else 'out'
     for _e in index:
         _fp = os.path.join(OUTDIR, _e['f'])
         _d = json.load(open(_fp, encoding='utf-8'))
