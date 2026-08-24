@@ -660,22 +660,45 @@ def _walk_tier(geo_tier, sec):
 #   tc/cm/cmin = מרכז (ברירת-מחדל) · te/em/emin = קצה (כניסה). כשאין OSRM שניהם גאומטריים.
 def _mins(sec):
     return round(sec / 60) if sec is not None else None
+# מסננת ארטיפקטים של הצמדת-כביש, בשני מבחנים בלבד — כדי לא לפסול גדרות אמיתיות:
+#   א. אבסורד: הליכה מעל פי-10 מהמרחק האווירי + ק"מ (אכזיב: 123מ' אווירי, 9ק"מ "הליכה").
+#   ב. חוסר-עקביות: תחנה "חסומה" שתחנה שכנה לה (עד 250מ') קיבלה הליכה קצרה תקפה —
+#      גדר חוסמת את שתיהן יחד; פער כזה הוא שגיאת ניתוב.
+# אתר מגודר באמת (חירייה, מילס) נשאר חסום — כל תחנותיו ארוכות בעקביות.
+_zone_walks = {}   # pi -> [(sid, la, lo)]
+for sid, hits in stop_hits.items():
+    _nm0, _c0, _sla, _slo, _city0 = stop_info[sid]
+    for (pi, tier, d) in hits:
+        _zone_walks.setdefault(pi, []).append((sid, _sla, _slo))
+
+def _nb_ok(pi, sid, sla, slo, ix):
+    # יש שכן עד 250מ' עם הליכה קצרה תקפה באותו מדד? (ix: 3=cs מרכז, 1=es קצה)
+    _clp = math.cos(math.radians(sla))
+    for (sid2, la2, lo2) in _zone_walks.get(pi, ()):
+        if sid2 == sid:
+            continue
+        if math.hypot((sla - la2) * 110540.0, (slo - lo2) * 111320.0 * _clp) > 250:
+            continue
+        v2 = walk.get((pi, sid2))
+        if v2 and len(v2) == 4 and v2[ix] is not None and v2[ix] <= WALK_FAR_SEC:
+            return True
+    return False
+
 for sid, hits in stop_hits.items():
     nh = []
     _nm0, _c0, _sla, _slo, _city0 = stop_info[sid]
     for (pi, tier, d) in hits:
         v = walk.get((pi, sid))
         em, es, cm, cs = v if (v and len(v) == 4) else (None, None, None, None)
-        # מסננת סבירות: כשמרכז האזור מוצמד לכביש רחוק, OSRM מחזיר מסלול-ענק
-        # לתחנה צמודה והיא מסווגת "חסומה" בטעות. הליכה מעל פי-4 מהאווירי
-        # (+400מ' רזרבה) = תוצאה לא סבירה — נופלים לסיווג הגאומטרי, לא לחסימה.
         _cen = parks[pi]['cen']
         _clp = math.cos(math.radians(_cen[0]))
         _air_c = math.hypot((_sla - _cen[0]) * 110540.0, (_slo - _cen[1]) * 111320.0 * _clp)
-        if cm is not None and cm > 4 * _air_c + 400:
-            cm = cs = None
-        if em is not None and em > 4 * max(d, 50) + 400:
-            em = es = None
+        if cs is not None and cs > WALK_FAR_SEC:
+            if (cm is not None and cm > 10 * _air_c + 1000) or _nb_ok(pi, sid, _sla, _slo, 3):
+                cm = cs = None
+        if es is not None and es > WALK_FAR_SEC:
+            if (em is not None and em > 10 * max(d, 50) + 1000) or _nb_ok(pi, sid, _sla, _slo, 1):
+                em = es = None
         nh.append((pi, d, _walk_tier(tier, cs), _walk_tier(tier, es),
                    cm, _mins(cs), em, _mins(es)))
     stop_hits[sid] = nh
