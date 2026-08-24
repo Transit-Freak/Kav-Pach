@@ -350,8 +350,8 @@ function openHeatmap(fit=true){
   const hsiz=(v)=>{if(!v)return 8;if(v<=T[0])return 9;if(v<=T[1])return 13;if(v<=T[2])return 18;return 24};
   const scol=(sf)=>sf==null?'#94a3b8':(sf<30?'#dc2626':(sf<55?'#eab308':'#16a34a'));
   // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
-  document.getElementById('hpeak').parentElement.style.visibility=SYMMODE=='lines'?'visible':'hidden';
-  document.getElementById('hscopeseg').style.visibility=(SYMMODE=='lines'||SYMMODE=='freq')?'visible':'hidden';
+  document.getElementById('hpeak').parentElement.style.visibility='hidden';   // פסק הדין קבוע — המתג לא רלוונטי
+  document.getElementById('hscopeseg').style.visibility=SYMMODE=='freq'?'visible':'hidden';
   document.getElementById('hsin').classList.toggle('on',HEATSCOPE=='in');
   document.getElementById('hsall').classList.toggle('on',HEATSCOPE=='all');
   document.getElementById('hleg').innerHTML=
@@ -401,11 +401,10 @@ function openHeatmap(fit=true){
       const vr=(walkN===0||pkdV===0||(cvv!=null&&cvv<60))?'r':((pkdV<21||(cvv!=null&&cvv<90))?'o':'g');
       const VC={r:'#dc2626',o:'#ea580c',g:'#16a34a'}[vr], VS={r:9,o:14,g:20}[vr];
       const vTxt={r:'אין נגישות לעבודה בתחבורה ציבורית',o:'נגישות חלקית — נכשל באחד המבחנים',g:'עומד בתקן הנגישות לעבודה'}[vr];
-      const modeTxt=WALKMODE=='c'?'עד מרכז':'עד כניסה';
       const body=`<b style="color:${VC}">${vTxt}</b><br>`+
         `יציאות שיא בכיוון הנסיעה (כל הקווים יחד): <b>${pkdV}</b> ${pkdV>=21?'✓':'✗ (התקן: 21)'}<br>`+
         `כיסוי הליכה: ${cvv!=null?`<b>${cvv}%</b> מהשטח עד 10 דק׳ מתחנה ${cvv>=90?'✓':'✗ (התקן: 90%)'}`:'לא חושב'}<br>`+
-        `<span style="color:#64748b">קווים בתקן ההליכה: ${walkN} · מהם עוצרים בפנים: ${p.li||0}</span>`;
+        `<span style="color:#64748b">קווים בתקן ההליכה (ממרכז האזור): ${walkN} · מהם עוצרים בפנים: ${p.li||0}</span>`;
       marker=L.circleMarker([p.la,p.lo],{radius:VS,color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:VC,fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
         .bindPopup(head+body);
     }
@@ -793,8 +792,8 @@ function openPark(f,push=true){
       const isPkH=t=>('06:00'<=t&&t<'09:00')||('15:00'<=t&&t<'19:00');
       const mkPk=new Set(lines.filter(L=>(L.wd||[]).some(isPkH)).map(mkOf));
       // יציאות שיא בכיוון הנסיעה: בפנים/בשער — הכול; בהליכה — בוקר לכיוון האזור, אחה"צ ממנו
-      const pkdZ=lines.reduce((s,L)=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length,pm=wd.filter(t=>'15:00'<=t&&t<'19:00').length;
-        return s+(L.t==='in'||L.t==='gate'?am+pm:(L.dr==='in'?am:(L.dr==='out'?pm:am+pm)))},0);
+      const pkdZ=((d.lines)||[]).reduce((s,L)=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length,pm=wd.filter(t=>'15:00'<=t&&t<'19:00').length;
+        return s+(L.t==='in'||L.t==='gate'?am+pm:(L.dr==='in'?am:(L.dr==='out'?pm:am+pm)))},0);   // תמיד מדידת מרכז — כהגדרת התקן
       const inTxt=mkIn.size===mkAll.size?'כולם עוצרים בתוך האזור':mkIn.size===0?'אף אחד לא עוצר בפנים':`${mkIn.size} עוצרים בתוך האזור`;
       h+=`<h2>קווים (${mkAll.size} — ${inTxt}${mkPk.size<mkAll.size?` · ${mkPk.size} פעילים בשעות השיא`:''}) · לחצו לשעות המלאות</h2>`;
       h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ}</b></div>`;

@@ -840,7 +840,10 @@ for pi, pk in enumerate(parks):
         _pts = []
         _seen_g = set()   # דה-דופ נקודות רשת בין טבעות חופפות
         _cl2 = math.cos(math.radians(pk['cen'][0]))
-        for _ring in pk['polys']:
+        # המדידה על קואורדינטות בדיוק הפלט (5 ספרות) — כדי שחישוב חוזר מהקבצים
+        # שנכתבו ייתן בדיוק את אותם worst/cov10, בלי סחף סביב סף ה-90
+        _rings5 = [[(round(_a, 5), round(_b, 5)) for _a, _b in _r] for _r in pk['polys']]
+        for _ring in _rings5:
             for _i in range(len(_ring)):
                 _a, _b = _ring[_i], _ring[(_i + 1) % len(_ring)]
                 _pts.append(_a)
@@ -865,7 +868,8 @@ for pi, pk in enumerate(parks):
                 _ga += _sla
         _worst = 0.0; _cov = 0
         for _p in _pts:
-            _best = min(math.hypot((_p[0] - _s['la']) * 110540.0, (_p[1] - _s['lo']) * 111320.0 * _cl2)
+            _best = min(math.hypot((_p[0] - round(_s['la'], 5)) * 110540.0,
+                                   (_p[1] - round(_s['lo'], 5)) * 111320.0 * _cl2)
                         for _s in outstops)
             _t = _best * 1.3 / 75.0
             _worst = max(_worst, _t)
