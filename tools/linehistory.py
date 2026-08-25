@@ -335,7 +335,13 @@ for rdesc,c in cur.items():
             lf['versions'].pop()
             json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
             n_resumed+=1
-            base=next((v for v in reversed(lf['versions']) if v.get('shp')),None)
+            # הבסיס להשוואה: התיעוד האחרון עם רצף תחנות, לא רק עם שרטוט.
+            # כשהרשומות האחרונות היו ריקות, ההשוואה נעשתה מול שרטוט בן שנים
+            # — קו 80 כפר חב"ד חזר באוגוסט עם מסלול-הקיץ הישן, נמצא "זהה
+            # לתיעוד" (של 2020!), והאירוע נבלע. ההצגה מחדש של המסלול הנוכחי
+            # ב-25.08 נראתה אז כשינוי שממציא תחנות (דיווח שלמה)
+            base=next((v for v in reversed(lf['versions'])
+                       if v.get('stops') or v.get('shp')),None)
             if base is not None:
                 old_codes=[s[0] for s in base.get('stops',[])]
                 geo=base.get('shp')!=encode_shape(c['pts']); stp=old_codes!=c['codes']
