@@ -833,6 +833,10 @@ out_i = 0
 _noname_ser = {}
 used_rids = set()   # כל הקווים שמופיעים באזור כלשהו — להפקת קובצי מסלול
 for pi, pk in enumerate(parks):
+    # אזורי הקמה (טרם נבנה / בנוי חלקית) אינם באתר כלל — בקשת שלמה 25.08.
+    # כשהבנייה בשטח תושלם, בדיקת המבנים השבועית תחזיר אותם אוטומטית.
+    if built_status(pk['cen']):
+        continue
     stops_here = []
     for sid, hits in stop_hits.items():
         if sid not in seen_active:
