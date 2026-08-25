@@ -6,7 +6,7 @@ name: backfill-new-routes
 
 on:
   schedule:
-    - cron: '7 */4 * * *'
+    - cron: '7 * * * *'   # כל שעה עד שכל 306 התאריכים מולאו; ריצה בלי עבודה יוצאת מיד
   workflow_dispatch:
     inputs:
       max_min:
