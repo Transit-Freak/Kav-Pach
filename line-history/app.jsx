@@ -443,6 +443,17 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
           {focus ? "🗺️ כל המסלול" : "🔍 רק הקטע ששונה"}
         </button>
       )}
+      {/* בתיקון שרטוט שרק הוסיף תוואי, כל המסלול הישן חופף לחדש — אין
+          קטע אדום, וזה נראה כאילו "חסר" משהו במפה (שאלת שלמה, רכסים) */}
+      {diff && diff.curSegs.length > 0 && diff.prevSegs.length === 0 && (
+        <div className="mut">🛈 המסלול הקודם חופף לחדש לכל אורכו (ההבדל רק בקטע הירוק שנוסף) — לכן אין כאן קטע אדום שירד.</div>
+      )}
+      {diff && diff.prevSegs.length > 0 && diff.curSegs.length === 0 && (
+        <div className="mut">🛈 המסלול החדש חופף לקודם לכל אורכו (ההבדל רק בקטע האדום שירד) — לכן אין כאן קטע ירוק חדש.</div>
+      )}
+      {diff && !diff.prevSegs.length && !diff.curSegs.length && (
+        <div className="mut">🛈 שני השרטוטים כמעט חופפים (ההבדל קטן מעשרות מטרים) — לכן אין קטע אדום או ירוק מודגש; הקו האדום המקווקו מסתתר מתחת לירוק.</div>
+      )}
     </div>
   );
 }
@@ -1017,16 +1028,38 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     const e = nv && nv.nc && nv.nc[name];
     return Array.isArray(e) ? e[0] : e;
   };
-  const withCode = (name, i, isAdd) => {
-    if (!isAdd && /^\d{3,}$/.test(name)) {
-      const h = stopByCode(name, i);
-      return h ? `${h[1]} (${name})` : name;
-    }
-    const nv = vs[Math.min(i, vs.length - 1)];
-    const c = ncOf(nv, name) || codeOf(name, i, isAdd);
-    if (c) return `${name} (${c})`;
-    if (!isAdd) { const f = remFix(i)[name]; if (f) return `${name} (${f[0]})`; }
-    return name;
+  // כל המק"טים ששייכים לשם — בסדר הסריקה של codeOf. שם שמופיע פעמיים
+  // ברשימה הוא שתי תחנות שונות (שני צידי רחוב), וכל מופע צריך את המספר
+  // שלו — לא "×2" עם מק"ט אחד לשתיהן (דיווח שלמה: ישעיהו הנביא)
+  const codesFor = (name, i, isAdd) => {
+    const out = []; const seen = new Set();
+    const take = (l) => (l || []).forEach((s) => {
+      if (s && s[1] === name && !seen.has(String(s[0]))) { seen.add(String(s[0])); out.push(String(s[0])); }
+    });
+    const top = Math.min(i, vs.length - 1);
+    if (isAdd && vs[top]) take(vs[top].stops);
+    for (let j = top - (isAdd ? 0 : 1); j >= 0; j--) take(vs[j].stops);
+    for (let j = i + 1; j < vs.length; j++) take(vs[j].stops);
+    return out;
+  };
+  // רשימת ➕/➖ מוכנה להצגה: מק"ט לכל מופע, שם לרשומות של מק"ט חשוף,
+  // וזיווג-הפרש לשם שלא נמצא. מופעים זהים לגמרי עדיין מקובצים עם ×N
+  const labelList = (names, i, isAdd) => {
+    const cnt = {};
+    const strs = (names || []).map((name) => {
+      if (!isAdd && /^\d{3,}$/.test(name)) {
+        const h = stopByCode(name, i);
+        return h ? `${h[1]} (${name})` : name;
+      }
+      const k = (cnt[name] = (cnt[name] || 0) + 1) - 1;
+      const nv = vs[Math.min(i, vs.length - 1)];
+      const cs = codesFor(name, i, isAdd);
+      const c = cs[k] != null ? cs[k] : (k === 0 ? ncOf(nv, name) : null);
+      if (c) return `${name} (${c})`;
+      if (!isAdd) { const f = remFix(i)[name]; if (f) return `${name} (${f[0]})`; }
+      return name;
+    });
+    return dedupCount(strs).map(({ x, n: c }) => x + (c > 1 ? ` ×${c}` : "")).join(", ");
   };
   // תחנה שירדה ותחנה שנוספה עם אותו שם ורק רציף שונה — זה מעבר רציף,
   // לא "תחנה חדשה": מזווגים אותן ומציגים שורת מעבר אחת ברורה
@@ -1399,13 +1432,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
               {(x.add || x.rem) && (() => {
                 const pm = splitPlatformMoves(x.add, x.rem);
+                // החלפת מק"ט (אותו שם, אותו מיקום) היא אירוע של רישום
+                // התחנות, לא של הקו — לא מוצגת כאן בכלל (בקשת שלמה)
                 const rn = splitRenumbers(pm.add, pm.rem, i);
+                if (!pm.moves.length && !rn.add.length && !rn.rem.length) return null;
                 return (
                   <div className="sub">
                     {pm.moves.map((m, k) => <div key={k}>🔀 מעבר רציף: {m.base} — מרציף {m.from} לרציף {m.to}</div>)}
-                    {rn.moves.map((m, k) => <div key={"rn" + k}>🔁 הוחלף מספר התחנה: {m.name} — מ-{m.from} ל-{m.to} (אותה תחנה, אותו מיקום)</div>)}
-                    {rn.add.length > 0 && <div>➕ נוספו: {dedupCount(rn.add).map(({ x: n, n: c }) => withCode(n, i, true) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
-                    {rn.rem.length > 0 && <div>➖ ירדו: {dedupCount(rn.rem).map(({ x: n, n: c }) => withCode(n, i, false) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
+                    {rn.add.length > 0 && <div>➕ נוספו: {labelList(rn.add, i, true)}</div>}
+                    {rn.rem.length > 0 && <div>➖ ירדו: {labelList(rn.rem, i, false)}</div>}
                   </div>
                 );
               })()}

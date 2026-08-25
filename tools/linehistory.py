@@ -384,15 +384,47 @@ for rdesc,c in cur.items():
     name={x[0]:x[1] for x in c['stopinfo']}
     # מק"ט שכבר נמחק מהרישום הארצי אין לו שם במצב-התחנות — משלימים
     # מהתיעוד של הקו עצמו; בלי זה כרטיס השינוי הציג מספר חשוף בלי שם
-    fnames={}
+    fentries={}
     if rem:
         lf0=jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json',None) or {}
         for s in (lf0.get('pool') or []):
-            if isinstance(s,list) and len(s)>=2: fnames.setdefault(str(s[0]),s[1])
+            if isinstance(s,list) and len(s)>=4: fentries.setdefault(str(s[0]),[s[1],s[2],s[3]])
+            elif isinstance(s,list) and len(s)>=2: fentries.setdefault(str(s[0]),[s[1],None,None])
         for v0 in (lf0.get('versions') or []):
             for s in (v0.get('stops') or []):
-                if isinstance(s,list) and len(s)>=2: fnames.setdefault(str(s[0]),s[1])
-    oldname=lambda x:(prev_stops.get(x) or [fnames.get(x) or x])[0]   # שם תחנה שירדה
+                if isinstance(s,list) and len(s)>=4: fentries.setdefault(str(s[0]),[s[1],s[2],s[3]])
+                elif isinstance(s,list) and len(s)>=2: fentries.setdefault(str(s[0]),[s[1],None,None])
+    oldname=lambda x:(prev_stops.get(x) or fentries.get(x) or [x])[0]   # שם תחנה שירדה
+    # החלפת מק"ט לתחנה (אותו שם, אותו מיקום) היא אירוע של רישום התחנות,
+    # לא של הקו: הזוג לא נספר כ"ירדה"+"נוספה" (בקשת שלמה, קו 80 כפר חב"ד)
+    codes_eff=c['codes']
+    if add and rem:
+        sinfo={s[0]:s for s in c['stopinfo']}
+        ren={}   # מק"ט חדש -> המק"ט הישן שהוא מחליף
+        for x in list(rem):
+            ent=prev_stops.get(x) or fentries.get(x)
+            if not ent or ent[1] is None: continue
+            for y in add:
+                if y in ren: continue
+                sy=sinfo.get(y)
+                if sy and sy[1]==ent[0] and abs(sy[2]-ent[1])<0.005 and abs(sy[3]-ent[2])<0.005:
+                    ren[y]=x; rem.remove(x); break
+        add=[y for y in add if y not in ren]
+        if ren:
+            codes_eff=[ren.get(y,y) for y in c['codes']]
+            if codes_eff==old_codes and not geo and not (op_changed or tt_changed
+               or ty_changed or wa_changed or pd_changed):
+                # רק מספרי תחנות הוחלפו — מרעננים בשקט את הרשימה בגרסה
+                # האחרונה, בלי להמציא אירוע-קו על החלפת רישום
+                p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+                lf=materialize(jload(p,None))
+                if lf and lf.get('versions'):
+                    tgt=next((v for v in reversed(lf['versions']) if v.get('stops')),None)
+                    if tgt is not None:
+                        tgt['stops']=c['stopinfo']
+                        json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+                continue
+            stp=codes_eff!=old_codes
     if REBASE:
         # יישור: מעדכנים את הגרסה האחרונה-עם-גאומטריה במקומה, בלי אירוע —
         # ההבדל נובע מבחירת נציג לא-מסוננת בריצה קודמת, לא משינוי בפועל
@@ -423,8 +455,8 @@ for rdesc,c in cur.items():
     elif not geo and not stp:
         kind='operator'
     else:
-        kind=classify(old_codes,c['codes'],geo,stp,
-                      lambda x: name.get(x) or (prev_stops.get(x) or [fnames.get(x)])[0])
+        kind=classify(old_codes,codes_eff,geo,stp,
+                      lambda x: name.get(x) or (prev_stops.get(x) or fentries.get(x) or [None])[0])
     kinds_count[kind]=kinds_count.get(kind,0)+1; n_changed+=1
     note=''
     if op_changed: note=f"המפעיל הוחלף: {pv.get('op','')} ← {c['op']}"
@@ -462,8 +494,8 @@ for rdesc,c in cur.items():
         # ("דוד רמז/הכרם" בקו 20, ששמור אצלנו בשמו הישן "מסוף רמז/דוד רמז")
         nc={}
         for x in rem[:15]:
-            pvs=prev_stops.get(x)
-            nc.setdefault(oldname(x),[x,pvs[1],pvs[2]] if pvs else x)
+            pvs=prev_stops.get(x) or fentries.get(x)
+            nc.setdefault(oldname(x),[x,pvs[1],pvs[2]] if pvs and pvs[1] is not None else x)
         extra['nc']=nc
     write_line_version(rdesc,c,kind,note,extra)
 gone=[rdesc for rdesc in prev if rdesc not in cur]

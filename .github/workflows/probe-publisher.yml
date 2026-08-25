@@ -1,7 +1,7 @@
 name: probe-publisher
 
-# אימות מה האתר החי מגיש בפועל: האם app.jsx שבאוויר מכיל את קוד ריבוי
-# הערים. דוח ללוג בלבד.
+# אימות מה האתר החי מגיש בפועל: האם app.jsx שבאוויר מכיל את תיקוני
+# שמות/מק"טים לתחנות שירדו. דוח ללוג בלבד.
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
           curl -fsS -H 'Cache-Control: no-cache' \
             "https://transit-freak.github.io/kav-bochan/line-history/app.jsx?cb=$RANDOM" -o live.jsx
           echo "bytes: $(wc -c < live.jsx)"
-          for s in "אפשר כמה" "addCity" "include_subscription" "הוסף"; do
+          for s in "codesFor" "labelList" "stopByCode" "remFix" "חופף לחדש"; do
             n=$(grep -c "$s" live.jsx || true)
             echo "'$s' occurrences: $n"
           done
