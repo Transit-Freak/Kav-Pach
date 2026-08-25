@@ -1,0 +1,60 @@
+name: backfill-change-segs
+
+# הקו בזמן — השלמת "הקטע ששונה" מהארכיון (tools/backfill_change_segs.py).
+# רץ במחזורים עד שהמלאי נגמר; ריצה בלי עבודה מסתיימת מיד.
+
+on:
+  schedule:
+    - cron: '41 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'קובץ קו יחיד לבדיקה (למשל 26035-1-H.json)'
+        required: false
+        default: ''
+      max_dates:
+        description: 'מגבלת ימי-ארכיון לריצה (0 = בלי)'
+        required: false
+        default: '0'
+      max_min:
+        description: 'תקציב זמן בדקות'
+        required: false
+        default: '45'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-change-segs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backfill change segments
+        run: |
+          set -euo pipefail
+          ONLY='${{ github.event.inputs.only || '' }}' \
+          MAX_DATES='${{ github.event.inputs.max_dates || '0' }}' \
+          MAX_MIN='${{ github.event.inputs.max_min || '45' }}' \
+          python3 tools/backfill_change_segs.py
+
+      - name: Commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add line-history/data
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          for i in 1 2 3 4; do
+            git commit -m "data: קטעי-שינוי מהארכיון (backfill_change_segs)" || exit 0
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main || { git rebase --abort; git fetch origin main; git reset --soft origin/main; }
+            echo "retry $i"; sleep 8
+          done
+          exit 1

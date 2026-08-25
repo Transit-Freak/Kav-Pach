@@ -316,9 +316,13 @@ const dedupCount = (arr) => {
   (arr || []).forEach((x) => { const k = typeof x === "string" ? x : x[0] + "|" + x[1]; const e = m.get(k); if (e) e.n += 1; else m.set(k, { x, n: 1 }); });
   return [...m.values()];
 };
-function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins, sg }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
+  // קטעי-שינוי ששולפו מהארכיון (v.sg) — הגאומטריה האמיתית של מה שירד
+  // ומה שנוסף גם כשלגרסאות אין שרטוט מלא (בקשת שלמה: רק הקטע ששונה)
+  const sgO = useMemo(() => (sg && sg.o ? sg.o.map(decodeShape).filter((r) => r.length > 1) : null), [sg]);
+  const sgN = useMemo(() => (sg && sg.n ? sg.n.map(decodeShape).filter((r) => r.length > 1) : null), [sg]);
   // הקטעים ששונו + התחנות ששונו — היעד של מצב "התמקדות" (בקשת המשתמש:
   // בתיקון באג לראות רק את הקטע שהשתנה, לא את כל המסלול).
   // השוואת קטעים רק כששני הצדדים מדויקים — קו מקורב בין תחנות ייתן רעש
@@ -340,10 +344,12 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
   }, [curStops, prevStops, addedCodes, remPins]);
   const focusPts = useMemo(() => {
     const pts = [];
-    if (diff) { diff.curSegs.forEach((sg) => pts.push(...sg)); diff.prevSegs.forEach((sg) => pts.push(...sg)); }
+    if (diff) { diff.curSegs.forEach((s2) => pts.push(...s2)); diff.prevSegs.forEach((s2) => pts.push(...s2)); }
+    (sgO || []).forEach((r) => pts.push(...r));
+    (sgN || []).forEach((r) => pts.push(...r));
     pts.push(...chStops);
     return pts;
-  }, [diff, chStops]);
+  }, [diff, chStops, sgO, sgN]);
   const [focus, setFocus] = useState(true);
   const canFocus = focusPts.length > 0;
   useEffect(() => {
@@ -368,8 +374,12 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
         : { color: prev ? "#16a34a" : "#4c1d95", weight: focused ? 3 : 5, opacity: focused ? 0.3 : 0.9 }).addTo(map);
     }
     if (focused && diff) {
-      diff.prevSegs.forEach((sg) => L.polyline(sg, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
-      diff.curSegs.forEach((sg) => L.polyline(sg, { color: "#16a34a", weight: 7, opacity: 0.95 }).addTo(map));
+      diff.prevSegs.forEach((s2) => L.polyline(s2, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
+      diff.curSegs.forEach((s2) => L.polyline(s2, { color: "#16a34a", weight: 7, opacity: 0.95 }).addTo(map));
+    }
+    if (!diff && (sgO || sgN)) {
+      (sgO || []).forEach((r) => L.polyline(r, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
+      (sgN || []).forEach((r) => L.polyline(r, { color: "#16a34a", weight: 7, opacity: 0.95 }).addTo(map));
     }
     // מסלול 2012 — קו חום מקווקו דרך התחנות שהוצלבו למק"ט (מיקום לפי המאגר של היום)
     if (pts12.length > 1) {
@@ -418,7 +428,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
         .bindPopup(popHtml([p[0], p[1]], "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
     });
     return () => { mapRef.current = null; map.remove(); };
-  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12, remPins]);
+  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12, remPins, sgO, sgN]);
   // סיכום טקסטואלי למי שלא רואה את המפה — המספרים כבר מחושבים ממילא
   const nAdd = (curStops || []).filter((s) => addedCodes && addedCodes.has(s[0])).length;
   const curC = new Set((curStops || []).map((s) => s[0]));
@@ -1150,6 +1160,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n) => codeOf(n, vi, true)).filter(Boolean)) : null}
           stops12={onlyCur ? null : stops12}
+          sg={onlyCur || cmpOn ? null : (v.sg || null)}
           remPins={onlyCur || cmpOn ? null : (v.rem || []).map((n) => {
             const e = v.nc && v.nc[n];
             if (Array.isArray(e)) return [String(e[0]), n, e[1], e[2]];
@@ -1172,6 +1183,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
           {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>}
         </div>
+        {!cmpOn && !onlyCur && v.sg && ((v.sg.n || []).length + (v.sg.o || []).length > 0) && (
+          <div className="mut">🔍 הקטע ששונה שורטט במדויק מצילומי הארכיון — אדום מקווקו = הקטע הישן, ירוק = החדש. שאר המסלול עשוי להיות מקורב.</div>
+        )}
         {v.shpref
           ? <div className="mut">🛈 רצף התחנות בצילום זהה לגרסה הסמוכה — מוצג המסלול המלא שלה במקום קו מקורב. {(v.stops || []).length} תחנות בגרסה זו.</div>
           : approx
