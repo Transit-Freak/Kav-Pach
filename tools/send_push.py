@@ -23,6 +23,15 @@ BASE_URL = 'https://transit-freak.github.io/kav-bochan/line-history/'
 MAX_SENDS = int(os.environ.get('MAX_SENDS', '200'))
 
 SKIP_KINDS = {'freq', 'sched', 'times', 'baseline', 'snapshot'}
+# קבוצות ההרשמה במרכז ההתראות (זהה ל-KIND_GROUPS_N שבאתר)
+KIND_GROUP = {}
+for _tag, _kinds in (('kg_rem', ['removed']), ('kg_new', ['new']),
+                     ('kg_route', ['route', 'redraw', 'extend', 'shorten', 'terminal',
+                                   'stops', 'stops-add', 'stops-del']),
+                     ('kg_ident', ['dest', 'renum', 'renamed', 'operator', 'mode'])):
+    for _k in _kinds:
+        KIND_GROUP[_k] = _tag
+
 KIND_LBL = {
     'new': 'וריאנט חדש', 'route': 'שינוי מסלול', 'redraw': 'תיקון שרטוט',
     'terminal': 'שינוי קצה המסלול', 'extend': 'הארכת קו', 'shorten': 'קיצור קו',
@@ -114,10 +123,18 @@ def main():
         title = f'קו {e["line"]}' if e['line'] else 'קו'
         body = f'{kinds} — {e["dest"][:90]}' if e['dest'] else kinds
         url = f'{BASE_URL}#{e["rd"]}@{DATE}'
+        groups = sorted({KIND_GROUP.get(k) for k in e['kinds']} - {None})
         filters = [{'field': 'tag', 'key': f'l{mk}', 'relation': '=', 'value': '1'}]
         for ct in dest_cities(e['dest']):
-            filters += [{'operator': 'OR'},
-                        {'field': 'tag', 'key': city_tag(ct), 'relation': '=', 'value': '1'}]
+            ctag = {'field': 'tag', 'key': city_tag(ct), 'relation': '=', 'value': '1'}
+            # עוקבי-עיר מהכפתור הפשוט (בלי תדירות) — מקבלים הכל יומית
+            filters += [{'operator': 'OR'}, ctag,
+                        {'field': 'tag', 'key': 'freq', 'relation': 'not_exists'}]
+            # נרשמי מרכז ההתראות במצב יומי — רק בסוגים שסימנו
+            for g in groups:
+                filters += [{'operator': 'OR'}, ctag,
+                            {'field': 'tag', 'key': 'freq', 'relation': '=', 'value': '1'},
+                            {'field': 'tag', 'key': g, 'relation': '=', 'value': '1'}]
         payload = {'app_id': APP_ID,
                    'headings': {'en': title, 'he': title},
                    'contents': {'en': body, 'he': body},
@@ -134,6 +151,72 @@ def main():
                 print(f'שגיאת שליחה לקו {e["line"]}: {ex}', file=sys.stderr)
         sent += 1
     print(f'סה"כ קריאות שליחה: {sent}')
+    send_digests()
+
+
+def collect_range(days):
+    since = (datetime.date.fromisoformat(DATE) - datetime.timedelta(days=days)).isoformat()
+    by_city = {}
+    for f in os.listdir(f'{OUTDIR}/lines'):
+        try:
+            d = json.load(open(f'{OUTDIR}/lines/{f}', encoding='utf-8'))
+        except Exception:
+            continue
+        for v in d.get('versions') or []:
+            dd = str(v.get('d', ''))[:10]
+            if not (since < dd <= DATE) or v.get('k') in SKIP_KINDS or v.get('k') in ('baseline', 'snapshot'):
+                continue
+            rd = d.get('rd') or f.rsplit('.', 1)[0]
+            for ct in dest_cities(d.get('dest') or ''):
+                e = by_city.setdefault(ct, {'mks': set(), 'kinds': set()})
+                e['mks'].add(rd.split('-')[0])
+                e['kinds'].add(v.get('k'))
+    return by_city
+
+
+def send_digests():
+    """סיכום כל 3 ימים / שבועי (יום ראשון) לנרשמי מרכז ההתראות."""
+    today = datetime.date.fromisoformat(DATE)
+    jobs = []
+    if today.toordinal() % 3 == 0:
+        jobs.append(('3', 3))
+    if today.weekday() == 6:   # ראשון
+        jobs.append(('7', 7))
+    if not jobs:
+        return
+    for freq, days in jobs:
+        by_city = collect_range(days)
+        print(f'סיכום {days} ימים: {len(by_city)} ערים עם שינויים')
+        sent = 0
+        for ct, e in sorted(by_city.items()):
+            if sent >= MAX_SENDS:
+                break
+            groups = sorted({KIND_GROUP.get(k) for k in e['kinds']} - {None})
+            if not groups:
+                continue
+            n = len(e['mks'])
+            title = f'🔔 {n} קווים השתנו ב{ct}'
+            body = 'סיכום ' + ('שבועי' if days == 7 else f'{days} ימים') + ' — ' +                    ' · '.join(sorted({KIND_LBL.get(k, k) for k in e['kinds']})[:4])
+            url = f'{BASE_URL}#digest={ct}@{days}'
+            ctag = {'field': 'tag', 'key': city_tag(ct), 'relation': '=', 'value': '1'}
+            filters = []
+            for g in groups:
+                if filters:
+                    filters.append({'operator': 'OR'})
+                filters += [ctag,
+                            {'field': 'tag', 'key': 'freq', 'relation': '=', 'value': freq},
+                            {'field': 'tag', 'key': g, 'relation': '=', 'value': '1'}]
+            payload = {'app_id': APP_ID, 'headings': {'en': title, 'he': title},
+                       'contents': {'en': body, 'he': body}, 'url': url, 'filters': filters}
+            if DRY:
+                print('DRY-DIGEST:', title, '|', body, '|', url)
+            else:
+                try:
+                    send(payload)
+                except Exception as ex:
+                    print(f'שגיאת סיכום {ct}: {ex}', file=sys.stderr)
+            sent += 1
+        print(f'סיכומי {days} ימים שנשלחו: {sent}')
 
 
 if __name__ == '__main__':

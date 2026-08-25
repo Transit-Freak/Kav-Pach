@@ -656,6 +656,135 @@ const destCities = (dest) => {
   return out.slice(0, 2);
 };
 
+// הגדרת תגים בבת אחת — בקשת הרשאה אחת לכל השמירה
+const osTags = (map) => {
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async (OS) => {
+    try {
+      await OS.Notifications.requestPermission();
+      for (const k in map) { if (map[k] == null) OS.User.removeTag(k); else OS.User.addTag(k, map[k]); }
+    } catch (e) {}
+  });
+};
+// קבוצות סוגי-שינוי להרשמה (בקשת שלמה) — התג בצד השולח זהה
+const KIND_GROUPS_N = [
+  { tag: "kg_rem", label: "ביטולי קווים", kinds: ["removed"] },
+  { tag: "kg_new", label: "קווים חדשים", kinds: ["new"] },
+  { tag: "kg_route", label: "מסלול ותחנות", kinds: ["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"] },
+  { tag: "kg_ident", label: "יעד, מספר ומפעיל", kinds: ["dest", "renum", "renamed", "operator", "mode"] },
+];
+function NotifyCenter({ cities }) {
+  const st0 = (() => { try { return JSON.parse(localStorage.kbNotify || "{}"); } catch (e) { return {}; } })();
+  const [open, setOpen] = useState(false);
+  const [city, setCity] = useState(st0.city || "");
+  const [freq, setFreq] = useState(st0.freq || "1");
+  const [gs, setGs] = useState(() => new Set(st0.gs || KIND_GROUPS_N.map((g) => g.tag)));
+  const [saved, setSaved] = useState(!!st0.city);
+  const [msg, setMsg] = useState("");
+  if (!PUSH_ON) return null;
+  const toggleG = (t) => setGs((p) => { const n = new Set(p); if (n.has(t)) n.delete(t); else n.add(t); return n; });
+  const save = () => {
+    const c = city.trim();
+    if (!c) { setMsg("בחרו עיר"); return; }
+    if (!gs.size) { setMsg("סמנו לפחות סוג שינוי אחד"); return; }
+    const tags = {};
+    if (st0.city && st0.city !== c) tags[cityTag(st0.city)] = null;   // עיר קודמת יורדת
+    tags[cityTag(c)] = "1";
+    tags.freq = freq;
+    KIND_GROUPS_N.forEach((g) => { tags[g.tag] = gs.has(g.tag) ? "1" : null; });
+    osTags(tags);
+    try { localStorage.kbNotify = JSON.stringify({ city: c, freq, gs: [...gs] }); } catch (e) {}
+    setSaved(true); setMsg("✓ נשמר — ההתראות יגיעו לדפדפן הזה");
+  };
+  const cancel = () => {
+    const tags = { freq: null };
+    if (st0.city || city) tags[cityTag(st0.city || city)] = null;
+    KIND_GROUPS_N.forEach((g) => { tags[g.tag] = null; });
+    osTags(tags);
+    try { delete localStorage.kbNotify; } catch (e) {}
+    setSaved(false); setMsg("ההרשמה בוטלה");
+  };
+  return (
+    <div className="katbox" style={{ marginTop: 8 }}>
+      <button className="kathead" style={{ fontWeight: 800 }} aria-expanded={open} onClick={() => setOpen(!open)}>
+        🔔 הרשמה להתראות על שינויים{saved ? ` — רשומים ל${st0.city || city}` : " — עיר, סוגי שינויים ותדירות"}
+      </button>
+      {open && (
+        <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
+          <label style={{ fontWeight: 700 }}>עיר:
+            <input list="kbcities" dir="rtl" value={city} onChange={(e) => setCity(e.target.value)}
+              placeholder="הקלידו שם עיר…" style={{ width: "100%", padding: "8px 10px", marginTop: 4, borderRadius: 8, border: "1px solid #cbd5e1", font: "inherit" }} />
+            <datalist id="kbcities">{(cities || []).map((c) => <option key={c} value={c} />)}</datalist>
+          </label>
+          <div style={{ fontWeight: 700 }}>אילו שינויים מעניינים אתכם:
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6, fontWeight: 400 }}>
+              {KIND_GROUPS_N.map((g) => (
+                <label key={g.tag} style={{ display: "flex", alignItems: "center", gap: 5, border: "1px solid #e2e8f0", borderRadius: 999, padding: "4px 10px" }}>
+                  <input type="checkbox" checked={gs.has(g.tag)} onChange={() => toggleG(g.tag)} /> {g.label}
+                </label>
+              ))}
+            </div>
+            <div className="mut" style={{ fontWeight: 400 }}>שינויי לו״ז ותדירות אינם נשלחים — רק שינויים מהותיים.</div>
+          </div>
+          <div style={{ fontWeight: 700 }}>באיזו תדירות:
+            <div style={{ display: "flex", gap: 8, marginTop: 6, flexWrap: "wrap", fontWeight: 400 }}>
+              {[["1", "כל יום שיש שינוי"], ["3", "סיכום כל 3 ימים"], ["7", "סיכום שבועי"]].map(([v, l]) => (
+                <label key={v} style={{ display: "flex", alignItems: "center", gap: 5, border: "1px solid #e2e8f0", borderRadius: 999, padding: "4px 10px" }}>
+                  <input type="radio" name="kbfreq" checked={freq === v} onChange={() => setFreq(v)} /> {l}
+                </label>
+              ))}
+            </div>
+            <div className="mut" style={{ fontWeight: 400 }}>בסיכום, ההתראה נפתחת לעמוד עם כל השינויים בתקופה — מקובצים לפי סוג.</div>
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button className="kathead" style={{ background: "#4c1d95", color: "#fff", borderRadius: 10, width: "auto", padding: "8px 18px" }} onClick={save}>שמירה והרשמה</button>
+            {saved && <button className="kathead" style={{ width: "auto", padding: "8px 14px" }} onClick={cancel}>ביטול ההרשמה</button>}
+            {msg && <span style={{ fontWeight: 700 }}>{msg}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+// עמוד הסיכום שנפתח מהתראת סיכום: כל השינויים בתקופה, מקובצים לפי סוג —
+// קווים עם אותו שינוי באותה שורה, כל אחד בקישור משלו (בקשת שלמה)
+function DigestPage({ city, days, onBack, openLine }) {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    fetch("data/digest.json", { cache: "no-cache" }).then((r) => r.json()).then(setData)
+      .catch(() => setData({ items: [] }));
+  }, []);
+  const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+  const items = ((data && data.items) || []).filter((x) => x.d >= since && (x.ct || []).includes(city));
+  const byKind = {};
+  items.forEach((x) => { (byKind[x.k] = byKind[x.k] || []).push(x); });
+  return (
+    <div className="card">
+      <button className="back" onClick={onBack}>→ לחיפוש</button>
+      <h2 style={{ margin: "6px 0" }}>🔔 סיכום השינויים בקווי {city} — {days === 7 ? "השבוע האחרון" : `${days} הימים האחרונים`}</h2>
+      {!data ? <div>טוען…</div> : !items.length ? <div className="mut">אין שינויים מהותיים בתקופה הזו.</div> : (
+        Object.keys(byKind).map((k) => {
+          const seen = new Set();
+          const rows = byKind[k].filter((x) => !seen.has(x.mk) && seen.add(x.mk));
+          return (
+            <div key={k} style={{ margin: "10px 0", padding: "8px 12px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+              <b style={{ color: (KINDS[k] || {}).color || "#0f172a" }}>{(KINDS[k] || {}).label || k}</b> · {rows.length} קווים:{" "}
+              {rows.map((x, i) => (
+                <React.Fragment key={x.rd + x.d}>
+                  {i > 0 && " · "}
+                  <a href={"#" + encodeURIComponent(x.rd) + "@" + x.d} onClick={(e) => { e.preventDefault(); openLine(x.rd, x.d); }}
+                    style={{ fontWeight: 700 }}>קו {x.line || x.mk}</a>
+                </React.Fragment>
+              ))}
+            </div>
+          );
+        })
+      )}
+      <div className="mut">שינויי לו״ז ותדירות אינם נכללים בסיכום.</div>
+    </div>
+  );
+}
+
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
@@ -2214,8 +2343,12 @@ function App() {
   const isStopH = (h) => h.startsWith("stop=");
   // ‎#מקט@תאריך‎ — קישור מציר תחנה שנוחת ישר על גרסת השינוי
   const splitRdDate = (h) => { const i = h.lastIndexOf("@"); return i > 0 ? [h.slice(0, i), h.slice(i + 1)] : [h, null]; };
-  const [rd, setRd] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? splitRdDate(H0)[0] : null));
-  const [rdDate, setRdDate] = useState(() => (H0 && !H0.startsWith("2012/") && !isStopH(H0) ? splitRdDate(H0)[1] : null));
+  const isDigestH = (h) => h.startsWith("digest=");
+  const parseDigest = (h) => { const [c, d] = h.slice(7).split("@"); return { city: c, days: parseInt(d) || 7 }; };
+  const [dig, setDig] = useState(() => (isDigestH(H0) ? parseDigest(H0) : null));
+  const _plainH = H0 && !H0.startsWith("2012/") && !isStopH(H0) && !isDigestH(H0);
+  const [rd, setRd] = useState(() => (_plainH ? splitRdDate(H0)[0] : null));
+  const [rdDate, setRdDate] = useState(() => (_plainH ? splitRdDate(H0)[1] : null));
   const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
   // מונה פתיחות: לחיצה חוזרת על קישור לאותה תחנה חייבת לפתוח מחדש גם
   // כשהמזהה עצמו לא השתנה
@@ -2232,6 +2365,12 @@ function App() {
       setAnc12(m);
     });
   }, [k12]);
+  // ערים להרשמה להתראות — מערי הקצה של כל הקווים בקטלוג
+  const notifyCities = useMemo(() => {
+    const cnt = {};
+    (((idx || {}).lines) || []).forEach((l) => destCities(l.dest).forEach((c) => { cnt[c] = (cnt[c] || 0) + 1; }));
+    return Object.keys(cnt).filter((c) => cnt[c] >= 3).sort((a, b) => cnt[b] - cnt[a]);
+  }, [idx]);
   const [lim, setLim] = useState(200);   // "הצג עוד" מרחיב; חיפוש חדש מאפס
   useEffect(() => setLim(200), [q, kats]);
   useEffect(() => {
@@ -2240,6 +2379,7 @@ function App() {
       const h = decodeURIComponent((location.hash || "").slice(1));
       if (h.startsWith("2012/")) { setRd(null); setK12(h.slice(5)); return; }
       if (isStopH(h)) { setRd(null); setStopSel(h.slice(5)); setStopSelN((n) => n + 1); setTab("stops"); return; }
+      if (isDigestH(h)) { setRd(null); setK12(null); setDig(parseDigest(h)); return; }
       // כתובת של קו נקראה רק בטעינה הראשונה: מי שהדביק קישור לקו בשורת
       // הכתובת של לשונית פתוחה, או ערך את הכתובת ידנית, נשאר במסך הקודם.
       // pushState/replaceState אינם מפעילים hashchange, ולכן אין כאן לולאה.
@@ -2249,7 +2389,8 @@ function App() {
     window.addEventListener("hashchange", onHash);
     return () => { window.removeEventListener("popstate", onPop); window.removeEventListener("hashchange", onHash); };
   }, []);
-  const openLine = (r) => { setK12(null); setRdDate(null); history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
+  const openLine = (r) => {
+    setDig(null); setK12(null); setRdDate(null); history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const open12 = (k) => { history.pushState({ k12: k }, "", "#2012/" + encodeURIComponent(k)); setK12(k); };
   const switchLine = (r) => { history.replaceState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const backToList = () => {
@@ -2358,7 +2499,11 @@ function App() {
             onClick={() => { setTab(t.k); backToList(); }}>{t.icon} {t.label}</button>
         ))}
       </div>
-      {k12 ? (
+      {!rd && !k12 && !dig && <NotifyCenter cities={notifyCities} />}
+      {dig ? (
+        <DigestPage city={dig.city} days={dig.days} openLine={openLine}
+          onBack={() => { setDig(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
+      ) : k12 ? (
         <Line2012Page k12={k12} anchorRd={anc12[k12] || null} openLine={openLine}
           onBack={() => { setK12(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
       ) : tab === "stops" ? <StopsTab sel={stopSel} selN={stopSelN} /> : (TABS.some((t) => t.k === tab) && !rd) ? (

@@ -22,7 +22,7 @@ on:
         default: '0'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: notify-push-${{ github.ref }}
@@ -35,6 +35,21 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Build digest data
+        run: |
+          set -euo pipefail
+          python3 tools/build_digest.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add line-history/data/digest.json
+          if git diff --cached --quiet; then echo "digest unchanged"; else
+            git commit -m "data: digest יומי להתראות הסיכום"
+            for i in 1 2 3; do
+              if git push origin HEAD:main; then break; fi
+              git pull --rebase origin main; sleep 5
+            done
+          fi
 
       - name: Send daily notifications
         env:
