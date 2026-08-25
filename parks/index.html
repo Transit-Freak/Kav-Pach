@@ -104,7 +104,8 @@
     <div class="legend" style="margin:0;align-items:center">
       <span class="seg"><button class="btn on" id="hpeak" title="רק הגעות בשעות ההגעה והחזרה מהעבודה: 06:00–09:00 ו-15:00–19:00 ביום חול">⏰ שעות שיא</button><button class="btn" id="hday" title="כל ההגעות לאורך היום כולו">🗓️ כל היום</button></span>
     </div>
-    <div class="mapwrap"><div id="heatmap" style="border-radius:14px;background:#dce8f2;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div><div class="maplegend"><span id="hleg"></span><span id="saleg"></span></div></div>
+    <div class="mapwrap"><div id="heatmap" style="border-radius:14px;background:#dce8f2;box-shadow:0 8px 30px rgba(0,0,0,.08);height:100%"></div></div>
+    <div class="maplegend"><span id="hleg"></span><span id="saleg"></span></div>
     <div class="legend" id="gapbox" style="margin:0"></div>
   </div>
 
@@ -199,7 +200,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='25';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='26';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
