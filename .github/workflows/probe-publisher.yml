@@ -1,7 +1,7 @@
 name: probe-publisher
 
-# בדיקת תנאי החינם של ספקי web-push (בקשת איריס): Pushwoosh מול OneSignal.
-# דוח ללוג בלבד.
+# אימות מה האתר החי מגיש בפועל: האם app.jsx שבאוויר מכיל את קוד ריבוי
+# הערים. דוח ללוג בלבד.
 
 on:
   push:
@@ -16,38 +16,15 @@ jobs:
   probe:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 5
     steps:
-      - name: Read pricing pages in a real browser
+      - name: Fetch live app.jsx and check
         run: |
-          python3 -m pip install --quiet playwright
-          python3 -m playwright install --with-deps chromium 2>/dev/null | tail -1
-          python3 - <<'PY'
-          from playwright.sync_api import sync_playwright
-          import re
-          URLS = ['https://www.pushwoosh.com/pricing/',
-                  'https://onesignal.com/pricing']
-          with sync_playwright() as pw:
-              b = pw.chromium.launch()
-              pg = b.new_page(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36')
-              for url in URLS:
-                  try:
-                      pg.goto(url, wait_until='networkidle', timeout=60000)
-                  except Exception as e:
-                      print(url, '-> goto error:', str(e)[:80])
-                  pg.wait_for_timeout(4000)
-                  txt = pg.inner_text('body')
-                  print('=== ', url, '| title:', pg.title())
-                  # שורות שמזכירות חינם/מנויים/מחיר
-                  keep = []
-                  for ln in txt.split('\n'):
-                      l = ln.strip()
-                      if not l or len(l) > 160: continue
-                      if re.search(r'[Ff]ree|1,?000|10,?000|subscriber|Subscriber|/month|per month|\$', l):
-                          keep.append(l)
-                  seen = set()
-                  for l in keep[:40]:
-                      if l not in seen:
-                          seen.add(l); print('  |', l)
-              b.close()
-          PY
+          set -euo pipefail
+          curl -fsS -H 'Cache-Control: no-cache' \
+            "https://transit-freak.github.io/kav-bochan/line-history/app.jsx?cb=$RANDOM" -o live.jsx
+          echo "bytes: $(wc -c < live.jsx)"
+          for s in "אפשר כמה" "addCity" "include_subscription" "הוסף"; do
+            n=$(grep -c "$s" live.jsx || true)
+            echo "'$s' occurrences: $n"
+          done
