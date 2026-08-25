@@ -1042,11 +1042,17 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     for (let j = i + 1; j < vs.length; j++) take(vs[j].stops);
     return out;
   };
-  // רשימת ➕/➖ מוכנה להצגה: מק"ט לכל מופע, שם לרשומות של מק"ט חשוף,
-  // וזיווג-הפרש לשם שלא נמצא. מופעים זהים לגמרי עדיין מקובצים עם ×N
-  const labelList = (names, i, isAdd) => {
+  // רשימת ➕/➖ מוכנה להצגה. הכלל: הזיהוי לפי מספר תחנה, השם רק תצוגה.
+  // אירועים חדשים נושאים את המק"ט המדויק לצד כל שם (e.c, מיושר מהסורק);
+  // הניחוש-לפי-שם נשאר רק לרשומות ישנות שנשמרו בלי מספרים.
+  const labelList = (entries, i, isAdd) => {
     const cnt = {};
-    const strs = (names || []).map((name) => {
+    const strs = (entries || []).map((e) => {
+      const name = e.n;
+      if (e.c) {
+        if (/^\d{3,}$/.test(name)) { const h = stopByCode(e.c, i); return h ? `${h[1]} (${e.c})` : name; }
+        return `${name} (${e.c})`;
+      }
       if (!isAdd && /^\d{3,}$/.test(name)) {
         const h = stopByCode(name, i);
         return h ? `${h[1]} (${name})` : name;
@@ -1068,39 +1074,44 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     return m ? { plat: m[1], base: (n.replace(/\s*\/?\s*רציף\s*[^\s/,]+/, "").trim() || n) } : null;
   };
   const splitPlatformMoves = (add, rem) => {
-    const a = (add || []).map((n) => ({ n, p: platOf(n), used: false }));
-    const r = (rem || []).map((n) => ({ n, p: platOf(n), used: false }));
+    const a = (add || []).map((e) => ({ ...e, p: platOf(e.n), used: false }));
+    const r = (rem || []).map((e) => ({ ...e, p: platOf(e.n), used: false }));
     const moves = [];
     for (const x of a) {
       if (!x.p) continue;
       const y = r.find((y2) => y2.p && !y2.used && y2.p.base === x.p.base);
       if (y) { x.used = y.used = true; moves.push({ base: x.p.base, from: y.p.plat, to: x.p.plat }); }
     }
-    return { moves, add: a.filter((x) => !x.used).map((x) => x.n), rem: r.filter((y) => !y.used).map((y) => y.n) };
+    return { moves,
+      add: a.filter((x) => !x.used).map((x) => ({ n: x.n, c: x.c })),
+      rem: r.filter((y) => !y.used).map((y) => ({ n: y.n, c: y.c })) };
   };
   // תחנה שירדה ותחנה שנוספה עם אותו שם, מק"ט שונה ואותו מיקום — משרד
   // התחבורה החליף לתחנה את המספר, לא ביטל אותה: שורת החלפה אחת במקום
   // "נוספה"+"ירדה" שנראות כסתירה (קו 80 כפר חב"ד: 33300 ← 33486)
   const splitRenumbers = (add, rem, i) => {
-    const a = (add || []).map((n) => ({ n, used: false }));
+    const a = (add || []).map((e) => ({ ...e, used: false }));
     const moves = []; const rest = [];
     const oldByName = (n2) => {
       const top = Math.min(i, vs.length - 1);
       for (let j = top - 1; j >= 0; j--) { const h = (vs[j].stops || []).find((s) => s && s[1] === n2); if (h) return h; }
       return remFix(i)[n2] || null;
     };
-    for (const n of rem || []) {
-      const bare = /^\d{3,}$/.test(n);
-      const oldStop = bare ? stopByCode(n, i) : oldByName(n);
-      const oldName = bare ? (oldStop && oldStop[1]) : n;
+    const curStops = vs[Math.min(i, vs.length - 1)].stops || [];
+    for (const e of rem || []) {
+      const bare = !e.c && /^\d{3,}$/.test(e.n);
+      // קודם לפי המספר המדויק כשנשמר; חיפוש-שם רק לרשומות ישנות בלעדיו
+      const oldStop = (e.c && stopByCode(e.c, i)) || (bare ? stopByCode(e.n, i) : oldByName(e.n));
+      const oldName = bare || (e.c && /^\d{3,}$/.test(e.n)) ? (oldStop && oldStop[1]) : e.n;
       const x = oldName && a.find((y) => !y.used && y.n === oldName);
-      const newStop = x && (vs[Math.min(i, vs.length - 1)].stops || []).find((s) => s && s[1] === oldName);
-      const near = oldStop && newStop &&
+      const newStop = x && ((x.c && curStops.find((s) => s && String(s[0]) === x.c)) ||
+        curStops.find((s) => s && s[1] === oldName));
+      const near = oldStop && newStop && String(oldStop[0]) !== String(newStop[0]) &&
         Math.abs(oldStop[2] - newStop[2]) < 0.005 && Math.abs(oldStop[3] - newStop[3]) < 0.005;
-      if (near) { x.used = true; moves.push({ name: oldName, from: bare ? n : String(oldStop[0]), to: String(newStop[0]) }); }
-      else rest.push(n);
+      if (near) { x.used = true; moves.push({ name: oldName, from: String(e.c || oldStop[0]), to: String(newStop[0]) }); }
+      else rest.push(e);
     }
-    return { moves, add: a.filter((x) => !x.used).map((x) => x.n), rem: rest };
+    return { moves, add: a.filter((x) => !x.used).map((x) => ({ n: x.n, c: x.c })), rem: rest };
   };
   const v = vs[sel] || vs[vs.length - 1];
   // ברירת המחדל היא הגרסה הקודמת הסמוכה; במצב השוואה חופשית המשתמש בוחר
@@ -1431,7 +1442,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
               <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
               {(x.add || x.rem) && (() => {
-                const pm = splitPlatformMoves(x.add, x.rem);
+                // הזיהוי לפי מספר תחנה (x.ac/x.rc, מיושרים לשמות) — השם תצוגה
+                const addE = (x.add || []).map((n, j) => ({ n, c: x.ac && x.ac[j] != null ? String(x.ac[j]) : null }));
+                const remE = (x.rem || []).map((n, j) => ({ n, c: x.rc && x.rc[j] != null ? String(x.rc[j]) : null }));
+                const pm = splitPlatformMoves(addE, remE);
                 // החלפת מק"ט (אותו שם, אותו מיקום) היא אירוע של רישום
                 // התחנות, לא של הקו — לא מוצגת כאן בכלל (בקשת שלמה)
                 const rn = splitRenumbers(pm.add, pm.rem, i);
@@ -1511,10 +1525,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
           prevStops={!onlyCur && pgv && (pgv.stops || []).length ? pgv.stops : null}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
-            ? new Set((v.add || []).map((n) => codeOf(n, vi, true)).filter(Boolean)) : null}
+            ? new Set((v.add || []).map((n, j) => (v.ac && v.ac[j] != null ? String(v.ac[j]) : codeOf(n, vi, true))).filter(Boolean)) : null}
           stops12={onlyCur ? null : stops12}
           sg={onlyCur || cmpOn ? null : (v.sg || null)}
-          remPins={onlyCur || cmpOn ? null : (v.rem || []).map((n) => {
+          remPins={onlyCur || cmpOn ? null : (v.rem || []).map((n, j) => {
+            // המק"ט המדויק שנשמר עם האירוע (v.rc) קודם לכל ניחוש
+            const rc = v.rc && v.rc[j] != null ? String(v.rc[j]) : null;
+            if (rc) {
+              const h = stopByCode(rc, vi);
+              if (h) return [rc, /^\d{3,}$/.test(n) ? h[1] : n, h[2], h[3]];
+            }
             const e = v.nc && v.nc[n];
             if (Array.isArray(e)) return [String(e[0]), n, e[1], e[2]];
             // רשומה שהיא מק"ט חשוף — התחנה מאותרת לפי המספר בתיעוד הישן

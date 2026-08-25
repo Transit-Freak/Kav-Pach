@@ -488,6 +488,11 @@ for rdesc,c in cur.items():
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
     chm['changes'].append(ch)
     extra={'add':ch.get('add'),'rem':ch.get('rem')} if (add or rem) else None
+    if extra:
+        # הזיהוי הוא לפי מספר תחנה והשם רק תצוגה (בקשת שלמה): המק"טים
+        # נשמרים מיושרים אחד-לאחד עם רשימות השמות — האתר לא מנחש כלום
+        if add: extra['ac']=add[:15]
+        if rem: extra['rc']=rem[:15]
     if extra and rem:
         # המק"ט של כל תחנה שירדה ידוע כאן במדויק — נשמר לצד השם (v.nc),
         # כדי שהאתר לא ינחש אותו בחיפוש-שם שנשבר כשהשם ברישום השתנה
