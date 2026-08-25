@@ -26,7 +26,7 @@ Q_BIZ = ('[out:json][timeout:600][bbox:%s];('
          'nwr["shop"];nwr["office"];nwr["craft"];nwr["industrial"];'
          'nwr["man_made"="works"];'
          'nwr["amenity"~"^(fuel|restaurant|cafe|fast_food|bank|car_wash|car_rental|vehicle_inspection|charging_station)$"];'
-         ');out tags center;') % BBOX
+         ');out meta center;') % BBOX
 # מבני תעשייה/מחסן — ספירה בלבד (רובם בלי שם)
 Q_BLD = ('[out:json][timeout:600][bbox:%s];('
          'way["building"~"^(industrial|warehouse|manufacture|factory)$"];'
@@ -81,7 +81,7 @@ def main():
     zrings = []   # (idx, bbox, ring)
     for i, z in enumerate(zones):
         try:
-            p = json.load(open(os.path.join(DATA, z['f'] + '.json')))
+            p = json.load(open(os.path.join(DATA, z['f'])))   # f כבר כולל ‎.json
         except Exception:
             continue
         for ring in p.get('polys') or []:
@@ -89,6 +89,8 @@ def main():
             las = [q[0] for q in ring]; los = [q[1] for q in ring]
             zrings.append((i, (min(las), min(los), max(las), max(los)), ring))
     print('zones: %d, rings: %d' % (len(zones), len(zrings)), flush=True)
+    if not zrings:
+        sys.exit('no zone rings loaded — refusing to publish an empty census')
 
     # אינדקס רשת גס (0.05 מעלות) — בלעדיו כל נקודה נבדקת מול כל 400+ הטבעות
     grid = {}
@@ -119,9 +121,13 @@ def main():
         t = e.get('tags', {})
         r = res[i]
         r[biz_kind(t)] += 1
+        ts = e.get('timestamp') or ''
+        yr = int(ts[:4]) if ts[:4].isdigit() else None
+        if yr:
+            r.setdefault('yrs', []).append(yr)
         nm = t.get('name:he') or t.get('name')
-        if nm and len(r['names']) < 8 and nm not in r['names']:
-            r['names'].append(nm)
+        if nm and len(r['names']) < 8 and not any(n[0] == nm for n in r['names']):
+            r['names'].append([nm, yr])
 
     print('== industrial buildings ==', flush=True)
     bld = overpass(Q_BLD)
@@ -136,6 +142,13 @@ def main():
 
     for r in res:
         r['biz'] = r['shop'] + r['office'] + r['craft'] + r['ind'] + r['amen']
+        ys = sorted(r.pop('yrs', []))
+        if ys:
+            r['y_new'] = ys[-1]                # העריכה האחרונה באזור
+            r['y_med'] = ys[len(ys) // 2]      # חציון — מתי רוב העדות עודכנה
+            r['y_fresh'] = sum(1 for y in ys if y >= 2023)  # כמה נגעו בהם לאחרונה
+    if not any(r['biz'] or r['bld'] for r in res):
+        sys.exit('country-wide data fetched but nothing assigned to any zone — assignment bug, refusing to publish')
     import datetime
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump({'generated': datetime.date.today().isoformat(), 'src': 'OpenStreetMap (Overpass)',
@@ -151,7 +164,7 @@ def main():
     print('thin evidence (1-2 items): %d' % len(thin))
     top = sorted(res, key=lambda r: -r['biz'])[:10]
     for r in top:
-        print('  TOP %s %s biz=%d bld=%d %s' % (r['f'], r['name'], r['biz'], r['bld'], ', '.join(r['names'][:4])))
+        print('  TOP %s %s biz=%d bld=%d y_new=%s %s' % (r['f'], r['name'], r['biz'], r['bld'], r.get('y_new'), ', '.join(n[0] for n in r['names'][:4])))
 
 
 if __name__ == '__main__':
