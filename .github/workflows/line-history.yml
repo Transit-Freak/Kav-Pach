@@ -63,6 +63,9 @@ jobs:
             SHAPES=shapes.txt AGENCY=agency.txt CALENDAR=calendar.txt MAIN=data-main.json \
             OUTDIR=line-history/data REBASE=$REBASE python3 tools/linehistory.py
           rm -f line-history/data/.rebase
+          # ניקוי עצמי: זוג אירועים שסוגר את עצמו (רפרוף רישום סביב הפסקה)
+          # נמחק — תנודת-נייר איננה שינוי (הלקח מקו 80 כפר חב"ד)
+          OUTDIR=line-history/data python3 tools/collapse_wobbles.py
 
       # אותה סריקה יומית אחת לכל הדפים: גם מעקב התגבורים (Gtfs_10_days)
       # רץ כאן, והתוצאות נדחפות באותו commit. כשל של שרת הרישוי לא מפיל
