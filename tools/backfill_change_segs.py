@@ -287,7 +287,7 @@ def main():
     if MAX_DATES:
         order = order[:MAX_DATES]
 
-    done = fails = 0
+    done = fails = done_dates = 0
     for d in order:
         if not _budget_left():
             print('time budget reached')
@@ -297,7 +297,13 @@ def main():
         if not rds:
             continue
         print(f'== {d}: {len(rds)} variants', flush=True)
-        got = fetch_day(d, rds)
+        try:
+            got = fetch_day(d, rds)
+        except (SystemExit, Exception) as ex:   # 503/רשת — ננסה בריצה הבאה
+            print(f'  fetch error ({ex}) — retry next run', flush=True)
+            time.sleep(20)
+            continue
+        time.sleep(0.6)   # נימוס מול S3 — בלי זה מקבלים 503 אחרי ~40 דק'
         if got is None:
             print('  no archive for date — marking skips', flush=True)
             for k, side in needs:
@@ -323,6 +329,9 @@ def main():
                 del entries[k]
             else:
                 state['pend'][f'{d}|{e["rd"]}'] = enc
+        done_dates += 1
+        if done_dates % 12 == 0:   # שמירת ביניים — קריסה לא מוחקת התקדמות
+            json.dump(state, open(STATE, 'w', encoding='utf-8'), ensure_ascii=False)
     # בהמתנה נשארים רק צדדים של רשומות שעדיין פתוחות (לפי שני התאריכים
     # הדטרמיניסטיים של כל רשומה) — השאר נוקה כדי שה-state לא יתנפח
     ref = set()

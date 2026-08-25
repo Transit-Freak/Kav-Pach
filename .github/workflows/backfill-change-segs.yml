@@ -45,6 +45,7 @@ jobs:
           python3 tools/backfill_change_segs.py
 
       - name: Commit
+        if: always()
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
