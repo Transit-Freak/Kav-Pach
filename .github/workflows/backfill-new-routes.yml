@@ -21,6 +21,10 @@ on:
         description: 'מילוי-מחדש גם של רשומות שכבר מולאו (1 = כן)'
         required: false
         default: '0'
+      only:
+        description: 'תאריכים מופרדי-פסיק לטיפול מיידי (עוקף את התור)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -43,6 +47,7 @@ jobs:
           MAX_MIN='${{ github.event.inputs.max_min || '45' }}' \
           DRY='${{ github.event.inputs.dry || '0' }}' \
           REDO='${{ github.event.inputs.redo || '0' }}' \
+          ONLY='${{ github.event.inputs.only || '' }}' \
           python3 tools/backfill_new_routes.py
 
       - name: Resolve stop codes unlocked by the new routes

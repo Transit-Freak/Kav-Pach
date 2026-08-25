@@ -34,6 +34,9 @@ OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 STATE = f'{OUTDIR}/nr-state.json'
 DRY = os.environ.get('DRY') == '1'
 REDO = os.environ.get('REDO') == '1'
+# ONLY: תאריכים מופרדי-פסיק לטיפול מיידי (עוקף את התור); ריק = הכל
+ONLY = {d for d in os.environ.get('ONLY', '').split(',') if d}
+# ENRICH=1: רק שלב ההעשרה המקומי, בלי רשת
 MAX_MIN = float(os.environ.get('MAX_MIN', '45'))
 PAUSE = float(os.environ.get('PAUSE', '0.6'))
 ARC_FROM, ARC_TO = '2022-01-16', '2026-07-24'   # טווח צילומי gtfs_archive
@@ -220,13 +223,57 @@ def save_state(st, done, skip):
         json.dump(st, open(STATE, 'w', encoding='utf-8'))
 
 
+def enrich_diffs():
+    """רשומות שמולאו מהארכיון: ההבדלים מול התיעוד שלפני ההפסקה נכתבים על
+    הכרטיס עצמו — כך השינוי מופיע בתאריך שבו נכנס לתוקף (דרישת שלמה,
+    קו 80: הורדת מעון-עולים שייכת לחזרה מהקיץ ב-30.08.2022, לא ל-2026)."""
+    n = 0
+    for p in sorted(glob.glob(f'{OUTDIR}/lines/*.json')):
+        raw = open(p, encoding='utf-8').read()
+        if FILLED_MARK not in raw:
+            continue
+        lf = materialize(json.loads(raw))
+        vs = sorted(lf.get('versions') or [], key=lambda v: v['d'])
+        dirty = False
+        for i, v in enumerate(vs):
+            if FILLED_MARK not in (v.get('note') or '') or v.get('add') or v.get('rem'):
+                continue
+            cur = v.get('stops') or []
+            prev = next((u for u in reversed(vs[:i]) if (u.get('stops') or [])), None)
+            if not cur or prev is None:
+                continue
+            pc = {str(s[0]) for s in prev['stops']}
+            cc = {str(s[0]) for s in cur}
+            add = [s for s in cur if str(s[0]) not in pc]
+            rem = [s for s in prev['stops'] if str(s[0]) not in cc]
+            if not add and not rem:
+                continue
+            if add:
+                v['add'] = [s[1] for s in add][:15]
+                v['ac'] = [str(s[0]) for s in add][:15]
+            if rem:
+                v['rem'] = [s[1] for s in rem][:15]
+                v['rc'] = [str(s[0]) for s in rem][:15]
+            dirty = True
+            n += 1
+        if dirty and not DRY:
+            lf['versions'] = vs
+            json.dump(compact(lf), open(p, 'w', encoding='utf-8'),
+                      ensure_ascii=False, separators=(',', ':'))
+    print(f'העשרה: {n} רשומות שמולאו קיבלו רשימות ➕/➖ מול התיעוד שלפני ההפסקה')
+
+
 def main():
     st = jload(STATE, {'done': [], 'skip': []})
     done = set(st.get('done') or [])
     skip = set(st.get('skip') or [])
+    if os.environ.get('ENRICH') == '1':
+        enrich_diffs()
+        return
     by = build_worklist()
     dates = [d for d in sorted(by, reverse=True)
-             if (REDO or (d not in done and d not in skip)) and ARC_FROM <= d <= ARC_TO]
+             if (REDO or (d not in done and d not in skip)) and ARC_FROM <= d <= ARC_TO
+             and (not ONLY or d in ONLY)]
     out_range = [d for d in by if not (ARC_FROM <= d <= ARC_TO)]
     total = sum(len(v) for v in by.values())
     print(f'{total} רשומות ב-{len(by)} תאריכים · {len(dates)} תאריכים נותרו לטיפול'
@@ -279,6 +326,7 @@ def main():
         time.sleep(PAUSE)
     save_state(st, done, skip)
     print(f'סיכום הריצה: {n_fix} רשומות קיבלו מסלול ותחנות · {n_miss} לא פעלו בצילום היום שלהן')
+    enrich_diffs()
 
 
 if __name__ == '__main__':
