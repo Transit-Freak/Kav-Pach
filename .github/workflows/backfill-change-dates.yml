@@ -1,0 +1,57 @@
+name: backfill-change-dates
+
+# הקו בזמן — תיארוך שינויים חסרי-תאריך מצילומי הארכיון
+# (tools/backfill_change_dates.py). רץ במחזורים עד שהמלאי נגמר.
+
+on:
+  schedule:
+    - cron: '37 */2 * * *'
+  workflow_dispatch:
+    inputs:
+      max_min:
+        description: 'תקציב זמן בדקות'
+        required: false
+        default: '45'
+      dry:
+        description: 'ניתוח בלבד (1 = בלי כתיבה)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backfill-change-dates-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Date the undated route changes from the archive
+        run: |
+          set -euo pipefail
+          MAX_MIN='${{ github.event.inputs.max_min || '45' }}' \
+          DRY='${{ github.event.inputs.dry || '0' }}' \
+          python3 tools/backfill_change_dates.py
+
+      - name: Commit
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add line-history/data
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          # קומיט פעם אחת; הלולאה רק דוחפת ומבצעת rebase על ריצות מקבילות
+          git commit -m "data: שינויים תוארכו ליומם האמיתי מצילומי הארכיון (backfill_change_dates)"
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+            echo "retry $i"; sleep 8
+          done
+          exit 1
