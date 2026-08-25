@@ -140,6 +140,37 @@ def main():
         if i is not None:
             res[i]['bld'] += 1
 
+    # שלב 2 — לאזורים בלי אף עסק: ספירת *כל* המבנים בתוך הגבול (רוב המבנים
+    # ב-OSM מתויגים סתם building=yes, לא "industrial"). זה מה שמפריד בין
+    # "פעיל אבל לא ממופה ברמת העסק" לבין "שטח ריק באמת".
+    print('== all-buildings pass for zones with no tagged business ==', flush=True)
+    byzone = {}
+    for i, bb, ring in zrings:
+        byzone.setdefault(i, []).append(ring)
+    for i, z in enumerate(zones):
+        r = res[i]
+        if r['shop'] + r['office'] + r['craft'] + r['ind'] + r['amen'] > 0:
+            continue
+        rings = sorted(byzone.get(i, []), key=len, reverse=True)[:3]
+        if not rings:
+            continue
+        cls = []
+        for ring in rings:
+            step = max(1, len(ring) // 80)
+            pts = ring[::step]
+            poly = ' '.join('%.5f %.5f' % (q[0], q[1]) for q in pts)
+            cls.append('way["building"](poly:"%s");' % poly)
+        q = '[out:json][timeout:60];(%s);out count;' % ''.join(cls)
+        try:
+            d = overpass(q)
+            n = sum(int(e.get('tags', {}).get('total', 0)) for e in d.get('elements', []))
+            r['bldall'] = n
+        except SystemExit:
+            raise
+        except Exception as e:
+            print('  bldall failed for %s: %s' % (z['name'], e), flush=True)
+        time.sleep(0.7)
+
     for r in res:
         r['biz'] = r['shop'] + r['office'] + r['craft'] + r['ind'] + r['amen']
         ys = sorted(r.pop('yrs', []))
@@ -154,14 +185,15 @@ def main():
     json.dump({'generated': datetime.date.today().isoformat(), 'src': 'OpenStreetMap (Overpass)',
                'zones': res}, open(OUT, 'w'), ensure_ascii=False, separators=(',', ':'))
 
-    empty = [r for r in res if r['biz'] == 0 and r['bld'] == 0]
-    thin = [r for r in res if 0 < r['biz'] + r['bld'] <= 2]
+    named = [r for r in res if r['biz'] > 0]
+    unmapped = [r for r in res if r['biz'] == 0 and (r['bld'] > 0 or r.get('bldall', 0) > 0)]
+    bare = [r for r in res if r['biz'] == 0 and r['bld'] == 0 and r.get('bldall', 0) == 0]
     print('== summary ==')
-    print('with activity evidence: %d / %d' % (len(res) - len(empty), len(res)))
-    print('zero evidence (no tagged biz, no industrial building): %d' % len(empty))
-    for r in empty[:40]:
-        print('  EMPTY %s %s' % (r['f'], r['name']))
-    print('thin evidence (1-2 items): %d' % len(thin))
+    print('A tagged businesses: %d' % len(named))
+    print('B buildings but no tagged business (unmapped, not empty): %d' % len(unmapped))
+    print('C no buildings at all (truly bare): %d' % len(bare))
+    for r in bare:
+        print('  BARE %s %s' % (r['f'], r['name']))
     top = sorted(res, key=lambda r: -r['biz'])[:10]
     for r in top:
         print('  TOP %s %s biz=%d bld=%d y_new=%s %s' % (r['f'], r['name'], r['biz'], r['bld'], r.get('y_new'), ', '.join(n[0] for n in r['names'][:4])))
