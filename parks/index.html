@@ -115,8 +115,8 @@
     <div class="sub">אילו קווי אוטובוס באמת מגיעים לכל אזור תעשייה בישראל, באילו שעות — ואיפה נשארים חורים בשירות. לחצו על אזור ברשימה או במפה לכל הפרטים · מתעדכן שבועית
       <details class="srcs" open><summary>📚 מאיפה המידע?</summary>
         <div class="src-l">🌐 <b>מאיפה נמשך המידע:</b> המאגרים הממשלתיים — מהאתר <b>data.gov.il</b> ("אתר המידע הממשלתי הפתוח", שבו משרדי הממשלה מפרסמים את מאגרי הנתונים שלהם). לוחות הזמנים — משרת הקבצים של משרד התחבורה (<b>gtfs.mot.gov.il</b>).</div>
-        <div class="src-l">🏛️ <b>רשימת האזורים</b> — <a href="https://data.gov.il/api/3/action/datastore_search?resource_id=30af8da4-7586-4b00-ac88-c5ee75251632" target="_blank" rel="noopener">מרשם אזורי התעשייה של משרד הכלכלה</a> (data.gov.il, נמשך שבועית), בתוספת אזורים מ-OpenStreetMap שעברו בדיקת קיום (🗺️).</div>
-        <div class="src-l">📐 <b>גבולות האזורים</b> — מאגר <a href="https://data.gov.il/dataset/industrial" target="_blank" rel="noopener">"תחום אזורי תעשיה תעסוקה"</a> שמפרסם משרד התחבורה באתר המידע הממשלתי הפתוח (data.gov.il) — נמשך מחדש מדי שבוע, בהצלבה עם הלמ״ס (📊).</div>
+        <div class="src-l">🏛️ <b>רשימת האזורים</b> — <a href="https://data.gov.il/datasets/moital/industrial-zones-info" target="_blank" rel="noopener">מרשם אזורי התעשייה של משרד הכלכלה</a> (data.gov.il, נמשך שבועית), בתוספת אזורים מ-OpenStreetMap שעברו בדיקת קיום (🗺️).</div>
+        <div class="src-l">📐 <b>גבולות האזורים</b> — מאגר <a href="https://data.gov.il/datasets/ministry_of_transport/industrial" target="_blank" rel="noopener">"תחום אזורי תעשיה תעסוקה"</a> שמפרסם משרד התחבורה באתר המידע הממשלתי הפתוח (data.gov.il) — נמשך מחדש מדי שבוע, בהצלבה עם הלמ״ס (📊).</div>
         <div class="src-l">🚌 <b>קווים ולוחות זמנים</b> — קובץ ה-GTFS הרשמי, נמשך ישירות משרת הקבצים של משרד התחבורה (gtfs.mot.gov.il) בכל בנייה שבועית.</div>
         <div class="src-l">📈 <b>ציוני השירות</b> — מדדי השירות הרשמיים של משרד התחבורה לפי אזור סטטיסטי.</div>
         <details style="margin-top:5px"><summary style="cursor:pointer;font-weight:700">🧭 אילו אזורים נכללים? הקריטריונים המלאים</summary>
@@ -201,7 +201,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='31';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='32';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
