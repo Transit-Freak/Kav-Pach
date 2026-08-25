@@ -1,6 +1,7 @@
 name: probe-publisher
 
-# חיפוש עמוד רשמי עם הסבר מדדי השירות ואימותו בדפדפן. דוח ללוג בלבד.
+# בירור עתלית: גיל וסוג 45 המבנים בתוך גבול האזור — מכריע בין "בנוי ישן"
+# ל"אתר בהקמה". דוח ללוג בלבד.
 
 on:
   push:
@@ -15,42 +16,31 @@ jobs:
   probe:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     steps:
-      - name: Search catalog for madadey shirut
+      - name: Ask OSM about buildings inside Atlit zone
         run: |
           set -euo pipefail
-          curl -fsS 'https://data.gov.il/api/3/action/package_search?q=%D7%9E%D7%93%D7%93%D7%99%20%D7%A9%D7%99%D7%A8%D7%95%D7%AA&rows=8' -o s.json
+          Q='[out:json][timeout:60];(way["building"](poly:"POLY"););out meta tags center;'
+          Q="${Q/POLY/32.69634 34.93852 32.69527 34.93839 32.69527 34.93862 32.69478 34.93854 32.69471 34.93883 32.69458 34.93924 32.69447 34.93943 32.69431 34.93964 32.69412 34.93984 32.69399 34.93994 32.69345 34.93985 32.69344 34.93985 32.69312 34.93977 32.69310 34.93977 32.69303 34.93974 32.69302 34.93974 32.69302 34.93967 32.69302 34.93953 32.69273 34.93947 32.69244 34.93941 32.69233 34.93939 32.69232 34.93952 32.69228 34.93951 32.69226 34.93951 32.69218 34.93912 32.69206 34.93843 32.69203 34.93822 32.69203 34.93821 32.69202 34.93809 32.69202 34.93808 32.69199 34.93792 32.69132 34.93787 32.69119 34.93785 32.69115 34.93784 32.69113 34.93776 32.69113 34.93772 32.69099 34.93659 32.69098 34.93650 32.69096 34.93612 32.69094 34.93609 32.69093 34.93605 32.69093 34.93600 32.69095 34.93596 32.69093 34.93552 32.69093 34.93542 32.69092 34.93522 32.69092 34.93517 32.69197 34.93547 32.69304 34.93521 32.69395 34.93546 32.69492 34.93600 32.69491 34.93620 32.69527 34.93602 32.69527 34.93603 32.69533 34.93614 32.69532 34.93615 32.69721 34.93613 32.69733 34.93868 32.69732 34.93868 32.69699 34.93866 32.69634 34.93852}"
+          ok=0
+          for ep in https://overpass-api.de/api/interpreter https://overpass.kumi.systems/api/interpreter; do
+            if curl -fsS --max-time 90 --data-urlencode "data=$Q" "$ep" -o b.json; then ok=1; break; fi
+            sleep 5
+          done
+          [ "$ok" = "1" ] || exit 1
           python3 - <<'PY'
-          import json
-          d = json.load(open('s.json'))['result']
-          print('matches:', d.get('count'))
-          for p in d.get('results', []):
-              org = (p.get('organization') or {}).get('name')
-              print('-', p.get('title'), '| https://data.gov.il/datasets/%s/%s' % (org, p.get('name')))
-          PY
-
-      - name: Verify top candidates in browser
-        run: |
-          python3 -m pip install --quiet playwright
-          python3 -m playwright install --with-deps chromium 2>/dev/null | tail -1
-          python3 - <<'PY'
-          import json
-          from playwright.sync_api import sync_playwright
-          d = json.load(open('s.json'))['result']
-          urls = ['https://data.gov.il/datasets/%s/%s' % ((p.get('organization') or {}).get('name'), p.get('name'))
-                  for p in d.get('results', [])[:3]]
-          with sync_playwright() as pw:
-              b = pw.chromium.launch()
-              pg = b.new_page(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36')
-              for url in urls:
-                  try:
-                      pg.goto(url, wait_until='networkidle', timeout=45000)
-                  except Exception as e:
-                      print(url, '-> goto error:', str(e)[:90])
-                  pg.wait_for_timeout(2500)
-                  print('=== URL:', url)
-                  print('  title:', pg.title())
-                  print('  body:', pg.inner_text('body')[:220].replace('\n', ' | '))
-              b.close()
+          import json, collections
+          d=json.load(open('b.json'))
+          els=d.get('elements',[])
+          print('buildings inside polygon:',len(els))
+          yrs=collections.Counter(); types=collections.Counter()
+          for e in els:
+              yrs[(e.get('timestamp') or '????')[:4]]+=1
+              types[(e.get('tags') or {}).get('building','?')]+=1
+          print('last-edit years:',dict(sorted(yrs.items())))
+          print('building types:',dict(types.most_common(10)))
+          for e in els[:6]:
+              t=e.get('tags',{})
+              print(' sample:',t.get('building'),t.get('name',''),e.get('timestamp','')[:10],'user:',e.get('user',''))
           PY
