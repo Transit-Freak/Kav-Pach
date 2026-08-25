@@ -324,15 +324,20 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
   // השוואת קטעים רק כששני הצדדים מדויקים — קו מקורב בין תחנות ייתן רעש
   const diff = useMemo(() => (prev && !approx && !prevApprox ? segDiff(cur, prev) : null), [cur, prev, approx, prevApprox]);
   const chStops = useMemo(() => {
-    if (addedCodes && (curStops || []).length) {
-      return (curStops || []).filter((s) => addedCodes.has(s[0])).map((s) => [s[2], s[3]]);
-    }
-    if (!prevStops) return [];
+    const pts = [];
     const curCodes = new Set((curStops || []).map((s) => s[0]));
-    const prevCodes = new Set((prevStops || []).map((s) => s[0]));
-    return (curStops || []).filter((s) => !prevCodes.has(s[0])).map((s) => [s[2], s[3]])
-      .concat((prevStops || []).filter((s) => !curCodes.has(s[0])).map((s) => [s[2], s[3]]));
-  }, [curStops, prevStops, addedCodes]);
+    if (addedCodes && (curStops || []).length) {
+      pts.push(...(curStops || []).filter((s) => addedCodes.has(s[0])).map((s) => [s[2], s[3]]));
+    } else if (prevStops) {
+      const prevCodes = new Set((prevStops || []).map((s) => s[0]));
+      pts.push(...(curStops || []).filter((s) => !prevCodes.has(s[0])).map((s) => [s[2], s[3]]));
+    }
+    // גם התחנות שירדו הן חלק מהשינוי — בלעדיהן המיקוד התכווץ לתחנה
+    // שנוספה בלבד והשאיר את הירידות מחוץ למסך (דיווח שלמה)
+    pts.push(...(prevStops || []).filter((s) => !curCodes.has(s[0])).map((s) => [s[2], s[3]]));
+    pts.push(...(remPins || []).map((p) => [p[2], p[3]]));
+    return pts;
+  }, [curStops, prevStops, addedCodes, remPins]);
   const focusPts = useMemo(() => {
     const pts = [];
     if (diff) { diff.curSegs.forEach((sg) => pts.push(...sg)); diff.prevSegs.forEach((sg) => pts.push(...sg)); }
