@@ -1,7 +1,6 @@
 name: probe-publisher
 
-# חיפוש עמוד אנושי לקבצי ה-GTFS: מחפשים בקטלוג data.gov.il ומאמתים בדפדפן.
-# דוח ללוג בלבד.
+# חיפוש עמוד רשמי עם הסבר מדדי השירות ואימותו בדפדפן. דוח ללוג בלבד.
 
 on:
   push:
@@ -18,21 +17,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Search data.gov.il catalog for GTFS
+      - name: Search catalog for madadey shirut
         run: |
           set -euo pipefail
-          curl -fsS 'https://data.gov.il/api/3/action/package_search?q=GTFS&rows=8' -o s.json
+          curl -fsS 'https://data.gov.il/api/3/action/package_search?q=%D7%9E%D7%93%D7%93%D7%99%20%D7%A9%D7%99%D7%A8%D7%95%D7%AA&rows=8' -o s.json
           python3 - <<'PY'
           import json
           d = json.load(open('s.json'))['result']
           print('matches:', d.get('count'))
           for p in d.get('results', []):
               org = (p.get('organization') or {}).get('name')
-              print('-', p.get('title'), '| org:', org, '| slug:', p.get('name'))
-              print('  page: https://data.gov.il/datasets/%s/%s' % (org, p.get('name')))
+              print('-', p.get('title'), '| https://data.gov.il/datasets/%s/%s' % (org, p.get('name')))
           PY
 
-      - name: Verify candidate pages in a browser
+      - name: Verify top candidates in browser
         run: |
           python3 -m pip install --quiet playwright
           python3 -m playwright install --with-deps chromium 2>/dev/null | tail -1
@@ -42,7 +40,6 @@ jobs:
           d = json.load(open('s.json'))['result']
           urls = ['https://data.gov.il/datasets/%s/%s' % ((p.get('organization') or {}).get('name'), p.get('name'))
                   for p in d.get('results', [])[:3]]
-          urls.append('https://www.bus.gov.il')
           with sync_playwright() as pw:
               b = pw.chromium.launch()
               pg = b.new_page(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36')
@@ -54,6 +51,6 @@ jobs:
                   pg.wait_for_timeout(2500)
                   print('=== URL:', url)
                   print('  title:', pg.title())
-                  print('  body:', pg.inner_text('body')[:160].replace('\n', ' | '))
+                  print('  body:', pg.inner_text('body')[:220].replace('\n', ' | '))
               b.close()
           PY
