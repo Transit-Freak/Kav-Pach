@@ -1140,8 +1140,20 @@ if used_rids and os.path.exists(SHAPES):
             elif _L.get('dr') == 'in': _pkd += _am
             elif _L.get('dr') == 'out': _pkd += _pm
             elif _L.get('dr') == '?': _pkd += _am + _pm
+        # התנאי השלישי לירוק (החלטת איריס 25.08.2026): "הקו החזק ביותר" —
+        # יציאות הבוקר לכיוון האזור של הקו (מקט) החזק ביותר. ירוק דורש ≥9
+        # (אוטובוס לפחות כל 20 דק' ב-06:00–09:00), אחרת המצטבר לבדו מטעה.
+        _per_mk = {}
+        for _L in _d.get('lines') or []:
+            _wd = _L.get('wd') or []
+            _am = sum(1 for t in _wd if _AM(t))
+            if _L.get('dr') == 'out':
+                _am = 0
+            _mk = _L.get('mk') or _L.get('num')
+            _per_mk[_mk] = _per_mk.get(_mk, 0) + _am
         json.dump(_d, open(_fp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         _e['pkd'] = _pkd
+        _e['bl'] = max(_per_mk.values()) if _per_mk else 0
     json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     print('ספירה כיוונית: pkd נכתב לכל האזורים')

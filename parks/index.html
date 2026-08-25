@@ -201,7 +201,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='37';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='38';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -373,9 +373,9 @@ function openHeatmap(fit=true){
         `<i style="background:#065f46"></i> ${T[2]}+`
       : (()=>{const c=(sz,cl)=>`<span style="display:inline-block;width:${sz}px;height:${sz}px;border-radius:50%;background:${cl};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;vertical-align:middle;flex:none"></span>`;
         // מקרא אחד לצבע ולגודל יחד (בקשת איריס) — לא מדד משוקלל: שני מבחנים, והחמור קובע
-        return `🎯 <b>צבע וגודל העיגול = עמידה בתקן הנגישות לעבודה.</b> שני מבחנים — תדירות וכיסוי — והחמור מביניהם קובע (אין שקלול):<br>`+
-        c(18,'#16a34a')+` <b style="color:#15803d">גדול וירוק — עומד בתקן</b>: 21+ יציאות בשעות השיא בכיוון הנסיעה (בבוקר פנימה, אחה״צ החוצה, כל הקווים יחד) וגם 90%+ מהשטח בהליכת 10 דק׳ מתחנה<br>`+
-        c(13,'#ea580c')+` <b style="color:#c2410c">בינוני וכתום — חלקי</b>: נכשל באחד משני המבחנים · `+
+        return `🎯 <b>צבע וגודל העיגול = עמידה בתקן הנגישות לעבודה.</b> שלושה מבחנים — תדירות מצטברת, כיסוי שטח, והקו החזק — והחמור מביניהם קובע (אין שקלול):<br>`+
+        c(18,'#16a34a')+` <b style="color:#15803d">גדול וירוק — עומד בתקן</b>: 21+ יציאות בשעות השיא בכיוון הנסיעה (בבוקר פנימה, אחה״צ החוצה, כל הקווים יחד), וגם 90%+ מהשטח בהליכת 10 דק׳ מתחנה, וגם לפחות קו אחד שמגיע בעצמו כל 20 דק׳ בבוקר<br>`+
+        c(13,'#ea580c')+` <b style="color:#c2410c">בינוני וכתום — חלקי</b>: נכשל באחד מהמבחנים · `+
         c(9,'#dc2626')+` <b style="color:#b91c1c">קטן ואדום — אין נגישות</b>: אין תחנה במרחק הליכה, אין שירות בשיא, או כיסוי מתחת ל-60%<br>`+
         `<span style="font-weight:600;color:#64748b">טבעת סגולה = אזור תעסוקה (משרדים/מסחר) · טבעת כהה = תשתית (נמל, זיקוק...)</span>`;})();
   const triIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
@@ -412,12 +412,16 @@ function openHeatmap(fit=true){
       const walkN=(p.li||0)+(p.lg||0)+(p.ln||0);
       const cvv=('cv' in p)?p.cv:null;
       const pkdV=p.pkd||0;
-      const vr=(walkN===0||pkdV===0||(cvv!=null&&cvv<60))?'r':((pkdV<21||(cvv!=null&&cvv<90))?'o':'g');
+      // התנאי השלישי (החלטת איריס 25.08.2026): הקו החזק ביותר לבדו חייב
+      // להגיע לפחות כל 20 דק' בבוקר (9 יציאות ב-06-09) — מצטבר לבדו מטעה
+      const blV=(p.bl==null)?null:p.bl;
+      const vr=(walkN===0||pkdV===0||(cvv!=null&&cvv<60))?'r':((pkdV<21||(cvv!=null&&cvv<90)||(blV!=null&&blV<9))?'o':'g');
       const VC={r:'#dc2626',o:'#ea580c',g:'#16a34a'}[vr], VS={r:9,o:14,g:20}[vr];
       const vTxt={r:'אין נגישות לעבודה בתחבורה ציבורית',o:'נגישות חלקית — נכשל באחד המבחנים',g:'עומד בתקן הנגישות לעבודה'}[vr];
       const body=`<b style="color:${VC}">${vTxt}</b><br>`+
         `יציאות שיא בכיוון הנסיעה (כל הקווים יחד): <b>${pkdV}</b> ${pkdV>=21?'✓':'✗ (התקן: 21)'}<br>`+
         `כיסוי הליכה: ${cvv!=null?`<b>${cvv}%</b> מהשטח עד 10 דק׳ מתחנה ${cvv>=90?'✓':'✗ (התקן: 90%)'}`:'לא חושב'}<br>`+
+        (blV!=null?`הקו החזק ביותר: <b>${blV}</b> יציאות בוקר לכיוון האזור ${blV>=9?'✓':'✗ (התקן: 9 = כל 20 דק׳)'}<br>`:'')+
         `<span style="color:#64748b">קווים בתקן ההליכה (ממרכז האזור): ${walkN} · מהם עוצרים בפנים: ${p.li||0}</span>`;
       marker=L.circleMarker([p.la,p.lo],{radius:VS,color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:VC,fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
         .bindPopup(head+body);
@@ -823,7 +827,13 @@ function openPark(f,push=true){
         return s+(L.t==='in'||L.t==='gate'?am+pm:(L.dr==='in'?am:(L.dr==='out'?pm:am+pm)))},0);   // תמיד מדידת מרכז — כהגדרת התקן
       const inTxt=mkIn.size===mkAll.size?'כולם עוצרים בתוך האזור':mkIn.size===0?'אף אחד לא עוצר בפנים':`${mkIn.size} עוצרים בתוך האזור`;
       h+=`<h2>קווים (${mkAll.size} — ${inTxt}${mkPk.size<mkAll.size?` · ${mkPk.size} פעילים בשעות השיא`:''}) · לחצו לשעות המלאות</h2>`;
-      h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ}</b></div>`;
+      // הקו החזק ביותר — התנאי השלישי (איריס): בוקר לכיוון האזור, לפי מקט
+      const blPer={};
+      ((d.lines)||[]).forEach(L=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length;const mk2=L.mk||L.num;blPer[mk2]=(blPer[mk2]||0)+(L.dr==='out'?0:am);});
+      const blZ=Object.keys(blPer).length?Math.max(...Object.values(blPer)):0;
+      const blMk=Object.keys(blPer).find(k=>blPer[k]===blZ);
+      const blNum=(lines.find(L=>String(L.mk||L.num)===String(blMk))||{}).num||blMk;
+      h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ}</b>${blZ?` · הקו החזק ביותר (קו ${esc(String(blNum))}): <b>${blZ}</b> יציאות בוקר — ${blZ>=9?'עומד לבדו בתקן (כל ≤20 דק׳) ✓':'מתחת לתקן הקו הבודד (9 = כל 20 דק׳) ✗'}`:''}</div>`;
     }
     // קווים לא-סדירים: קו בלי אף יציאה בשעות השיא מוצג בקבוצה מקופלת.
     // קווי תלמידים ולילה כלל אינם בנתונים — מוחרגים במקור לפי הקטלוג הרשמי.
