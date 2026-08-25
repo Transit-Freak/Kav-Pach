@@ -144,32 +144,35 @@ def main():
     # ב-OSM מתויגים סתם building=yes, לא "industrial"). זה מה שמפריד בין
     # "פעיל אבל לא ממופה ברמת העסק" לבין "שטח ריק באמת".
     print('== all-buildings pass for zones with no tagged business ==', flush=True)
+    # מקבצים ~12 אזורים לשאילתה אחת (146 נפרדות חרגו מתקרת ה-45 דק'); את
+    # המבנים שחוזרים משייכים לאזורים מקומית עם אותו assign של שלב 1.
     byzone = {}
     for i, bb, ring in zrings:
         byzone.setdefault(i, []).append(ring)
-    for i, z in enumerate(zones):
-        r = res[i]
-        if r['shop'] + r['office'] + r['craft'] + r['ind'] + r['amen'] > 0:
-            continue
-        rings = sorted(byzone.get(i, []), key=len, reverse=True)[:3]
-        if not rings:
-            continue
+    targets = [i for i, z in enumerate(zones)
+               if res[i]['shop'] + res[i]['office'] + res[i]['craft'] + res[i]['ind'] + res[i]['amen'] == 0
+               and byzone.get(i)]
+    for i in targets:
+        res[i]['bldall'] = 0
+    for bstart in range(0, len(targets), 12):
+        batch = targets[bstart:bstart + 12]
         cls = []
-        for ring in rings:
-            step = max(1, len(ring) // 80)
-            pts = ring[::step]
-            poly = ' '.join('%.5f %.5f' % (q[0], q[1]) for q in pts)
-            cls.append('way["building"](poly:"%s");' % poly)
-        q = '[out:json][timeout:60];(%s);out count;' % ''.join(cls)
-        try:
-            d = overpass(q)
-            n = sum(int(e.get('tags', {}).get('total', 0)) for e in d.get('elements', []))
-            r['bldall'] = n
-        except SystemExit:
-            raise
-        except Exception as e:
-            print('  bldall failed for %s: %s' % (z['name'], e), flush=True)
-        time.sleep(0.7)
+        for i in batch:
+            for ring in sorted(byzone[i], key=len, reverse=True)[:3]:
+                step = max(1, len(ring) // 40)
+                pts = ring[::step]
+                poly = ' '.join('%.5f %.5f' % (q[0], q[1]) for q in pts)
+                cls.append('way["building"](poly:"%s");' % poly)
+        q = '[out:json][timeout:120];(%s);out ids center 4000;' % ''.join(cls)
+        d = overpass(q)
+        for e in d.get('elements', []):
+            la, lo = latlon(e)
+            if la is None: continue
+            j = assign(la, lo)
+            if j in batch:
+                res[j]['bldall'] += 1
+        print('  batch %d-%d: done' % (bstart, bstart + len(batch)), flush=True)
+        time.sleep(1)
 
     for r in res:
         r['biz'] = r['shop'] + r['office'] + r['craft'] + r['ind'] + r['amen']
