@@ -1,0 +1,37 @@
+name: probe-publisher
+
+# בדיקה חד-פעמית: מי הגוף המפרסם הרשמי של מאגר "תחום אזורי תעשיה תעסוקה"
+# ב-data.gov.il. דוח ללוג בלבד — שום שינוי בנתונים.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/probe-publisher.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ask data.gov.il who publishes the dataset
+        run: |
+          set -euo pipefail
+          curl -fsS 'https://data.gov.il/api/3/action/package_show?id=8db5effd-59ca-44ef-b561-86e0ce2911d1' -o pkg.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('pkg.json'))['result']
+          org = d.get('organization') or {}
+          print('=== PUBLISHER PROBE ===')
+          print('dataset title:', d.get('title'))
+          print('organization title:', org.get('title'))
+          print('organization name:', org.get('name'))
+          print('author:', d.get('author'))
+          print('maintainer:', d.get('maintainer'))
+          for r in d.get('resources', [])[:6]:
+              print('resource:', r.get('name'), '|', r.get('format'), '|', r.get('id'))
+          PY
