@@ -1,7 +1,7 @@
 name: probe-publisher
 
-# אימות כתובות עמודי-המאגר בפורטל החדש (datasets/{org}/{slug}) עבור שני
-# המקורות, בדפדפן אמיתי. דוח ללוג בלבד.
+# חיפוש עמוד אנושי לקבצי ה-GTFS: מחפשים בקטלוג data.gov.il ומאמתים בדפדפן.
+# דוח ללוג בלבד.
 
 on:
   push:
@@ -18,30 +18,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Resolve economy-registry dataset slug
+      - name: Search data.gov.il catalog for GTFS
         run: |
           set -euo pipefail
-          curl -fsS 'https://data.gov.il/api/3/action/resource_show?id=30af8da4-7586-4b00-ac88-c5ee75251632' -o res.json
-          PKG=$(python3 -c "import json; print(json.load(open('res.json'))['result']['package_id'])")
-          curl -fsS "https://data.gov.il/api/3/action/package_show?id=$PKG" -o eco.json
+          curl -fsS 'https://data.gov.il/api/3/action/package_search?q=GTFS&rows=8' -o s.json
           python3 - <<'PY'
           import json
-          d = json.load(open('eco.json'))['result']
-          org = (d.get('organization') or {})
-          print('ECONOMY dataset title:', d.get('title'))
-          print('ECONOMY page URL: https://data.gov.il/datasets/%s/%s' % (org.get('name'), d.get('name')))
+          d = json.load(open('s.json'))['result']
+          print('matches:', d.get('count'))
+          for p in d.get('results', []):
+              org = (p.get('organization') or {}).get('name')
+              print('-', p.get('title'), '| org:', org, '| slug:', p.get('name'))
+              print('  page: https://data.gov.il/datasets/%s/%s' % (org, p.get('name')))
           PY
 
-      - name: Verify both page URLs in a real browser
+      - name: Verify candidate pages in a browser
         run: |
           python3 -m pip install --quiet playwright
           python3 -m playwright install --with-deps chromium 2>/dev/null | tail -1
           python3 - <<'PY'
           import json
           from playwright.sync_api import sync_playwright
-          eco = json.load(open('eco.json'))['result']
-          urls = ['https://data.gov.il/datasets/ministry_of_transport/industrial',
-                  'https://data.gov.il/datasets/%s/%s' % ((eco.get('organization') or {}).get('name'), eco.get('name'))]
+          d = json.load(open('s.json'))['result']
+          urls = ['https://data.gov.il/datasets/%s/%s' % ((p.get('organization') or {}).get('name'), p.get('name'))
+                  for p in d.get('results', [])[:3]]
+          urls.append('https://www.bus.gov.il')
           with sync_playwright() as pw:
               b = pw.chromium.launch()
               pg = b.new_page(user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36')
@@ -49,11 +50,10 @@ jobs:
                   try:
                       pg.goto(url, wait_until='networkidle', timeout=45000)
                   except Exception as e:
-                      print(url, '-> goto error:', str(e)[:100])
-                  pg.wait_for_timeout(3000)
+                      print(url, '-> goto error:', str(e)[:90])
+                  pg.wait_for_timeout(2500)
                   print('=== URL:', url)
-                  print('  final:', pg.url)
                   print('  title:', pg.title())
-                  print('  body starts:', pg.inner_text('body')[:200].replace('\n', ' | '))
+                  print('  body:', pg.inner_text('body')[:160].replace('\n', ' | '))
               b.close()
           PY
