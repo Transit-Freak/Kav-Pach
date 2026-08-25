@@ -295,11 +295,19 @@ def write_line_version(rdesc,c,kind,note='',extra=None):
 # סיווג עדין של שינוי (בקשת המשתמש: קטגוריות לכל סוגי השינויים):
 # redraw=שרטוט בלבד · terminal=שונה קצה המסלול · extend/shorten=הארכה/קיצור
 # stops-add/stops-del=רק נוספו/רק ירדו · route=מסלול+תחנות · stops=שינוי תחנות
-def classify(old_codes,new_codes,geo,stp):
+def classify(old_codes,new_codes,geo,stp,nm=None):
     if geo and not stp: return 'redraw'
     add=[x for x in new_codes if x not in old_codes]
     rem=[x for x in old_codes if x not in new_codes]
-    term=bool(old_codes and new_codes and (old_codes[0]!=new_codes[0] or old_codes[-1]!=new_codes[-1]))
+    # קצה נחשב "שונה" רק כשגם שם התחנה שונה: משרד התחבורה מחליף לפעמים
+    # רק את המק"ט של תחנת הקצה (אותו שם, אותו מיקום), וההשוואה לפי מספר
+    # בלבד סיווגה שינוי-מסלול כ"הארכת קו" (קו 80 כפר חב"ד, 25.08.2026)
+    def same(a,b):
+        if a==b: return True
+        na,nb=(nm(a),nm(b)) if nm else (None,None)
+        return bool(na) and na==nb
+    term=bool(old_codes and new_codes and
+              not (same(old_codes[0],new_codes[0]) and same(old_codes[-1],new_codes[-1])))
     d=len(new_codes)-len(old_codes)
     if term and d>=3: return 'extend'
     if term and d<=-3: return 'shorten'
@@ -374,7 +382,17 @@ for rdesc,c in cur.items():
     old_codes=pv['codes']; add=[x for x in c['codes'] if x not in old_codes]
     rem=[x for x in old_codes if x not in c['codes']]
     name={x[0]:x[1] for x in c['stopinfo']}
-    oldname=lambda x:(prev_stops.get(x) or [x])[0]   # שם תחנה שירדה — מהמצב הקודם
+    # מק"ט שכבר נמחק מהרישום הארצי אין לו שם במצב-התחנות — משלימים
+    # מהתיעוד של הקו עצמו; בלי זה כרטיס השינוי הציג מספר חשוף בלי שם
+    fnames={}
+    if rem:
+        lf0=jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json',None) or {}
+        for s in (lf0.get('pool') or []):
+            if isinstance(s,list) and len(s)>=2: fnames.setdefault(str(s[0]),s[1])
+        for v0 in (lf0.get('versions') or []):
+            for s in (v0.get('stops') or []):
+                if isinstance(s,list) and len(s)>=2: fnames.setdefault(str(s[0]),s[1])
+    oldname=lambda x:(prev_stops.get(x) or [fnames.get(x) or x])[0]   # שם תחנה שירדה
     if REBASE:
         # יישור: מעדכנים את הגרסה האחרונה-עם-גאומטריה במקומה, בלי אירוע —
         # ההבדל נובע מבחירת נציג לא-מסוננת בריצה קודמת, לא משינוי בפועל
@@ -405,7 +423,8 @@ for rdesc,c in cur.items():
     elif not geo and not stp:
         kind='operator'
     else:
-        kind=classify(old_codes,c['codes'],geo,stp)
+        kind=classify(old_codes,c['codes'],geo,stp,
+                      lambda x: name.get(x) or (prev_stops.get(x) or [fnames.get(x)])[0])
     kinds_count[kind]=kinds_count.get(kind,0)+1; n_changed+=1
     note=''
     if op_changed: note=f"המפעיל הוחלף: {pv.get('op','')} ← {c['op']}"
@@ -437,6 +456,15 @@ for rdesc,c in cur.items():
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
     chm['changes'].append(ch)
     extra={'add':ch.get('add'),'rem':ch.get('rem')} if (add or rem) else None
+    if extra and rem:
+        # המק"ט של כל תחנה שירדה ידוע כאן במדויק — נשמר לצד השם (v.nc),
+        # כדי שהאתר לא ינחש אותו בחיפוש-שם שנשבר כשהשם ברישום השתנה
+        # ("דוד רמז/הכרם" בקו 20, ששמור אצלנו בשמו הישן "מסוף רמז/דוד רמז")
+        nc={}
+        for x in rem[:15]:
+            pvs=prev_stops.get(x)
+            nc.setdefault(oldname(x),[x,pvs[1],pvs[2]] if pvs else x)
+        extra['nc']=nc
     write_line_version(rdesc,c,kind,note,extra)
 gone=[rdesc for rdesc in prev if rdesc not in cur]
 carry={}     # וריאנטים רשומים בלי נסיעות פעילות כרגע — נשמרים במצב, לא "בוטלו"

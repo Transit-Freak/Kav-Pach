@@ -971,6 +971,45 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     for (let j = i + 1; j < vs.length; j++) { const c = scan(vs[j].stops); if (c) return c; }
     return null;
   };
+  // רשומת ➖ שהיא מק"ט חשוף: הסריקה לא מצאה שם לתחנה שירדה (המק"ט כבר
+  // נמחק מהרישום הארצי) ושמרה את המספר עצמו. השם קיים בתיעוד הישן של
+  // הקו — מאתרים אותו שם. מחזיר את רשומת התחנה המלאה (מק"ט, שם, מיקום)
+  const stopByCode = (code, i) => {
+    const top = Math.min(i, vs.length - 1);
+    for (let j = top; j >= 0; j--) {
+      const h = (vs[j].stops || []).find((s) => s && String(s[0]) === code);
+      if (h) return h;
+    }
+    for (let j = top + 1; j < vs.length; j++) {
+      const h = (vs[j].stops || []).find((s) => s && String(s[0]) === code);
+      if (h) return h;
+    }
+    return null;
+  };
+  // ➖ שנשאר בלי מק"ט: שם התחנה בפיד השתנה מאז התיעוד שלנו (למשל
+  // "דוד רמז/הכרם" ששמור אצלנו בשמו הישן "מסוף רמז/דוד רמז"), ולכן חיפוש
+  // לפי שם לא מוצא כלום. משלימים מול ההפרש בפועל בין הגרסאות: אם בדיוק
+  // מק"ט אחד ירד ולא נתבע על ידי שם אחר ברשימה — הוא-הוא התחנה החסרה
+  const remFix = (i) => {
+    const out = {};
+    const top = Math.min(i, vs.length - 1);
+    const v = vs[top];
+    if (!v || !(v.stops || []).length || !(v.rem || []).length) return out;
+    let prevS = null;
+    for (let j = top - 1; j >= 0; j--) { if ((vs[j].stops || []).length) { prevS = vs[j].stops; break; } }
+    if (!prevS) return out;
+    const curC = new Set(v.stops.map((s) => String(s[0])));
+    const claimed = new Set();
+    const unresolved = [];
+    for (const n of v.rem || []) {
+      const e = v.nc && v.nc[n];
+      const c = Array.isArray(e) ? String(e[0]) : (e || (/^\d{3,}$/.test(n) ? n : codeOf(n, i, false)));
+      if (c) claimed.add(String(c)); else unresolved.push(n);
+    }
+    const free = prevS.filter((s) => !curC.has(String(s[0])) && !claimed.has(String(s[0])));
+    if (unresolved.length === 1 && free.length === 1) out[unresolved[0]] = free[0];
+    return out;
+  };
   // v.nc — מק"טים שהצנרת פענחה מראש לשמות שאינם בקובץ (תחנה שירדה
   // בגרסה הראשונה של קו ארכיוני, למשל) — נבדק לפני החיפוש הרגיל.
   // הערך: מחרוזת מק"ט, או [מק"ט, lat, lon] כשגם המיקום ידוע (למפה)
@@ -979,9 +1018,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     return Array.isArray(e) ? e[0] : e;
   };
   const withCode = (name, i, isAdd) => {
+    if (!isAdd && /^\d{3,}$/.test(name)) {
+      const h = stopByCode(name, i);
+      return h ? `${h[1]} (${name})` : name;
+    }
     const nv = vs[Math.min(i, vs.length - 1)];
     const c = ncOf(nv, name) || codeOf(name, i, isAdd);
-    return c ? `${name} (${c})` : name;
+    if (c) return `${name} (${c})`;
+    if (!isAdd) { const f = remFix(i)[name]; if (f) return `${name} (${f[0]})`; }
+    return name;
   };
   // תחנה שירדה ותחנה שנוספה עם אותו שם ורק רציף שונה — זה מעבר רציף,
   // לא "תחנה חדשה": מזווגים אותן ומציגים שורת מעבר אחת ברורה
@@ -999,6 +1044,30 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
       if (y) { x.used = y.used = true; moves.push({ base: x.p.base, from: y.p.plat, to: x.p.plat }); }
     }
     return { moves, add: a.filter((x) => !x.used).map((x) => x.n), rem: r.filter((y) => !y.used).map((y) => y.n) };
+  };
+  // תחנה שירדה ותחנה שנוספה עם אותו שם, מק"ט שונה ואותו מיקום — משרד
+  // התחבורה החליף לתחנה את המספר, לא ביטל אותה: שורת החלפה אחת במקום
+  // "נוספה"+"ירדה" שנראות כסתירה (קו 80 כפר חב"ד: 33300 ← 33486)
+  const splitRenumbers = (add, rem, i) => {
+    const a = (add || []).map((n) => ({ n, used: false }));
+    const moves = []; const rest = [];
+    const oldByName = (n2) => {
+      const top = Math.min(i, vs.length - 1);
+      for (let j = top - 1; j >= 0; j--) { const h = (vs[j].stops || []).find((s) => s && s[1] === n2); if (h) return h; }
+      return remFix(i)[n2] || null;
+    };
+    for (const n of rem || []) {
+      const bare = /^\d{3,}$/.test(n);
+      const oldStop = bare ? stopByCode(n, i) : oldByName(n);
+      const oldName = bare ? (oldStop && oldStop[1]) : n;
+      const x = oldName && a.find((y) => !y.used && y.n === oldName);
+      const newStop = x && (vs[Math.min(i, vs.length - 1)].stops || []).find((s) => s && s[1] === oldName);
+      const near = oldStop && newStop &&
+        Math.abs(oldStop[2] - newStop[2]) < 0.005 && Math.abs(oldStop[3] - newStop[3]) < 0.005;
+      if (near) { x.used = true; moves.push({ name: oldName, from: bare ? n : String(oldStop[0]), to: String(newStop[0]) }); }
+      else rest.push(n);
+    }
+    return { moves, add: a.filter((x) => !x.used).map((x) => x.n), rem: rest };
   };
   const v = vs[sel] || vs[vs.length - 1];
   // ברירת המחדל היא הגרסה הקודמת הסמוכה; במצב השוואה חופשית המשתמש בוחר
@@ -1330,11 +1399,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
               {(x.add || x.rem) && (() => {
                 const pm = splitPlatformMoves(x.add, x.rem);
+                const rn = splitRenumbers(pm.add, pm.rem, i);
                 return (
                   <div className="sub">
                     {pm.moves.map((m, k) => <div key={k}>🔀 מעבר רציף: {m.base} — מרציף {m.from} לרציף {m.to}</div>)}
-                    {pm.add.length > 0 && <div>➕ נוספו: {dedupCount(pm.add).map(({ x: n, n: c }) => withCode(n, i, true) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
-                    {pm.rem.length > 0 && <div>➖ ירדו: {dedupCount(pm.rem).map(({ x: n, n: c }) => withCode(n, i, false) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
+                    {rn.moves.map((m, k) => <div key={"rn" + k}>🔁 הוחלף מספר התחנה: {m.name} — מ-{m.from} ל-{m.to} (אותה תחנה, אותו מיקום)</div>)}
+                    {rn.add.length > 0 && <div>➕ נוספו: {dedupCount(rn.add).map(({ x: n, n: c }) => withCode(n, i, true) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
+                    {rn.rem.length > 0 && <div>➖ ירדו: {dedupCount(rn.rem).map(({ x: n, n: c }) => withCode(n, i, false) + (c > 1 ? ` ×${c}` : "")).join(", ")}</div>}
                   </div>
                 );
               })()}
@@ -1411,6 +1482,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           remPins={onlyCur || cmpOn ? null : (v.rem || []).map((n) => {
             const e = v.nc && v.nc[n];
             if (Array.isArray(e)) return [String(e[0]), n, e[1], e[2]];
+            // רשומה שהיא מק"ט חשוף — התחנה מאותרת לפי המספר בתיעוד הישן
+            if (/^\d{3,}$/.test(n)) {
+              const h = stopByCode(n, vi);
+              return h ? [n, h[1], h[2], h[3]] : null;
+            }
             // התחנה שירדה קיימת עם קואורדינטות ברשימות של גרסאות אחרות —
             // בלי הנפילה הזו לאחור היא הופיעה בטקסט אך לא על המפה
             for (let j = vi - 1; j >= 0; j--) {
@@ -1421,8 +1497,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               const h = (vs[j].stops || []).find((s) => s && s[1] === n);
               if (h) return [String(h[0]), n, h[2], h[3]];
             }
-            return null;
-          }).filter(Boolean)} />
+            // השם בפיד השתנה מאז התיעוד שלנו — הזיווג מול ההפרש בפועל
+            const f = remFix(vi)[n];
+            return f ? [String(f[0]), n, f[2], f[3]] : null;
+          }).filter(Boolean).filter((p) =>
+            // מק"ט שהוחלף: תחנה באותו שם ואותו מיקום עדיין בקו — לא מציירים
+            // עליה סיכת "ירדה" אדומה שנראית כאילו התחנה בוטלה
+            !(gv.stops || []).some((s) => s && s[1] === p[1] &&
+              Math.abs(s[2] - p[2]) < 0.005 && Math.abs(s[3] - p[3]) < 0.005))} />
         <div className="legend">
           {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev && !onlyCur ? "#16a34a" : "#4c1d95" }} /> {prev && !onlyCur ? "המסלול החדש" : "המסלול"}</span>
