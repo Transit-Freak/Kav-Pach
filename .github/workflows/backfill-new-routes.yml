@@ -17,6 +17,10 @@ on:
         description: 'ניתוח בלבד (1 = בלי כתיבה)'
         required: false
         default: '0'
+      redo:
+        description: 'מילוי-מחדש גם של רשומות שכבר מולאו (1 = כן)'
+        required: false
+        default: '0'
 
 permissions:
   contents: write
@@ -38,6 +42,7 @@ jobs:
           set -euo pipefail
           MAX_MIN='${{ github.event.inputs.max_min || '45' }}' \
           DRY='${{ github.event.inputs.dry || '0' }}' \
+          REDO='${{ github.event.inputs.redo || '0' }}' \
           python3 tools/backfill_new_routes.py
 
       - name: Resolve stop codes unlocked by the new routes
