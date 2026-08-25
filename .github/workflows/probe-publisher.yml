@@ -1,13 +1,19 @@
 name: probe-publisher
 
-# אימות מה האתר החי מגיש בפועל: האם app.jsx שבאוויר מכיל את תיקוני
-# שמות/מק"טים לתחנות שירדו. דוח ללוג בלבד.
+# בדיקה נקודתית מול ארכיון אופן באס: מתי בדיוק השתנה המסלול של קו 80
+# כפר חב"ד (מעון-עולים 32455 · דרך הרבנית חנה 37037 · מנוחה ונחלה 38474).
+# דוח ללוג בלבד — שום כתיבה.
 
 on:
   push:
     paths:
       - '.github/workflows/probe-publisher.yml'
   workflow_dispatch:
+    inputs:
+      dates:
+        description: 'תאריכים מופרדי-פסיק לדגימה'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -16,15 +22,32 @@ jobs:
   probe:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
-      - name: Fetch live app.jsx and check
+      - uses: actions/checkout@v4
+      - name: Sample line 80 route across archive days
         run: |
           set -euo pipefail
-          curl -fsS -H 'Cache-Control: no-cache' \
-            "https://transit-freak.github.io/kav-bochan/line-history/app.jsx?cb=$RANDOM" -o live.jsx
-          echo "bytes: $(wc -c < live.jsx)"
-          for s in "codesFor" "labelList" "stopByCode" "remFix" "חופף לחדש" "x.ac" "v.rc"; do
-            n=$(grep -c "$s" live.jsx || true)
-            echo "'$s' occurrences: $n"
-          done
+          DATES='${{ github.event.inputs.dates || '' }}' python3 - <<'PY'
+          import os, sys
+          sys.path.insert(0, 'tools')
+          from backfill_new_routes import day_full_cal
+          RDS = ['28080-1-#', '28080-1-ז', '28080-2-#']
+          MARKS = {'32455': 'מעון-עולים', '37037': 'הרבנית-חנה', '38474': 'מנוחה-ונחלה'}
+          dates = [d for d in (os.environ.get('DATES') or '').split(',') if d] or [
+              '2022-01-17', '2022-03-15', '2022-05-15', '2022-06-20', '2022-08-30']
+          for ds in dates:
+              try:
+                  got = day_full_cal(ds, RDS)
+              except (Exception, SystemExit) as e:
+                  print(f'{ds}: שגיאה {type(e).__name__}: {e}')
+                  continue
+              for rd in RDS:
+                  g = got.get(rd)
+                  if not g or not g.get('stops'):
+                      print(f'{ds} {rd}: אין נסיעות בתוקף בצילום')
+                      continue
+                  cs = {str(s[0]) for s in g['stops']}
+                  flags = ' '.join(f"{name}={'כן' if c in cs else 'לא'}" for c, name in MARKS.items())
+                  print(f"{ds} {rd}: {len(g['stops'])} תחנות | {flags}")
+          PY
