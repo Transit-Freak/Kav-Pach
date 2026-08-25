@@ -199,7 +199,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='24';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='25';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -369,8 +369,13 @@ function openHeatmap(fit=true){
         `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${T[0]} · `+
         `<i style="background:#84cc16"></i> ${T[0]+1}–${T[1]} · <i style="background:#16a34a"></i> ${T[1]+1}–${T[2]} · `+
         `<i style="background:#065f46"></i> ${T[2]}+`
-      : `🎯 עמידה בתקן: <i style="background:#16a34a"></i> עומד — 21+ יציאות בכיוון הנסיעה וגם 90%+ כיסוי · `+
-        `<i style="background:#ea580c"></i> חלקי — נכשל באחד · <i style="background:#dc2626"></i> אין נגישות (או כיסוי מתחת ל-60%) · הגודל לפי אותו מדד`;
+      : (()=>{const c=(sz,cl)=>`<span style="display:inline-block;width:${sz}px;height:${sz}px;border-radius:50%;background:${cl};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;vertical-align:middle;flex:none"></span>`;
+        // מקרא אחד לצבע ולגודל יחד (בקשת איריס) — לא מדד משוקלל: שני מבחנים, והחמור קובע
+        return `🎯 <b>צבע וגודל העיגול = עמידה בתקן הנגישות לעבודה.</b> שני מבחנים — תדירות וכיסוי — והחמור מביניהם קובע (אין שקלול):<br>`+
+        c(18,'#16a34a')+` <b style="color:#15803d">גדול וירוק — עומד בתקן</b>: 21+ יציאות בשעות השיא בכיוון הנסיעה (בבוקר פנימה, אחה״צ החוצה, כל הקווים יחד) וגם 90%+ מהשטח בהליכת 10 דק׳ מתחנה<br>`+
+        c(13,'#ea580c')+` <b style="color:#c2410c">בינוני וכתום — חלקי</b>: נכשל באחד משני המבחנים · `+
+        c(9,'#dc2626')+` <b style="color:#b91c1c">קטן ואדום — אין נגישות</b>: אין תחנה במרחק הליכה, אין שירות בשיא, או כיסוי מתחת ל-60%<br>`+
+        `<span style="font-weight:600;color:#64748b">טבעת סגולה = אזור תעסוקה (משרדים/מסחר) · טבעת כהה = תשתית (נמל, זיקוק...)</span>`;})();
   const triIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
     html:`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20"><polygon points="10,2 19,18 1,18" fill="${c}" stroke="#fff" stroke-width="1.6"/></svg>`});
   const starIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
