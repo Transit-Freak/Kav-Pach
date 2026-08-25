@@ -31,6 +31,8 @@ jobs:
           org = d.get('organization') or {}
           print('=== PUBLISHER PROBE ===')
           print('dataset title:', d.get('title'))
+          print('dataset slug (page URL name):', d.get('name'))
+          print('human page URL: https://data.gov.il/dataset/' + str(d.get('name')))
           print('organization title:', org.get('title'))
           print('MOT layer total records:', json.load(open('mot.json'))['result']['total'])
           print('Economy registry total records:', json.load(open('eco.json'))['result']['total'])
