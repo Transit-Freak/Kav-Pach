@@ -633,7 +633,7 @@ function FollowBtn({ tag, label, title }) {
   if (!PUSH_ON) return null;
   const toggle = () => {
     const n = !on; setOn(n);
-    try { const m = JSON.parse(localStorage.kbFollow || "{}"); if (n) m[tag] = 1; else delete m[tag]; localStorage.kbFollow = JSON.stringify(m); } catch (e) {}
+    try { const m = JSON.parse(localStorage.kbFollow || "{}"); if (n) m[tag] = label || "מעקב"; else delete m[tag]; localStorage.kbFollow = JSON.stringify(m); } catch (e) {}
     osTag(tag, n ? "1" : null);
   };
   return <button className="sharebtn" title={title || "התראת דפדפן כשנרשם שינוי מהותי (מסלול, תחנות, ביטול — לא לו\u05f4ז)"}
@@ -673,6 +673,47 @@ const KIND_GROUPS_N = [
   { tag: "kg_route", label: "מסלול ותחנות", kinds: ["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"] },
   { tag: "kg_ident", label: "יעד, מספר ומפעיל", kinds: ["dest", "renum", "renamed", "operator", "mode"] },
 ];
+// "ההרשמות שלי": כל מה שנרשם מהדפדפן הזה (צ'יפים + המרכז), עם ✖ להסרה
+function MyFollows({ bump }) {
+  const read = () => {
+    const out = [];
+    try {
+      const n = JSON.parse(localStorage.kbNotify || "{}");
+      if (n.city) out.push({ tag: cityTag(n.city), label: `${n.city} (${n.freq === "7" ? "סיכום שבועי" : n.freq === "3" ? "סיכום כל 3 ימים" : "יומי"})`, center: true });
+    } catch (e) {}
+    try {
+      const m = JSON.parse(localStorage.kbFollow || "{}");
+      for (const t in m) out.push({ tag: t, label: typeof m[t] === "string" ? m[t] : (t[0] === "l" ? "קו (מקט " + t.slice(1) + ")" : "מעקב ישן") });
+    } catch (e) {}
+    return out;
+  };
+  const [items, setItems] = useState(read);
+  useEffect(() => { setItems(read()); }, [bump]);
+  const drop = (it) => {
+    if (it.center) {
+      try { const n = JSON.parse(localStorage.kbNotify || "{}"); osTags({ [cityTag(n.city)]: null, freq: null, kg_rem: null, kg_new: null, kg_route: null, kg_ident: null }); delete localStorage.kbNotify; } catch (e) {}
+    } else {
+      osTags({ [it.tag]: null });
+      try { const m = JSON.parse(localStorage.kbFollow || "{}"); delete m[it.tag]; localStorage.kbFollow = JSON.stringify(m); } catch (e) {}
+    }
+    setItems(read());
+  };
+  if (!items.length) return null;
+  return (
+    <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: 8 }}>
+      <b>ההרשמות הפעילות בדפדפן הזה:</b>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 }}>
+        {items.map((it) => (
+          <span key={it.tag + (it.center ? "c" : "")} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid #e2e8f0", borderRadius: 999, padding: "3px 10px" }}>
+            🔔 {it.label}
+            <button title="הסרת ההרשמה הזו" onClick={() => drop(it)}
+              style={{ border: "none", background: "none", cursor: "pointer", color: "#b91c1c", fontWeight: 900 }}>✖</button>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 function NotifyCenter({ cities }) {
   const st0 = (() => { try { return JSON.parse(localStorage.kbNotify || "{}"); } catch (e) { return {}; } })();
   const [open, setOpen] = useState(false);
@@ -741,6 +782,7 @@ function NotifyCenter({ cities }) {
             {saved && <button className="kathead" style={{ width: "auto", padding: "8px 14px" }} onClick={cancel}>ביטול ההרשמה</button>}
             {msg && <span style={{ fontWeight: 700 }}>{msg}</span>}
           </div>
+          <MyFollows bump={msg} />
         </div>
       )}
     </div>
