@@ -1,0 +1,51 @@
+name: verify-activity
+
+# מפקד פעילות עסקית לאזורי התעשייה — בדיקת "האם באמת עובדים שם" מול OSM.
+# ההגדרות הרשמיות (משרד התחבורה/הכלכלה) הן תכנוניות בלבד; הכלי סופר עסקים
+# מתויגים ומבני תעשייה בתוך גבול כל אזור וכותב דוח ל-parks/checks/activity.json.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/verify-activity.yml'
+      - 'tools/verify_activity.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # קבוצה נפרדת לכל ref: ריצת ה-push של סנכרון הענף (שמדלגת בגלל תנאי
+  # main-בלבד) נכנסת לקבוצה לפני שהתנאי נבדק — בלי זה היא מבטלת את ריצת main
+  group: verify-activity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  census:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Business census from Overpass
+        run: |
+          set -euo pipefail
+          ACTIVITY_OUT=/tmp/activity.json python3 tools/verify_activity.py
+
+      - name: Commit report to main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3 4; do
+            git fetch origin main
+            git checkout -B publish origin/main
+            mkdir -p parks/checks
+            cp /tmp/activity.json parks/checks/activity.json
+            git add parks/checks/activity.json
+            if git diff --cached --quiet; then echo "unchanged — nothing to commit"; break; fi
+            git commit -m "data: מפקד פעילות עסקית מ-OSM לאזורי התעשייה"
+            if git push origin HEAD:main; then break; fi
+            echo "push rejected (main moved) — retry $i"; sleep 10
+          done
