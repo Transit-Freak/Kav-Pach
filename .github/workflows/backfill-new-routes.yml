@@ -68,7 +68,13 @@ jobs:
           git commit -m "data: מסלול אמיתי לרשומות ארכיון של קיום-בלבד (backfill_new_routes)"
           for i in 1 2 3 4 5; do
             if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main
+            # התנגשות תוכן מול עדכון מקביל: מוותרים בנקיון — הצ'קפוינט לא
+            # נדחף, ולכן הריצה הבאה תעשה את אותה עבודה מחדש על בסיס עדכני
+            if ! git pull --rebase origin main; then
+              git rebase --abort || true
+              echo "קונפליקט מול עדכון מקביל — הריצה הבאה תשלים"
+              exit 0
+            fi
             echo "retry $i"; sleep 8
           done
           exit 1
