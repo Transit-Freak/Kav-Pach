@@ -801,7 +801,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   // אדום שנראה כמו שינוי אמיתי כשהמסלול בכלל לא השתנה (בקשת שלמה).
   const ROUTE_KINDS = new Set(["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"]);
   const comparable = !!pv && (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
-  const pgv = cmpOn ? (geoAt(pi) || pv) : pv;
+  // הגרסה הסמוכה עשויה להיות אירוע-רישום בלי רצף תחנות — ואז "המסלול
+  // הקודם" והתחנות שירדו לא צוירו כלל (הבאג שצילם שלמה בקו 35 אשדוד).
+  // שואלים את התיעוד הגיאומטרי האחרון שלפני האירוע, כמו במצב השוואה.
+  const pgv = cmpOn ? (geoAt(pi) || pv)
+    : (pv && !(pv.stops || []).length && !pv.shp ? (geoAt(pi) || pv) : pv);
   const prev = comparable ? toPts(pgv) : null;
   const prevApprox = !!(pgv && prev && !pgv.shp);
   // קובץ 2012 מקבץ את כל הווריאנטים הארציים של המספר — מציגים רק את
@@ -1128,6 +1132,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           <div className="mut">🛈 האירוע עצמו אינו נושא מסלול — המפה מציגה את המסלול המתועד
             {gv.d < v.d ? " האחרון לפני האירוע" : " הראשון אחרי האירוע"}, מ-{fmtD(gv.d)}.</div>
         )}
+        {!cmpOn && !onlyCur && prev && pgv !== pv && (
+          <div className="mut">🛈 לגרסה הקודמת הסמוכה אין רצף תחנות מתועד — "המסלול הקודם" והתחנות שירדו מוצגים מהתיעוד האחרון שלפני האירוע, מ-{fmtD(pgv.d)}.</div>
+        )}
         {/* addedCodes: codeOf מצפה לאינדקס גרסה (vi) — האינדקס בתוך רשימת
             ➕ גרם לסריקה מהגרסאות הישנות ביותר, ותחנה עם שם זהה ומק"ט אחר
             מהעבר קיבלה את הסימון הירוק במקום התחנה שבאמת נוספה */}
@@ -1140,7 +1147,18 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           stops12={onlyCur ? null : stops12}
           remPins={onlyCur || cmpOn ? null : (v.rem || []).map((n) => {
             const e = v.nc && v.nc[n];
-            return Array.isArray(e) ? [String(e[0]), n, e[1], e[2]] : null;
+            if (Array.isArray(e)) return [String(e[0]), n, e[1], e[2]];
+            // התחנה שירדה קיימת עם קואורדינטות ברשימות של גרסאות אחרות —
+            // בלי הנפילה הזו לאחור היא הופיעה בטקסט אך לא על המפה
+            for (let j = vi - 1; j >= 0; j--) {
+              const h = (vs[j].stops || []).find((s) => s && s[1] === n);
+              if (h) return [String(h[0]), n, h[2], h[3]];
+            }
+            for (let j = vi + 1; j < vs.length; j++) {
+              const h = (vs[j].stops || []).find((s) => s && s[1] === n);
+              if (h) return [String(h[0]), n, h[2], h[3]];
+            }
+            return null;
           }).filter(Boolean)} />
         <div className="legend">
           {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
