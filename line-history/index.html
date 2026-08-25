@@ -30,6 +30,23 @@
 </head>
 <body>
   <div id="root"><div class="boot">טוען…</div></div>
+  <!-- התראות דפדפן (OneSignal). פעיל רק כשמזהה האפליקציה מוזן כאן -->
+  <script>
+    window.KB_ONESIGNAL_APP_ID = '';   // ← מזהה האפליקציה מ-OneSignal (App ID); ריק = הפיצ'ר כבוי
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    if (window.KB_ONESIGNAL_APP_ID) {
+      OneSignalDeferred.push(async function (OneSignal) {
+        await OneSignal.init({
+          appId: window.KB_ONESIGNAL_APP_ID,
+          serviceWorkerPath: '/kav-bochan/OneSignalSDKWorker.js',
+          serviceWorkerParam: { scope: '/kav-bochan/' },
+        });
+      });
+      var s = document.createElement('script');
+      s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; s.defer = true;
+      document.head.appendChild(s);
+    }
+  </script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- React ייצור מ-vendor מקומי (אותם קבצים של הדף הראשי): גרסת הפיתוח
        מ-CDN הריצה בדיקות ואזהרות בכל רינדור — כואב במיוחד ברשימות של

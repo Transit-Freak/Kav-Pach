@@ -1,0 +1,43 @@
+name: notify-push
+
+# הקו בזמן — שליחת התראות הדפדפן היומית (OneSignal), אחרי הסריקה של 07:30.
+# בלי המפתחות (Secrets) הריצה יוצאת בשקט — הפיצ'ר כבוי עד שיוזנו.
+
+on:
+  schedule:
+    - cron: '15 9 * * *'   # ~12:15 ישראל בקיץ — אחרי שהסריקה היומית מסיימת
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'תאריך השינויים (ברירת מחדל: היום)'
+        required: false
+        default: ''
+      dry:
+        description: 'הרצה יבשה (1 = רק להדפיס)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify-push-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  send:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Send daily notifications
+        env:
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+          ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+        run: |
+          set -euo pipefail
+          DATE='${{ github.event.inputs.date || '' }}' \
+          DRY='${{ github.event.inputs.dry || '0' }}' \
+          python3 tools/send_push.py

@@ -614,6 +614,48 @@ function SchedBox({ rd }) {
   );
 }
 
+// --- התראות דפדפן (OneSignal) — פעיל רק כשמזהה האפליקציה מוזן ב-index.html ---
+const PUSH_ON = typeof window !== "undefined" && !!window.KB_ONESIGNAL_APP_ID;
+// תג עיר: מפתחות תגים חייבים להיות ASCII — האש יציב של שם העיר (djb2→base36),
+// זהה לחישוב בצד השולח (tools/send_push.py)
+const cityTag = (name) => { let h = 5381; const s = String(name || "").trim(); for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return "c" + h.toString(36); };
+const osTag = (key, val) => {
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  window.OneSignalDeferred.push(async (OS) => {
+    try {
+      await OS.Notifications.requestPermission();
+      if (val == null) OS.User.removeTag(key); else OS.User.addTag(key, val);
+    } catch (e) { /* המשתמש סירב — הכפתור נשאר, אפשר לנסות שוב */ }
+  });
+};
+function FollowBtn({ tag, label, title }) {
+  const [on, setOn] = useState(() => { try { return !!JSON.parse(localStorage.kbFollow || "{}")[tag]; } catch (e) { return false; } });
+  if (!PUSH_ON) return null;
+  const toggle = () => {
+    const n = !on; setOn(n);
+    try { const m = JSON.parse(localStorage.kbFollow || "{}"); if (n) m[tag] = 1; else delete m[tag]; localStorage.kbFollow = JSON.stringify(m); } catch (e) {}
+    osTag(tag, n ? "1" : null);
+  };
+  return <button className="sharebtn" title={title || "התראת דפדפן כשנרשם שינוי מהותי (מסלול, תחנות, ביטול — לא לו\u05f4ז)"}
+    onClick={toggle}>{on ? "🔔 עוקב ✓" : "🔔 " + (label || "קבל התראות")}</button>;
+}
+// ערי הקצה מהיעד ("מוצא-עיר<->יעד-עיר") — למעקב ברמת עיר
+const destCities = (dest) => {
+  // העיר = המקטע העברי האחרון; סיומות טכניות ("2#") מדולגות — זהה לצד השולח
+  const out = [];
+  String(dest || "").split("<->").forEach((side) => {
+    const parts = side.trim().split("-");
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i].trim();
+      if (p.length >= 2 && !p.includes("#") && /[א-ת]/.test(p) && !/[0-9]/.test(p)) {
+        if (!out.includes(p)) out.push(p);
+        break;
+      }
+    }
+  });
+  return out.slice(0, 2);
+};
+
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
@@ -870,6 +912,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               const done = () => { b.textContent = "✓ הועתק"; setTimeout(() => { b.textContent = t; }, 1500); };
               if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => {});
             }}>🔗 שיתוף</button>
+          <FollowBtn tag={"l" + String(lf.rd || rd || "").split("-")[0]} />
+          {destCities(lf.dest).map((ct) => (
+            <FollowBtn key={ct} tag={cityTag(ct)} label={"עקוב: " + ct}
+              title={"התראה על כל שינוי מהותי בקווים של " + ct} />
+          ))}
         </div>
         <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
           {/* נגישות לכיסא גלגלים מגיעה מ-wheelchair_accessible בפיד, והיא
