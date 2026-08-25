@@ -1041,7 +1041,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               const done = () => { b.textContent = "✓ הועתק"; setTimeout(() => { b.textContent = t; }, 1500); };
               if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => {});
             }}>🔗 שיתוף</button>
-          <FollowBtn tag={"l" + String(lf.rd || rd || "").split("-")[0]} />
+          {/* מעקב לפי קו בודד הוסר (בקשת שלמה 25.08) — הרשמה ברמת עיר בלבד */}
           {destCities(lf.dest).map((ct) => (
             <FollowBtn key={ct} tag={cityTag(ct)} label={"עקוב: " + ct}
               title={"התראה על כל שינוי מהותי בקווים של " + ct} />
