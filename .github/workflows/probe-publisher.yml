@@ -1,7 +1,8 @@
 name: probe-publisher
 
-# בדיקה חד-פעמית: מי הגוף המפרסם הרשמי של מאגר "תחום אזורי תעשיה תעסוקה"
-# ב-data.gov.il. דוח ללוג בלבד — שום שינוי בנתונים.
+# בדיקה: מי הגוף המפרסם הרשמי של מאגר "תחום אזורי תעשיה תעסוקה"
+# ב-data.gov.il, וכמה רשומות יש בכל אחד משני הקבצים הממשלתיים.
+# דוח ללוג בלבד — שום שינוי בנתונים.
 
 on:
   push:
@@ -18,10 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Ask data.gov.il who publishes the dataset
+      - name: Ask data.gov.il who publishes and how many records
         run: |
           set -euo pipefail
           curl -fsS 'https://data.gov.il/api/3/action/package_show?id=8db5effd-59ca-44ef-b561-86e0ce2911d1' -o pkg.json
+          curl -fsS 'https://data.gov.il/api/3/action/datastore_search?resource_id=71799e72-7a1f-45cf-9d81-5cd1d5f3b201&limit=1' -o mot.json
+          curl -fsS 'https://data.gov.il/api/3/action/datastore_search?resource_id=30af8da4-7586-4b00-ac88-c5ee75251632&limit=1' -o eco.json
           python3 - <<'PY'
           import json
           d = json.load(open('pkg.json'))['result']
@@ -29,9 +32,6 @@ jobs:
           print('=== PUBLISHER PROBE ===')
           print('dataset title:', d.get('title'))
           print('organization title:', org.get('title'))
-          print('organization name:', org.get('name'))
-          print('author:', d.get('author'))
-          print('maintainer:', d.get('maintainer'))
-          for r in d.get('resources', [])[:6]:
-              print('resource:', r.get('name'), '|', r.get('format'), '|', r.get('id'))
+          print('MOT layer total records:', json.load(open('mot.json'))['result']['total'])
+          print('Economy registry total records:', json.load(open('eco.json'))['result']['total'])
           PY
