@@ -1,8 +1,7 @@
 name: probe-publisher
 
-# בדיקה: מי הגוף המפרסם הרשמי של מאגר "תחום אזורי תעשיה תעסוקה"
-# ב-data.gov.il, וכמה רשומות יש בכל אחד משני הקבצים הממשלתיים.
-# דוח ללוג בלבד — שום שינוי בנתונים.
+# איתור כתובת עמוד-המאגר שעובדת בדפדפן אנושי: בודקים כמה מועמדות ומדווחים
+# סטטוס + כותרת עמוד. דוח ללוג בלבד.
 
 on:
   push:
@@ -19,21 +18,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Ask data.gov.il who publishes and how many records
+      - name: Try candidate dataset-page URLs
         run: |
-          set -euo pipefail
-          curl -fsS 'https://data.gov.il/api/3/action/package_show?id=8db5effd-59ca-44ef-b561-86e0ce2911d1' -o pkg.json
-          curl -fsS 'https://data.gov.il/api/3/action/datastore_search?resource_id=71799e72-7a1f-45cf-9d81-5cd1d5f3b201&limit=1' -o mot.json
-          curl -fsS 'https://data.gov.il/api/3/action/datastore_search?resource_id=30af8da4-7586-4b00-ac88-c5ee75251632&limit=1' -o eco.json
-          python3 - <<'PY'
-          import json
-          d = json.load(open('pkg.json'))['result']
-          org = d.get('organization') or {}
-          print('=== PUBLISHER PROBE ===')
-          print('dataset title:', d.get('title'))
-          print('dataset slug (page URL name):', d.get('name'))
-          print('human page URL: https://data.gov.il/dataset/' + str(d.get('name')))
-          print('organization title:', org.get('title'))
-          print('MOT layer total records:', json.load(open('mot.json'))['result']['total'])
-          print('Economy registry total records:', json.load(open('eco.json'))['result']['total'])
-          PY
+          set -uo pipefail
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36'
+          for u in \
+            'https://data.gov.il/dataset/industrial' \
+            'https://data.gov.il/he/dataset/industrial' \
+            'https://data.gov.il/dataset/8db5effd-59ca-44ef-b561-86e0ce2911d1' \
+            'https://data.gov.il/he/datasets/industrial' \
+            'https://info.data.gov.il/dataset/industrial' \
+            'https://data.gov.il/dataset?q=%D7%AA%D7%97%D7%95%D7%9D%20%D7%90%D7%96%D7%95%D7%A8%D7%99%20%D7%AA%D7%A2%D7%A9%D7%99%D7%94' \
+            'https://data.gov.il/' ; do
+            code=$(curl -s -o page.html -w '%{http_code} -> %{url_effective}' -L -A "$UA" "$u")
+            title=$(python3 -c "import re,sys; h=open('page.html',encoding='utf-8',errors='replace').read(); m=re.search(r'<title[^>]*>(.*?)</title>',h,re.S); print((m.group(1).strip()[:80] if m else 'no-title'))" 2>/dev/null)
+            echo "URL: $u"
+            echo "  status: $code | title: $title"
+          done
+          echo '--- looking for dataset link patterns on homepage ---'
+          python3 -c "
+          import re
+          h=open('page.html',encoding='utf-8',errors='replace').read()
+          pats=set(re.findall(r'href=\"(/[a-z]{0,3}/?dataset[^\"]{0,60})\"', h))
+          for p in sorted(pats)[:15]: print(' ', p)
+          print('total link patterns:', len(pats))"
