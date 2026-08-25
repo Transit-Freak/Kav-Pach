@@ -40,6 +40,12 @@ jobs:
           DRY='${{ github.event.inputs.dry || '0' }}' \
           python3 tools/backfill_new_routes.py
 
+      - name: Resolve stop codes unlocked by the new routes
+        run: |
+          set -euo pipefail
+          DRY='${{ github.event.inputs.dry || '0' }}' \
+          python3 tools/backfill_codes.py
+
       - name: Commit
         if: always()
         run: |

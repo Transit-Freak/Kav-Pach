@@ -110,7 +110,7 @@ def main():
                     if g and g.get('stops'):
                         v['stops'] = g['stops']
                         v['shp'] = g.get('shp') or ''
-                        v['note'] = ((v.get('note') or '') +
+                        v['note'] = ('הווריאנט הופיע ברישום (ארכיון אופן באס, תאריך מדויק)'
                                      ' · המסלול והתחנות הושלמו מצילום הארכיון של אותו יום')
                         dirty = True
                         n_fix += 1
