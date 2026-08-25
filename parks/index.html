@@ -201,7 +201,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='36';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='37';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -357,7 +357,7 @@ function openHeatmap(fit=true){
   const T=THMAP[SYMMODE]||TH;
   const hcol=(v)=>{if(!v)return'#dc2626';if(v<=T[0])return'#fde047';if(v<=T[1])return'#84cc16';if(v<=T[2])return'#16a34a';return'#065f46'};
   const hsiz=(v)=>{if(!v)return 8;if(v<=T[0])return 9;if(v<=T[1])return 13;if(v<=T[2])return 18;return 24};
-  const scol=(sf)=>sf==null?'#94a3b8':(sf<30?'#dc2626':(sf<55?'#eab308':'#16a34a'));
+  const scol=(sf)=>sf==null?'#94a3b8':(sf<30?'#dc2626':(sf<45?'#ea580c':(sf<60?'#eab308':(sf<75?'#84cc16':'#15803d'))));
   // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
   document.getElementById('hpeak').parentElement.style.visibility='hidden';   // פסק הדין קבוע — המתג לא רלוונטי
   document.getElementById('hscopeseg').style.visibility=SYMMODE=='freq'?'visible':'hidden';
@@ -365,7 +365,7 @@ function openHeatmap(fit=true){
   document.getElementById('hsall').classList.toggle('on',HEATSCOPE=='all');
   document.getElementById('hleg').innerHTML=
     SYMMODE=='score'
-      ? `⭐ ציון משרד התחבורה: <i style="background:#dc2626"></i> עד 30 · <i style="background:#eab308"></i> 30–55 · <i style="background:#16a34a"></i> 55+ · <i style="background:#94a3b8"></i> אין ציון`
+      ? `⭐ ציון משרד התחבורה: <i style="background:#dc2626"></i> עד 30 · <i style="background:#ea580c"></i> 30–45 · <i style="background:#eab308"></i> 45–60 · <i style="background:#84cc16"></i> 60–75 · <i style="background:#15803d"></i> 75+ · <i style="background:#94a3b8"></i> אין ציון`
       : (SYMMODE=='stops'||SYMMODE=='freq')
       ? (SYMMODE=='stops'?'🚏 תחנות בתוך האזור: ':'🕐 יציאות אוטובוס ביום חול: ')+
         `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${T[0]} · `+
@@ -731,7 +731,7 @@ function openPark(f,push=true){
       <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב 🚶 <b>${ngate}</b></span>
       <span class="stat" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
     </div>`;
-    let boxes='';
+    let boxes='', svcbox='';
     if(!d.strict&&!(d.stops||[]).length&&(d.lines||[]).length===0){
       h+=`<div style="margin:8px 0;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.65"><b>🚶 מדידה מחמירה:</b> אין אף תחנת אוטובוס במרחק כלשהו מהאזור — 0% מהשטח בטווח הליכה.</div>`;
     }
@@ -770,12 +770,12 @@ function openPark(f,push=true){
         ${(!ostats&&!facts)?'<div class="note" style="margin:4px 0 0">אין נתוני שטח/תעסוקה במקור הרשמי לאזור זה</div>':''}
       </div>`;
     }
-    if(d.svc){
+    if(d.svc){   // התיבה נבנית בנפרד ומוצגת מעל רשימות הקווים (בקשת איריס)
       const v=d.svc, sc=x=>(x==null?'—':x);
       // צביעה לפי סולם 0-100 של המשרד: אדום עד 30, כתום עד 55, ירוק מעל
-      const col=x=>x==null?'#94a3b8':(x<30?'#b91c1c':(x<55?'#b45309':'#15803d'));
+      const col=x=>x==null?'#94a3b8':(x<30?'#b91c1c':(x<45?'#c2410c':(x<60?'#a16207':(x<75?'#4d7c0f':'#15803d'))));
       const cell=(lbl,x,t)=>`<span class="stat" title="${t}">${lbl} <b style="color:${col(x)}">${sc(x)}</b></span>`;
-      boxes+=`<div class="offbox" style="background:#f5f3ff;border-color:#ddd6fe">
+      svcbox+=`<div class="offbox" style="background:#f5f3ff;border-color:#ddd6fe">
         <div class="offh" style="color:#5b21b6">📈 מדדי השירות הרשמיים · משרד התחבורה${d.svcmeta&&d.svcmeta.updated?` · עדכון ${esc(d.svcmeta.updated)}`:''}</div>
         <div class="stats" style="margin:6px 0 0">
           ${cell('ציון משוקלל',v.fs,'הציון הכולל של המשרד לאזור הסטטיסטי, 0–100')}
@@ -808,6 +808,7 @@ function openPark(f,push=true){
         <div class="note" style="margin:6px 0 0">${sa2?'"אשכול האזור עצמו" = האזור הסטטיסטי שבו אזור התעשייה יושב; ':''}${se?`אשכול היישוב = ${esc(d.city)} כולו. `:''}ההקשר החברתי-כלכלי של הנגישות: באשכולות נמוכים התלות בתחבורה הציבורית גבוהה יותר.</div>
       </div>`;
     }
+    h+=svcbox;   // ⭐ ציון משרד התחבורה למעלה, לפני רשימות הקווים
     if(!lines.length&&!_plan) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהכניסה/הסביבה</div>`;
     if(lines.length){
