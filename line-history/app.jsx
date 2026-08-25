@@ -679,7 +679,9 @@ function MyFollows({ bump }) {
     const out = [];
     try {
       const n = JSON.parse(localStorage.kbNotify || "{}");
-      if (n.city) out.push({ tag: cityTag(n.city), label: `${n.city} (${n.freq === "7" ? "סיכום שבועי" : n.freq === "3" ? "סיכום כל 3 ימים" : "יומי"})`, center: true });
+      const cl = n.cities || (n.city ? [n.city] : []);
+      const fl = n.freq === "7" ? "סיכום שבועי" : n.freq === "3" ? "סיכום כל 3 ימים" : "יומי";
+      cl.forEach((c) => out.push({ tag: cityTag(c), label: `${c} (${fl})`, center: true, cityName: c }));
     } catch (e) {}
     try {
       const m = JSON.parse(localStorage.kbFollow || "{}");
@@ -691,7 +693,14 @@ function MyFollows({ bump }) {
   useEffect(() => { setItems(read()); }, [bump]);
   const drop = (it) => {
     if (it.center) {
-      try { const n = JSON.parse(localStorage.kbNotify || "{}"); osTags({ [cityTag(n.city)]: null, freq: null, kg_rem: null, kg_new: null, kg_route: null, kg_ident: null }); delete localStorage.kbNotify; } catch (e) {}
+      try {
+        const n = JSON.parse(localStorage.kbNotify || "{}");
+        const cl = (n.cities || (n.city ? [n.city] : [])).filter((c) => c !== it.cityName);
+        const tags = { [cityTag(it.cityName)]: null };
+        if (!cl.length) { tags.freq = null; tags.kg_rem = tags.kg_new = tags.kg_route = tags.kg_ident = null; delete localStorage.kbNotify; }
+        else localStorage.kbNotify = JSON.stringify({ ...n, cities: cl, city: undefined });
+        osTags(tags);
+      } catch (e) {}
     } else {
       osTags({ [it.tag]: null });
       try { const m = JSON.parse(localStorage.kbFollow || "{}"); delete m[it.tag]; localStorage.kbFollow = JSON.stringify(m); } catch (e) {}
@@ -714,36 +723,41 @@ function MyFollows({ bump }) {
     </div>
   );
 }
-function NotifyCenter({ cities }) {
-  const st0 = (() => { try { return JSON.parse(localStorage.kbNotify || "{}"); } catch (e) { return {}; } })();
+function NotifyCenter({ cities: allCities }) {
+  const st0 = (() => { try { const s = JSON.parse(localStorage.kbNotify || "{}"); if (s.city && !s.cities) s.cities = [s.city]; return s; } catch (e) { return {}; } })();
   const [open, setOpen] = useState(false);
-  const [city, setCity] = useState(st0.city || "");
+  const [city, setCity] = useState("");
+  const [cities, setCities] = useState(st0.cities || []);
   const [freq, setFreq] = useState(st0.freq || "1");
   const [gs, setGs] = useState(() => new Set(st0.gs || KIND_GROUPS_N.map((g) => g.tag)));
-  const [saved, setSaved] = useState(!!st0.city);
+  const [saved, setSaved] = useState(!!(st0.cities || []).length);
   const [msg, setMsg] = useState("");
   if (!PUSH_ON) return null;
   const toggleG = (t) => setGs((p) => { const n = new Set(p); if (n.has(t)) n.delete(t); else n.add(t); return n; });
+  const addCity = () => { const c = city.trim(); if (!c) return; if (!cities.includes(c)) setCities([...cities, c]); setCity(""); };
   const save = () => {
+    const list = [...cities];
     const c = city.trim();
-    if (!c) { setMsg("בחרו עיר"); return; }
+    if (c && !list.includes(c)) list.push(c);   // מה שהוקלד ולא נלחץ "הוסף"
+    if (!list.length) { setMsg("הוסיפו לפחות עיר אחת"); return; }
     if (!gs.size) { setMsg("סמנו לפחות סוג שינוי אחד"); return; }
     const tags = {};
-    if (st0.city && st0.city !== c) tags[cityTag(st0.city)] = null;   // עיר קודמת יורדת
-    tags[cityTag(c)] = "1";
+    (st0.cities || []).forEach((old2) => { if (!list.includes(old2)) tags[cityTag(old2)] = null; });
+    list.forEach((ct) => { tags[cityTag(ct)] = "1"; });
     tags.freq = freq;
     KIND_GROUPS_N.forEach((g) => { tags[g.tag] = gs.has(g.tag) ? "1" : null; });
     osTags(tags);
-    try { localStorage.kbNotify = JSON.stringify({ city: c, freq, gs: [...gs] }); } catch (e) {}
-    setSaved(true); setMsg("✓ נשמר — ההתראות יגיעו לדפדפן הזה");
+    try { localStorage.kbNotify = JSON.stringify({ cities: list, freq, gs: [...gs] }); } catch (e) {}
+    setCities(list); setCity(""); setSaved(true);
+    setMsg(`✓ נשמר — ${list.length} ערים. בסיכום תגיע הודעה אחת שמאחדת את כולן`);
   };
   const cancel = () => {
     const tags = { freq: null };
-    if (st0.city || city) tags[cityTag(st0.city || city)] = null;
+    [...cities, ...(st0.cities || [])].forEach((ct) => { tags[cityTag(ct)] = null; });
     KIND_GROUPS_N.forEach((g) => { tags[g.tag] = null; });
     osTags(tags);
     try { delete localStorage.kbNotify; } catch (e) {}
-    setSaved(false); setMsg("ההרשמה בוטלה");
+    setCities([]); setSaved(false); setMsg("ההרשמה בוטלה");
   };
   return (
     <div className="katbox" style={{ marginTop: 8 }}>
@@ -752,10 +766,24 @@ function NotifyCenter({ cities }) {
       </button>
       {open && (
         <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
-          <label style={{ fontWeight: 700 }}>עיר:
-            <input list="kbcities" dir="rtl" value={city} onChange={(e) => setCity(e.target.value)}
-              placeholder="הקלידו שם עיר…" style={{ width: "100%", padding: "8px 10px", marginTop: 4, borderRadius: 8, border: "1px solid #cbd5e1", font: "inherit" }} />
-            <datalist id="kbcities">{(cities || []).map((c) => <option key={c} value={c} />)}</datalist>
+          <label style={{ fontWeight: 700 }}>ערים (אפשר כמה):
+            <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+              <input list="kbcities" dir="rtl" value={city} onChange={(e) => setCity(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCity(); } }}
+                placeholder="הקלידו שם עיר…" style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid #cbd5e1", font: "inherit" }} />
+              <button className="kathead" style={{ width: "auto", padding: "6px 14px" }} onClick={addCity}>+ הוסף</button>
+            </div>
+            <datalist id="kbcities">{(allCities || []).map((c) => <option key={c} value={c} />)}</datalist>
+            {cities.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, fontWeight: 400 }}>
+                {cities.map((ct) => (
+                  <span key={ct} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "#ede9fe", borderRadius: 999, padding: "3px 10px" }}>
+                    {ct} <button onClick={() => setCities(cities.filter((x) => x !== ct))}
+                      style={{ border: "none", background: "none", cursor: "pointer", color: "#b91c1c", fontWeight: 900 }}>✖</button>
+                  </span>
+                ))}
+              </div>
+            )}
           </label>
           <div style={{ fontWeight: 700 }}>אילו שינויים מעניינים אתכם:
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6, fontWeight: 400 }}>
@@ -797,13 +825,14 @@ function DigestPage({ city, days, onBack, openLine }) {
       .catch(() => setData({ items: [] }));
   }, []);
   const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
-  const items = ((data && data.items) || []).filter((x) => x.d >= since && (x.ct || []).includes(city));
+  const cityList = String(city || "").split(",").map((c) => c.trim()).filter(Boolean);
+  const items = ((data && data.items) || []).filter((x) => x.d >= since && (x.ct || []).some((c) => cityList.includes(c)));
   const byKind = {};
   items.forEach((x) => { (byKind[x.k] = byKind[x.k] || []).push(x); });
   return (
     <div className="card">
       <button className="back" onClick={onBack}>→ לחיפוש</button>
-      <h2 style={{ margin: "6px 0" }}>🔔 סיכום השינויים בקווי {city} — {days === 7 ? "השבוע האחרון" : `${days} הימים האחרונים`}</h2>
+      <h2 style={{ margin: "6px 0" }}>🔔 סיכום השינויים בקווי {String(city || "").split(",").join(", ")} — {days === 7 ? "השבוע האחרון" : `${days} הימים האחרונים`}</h2>
       {!data ? <div>טוען…</div> : !items.length ? <div className="mut">אין שינויים מהותיים בתקופה הזו.</div> : (
         Object.keys(byKind).map((k) => {
           const seen = new Set();

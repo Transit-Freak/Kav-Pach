@@ -168,14 +168,31 @@ def collect_range(days):
                 continue
             rd = d.get('rd') or f.rsplit('.', 1)[0]
             for ct in dest_cities(d.get('dest') or ''):
-                e = by_city.setdefault(ct, {'mks': set(), 'kinds': set()})
-                e['mks'].add(rd.split('-')[0])
+                e = by_city.setdefault(ct, {'kinds': set(), 'bykind': {}})
                 e['kinds'].add(v.get('k'))
+                e['bykind'].setdefault(v.get('k'), set()).add(rd.split('-')[0])
     return by_city
 
 
+def list_players():
+    """כל הנרשמים והתגים שלהם — לצורך סיכום מאוחד פר-נרשם."""
+    out, offset = [], 0
+    while True:
+        req = urllib.request.Request(
+            f'https://api.onesignal.com/players?app_id={APP_ID}&limit=300&offset={offset}',
+            headers={'Authorization': f'Key {API_KEY}'})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            d = json.load(r)
+        ps = d.get('players') or []
+        out += ps
+        if len(ps) < 300:
+            return out
+        offset += 300
+
+
 def send_digests():
-    """סיכום כל 3 ימים / שבועי (יום ראשון) לנרשמי מרכז ההתראות."""
+    """סיכום כל 3 ימים / שבועי (יום ראשון) — הודעה אחת לכל נרשם, שמאחדת
+    את כל הערים שבחר (בקשת שלמה: לא הודעה לכל עיר)."""
     today = datetime.date.fromisoformat(DATE)
     jobs = []
     if today.toordinal() % 3 == 0:
@@ -184,39 +201,58 @@ def send_digests():
         jobs.append(('7', 7))
     if not jobs:
         return
+    # מפה מהתג המגובב חזרה לשם העיר — מערי הקצה של כל הקטלוג
+    rev = {}
+    try:
+        for x in json.load(open(f'{OUTDIR}/lines.json'))['lines']:
+            for ct in dest_cities(x.get('dest') or ''):
+                rev[city_tag(ct)] = ct
+    except Exception:
+        pass
+    if not (APP_ID and API_KEY):
+        print('סיכומים: אין מפתחות — דילוג')
+        return
+    try:
+        players = list_players()
+    except Exception as ex:
+        print(f'סיכומים: רשימת הנרשמים נכשלה ({ex})', file=sys.stderr)
+        return
     for freq, days in jobs:
         by_city = collect_range(days)
-        print(f'סיכום {days} ימים: {len(by_city)} ערים עם שינויים')
         sent = 0
-        for ct, e in sorted(by_city.items()):
-            if sent >= MAX_SENDS:
-                break
-            groups = sorted({KIND_GROUP.get(k) for k in e['kinds']} - {None})
-            if not groups:
+        for p in players:
+            tags = p.get('tags') or {}
+            if tags.get('freq') != freq or p.get('invalid_identifier'):
                 continue
-            n = len(e['mks'])
-            title = f'🔔 {n} קווים השתנו ב{ct}'
-            body = 'סיכום ' + ('שבועי' if days == 7 else f'{days} ימים') + ' — ' +                    ' · '.join(sorted({KIND_LBL.get(k, k) for k in e['kinds']})[:4])
-            url = f'{BASE_URL}#digest={ct}@{days}'
-            ctag = {'field': 'tag', 'key': city_tag(ct), 'relation': '=', 'value': '1'}
-            filters = []
-            for g in groups:
-                if filters:
-                    filters.append({'operator': 'OR'})
-                filters += [ctag,
-                            {'field': 'tag', 'key': 'freq', 'relation': '=', 'value': freq},
-                            {'field': 'tag', 'key': g, 'relation': '=', 'value': '1'}]
+            ucities = [rev[t] for t, val in tags.items() if t in rev and val == '1']
+            ugroups = {g for g in ('kg_rem', 'kg_new', 'kg_route', 'kg_ident') if tags.get(g) == '1'}
+            mks, kinds = set(), set()
+            for ct in ucities:
+                e = by_city.get(ct)
+                if not e:
+                    continue
+                for k, kmks in e['bykind'].items():
+                    if KIND_GROUP.get(k) in ugroups:
+                        kinds.add(k)
+                        mks |= kmks
+            if not mks:
+                continue
+            title = f'🔔 {len(mks)} קווים השתנו ב{"ערים שלך" if len(ucities) > 1 else (ucities[0] if ucities else "")}'
+            body = ('סיכום ' + ('שבועי' if days == 7 else f'{days} ימים') + f' — {", ".join(ucities[:4])}: ' +
+                    ' · '.join(sorted({KIND_LBL.get(k, k) for k in kinds})[:4]))
+            url = f'{BASE_URL}#digest={",".join(ucities)}@{days}'
             payload = {'app_id': APP_ID, 'headings': {'en': title, 'he': title},
-                       'contents': {'en': body, 'he': body}, 'url': url, 'filters': filters}
+                       'contents': {'en': body, 'he': body}, 'url': url,
+                       'include_subscription_ids': [p.get('id')]}
             if DRY:
                 print('DRY-DIGEST:', title, '|', body, '|', url)
             else:
                 try:
                     send(payload)
                 except Exception as ex:
-                    print(f'שגיאת סיכום {ct}: {ex}', file=sys.stderr)
+                    print(f'שגיאת סיכום לנרשם: {ex}', file=sys.stderr)
             sent += 1
-        print(f'סיכומי {days} ימים שנשלחו: {sent}')
+        print(f'סיכומי {days} ימים: {sent} נרשמים קיבלו הודעה מאוחדת אחת')
 
 
 if __name__ == '__main__':
