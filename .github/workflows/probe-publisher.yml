@@ -1,17 +1,21 @@
 name: probe-publisher
 
-# כתיבה חד-פעמית: אירוע 26.10.2022 של קו 80 כפר חב"ד — הורדת מעון-עולים
-# — בתאריך האמיתי שלו, מהשוואת צילומי הארכיון של 25.10 ו-26.10.2022
-# (אומת בדגימות: ב-25.10 התחנה במסלול, ב-26.10 איננה — יום ביטול התחנה).
+# בדיקה מול ארכיון אופן באס: האם רצף התחנות של קו 26 שדרות (30026)
+# השתנה במהלך הקיץ — דוח ללוג בלבד, שום כתיבה.
 
 on:
   push:
     paths:
       - '.github/workflows/probe-publisher.yml'
   workflow_dispatch:
+    inputs:
+      dates:
+        description: 'תאריכים מופרדי-פסיק לדגימה'
+        required: false
+        default: ''
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   probe:
@@ -20,67 +24,39 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Write the 26.10.2022 event from the archive diff
+      - name: Sample line 26 Sderot stop sequences across archive days
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json, sys
+          DATES='${{ github.event.inputs.dates || '' }}' python3 - <<'PY'
+          import os, sys, json
           sys.path.insert(0, 'tools')
-          from backfill_new_routes import day_full_cal
-          from compact_lines import compact, materialize
-          RDS = ['28080-1-#', '28080-1-ז', '28080-2-#']
-          FS = {'28080-1-#': '28080-1-H', '28080-1-ז': '28080-1-ז', '28080-2-#': '28080-2-H'}
-          D0, D1 = '2022-10-25', '2022-10-26'
-          before = day_full_cal(D0, RDS)
-          after = day_full_cal(D1, RDS)
-          mp = 'line-history/data/changes/2022-10.json'
-          try:
-              chm = json.load(open(mp, encoding='utf-8'))
-          except Exception:
-              chm = {'changes': []}
-          for rd in RDS:
-              b, a = before.get(rd), after.get(rd)
-              if not (b and a and b.get('stops') and a.get('stops')):
-                  print(f'{rd}: חסר צילום — דילוג'); continue
-              p = f'line-history/data/lines/{FS[rd]}.json'
-              lf = materialize(json.load(open(p, encoding='utf-8')))
-              if any(v['d'] == D1 for v in lf['versions']):
-                  print(f'{rd}: כבר מתועד'); continue
-              bc = {str(s[0]) for s in b['stops']}
-              ac_ = {str(s[0]) for s in a['stops']}
-              add = [s for s in a['stops'] if str(s[0]) not in bc]
-              rem = [s for s in b['stops'] if str(s[0]) not in ac_]
-              if not add and not rem:
-                  print(f'{rd}: אין הבדל — דילוג'); continue
-              kind = 'stops-del' if rem and not add else ('stops-add' if add and not rem else 'route')
-              v = {'d': D1, 'k': kind, 'shp': a.get('shp') or '', 'stops': a['stops'],
-                   'src': 'ob',
-                   'note': 'השינוי אותר ותוארך בהשוואת צילומי הארכיון יום-מול-יום (25.10 ← 26.10.2022)'}
-              if add:
-                  v['add'] = [s[1] for s in add][:15]; v['ac'] = [str(s[0]) for s in add][:15]
-              if rem:
-                  v['rem'] = [s[1] for s in rem][:15]; v['rc'] = [str(s[0]) for s in rem][:15]
-              lf['versions'].append(v)
-              lf['versions'].sort(key=lambda x: x['d'])
-              json.dump(compact(lf), open(p, 'w', encoding='utf-8'),
-                        ensure_ascii=False, separators=(',', ':'))
-              chm['changes'] = [c for c in chm['changes'] if not (c.get('rd') == rd and c.get('d') == D1)]
-              ch = {'d': D1, 'rd': rd, 'line': lf.get('line', '80'), 'k': kind}
-              if add: ch['add'] = v['add']
-              if rem: ch['rem'] = v['rem']
-              chm['changes'].append(ch)
-              print(f"{rd}: נכתב {kind} ב-{D1} | ➕{len(add)} ➖{len(rem)} | ירדו: {[s[1] for s in rem]}")
-          json.dump(chm, open(mp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+          from backfill_change_dates import day_sigs_cal
+          from compact_lines import materialize
+          RDS = ['30026-1-#', '30026-2-#']
+          # הרצפים המתועדים אצלנו (צילום 01.05) — הבסיס להשוואה
+          ref = {}
+          for rd, f in (('30026-1-#', '30026-1-H'), ('30026-2-#', '30026-2-H')):
+              d = materialize(json.load(open(f'line-history/data/lines/{f}.json', encoding='utf-8')))
+              vs = [v for v in sorted(d['versions'], key=lambda v: v['d']) if v.get('stops')]
+              ref[rd] = tuple(str(s[0]) for s in vs[-1]['stops']) if vs else ()
+              print(f'{rd}: מתועד אצלנו {len(ref[rd])} תחנות (גרסת {vs[-1]["d"] if vs else "?"})')
+          dates = [x for x in (os.environ.get('DATES') or '').split(',') if x] or [
+              '2026-05-02', '2026-05-20', '2026-06-10', '2026-07-01', '2026-07-15', '2026-07-24']
+          for ds in dates:
+              try:
+                  sigs = day_sigs_cal(ds, RDS)
+              except (Exception, SystemExit) as e:
+                  print(f'{ds}: שגיאה {type(e).__name__}: {e}')
+                  continue
+              for rd in RDS:
+                  sig = sigs.get(rd)
+                  if sig is None:
+                      print(f'{ds} {rd}: אין נסיעות בתוקף בצילום')
+                      continue
+                  same = 'זהה למתועד' if sig == ref[rd] else 'שונה!'
+                  extra = ''
+                  if sig != ref[rd]:
+                      a, b = set(ref[rd]), set(sig)
+                      extra = f' | נוספו: {sorted(b - a)} | ירדו: {sorted(a - b)}'
+                  print(f'{ds} {rd}: {len(sig)} תחנות — {same}{extra}')
           PY
-          python3 tools/rebuild_lines_index.py
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add line-history/data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: קו 80 כפר חב״ד — הורדת מעון-עולים מתוארכת ליום האמיתי (26.10.2022, מצילומי הארכיון)"
-          for i in 1 2 3 4 5; do
-            if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main
-            echo "retry $i"; sleep 8
-          done
-          exit 1
