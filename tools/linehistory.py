@@ -317,6 +317,40 @@ def classify(old_codes,new_codes,geo,stp,nm=None):
     if rem: return 'stops-del'
     return 'route' if geo else 'stops'
 
+# ---- שרטוט "חדש" שחופף לגמרי לישן = פרסום מחדש בצפיפות אחרת, לא תיקון ----
+def _dec_pts(s):
+    pts=[];i=0;la=0;lo=0
+    while i<len(s):
+        for ref in (0,1):
+            sh=0;res=0
+            while True:
+                b=ord(s[i])-63;i+=1
+                res|=(b&0x1f)<<sh;sh+=5
+                if b<0x20:break
+            d=~(res>>1) if res&1 else res>>1
+            if ref==0:la+=d
+            else:lo+=d
+        pts.append((la/1e5,lo/1e5))
+    return pts
+def shapes_overlap(sa,sb):
+    """True כשכל נקודה בכל שרטוט בתוך ~40 מ' מהשני — אותו מסלול בפועל."""
+    try:
+        a,b=_dec_pts(sa),_dec_pts(sb)
+    except Exception:
+        return False
+    if not a or not b: return False
+    def cells(pts):
+        cs=set()
+        for la,lo in pts:
+            ci,cj=round(la*4000),round(lo*4000)
+            for di in (-1,0,1):
+                for dj in (-1,0,1): cs.add((ci+di,cj+dj))
+        return cs
+    ca,cb=cells(a),cells(b)
+    if any((round(p[0]*4000),round(p[1]*4000)) not in ca for p in b): return False
+    if any((round(p[0]*4000),round(p[1]*4000)) not in cb for p in a): return False
+    return True
+
 PAUSE_MAX_D=35   # ביטול שחזר תוך עד ~חודש = הפסקת חג/פגרה, לא מעניין (בקשת המשתמש)
 def days_between(a,b):
     return (datetime.date.fromisoformat(b)-datetime.date.fromisoformat(a)).days
@@ -362,6 +396,13 @@ for rdesc,c in cur.items():
     else:
         geo=pv['sh_h']!=c['sh_h']; stp=pv['st_h']!=c['st_h']
     op_changed=pv.get('op') is not None and pv.get('op')!=c['op']
+    if op_changed:
+        # הרישום "חזר" עם תווית מפעיל ישנה ותוקן בחזרה — לא החלפה: אם
+        # המפעיל המתועד בקובץ כבר זהה לחדש, האירוע כבר נרשם בזמן אמת
+        # (קו 774 ירושלים: אגד←אקסטרה תועד ב-12.2023, ושוב "הוחלף" ב-2026)
+        _lfop=(jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json',None) or {}).get('op')
+        if _lfop==c['op']:
+            op_changed=False
     # שינוי בהגדרת הקו עצמו: קו רגיל שהפך ל"שירות לפי דרישה", או להפך.
     # אין לו ביטוי בתחנות או בשרטוט, ולכן בלי בדיקה מפורשת הוא היה עובר
     # בשקט — ומבחינת הנוסע זה שינוי מהותי יותר מהזזת תחנה.
@@ -463,6 +504,17 @@ for rdesc,c in cur.items():
     else:
         kind=classify(old_codes,codes_eff,geo,stp,
                       lambda x: name.get(x) or (prev_stops.get(x) or fentries.get(x) or [None])[0])
+    if kind=='redraw':
+        # "תיקון שרטוט" שחופף לגמרי לשרטוט המתועד = פרסום מחדש בצפיפות
+        # נקודות אחרת, לא תיקון (55 כאלה נרשמו 19-25.08). מרעננים בשקט
+        # את השרטוט בגרסה האחרונה — בלי אירוע
+        p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+        lf=materialize(jload(p,None))
+        base=next((v for v in reversed((lf or {}).get('versions') or []) if v.get('shp')),None)
+        if base is not None and shapes_overlap(base['shp'],encode_shape(c['pts'])):
+            base['shp']=encode_shape(c['pts'])
+            json.dump(lf,open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+            continue
     kinds_count[kind]=kinds_count.get(kind,0)+1; n_changed+=1
     note=''
     if op_changed: note=f"המפעיל הוחלף: {pv.get('op','')} ← {c['op']}"
