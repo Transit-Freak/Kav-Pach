@@ -1211,7 +1211,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   // מדויקות. בלי זה, קירוב-לפי-תחנות מול גאומטריה מלאה מצייר "מסלול ישן"
   // אדום שנראה כמו שינוי אמיתי כשהמסלול בכלל לא השתנה (בקשת שלמה).
   const ROUTE_KINDS = new Set(["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"]);
-  const comparable = !!pv && (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
+  // צילום מהארכיון / תיעוד-ראשון אינו שינוי: המפה נפתחת נקייה — בלי
+  // שכבת "לפני" ובלי סימוני נוספו/ירדו שנראים כאילו קרה משהו (דיווח
+  // שלמה, קו 26). כפתור "השווה" עדיין זמין למי שרוצה להשוות במפורש.
+  const snapOnly = (v.k === "snapshot" || v.k === "baseline" || v.k === "times")
+    && !(v.add || []).length && !(v.rem || []).length;
+  const comparable = !!pv && !snapOnly &&
+    (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
   // הגרסה הסמוכה עשויה להיות אירוע-רישום בלי רצף תחנות — ואז "המסלול
   // הקודם" והתחנות שירדו לא צוירו כלל (הבאג שצילם שלמה בקו 35 אשדוד).
   // שואלים את התיעוד הגיאומטרי האחרון שלפני האירוע, כמו במצב השוואה.
@@ -1564,7 +1570,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
         <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
           cur={cur} prev={onlyCur ? null : prev}
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
-          prevStops={!onlyCur && pgv && (pgv.stops || []).length ? pgv.stops : null}
+          prevStops={!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n, j) => (v.ac && v.ac[j] != null ? String(v.ac[j]) : codeOf(n, vi, true))).filter(Boolean)) : null}
           stops12={onlyCur ? null : stops12}
