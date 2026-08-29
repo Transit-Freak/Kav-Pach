@@ -89,9 +89,12 @@ def day_sigs_all(ds):
         if (rd2, sh) not in first or t < first[(rd2, sh)]:
             first[(rd2, sh)] = t
     trip2rd = {}
+    rd2shape = {}
     for rd2, shapes in cnt.items():
         sh = min(shapes, key=lambda x: (-shapes[x], x))
         trip2rd[first[(rd2, sh)].encode()] = rd2
+        if sh:
+            rd2shape[rd2] = sh.encode()
     seqs = collections.defaultdict(list)
     buf = [b'']
     hdr = {}
@@ -114,10 +117,56 @@ def day_sigs_all(ds):
                 continue
 
     stream_member(url, members, 'stop_times.txt', on_st)
+    # ההשוואה לפי מק"ט (stop_code), לא לפי המזהה הפנימי — המזהים מתחלפים
+    # בין פרסומים בלי שהתחנה זזה, והמק"ט הוא הזהות האמיתית (כלל שלמה)
+    code_of = {}
+    try:
+        c, rows = member_rows(url, members, 'stops.txt')
+        for r in rows:
+            code_of[r[c['stop_id']].encode()] = (r[c['stop_code']] or r[c['stop_id']]).encode()
+    except (KeyError, ValueError):
+        pass
+    # טביעת השרטוט: תיקון שרטוט שלא שינה אף תחנה היה בלתי-נראה להשוואת
+    # הרצף בלבד (דיווח שלמה) — נקודות התבנית הנבחרת נטחנות גם הן לטביעה
+    shp_wanted = set(rd2shape.values())
+    shp_pts = collections.defaultdict(list)
+    if shp_wanted:
+        buf2 = [b'']
+        hdr2 = {}
+
+        def on_shp(data):
+            buf2[0] += data
+            *lines, buf2[0] = buf2[0].split(b'\n')
+            for ln in lines:
+                if not hdr2:
+                    for i, h in enumerate(ln.decode('utf-8-sig').strip().split(',')):
+                        hdr2[h.strip()] = i
+                    continue
+                f = ln.split(b',')
+                try:
+                    sid = f[hdr2['shape_id']]
+                    if sid in shp_wanted:
+                        shp_pts[sid].append((int(f[hdr2['shape_pt_sequence']]),
+                                             f[hdr2['shape_pt_lat']], f[hdr2['shape_pt_lon']]))
+                except (IndexError, ValueError):
+                    continue
+
+        try:
+            stream_member(url, members, 'shapes.txt', on_shp)
+        except (KeyError, ValueError):
+            pass
+    shp_sig = {}
+    for sid, pts in shp_pts.items():
+        pts.sort()
+        h = hashlib.sha1()
+        for _, la, lo in pts:
+            h.update(la); h.update(b','); h.update(lo); h.update(b';')
+        shp_sig[sid] = h.hexdigest()[:10]
     out = {}
     for rd2, lst in seqs.items():
         lst.sort()
-        out[rd2] = hashlib.sha1(b','.join(sid for _, sid in lst)).hexdigest()[:10]
+        st_sig = hashlib.sha1(b','.join(code_of.get(sid, sid) for _, sid in lst)).hexdigest()[:10]
+        out[rd2] = st_sig + ':' + shp_sig.get(rd2shape.get(rd2, b''), '')
     return out
 
 
@@ -151,16 +200,20 @@ def has_route_record(rd, ds):
     return False
 
 
-def write_events(young, old, rds):
-    """כתיבת אירוע לכל וריאנט שרצפו השתנה בין old ל-young — ביום young."""
+def write_events(young, old, rds, geo_rds=()):
+    """אירוע לכל וריאנט שהשתנה בין old ל-young: רצף, סדר, או שרטוט בלבד."""
     n = 0
+    allr = list(rds) + list(geo_rds)
+    if not allr:
+        return 0
+    geo_set = set(geo_rds)
     try:
-        got_y = day_full_cal(young, rds)
-        got_o = day_full_cal(old, rds)
+        got_y = day_full_cal(young, allr)
+        got_o = day_full_cal(old, allr)
     except (Exception, SystemExit) as e:
         print(f'{young}: שליפת פרטי המעבר נכשלה ({type(e).__name__})', file=sys.stderr)
         return 0
-    for rd in rds:
+    for rd in allr:
         gy, go = got_y.get(rd), got_o.get(rd)
         if not (gy and gy.get('stops') and go and go.get('stops')):
             continue
@@ -172,11 +225,23 @@ def write_events(young, old, rds):
         oc = {str(s[0]) for s in go['stops']}
         add = [s for s in gy['stops'] if str(s[0]) not in oc]
         rem = [s for s in go['stops'] if str(s[0]) not in yc]
-        if not add and not rem:
-            continue   # שינוי סדר בלבד — לא נרשם כאן
-        kind = 'stops-del' if rem and not add else ('stops-add' if add and not rem else 'route')
+        yseq = [str(s[0]) for s in gy['stops']]
+        oseq = [str(s[0]) for s in go['stops']]
+        if rd in geo_set and not add and not rem and yseq == oseq:
+            # תיקון שרטוט בלבד — התחנות לא זזו, הציור השתנה
+            kind = 'redraw'
+            note2 = f'{NOTE} — תיקון שרטוט בלבד ({old} ← {young})'
+        elif not add and not rem and yseq != oseq:
+            # אותן תחנות בסדר אחר — שינוי מסלול לכל דבר (נזרק בעבר בטעות)
+            kind = 'route'
+            note2 = f'{NOTE} — סדר העצירה השתנה ({old} ← {young})'
+        elif not add and not rem:
+            continue
+        else:
+            kind = 'stops-del' if rem and not add else ('stops-add' if add and not rem else 'route')
+            note2 = f'{NOTE} ({old} ← {young})'
         v = {'d': young, 'k': kind, 'shp': gy.get('shp') or '', 'stops': gy['stops'],
-             'src': 'ob', 'note': f'{NOTE} ({old} ← {young})'}
+             'src': 'ob', 'note': note2}
         if add:
             v['add'] = [s[1] for s in add][:15]
             v['ac'] = [str(s[0]) for s in add][:15]
@@ -241,12 +306,24 @@ def main():
             time.sleep(8)
             continue
         sy = st['sigs']
-        changed = [rd for rd, h in sigs_o.items()
-                   if rd in sy and sy[rd] != h]
+        def parts(h):
+            a, _, b = str(h).partition(':')
+            return a, b
+        changed, geo_only = [], []
+        for rd, h in sigs_o.items():
+            if rd not in sy:
+                continue
+            so, go = parts(sy[rd]), parts(h)
+            if so[0] != go[0]:
+                changed.append(rd)
+            elif so[1] and go[1] and so[1] != go[1]:
+                geo_only.append(rd)   # תיקון שרטוט בלי שינוי תחנות
         pend = [rd for rd in changed if not has_route_record(rd, st['young'])]
-        if pend:
-            print(f'{old} ← {st["young"]}: {len(changed)} שינויים, {len(pend)} בלי תיעוד')
-            st['written'] = st.get('written', 0) + write_events(st['young'], old, pend)
+        gpend = [rd for rd in geo_only if not has_route_record(rd, st['young'])]
+        if pend or gpend:
+            print(f'{old} ← {st["young"]}: {len(changed)} שינויי רצף + {len(geo_only)} שרטוט, '
+                  f'{len(pend)}+{len(gpend)} בלי תיעוד')
+            st['written'] = st.get('written', 0) + write_events(st['young'], old, pend, gpend)
         st['young'] = old
         st['sigs'] = sigs_o
         st['done_pairs'] = st.get('done_pairs', 0) + 1
