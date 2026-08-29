@@ -204,16 +204,25 @@ def refillable(v):
     return REDO and FILLED_MARK in (v.get('note') or '')
 
 
+def shp_missing(v):
+    """גרסה עם רצף תחנות אבל בלי שרטוט — מוצגת באתר כקו מקורב מקווקו
+    (דיווח שלמה, קו 774 שדרות). משלימים לה שרטוט מלא מצילום אותו יום."""
+    return bool(v.get('stops')) and not v.get('shp')
+
+
 def build_worklist():
-    """date -> [(path, rd)] — רשומות 'וריאנט חדש' מהארכיון בלי מסלול."""
+    """date -> [(path, rd, mode)] — mode='fill' לרשומות ריקות, 'shp' להשלמת שרטוט."""
     by = collections.defaultdict(list)
     for p in sorted(glob.glob(f'{OUTDIR}/lines/*.json')):
         d = jload(p, None)
         if not d:
             continue
+        seen = set()
         for v in d.get('versions') or []:
-            if refillable(v):
-                by[v['d']].append((p, d.get('rd')))
+            if refillable(v) and ('fill', v['d']) not in seen:
+                by[v['d']].append((p, d.get('rd'), 'fill')); seen.add(('fill', v['d']))
+            elif shp_missing(v) and ('shp', v['d']) not in seen:
+                by[v['d']].append((p, d.get('rd'), 'shp')); seen.add(('shp', v['d']))
     return by
 
 
@@ -271,21 +280,27 @@ def main():
     if os.environ.get('ENRICH') == '1':
         enrich_diffs()
         return
+    sdone = set(st.get('sdone') or [])
     by = build_worklist()
-    dates = [d for d in sorted(by, reverse=True)
-             if (REDO or (d not in done and d not in skip)) and ARC_FROM <= d <= ARC_TO
-             and (not ONLY or d in ONLY)]
+    def pending(d):
+        if d in skip or not (ARC_FROM <= d <= ARC_TO):
+            return False
+        if ONLY and d not in ONLY:
+            return False
+        modes = {m for _, _, m in by[d]}
+        return ('fill' in modes and (REDO or d not in done)) or ('shp' in modes and d not in sdone)
+    dates = [d for d in sorted(by, reverse=True) if pending(d)]
     out_range = [d for d in by if not (ARC_FROM <= d <= ARC_TO)]
     total = sum(len(v) for v in by.values())
     print(f'{total} רשומות ב-{len(by)} תאריכים · {len(dates)} תאריכים נותרו לטיפול'
           + (f' · {len(out_range)} מחוץ לטווח הארכיון' if out_range else '')
           + (' · REDO' if REDO else ''))
-    n_fix = n_miss = 0
+    n_fix = n_miss = n_shp = 0
     for i, ds in enumerate(dates):
         if (time.time() - T0) / 60 > MAX_MIN:
             print('נגמר תקציב הזמן — ההמשך בריצה הבאה')
             break
-        rds = sorted({rd for _, rd in by[ds] if rd})
+        rds = sorted({rd for rd in (e[1] for e in by[ds]) if rd})
         print(f'{ds}: {len(rds)} וריאנטים')
         try:
             got = day_full_cal(ds, rds)
@@ -301,14 +316,16 @@ def main():
                 print(f'{ds}: {type(e).__name__}: {e} — דילוג זמני', file=sys.stderr)
                 time.sleep(10)
             continue
-        for p, rd in by[ds]:
+        for p, rd, mode in by[ds]:
             g = got.get(rd)
             lf = materialize(jload(p, None))
             if not lf:
                 continue
             dirty = False
             for v in lf.get('versions') or []:
-                if v.get('d') == ds and refillable(v):
+                if v.get('d') != ds:
+                    continue
+                if refillable(v):
                     if g and g.get('stops'):
                         v['stops'] = g['stops']
                         v['shp'] = g.get('shp') or ''
@@ -318,15 +335,29 @@ def main():
                         n_fix += 1
                     elif not (v.get('stops') or v.get('shp')):
                         n_miss += 1   # רשום בלי נסיעות בתוקף בצילום — נשאר קיום-בלבד
+                elif shp_missing(v) and g and g.get('shp'):
+                    # השלמת שרטוט בלבד: התחנות השמורות נשארות. תנאי שפיות —
+                    # תבנית היום חייבת לחפוף את הרצף השמור, שלא נדביק שרטוט זר
+                    stored = {str(x[0]) for x in v['stops']}
+                    day = {str(x[0]) for x in (g.get('stops') or [])}
+                    if stored and len(stored & day) >= 0.7 * len(stored):
+                        v['shp'] = g['shp']
+                        v['note'] = ((v.get('note') or '') +
+                                     ' · השרטוט הושלם מצילום הארכיון של אותו יום').strip(' ·')
+                        dirty = True
+                        n_shp += 1
             if dirty and not DRY:
                 json.dump(compact(lf), open(p, 'w', encoding='utf-8'),
                           ensure_ascii=False, separators=(',', ':'))
         done.add(ds)
+        sdone.add(ds)
         if i % 8 == 0:
+            st['sdone'] = sorted(sdone)
             save_state(st, done, skip)
         time.sleep(PAUSE)
+    st['sdone'] = sorted(sdone)
     save_state(st, done, skip)
-    print(f'סיכום הריצה: {n_fix} רשומות קיבלו מסלול ותחנות · {n_miss} לא פעלו בצילום היום שלהן')
+    print(f'סיכום הריצה: {n_fix} רשומות קיבלו מסלול ותחנות · {n_shp} קיבלו שרטוט · {n_miss} לא פעלו בצילום היום שלהן')
     enrich_diffs()
 
 
