@@ -29,6 +29,11 @@ FROM = os.environ.get('FROM') or (TODAY - datetime.timedelta(days=8)).isoformat(
 TO = os.environ.get('TO') or TODAY.isoformat()
 MAX_MIN = float(os.environ.get('MAX_MIN', '0'))
 RETIRE_DAYS = int(os.environ.get('RETIRE_DAYS', '30'))
+# מצב "חודשים בלבד": סריקה חוזרת של העבר שממלאת רק את מסיכת חודשי
+# הפעילות של כל רכב, בלי לצבור שוב נסיעות/ימים שכבר נספרו בסריקה
+# המקורית (צבירה חוזרת הייתה מכפילה את ממוצע הנסיעות ליום)
+MONTHS_ONLY = os.environ.get('MONTHS_ONLY') == '1'
+MBASE = 2020 * 12   # ביט 0 במסיכת החודשים = ינואר 2020
 # עדכון-ביניים לאתר כל X ימים סרוקים (0 = רק בסוף); נקבע ב-workflow
 FLUSH_DAYS = int(os.environ.get('FLUSH_DAYS', '0'))
 PAGE = 1000
@@ -128,14 +133,16 @@ def scan_day(day, routes, state):
             key = f'{op}:{v}'
             cur = state.get(key)
             if cur is None:
-                cur = state[key] = [day, day, 0, 0, []]
+                cur = state[key] = [day, day, 0, 0, [], 0]
             else:
-                while len(cur) < 5:   # מצב ישן — הרחבה הדרגתית
-                    cur.append(0 if len(cur) < 4 else [])
+                while len(cur) < 6:   # מצב ישן — הרחבה הדרגתית
+                    cur.append([] if len(cur) == 4 else 0)
                 if day < cur[0]:
                     cur[0] = day
                 if day > cur[1]:
                     cur[1] = day
+            # באיזה חודש הרכב פעל — ביט במסיכה (לספירה חודשית בערים)
+            cur[5] |= 1 << (int(day[:4]) * 12 + int(day[5:7]) - 1 - MBASE)
             # אילו קווים הרכב שירת (עד 40 — מספיק לשיוך ערים)
             if line and line not in cur[4] and len(cur[4]) < 40:
                 cur[4].append(line)
@@ -144,10 +151,13 @@ def scan_day(day, routes, state):
         if len(rows) < PAGE:
             break
         offset += PAGE
-    for key, cnt in today.items():   # צבירה: סך נסיעות + ימי פעילות שנמדדו
-        cur = state[key]
-        cur[2] += cnt
-        cur[3] += 1
+        if MONTHS_ONLY:
+            time.sleep(0.1)   # מילוי היסטורי — בעדינות, לא להעמיס על דאטאבוס
+    if not MONTHS_ONLY:
+        for key, cnt in today.items():   # צבירה: סך נסיעות + ימי פעילות שנמדדו
+            cur = state[key]
+            cur[2] += cnt
+            cur[3] += 1
     print(f'{day}: {n} נסיעות', flush=True)
 
 
@@ -206,16 +216,28 @@ def flush_site(state):
 
 def main():
     os.makedirs(OUTDIR, exist_ok=True)
-    state = {}
+    root = {}
     if os.path.exists(STATE):
         with open(STATE, encoding='utf-8') as f:
-            state = json.load(f).get('vehicles', {})
-    print(f'סריקה {FROM} → {TO} · מצב קיים: {len(state)} רכבים', flush=True)
+            root = json.load(f)
+    state = root.setdefault('vehicles', {})
+    # ברירת המחדל של FROM: היום שאחרי האחרון שנסרק (scanned_to) — כך ריצה
+    # חודשית מכסה בדיוק את החודש שעבר, בלי חפיפה שסופרת נסיעות פעמיים
+    # ובלי חורים. גיבוי (מצב ישן בלי המצביע): 8 ימים אחורה, כמו פעם.
+    frm = FROM
+    if not os.environ.get('FROM') and root.get('scanned_to') and not MONTHS_ONLY:
+        frm = (datetime.date.fromisoformat(root['scanned_to'])
+               + datetime.timedelta(days=1)).isoformat()
+    print(f'סריקה {frm} → {TO}{" (חודשים בלבד)" if MONTHS_ONLY else ""}'
+          f' · מצב קיים: {len(state)} רכבים', flush=True)
+    if frm > TO:
+        print('אין ימים חדשים לסריקה', flush=True)
+        return
 
     load_agency_names()
     routes = route_operator_map()
     t0 = time.time()
-    day = datetime.date.fromisoformat(FROM)
+    day = datetime.date.fromisoformat(frm)
     end = datetime.date.fromisoformat(TO)
     scanned = []
     while day <= end:
@@ -224,14 +246,20 @@ def main():
             break
         scan_day(day.isoformat(), routes, state)
         scanned.append(day.isoformat())
+        if not MONTHS_ONLY:
+            root['scanned_to'] = max(root.get('scanned_to') or '', day.isoformat())
         # שמירת ביניים כל יום — ריצה שנקטעת לא מאבדת כלום
-        jdump({'vehicles': state}, STATE)
+        jdump(root, STATE)
         # דחיפת עדכון חי לאתר תוך כדי הריצה
         if FLUSH_DAYS and len(scanned) % FLUSH_DAYS == 0:
             flush_site(state)
         day += datetime.timedelta(days=1)
 
-    jdump({'vehicles': state}, STATE)
+    if MONTHS_ONLY and scanned and day > end:
+        # הפרק הושלם — מצביע ההמשך של מילוי-החודשים זז אחורה
+        prev = root.get('months_done')
+        root['months_done'] = min(prev, frm) if prev else frm
+    jdump(root, STATE)
     jdump(build_output(state), OUT)
     print(f'סיום: {len(state)} רכבים · {len(scanned)} ימים נסרקו', flush=True)
 

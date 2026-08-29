@@ -1,0 +1,84 @@
+name: fleet-months
+
+# מילוי חודשי-הפעילות של כל רכב (מסיכת החודשים בקובץ המצב) — סריקה
+# חוזרת של העבר שלא צוברת מונים מחדש, לצורך החיפוש לפי חודש בערים.
+# בקשת שלמה: לא להעמיס על דאטאבוס — פרק לילי אחד קטן בכל לילה (עם
+# השהיה בין דפים), מהחודשים האחרונים אחורה עד הצפייה הראשונה במעקב.
+# כשהמילוי מגיע לסוף — הריצות הליליות הופכות לאפס-פעולה מיידי.
+
+on:
+  schedule:
+    - cron: '15 0 * * *'   # 00:15 UTC = ‏02:15–03:15 לפנות בוקר בישראל
+  workflow_dispatch:
+    inputs:
+      max_min:
+        description: 'עצירה נקייה אחרי X דקות'
+        required: false
+        default: '150'
+
+permissions:
+  contents: write
+
+# אותה קבוצה כמו fleet-scan — הסריקות לא רצות במקביל על אותו קובץ מצב
+concurrency:
+  group: fleet-scan
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: חישוב הפרק הלילי
+        id: chap
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'EOF'
+          import datetime
+          import json
+          root = json.load(open('fleet/data/fleet-state.json'))
+          st = root['vehicles']
+          earliest = min(v[0] for v in st.values())
+          done = root.get('months_done')
+          if done and done <= earliest:
+              print('skip=1')
+              print('from=')
+              print('to=')
+          else:
+              to = ((datetime.date.fromisoformat(done)
+                     - datetime.timedelta(days=1)).isoformat()
+                    if done else datetime.date.today().isoformat())
+              frm = max(earliest, (datetime.date.fromisoformat(to)
+                                   - datetime.timedelta(days=43)).isoformat())
+              print('skip=')
+              print(f'from={frm}')
+              print(f'to={to}')
+          EOF
+          cat "$GITHUB_OUTPUT" || true
+
+      - name: מילוי חודשים — פרק לילי אחד
+        if: steps.chap.outputs.skip != '1'
+        env:
+          MONTHS_ONLY: '1'
+          FROM: ${{ steps.chap.outputs.from }}
+          TO: ${{ steps.chap.outputs.to }}
+          MAX_MIN: ${{ github.event.inputs.max_min || '150' }}
+        run: python3 tools/fleet_scan.py
+
+      - name: שיוך ערים — כולל הספירה החודשית (best-effort)
+        if: steps.chap.outputs.skip != '1'
+        continue-on-error: true
+        run: python3 tools/fleet_cities.py
+
+      - name: commit
+        if: steps.chap.outputs.skip != '1'
+        run: |
+          git config user.name 'fleet-bot'
+          git config user.email 'noreply@github.com'
+          git rebase --abort 2>/dev/null || true
+          git add fleet/data
+          git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
+          git commit -m 'data: fleet — מילוי חודשי פעילות (פרק לילי)'
+          git pull --rebase -X theirs origin main
+          git push

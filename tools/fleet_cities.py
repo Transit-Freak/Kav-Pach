@@ -21,6 +21,7 @@ from backfill_geo import central_dir, member_rows  # noqa: E402
 
 S3 = ('https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
       '/gtfs_archive/{y}/{m}/{d}/israel-public-transportation.zip')
+MBASE = 2020 * 12   # ביט 0 במסיכת חודשי-הפעילות = ינואר 2020 (כמו fleet_scan)
 OUTDIR = os.environ.get('OUTDIR', 'fleet/data')
 STATE = f'{OUTDIR}/fleet-state.json'
 FLEET = f'{OUTDIR}/fleet.json'
@@ -83,19 +84,33 @@ def main():
             vset |= rc.get(str(ln), set())
         if vset:
             linked += 1
+        mask = vals[5] if len(vals) > 5 else 0
         for city in vset:
-            ct = cities.setdefault(city, {'total': 0, 'ops': {}, 'years': {}})
+            ct = cities.setdefault(city,
+                                   {'total': 0, 'ops': {}, 'years': {}, 'months': {}})
             ct['total'] += 1
             ct['ops'][op] = ct['ops'].get(op, 0) + 1
             y = year_of.get(key)
             if y:
                 ct['years'][str(y)] = ct['years'].get(str(y), 0) + 1
+            # ספירה חודשית: בכל חודש שבו הרכב פעל הוא נספר לערים שלו.
+            # קירוב מוצהר — הערים הן כלל הקווים שהרכב שירת אי-פעם.
+            b, i = mask, 0
+            while b:
+                if b & 1:
+                    t = MBASE + i
+                    m = f'{t // 12}-{t % 12 + 1:02d}'
+                    ct['months'][m] = ct['months'].get(m, 0) + 1
+                b >>= 1
+                i += 1
 
     # רק ערים עם נוכחות ממשית, ממוינות לפי גודל
     out = {'updated': datetime.date.today().isoformat(),
            'cities': {c: {'total': d['total'],
                           'ops': sorted(d['ops'].items(), key=lambda x: -x[1]),
-                          'years': d['years']}
+                          'years': d['years'],
+                          **({'months': dict(sorted(d['months'].items()))}
+                             if d.get('months') else {})}
                       for c, d in cities.items() if d['total'] >= 3}}
     tmp = f'{OUT}.tmp'
     with open(tmp, 'w', encoding='utf-8') as f:
