@@ -280,9 +280,9 @@ function cityView(c){
     ${CITYMON&&months[CITYMON]!==undefined?`<div class="yrow lbl" style="font-size:14px"><span style="font-weight:800">${mfmt(CITYMON)}</span><div class="ybar" style="height:16px"><i style="width:${Math.max(3,months[CITYMON]/mmax*100)}%;background:#1E5BC6"></i></div><span class="c" style="font-weight:800">${fmt(months[CITYMON])}</span></div>
       <p class="note">בחודש ${mfmt(CITYMON)} פעלו בעיר ${fmt(months[CITYMON])} רכבים שונים — לעומת ממוצע חודשי של כ-${fmt(mavg)}.</p>`
     :mk.map(m=>`<div class="yrow lbl"><span>${mfmt(m)}</span><div class="ybar"><i style="width:${Math.max(3,months[m]/mmax*100)}%;background:#1E5BC6"></i></div><span class="c">${fmt(months[m])}</span></div>`).join('')}
-    <p class="note">רכב נספר לחודש שבו שידר נסיעות. הספירה החודשית נבנית בהדרגה מהחודשים האחרונים אחורה — חודשים ישנים יתווספו ככל שהמילוי הלילי מתקדם.</p>
+    <p class="note">רכב נספר לחודש שבו שידר נסיעות. הספירה החודשית נבנית בהדרגה מהחודשים האחרונים אחורה — חודשים ישנים יתווספו ככל שהמילוי מתקדם.</p>
   </div>`
-  :`<div class="panel"><p class="ptitle">פעילות לפי חודש</p><div class="empty">הספירה החודשית נאספת כעת — מילוי לילי עדין רץ ברקע (מהחודשים האחרונים אחורה) ויופיע כאן בהדרגה</div></div>`;
+  :`<div class="panel"><p class="ptitle">פעילות לפי חודש</p><div class="empty">הספירה החודשית נאספת כעת — המילוי רץ ברקע מהחודשים האחרונים אחורה ויופיע כאן בהדרגה</div></div>`;
   return `<button class="back" onclick="history.back()">→ חזרה לכל הערים</button>
   <div class="ophead" style="background:#10172A">
     <div><h2>${esc(c)}</h2><div class="sub2">${fmt(d.total)} רכבים שונים פועלים בעיר${mavg?` · כ-${fmt(mavg)} בחודש ממוצע`:''} · עדכון ${fd(CITIES.updated)}</div></div>

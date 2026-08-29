@@ -1,10 +1,11 @@
 name: fleet-months
 
 # מילוי חודשי-הפעילות של כל רכב (מסיכת החודשים בקובץ המצב) — סריקה
-# חוזרת של העבר שלא צוברת מונים מחדש, לצורך החיפוש לפי חודש בערים.
-# בקשת שלמה: לא להעמיס על דאטאבוס — פרק לילי אחד קטן בכל לילה (עם
-# השהיה בין דפים), מהחודשים האחרונים אחורה עד הצפייה הראשונה במעקב.
-# כשהמילוי מגיע לסוף — הריצות הליליות הופכות לאפס-פעולה מיידי.
+# חוזרת חד-פעמית של העבר שלא צוברת מונים מחדש, לצורך החיפוש לפי חודש
+# בערים. רץ מהחדש לישן עם השהיה בין דפים (לא להעמיס על דאטאבוס),
+# והמצביע months_done מתקדם אחרי כל יום. chain=true משרשר ריצות ברצף
+# עד שהמילוי מגיע לצפייה הראשונה במעקב; ה-cron הלילי הוא רק גיבוי
+# שממשיך פרק אם השרשרת נקטעה — וכשהמילוי הושלם, שניהם אפס-פעולה.
 
 on:
   schedule:
@@ -15,9 +16,14 @@ on:
         description: 'עצירה נקייה אחרי X דקות'
         required: false
         default: '150'
+      chain:
+        description: 'שרשור — בסיום, הזנקת ההמשך עד שהמילוי מושלם'
+        required: false
+        default: 'false'
 
 permissions:
   contents: write
+  actions: write
 
 # אותה קבוצה כמו fleet-scan — הסריקות לא רצות במקביל על אותו קובץ מצב
 concurrency:
@@ -27,7 +33,7 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 200
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
 
@@ -79,6 +85,27 @@ jobs:
           git rebase --abort 2>/dev/null || true
           git add fleet/data
           git diff --cached --quiet && { echo 'אין שינוי'; exit 0; }
-          git commit -m 'data: fleet — מילוי חודשי פעילות (פרק לילי)'
+          git commit -m 'data: fleet — מילוי חודשי פעילות (פרק)'
           git pull --rebase -X theirs origin main
           git push
+
+      - name: המשך מילוי אוטומטי (chain)
+        if: github.event.inputs.chain == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - > /tmp/next.env <<'EOF'
+          import json
+          root = json.load(open('fleet/data/fleet-state.json'))
+          st = root['vehicles']
+          earliest = min(v[0] for v in st.values())
+          done = root.get('months_done')
+          print('DONE=1' if done and done <= earliest else 'DONE=')
+          EOF
+          . /tmp/next.env
+          if [ -z "$DONE" ]; then
+            echo 'מזניק את ההמשך'
+            gh workflow run fleet-months.yml --ref main -f chain=true -f max_min=320
+          else
+            echo 'מילוי החודשים הושלם — אין המשך'
+          fi

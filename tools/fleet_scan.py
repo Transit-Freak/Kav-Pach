@@ -237,28 +237,31 @@ def main():
     load_agency_names()
     routes = route_operator_map()
     t0 = time.time()
-    day = datetime.date.fromisoformat(frm)
+    start = datetime.date.fromisoformat(frm)
     end = datetime.date.fromisoformat(TO)
+    # מילוי החודשים רץ מהחדש לישן: כל עצירה משאירה רצף רציף מלמעלה,
+    # והמצביע months_done מתקדם אחרי כל יום — ריצה איטית לעולם לא נתקעת
+    day = end if MONTHS_ONLY else start
+    step = -1 if MONTHS_ONLY else 1
     scanned = []
-    while day <= end:
+    while start <= day <= end:
         if MAX_MIN and (time.time() - t0) / 60 > MAX_MIN:
             print(f'MAX_MIN — עצירה נקייה לפני {day}', flush=True)
             break
         scan_day(day.isoformat(), routes, state)
         scanned.append(day.isoformat())
-        if not MONTHS_ONLY:
+        if MONTHS_ONLY:
+            prev = root.get('months_done')
+            root['months_done'] = min(prev, day.isoformat()) if prev else day.isoformat()
+        else:
             root['scanned_to'] = max(root.get('scanned_to') or '', day.isoformat())
         # שמירת ביניים כל יום — ריצה שנקטעת לא מאבדת כלום
         jdump(root, STATE)
         # דחיפת עדכון חי לאתר תוך כדי הריצה
         if FLUSH_DAYS and len(scanned) % FLUSH_DAYS == 0:
             flush_site(state)
-        day += datetime.timedelta(days=1)
+        day += datetime.timedelta(days=step)
 
-    if MONTHS_ONLY and scanned and day > end:
-        # הפרק הושלם — מצביע ההמשך של מילוי-החודשים זז אחורה
-        prev = root.get('months_done')
-        root['months_done'] = min(prev, frm) if prev else frm
     jdump(root, STATE)
     jdump(build_output(state), OUT)
     print(f'סיום: {len(state)} רכבים · {len(scanned)} ימים נסרקו', flush=True)
