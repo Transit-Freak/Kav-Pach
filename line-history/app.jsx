@@ -238,7 +238,28 @@ function segDiff(cur, prev) {
     curSegs = runsOf(da, th, cur); prevSegs = runsOf(db, th, prev);
   }
   if (!curSegs.length && !prevSegs.length) return null;
-  return { curSegs, prevSegs };
+  // הקטע שהוחלף מוצג תמיד, משני הצדדים: כשרק צד אחד חורג מהסף (תיקון
+  // שרטוט שהוסיף פיתול קטן — הישן נשאר בתוך הסבלנות), נגזר מהמסלול
+  // השני התוואי המקביל לקטע ששונה. בלי זה נראה היה כאילו "לא מסומן
+  // מה בוטל" (דרישת שלמה, רכסים) — עכשיו אדום וירוק מופיעים יחד בכל קו
+  const nearIdx = (Pm, q) => {
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < Pm.length; i++) {
+      const dx = Pm[i][0] - q[0], dy = Pm[i][1] - q[1];
+      const d = dx * dx + dy * dy;
+      if (d < bd) { bd = d; bi = i; }
+    }
+    return bi;
+  };
+  const counterpart = (segs, Pm, Praw) => segs.map((s2) => {
+    const a = nearIdx(Pm, M(s2[0])), b = nearIdx(Pm, M(s2[s2.length - 1]));
+    const [i, j] = a <= b ? [a, b] : [b, a];
+    return Praw.slice(Math.max(0, i - 1), Math.min(Praw.length, j + 2));
+  }).filter((r) => r.length > 1);
+  let derived = null;
+  if (curSegs.length && !prevSegs.length) { prevSegs = counterpart(curSegs, B, prev); derived = "prev"; }
+  else if (prevSegs.length && !curSegs.length) { curSegs = counterpart(prevSegs, A, cur); derived = "cur"; }
+  return { curSegs, prevSegs, derived };
 }
 
 /* ---------- מפת לפני/אחרי ---------- */
@@ -443,13 +464,13 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
           {focus ? "🗺️ כל המסלול" : "🔍 רק הקטע ששונה"}
         </button>
       )}
-      {/* בתיקון שרטוט שרק הוסיף תוואי, כל המסלול הישן חופף לחדש — אין
-          קטע אדום, וזה נראה כאילו "חסר" משהו במפה (שאלת שלמה, רכסים) */}
-      {diff && diff.curSegs.length > 0 && diff.prevSegs.length === 0 && (
-        <div className="mut">🛈 המסלול הקודם חופף לחדש לכל אורכו (ההבדל רק בקטע הירוק שנוסף) — לכן אין כאן קטע אדום שירד.</div>
+      {/* כשצד אחד נגזר כתוואי-מקביל (תיקון שרטוט קטן) — אומרים את זה,
+          כדי שהאדום לא ייקרא כסטייה גדולה (דרישת שלמה, רכסים) */}
+      {diff && diff.derived === "prev" && (
+        <div className="mut">🛈 הקטע האדום מסמן את התוואי הישן במקום שבו השרטוט תוקן — הוא קרוב לחדש (עד עשרות מטרים), והירוק הוא התיקון עצמו.</div>
       )}
-      {diff && diff.prevSegs.length > 0 && diff.curSegs.length === 0 && (
-        <div className="mut">🛈 המסלול החדש חופף לקודם לכל אורכו (ההבדל רק בקטע האדום שירד) — לכן אין כאן קטע ירוק חדש.</div>
+      {diff && diff.derived === "cur" && (
+        <div className="mut">🛈 הקטע הירוק מסמן את התוואי החדש במקום שבו השרטוט תוקן — הוא קרוב לישן (עד עשרות מטרים), והאדום הוא מה שירד.</div>
       )}
       {diff && !diff.prevSegs.length && !diff.curSegs.length && (
         <div className="mut">🛈 שני השרטוטים כמעט חופפים (ההבדל קטן מעשרות מטרים) — לכן אין קטע אדום או ירוק מודגש; הקו האדום המקווקו מסתתר מתחת לירוק.</div>
