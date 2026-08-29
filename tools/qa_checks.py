@@ -28,6 +28,7 @@ CHECKS = {
     'empty_geo': 'אירוע מסלול בלי תחנות ובלי שרטוט',
     'dup_versions': 'שתי גרסאות באותו קו, תאריך וסוג',
     'thinned_shp': 'שרטוט קצר חשוד ביחס למספר התחנות (ייתכן דילול ישן)',
+    'noop_redraw': 'אירוע "תיקון שרטוט" שהשרטוט בו זהה לגרסה הקודמת (מועמד לניקוי)',
 }
 
 
@@ -46,6 +47,7 @@ def run():
         vs = sorted(lf.get('versions') or [], key=lambda v: v['d'])
         seen_dk = set()
         prev_codes = None
+        prev_shp = None
         for v in vs:
             d, k = v.get('d', ''), v.get('k', '')
             stops = v.get('stops') or []
@@ -75,6 +77,12 @@ def run():
             seen_dk.add((d, k))
             if stops and v.get('shp') and len(stops) >= 8 and len(v['shp']) < len(stops) * 6:
                 hit('thinned_shp', f'{rd} · {d}')
+            # "תיקון שרטוט" בלי שינוי בשרטוט — נתגלה בקו 26 שדרות: אירוע
+            # שמציג מפה ריקה מהדגשות כי אין באמת מה להדגיש
+            if k == 'redraw' and v.get('shp') and prev_shp and v['shp'] == prev_shp:
+                hit('noop_redraw', f'{rd} · {d}')
+            if v.get('shp'):
+                prev_shp = v['shp']
             if codes is not None:
                 prev_codes = codes
     return out
