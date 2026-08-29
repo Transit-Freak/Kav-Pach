@@ -1,6 +1,8 @@
 name: probe-publisher
 
-# אימות מה האתר החי מגיש: הודעת הבדיקה-מחדש וקובץ הסטטוס שלה.
+# בדיקת אמת חד-פעמית (שאלת שלמה, קו 26 ברור חיל): האם הלולאה למתחם
+# התחנה קיימת בשרטוטים בארכיון הגולמי לפני 01.09.2025 — נבדק ישירות
+# מול צילומי ה-GTFS של ימי הארכיון, לא מול מה שאנחנו שמרנו.
 
 on:
   push:
@@ -15,14 +17,42 @@ jobs:
   probe:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
-      - name: Fetch live files and check
+      - uses: actions/checkout@v4
+
+      - name: הלולאה בארכיון הגולמי — יום-יום
         run: |
-          set -euo pipefail
-          curl -fsS -H 'Cache-Control: no-cache' \
-            "https://transit-freak.github.io/kav-bochan/line-history/app.jsx?cb=$RANDOM" -o live.jsx
-          echo "app.jsx bytes: $(wc -c < live.jsx)"
-          grep -c "RecheckNotice" live.jsx && echo "RecheckNotice: קיים" || echo "RecheckNotice: חסר!"
-          curl -fsS "https://transit-freak.github.io/kav-bochan/line-history/data/recheck.json?cb=$RANDOM" && echo && echo "recheck.json: קיים"
-          curl -fsS "https://transit-freak.github.io/kav-bochan/line-history/index.html?cb=$RANDOM" | grep -o 'LH_BUILD = "[0-9]*"'
+          python3 - <<'EOF'
+          import math
+          import sys
+          sys.path.insert(0, 'tools')
+          from backfill_new_routes import day_full_cal
+          from backfill_change_segs import dec_polyline
+
+          APEX = (31.55829, 34.63493)   # קודקוד הלולאה מצילום המסך של שלמה
+
+          def dist_m(a, b):
+              kx = 111320 * math.cos(math.radians(a[0]))
+              return math.hypot((a[1] - b[1]) * kx, (a[0] - b[0]) * 110540)
+
+          DAYS = ['2023-06-15', '2024-03-15', '2024-06-15', '2024-11-29',
+                  '2025-02-15', '2025-05-15', '2025-06-06', '2025-07-15',
+                  '2025-08-15', '2025-08-31', '2025-09-01', '2025-09-02']
+          RDS = ['30026-1-#', '30026-2-#']
+          for ds in DAYS:
+              try:
+                  got = day_full_cal(ds, RDS)
+              except Exception as e:
+                  print(f'{ds}: הצילום לא נטען ({type(e).__name__})', flush=True)
+                  continue
+              for rd in RDS:
+                  g = got.get(rd)
+                  if not g or not g.get('shp'):
+                      print(f'{ds} {rd}: אין שרטוט בצילום', flush=True)
+                      continue
+                  pts = dec_polyline(g['shp'])
+                  dmin = min(dist_m(p, APEX) for p in pts)
+                  tag = 'יש לולאה ✓' if dmin < 30 else 'אין לולאה'
+                  print(f'{ds} {rd}: מרחק מקודקוד הלולאה {dmin:5.0f} מ · {tag}', flush=True)
+          EOF
