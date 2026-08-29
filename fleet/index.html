@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F2F4F8">
 <meta name="robots" content="noindex, nofollow">
 <!-- כמו בשאר הכלים: הדפדפן מאמת מול השרת בכל כניסה — עדכוני תכונה נראים מיד -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -66,6 +67,11 @@
   .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:760px){.cols2{grid-template-columns:1fr}}
   .yrow{display:grid;grid-template-columns:64px 1fr 52px;align-items:center;gap:8px;font-size:12px;font-weight:600;margin-bottom:4px}
+  /* וריאנטים של שורת-עמודה כמחלקות (לא style מוטבע) — כדי שהמובייל יוכל לכווץ אותן */
+  .yrow.lbl{grid-template-columns:110px 1fr 52px}
+  .yrow.lbl2{grid-template-columns:150px 1fr 60px}
+  .yrow.yact{grid-template-columns:44px 1fr 170px}
+  .yrow.lbl>span:first-child,.yrow.lbl2>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ybar{height:12px;border-radius:4px;background:var(--chipbg);overflow:hidden}
   .ybar i{display:block;height:100%;border-radius:4px}
   .ybar .tot{display:block;height:100%;border-radius:4px;background:#D7DDE6}
@@ -102,6 +108,36 @@
   .empty{padding:40px;text-align:center;color:var(--dim);font-weight:700}
   .msg{padding:60px 20px;text-align:center;color:var(--mut);font-weight:800;font-size:16px}
   button:focus-visible,input:focus-visible,tr:focus-visible{outline:2px solid #10172A;outline-offset:2px}
+  /* ── טלפון: הסרגל העליון נשבר לשורות, הכפתורים גדלים, המודאל הופך לגיליון תחתון ──
+     הגורם לגלילה הצידית: שורת החיפוש+מצבים לא נשברה וקיבעה רוחב מינימלי ~574px */
+  @media(max-width:640px){
+    .wrap{padding:12px 10px 50px}
+    .top{gap:8px 10px}
+    h1{font-size:19px}
+    .homelink{padding:10px 2px}
+    .searchrow{order:5;flex-basis:100%;min-width:0;flex-wrap:wrap}
+    #q{flex:1 1 100%;height:44px;font-size:16px}
+    .modes{flex-wrap:wrap;width:100%}
+    .mode,.xlsbtn{flex:1 0 auto;padding:11px 12px;min-height:42px}
+    .sub{margin-top:10px}
+    .kpis{grid-template-columns:1fr 1fr;gap:8px}
+    .kpi{padding:10px 12px}
+    .kpi b{font-size:19px}
+    .ophead{padding:14px 16px}
+    .ophead .pills{margin-inline-start:0}
+    .yrow.lbl{grid-template-columns:92px 1fr 46px}
+    .yrow.lbl2{grid-template-columns:104px 1fr 50px}
+    .yrow.yact{grid-template-columns:38px 1fr 112px}
+    .yrow.yact .c{white-space:normal;font-size:10.5px;line-height:1.35}
+    .fchip{padding:9px 14px;font-size:12px;min-height:36px}
+    th{padding:2px 7px}
+    td{padding:9px 7px}
+    .tblbox{-webkit-overflow-scrolling:touch;margin:0 -4px}
+    .ovl{align-items:flex-end;padding:0}
+    .modal{max-width:none;border-radius:18px 18px 0 0;max-height:88vh;padding:16px 16px 24px}
+    .mhead{position:relative;padding-inline-end:46px}
+    .x{position:absolute;inset-inline-end:0;top:0;margin:0;width:40px;height:40px}
+  }
 </style>
 </head>
 <body>
@@ -231,7 +267,7 @@ function cityView(c){
   </div>
   <div class="cols2">
     <div class="panel"><p class="ptitle">החברות שפועלות בעיר</p>
-      ${d.ops.slice(0,12).map(([ref,n])=>`<div class="yrow" style="grid-template-columns:110px 1fr 52px"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
+      ${d.ops.slice(0,12).map(([ref,n])=>`<div class="yrow lbl"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
     </div>
     ${yk.length?`<div class="panel"><p class="ptitle">כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר</p>
       ${yk.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';
@@ -279,7 +315,7 @@ function typeView(t){
   </div>
   <div class="cols2">
     <div class="panel"><p class="ptitle">אצל אילו חברות הדגם הזה נפוץ</p>
-      ${ops.slice(0,14).map(([ref,n])=>`<div class="yrow" style="grid-template-columns:150px 1fr 60px"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(4,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
+      ${ops.slice(0,14).map(([ref,n])=>`<div class="yrow lbl2"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(4,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
     </div>
   </div>
   <div class="panel"><p class="ptitle">כל הרכבים מהדגם הזה</p>
@@ -356,7 +392,7 @@ function opView(ref){
         ${calYears.map(y=>`<button class="fchip ${YEARF===y?'on':''}" onclick="YEARF=${y};render()">${y}</button>`).join('')}
       </div>`:''}
       ${yk.map(y=>{const c=y>=y0-6?color:y>=y0-10?'#9AA8B8':'#C4CAD4';const act=yearsAct[y]||0;
-        return `<div class="yrow" style="grid-template-columns:44px 1fr 170px"><span>${y}</span><div class="ybar"><b class="tot" style="width:${Math.max(4,years[y]/ymax*100)}%"><i style="width:${years[y]?Math.round(act/years[y]*100):0}%;background:${c}"></i></b></div><span class="c"><b style="color:var(--ok)">${fmt(act)} ${YEARF?`בשנת ${YEARF}`:'פעילים'}</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
+        return `<div class="yrow yact"><span>${y}</span><div class="ybar"><b class="tot" style="width:${Math.max(4,years[y]/ymax*100)}%"><i style="width:${years[y]?Math.round(act/years[y]*100):0}%;background:${c}"></i></b></div><span class="c"><b style="color:var(--ok)">${fmt(act)} ${YEARF?`בשנת ${YEARF}`:'פעילים'}</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
       <p class="note">${YEARF?`רכב נספר לשנת ${YEARF} אם שידר נסיעות במהלכה (לפי חלון הפעילות שנמדד בדאטאבוס). הנתונים מכסים מ-${minSeen} ואילך — ורק את התקופה שכבר נסרקה.`:'"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.'}</p>
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
   <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}</p>
