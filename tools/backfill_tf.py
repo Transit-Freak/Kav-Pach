@@ -186,7 +186,8 @@ def snapshot(ds):
             continue
         p = pts.get(picked[rd][1]) or []
         p.sort()
-        out[rd] = (stops, enc_polyline(thin([(x[1], x[2]) for x in p])) if p else '')
+        # בלי דילול — הכלל הקבוע: שרטוט מלא (שלמה)
+        out[rd] = (stops, enc_polyline([(x[1], x[2]) for x in p]) if p else '')
     return out
 
 

@@ -208,7 +208,17 @@ def main():
     while (time.time() - T0) / 60 < MAX_MIN:
         yi = idx.get(st['young'])
         if yi is None or yi == 0:
-            print('הסריקה הגיעה לתחילת הארכיון — הושלם')
+            if st.get('pass', 1) < 2:
+                # מעבר אימות שני מההתחלה (דרישת שלמה: "הכל לבדוק מחדש") —
+                # הכתיבה מדלגת על מה שכבר מתועד, אז מעבר נקי אמור לכתוב אפס
+                young = avail[-1]
+                print(f'מעבר 1 הושלם — מתחיל מעבר אימות שני מ-{young}')
+                st = {'young': young, 'sigs': day_sigs_all(young), 'pass': 2,
+                      'done_pairs': st.get('done_pairs', 0), 'written': st.get('written', 0)}
+                if not DRY:
+                    json.dump(st, open(STATE, 'w', encoding='utf-8'))
+                continue
+            print('שני המעברים הושלמו — הסריקה נגמרה')
             break
         old = avail[yi - 1]
         try:
