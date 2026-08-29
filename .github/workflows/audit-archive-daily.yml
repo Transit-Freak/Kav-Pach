@@ -33,34 +33,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Day-by-day archive audit
-        run: |
-          set -euo pipefail
-          MAX_MIN='${{ github.event.inputs.max_min || '45' }}' \
-          DRY='${{ github.event.inputs.dry || '0' }}' \
-          python3 tools/audit_archive_daily.py
-
-      - name: Resolve stop codes for anything new
-        run: |
-          set -euo pipefail
-          python3 tools/backfill_codes.py
-
-      - name: Commit
-        if: always()
+      # עבודה בצ'אנקים קצרים ודחיפה אחרי כל אחד: קונפליקט מול עדכון מקביל
+      # מאבד דקות ספורות במקום ריצה שלמה (התבנית הישנה — עבודה של 45 דקות
+      # ודחיפה אחת בסוף — איבדה יום שלם של סריקות לקונפליקטים)
+      - name: Day-by-day archive audit (chunks)
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add line-history/data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: סריקת הארכיון יום-מול-יום — שינויים שלא תועדו נכתבו ביומם"
-          for i in 1 2 3 4 5; do
-            if git push origin HEAD:main; then exit 0; fi
-            if ! git pull --rebase origin main; then
-              git rebase --abort || true
-              echo "קונפליקט מול עדכון מקביל — הריצה הבאה תשלים"
-              exit 0
-            fi
-            echo "retry $i"; sleep 8
+          TOTAL='${{ github.event.inputs.max_min || '45' }}'
+          CH=8
+          for c in $(seq 1 $(( (TOTAL + CH - 1) / CH ))); do
+            MAX_MIN=$CH DRY='${{ github.event.inputs.dry || '0' }}' \
+              python3 tools/audit_archive_daily.py
+            python3 tools/backfill_codes.py || true
+            git add line-history/data
+            if git diff --cached --quiet; then echo "אין שינוי — סוף העבודה"; break; fi
+            git commit -m "data: סריקת הארכיון יום-מול-יום — שינויים שלא תועדו נכתבו ביומם"
+            for i in 1 2 3 4 5; do
+              if git push origin HEAD:main; then break; fi
+              if ! git pull --rebase origin main; then
+                git rebase --abort || true
+                git fetch origin main
+                git reset --hard origin/main
+                echo "קונפליקט — הצ'אנק אבד (עד ~$CH דקות), ממשיכים מבסיס עדכני"
+                break
+              fi
+              echo "retry $i"; sleep 8
+            done
           done
-          exit 1

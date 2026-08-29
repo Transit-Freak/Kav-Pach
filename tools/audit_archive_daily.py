@@ -171,13 +171,13 @@ def day_sigs_all(ds):
 
 
 def save_recheck(st):
-    """סטטוס הבדיקה-מחדש לתצוגה באתר (data/recheck.json)."""
+    """סטטוס הבדיקה-מחדש לתצוגה באתר. קובץ נפרד לכל מנוע (recheck-ob) —
+    כששני המנועים כתבו לאותו recheck.json הם התנגשו זה בזה ב-git
+    ואיבדו ריצות שלמות; האתר ממזג את הקבצים בעצמו."""
     import datetime
-    p = f'{OUTDIR}/recheck.json'
-    rc = jload(p, {})
-    rc['ob_young'] = st.get('young')
-    rc['ob_pass'] = st.get('pass', 1)
-    rc['updated'] = datetime.date.today().isoformat()
+    p = f'{OUTDIR}/recheck-ob.json'
+    rc = {'ob_young': st.get('young'), 'ob_pass': st.get('pass', 1),
+          'updated': datetime.date.today().isoformat()}
     if not DRY:
         json.dump(rc, open(p, 'w', encoding='utf-8'), ensure_ascii=False)
 

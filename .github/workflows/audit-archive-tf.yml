@@ -32,29 +32,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Audit TransitFeeds snapshots pair-by-pair
-        run: |
-          set -euo pipefail
-          MAX_MIN='${{ github.event.inputs.max_min || '45' }}' \
-          DRY='${{ github.event.inputs.dry || '0' }}' \
-          OUTDIR=line-history/data python3 tools/audit_archive_tf.py
-
-      - name: Commit
-        if: always()
+      # צ'אנקים קצרים + דחיפה אחרי כל אחד — קונפליקט מאבד דקות, לא ריצה
+      - name: Audit TransitFeeds snapshots (chunks)
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add line-history/data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: סריקת ארכיון TransitFeeds צילום-מול-צילום — שינויים שלא תועדו נכתבו ביומם"
-          for i in 1 2 3 4 5; do
-            if git push origin HEAD:main; then exit 0; fi
-            if ! git pull --rebase origin main; then
-              git rebase --abort || true
-              echo "קונפליקט מול עדכון מקביל — הריצה הבאה תשלים"
-              exit 0
-            fi
-            echo "retry $i"; sleep 8
+          TOTAL='${{ github.event.inputs.max_min || '45' }}'
+          CH=10
+          for c in $(seq 1 $(( (TOTAL + CH - 1) / CH ))); do
+            MAX_MIN=$CH DRY='${{ github.event.inputs.dry || '0' }}' \
+              OUTDIR=line-history/data python3 tools/audit_archive_tf.py
+            git add line-history/data
+            if git diff --cached --quiet; then echo "אין שינוי — סוף העבודה"; break; fi
+            git commit -m "data: סריקת ארכיון TransitFeeds צילום-מול-צילום — שינויים שלא תועדו נכתבו ביומם"
+            for i in 1 2 3 4 5; do
+              if git push origin HEAD:main; then break; fi
+              if ! git pull --rebase origin main; then
+                git rebase --abort || true
+                git fetch origin main
+                git reset --hard origin/main
+                echo "קונפליקט — הצ'אנק אבד (עד ~$CH דקות), ממשיכים מבסיס עדכני"
+                break
+              fi
+              echo "retry $i"; sleep 8
+            done
           done
-          exit 1

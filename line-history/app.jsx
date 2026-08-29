@@ -2602,12 +2602,16 @@ function ModesTab({ idx, openLine, spec }) {
 
 /* הודעת הבדיקה-מחדש (בקשת שלמה): התגלתה תקלה בחלק מהמידע ההיסטורי —
    שרטוטים ומק"טים חסרים ושינויים בלי תאריך מדויק — וכל הארכיון נבדק
-   מחדש מול שני המקורות. הטווחים חיים מ-data/recheck.json, שהסריקות
-   מעדכנות בכל ריצה, כך שההודעה מציגה תמיד את המצב האמיתי. */
+   מחדש מול שני המקורות. הטווחים חיים בקובץ סטטוס נפרד לכל מנוע סריקה
+   (recheck-ob / recheck-tf) — קובץ משותף גרם לקונפליקטים בין המנועים —
+   ו-recheck.json הישן נשאר כבסיס. המיזוג כאן, בדפדפן. */
 function RecheckNotice() {
   const [rc, setRc] = useState(null);
   useEffect(() => {
-    dfetch("data/recheck.json").then((r) => r.json()).then(setRc).catch(() => {});
+    const grab = (u) => dfetch(u).then((r) => r.json()).catch(() => ({}));
+    Promise.all([grab("data/recheck.json"), grab("data/recheck-ob.json"), grab("data/recheck-tf.json")])
+      .then(([a, b, c]) => setRc({ ...a, ...b, ...c }))
+      .catch(() => {});
   }, []);
   if (!rc || !rc.ob_young) return null;
   const f = (d) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : "");

@@ -52,11 +52,11 @@ def sig_of(stops):
 
 
 def save_recheck(st):
-    """סטטוס הבדיקה-מחדש לתצוגה באתר (data/recheck.json)."""
-    p = f'{OUTDIR}/recheck.json'
-    rc = jload(p, {})
-    rc['tf_young'] = iso(st['young'])
-    rc['updated'] = datetime.date.today().isoformat()
+    """סטטוס הבדיקה-מחדש לתצוגה באתר. קובץ נפרד לכל מנוע (recheck-tf) —
+    כתיבה משותפת ל-recheck.json גרמה לקונפליקטים בין המנועים."""
+    p = f'{OUTDIR}/recheck-tf.json'
+    rc = {'tf_young': iso(st['young']),
+          'updated': datetime.date.today().isoformat()}
     if not DRY:
         json.dump(rc, open(p, 'w', encoding='utf-8'), ensure_ascii=False)
 
