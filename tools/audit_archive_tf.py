@@ -51,6 +51,16 @@ def sig_of(stops):
     return hashlib.sha1(','.join(str(s[0]) for s in stops).encode()).hexdigest()[:10]
 
 
+def save_recheck(st):
+    """סטטוס הבדיקה-מחדש לתצוגה באתר (data/recheck.json)."""
+    p = f'{OUTDIR}/recheck.json'
+    rc = jload(p, {})
+    rc['tf_young'] = iso(st['young'])
+    rc['updated'] = datetime.date.today().isoformat()
+    if not DRY:
+        json.dump(rc, open(p, 'w', encoding='utf-8'), ensure_ascii=False)
+
+
 def has_route_record(rd, lo_iso, hi_iso):
     """יש כבר רשומת-מסלול בחלון (lo, hi]? הדגימה דלילה — כל החלון נבדק."""
     lf = jload(f'{OUTDIR}/lines/{fsafe(rd)}.json', None)
@@ -164,6 +174,7 @@ def main():
         if not DRY:
             json.dump({k: v for k, v in st.items() if k != 'sigs'},
                       open(STATE, 'w', encoding='utf-8'))
+        save_recheck(st)
         time.sleep(PAUSE)
     print(f"מצב: הגענו עד {iso(st['young'])} · זוגות: {st.get('done_pairs', 0)}"
           f" · אירועים שנכתבו: {st.get('written', 0)}")

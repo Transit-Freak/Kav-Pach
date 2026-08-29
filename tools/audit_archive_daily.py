@@ -121,6 +121,18 @@ def day_sigs_all(ds):
     return out
 
 
+def save_recheck(st):
+    """סטטוס הבדיקה-מחדש לתצוגה באתר (data/recheck.json)."""
+    import datetime
+    p = f'{OUTDIR}/recheck.json'
+    rc = jload(p, {})
+    rc['ob_young'] = st.get('young')
+    rc['ob_pass'] = st.get('pass', 1)
+    rc['updated'] = datetime.date.today().isoformat()
+    if not DRY:
+        json.dump(rc, open(p, 'w', encoding='utf-8'), ensure_ascii=False)
+
+
 def has_route_record(rd, ds):
     """יש כבר רשומת-מסלול בטווח ±2 ימים? (אירוע/קיום — לא לו"ז)."""
     import datetime
@@ -240,6 +252,7 @@ def main():
         st['done_pairs'] = st.get('done_pairs', 0) + 1
         if not DRY:
             json.dump(st, open(STATE, 'w', encoding='utf-8'))
+        save_recheck(st)
         time.sleep(PAUSE)
     print(f"מצב: הגענו עד {st.get('young')} · זוגות שנבדקו: {st.get('done_pairs', 0)}"
           f" · אירועים שנכתבו: {st.get('written', 0)}")

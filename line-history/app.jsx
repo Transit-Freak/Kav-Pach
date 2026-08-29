@@ -2600,6 +2600,37 @@ function ModesTab({ idx, openLine, spec }) {
   );
 }
 
+/* הודעת הבדיקה-מחדש (בקשת שלמה): התגלתה תקלה בחלק מהמידע ההיסטורי —
+   שרטוטים ומק"טים חסרים ושינויים בלי תאריך מדויק — וכל הארכיון נבדק
+   מחדש מול שני המקורות. הטווחים חיים מ-data/recheck.json, שהסריקות
+   מעדכנות בכל ריצה, כך שההודעה מציגה תמיד את המצב האמיתי. */
+function RecheckNotice() {
+  const [rc, setRc] = useState(null);
+  useEffect(() => {
+    dfetch("data/recheck.json").then((r) => r.json()).then(setRc).catch(() => {});
+  }, []);
+  if (!rc || !rc.ob_young) return null;
+  const f = (d) => (d ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : "");
+  const obDone = rc.ob_pass >= 2 || rc.ob_young <= "2022-01-16";
+  const tfDone = rc.tf_young && rc.tf_young <= "2017-03-20";
+  if (obDone && tfDone && rc.ob_pass >= 2) return null;   // הבדיקה הסתיימה — ההודעה יורדת
+  return (
+    <div style={{ background: "#fffbeb", border: "1px solid #f3d9a4", borderRadius: 12,
+      padding: "10px 14px", margin: "10px 0 2px", fontSize: 14, lineHeight: 1.55, color: "#57534e" }}>
+      <b style={{ color: "#92400e" }}>🛠️ הודעה: התגלתה תקלה בחלק מהמידע ההיסטורי, והארכיון כולו נבדק ומתעדכן מחדש מול שני המקורות.</b>
+      <div>
+        ✅ מאומת ותקין: התיעוד השוטף מהסריקה היומית (25.07.2026 ← היום),
+        {" "}וכן ארכיון אופן באס בטווח {f(rc.ob_young)} ← 24.07.2026{rc.ob_pass >= 2 ? " (מעבר אימות שני)" : ""}.
+      </div>
+      <div>
+        🔄 בבדיקה כעת: אופן באס 16.01.2022 ← {f(rc.ob_young)}
+        {rc.tf_young ? <> · TransitFeeds ‏03.2017 ← {f(rc.tf_young)}</> : null}
+        {" "}— נתונים בטווחים אלה עשויים להתעדכן בימים הקרובים.
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [idx, setIdx] = useState(null);
   const [err, setErr] = useState(null);
@@ -2752,6 +2783,7 @@ function App() {
   const changed = idx ? idx.lines.filter((l) => l.v > 1).length : 0;
   return (
     <div className="wrap">
+      <RecheckNotice />
       <header>
         <h1>🕰️ הקו בזמן</h1>
         <p className="tag">כל שינוי שנכנס לתוקף במסלולי הקווים ובתחנות — מסלול, שרטוט, תחנות ושמות. מהשוואת ה-GTFS של משרד התחבורה, יום מול יום, ממרץ 2017 ועד היום.</p>
