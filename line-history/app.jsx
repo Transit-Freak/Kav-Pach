@@ -223,7 +223,9 @@ function segDiff(cur, prev) {
     const out = [];
     let s = idx[0], e = idx[0];
     for (let i = 1; i < idx.length; i++) {
-      if (idx[i] - e <= 12) e = idx[i];
+      // גישור הדוק (3 נקודות): גישור רחב הדביק רסיסי-רעש לרצף של מאות
+      // מטרים והסימון נראה "בערך" (דיווח שלמה, קו 26 — הכיכר החדשה)
+      if (idx[i] - e <= 3) e = idx[i];
       else { out.push([s, e]); s = e = idx[i]; }
     }
     out.push([s, e]);
@@ -246,18 +248,32 @@ function segDiff(cur, prev) {
     curRuns = runsIdx(da, th); prevRuns = runsIdx(db, th);
   }
   if (!curRuns.length && !prevRuns.length) return null;
+  /* שרטוט-מחדש של אותו כביש מזיז את כל התוואי ב-13–20 מ' (צד שני של
+     דו-מסלולי, החלקת פינות) — רעש שאינו שינוי מסלול. שינוי אמיתי
+     (כיכר חדשה, לולאה, רחוב אחר) מטפס הרבה מעל הסף. נשמרים רק רצפים
+     עם שיא-סטייה ממשי; אם אין כאלה כלל — זה תיקון קטן אמיתי (רכסים)
+     וכל הרצפים נשארים. */
+  const TH2 = Math.max(28, th + 15);
+  const dmaxOf = (ds, [a, b]) => { let m = 0; for (let i = a; i <= b; i++) if (ds[i] > m) m = ds[i]; return m; };
+  const strongA = curRuns.filter((r) => dmaxOf(da, r) >= TH2);
+  const strongB = prevRuns.filter((r) => dmaxOf(db, r) >= TH2);
+  if (strongA.length || strongB.length) { curRuns = strongA; prevRuns = strongB; }
   /* הסימון מדויק לפי קואורדינטות השרטוטים בלבד (דרישת שלמה, קו 26
      שדרות — "לא לנחש בערך"): לכל קטע ששונה בצד אחד נחתך גם הצד השני
      בדיוק בין ההטלות הגיאומטריות של קצות הקטע על הפוליליין שלו. כך
      האדום עוקב אחרי השרטוט הישן עצמו מנקודת ההתפצלות ועד נקודת
      ההתאחדות, והירוק אחרי החדש — בלי להמציא תוואי ובלי קיטוע. */
-  function projOn(q, Sm, hint) {
-    /* המיקום (אינדקס+שבר) הקרוב ביותר לאורך פוליליין. hint = המיקום
-       היחסי הצפוי (0..1): מסלול הלוך-ושוב עובר באותו כביש פעמיים,
-       ובלי העוגן ההטלה "קופצת" למעבר השני ומותחת את הסימון לקילומטרים
-       (קרה בקו 26 שדרות). בין מועמדים קרובים־דומה נבחר זה שמכבד את
-       הסדר לאורך הקו. */
-    const cand = [];
+  /* קטע-הנגד המדויק: קצות הרצף מוטלים על הפוליליין השני, וכשמסלול
+     עובר באותו כביש פעמיים (הלוך-ושוב) יש לכל קצה כמה הטלות אפשריות —
+     נבחר צמד ההטלות שממזער את האורך הכלוא ביניהן. בחירה לפי סדר-לאורך-
+     הקו כלאה בקו 26 לולאה של 4 ק"מ שקיימת בשני השרטוטים והציגה אותה
+     כאילו בוטלה. גם עכשיו: אם האורך הכלוא לא פרופורציונלי לרצף — אין
+     תוואי מקביל אמיתי (הארכה מעבר לקצה) ולא ממציאים כלום. */
+  const cumOf = (S) => { const c = [0]; for (let i = 1; i < S.length; i++) c.push(c[i - 1] + Math.hypot(S[i][0] - S[i - 1][0], S[i][1] - S[i - 1][1])); return c; };
+  const cumA = cumOf(A), cumB = cumOf(B);
+  const lenAt = (c, pos) => { const i = Math.max(0, Math.min(Math.floor(pos), c.length - 2)); return c[i] + (c[i + 1] - c[i]) * (pos - i); };
+  function candsOn(q, Sm) {   // אשכולות ההטלות הקרובות (אחד לכל מעבר של הכביש)
+    const raw = [];
     let dmin = Infinity;
     for (let i = 0; i < Sm.length - 1; i++) {
       const s0 = Sm[i], s1 = Sm[i + 1];
@@ -268,32 +284,38 @@ function segDiff(cur, prev) {
       const x = s0[0] + t * dx - q[0], y = s0[1] + t * dy - q[1];
       const dd = Math.sqrt(x * x + y * y);
       if (dd < dmin) dmin = dd;
-      cand.push({ d: dd, pos: i + t });
+      raw.push({ d: dd, pos: i + t });
     }
-    const lim = Math.max(dmin * 2, dmin + 30);
-    let best = null;
-    for (const c of cand) {
-      if (c.d > lim) continue;
-      const off = Math.abs(c.pos / (Sm.length - 1) - hint);
-      if (!best || off < best.off) best = { d: c.d, pos: c.pos, off };
+    const lim = Math.min(250, Math.max(dmin * 2, dmin + 30));
+    const near = raw.filter((c) => c.d <= lim);
+    const out = [];
+    for (const c of near) {
+      if (out.length && c.pos - out[out.length - 1].pos <= 3) {
+        if (c.d < out[out.length - 1].d) out[out.length - 1] = { d: c.d, pos: c.pos };
+      } else out.push({ d: c.d, pos: c.pos });
     }
-    return best || { d: dmin, pos: 0, off: 1 };
+    return out;
   }
-  // קטעי כל צד: הרצפים החורגים שלו עצמו + החיתוכים המדויקים שנגזרים
-  // מרצפי הצד השני. הטלה רחוקה מ-250 מ' = אין תוואי מקביל (למשל הארכה
-  // מעבר לקצה הישן) — לא ממציאים כלום.
+  const counterIv = (run, Pm, cumP, Sm, cumS) => {
+    const a0 = Math.max(0, run[0] - 1), b0 = Math.min(Pm.length - 1, run[1] + 1);
+    const c0 = candsOn(Pm[a0], Sm), c1 = candsOn(Pm[b0], Sm);
+    const runLen = lenAt(cumP, b0) - lenAt(cumP, a0);
+    // הצמד הנבחר: האורך הכלוא הכי דומה לאורך הרצף עצמו (מזעור טהור קרס
+    // לאפס כששני הקצוות נפלו על אותה נקודת צומת), עם שובר-שוויון לקרבה
+    let best = null;
+    for (const u of c0) for (const v of c1) {
+      const span = Math.abs(lenAt(cumS, v.pos) - lenAt(cumS, u.pos));
+      const score = Math.abs(span - runLen) + (u.d + v.d) * 2;
+      if (!best || score < best.score) best = { score, span, lo: Math.min(u.pos, v.pos), hi: Math.max(u.pos, v.pos) };
+    }
+    if (!best) return null;
+    if (best.span > runLen * 3 + 300 || best.span < runLen * 0.15 - 60) return null;
+    return [best.lo, best.hi];
+  };
   const ivA = curRuns.map(([a, b]) => [Math.max(0, a - 1), Math.min(A.length - 1, b + 1)]);
   const ivB = prevRuns.map(([a, b]) => [Math.max(0, a - 1), Math.min(B.length - 1, b + 1)]);
-  for (const [a, b] of curRuns) {
-    const a0 = Math.max(0, a - 1), b0 = Math.min(A.length - 1, b + 1);
-    const p0 = projOn(A[a0], B, a0 / (A.length - 1)), p1 = projOn(A[b0], B, b0 / (A.length - 1));
-    if (p0.d <= 250 && p1.d <= 250) ivB.push([Math.min(p0.pos, p1.pos), Math.max(p0.pos, p1.pos)]);
-  }
-  for (const [a, b] of prevRuns) {
-    const a0 = Math.max(0, a - 1), b0 = Math.min(B.length - 1, b + 1);
-    const p0 = projOn(B[a0], A, a0 / (B.length - 1)), p1 = projOn(B[b0], A, b0 / (B.length - 1));
-    if (p0.d <= 250 && p1.d <= 250) ivA.push([Math.min(p0.pos, p1.pos), Math.max(p0.pos, p1.pos)]);
-  }
+  for (const r of curRuns) { const iv = counterIv(r, A, cumA, B, cumB); if (iv) ivB.push(iv); }
+  for (const r of prevRuns) { const iv = counterIv(r, B, cumB, A, cumA); if (iv) ivA.push(iv); }
   const mergeIv = (iv) => {
     const s = iv.filter(([x, y]) => y - x > 0.05).sort((u, v) => u[0] - v[0]);
     const out = [];
@@ -522,13 +544,20 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
         </button>
       )}
       {/* כשרק צד אחד חרג מהסף (תיקון שרטוט קטן) — הצד השני הוא חיתוך
-          מדויק של השרטוט שלו בין נקודות ההתפצלות; אומרים את זה כדי
-          שהאדום לא ייקרא כסטייה גדולה (דרישת שלמה, רכסים + קו 26) */}
-      {diff && diff.derived === "prev" && (
+          מדויק של השרטוט שלו בין נקודות ההתפצלות; וכשהתוואי הישן עבר
+          צמוד (כיכר חדשה בקו 26 — הקו הישן משיק לה) אין בכלל מה לסמן
+          באדום, ואומרים את זה במקום להמציא קטע (דרישת שלמה) */}
+      {diff && diff.derived === "prev" && diff.prevSegs.length > 0 && (
         <div className="mut">🛈 הקטע האדום מסמן את התוואי הישן במקום שבו השרטוט תוקן — חתוך מהשרטוט הישן עצמו, בדיוק בין נקודות ההתפצלות מהתוואי החדש; הירוק הוא התיקון.</div>
       )}
-      {diff && diff.derived === "cur" && (
+      {diff && diff.derived === "prev" && diff.prevSegs.length === 0 && (
+        <div className="mut">🛈 כאן נוסף תוואי חדש (הירוק) — התוואי הישן במקום שבו השרטוט תוקן עבר צמוד לחדש, בלי סטייה משלו, ולכן אין קטע אדום.</div>
+      )}
+      {diff && diff.derived === "cur" && diff.curSegs.length > 0 && (
         <div className="mut">🛈 הקטע הירוק מסמן את התוואי החדש במקום שבו השרטוט תוקן — חתוך מהשרטוט החדש עצמו, בדיוק בין נקודות ההתפצלות מהתוואי הישן; האדום הוא מה שירד.</div>
+      )}
+      {diff && diff.derived === "cur" && diff.curSegs.length === 0 && (
+        <div className="mut">🛈 כאן ירד תוואי (האדום) — התוואי החדש במקום שבו השרטוט תוקן עובר צמוד לישן, בלי סטייה משלו, ולכן אין קטע ירוק.</div>
       )}
       {diff && !diff.prevSegs.length && !diff.curSegs.length && (
         <div className="mut">🛈 שני השרטוטים כמעט חופפים (ההבדל קטן מעשרות מטרים) — לכן אין קטע אדום או ירוק מודגש; הקו האדום המקווקו מסתתר מתחת לירוק.</div>
