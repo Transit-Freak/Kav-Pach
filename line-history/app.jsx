@@ -269,6 +269,23 @@ function segDiff(cur, prev) {
     curRuns = runsIdx(da, th); prevRuns = runsIdx(db, th);
   }
   if (!curRuns.length && !prevRuns.length) return null;
+  /* הרחבה עד נקודת האיחוי (בקשת שלמה: "הקטע שמצויר בצבע החלש — שיודגש
+     כולו"): רצף שנתפס מעל הסף מתרחב לאורך הקו שלו עד המקום שבו שני
+     השרטוטים באמת מתאחדים (מתחת ל-LOW), כך שההדגשה מכסה את כל הקטע
+     שנראה נפרד בעין — לא רק את ליבו שחצה את הסף. */
+  const LOW = Math.max(5, th / 3);
+  const grow = (runs, ds) => {
+    const out = [];
+    for (let [a, b] of runs) {
+      while (a > 0 && ds[a - 1] > LOW) a--;
+      while (b < ds.length - 1 && ds[b + 1] > LOW) b++;
+      if (out.length && a <= out[out.length - 1][1] + 3) out[out.length - 1][1] = Math.max(out[out.length - 1][1], b);
+      else out.push([a, b]);
+    }
+    return out;
+  };
+  curRuns = grow(curRuns, da);
+  prevRuns = grow(prevRuns, db);
   /* הסימון מדויק לפי קואורדינטות השרטוטים בלבד (דרישת שלמה, קו 26
      שדרות — "לא לנחש בערך"): לכל קטע ששונה בצד אחד נחתך גם הצד השני
      בדיוק בין ההטלות הגיאומטריות של קצות הקטע על הפוליליין שלו. כך
