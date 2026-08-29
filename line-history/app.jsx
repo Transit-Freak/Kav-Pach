@@ -262,10 +262,10 @@ function segDiff(cur, prev) {
     return s.length ? s[Math.floor(s.length / 2)] : 0;
   };
   const noise = med(da.concat(db));
-  // סף הזיהוי 8 מ': שני שרטוטים מלאים של אותו כביש נבדלים ב-0–5 מ',
-  // וסטייה של 6–11 מ' כבר נראית בעין כשני קווים נפרדים — עם סף 12 מ'
-  // היא לא נתפסה בכלל (דיווח שלמה: "קטע חלש שלא מסומן")
-  let th = Math.max(8, noise * 2.5 + 8);
+  // בלי רף זיהוי (בקשת שלמה: "שלא תהיה הגבלה — שפשוט יסמן את הקטע"):
+  // הסף הוא רק דיוק הציור — 5 מ'. כל מקום ששני השרטוטים אינם אותו קו
+  // בו מסומן. הרכיב המסתגל מגן רק מצמד שרטוטים ישן ורועד.
+  let th = Math.max(5, noise * 2.5 + 3);
   let curRuns = runsIdx(da, th), prevRuns = runsIdx(db, th);
   if (!curRuns.length && !prevRuns.length) {
     th = Math.max(3, noise * 2.5 + 2);
@@ -276,7 +276,7 @@ function segDiff(cur, prev) {
      כולו"): רצף שנתפס מעל הסף מתרחב לאורך הקו שלו עד המקום שבו שני
      השרטוטים באמת מתאחדים (מתחת ל-LOW), כך שההדגשה מכסה את כל הקטע
      שנראה נפרד בעין — לא רק את ליבו שחצה את הסף. */
-  const LOW = Math.max(4, th / 3);
+  const LOW = Math.max(3, th - 2);
   const grow = (runs, ds) => {
     const n = ds.length;
     const sep = new Array(n);
