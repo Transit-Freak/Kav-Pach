@@ -227,7 +227,9 @@ function segDiff(cur, prev) {
       else { out.push([s, e]); s = e = idx[i]; }
     }
     out.push([s, e]);
-    return out.map(([a, b]) => pts.slice(Math.max(0, a - 6), Math.min(pts.length, b + 7)));
+    // ריפוד מינימלי בלבד: מדגישים רק את מה שבאמת השתנה, לא את כל הסביבה
+    // (בקשת שלמה — בתיקון שרטוט ההדגשה הרחבה נראתה כאילו כל הקטע הוחלף)
+    return out.map(([a, b]) => pts.slice(Math.max(0, a - 1), Math.min(pts.length, b + 2)));
   }
   const gB = buildGrid(B), gA = buildGrid(A);
   const da = dists(A, B, gB), db = dists(B, A, gA);
@@ -242,18 +244,25 @@ function segDiff(cur, prev) {
   // שרטוט שהוסיף פיתול קטן — הישן נשאר בתוך הסבלנות), נגזר מהמסלול
   // השני התוואי המקביל לקטע ששונה. בלי זה נראה היה כאילו "לא מסומן
   // מה בוטל" (דרישת שלמה, רכסים) — עכשיו אדום וירוק מופיעים יחד בכל קו
-  const nearIdx = (Pm, q) => {
-    let bi = 0, bd = Infinity;
-    for (let i = 0; i < Pm.length; i++) {
-      const dx = Pm[i][0] - q[0], dy = Pm[i][1] - q[1];
-      const d = dx * dx + dy * dy;
-      if (d < bd) { bd = d; bi = i; }
-    }
-    return bi;
-  };
+  // הגזירה לפי מרחק, לא לפי אינדקסים: רק הרצף הישן שבטווח ~80 מ'
+  // מהקטע ששונה — אחרת מסלול שמתקרב לעצמו גרר קטע אדום ענק
   const counterpart = (segs, Pm, Praw) => segs.map((s2) => {
-    const a = nearIdx(Pm, M(s2[0])), b = nearIdx(Pm, M(s2[s2.length - 1]));
-    const [i, j] = a <= b ? [a, b] : [b, a];
+    const segM = s2.map(M);
+    const dmin = Pm.map((q) => {
+      let best = Infinity;
+      for (const p of segM) {
+        const dx = p[0] - q[0], dy = p[1] - q[1];
+        const d = dx * dx + dy * dy;
+        if (d < best) best = d;
+      }
+      return best;
+    });
+    let ci = 0;
+    for (let i = 1; i < dmin.length; i++) if (dmin[i] < dmin[ci]) ci = i;
+    const LIM = 80 * 80;
+    let i = ci, j = ci;
+    while (i > 0 && dmin[i - 1] < LIM) i--;
+    while (j < dmin.length - 1 && dmin[j + 1] < LIM) j++;
     return Praw.slice(Math.max(0, i - 1), Math.min(Praw.length, j + 2));
   }).filter((r) => r.length > 1);
   let derived = null;
