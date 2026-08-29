@@ -233,10 +233,18 @@ function segDiff(cur, prev) {
   }
   const gB = buildGrid(B), gA = buildGrid(A);
   const da = dists(A, B, gB), db = dists(B, A, gA);
-  let th = 12;
+  // סף מסתגל: שני שרטוטים שדוללו אחרת "רועדים" זה סביב זה לכל האורך,
+  // ועם סף קבוע כל המסלול הודגש כאילו הוחלף (דיווח שלמה, קו 26). הסף
+  // עולה מעל רעש-הבסיס של ההשוואה כך שרק הסטייה האמיתית מודגשת
+  const med = (arr) => {
+    const s = [...arr].filter((x) => isFinite(x)).sort((x, y) => x - y);
+    return s.length ? s[Math.floor(s.length / 2)] : 0;
+  };
+  const noise = med(da.concat(db));
+  let th = Math.max(12, noise * 2.5 + 8);
   let curSegs = runsOf(da, th, cur), prevSegs = runsOf(db, th, prev);
   if (!curSegs.length && !prevSegs.length) {
-    th = 3;
+    th = Math.max(3, noise * 2.5 + 2);
     curSegs = runsOf(da, th, cur); prevSegs = runsOf(db, th, prev);
   }
   if (!curSegs.length && !prevSegs.length) return null;
@@ -1246,8 +1254,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   // שלמה, קו 26). כפתור "השווה" עדיין זמין למי שרוצה להשוות במפורש.
   const snapOnly = (v.k === "snapshot" || v.k === "baseline" || v.k === "times")
     && !(v.add || []).length && !(v.rem || []).length;
-  const comparable = !!pv && !snapOnly &&
-    (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp));
+  // השוואה מפורשת ("השווה") עובדת תמיד — חסימת הצילומים חלה רק על
+  // ההשוואה האוטומטית של הכרטיס (התיקון הקודם שבר את ההשוואה, שלמה)
+  const comparable = cmpOn || (!!pv && !snapOnly &&
+    (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp)));
   // הגרסה הסמוכה עשויה להיות אירוע-רישום בלי רצף תחנות — ואז "המסלול
   // הקודם" והתחנות שירדו לא צוירו כלל (הבאג שצילם שלמה בקו 35 אשדוד).
   // שואלים את התיעוד הגיאומטרי האחרון שלפני האירוע, כמו במצב השוואה.

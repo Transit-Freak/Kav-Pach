@@ -182,7 +182,8 @@ def day_full_cal(ds, rds):
         pts = shp_pts.get(sid_.encode() if isinstance(sid_, str) else sid_)
         if pts:
             pts.sort()
-            shp = enc_polyline(thin([(p[1], p[2]) for p in pts]))
+            # בלי דילול — הכלל הקבוע: גם תיקון של כמה מטרים ייראה (שלמה)
+            shp = enc_polyline([(p[1], p[2]) for p in pts])
         out[rd2] = {'stops': stops, 'shp': shp}
     return out
 
