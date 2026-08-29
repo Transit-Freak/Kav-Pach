@@ -262,7 +262,10 @@ function segDiff(cur, prev) {
     return s.length ? s[Math.floor(s.length / 2)] : 0;
   };
   const noise = med(da.concat(db));
-  let th = Math.max(12, noise * 2.5 + 8);
+  // סף הזיהוי 8 מ': שני שרטוטים מלאים של אותו כביש נבדלים ב-0–5 מ',
+  // וסטייה של 6–11 מ' כבר נראית בעין כשני קווים נפרדים — עם סף 12 מ'
+  // היא לא נתפסה בכלל (דיווח שלמה: "קטע חלש שלא מסומן")
+  let th = Math.max(8, noise * 2.5 + 8);
   let curRuns = runsIdx(da, th), prevRuns = runsIdx(db, th);
   if (!curRuns.length && !prevRuns.length) {
     th = Math.max(3, noise * 2.5 + 2);
@@ -273,12 +276,20 @@ function segDiff(cur, prev) {
      כולו"): רצף שנתפס מעל הסף מתרחב לאורך הקו שלו עד המקום שבו שני
      השרטוטים באמת מתאחדים (מתחת ל-LOW), כך שההדגשה מכסה את כל הקטע
      שנראה נפרד בעין — לא רק את ליבו שחצה את הסף. */
-  const LOW = Math.max(5, th / 3);
+  const LOW = Math.max(4, th / 3);
   const grow = (runs, ds) => {
+    const n = ds.length;
+    const sep = new Array(n);
+    for (let i = 0; i < n; i++) sep[i] = ds[i] > LOW;
+    // כשהקו הישן חוצה את החדש המרחק צונח לרגע לאפס — חור של עד 2 דגימות
+    // (~24 מ') בנקודת ההצטלבות לא קוטע את הרצף, והזנב שמעבר לה מודגש גם
+    for (let i = 1; i < n - 1; i++) {
+      if (!sep[i] && sep[i - 1] && (sep[i + 1] || (i + 2 < n && sep[i + 2]))) sep[i] = true;
+    }
     const out = [];
     for (let [a, b] of runs) {
-      while (a > 0 && ds[a - 1] > LOW) a--;
-      while (b < ds.length - 1 && ds[b + 1] > LOW) b++;
+      while (a > 0 && sep[a - 1]) a--;
+      while (b < n - 1 && sep[b + 1]) b++;
       if (out.length && a <= out[out.length - 1][1] + 3) out[out.length - 1][1] = Math.max(out[out.length - 1][1], b);
       else out.push([a, b]);
     }
@@ -493,13 +504,16 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     const pinPts = (remPins || []).map((p) => [p[2], p[3]]);
     const all = focused ? focusPts : cur.concat(prev || []).concat(pts12).concat(pinPts);
     map.fitBounds(L.latLngBounds(all.length ? all : [[32.08, 34.78]]).pad(focused ? 0.35 : 0.1), { maxZoom: 16 });
+    // במצב התמקדות שכבות-הרקע כמעט שקופות: המקווקו האדום העדין שמצויר
+    // לאורך כל המסלול נקרא בטעות כ"שינוי לא מסומן" בקטעים שבהם שני
+    // השרטוטים זהים והוא מציץ מתחת לירוק (דיווח שלמה)
     if (prev && prev.length > 1) {
-      L.polyline(prev, { color: "#dc2626", weight: focused ? 3 : 4, opacity: focused ? 0.25 : 0.75, dashArray: "8 7" }).addTo(map);
+      L.polyline(prev, { color: "#dc2626", weight: focused ? 2 : 4, opacity: focused ? 0.12 : 0.75, dashArray: "8 7" }).addTo(map);
     }
     if (cur.length > 1) {
       L.polyline(cur, approx
         ? { color: "#7c3aed", weight: 4, opacity: 0.8, dashArray: "7 9" }   // קו מקורב בין תחנות
-        : { color: prev ? "#16a34a" : "#4c1d95", weight: focused ? 3 : 5, opacity: focused ? 0.3 : 0.9 }).addTo(map);
+        : { color: prev ? "#16a34a" : "#4c1d95", weight: focused ? 3 : 5, opacity: focused ? 0.25 : 0.9 }).addTo(map);
     }
     if (focused && diff) {
       diff.prevSegs.forEach((s2) => L.polyline(s2, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
