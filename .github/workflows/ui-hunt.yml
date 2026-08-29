@@ -1,0 +1,60 @@
+name: ui-hunt
+
+# הצייד — סיור דפדפן יומי באתר החי: קווים אקראיים, מפות, מק"טים,
+# השוואות. הממצאים נכתבים לפאנל התקלות. תקלה נתפסת לפני שמדווחים עליה.
+
+on:
+  schedule:
+    - cron: '0 11 * * *'   # ~14:00 ישראל — אחרי שהסריקה היומית התפרסמה
+  workflow_dispatch:
+    inputs:
+      n:
+        description: 'כמה קווים לדגום'
+        required: false
+        default: '30'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ui-hunt-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  hunt:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install browser
+        run: |
+          npm install playwright@1.49.0 --no-save
+          npx playwright install --with-deps chromium
+      - name: Hunt the live site
+        run: |
+          HUNT_N='${{ github.event.inputs.n || '30' }}' node tools/ui_hunt.mjs
+      - name: Refresh the failures panel
+        run: OUTDIR=line-history/data python3 tools/qa_checks.py
+      - name: Commit
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add line-history/data
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "data: סיור הצייד היומי — ממצאי בדיקת האתר החי"
+          for i in 1 2 3 4 5; do
+            if git push origin HEAD:main; then exit 0; fi
+            if ! git pull --rebase origin main; then
+              git rebase --abort || true
+              echo "קונפליקט מול עדכון מקביל — הריצה הבאה תשלים"
+              exit 0
+            fi
+            echo "retry $i"; sleep 8
+          done
+          exit 1

@@ -82,6 +82,29 @@ def run():
 
 def main():
     res = run()
+    # ממצאי הצייד (סיור הדפדפן היומי באתר החי) — שורות נוספות בפאנל
+    try:
+        hunt = json.load(open(f'{OUTDIR}/ui-hunt.json', encoding='utf-8'))
+        lbl = {'page_load': 'עמוד קו שלא נטען (סיור חי)',
+               'js_error': 'שגיאת קוד בדפדפן (סיור חי)',
+               'empty_map': 'מפה שלא מציירת כלום (סיור חי)',
+               'no_code': 'רשומת ➕/➖ בלי מק"ט בתצוגה (סיור חי)',
+               'compare_broken': '"השווה" לא נפתח (סיור חי)',
+               'js_error_compare': 'שגיאת קוד בהשוואה (סיור חי)',
+               'crash': 'קריסת עמוד בסיור החי'}
+        agg = {}
+        for i in hunt.get('issues') or []:
+            k = 'hunt_' + i.get('type', 'x')
+            e = agg.setdefault(k, {'label': lbl.get(i.get('type'), i.get('type')), 'count': 0, 'sample': []})
+            e['count'] += 1
+            if len(e['sample']) < 5:
+                e['sample'].append(f"{i.get('rd')} · {i.get('detail', '')[:60]}")
+        for k in lbl:
+            res.setdefault('hunt_' + k, {'label': lbl[k] + f" — מדגם {hunt.get('checked', 0)} עמודים",
+                                          'count': 0, 'sample': []})
+        res.update({k: v for k, v in agg.items()})
+    except Exception:
+        pass
     gen = datetime.datetime.now().strftime('%d.%m.%Y %H:%M')
     json.dump({'generated': gen, 'checks': res},
               open(f'{OUTDIR}/qa.json', 'w', encoding='utf-8'), ensure_ascii=False)
