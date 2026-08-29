@@ -1,8 +1,6 @@
 name: probe-publisher
 
-# איתור ותיעוד: מתי בדיוק ירדה תחנת "מרכז שדה חינוכי" (19125, ברור חיל)
-# מקו 26 שדרות — חיפוש בינארי בארכיון בין 14.02.2024 ל-01.05.2026,
-# וכתיבת האירוע ביומו האמיתי עם ➕/➖ ומק"טים.
+# אימות מה האתר החי מגיש: הודעת הבדיקה-מחדש וקובץ הסטטוס שלה.
 
 on:
   push:
@@ -11,147 +9,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   probe:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - name: Locate and record the 19125 removal from line 26
+      - name: Fetch live files and check
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json, sys, bisect
-          sys.path.insert(0, 'tools')
-          from backfill_new_routes import day_full_cal
-          from backfill_geo import list_available_days
-          from compact_lines import compact, materialize
-          RDS = ['30026-1-#', '30026-2-#']
-          FS = {'30026-1-#': '30026-1-H', '30026-2-#': '30026-2-H'}
-          TARGET = '19125'
-          avail = [d for d in list_available_days() if '2024-02-14' < d < '2026-05-01']
-          cache = {}
-
-          def state_at(i):
-              ds = avail[i]
-              if ds in cache:
-                  return cache[ds]
-              try:
-                  got = day_full_cal(ds, RDS)
-              except (Exception, SystemExit):
-                  cache[ds] = None
-                  return None
-              g = got.get('30026-1-#')
-              if not g or not g.get('stops'):
-                  cache[ds] = None
-              else:
-                  cache[ds] = TARGET in {str(s[0]) for s in g['stops']}
-              print(f'{ds}: ' + {True: 'התחנה בקו', False: 'התחנה איננה', None: 'הקו לא פעיל בצילום'}[cache[ds]])
-              return cache[ds]
-
-          def probe_near(i):
-              for off in (0, 1, -1, 2, -2, 3, -3, 5, -5):
-                  j = i + off
-                  if 0 <= j < len(avail):
-                      r = state_at(j)
-                      if r is not None:
-                          return j, r
-              return None, None
-
-          lo, hi = 0, len(avail) - 1
-          j, r = probe_near(lo)
-          if r is False:
-              hi = j
-              lo = -1   # הירידה לפני תחילת החלון הזמין
-          j, r = probe_near(hi)
-          if r is True:
-              print('התחנה עוד בקו בסוף החלון — לא צפוי')
-              sys.exit(0)
-          steps = 0
-          while lo >= 0 and hi - lo > 1 and steps < 16:
-              steps += 1
-              mid = (lo + hi) // 2
-              j, r = probe_near(mid)
-              if j is None or j <= lo or j >= hi:
-                  break
-              if r:
-                  lo = j
-              else:
-                  hi = j
-          d_with = avail[lo] if lo >= 0 else '2024-02-14'
-          d_without = avail[hi]
-          print(f'==> נצפתה לאחרונה בקו: {d_with} · נעדרת לראשונה: {d_without}')
-          # כתיבת האירוע ביום המעבר, לשני הכיוונים
-          try:
-              got_o = day_full_cal(d_with, RDS) if lo >= 0 else None
-          except (Exception, SystemExit):
-              got_o = None
-          got_y = day_full_cal(d_without, RDS)
-          mp = f'line-history/data/changes/{d_without[:7]}.json'
-          try:
-              chm = json.load(open(mp, encoding='utf-8'))
-          except Exception:
-              chm = {'changes': []}
-          for rd in RDS:
-              gy = got_y.get(rd)
-              go = (got_o or {}).get(rd)
-              if not (gy and gy.get('stops')):
-                  print(f'{rd}: אין נתוני יום-המעבר — דילוג')
-                  continue
-              p = f'line-history/data/lines/{FS[rd]}.json'
-              lf = materialize(json.load(open(p, encoding='utf-8')))
-              if any(abs((__import__('datetime').date.fromisoformat(v['d'])
-                          - __import__('datetime').date.fromisoformat(d_without)).days) <= 2
-                     and (v.get('stops') or v.get('add') or v.get('rem')) for v in lf['versions']):
-                  print(f'{rd}: כבר יש רשומה סמוכה — דילוג')
-                  continue
-              base = go['stops'] if (go and go.get('stops')) else None
-              if base is None:
-                  prev = [v for v in sorted(lf['versions'], key=lambda x: x['d'])
-                          if v.get('stops') and v['d'] < d_without]
-                  base = prev[-1]['stops'] if prev else []
-              yc = {str(s[0]) for s in gy['stops']}
-              bc = {str(s[0]) for s in base}
-              add = [s for s in gy['stops'] if str(s[0]) not in bc]
-              rem = [s for s in base if str(s[0]) not in yc]
-              if not add and not rem:
-                  print(f'{rd}: אין הפרש — דילוג')
-                  continue
-              kind = 'stops-del' if rem and not add else ('stops-add' if add and not rem else 'route')
-              v = {'d': d_without, 'k': kind, 'shp': gy.get('shp') or '', 'stops': gy['stops'],
-                   'src': 'ob',
-                   'note': f'שוחזר בדיעבד מהארכיון: התחנה ירדה בין {d_with} ל-{d_without}'}
-              if add:
-                  v['add'] = [s[1] for s in add][:15]
-                  v['ac'] = [str(s[0]) for s in add][:15]
-              if rem:
-                  v['rem'] = [s[1] for s in rem][:15]
-                  v['rc'] = [str(s[0]) for s in rem][:15]
-              lf['versions'].append(v)
-              lf['versions'].sort(key=lambda x: x['d'])
-              json.dump(compact(lf), open(p, 'w', encoding='utf-8'),
-                        ensure_ascii=False, separators=(',', ':'))
-              chm['changes'] = [c for c in chm['changes']
-                                if not (c.get('rd') == rd and c.get('d') == d_without)]
-              ch = {'d': d_without, 'rd': rd, 'line': lf.get('line', '26'), 'k': kind}
-              if add: ch['add'] = v['add']
-              if rem: ch['rem'] = v['rem']
-              chm['changes'].append(ch)
-              print(f"{rd}: נכתב {kind} ב-{d_without} | ➖ {[s[1] for s in rem]}")
-          json.dump(chm, open(mp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-          PY
-          python3 tools/rebuild_lines_index.py
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add line-history/data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: קו 26 שדרות — הורדת מרכז שדה חינוכי (19125) תוארכה ליומה מהארכיון"
-          for i in 1 2 3 4 5; do
-            if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main || { git rebase --abort || true; exit 0; }
-            sleep 8
-          done
-          exit 1
+          curl -fsS -H 'Cache-Control: no-cache' \
+            "https://transit-freak.github.io/kav-bochan/line-history/app.jsx?cb=$RANDOM" -o live.jsx
+          echo "app.jsx bytes: $(wc -c < live.jsx)"
+          grep -c "RecheckNotice" live.jsx && echo "RecheckNotice: קיים" || echo "RecheckNotice: חסר!"
+          curl -fsS "https://transit-freak.github.io/kav-bochan/line-history/data/recheck.json?cb=$RANDOM" && echo && echo "recheck.json: קיים"
+          curl -fsS "https://transit-freak.github.io/kav-bochan/line-history/index.html?cb=$RANDOM" | grep -o 'LH_BUILD = "[0-9]*"'
