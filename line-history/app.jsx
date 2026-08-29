@@ -181,7 +181,28 @@ function segDiff(cur, prev) {
   if (!cur || cur.length < 2 || !prev || prev.length < 2) return null;
   const ky = 110540, kx = 111320 * Math.cos((cur[0][0] * Math.PI) / 180);
   const M = (p) => [p[1] * kx, p[0] * ky];
-  const A = cur.map(M), B = prev.map(M);
+  /* דגימה צפופה (כל ~12 מ') של שני השרטוטים לפני ההשוואה: קטע ישר ארוך
+     בלי קודקודים באמצע — כמו חציית כיכר בקו ישר — לא נדגם קודם בכלל,
+     והתוואי הישן שעבר בתוך הכיכר לא סומן באדום (צילומי שלמה, קו 26,
+     צומת ברור חיל וצומת אור הנר). הנקודות הנדגמות יושבות בדיוק על
+     הקו המקורי — שום גאומטריה לא מומצאת. */
+  function densify(Praw, Pm) {
+    const R = [Praw[0]], Q = [Pm[0]];
+    for (let i = 1; i < Praw.length; i++) {
+      const a = Pm[i - 1], b = Pm[i];
+      const n = Math.min(60, Math.floor(Math.hypot(b[0] - a[0], b[1] - a[1]) / 12));
+      for (let k = 1; k <= n; k++) {
+        const t = k / (n + 1);
+        R.push([Praw[i - 1][0] + (Praw[i][0] - Praw[i - 1][0]) * t,
+                Praw[i - 1][1] + (Praw[i][1] - Praw[i - 1][1]) * t]);
+        Q.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+      }
+      R.push(Praw[i]); Q.push(Pm[i]);
+    }
+    return [R, Q];
+  }
+  const [cd, A] = densify(cur, cur.map(M));
+  const [pd, B] = densify(prev, prev.map(M));
   const CS = 60; // גודל תא הרשת במטרים
   function buildGrid(S) {
     const g = new Map();
@@ -248,16 +269,6 @@ function segDiff(cur, prev) {
     curRuns = runsIdx(da, th); prevRuns = runsIdx(db, th);
   }
   if (!curRuns.length && !prevRuns.length) return null;
-  /* שרטוט-מחדש של אותו כביש מזיז את כל התוואי ב-13–20 מ' (צד שני של
-     דו-מסלולי, החלקת פינות) — רעש שאינו שינוי מסלול. שינוי אמיתי
-     (כיכר חדשה, לולאה, רחוב אחר) מטפס הרבה מעל הסף. נשמרים רק רצפים
-     עם שיא-סטייה ממשי; אם אין כאלה כלל — זה תיקון קטן אמיתי (רכסים)
-     וכל הרצפים נשארים. */
-  const TH2 = Math.max(28, th + 15);
-  const dmaxOf = (ds, [a, b]) => { let m = 0; for (let i = a; i <= b; i++) if (ds[i] > m) m = ds[i]; return m; };
-  const strongA = curRuns.filter((r) => dmaxOf(da, r) >= TH2);
-  const strongB = prevRuns.filter((r) => dmaxOf(db, r) >= TH2);
-  if (strongA.length || strongB.length) { curRuns = strongA; prevRuns = strongB; }
   /* הסימון מדויק לפי קואורדינטות השרטוטים בלבד (דרישת שלמה, קו 26
      שדרות — "לא לנחש בערך"): לכל קטע ששונה בצד אחד נחתך גם הצד השני
      בדיוק בין ההטלות הגיאומטריות של קצות הקטע על הפוליליין שלו. כך
@@ -334,8 +345,8 @@ function segDiff(cur, prev) {
     if (t1 > 0.001 && i1 < P.length - 1) out.push(lerp(P[i1], P[i1 + 1], t1));
     return out;
   };
-  const curSegs = mergeIv(ivA).map((r) => slice(cur, r)).filter((r) => r.length > 1);
-  const prevSegs = mergeIv(ivB).map((r) => slice(prev, r)).filter((r) => r.length > 1);
+  const curSegs = mergeIv(ivA).map((r) => slice(cd, r)).filter((r) => r.length > 1);
+  const prevSegs = mergeIv(ivB).map((r) => slice(pd, r)).filter((r) => r.length > 1);
   const derived = curRuns.length && !prevRuns.length ? "prev"
     : prevRuns.length && !curRuns.length ? "cur" : null;
   return { curSegs, prevSegs, derived };
