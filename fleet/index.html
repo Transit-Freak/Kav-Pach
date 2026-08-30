@@ -159,12 +159,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 7 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 8 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='7';
+window.FLEET_BUILD='8';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -343,10 +343,17 @@ function cityView(c){
     <div class="panel"><p class="ptitle">${opsTitle}</p>
       ${opRows}
     </div>
-    ${yk.length?`<div class="panel"><p class="ptitle">כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר</p>
-      ${yk.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';
-        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,d.years[y]/ymax*100)}%;background:${col}"></i></div><span class="c">${fmt(d.years[y])}</span></div>`;}).join('')}
-    </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>'}
+    ${(()=>{
+      // שנתונים — מסונן לחודש הנבחר כשיש פילוח (בקשת שלמה)
+      const ymd=CITYMON&&d.ym?d.ym:null;
+      const vals=ymd?Object.fromEntries(Object.keys(d.years).map(y=>[y,(ymd[y]||{})[CITYMON]||0])):d.years;
+      const keys=Object.keys(vals).map(Number).filter(y=>vals[y]>0).sort((a,b)=>b-a);
+      const vmax=keys.length?Math.max(...keys.map(y=>vals[y])):1;
+      const ttl=CITYMON?`כמה אוטובוסים מכל שנתון פעלו בעיר ב-${mfmt(CITYMON)}`+(ymd?'':' (הפילוח החודשי ייבנה בריצה הקרובה — מוצג הכללי)'):'כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר';
+      return keys.length?`<div class="panel"><p class="ptitle">${ttl}</p>
+      ${keys.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';
+        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,vals[y]/vmax*100)}%;background:${CITYMON&&ymd?'#1E5BC6':col}"></i></div><span class="c">${fmt(vals[y])}</span></div>`;}).join('')}
+    </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>';})()}
   </div>
   <p class="note">רכב משויך לעיר רק אם היא מוצא או יעד של קו שבו שידר — קווים שרק חולפים דרך העיר אינם נספרים. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
 }

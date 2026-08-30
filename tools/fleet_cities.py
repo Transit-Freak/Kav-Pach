@@ -112,6 +112,7 @@ def main():
             # opm = אותה ספירה בפילוח לפי חברה (בקשת שלמה: בחירת חודש
             # מציגה את גרף החברות של אותו חודש)
             om = ct['opm'].setdefault(op, {})
+            ym = ct.setdefault('ym', {}).setdefault(str(y), {}) if y else None
             b, i = mask, 0
             while b:
                 if b & 1:
@@ -119,6 +120,8 @@ def main():
                     m = f'{t // 12}-{t % 12 + 1:02d}'
                     ct['months'][m] = ct['months'].get(m, 0) + 1
                     om[m] = om.get(m, 0) + 1
+                    if ym is not None:
+                        ym[m] = ym.get(m, 0) + 1
                 b >>= 1
                 i += 1
 
@@ -132,7 +135,8 @@ def main():
                           **({'months': dict(sorted(d['months'].items()))}
                              if d.get('months') else {}),
                           **({'opm': {str(o): m for o, m in d['opm'].items() if m}}
-                             if any(d.get('opm', {}).values()) else {})}
+                             if any(d.get('opm', {}).values()) else {}),
+                          **({'ym': d['ym']} if d.get('ym') else {})}
                       for c, d in cities.items() if d['total'] >= 3}}
     tmp = f'{OUT}.tmp'
     with open(tmp, 'w', encoding='utf-8') as f:
