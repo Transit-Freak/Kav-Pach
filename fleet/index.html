@@ -226,7 +226,7 @@ function home(){
     let hits=[];
     for(const o of DATA.operators) for(const v of o.vehicles)
       if(!clean||v[0].replace(/-/g,'').includes(clean)) hits.push([o,v]);
-    if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
+    if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0,ok:v=>v._ok||0}[SORTK];
       if(key) hits.sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
     else hits.sort((a,b)=>a[1][2]<b[1][2]?1:a[1][2]>b[1][2]?-1:0);
     if(ARF) hits=hits.filter(h=>h[1]._ar&&(ARF===1||h[1]._ar.includes(ARF)));
@@ -353,7 +353,7 @@ function typeView(t){
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
   if(ARF) pairs=pairs.filter(p=>p[1]._ar&&(ARF===1||p[1]._ar.includes(ARF)));
-  if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
+  if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0,ok:v=>v._ok||0}[SORTK];
     if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
   return `<button class="back" onclick="history.back()">→ חזרה לכל הדגמים</button>
   <div class="ophead" style="background:#10172A">
@@ -379,10 +379,10 @@ function typeView(t){
 // הסבר קצר על הערכת הק"מ — מוצג בריחוף על ⓘ בכותרות העמודות ובחלון הרכב
 const KMTIP='הערכה בלבד: אורך המסלול המתוכנן של הקווים שבהם הרכב שידר, כפול מספר הנסיעות שנקלטו. לא ידוע אם כל נסיעה בוצעה במלואה — ייתכנו נסיעות חלקיות, קטעים בלי קליטת GPS או שידור חסר, ולא ידוע כמה נסיעות היו בכל קו.';
 // חלונית ההסבר של הק"מ — נפתחת בלחיצה על ⓘ (בעיקר לטלפון, שאין בו ריחוף)
-function showTip(){
+function showTip(title,body){title=title||'איך מחושב הקילומטראז\' המשוער';body=body||KMTIP;
   const ovl=document.createElement('div');ovl.className='ovl';
-  ovl.innerHTML=`<div class="modal" style="max-width:420px"><div class="mhead"><b style="font-size:16px">איך מחושב הקילומטראז' המשוער</b><button class="x" aria-label="סגירה">✕</button></div>
-    <div style="font-size:14.5px;line-height:1.65;color:var(--ink)">${KMTIP}</div>
+  ovl.innerHTML=`<div class="modal" style="max-width:420px"><div class="mhead"><b style="font-size:16px">${title}</b><button class="x" aria-label="סגירה">✕</button></div>
+    <div style="font-size:14.5px;line-height:1.65;color:var(--ink)">${body}</div>
     <p class="note">המקור לאורכי המסלולים: שרטוטי הקווים של "הקו בזמן". ההערכה מכסה רק ימים שנסרקו.</p></div>`;
   ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
   document.body.appendChild(ovl);
@@ -391,18 +391,18 @@ function table(vs,opsArr){
   const enr=DATA.enriched;
   // ⓘ לחיץ: בטלפון אין ריחוף, ולחיצה על הסמל פתחה את המיון במקום את
   // ההסבר (דיווח שלמה) — עצירת האירוע ופתיחת חלונית הסבר
-  const th=(k,t,tip)=>`<th onclick="srt('${k}')" ${tip?`title="${tip}"`:''}>${t}${tip?` <span style="cursor:help;color:#1D4ED8;font-size:13px" onclick="event.stopPropagation();showTip()">ⓘ</span>`:''}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
+  const th=(k,t,tip,tt)=>`<th onclick="srt('${k}')" ${tip?`title="${tip}"`:''}>${t}${tip?` <span style="cursor:help;color:#1D4ED8;font-size:13px" onclick='event.stopPropagation();showTip(${tt?JSON.stringify(tt):'null'},${tt?JSON.stringify(tip):'null'})'>ⓘ</span>`:''}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
   const shown=vs.slice(0,LIMIT);
   return `<div class="tblbox"><table><thead><tr>${opsArr?'<th>חברה</th>':''}
     ${th('p','מספר רכב')}${enr?th('t','סוג הרכב')+th('y','שנתון')+th('m','יצרן ודגם'):''}
-    ${OFF?th('r','נסיעות ביום'):''}${KMOK?th('kd','ק"מ ביום (משוער)',KMTIP)+th('kt','ק"מ סה"כ (משוער)',KMTIP):''}${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
+    ${OFF?th('r','נסיעות ביום'):''}${KMOK?th('kd','ק"מ ביום (משוער)',KMTIP)+th('kt','ק"מ סה"כ (משוער)',KMTIP):''}${OFCOK?th('ok','ק"מ במד (רשמי)','מד הקילומטרים הרשמי של האוטובוס — ממאגר ״ציי רכב אוטובוסים״ של משרד התחבורה. נתון אמיתי מהמונה, לא הערכה; קיים רק לרכבי החברות (לא לרכבי קבלן).','מד הקילומטרים הרשמי'):''}${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
   ${shown.map((v,i)=>{const on=isActive(v);const mv=on?null:movedTo(v);
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
     <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" style="cursor:help">🛡️</span>`:''}</td>
     ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
-    ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}
+    ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}${OFCOK?`<td>${v._ok!=null?fmt(v._ok):'—'}</td>`:''}
     <td>${fd(v[1])}</td><td>${fd(v[2])}</td>
     <td><span class="st ${on?'on':mv?'mv':'off'}">${on?'פעיל':mv?'עבר ל'+esc(mv.name):'ירד מהשירות'}</span></td></tr>`;}).join('')}
   </tbody></table></div>
@@ -490,7 +490,7 @@ function opView(ref){
 
 function sortVs(vs){
   if(!SORTK) return vs;
-  const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',d:v=>gD(v)||0,t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
+  const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',d:v=>gD(v)||0,t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0,ok:v=>v._ok||0}[SORTK];
   return vs.slice().sort((a,b)=>{const x=key(a),y=key(b);return (x>y?1:x<y?-1:0)*SORTD;});
 }
 function srt(k){if(SORTK===k)SORTD*=-1;else{SORTK=k;SORTD=-1;}render();}
@@ -543,7 +543,7 @@ function buildOfficial(){
   let n=0;
   for(const o of DATA.operators) for(const v of o.vehicles){
     const f=OFC.of[v[0].replace(/\D/g,'').replace(/^0+/,'')];
-    if(f){v._bt=f[4]||null;v._bs=f[5]||null;n++;}
+    if(f){v._bt=f[4]||null;v._bs=f[5]||null;if(f[0]!=null)v._ok=f[0];n++;}
   }
   OFCOK=n>0;
 }
@@ -637,9 +637,9 @@ function dlCSV(name,rows){
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
-const VHEAD=['חברה','מספר רכב','סוג הרכב','שנתון','יצרן ודגם','נסיעות ביום','ק"מ ביום (משוער)','ק"מ סה"כ (משוער)','נצפה לראשונה','נצפה לאחרונה','מצב'];
+const VHEAD=['חברה','מספר רכב','סוג הרכב','שנתון','יצרן ודגם','נסיעות ביום','ק"מ ביום (משוער)','ק"מ סה"כ (משוער)','ק"מ במד (רשמי)','נצפה לראשונה','נצפה לאחרונה','מצב'];
 function vRow(v,o){const on=isActive(v);const mv=on?null:movedTo(v);
-  return [o?o.name:'',v[0],gT(v)||'',gY(v)||'',gM(v)||'',gR(v)!=null?gR(v):'',v._kd!=null?v._kd:'',v._kt!=null?v._kt:'',v[1],v[2],on?'פעיל':mv?'עבר ל'+mv.name:'ירד מהשירות'];}
+  return [o?o.name:'',v[0],gT(v)||'',gY(v)||'',gM(v)||'',gR(v)!=null?gR(v):'',v._kd!=null?v._kd:'',v._kt!=null?v._kt:'',v._ok!=null?v._ok:'',v[1],v[2],on?'פעיל':mv?'עבר ל'+mv.name:'ירד מהשירות'];}
 function XDL(){
   if(!DATA) return;
   const D=[]; let name='צי-הרכבים';
