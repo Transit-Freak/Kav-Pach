@@ -32,6 +32,13 @@ def key(plate):
 def main():
     armor, official = {}, {}
     nb = ns = 0
+    # תאריך העדכון של המאגר אצל המשרד עצמו — לא רק מתי משכנו
+    gov_upd = ''
+    try:
+        meta = get(f'{CKAN}/resource_show?id={RID}')['result']
+        gov_upd = (meta.get('last_modified') or '')[:10]
+    except Exception:
+        pass
     offset = 0
     while True:
         d = get(f'{CKAN}/datastore_search?resource_id={RID}&limit=2000&offset={offset}')
@@ -61,10 +68,12 @@ def main():
     today = datetime.date.today().isoformat()
     for path, obj in [
         (f'{OUTDIR}/fleet-armor.json',
-         {'updated': today, 'src': 'מאגר "ציי רכב אוטובוסים" — משרד התחבורה (data.gov.il)',
+         {'updated': today, 'gov_updated': gov_upd,
+          'src': 'מאגר "ציי רכב אוטובוסים" — משרד התחבורה (data.gov.il)',
           'counts': {'bullet': nb, 'stone': ns}, 'armor': armor}),
         (f'{OUTDIR}/fleet-official.json',
-         {'updated': today, 'src': 'מאגר "ציי רכב אוטובוסים" — משרד התחבורה (data.gov.il)',
+         {'updated': today, 'gov_updated': gov_upd,
+          'src': 'מאגר "ציי רכב אוטובוסים" — משרד התחבורה (data.gov.il)',
           'of': official}),
     ]:
         tmp = f'{path}.tmp'
