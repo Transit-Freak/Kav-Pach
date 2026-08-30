@@ -159,12 +159,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 3 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 4 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='3';
+window.FLEET_BUILD='4';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -361,10 +361,10 @@ function typeHome(f){
   else rows.sort((a,b)=>b[1].n-a[1].n);
   const total=rows.length;
   if(!f) rows=rows.slice(0,MODELS_SHOWN);
-  return kpis()+`${GPOK?`<div class="filters" style="margin-bottom:10px">
+  return kpis()+`<div class="filters" style="margin-bottom:10px">
     <button class="fchip ${TSORT==='n'?'on':''}" onclick="TSORT='n';render()">הדגמים הגדולים</button>
     <button class="fchip ${TSORT==='g'?'on':''}" onclick="TSORT='g';render()" title="דגמים לפי אחוז הרכבים שנעלמו חודש+ וחזרו (תקלה אפשרית) — מ-20 רכבים ומעלה">⚠️ הכי מקולקלים</button>
-  </div>`:''}<div class="cards">${rows.map(([t,g],i)=>
+  </div>${TSORT==='g'&&!GPOK?`<div class="panel"><div class="empty">נתוני הנפילות עדיין נטענים או לא זמינים — נסו לרענן</div></div>`:''}<div class="cards">${rows.map(([t,g],i)=>
     `<button class="card" style="background:${TCOLORS[i%TCOLORS.length]}" onclick="history.pushState({sub:1},'');TYPESEL=${JSON.stringify(t).replace(/"/g,'&quot;')};STATF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0})">
       <h2 style="font-size:1.05rem;word-break:break-word">${esc(t)}</h2><div class="n">${TSORT==='g'?Math.round(100*g.gp/g.n)+'%':fmt(g.n)}</div>
       ${TSORT==='g'?`<div style="font-size:13px;font-weight:700;opacity:.92;margin-top:-2px">נפלו וחזרו — תקלה אפשרית</div>`:''}
