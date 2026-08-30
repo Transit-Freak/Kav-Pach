@@ -507,6 +507,13 @@ function buildKm(){
   }
   KMOK=n>0;
 }
+// ימי הפעילות שנמדדו לכל רכב — נטען בעצלתיים לכרטיס הרכב
+let DAYS=null;
+async function loadDays(){
+  if(DAYS!==null) return;
+  try{const r=await fetch('data/fleet-days.json',{cache:'no-cache'});DAYS=r.ok?await r.json():{};}
+  catch(e){DAYS={};}
+}
 // מיגון ירי/אבנים — ממאגר "ציי רכב אוטובוסים" של משרד התחבורה
 async function loadArmor(){
   if(ARM!==null) return;
@@ -534,7 +541,7 @@ async function showV(plate){
   if(!recs.length) return;
   const fv=recs[0][1];
   const clean=plate.replace(/-/g,'').replace(/^0+/,'');
-  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor()]);
+  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays()]);
   const ar=ARM&&ARM.armor?ARM.armor[clean]:null;
   const on=recs.some(([,v])=>isActive(v));
   let rows='',anyKm=false;
@@ -546,6 +553,8 @@ async function showV(plate){
     ${recs.length>1?'':`<div class="k">מפעיל</div><div class="v2">${esc(o2.name)}</div>`}
     <div class="k">נצפה לראשונה</div><div class="v2">${fd(v2[1])}</div>
     <div class="k">נצפה לאחרונה</div><div class="v2">${fd(v2[2])}</div>
+    ${(()=>{const dd=DAYS&&DAYS.d?DAYS.d[o2.ref+':'+v2[0]]:null;
+      return dd?`<div class="k">ימי פעילות שנמדדו</div><div class="v2">${fmt(dd[0])} ימים · ${fmt(dd[1])} נסיעות סה"כ</div>`:'';})()}
     ${gR(v2)!=null?`<div class="k">נסיעות ביום בממוצע</div><div class="v2">${gR(v2)} (בימים שנמדדו)</div>`:''}
     ${km&&km[0]!=null?`<div class="k">ק"מ ביום פעילות (משוער)</div><div class="v2">כ-${fmt(km[0])} ק"מ</div>`:''}
     ${km?`<div class="k">ק"מ שנמדדו בסך הכול (משוער)</div><div class="v2">כ-${fmt(km[1])} ק"מ</div>`:''}
