@@ -243,8 +243,9 @@ function home(){
     const kab=DATA.enriched?o.vehicles.filter(isKab).length:0;
     const kabA=kab?o.vehicles.filter(v=>isKab(v)&&isActive(v)).length:0, retReg=ret-(kab-kabA);
     return `<button class="card" style="background:${opColor(o.ref,i)}" onclick="go(${o.ref})">
-      <h2>${esc(o.name)}</h2><div class="n">${fmt(o.vehicles.length)}</div>
-      <div class="pills"><span>${fmt(act)} פעילים</span>${retReg?`<span class="r">${fmt(retReg)} ירדו</span>`:''}${kab?`<span>רכבי קבלן: ${fmt(kabA)} פעילים${kab-kabA?` · ${fmt(kab-kabA)} ירדו`:''}</span>`:''}</div>
+      <h2>${esc(o.name)}</h2><div class="n">${fmt(act-kabA)}</div>
+      <div style="font-size:13.5px;font-weight:700;opacity:.92;margin-top:-2px">רכבי החברה הפעילים עכשיו${kabA?' (בלי קבלנים)':''}</div>
+      <div class="pills"><span style="background:rgba(255,255,255,.16)">ובסך הכול נצפו: ${fmt(o.vehicles.length)}</span>${retReg?`<span class="r">${fmt(retReg)} ירדו</span>`:''}${kab?`<span>רכבי קבלן: ${fmt(kabA)} פעילים${kab-kabA?` · ${fmt(kab-kabA)} ירדו`:''}</span>`:''}</div>
     </button>`;}).join('')||'<div class="empty">לא נמצאה חברה</div>'}</div>`;
 }
 
