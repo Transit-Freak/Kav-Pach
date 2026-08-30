@@ -258,11 +258,12 @@ function cityHome(f){
   const all=Object.entries(CITIES.cities||{});
   if(!all.length) return kpis()+'<div class="panel"><div class="empty">נתוני הערים ייבנו בריצת האיסוף הקרובה — הסריקה החלה לשמור את הקווים של כל רכב רק עכשיו. חזרו מחר.</div></div>';
   if(CITYSEL&&CITIES.cities[CITYSEL]) return cityView(CITYSEL);
-  const hits=all.filter(([c])=>!f||c.includes(f)).sort((a,b)=>b[1].total-a[1].total).slice(0,30);
+  const hits=all.filter(([c])=>!f||c.includes(f)).sort((a,b)=>(b[1].act??b[1].total)-(a[1].act??a[1].total)).slice(0,30);
   return kpis()+`<div class="cards">${hits.map(([c,d])=>
     `<button class="card" style="background:#10172A" onclick="history.pushState({sub:1},'');CITYSEL=${JSON.stringify(c).replace(/"/g,'&quot;')};CITYMON='';render();window.scrollTo({top:0})">
       <h2>${esc(c)}</h2><div class="n">${d.act!=null?fmt(d.act):fmt(d.total)}</div>
-      <div class="pills">${d.act!=null?`<span>פעילים עכשיו בעיר</span><span style="background:rgba(255,255,255,.14);color:#e2e8f0">${fmt(d.total)} סה"כ שנצפו</span>`:`<span>רכבים פועלים בעיר</span>`}</div>
+      <div style="font-size:13.5px;font-weight:700;opacity:.92;margin-top:-2px">${d.act!=null?'אוטובוסים פעילים עכשיו בעיר':'רכבים פועלים בעיר'}</div>
+      ${d.act!=null?`<div class="pills"><span style="background:rgba(255,255,255,.14);color:#e2e8f0">ובסך הכול נצפו בה אי-פעם: ${fmt(d.total)}</span></div>`:''}
     </button>`).join('')||'<div class="empty">לא נמצאה עיר</div>'}</div>`;
 }
 function cityView(c){
