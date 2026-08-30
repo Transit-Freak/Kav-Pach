@@ -234,7 +234,9 @@ function home(){
       ${ARMOK?`<div class="filters"><button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">🛡️ ממוגנים בלבד</button></div>`:''}
       ${hits.length?table(hits.map(h=>h[1]),hits.map(h=>h[0])):'<div class="empty">לא נמצא רכב מתאים</div>'}</div>`;
   }
-  const ops=DATA.operators.filter(o=>!f||o.name.includes(f)).slice().sort((a,b)=>b.vehicles.length-a.vehicles.length);
+  // מיון החברות לפי הפעילים עכשיו (בקשת שלמה) — לא לפי הסה"כ המצטבר
+  const actN=o=>o.vehicles.reduce((s,v)=>s+(isActive(v)?1:0),0);
+  const ops=DATA.operators.filter(o=>!f||o.name.includes(f)).slice().sort((a,b)=>actN(b)-actN(a));
   return kpis()+`<div class="cards">${ops.map((o,i)=>{
     const act=o.vehicles.filter(isActive).length, ret=o.vehicles.length-act;
     const kab=DATA.enriched?o.vehicles.filter(isKab).length:0;
