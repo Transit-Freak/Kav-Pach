@@ -29,6 +29,9 @@ CHECKS = {
     'dup_versions': 'שתי גרסאות באותו קו, תאריך וסוג',
     'thinned_shp': 'שרטוט קצר חשוד ביחס למספר התחנות (ייתכן דילול ישן)',
     'noop_redraw': 'אירוע "תיקון שרטוט" שהשרטוט בו זהה לגרסה הקודמת (מועמד לניקוי)',
+    'pd_inverted': 'תחנה ראשונה "הורדה בלבד" או אחרונה "העלאה בלבד" — חשד להיפוך דגלים (הבאג של קו 12 טבריה)',
+    'add_not_in_stops': 'תחנה ברשימת ➕ שאינה מופיעה ברצף התחנות של הגרסה — חשד לערבוב רשימות',
+    'rem_in_stops': 'תחנה ברשימת ➖ שעדיין מופיעה ברצף התחנות — חשד לערבוב רשימות',
 }
 
 
@@ -81,6 +84,28 @@ def run():
             # שמציג מפה ריקה מהדגשות כי אין באמת מה להדגיש
             if k == 'redraw' and v.get('shp') and prev_shp and v['shp'] == prev_shp:
                 hit('noop_redraw', f'{rd} · {d}')
+            # שומרי-סמנטיקה (בקשת שלמה אחרי היפוך העלאה/הורדה בקו 12):
+            # pd: 1=אין-הורדה (העלאה בלבד), 2=אין-העלאה (הורדה בלבד).
+            # תחנה ראשונה עם 2 או אחרונה עם 1 — כמעט בלתי אפשרי; קפיצה
+            # במונה = ההיפוך חזר איפשהו בצנרת
+            if stops and len(stops) >= 3:
+                pdf = stops[0][4] if len(stops[0]) > 4 else 0
+                pdl = stops[-1][4] if len(stops[-1]) > 4 else 0
+                if pdf == 2 or pdl == 1:
+                    hit('pd_inverted', f'{rd} · {d} · ראשונה={pdf} אחרונה={pdl}')
+            # ערבוב רשימות ➕/➖ — לפי מק"ט (כלל שלמה), לא לפי שם: קו שעובר
+            # פעמיים באותו רחוב מציג שם זהה בשתי נקודות, והשוואת-שמות
+            # צעקה על 5,471 מקרים כשרים
+            if stops and (v.get('add') or v.get('rem')):
+                scodes = {str(x[0]) for x in stops}
+                for c0 in (v.get('ac') or []):
+                    if c0 is not None and str(c0) not in scodes:
+                        hit('add_not_in_stops', f'{rd} · {d} · מקט {c0}')
+                        break
+                for c0 in (v.get('rc') or []):
+                    if c0 is not None and str(c0) in scodes:
+                        hit('rem_in_stops', f'{rd} · {d} · מקט {c0}')
+                        break
             if v.get('shp'):
                 prev_shp = v['shp']
             if codes is not None:
