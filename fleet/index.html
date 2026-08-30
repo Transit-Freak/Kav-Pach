@@ -301,15 +301,19 @@ function cityView(c){
       const bar=a!=null?`<b class="tot" style="width:${Math.max(5,n/mx*100)}%"><i style="width:${n?Math.round(a/n*100):0}%;background:#1B7A3D"></i></b>`:`<i style="width:${Math.max(5,n/mx*100)}%;background:#1B7A3D"></i>`;
       return `<div class="yrow lbl"${a!=null?' style="grid-template-columns:110px 1fr 118px"':''}><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar">${bar}</div><span class="c">${a!=null?`<b style="color:var(--ok)">${fmt(a)} פעילים</b> · ${fmt(n)}`:fmt(n)}</span></div>`;}).join('');
   }
-  const monPanel=mk.length?`<div class="panel"><p class="ptitle">כמה רכבים שונים פעלו בעיר בכל חודש · ממוצע חודשי: כ-${fmt(mavg)}${CITYMON?` · <button class="fchip on" onclick="CITYMON='';render()">✕ ${mfmt(CITYMON)} — חזרה לכל המידע</button>`:''}</p>
-    ${mk.map(m=>`<button class="yrow lbl" style="width:100%;border:none;background:${CITYMON===m?'#eef4ff':'transparent'};cursor:pointer;font-family:inherit;border-radius:8px;text-align:inherit" title="לחיצה מציגה את גרף החברות של החודש הזה" onclick="CITYMON=CITYMON===${JSON.stringify(m).replace(/"/g,'&quot;')}?'':${JSON.stringify(m).replace(/"/g,'&quot;')};render()"><span ${CITYMON===m?'style="font-weight:800"':''}>${mfmt(m)}</span><div class="ybar"><i style="width:${Math.max(3,months[m]/mmax*100)}%;background:#1E5BC6"></i></div><span class="c">${fmt(months[m])}</span></button>`).join('')}
-    <p class="note">לחיצה על חודש מציגה את גרף החברות שלו · רכב נספר לחודש שבו שידר נסיעות. הספירה נבנית מהחודשים האחרונים אחורה — חודשים ישנים יתווספו ככל שהמילוי מתקדם.</p>
-  </div>`
-  :`<div class="panel"><p class="ptitle">פעילות לפי חודש</p><div class="empty">הספירה החודשית נאספת כעת — המילוי רץ ברקע מהחודשים האחרונים אחורה ויופיע כאן בהדרגה</div></div>`;
+  const monPanel='';
   return `<button class="back" onclick="history.back()">→ חזרה לכל הערים</button>
   <div class="ophead" style="background:#10172A">
     <div><h2>${esc(c)}</h2><div class="sub2">${CITYMON?`ב-${mfmt(CITYMON)}: ${fmt(months[CITYMON])} רכבים שונים פעלו בעיר · `:`${d.act!=null?`${fmt(d.act)} פעילים עכשיו (שידרו בחודש האחרון, נכון ל-${fd(DATA.updated)}) · ${fmt(d.total)} סה"כ שנצפו · `:`${fmt(d.total)} רכבים שונים פועלים בעיר · `}`}${mavg?`כ-${fmt(mavg)} בחודש ממוצע · `:''}עדכון ${fd(CITIES.updated)}</div></div>
   </div>
+  ${mk.length?`<div class="filters" style="margin:12px 0 2px;align-items:center">
+    <span style="font-size:13px;font-weight:700;color:var(--mut)">תקופה:</span>
+    <button class="fchip ${CITYMON===''?'on':''}" onclick="CITYMON='';render()">כל המידע</button>
+    <select class="mselect" onchange="CITYMON=this.value;render()">
+      <option value="">בחירת חודש…</option>
+      ${mk.map(m=>`<option value="${m}" ${CITYMON===m?'selected':''}>${mfmt(m)}</option>`).join('')}
+    </select>
+  </div>`:''}
   <div class="cols2">
     <div class="panel"><p class="ptitle">${opsTitle}</p>
       ${opRows}
@@ -319,7 +323,6 @@ function cityView(c){
         return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,d.years[y]/ymax*100)}%;background:${col}"></i></div><span class="c">${fmt(d.years[y])}</span></div>`;}).join('')}
     </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>'}
   </div>
-  ${monPanel}
   <p class="note">רכב משויך לעיר רק אם היא מוצא או יעד של קו שבו שידר — קווים שרק חולפים דרך העיר אינם נספרים. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
 }
 
