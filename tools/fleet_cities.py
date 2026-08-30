@@ -87,7 +87,8 @@ def main():
         mask = vals[5] if len(vals) > 5 else 0
         for city in vset:
             ct = cities.setdefault(city,
-                                   {'total': 0, 'ops': {}, 'years': {}, 'months': {}})
+                                   {'total': 0, 'ops': {}, 'years': {}, 'months': {},
+                                    'opm': {}})
             ct['total'] += 1
             ct['ops'][op] = ct['ops'].get(op, 0) + 1
             y = year_of.get(key)
@@ -95,12 +96,16 @@ def main():
                 ct['years'][str(y)] = ct['years'].get(str(y), 0) + 1
             # ספירה חודשית: בכל חודש שבו הרכב פעל הוא נספר לערים שלו.
             # קירוב מוצהר — הערים הן כלל הקווים שהרכב שירת אי-פעם.
+            # opm = אותה ספירה בפילוח לפי חברה (בקשת שלמה: בחירת חודש
+            # מציגה את גרף החברות של אותו חודש)
+            om = ct['opm'].setdefault(op, {})
             b, i = mask, 0
             while b:
                 if b & 1:
                     t = MBASE + i
                     m = f'{t // 12}-{t % 12 + 1:02d}'
                     ct['months'][m] = ct['months'].get(m, 0) + 1
+                    om[m] = om.get(m, 0) + 1
                 b >>= 1
                 i += 1
 
@@ -110,7 +115,9 @@ def main():
                           'ops': sorted(d['ops'].items(), key=lambda x: -x[1]),
                           'years': d['years'],
                           **({'months': dict(sorted(d['months'].items()))}
-                             if d.get('months') else {})}
+                             if d.get('months') else {}),
+                          **({'opm': {str(o): m for o, m in d['opm'].items() if m}}
+                             if any(d.get('opm', {}).values()) else {})}
                       for c, d in cities.items() if d['total'] >= 3}}
     tmp = f'{OUT}.tmp'
     with open(tmp, 'w', encoding='utf-8') as f:

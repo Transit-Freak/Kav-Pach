@@ -167,7 +167,7 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, CITYMON='';
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='';
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
 // ('צבורי להסע מיוחד', 'זעצ הסעות מיוחדות'...) — שם שכל אחד מבין.
 // המפתח אחרי ניקוי: גרש תקוע, רווחים כפולים ותחילית 'אוטובוס' (בקובץ
@@ -266,30 +266,47 @@ function cityView(c){
   const yk=Object.keys(d.years).map(Number).sort((a,b)=>b-a);
   const ymax=yk.length?Math.max(...Object.values(d.years)):1;
   const y0=+DATA.updated.slice(0,4);
-  // פעילות לפי חודש: כמה רכבים שונים פעלו בעיר בכל חודש + ממוצע חודשי
+  // פעילות לפי חודש: כמה רכבים שונים פעלו בעיר בכל חודש + ממוצע חודשי.
+  // הבורר יושב בראש העמוד (בקשת שלמה): ברירת המחדל "כל המידע", ובחירת
+  // חודש מחליפה את גרף החברות לנתוני אותו חודש (d.opm = חברה×חודש)
   const months=d.months||{};
   const mk=Object.keys(months).sort().reverse();
   const mavg=mk.length?Math.round(mk.reduce((s,m)=>s+months[m],0)/mk.length):0;
   const mfmt=m=>m.slice(5)+'.'+m.slice(0,4);
   const mmax=mk.length?Math.max(...mk.map(m=>months[m])):1;
+  if(CITYMON&&months[CITYMON]===undefined) CITYMON='';
+  const opm=d.opm||null;
+  // שורות גרף החברות — לפי החודש הנבחר או כל המידע
+  let opRows, opsTitle;
+  if(CITYMON&&opm){
+    const rows=Object.entries(opm).map(([ref,m])=>[ref,m[CITYMON]||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+    const rmx=rows.length?rows[0][1]:1;
+    opsTitle=`החברות שפעלו בעיר ב-${mfmt(CITYMON)}`;
+    opRows=rows.slice(0,12).map(([ref,n])=>`<div class="yrow lbl"><span style="font-weight:700">${esc(opName(+ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/rmx*100)}%;background:#1E5BC6"></i></div><span class="c">${fmt(n)}</span></div>`).join('')||'<div class="empty">אין נתוני חברות לחודש הזה</div>';
+  }else{
+    opsTitle='החברות שפועלות בעיר'+(CITYMON?` · ${mfmt(CITYMON)} (הפילוח החודשי לפי חברה ייבנה בריצה הקרובה)`:'');
+    opRows=d.ops.slice(0,12).map(([ref,n])=>`<div class="yrow lbl"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('');
+  }
   const monPanel=mk.length?`<div class="panel"><p class="ptitle">כמה רכבים שונים פעלו בעיר בכל חודש · ממוצע חודשי: כ-${fmt(mavg)}</p>
-    <div class="filters"><select class="mselect" onchange="CITYMON=this.value;render()">
-      <option value="">כל החודשים</option>
-      ${mk.map(m=>`<option value="${m}" ${CITYMON===m?'selected':''}>${mfmt(m)}</option>`).join('')}
-    </select>${CITYMON?`<button class="fchip" onclick="CITYMON='';render()">✕ ניקוי</button>`:''}</div>
-    ${CITYMON&&months[CITYMON]!==undefined?`<div class="yrow lbl" style="font-size:14px"><span style="font-weight:800">${mfmt(CITYMON)}</span><div class="ybar" style="height:16px"><i style="width:${Math.max(3,months[CITYMON]/mmax*100)}%;background:#1E5BC6"></i></div><span class="c" style="font-weight:800">${fmt(months[CITYMON])}</span></div>
-      <p class="note">בחודש ${mfmt(CITYMON)} פעלו בעיר ${fmt(months[CITYMON])} רכבים שונים — לעומת ממוצע חודשי של כ-${fmt(mavg)}.</p>`
-    :mk.map(m=>`<div class="yrow lbl"><span>${mfmt(m)}</span><div class="ybar"><i style="width:${Math.max(3,months[m]/mmax*100)}%;background:#1E5BC6"></i></div><span class="c">${fmt(months[m])}</span></div>`).join('')}
-    <p class="note">רכב נספר לחודש שבו שידר נסיעות. הספירה החודשית נבנית בהדרגה מהחודשים האחרונים אחורה — חודשים ישנים יתווספו ככל שהמילוי מתקדם.</p>
+    ${mk.map(m=>`<div class="yrow lbl" ${CITYMON===m?'style="background:#eef4ff;border-radius:8px"':''}><span ${CITYMON===m?'style="font-weight:800"':''}>${mfmt(m)}</span><div class="ybar"><i style="width:${Math.max(3,months[m]/mmax*100)}%;background:#1E5BC6"></i></div><span class="c">${fmt(months[m])}</span></div>`).join('')}
+    <p class="note">רכב נספר לחודש שבו שידר נסיעות. הספירה נבנית בהדרגה מהחודשים האחרונים אחורה — חודשים ישנים יתווספו ככל שהמילוי מתקדם.</p>
   </div>`
   :`<div class="panel"><p class="ptitle">פעילות לפי חודש</p><div class="empty">הספירה החודשית נאספת כעת — המילוי רץ ברקע מהחודשים האחרונים אחורה ויופיע כאן בהדרגה</div></div>`;
   return `<button class="back" onclick="history.back()">→ חזרה לכל הערים</button>
   <div class="ophead" style="background:#10172A">
-    <div><h2>${esc(c)}</h2><div class="sub2">${fmt(d.total)} רכבים שונים פועלים בעיר${mavg?` · כ-${fmt(mavg)} בחודש ממוצע`:''} · עדכון ${fd(CITIES.updated)}</div></div>
+    <div><h2>${esc(c)}</h2><div class="sub2">${CITYMON?`ב-${mfmt(CITYMON)}: ${fmt(months[CITYMON])} רכבים שונים פעלו בעיר · `:`${fmt(d.total)} רכבים שונים פועלים בעיר · `}${mavg?`כ-${fmt(mavg)} בחודש ממוצע · `:''}עדכון ${fd(CITIES.updated)}</div></div>
   </div>
+  ${mk.length?`<div class="filters" style="margin:12px 0 2px;align-items:center">
+    <span style="font-size:13px;font-weight:700;color:var(--mut)">תקופה:</span>
+    <button class="fchip ${CITYMON===''?'on':''}" onclick="CITYMON='';render()">כל המידע</button>
+    <select class="mselect" onchange="CITYMON=this.value;render()">
+      <option value="">בחירת חודש…</option>
+      ${mk.map(m=>`<option value="${m}" ${CITYMON===m?'selected':''}>${mfmt(m)}</option>`).join('')}
+    </select>
+  </div>`:''}
   <div class="cols2">
-    <div class="panel"><p class="ptitle">החברות שפועלות בעיר</p>
-      ${d.ops.slice(0,12).map(([ref,n])=>`<div class="yrow lbl"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/mx*100)}%;background:#1B7A3D"></i></div><span class="c">${fmt(n)}</span></div>`).join('')}
+    <div class="panel"><p class="ptitle">${opsTitle}</p>
+      ${opRows}
     </div>
     ${yk.length?`<div class="panel"><p class="ptitle">כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר</p>
       ${yk.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';
@@ -352,19 +369,22 @@ function typeView(t){
   </div>`;
 }
 
+// הסבר קצר על הערכת הק"מ — מוצג בריחוף על ⓘ בכותרות העמודות ובחלון הרכב
+const KMTIP='הערכה בלבד: אורך המסלול המתוכנן של הקווים שבהם הרכב שידר, כפול מספר הנסיעות שנקלטו. לא ידוע אם כל נסיעה בוצעה במלואה — ייתכנו נסיעות חלקיות, קטעים בלי קליטת GPS או שידור חסר, ולא ידוע כמה נסיעות היו בכל קו.';
 function table(vs,opsArr){
   const enr=DATA.enriched;
-  const th=(k,t)=>`<th onclick="srt('${k}')">${t}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
+  const th=(k,t,tip)=>`<th onclick="srt('${k}')" ${tip?`title="${tip}"`:''}>${t}${tip?' <span style="cursor:help;color:#8B93A7">ⓘ</span>':''}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
   const shown=vs.slice(0,LIMIT);
   return `<div class="tblbox"><table><thead><tr>${opsArr?'<th>חברה</th>':''}
     ${th('p','מספר רכב')}${enr?th('t','סוג הרכב')+th('y','שנתון')+th('m','יצרן ודגם'):''}
-    ${OFF?th('r','נסיעות ביום'):''}${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
+    ${OFF?th('r','נסיעות ביום'):''}${KMOK?th('kd','ק"מ ביום (משוער)',KMTIP)+th('kt','ק"מ סה"כ (משוער)',KMTIP):''}${th('f','נצפה לראשונה')}${th('l','נצפה לאחרונה')}<th>מצב</th></tr></thead><tbody>
   ${shown.map((v,i)=>{const on=isActive(v);const mv=on?null:movedTo(v);
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
     <td dir="ltr" style="text-align:right">${esc(v[0])}</td>
     ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
+    ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}
     <td>${fd(v[1])}</td><td>${fd(v[2])}</td>
     <td><span class="st ${on?'on':mv?'mv':'off'}">${on?'פעיל':mv?'עבר ל'+esc(mv.name):'ירד מהשירות'}</span></td></tr>`;}).join('')}
   </tbody></table></div>
@@ -433,7 +453,7 @@ function opView(ref){
 
 function sortVs(vs){
   if(!SORTK) return vs;
-  const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',d:v=>gD(v)||0,t:v=>gT(v)||'',r:v=>gR(v)||0}[SORTK];
+  const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',d:v=>gD(v)||0,t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
   return vs.slice().sort((a,b)=>{const x=key(a),y=key(b);return (x>y?1:x<y?-1:0)*SORTD;});
 }
 function srt(k){if(SORTK===k)SORTD*=-1;else{SORTK=k;SORTD=-1;}render();}
@@ -457,6 +477,16 @@ async function loadKM(){
   if(KM!==null) return;
   try{const r=await fetch('data/fleet-km.json',{cache:'no-cache'});KM=r.ok?await r.json():{};}
   catch(e){KM={};}
+}
+// הצמדת הערכת הק"מ לכל רכב (v._kd ליום, v._kt סה"כ) — לטבלה ולמיון
+function buildKm(){
+  if(!DATA||!KM||!KM.km) return;
+  let n=0;
+  for(const o of DATA.operators) for(const v of o.vehicles){
+    const k=KM.km[o.ref+':'+v[0]];
+    if(k){v._kd=k[0];v._kt=k[1];n++;}
+  }
+  KMOK=n>0;
 }
 async function shard(d){
   if(SHARDS[d]!==undefined) return SHARDS[d];
@@ -486,7 +516,7 @@ async function showV(plate){
     ${km?`<div class="k">ק"מ שנמדדו בסך הכול (משוער)</div><div class="v2">כ-${fmt(km[1])} ק"מ</div>`:''}
     <div class="k">מצב</div><div class="v2">${on2?'✅ פעיל':recs.length>1&&on?'↩️ כבר לא משדר אצל המפעיל הזה':'🔴 ירד מהשירות'}</div></div>`;
   }
-  if(anyKm) rows+=`<p class="note">הערכת הקילומטראז': ממוצע אורכי המסלולים של הקווים שבהם הרכב שידר (מתוך שרטוטי "הקו בזמן") × הנסיעות שנמדדו. הערכה גסה — לא ידוע כמה נסיעות בוצעו בכל קו, והיא מכסה רק ימים שנסרקו.</p>`;
+  if(anyKm) rows+=`<p class="note">הערכת הקילומטראז': אורך המסלול המתוכנן של הקווים שבהם הרכב שידר (משרטוטי "הקו בזמן") × הנסיעות שנקלטו. הערכה גסה בלבד — לא ידוע אם כל נסיעה בוצעה במלואה (ייתכנו נסיעות חלקיות או בעיות שידור GPS), לא ידוע כמה נסיעות היו בכל קו, והיא מכסה רק ימים שנסרקו.</p>`;
   if(recs.length>1) rows+=`<p class="note">הרכב שידר תחת יותר ממפעיל אחד — כנראה הועבר בין חברות באותה קבוצה.</p>`;
   if(gov){
     const known=Object.keys(LBL).filter(k=>gov[k]!==undefined);
@@ -517,9 +547,9 @@ function dlCSV(name,rows){
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }
-const VHEAD=['חברה','מספר רכב','סוג הרכב','שנתון','יצרן ודגם','נסיעות ביום','נצפה לראשונה','נצפה לאחרונה','מצב'];
+const VHEAD=['חברה','מספר רכב','סוג הרכב','שנתון','יצרן ודגם','נסיעות ביום','ק"מ ביום (משוער)','ק"מ סה"כ (משוער)','נצפה לראשונה','נצפה לאחרונה','מצב'];
 function vRow(v,o){const on=isActive(v);const mv=on?null:movedTo(v);
-  return [o?o.name:'',v[0],gT(v)||'',gY(v)||'',gM(v)||'',gR(v)!=null?gR(v):'',v[1],v[2],on?'פעיל':mv?'עבר ל'+mv.name:'ירד מהשירות'];}
+  return [o?o.name:'',v[0],gT(v)||'',gY(v)||'',gM(v)||'',gR(v)!=null?gR(v):'',v._kd!=null?v._kd:'',v._kt!=null?v._kt:'',v[1],v[2],on?'פעיל':mv?'עבר ל'+mv.name:'ירד מהשירות'];}
 function XDL(){
   if(!DATA) return;
   const D=[]; let name='צי-הרכבים';
@@ -570,7 +600,8 @@ document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-.then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();})
+.then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();
+  loadKM().then(()=>{buildKm();render();});})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>

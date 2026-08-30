@@ -263,7 +263,11 @@ def main():
         day += datetime.timedelta(days=step)
 
     jdump(root, STATE)
-    jdump(build_output(state), OUT)
+    # במצב חודשים-בלבד אסור לכתוב את fleet.json: הכתיבה כאן דרסה את
+    # הקובץ המועשר (שנתון/דגם/סוג מהמאגר הממשלתי) בגרסה חשופה, כי
+    # ה-workflow של החודשים לא מריץ את שלב ההעשרה — "דגם נעלם" באתר
+    if not MONTHS_ONLY:
+        jdump(build_output(state), OUT)
     print(f'סיום: {len(state)} רכבים · {len(scanned)} ימים נסרקו', flush=True)
 
 
