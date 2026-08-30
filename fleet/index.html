@@ -205,7 +205,7 @@ function kpis(){
   for(const o of DATA.operators) for(const v of o.vehicles){tot++;if(isActive(v))act++;if(DATA.enriched&&isKab(v)){kab++;if(isActive(v))kabA++;}if(!first||v[1]<first)first=v[1];if(!last||v[2]>last)last=v[2];}
   return `<div class="kpis">
     <div class="kpi"><b>${fmt(tot)}</b><span>רכבים במעקב</span></div>
-    <div class="kpi"><b>${fmt(act)}</b><span>פעילים</span></div>
+    <div class="kpi" title='"פעיל" = שידר נסיעות במהלך החודש האחרון, נכון לעדכון הנתונים. רכב שלא שידר חודש ומעלה נספר כמי שירד מהשירות'><b>${fmt(act)}</b><span>פעילים</span></div>
     ${kab?`<div class="kpi bad" title="רכבים מהצי הסדיר שלא שידרו מעל ${DATA.retire_days} יום. רכבי קבלן שירדו מוצגים בנפרד, בכרטיס רכבי הקבלן"><b>${fmt(tot-act-(kab-kabA))}</b><span>ירדו מהשירות (צי סדיר)</span></div>`
         :`<div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>`}
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
@@ -265,6 +265,7 @@ function cityHome(f){
     `<button class="card" style="background:#10172A" onclick="history.pushState({sub:1},'');CITYSEL=${JSON.stringify(c).replace(/"/g,'&quot;')};CITYMON='';render();window.scrollTo({top:0})">
       <h2>${esc(c)}</h2><div class="n">${d.act!=null?fmt(d.act):fmt(d.total)}</div>
       <div style="font-size:13.5px;font-weight:700;opacity:.92;margin-top:-2px">${d.act!=null?'אוטובוסים פעילים עכשיו בעיר':'רכבים פועלים בעיר'}</div>
+      ${d.act!=null?`<div style="font-size:11px;opacity:.75">"פעיל" = שידר נסיעות בחודש האחרון · נכון ל-${fd(DATA.updated)}</div>`:''}
       ${d.act!=null?`<div class="pills"><span style="background:rgba(255,255,255,.14);color:#e2e8f0">ובסך הכול נצפו בה אי-פעם: ${fmt(d.total)}</span></div>`:''}
     </button>`).join('')||'<div class="empty">לא נמצאה עיר</div>'}</div>`;
 }
@@ -306,7 +307,7 @@ function cityView(c){
   :`<div class="panel"><p class="ptitle">פעילות לפי חודש</p><div class="empty">הספירה החודשית נאספת כעת — המילוי רץ ברקע מהחודשים האחרונים אחורה ויופיע כאן בהדרגה</div></div>`;
   return `<button class="back" onclick="history.back()">→ חזרה לכל הערים</button>
   <div class="ophead" style="background:#10172A">
-    <div><h2>${esc(c)}</h2><div class="sub2">${CITYMON?`ב-${mfmt(CITYMON)}: ${fmt(months[CITYMON])} רכבים שונים פעלו בעיר · `:`${d.act!=null?`${fmt(d.act)} פעילים עכשיו · ${fmt(d.total)} סה"כ שנצפו · `:`${fmt(d.total)} רכבים שונים פועלים בעיר · `}`}${mavg?`כ-${fmt(mavg)} בחודש ממוצע · `:''}עדכון ${fd(CITIES.updated)}</div></div>
+    <div><h2>${esc(c)}</h2><div class="sub2">${CITYMON?`ב-${mfmt(CITYMON)}: ${fmt(months[CITYMON])} רכבים שונים פעלו בעיר · `:`${d.act!=null?`${fmt(d.act)} פעילים עכשיו (שידרו בחודש האחרון, נכון ל-${fd(DATA.updated)}) · ${fmt(d.total)} סה"כ שנצפו · `:`${fmt(d.total)} רכבים שונים פועלים בעיר · `}`}${mavg?`כ-${fmt(mavg)} בחודש ממוצע · `:''}עדכון ${fd(CITIES.updated)}</div></div>
   </div>
   <div class="cols2">
     <div class="panel"><p class="ptitle">${opsTitle}</p>
