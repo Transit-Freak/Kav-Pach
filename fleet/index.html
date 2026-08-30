@@ -223,7 +223,7 @@ function home(){
     const hits=[];
     for(const o of DATA.operators) for(const v of o.vehicles)
       if(!clean||v[0].replace(/-/g,'').includes(clean)) hits.push([o,v]);
-    if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0}[SORTK];
+    if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
       if(key) hits.sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
     else hits.sort((a,b)=>a[1][2]<b[1][2]?1:a[1][2]>b[1][2]?-1:0);
     return kpis()+`<div class="panel"><p class="ptitle">${clean?`תוצאות למספר רכב "${esc(f)}" · ${fmt(hits.length)}`:`כל הרכבים במעקב · ${fmt(hits.length)}`}</p>
@@ -347,7 +347,7 @@ function typeView(t){
   const byOp={}; for(const [o] of all) byOp[o.ref]=(byOp[o.ref]||0)+1;
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
-  if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0}[SORTK];
+  if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
     if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
   return `<button class="back" onclick="history.back()">→ חזרה לכל הדגמים</button>
   <div class="ophead" style="background:#10172A">
