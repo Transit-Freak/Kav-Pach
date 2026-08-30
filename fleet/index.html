@@ -167,7 +167,7 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n';
 // תווית מיגון לרכב (v._ar: 'y' ירי / 's' אבנים / 'ys' שניהם)
 const arLbl=a=>a==='ys'?'ממוגן ירי ואבנים':(a&&a.includes('y')?'ממוגן ירי':'ממוגן אבנים');
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
@@ -337,16 +337,22 @@ function typeHome(f){
   const agg={};
   for(const o of DATA.operators) for(const v of o.vehicles){
     const t=gM(v); if(!t) continue;
-    const g=agg[t]||(agg[t]={n:0,act:0,ops:new Set()});
-    g.n++; if(isActive(v))g.act++; g.ops.add(o.ref);
+    const g=agg[t]||(agg[t]={n:0,act:0,gp:0,ops:new Set()});
+    g.n++; if(isActive(v))g.act++; if(v._gp)g.gp++; g.ops.add(o.ref);
   }
-  let rows=Object.entries(agg).filter(([t])=>!f||t.includes(f)).sort((a,b)=>b[1].n-a[1].n);
+  let rows=Object.entries(agg).filter(([t])=>!f||t.includes(f));
+  if(TSORT==='g'&&GPOK) rows=rows.filter(([t,g])=>g.n>=20).sort((a,b)=>b[1].gp/b[1].n-a[1].gp/a[1].n);
+  else rows.sort((a,b)=>b[1].n-a[1].n);
   const total=rows.length;
   if(!f) rows=rows.slice(0,MODELS_SHOWN);
-  return kpis()+`<div class="cards">${rows.map(([t,g],i)=>
+  return kpis()+`${GPOK?`<div class="filters" style="margin-bottom:10px">
+    <button class="fchip ${TSORT==='n'?'on':''}" onclick="TSORT='n';render()">הדגמים הגדולים</button>
+    <button class="fchip ${TSORT==='g'?'on':''}" onclick="TSORT='g';render()" title="דגמים לפי אחוז הרכבים שנעלמו חודש+ וחזרו (תקלה אפשרית) — מ-20 רכבים ומעלה">⚠️ הכי מקולקלים</button>
+  </div>`:''}<div class="cards">${rows.map(([t,g],i)=>
     `<button class="card" style="background:${TCOLORS[i%TCOLORS.length]}" onclick="history.pushState({sub:1},'');TYPESEL=${JSON.stringify(t).replace(/"/g,'&quot;')};STATF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0})">
-      <h2 style="font-size:1.05rem;word-break:break-word">${esc(t)}</h2><div class="n">${fmt(g.n)}</div>
-      <div class="pills"><span>${fmt(g.act)} פעילים</span>${g.n-g.act?`<span class="r">${fmt(g.n-g.act)} ירדו</span>`:''}<span>${g.ops.size} חברות</span></div>
+      <h2 style="font-size:1.05rem;word-break:break-word">${esc(t)}</h2><div class="n">${TSORT==='g'?Math.round(100*g.gp/g.n)+'%':fmt(g.n)}</div>
+      ${TSORT==='g'?`<div style="font-size:13px;font-weight:700;opacity:.92;margin-top:-2px">נפלו וחזרו — תקלה אפשרית</div>`:''}
+      <div class="pills"><span>${fmt(g.act)} פעילים</span>${g.n-g.act?`<span class="r">${fmt(g.n-g.act)} ירדו</span>`:''}${g.gp?`<span>⚠️ ${fmt(g.gp)} נפלו וחזרו</span>`:''}<span>${g.ops.size} חברות</span></div>
     </button>`).join('')||'<div class="empty">לא נמצא דגם</div>'}</div>
     ${!f&&total>MODELS_SHOWN?`<p class="note">מוצגים ${MODELS_SHOWN} הדגמים הנפוצים מתוך ${fmt(total)} — חיפוש למעלה מוצא כל דגם או יצרן</p>`:''}`;
 }
@@ -404,7 +410,7 @@ function table(vs,opsArr){
   ${shown.map((v,i)=>{const on=isActive(v);const mv=on?null:movedTo(v);
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
-    <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" style="cursor:help">🛡️</span>`:''}</td>
+    <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" style="cursor:help">🛡️</span>`:''}${v._gp?` <span title="נעלם חודש+ וחזר ${v._gp.length} פעמים — תקלה אפשרית; התאריכים בכרטיס הרכב" style="cursor:help">⚠️</span>`:''}</td>
     ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}${OFCOK?`<td>${v._ok!=null?fmt(v._ok):'—'}</td>`:''}
@@ -552,6 +558,21 @@ function buildOfficial(){
   }
   OFCOK=n>0;
 }
+// נפילות-וחזרות: רכב שנעלם חודש קלנדרי מלא וחזר לשדר (תקלה אפשרית)
+async function loadGaps(){
+  if(GAPS!==null) return;
+  try{const r=await fetch('data/fleet-gaps.json',{cache:'no-cache'});GAPS=r.ok?await r.json():{};}
+  catch(e){GAPS={};}
+}
+function buildGaps(){
+  if(!DATA||!GAPS||!GAPS.g) return;
+  let n=0;
+  for(const o of DATA.operators) for(const v of o.vehicles){
+    const g=GAPS.g[o.ref+':'+v[0]];
+    if(g){v._gp=g;n++;}
+  }
+  GPOK=n>0;
+}
 // מיגון ירי/אבנים — ממאגר "ציי רכב אוטובוסים" של משרד התחבורה
 async function loadArmor(){
   if(ARM!==null) return;
@@ -579,7 +600,7 @@ async function showV(plate){
   if(!recs.length) return;
   const fv=recs[0][1];
   const clean=plate.replace(/-/g,'').replace(/^0+/,'');
-  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays(),loadOfficial()]);
+  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays(),loadOfficial(),loadGaps()]);
   const ofc=OFC&&OFC.of?OFC.of[clean]:null;
   const ar=ARM&&ARM.armor?ARM.armor[clean]:null;
   const on=recs.some(([,v])=>isActive(v));
@@ -594,6 +615,8 @@ async function showV(plate){
     <div class="k">נצפה לאחרונה</div><div class="v2">${fd(v2[2])}</div>
     ${(()=>{const dd=DAYS&&DAYS.d?DAYS.d[o2.ref+':'+v2[0]]:null;
       return dd?`<div class="k">ימי פעילות שנמדדו</div><div class="v2">${fmt(dd[0])} ימים · ${fmt(dd[1])} נסיעות סה"כ</div>`:'';})()}
+    ${(()=>{const g=GAPS&&GAPS.g?GAPS.g[o2.ref+':'+v2[0]]:null;
+      return g?`<div class="k">⚠️ נפילות וחזרות</div><div class="v2">${g.map(e=>`לא שידר ${e[0].slice(5)+'.'+e[0].slice(0,4)}${e[1]!==e[0]?`–${e[1].slice(5)+'.'+e[1].slice(0,4)}`:''} וחזר`).join(' · ')}<div style="font-size:11px;color:var(--dim)">היעלמות של חודש קלנדרי מלא וחזרה — תקלה/מוסך אפשריים · נבדק בטווח ${GAPS.from.slice(5)+'.'+GAPS.from.slice(0,4)}–${GAPS.to.slice(5)+'.'+GAPS.to.slice(0,4)}, מתרחב כל לילה</div></div>`:'';})()}
     ${gR(v2)!=null?`<div class="k">נסיעות ביום בממוצע</div><div class="v2">${gR(v2)} (בימים שנמדדו)</div>`:''}
     ${km&&km[0]!=null?`<div class="k">ק"מ ביום פעילות (משוער)</div><div class="v2">כ-${fmt(km[0])} ק"מ</div>`:''}
     ${km?`<div class="k">ק"מ שנמדדו בסך הכול (משוער)</div><div class="v2">כ-${fmt(km[1])} ק"מ</div>`:''}
@@ -696,7 +719,7 @@ $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=nu
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();
-  Promise.all([loadKM(),loadArmor(),loadOfficial()]).then(()=>{buildKm();buildArmor();buildOfficial();render();});})
+  Promise.all([loadKM(),loadArmor(),loadOfficial(),loadGaps()]).then(()=>{buildKm();buildArmor();buildOfficial();buildGaps();render();});})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>

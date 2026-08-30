@@ -74,6 +74,10 @@ jobs:
         continue-on-error: true
         run: python3 tools/fleet_days.py
 
+      - name: נפילות-וחזרות (best-effort)
+        continue-on-error: true
+        run: python3 tools/fleet_flaps.py
+
       - name: commit
         run: |
           git config user.name 'fleet-bot'
