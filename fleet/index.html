@@ -262,7 +262,7 @@ function cityHome(f){
   return kpis()+`<div class="cards">${hits.map(([c,d])=>
     `<button class="card" style="background:#10172A" onclick="history.pushState({sub:1},'');CITYSEL=${JSON.stringify(c).replace(/"/g,'&quot;')};CITYMON='';render();window.scrollTo({top:0})">
       <h2>${esc(c)}</h2><div class="n">${d.act!=null?fmt(d.act):fmt(d.total)}</div>
-      <div class="pills">${d.act!=null?`<span>פעילים עכשיו בעיר</span><span class="r">${fmt(d.total)} סה"כ שנצפו</span>`:`<span>רכבים פועלים בעיר</span>`}</div>
+      <div class="pills">${d.act!=null?`<span>פעילים עכשיו בעיר</span><span style="background:rgba(255,255,255,.14);color:#e2e8f0">${fmt(d.total)} סה"כ שנצפו</span>`:`<span>רכבים פועלים בעיר</span>`}</div>
     </button>`).join('')||'<div class="empty">לא נמצאה עיר</div>'}</div>`;
 }
 function cityView(c){
