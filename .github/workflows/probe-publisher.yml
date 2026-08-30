@@ -1,8 +1,9 @@
 name: probe-publisher
 
-# בדיקת אמת חד-פעמית (שאלת שלמה, קו 26 ברור חיל): האם הלולאה למתחם
-# התחנה קיימת בשרטוטים בארכיון הגולמי לפני 01.09.2025 — נבדק ישירות
-# מול צילומי ה-GTFS של ימי הארכיון, לא מול מה שאנחנו שמרנו.
+# בדיקת-כיס לשימוש חוזר: מאמתת מה האתר החי באמת מגיש. הבדיקה האחרונה
+# שרצה כאן (29.08) אימתה את לולאת קו 26 מול צילומי הארכיון הגולמיים —
+# הושלמה, והקובץ הוחזר לבדיקת ברירת-מחדל שקטה שתמיד עוברת, כדי שלא
+# יישלחו התראות כשל בלילה על בדיקות חד-פעמיות שכבר הסתיימו.
 
 on:
   push:
@@ -17,42 +18,10 @@ jobs:
   probe:
     if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - name: הלולאה בארכיון הגולמי — יום-יום
+      - name: האתר החי מגיש את הגרסה העדכנית
         run: |
-          python3 - <<'EOF'
-          import math
-          import sys
-          sys.path.insert(0, 'tools')
-          from backfill_new_routes import day_full_cal
-          from backfill_change_segs import dec_polyline
-
-          APEX = (31.55829, 34.63493)   # קודקוד הלולאה מצילום המסך של שלמה
-
-          def dist_m(a, b):
-              kx = 111320 * math.cos(math.radians(a[0]))
-              return math.hypot((a[1] - b[1]) * kx, (a[0] - b[0]) * 110540)
-
-          DAYS = ['2024-11-29', '2025-02-15', '2025-05-15', '2025-06-06',
-                  '2025-07-15', '2025-08-15', '2025-08-31', '2025-09-01',
-                  '2025-09-02']   # 2023-06-15 ו-2024-03-15 כבר נבדקו: אין לולאה
-          RDS = ['30026-1-#', '30026-2-#']
-          for ds in DAYS:
-              try:
-                  got = day_full_cal(ds, RDS)
-              except (Exception, SystemExit) as e:   # יום חסר בארכיון (404) — ממשיכים
-                  print(f'{ds}: הצילום לא נטען ({type(e).__name__})', flush=True)
-                  continue
-              for rd in RDS:
-                  g = got.get(rd)
-                  if not g or not g.get('shp'):
-                      print(f'{ds} {rd}: אין שרטוט בצילום', flush=True)
-                      continue
-                  pts = dec_polyline(g['shp'])
-                  dmin = min(dist_m(p, APEX) for p in pts)
-                  tag = 'יש לולאה ✓' if dmin < 30 else 'אין לולאה'
-                  print(f'{ds} {rd}: מרחק מקודקוד הלולאה {dmin:5.0f} מ · {tag}', flush=True)
-          EOF
+          set -euo pipefail
+          curl -fsS "https://transit-freak.github.io/kav-bochan/line-history/index.html?cb=$RANDOM" | grep -o 'LH_BUILD = "[0-9]*"'
+          curl -fsS "https://transit-freak.github.io/kav-bochan/fleet/index.html?cb=$RANDOM" | grep -c 'fleet-km' && echo 'fleet: עמודות הק"מ מוגשות'
