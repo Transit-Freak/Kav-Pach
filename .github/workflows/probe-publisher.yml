@@ -21,9 +21,8 @@ jobs:
     steps:
       - name: חיפוש מיגון ב-data.gov.il
         run: |
-          python3 - <<'EOF' || echo "שגיאה — ראו למעלה"
+          python3 - <<'EOF' || echo "שגיאה"
           import json
-          import urllib.parse
           import urllib.request
 
           def get(url):
@@ -32,35 +31,14 @@ jobs:
                   return json.load(r)
 
           CKAN = 'https://data.gov.il/api/3/action'
-          # המשאבים של ציי רכב אוטובוסים
-          d = get(f'{CKAN}/package_show?id=bus_fleet')['result']
-          for res in d.get('resources', []):
-              rid = res['id']
-              try:
-                  meta = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
-              except Exception:
-                  continue
-              total = meta['result'].get('total')
-              print(f'=== {res.get("name", "")[:60]} · {rid} · סה"כ רשומות: {total}')
-              for fld, val in [('bullet_proof_nm', 'ממוגן ירי'), ('stone_proof_nm', 'ממוגן אבנים'), ('stone_proof_nm', 'ממוגן אבן')]:
-                  flt = urllib.parse.quote(json.dumps({fld: val}, ensure_ascii=False))
-                  try:
-                      s = get(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&limit=3')
-                      tot = s['result'].get('total')
-                      print(f'   {fld} = "{val}": {tot}')
-                      for rec in s['result'].get('records', [])[:2]:
-                          keep = {k: rec.get(k) for k in ('operator_nm', 'bus_license_id', 'BusSize_nm', 'BusType_nm', 'production_year', 'bullet_proof_nm', 'stone_proof_nm')}
-                          print('      ·', json.dumps(keep, ensure_ascii=False))
-                  except Exception as e:
-                      print(f'   {fld}="{val}": {type(e).__name__}')
-              # התפלגות ערכים מלאה של שני השדות (דגימה רחבה)
-              try:
-                  s = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=32000')
-                  from collections import Counter
-                  bp = Counter(r.get('bullet_proof_nm') for r in s['result']['records'])
-                  sp = Counter(r.get('stone_proof_nm') for r in s['result']['records'])
-                  print('   התפלגות ירי:', dict(bp))
-                  print('   התפלגות אבנים:', dict(sp))
-              except Exception as e:
-                  print('   התפלגות:', type(e).__name__, e)
+          RID = '91d298ed-a260-4f93-9d50-d5e3c5b82ce1'
+          d = get(f'{CKAN}/datastore_search?resource_id={RID}&limit=2')
+          fields = [x['id'] + ':' + x.get('type', '') for x in d['result'].get('fields', [])]
+          print('כל השדות של ציי רכב אוטובוסים:')
+          for f in fields:
+              print('  ·', f)
+          print()
+          print('רשומה מלאה לדוגמה:')
+          for rec in d['result'].get('records', [])[:2]:
+              print(json.dumps(rec, ensure_ascii=False, indent=1))
           EOF
