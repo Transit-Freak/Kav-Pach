@@ -167,7 +167,7 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null;
 // תווית מיגון לרכב (v._ar: 'y' ירי / 's' אבנים / 'ys' שניהם)
 const arLbl=a=>a==='ys'?'ממוגן ירי ואבנים':(a&&a.includes('y')?'ממוגן ירי':'ממוגן אבנים');
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
@@ -438,12 +438,24 @@ function opView(ref){
   if(KABF==='l') vs=vs.filter(v=>!isKab(v));
   if(STATF!==null) vs=vs.filter(v=>(isActive(v)?1:0)===STATF);
   if(ARF) vs=vs.filter(v=>v._ar&&(ARF===1||v._ar.includes(ARF)));
+  if(BTF) vs=vs.filter(v=>v._bt===BTF);
+  if(BSF) vs=vs.filter(v=>v._bs===BSF);
   vs=sortVs(vs);
   // כרטיסי מיגון בפילוח סוג הרכב (בקשת שלמה): לחיצה מסננת כמו כל סוג
   const ay=ARMOK?o.vehicles.filter(v=>v._ar&&v._ar.includes('y')).length:0;
   const as_=ARMOK?o.vehicles.filter(v=>v._ar&&v._ar.includes('s')).length:0;
   const armCards=(ay?`<button class="type ${ARF==='y'?'on':''}" onclick="ARF=ARF==='y'?null:'y';LIMIT=200;render()"><b>${fmt(ay)}</b><span>🛡️ ממוגן ירי</span></button>`:'')+
     (as_?`<button class="type ${ARF==='s'?'on':''}" onclick="ARF=ARF==='s'?null:'s';LIMIT=200;render()"><b>${fmt(as_)}</b><span>🛡️ ממוגן אבנים</span></button>`:'');
+  // קטגוריות סוג וגודל מהמאגר הרשמי (בקשת שלמה) — לחיצה מסננת כמו כל סוג
+  let ofCards='';
+  if(OFCOK){
+    const bt={},bs={};
+    o.vehicles.forEach(v=>{if(v._bt)bt[v._bt]=(bt[v._bt]||0)+1;if(v._bs)bs[v._bs]=(bs[v._bs]||0)+1;});
+    const card=(val,c,cur,setter)=>`<button class="type ${cur===val?'on':''}" onclick="${setter}=${setter==='BTF'?'BTF':'BSF'}===${JSON.stringify(val).replace(/"/g,'&quot;')}?null:${JSON.stringify(val).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(val)}</span></button>`;
+    const btc=Object.entries(bt).sort((a,b)=>b[1]-a[1]).map(([t,c])=>card(t,c,BTF,'BTF')).join('');
+    const bsc=Object.entries(bs).sort((a,b)=>b[1]-a[1]).map(([t,c])=>card(t,c,BSF,'BSF')).join('');
+    if(btc||bsc) ofCards=`<p class="ptitle" style="margin-top:14px">סוג וגודל — לפי מאגר ציי הרכב הרשמי</p><div class="types">${btc}${bsc}</div>`;
+  }
   return `<button class="back" onclick="history.back()">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
@@ -451,7 +463,7 @@ function opView(ref){
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
-      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armCards}</div></div>`:''}
+      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armCards}</div>${ofCards}</div>`:''}
   ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם ${YEARF?`היו בשימוש בשנת ${YEARF}`:'פעילים בפועל'}</p>
       ${calYears.length>1?`<div class="filters">
         <button class="fchip ${YEARF===null?'on':''}" onclick="YEARF=null;render()">היום</button>
@@ -461,7 +473,7 @@ function opView(ref){
         return `<div class="yrow yact"><span>${y}</span><div class="ybar"><b class="tot" style="width:${Math.max(4,years[y]/ymax*100)}%"><i style="width:${years[y]?Math.round(act/years[y]*100):0}%;background:${c}"></i></b></div><span class="c"><b style="color:var(--ok)">${fmt(act)} ${YEARF?`בשנת ${YEARF}`:'פעילים'}</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
       <p class="note">${YEARF?`רכב נספר לשנת ${YEARF} אם שידר נסיעות במהלכה (לפי חלון הפעילות שנמדד בדאטאבוס). הנתונים מכסים מ-${minSeen} ואילך — ורק את התקופה שכבר נסרקה.`:'"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.'}</p>
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
-  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}${ARF?' · '+(ARF==='y'?'🛡️ ממוגני ירי':ARF==='s'?'🛡️ ממוגני אבנים':'🛡️ ממוגנים'):''}</p>
+  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}${ARF?' · '+(ARF==='y'?'🛡️ ממוגני ירי':ARF==='s'?'🛡️ ממוגני אבנים':'🛡️ ממוגנים'):''}${BTF?' · '+esc(BTF):''}${BSF?' · '+esc(BSF):''}</p>
     <div class="filters">
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
@@ -519,6 +531,21 @@ async function loadDays(){
   try{const r=await fetch('data/fleet-days.json',{cache:'no-cache'});DAYS=r.ok?await r.json():{};}
   catch(e){DAYS={};}
 }
+// המפרט הרשמי ממאגר "ציי רכב אוטובוסים": מד ק"מ, מושבים, ארץ, הנעה, סוג, גודל
+async function loadOfficial(){
+  if(OFC!==null) return;
+  try{const r=await fetch('data/fleet-official.json',{cache:'no-cache'});OFC=r.ok?await r.json():{};}
+  catch(e){OFC={};}
+}
+function buildOfficial(){
+  if(!DATA||!OFC||!OFC.of) return;
+  let n=0;
+  for(const o of DATA.operators) for(const v of o.vehicles){
+    const f=OFC.of[v[0].replace(/\D/g,'').replace(/^0+/,'')];
+    if(f){v._bt=f[4]||null;v._bs=f[5]||null;n++;}
+  }
+  OFCOK=n>0;
+}
 // מיגון ירי/אבנים — ממאגר "ציי רכב אוטובוסים" של משרד התחבורה
 async function loadArmor(){
   if(ARM!==null) return;
@@ -546,7 +573,8 @@ async function showV(plate){
   if(!recs.length) return;
   const fv=recs[0][1];
   const clean=plate.replace(/-/g,'').replace(/^0+/,'');
-  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays()]);
+  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays(),loadOfficial()]);
+  const ofc=OFC&&OFC.of?OFC.of[clean]:null;
   const ar=ARM&&ARM.armor?ARM.armor[clean]:null;
   const on=recs.some(([,v])=>isActive(v));
   let rows='',anyKm=false;
@@ -567,6 +595,17 @@ async function showV(plate){
   }
   if(anyKm) rows+=`<p class="note">הערכת הקילומטראז': אורך המסלול המתוכנן של הקווים שבהם הרכב שידר (משרטוטי "הקו בזמן") × הנסיעות שנקלטו. הערכה גסה בלבד — לא ידוע אם כל נסיעה בוצעה במלואה (ייתכנו נסיעות חלקיות או בעיות שידור GPS), לא ידוע כמה נסיעות היו בכל קו, והיא מכסה רק ימים שנסרקו.</p>`;
   if(recs.length>1) rows+=`<p class="note">הרכב שידר תחת יותר ממפעיל אחד — כנראה הועבר בין חברות באותה קבוצה.</p>`;
+  if(ofc){
+    rows+=`<div class="msec">ממאגר ציי רכב אוטובוסים — משרד התחבורה${OFC.updated?` (נכון ל-${fd(OFC.updated)})`:''}</div><div class="mgrid">
+    ${ofc[0]!=null?`<div class="k">מד הקילומטרים הרשמי</div><div class="v2"><b>${fmt(ofc[0])}</b> ק"מ</div>`:''}
+    ${ofc[1]?`<div class="k">מספר מושבים</div><div class="v2">${ofc[1]}</div>`:''}
+    ${ofc[2]?`<div class="k">ארץ ייצור</div><div class="v2">${esc(ofc[2])}</div>`:''}
+    ${ofc[3]?`<div class="k">הנעה</div><div class="v2">${esc(ofc[3])}</div>`:''}
+    ${ofc[4]?`<div class="k">סוג</div><div class="v2">${esc(ofc[4])}</div>`:''}
+    ${ofc[5]?`<div class="k">גודל</div><div class="v2">${esc(ofc[5])}</div>`:''}
+    ${ofc[6]&&ofc[6]!=='לא מוגדר'?`<div class="k">אשכול</div><div class="v2">${esc(ofc[6])}</div>`:''}
+    </div>`;
+  }
   if(gov){
     const known=Object.keys(LBL).filter(k=>gov[k]!==undefined);
     const rest=Object.keys(gov).filter(k=>!(k in LBL));
@@ -638,20 +677,20 @@ function XDL(){
   }
   if(D.length>1) dlCSV(name,D);
 }
-function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;ARF=null;LIMIT=200;render();window.scrollTo({top:0});}
+function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;ARF=null;BTF=null;BSF=null;LIMIT=200;render();window.scrollTo({top:0});}
 // חץ "אחורה" של הדפדפן מחזיר למסך הבית במקום לצאת מהאתר
 window.addEventListener('popstate',()=>{VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';LIMIT=200;render();window.scrollTo({top:0});});
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
   $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש דגם או יצרן…':'חיפוש מספר רכב…';
-  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;LIMIT=200;render();
+  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;BTF=null;BSF=null;LIMIT=200;render();
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();
-  Promise.all([loadKM(),loadArmor()]).then(()=>{buildKm();buildArmor();render();});})
+  Promise.all([loadKM(),loadArmor(),loadOfficial()]).then(()=>{buildKm();buildArmor();buildOfficial();render();});})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>
