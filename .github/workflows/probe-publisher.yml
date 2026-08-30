@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
@@ -19,42 +19,104 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: חיפוש מיגון ב-data.gov.il
+      - uses: actions/checkout@v4
+
+      - name: רשימת הבין-עירוניים הנגישים מה-GTFS
         run: |
+          mkdir -p reports
           python3 - <<'EOF' || echo "שגיאה"
+          import csv
+          import datetime
+          import io
           import json
+          import sys
           import urllib.parse
           import urllib.request
+          sys.path.insert(0, 'tools')
+          from backfill_geo import central_dir, member_rows
 
           def get(url):
               req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-probe/1.0'})
-              with urllib.request.urlopen(req, timeout=60) as r:
+              with urllib.request.urlopen(req, timeout=90) as r:
                   return json.load(r)
 
-          CKAN = 'https://data.gov.il/api/3/action'
-          # חיפוש מאגרים על נגישות אוטובוסים
-          for q in ['נגישות אוטובוס', 'אוטובוס נגיש', 'נגישות תחבורה ציבורית']:
-              d = get(f'{CKAN}/package_search?q={urllib.parse.quote(q)}&rows=8')
-              print(f'--- "{q}": {d["result"]["count"]}')
-              for p in d['result']['results']:
-                  print('   ·', p.get('title', '')[:75], '·', p.get('name', ''))
-          # ערכי "נגיש" בתוך המאגרים שכבר הכרנו
-          for name, rid in [('ציי רכב אוטובוסים', '91d298ed-a260-4f93-9d50-d5e3c5b82ce1'),
-                            ('רישוי מערך 2026', '58593e9b-2d71-4c39-8663-b34ab29607ab')]:
-              try:
-                  s = get(f'{CKAN}/datastore_search?resource_id={rid}&q={urllib.parse.quote("נגיש")}&limit=3')
-                  print(f'--- {name}: רשומות עם "נגיש": {s["result"].get("total")}')
-                  for rec in s['result'].get('records', [])[:2]:
-                      rec.pop('_id', None)
-                      print('   ·', json.dumps(rec, ensure_ascii=False)[:200])
-              except Exception as e:
-                  print(f'--- {name}: {type(e).__name__}')
-          # ערכים ייחודיים של VehicleType_nm ברישוי מערך — אולי יש שם וריאנט נגיש
-          try:
-              s = get(f'{CKAN}/datastore_search_sql?sql=' + urllib.parse.quote(
-                  'SELECT "VehicleType_nm", COUNT(*) AS n FROM "58593e9b-2d71-4c39-8663-b34ab29607ab" GROUP BY "VehicleType_nm" ORDER BY n DESC LIMIT 25'))
-              for r in s['result']['records']:
-                  print('   סוג-רכב-לקו:', r.get('VehicleType_nm'), '·', r.get('n'))
-          except Exception as e:
-              print('sql:', type(e).__name__, str(e)[:120])
+          day = datetime.date.today() - datetime.timedelta(days=1)
+          URL = ('https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
+                 f'/gtfs_archive/{day.year}/{day.month:02d}/{day.day:02d}/israel-public-transportation.zip')
+          members = central_dir(URL)
+          # 1) האם דגל הנגישות מאוכלס בכלל?
+          c, rows = member_rows(URL, members, 'trips.txt')
+          from collections import Counter, defaultdict
+          has_wc = 'wheelchair_accessible' in c
+          print('שדה wheelchair_accessible בטריפס:', has_wc)
+          per_route = defaultdict(lambda: [0, 0])
+          dist = Counter()
+          for r in rows:
+              rid = r[c['route_id']]
+              w = (r[c['wheelchair_accessible']] if has_wc else '').strip()
+              dist[w] += 1
+              per_route[rid][0] += 1
+              if w == '1':
+                  per_route[rid][1] += 1
+          print('התפלגות הדגל:', dict(dist))
+          if not has_wc or dist.get('1', 0) == 0:
+              print('הדגל לא מאוכלס — אין דרך לבנות את הרשימה מה-GTFS')
+              raise SystemExit(0)
+          # 2) routes.txt — מק"ט, מספר קו, שם
+          c2, rows2 = member_rows(URL, members, 'routes.txt')
+          rinfo = {}
+          for r in rows2:
+              p = (r[c2['route_desc']] or '').split('-')
+              rinfo[r[c2['route_id']]] = {
+                  'mkt': p[0].lstrip('0') if p else '',
+                  'num': r[c2['route_short_name']],
+                  'name': r[c2['route_long_name']][:60],
+                  'agency': r[c2['agency_id']],
+              }
+          # 3) הבין-עירוניים מרישוי המערך 2026
+          inter = {}
+          offset = 0
+          while True:
+              d = get('https://data.gov.il/api/3/action/datastore_search?resource_id=58593e9b-2d71-4c39-8663-b34ab29607ab'
+                      f'&limit=5000&offset={offset}')
+              recs = d['result'].get('records') or []
+              for r in recs:
+                  if 'בינעירוני' in (r.get('line_type_nm') or ''):
+                      inter[str(r.get('office_line_id'))] = r.get('operator_nm', '')
+              if len(recs) < 5000:
+                  break
+              offset += 5000
+          print('קווים בין-עירוניים ברישוי המערך:', len(inter))
+          # 4) איחוד לקובץ
+          agg = defaultdict(lambda: [0, 0, None])
+          for rid, (tot, acc) in per_route.items():
+              ri = rinfo.get(rid)
+              if not ri or ri['mkt'] not in inter:
+                  continue
+              a = agg[ri['mkt']]
+              a[0] += tot
+              a[1] += acc
+              a[2] = ri
+          out = io.StringIO()
+          w = csv.writer(out)
+          w.writerow(['מקט', 'קו', 'מפעילה', 'מסלול', 'נסיעות ביום', 'מהן נגישות', 'אחוז נגיש'])
+          full = part = none = 0
+          for mkt, (tot, acc, ri) in sorted(agg.items(), key=lambda x: -x[1][1]):
+              pct = round(100 * acc / tot) if tot else 0
+              if pct >= 99: full += 1
+              elif pct > 0: part += 1
+              else: none += 1
+              w.writerow([mkt, ri['num'], inter.get(mkt, ''), ri['name'], tot, acc, f'{pct}%'])
+          open('reports/intercity-accessible.csv', 'w', encoding='utf-8-sig').write(out.getvalue())
+          print(f'קווים בין-עירוניים ב-GTFS של אתמול: {len(agg)} · נגישים במלואם: {full} · חלקית: {part} · ללא: {none}')
           EOF
+
+      - name: commit
+        run: |
+          git config user.name 'probe-bot'
+          git config user.email 'noreply@github.com'
+          git add reports/ 2>/dev/null || true
+          git diff --cached --quiet && { echo 'אין קובץ'; exit 0; }
+          git commit -m 'data: רשימת קווים בין-עירוניים נגישים (GTFS wheelchair_accessible)'
+          git pull --rebase -X theirs origin main
+          git push
