@@ -32,43 +32,35 @@ jobs:
                   return json.load(r)
 
           CKAN = 'https://data.gov.il/api/3/action'
-          for pkg in ['bus_fleet']:
-              d = get(f'{CKAN}/package_show?id={pkg}')['result']
-              print(f'=== {d.get("title")} · org: {d.get("organization", {}).get("title", "")}')
-              print('   notes:', (d.get('notes') or '').replace(chr(10), ' ')[:300])
-              for res in d.get('resources', []):
-                  rid = res['id']
-                  print(f'   resource: {res.get("name", "")[:60]} · {rid} · {res.get("format")}')
+          # המשאבים של ציי רכב אוטובוסים
+          d = get(f'{CKAN}/package_show?id=bus_fleet')['result']
+          for res in d.get('resources', []):
+              rid = res['id']
+              try:
+                  meta = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
+              except Exception:
+                  continue
+              total = meta['result'].get('total')
+              print(f'=== {res.get("name", "")[:60]} · {rid} · סה"כ רשומות: {total}')
+              for fld, val in [('bullet_proof_nm', 'ממוגן ירי'), ('stone_proof_nm', 'ממוגן אבנים'), ('stone_proof_nm', 'ממוגן אבן')]:
+                  flt = urllib.parse.quote(json.dumps({fld: val}, ensure_ascii=False))
                   try:
-                      f = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
-                      fields = [x['id'] for x in f['result'].get('fields', [])]
-                      print('     שדות:', ', '.join(fields))
-                      # חיפוש רשומות ממוגנות
-                      s = get(f'{CKAN}/datastore_search?resource_id={rid}&q={urllib.parse.quote("ממוגן")}&limit=5')
+                      s = get(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&limit=3')
                       tot = s['result'].get('total')
-                      print(f'     רשומות עם "ממוגן": {tot}')
-                      for rec in s['result'].get('records', [])[:4]:
-                          rec.pop('_id', None)
-                          print('      ·', json.dumps(rec, ensure_ascii=False)[:250])
-                  except Exception as e:
-                      print(f'     datastore: {type(e).__name__}: {e}')
-          # גם רישוי מערך האוטובוסים
-          d = get(f'{CKAN}/package_search?q={urllib.parse.quote("רישוי מערך האוטובוסים")}&rows=3')
-          for p in d['result']['results']:
-              print(f'=== {p.get("title")}')
-              for res in p.get('resources', [])[:4]:
-                  rid = res['id']
-                  print(f'   resource: {res.get("name", "")[:60]} · {rid}')
-                  try:
-                      f = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
-                      fields = [x['id'] for x in f['result'].get('fields', [])]
-                      hit = [x for x in fields if 'migun' in x.lower() or 'mugan' in x.lower()]
-                      print('     שדות:', ', '.join(fields[:35]))
-                      s = get(f'{CKAN}/datastore_search?resource_id={rid}&q={urllib.parse.quote("ממוגן")}&limit=3')
-                      print(f'     רשומות עם "ממוגן": {s["result"].get("total")} · שדות מיגון: {hit or "אין"}')
+                      print(f'   {fld} = "{val}": {tot}')
                       for rec in s['result'].get('records', [])[:2]:
-                          rec.pop('_id', None)
-                          print('      ·', json.dumps(rec, ensure_ascii=False)[:250])
+                          keep = {k: rec.get(k) for k in ('operator_nm', 'bus_license_id', 'BusSize_nm', 'BusType_nm', 'production_year', 'bullet_proof_nm', 'stone_proof_nm')}
+                          print('      ·', json.dumps(keep, ensure_ascii=False))
                   except Exception as e:
-                      print(f'     datastore: {type(e).__name__}: {e}')
+                      print(f'   {fld}="{val}": {type(e).__name__}')
+              # התפלגות ערכים מלאה של שני השדות (דגימה רחבה)
+              try:
+                  s = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=32000')
+                  from collections import Counter
+                  bp = Counter(r.get('bullet_proof_nm') for r in s['result']['records'])
+                  sp = Counter(r.get('stone_proof_nm') for r in s['result']['records'])
+                  print('   התפלגות ירי:', dict(bp))
+                  print('   התפלגות אבנים:', dict(sp))
+              except Exception as e:
+                  print('   התפלגות:', type(e).__name__, e)
           EOF
