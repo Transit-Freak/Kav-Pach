@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: חיפוש מיגון ב-data.gov.il
         run: |
-          python3 - <<'EOF' || echo "הבדיקה הסתיימה עם שגיאה — ראו למעלה"
+          python3 - <<'EOF' || echo "שגיאה — ראו למעלה"
           import json
           import urllib.parse
           import urllib.request
@@ -32,39 +32,43 @@ jobs:
                   return json.load(r)
 
           CKAN = 'https://data.gov.il/api/3/action'
-          # 1) חיפוש מאגרים לפי מילות מפתח
-          for q in ['ממוגן', 'מיגון', 'ממוגנים', 'מיגון ירי']:
-              try:
-                  d = get(f'{CKAN}/package_search?q={urllib.parse.quote(q)}&rows=10')
-                  res = d['result']
-                  print(f'--- חיפוש "{q}": {res["count"]} מאגרים')
-                  for p in res['results']:
-                      print(f'   · {p.get("title", "")[:70]} · {p.get("name", "")}')
-              except Exception as e:
-                  print(f'--- חיפוש "{q}": שגיאה {type(e).__name__}: {e}')
-
-          # 2) שדות במאגרי הרכב המרכזיים — יש עמודת מיגון?
-          RES = {
-              'כלי רכב ציבוריים (שלנו)': 'cf29862d-ca25-4691-84f6-1be60dcb4a1e',
-              'רכב פרטי ומסחרי (הראשי)': '053cea08-09bc-40ec-8f7a-156f0677aff3',
-              'כלי רכב פעילים ברמת דגם': '142afde2-6228-49f9-8a29-9b6c3a0cbe40',
-          }
-          for name, rid in RES.items():
-              try:
-                  d = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
-                  fields = [f['id'] for f in d['result'].get('fields', [])]
-                  hit = [f for f in fields if 'migun' in f.lower() or 'ממוגן' in f or 'מיגון' in f or 'armor' in f.lower()]
-                  print(f'--- {name}: {len(fields)} שדות · שדות מיגון: {hit or "אין"}')
-                  print('    ' + ', '.join(fields[:30]))
-              except Exception as e:
-                  print(f'--- {name}: שגיאה {type(e).__name__}: {e}')
-
-          # 3) חיפוש כללי של מאגרי אוטובוסים — אולי מאגר ייעודי בשם אחר
-          try:
-              d = get(f'{CKAN}/package_search?q={urllib.parse.quote("אוטובוס")}&rows=30')
-              print(f'--- מאגרים עם "אוטובוס": {d["result"]["count"]}')
-              for p in d['result']['results']:
-                  print(f'   · {p.get("title", "")[:80]}')
-          except Exception as e:
-              print(f'--- אוטובוס: שגיאה {e}')
+          for pkg in ['bus_fleet']:
+              d = get(f'{CKAN}/package_show?id={pkg}')['result']
+              print(f'=== {d.get("title")} · org: {d.get("organization", {}).get("title", "")}')
+              print('   notes:', (d.get('notes') or '').replace(chr(10), ' ')[:300])
+              for res in d.get('resources', []):
+                  rid = res['id']
+                  print(f'   resource: {res.get("name", "")[:60]} · {rid} · {res.get("format")}')
+                  try:
+                      f = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
+                      fields = [x['id'] for x in f['result'].get('fields', [])]
+                      print('     שדות:', ', '.join(fields))
+                      # חיפוש רשומות ממוגנות
+                      s = get(f'{CKAN}/datastore_search?resource_id={rid}&q={urllib.parse.quote("ממוגן")}&limit=5')
+                      tot = s['result'].get('total')
+                      print(f'     רשומות עם "ממוגן": {tot}')
+                      for rec in s['result'].get('records', [])[:4]:
+                          rec.pop('_id', None)
+                          print('      ·', json.dumps(rec, ensure_ascii=False)[:250])
+                  except Exception as e:
+                      print(f'     datastore: {type(e).__name__}: {e}')
+          # גם רישוי מערך האוטובוסים
+          d = get(f'{CKAN}/package_search?q={urllib.parse.quote("רישוי מערך האוטובוסים")}&rows=3')
+          for p in d['result']['results']:
+              print(f'=== {p.get("title")}')
+              for res in p.get('resources', [])[:4]:
+                  rid = res['id']
+                  print(f'   resource: {res.get("name", "")[:60]} · {rid}')
+                  try:
+                      f = get(f'{CKAN}/datastore_search?resource_id={rid}&limit=0')
+                      fields = [x['id'] for x in f['result'].get('fields', [])]
+                      hit = [x for x in fields if 'migun' in x.lower() or 'mugan' in x.lower()]
+                      print('     שדות:', ', '.join(fields[:35]))
+                      s = get(f'{CKAN}/datastore_search?resource_id={rid}&q={urllib.parse.quote("ממוגן")}&limit=3')
+                      print(f'     רשומות עם "ממוגן": {s["result"].get("total")} · שדות מיגון: {hit or "אין"}')
+                      for rec in s['result'].get('records', [])[:2]:
+                          rec.pop('_id', None)
+                          print('      ·', json.dumps(rec, ensure_ascii=False)[:250])
+                  except Exception as e:
+                      print(f'     datastore: {type(e).__name__}: {e}')
           EOF
