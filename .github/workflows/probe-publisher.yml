@@ -23,6 +23,7 @@ jobs:
         run: |
           python3 - <<'EOF' || echo "שגיאה"
           import json
+          import urllib.parse
           import urllib.request
 
           def get(url):
@@ -31,14 +32,29 @@ jobs:
                   return json.load(r)
 
           CKAN = 'https://data.gov.il/api/3/action'
-          RID = '91d298ed-a260-4f93-9d50-d5e3c5b82ce1'
-          d = get(f'{CKAN}/datastore_search?resource_id={RID}&limit=2')
-          fields = [x['id'] + ':' + x.get('type', '') for x in d['result'].get('fields', [])]
-          print('כל השדות של ציי רכב אוטובוסים:')
-          for f in fields:
-              print('  ·', f)
-          print()
-          print('רשומה מלאה לדוגמה:')
-          for rec in d['result'].get('records', [])[:2]:
-              print(json.dumps(rec, ensure_ascii=False, indent=1))
+          # חיפוש מאגרים על נגישות אוטובוסים
+          for q in ['נגישות אוטובוס', 'אוטובוס נגיש', 'נגישות תחבורה ציבורית']:
+              d = get(f'{CKAN}/package_search?q={urllib.parse.quote(q)}&rows=8')
+              print(f'--- "{q}": {d["result"]["count"]}')
+              for p in d['result']['results']:
+                  print('   ·', p.get('title', '')[:75], '·', p.get('name', ''))
+          # ערכי "נגיש" בתוך המאגרים שכבר הכרנו
+          for name, rid in [('ציי רכב אוטובוסים', '91d298ed-a260-4f93-9d50-d5e3c5b82ce1'),
+                            ('רישוי מערך 2026', '58593e9b-2d71-4c39-8663-b34ab29607ab')]:
+              try:
+                  s = get(f'{CKAN}/datastore_search?resource_id={rid}&q={urllib.parse.quote("נגיש")}&limit=3')
+                  print(f'--- {name}: רשומות עם "נגיש": {s["result"].get("total")}')
+                  for rec in s['result'].get('records', [])[:2]:
+                      rec.pop('_id', None)
+                      print('   ·', json.dumps(rec, ensure_ascii=False)[:200])
+              except Exception as e:
+                  print(f'--- {name}: {type(e).__name__}')
+          # ערכים ייחודיים של VehicleType_nm ברישוי מערך — אולי יש שם וריאנט נגיש
+          try:
+              s = get(f'{CKAN}/datastore_search_sql?sql=' + urllib.parse.quote(
+                  'SELECT "VehicleType_nm", COUNT(*) AS n FROM "58593e9b-2d71-4c39-8663-b34ab29607ab" GROUP BY "VehicleType_nm" ORDER BY n DESC LIMIT 25'))
+              for r in s['result']['records']:
+                  print('   סוג-רכב-לקו:', r.get('VehicleType_nm'), '·', r.get('n'))
+          except Exception as e:
+              print('sql:', type(e).__name__, str(e)[:120])
           EOF
