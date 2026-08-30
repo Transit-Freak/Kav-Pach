@@ -371,9 +371,20 @@ function typeView(t){
 
 // הסבר קצר על הערכת הק"מ — מוצג בריחוף על ⓘ בכותרות העמודות ובחלון הרכב
 const KMTIP='הערכה בלבד: אורך המסלול המתוכנן של הקווים שבהם הרכב שידר, כפול מספר הנסיעות שנקלטו. לא ידוע אם כל נסיעה בוצעה במלואה — ייתכנו נסיעות חלקיות, קטעים בלי קליטת GPS או שידור חסר, ולא ידוע כמה נסיעות היו בכל קו.';
+// חלונית ההסבר של הק"מ — נפתחת בלחיצה על ⓘ (בעיקר לטלפון, שאין בו ריחוף)
+function showTip(){
+  const ovl=document.createElement('div');ovl.className='ovl';
+  ovl.innerHTML=`<div class="modal" style="max-width:420px"><div class="mhead"><b style="font-size:16px">איך מחושב הקילומטראז' המשוער</b><button class="x" aria-label="סגירה">✕</button></div>
+    <div style="font-size:14.5px;line-height:1.65;color:var(--ink)">${KMTIP}</div>
+    <p class="note">המקור לאורכי המסלולים: שרטוטי הקווים של "הקו בזמן". ההערכה מכסה רק ימים שנסרקו.</p></div>`;
+  ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
+  document.body.appendChild(ovl);
+}
 function table(vs,opsArr){
   const enr=DATA.enriched;
-  const th=(k,t,tip)=>`<th onclick="srt('${k}')" ${tip?`title="${tip}"`:''}>${t}${tip?' <span style="cursor:help;color:#8B93A7">ⓘ</span>':''}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
+  // ⓘ לחיץ: בטלפון אין ריחוף, ולחיצה על הסמל פתחה את המיון במקום את
+  // ההסבר (דיווח שלמה) — עצירת האירוע ופתיחת חלונית הסבר
+  const th=(k,t,tip)=>`<th onclick="srt('${k}')" ${tip?`title="${tip}"`:''}>${t}${tip?` <span style="cursor:help;color:#1D4ED8;font-size:13px" onclick="event.stopPropagation();showTip()">ⓘ</span>`:''}${SORTK===k?(SORTD>0?' ▲':' ▼'):''}</th>`;
   const shown=vs.slice(0,LIMIT);
   return `<div class="tblbox"><table><thead><tr>${opsArr?'<th>חברה</th>':''}
     ${th('p','מספר רכב')}${enr?th('t','סוג הרכב')+th('y','שנתון')+th('m','יצרן ודגם'):''}
