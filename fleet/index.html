@@ -228,7 +228,7 @@ function home(){
     if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
       if(key) hits.sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
     else hits.sort((a,b)=>a[1][2]<b[1][2]?1:a[1][2]>b[1][2]?-1:0);
-    if(ARF) hits=hits.filter(h=>h[1]._ar);
+    if(ARF) hits=hits.filter(h=>h[1]._ar&&(ARF===1||h[1]._ar.includes(ARF)));
     return kpis()+`<div class="panel"><p class="ptitle">${clean?`תוצאות למספר רכב "${esc(f)}" · ${fmt(hits.length)}`:`כל הרכבים במעקב · ${fmt(hits.length)}`}</p>
       ${ARMOK?`<div class="filters"><button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">🛡️ ממוגנים בלבד</button></div>`:''}
       ${hits.length?table(hits.map(h=>h[1]),hits.map(h=>h[0])):'<div class="empty">לא נמצא רכב מתאים</div>'}</div>`;
@@ -351,7 +351,7 @@ function typeView(t){
   const byOp={}; for(const [o] of all) byOp[o.ref]=(byOp[o.ref]||0)+1;
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
-  if(ARF) pairs=pairs.filter(p=>p[1]._ar);
+  if(ARF) pairs=pairs.filter(p=>p[1]._ar&&(ARF===1||p[1]._ar.includes(ARF)));
   if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
     if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
   return `<button class="back" onclick="history.back()">→ חזרה לכל הדגמים</button>
@@ -437,8 +437,13 @@ function opView(ref){
   if(KABF==='k') vs=vs.filter(isKab);
   if(KABF==='l') vs=vs.filter(v=>!isKab(v));
   if(STATF!==null) vs=vs.filter(v=>(isActive(v)?1:0)===STATF);
-  if(ARF) vs=vs.filter(v=>v._ar);
+  if(ARF) vs=vs.filter(v=>v._ar&&(ARF===1||v._ar.includes(ARF)));
   vs=sortVs(vs);
+  // כרטיסי מיגון בפילוח סוג הרכב (בקשת שלמה): לחיצה מסננת כמו כל סוג
+  const ay=ARMOK?o.vehicles.filter(v=>v._ar&&v._ar.includes('y')).length:0;
+  const as_=ARMOK?o.vehicles.filter(v=>v._ar&&v._ar.includes('s')).length:0;
+  const armCards=(ay?`<button class="type ${ARF==='y'?'on':''}" onclick="ARF=ARF==='y'?null:'y';LIMIT=200;render()"><b>${fmt(ay)}</b><span>🛡️ ממוגן ירי</span></button>`:'')+
+    (as_?`<button class="type ${ARF==='s'?'on':''}" onclick="ARF=ARF==='s'?null:'s';LIMIT=200;render()"><b>${fmt(as_)}</b><span>🛡️ ממוגן אבנים</span></button>`:'');
   return `<button class="back" onclick="history.back()">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
@@ -446,7 +451,7 @@ function opView(ref){
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
-      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}</div></div>`:''}
+      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armCards}</div></div>`:''}
   ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם ${YEARF?`היו בשימוש בשנת ${YEARF}`:'פעילים בפועל'}</p>
       ${calYears.length>1?`<div class="filters">
         <button class="fchip ${YEARF===null?'on':''}" onclick="YEARF=null;render()">היום</button>
@@ -456,7 +461,7 @@ function opView(ref){
         return `<div class="yrow yact"><span>${y}</span><div class="ybar"><b class="tot" style="width:${Math.max(4,years[y]/ymax*100)}%"><i style="width:${years[y]?Math.round(act/years[y]*100):0}%;background:${c}"></i></b></div><span class="c"><b style="color:var(--ok)">${fmt(act)} ${YEARF?`בשנת ${YEARF}`:'פעילים'}</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
       <p class="note">${YEARF?`רכב נספר לשנת ${YEARF} אם שידר נסיעות במהלכה (לפי חלון הפעילות שנמדד בדאטאבוס). הנתונים מכסים מ-${minSeen} ואילך — ורק את התקופה שכבר נסרקה.`:'"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.'}</p>
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
-  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}</p>
+  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}${ARF?' · '+(ARF==='y'?'🛡️ ממוגני ירי':ARF==='s'?'🛡️ ממוגני אבנים':'🛡️ ממוגנים'):''}</p>
     <div class="filters">
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
