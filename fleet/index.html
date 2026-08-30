@@ -167,7 +167,9 @@
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='';
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null;
+// תווית מיגון לרכב (v._ar: 'y' ירי / 's' אבנים / 'ys' שניהם)
+const arLbl=a=>a==='ys'?'ממוגן ירי ואבנים':(a&&a.includes('y')?'ממוגן ירי':'ממוגן אבנים');
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
 // ('צבורי להסע מיוחד', 'זעצ הסעות מיוחדות'...) — שם שכל אחד מבין.
 // המפתח אחרי ניקוי: גרש תקוע, רווחים כפולים ותחילית 'אוטובוס' (בקובץ
@@ -220,13 +222,15 @@ function home(){
   if(MODE==='plate'){
     // בלי חיפוש: כל רשימת הרכבים (לא רשימת החברות) — מהחדש שנצפה לישן
     const clean=f.replace(/-/g,'');
-    const hits=[];
+    let hits=[];
     for(const o of DATA.operators) for(const v of o.vehicles)
       if(!clean||v[0].replace(/-/g,'').includes(clean)) hits.push([o,v]);
     if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
       if(key) hits.sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
     else hits.sort((a,b)=>a[1][2]<b[1][2]?1:a[1][2]>b[1][2]?-1:0);
+    if(ARF) hits=hits.filter(h=>h[1]._ar);
     return kpis()+`<div class="panel"><p class="ptitle">${clean?`תוצאות למספר רכב "${esc(f)}" · ${fmt(hits.length)}`:`כל הרכבים במעקב · ${fmt(hits.length)}`}</p>
+      ${ARMOK?`<div class="filters"><button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">🛡️ ממוגנים בלבד</button></div>`:''}
       ${hits.length?table(hits.map(h=>h[1]),hits.map(h=>h[0])):'<div class="empty">לא נמצא רכב מתאים</div>'}</div>`;
   }
   const ops=DATA.operators.filter(o=>!f||o.name.includes(f)).slice().sort((a,b)=>b.vehicles.length-a.vehicles.length);
@@ -347,6 +351,7 @@ function typeView(t){
   const byOp={}; for(const [o] of all) byOp[o.ref]=(byOp[o.ref]||0)+1;
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
+  if(ARF) pairs=pairs.filter(p=>p[1]._ar);
   if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0}[SORTK];
     if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
   return `<button class="back" onclick="history.back()">→ חזרה לכל הדגמים</button>
@@ -363,6 +368,7 @@ function typeView(t){
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
       <button class="fchip ${STATF===0?'on':''}" onclick="STATF=0;LIMIT=200;render()">ירדו מהשירות</button>
+      ${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">🛡️ ממוגנים</button>`:''}
     </div>
     ${table(pairs.map(p=>p[1]),pairs.map(p=>p[0]))}
     <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו · עמודת החברה מראה למי כל רכב שייך.</p>
@@ -392,7 +398,7 @@ function table(vs,opsArr){
   ${shown.map((v,i)=>{const on=isActive(v);const mv=on?null:movedTo(v);
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
-    <td dir="ltr" style="text-align:right">${esc(v[0])}</td>
+    <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" style="cursor:help">🛡️</span>`:''}</td>
     ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}
@@ -431,6 +437,7 @@ function opView(ref){
   if(KABF==='k') vs=vs.filter(isKab);
   if(KABF==='l') vs=vs.filter(v=>!isKab(v));
   if(STATF!==null) vs=vs.filter(v=>(isActive(v)?1:0)===STATF);
+  if(ARF) vs=vs.filter(v=>v._ar);
   vs=sortVs(vs);
   return `<button class="back" onclick="history.back()">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
@@ -456,6 +463,7 @@ function opView(ref){
       <button class="fchip ${STATF===0?'on':''}" onclick="STATF=0;LIMIT=200;render()">ירדו מהשירות</button>
       ${enr&&kab?`<button class="fchip ${KABF==='l'?'on':''}" onclick="KABF=KABF==='l'?null:'l';LIMIT=200;render()">רכבי קו</button>
       <button class="fchip ${KABF==='k'?'on':''}" onclick="KABF=KABF==='k'?null:'k';LIMIT=200;render()">רכבי קבלן</button>`:''}
+      ${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">🛡️ ממוגנים</button>`:''}
     </div>
     ${table(vs,null)}
     <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו.</p>
@@ -499,6 +507,21 @@ function buildKm(){
   }
   KMOK=n>0;
 }
+// מיגון ירי/אבנים — ממאגר "ציי רכב אוטובוסים" של משרד התחבורה
+async function loadArmor(){
+  if(ARM!==null) return;
+  try{const r=await fetch('data/fleet-armor.json',{cache:'no-cache'});ARM=r.ok?await r.json():{};}
+  catch(e){ARM={};}
+}
+function buildArmor(){
+  if(!DATA||!ARM||!ARM.armor) return;
+  let n=0;
+  for(const o of DATA.operators) for(const v of o.vehicles){
+    const a=ARM.armor[v[0].replace(/\D/g,'').replace(/^0+/,'')];
+    if(a){v._ar=a;n++;}
+  }
+  ARMOK=n>0;
+}
 async function shard(d){
   if(SHARDS[d]!==undefined) return SHARDS[d];
   try{const r=await fetch(`data/gov-details-${d}.json`,{cache:'no-cache'});SHARDS[d]=r.ok?await r.json():{};}
@@ -511,7 +534,8 @@ async function showV(plate){
   if(!recs.length) return;
   const fv=recs[0][1];
   const clean=plate.replace(/-/g,'').replace(/^0+/,'');
-  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM()]);
+  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor()]);
+  const ar=ARM&&ARM.armor?ARM.armor[clean]:null;
   const on=recs.some(([,v])=>isActive(v));
   let rows='',anyKm=false;
   for(const [o2,v2] of recs){
@@ -540,6 +564,7 @@ async function showV(plate){
   const ovl=document.createElement('div');ovl.className='ovl';
   ovl.innerHTML=`<div class="modal"><div class="mhead"><span class="plate">${esc(plate)}</span>
     ${gT(fv)?`<span class="tg">${esc(gT(fv))}</span>`:''}
+    ${ar?`<span class="st mv" title="לפי מאגר ״ציי רכב אוטובוסים״ של משרד התחבורה${ARM.updated?` (${fd(ARM.updated)})`:''}">🛡️ ${arLbl(ar)}</span>`:''}
     <span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span>
     <button class="x" aria-label="סגירה">✕</button></div>${rows}</div>`;
   ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
@@ -599,20 +624,20 @@ function XDL(){
   }
   if(D.length>1) dlCSV(name,D);
 }
-function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0});}
+function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;ARF=null;LIMIT=200;render();window.scrollTo({top:0});}
 // חץ "אחורה" של הדפדפן מחזיר למסך הבית במקום לצאת מהאתר
 window.addEventListener('popstate',()=>{VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';LIMIT=200;render();window.scrollTo({top:0});});
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
   $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש דגם או יצרן…':'חיפוש מספר רכב…';
-  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';LIMIT=200;render();
+  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;LIMIT=200;render();
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();
-  loadKM().then(()=>{buildKm();render();});})
+  Promise.all([loadKM(),loadArmor()]).then(()=>{buildKm();buildArmor();render();});})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>
