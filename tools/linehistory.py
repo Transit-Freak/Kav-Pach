@@ -531,7 +531,9 @@ for rdesc,c in cur.items():
         t=f"הנגישות שוּנתה: {lblw.get(pv['wa'],pv['wa'])} ← {lblw.get(c['wa'],c['wa'])}"
         note=(note+' · '+t) if note else t
     if pd_changed:
-        lblp={1:'הורדה בלבד',2:'העלאה בלבד',3:'לא עוצר לנוסעים'}
+        # 1 = אין הורדה (העלאה בלבד), 2 = אין העלאה (הורדה בלבד) — המיפוי
+        # היה הפוך וכתב "העלאה בלבד" על תחנות סופיות (דיווח שלמה, קו 12 טבריה)
+        lblp={1:'העלאה בלבד',2:'הורדה בלבד',3:'לא עוצר לנוסעים'}
         now={x[0]:x[4] for x in c['stopinfo'] if len(x)>4}
         was=prev_pd_of(rdesc)
         chg=[f"{name.get(k,k)}: {lblp.get(was.get(k,0),'רגילה')} ← {lblp.get(v,'רגילה')}"
