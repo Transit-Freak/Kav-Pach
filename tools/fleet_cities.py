@@ -70,6 +70,15 @@ def main():
                 year_of[key] = v[ybase]
 
     rc = route_cities()
+    # אילו רכבים פעילים עכשיו (שידרו בחודש האחרון) — לספירת "פעילים בעיר"
+    import datetime as _dt
+    _upd = _dt.date.fromisoformat(fleet['updated'])
+    _ret = fleet.get('retire_days', 30)
+    active = set()
+    for op in fleet['operators']:
+        for v in op['vehicles']:
+            if (_upd - _dt.date.fromisoformat(v[2])).days <= _ret:
+                active.add(f"{op['ref']}:{v[0]}")
     cities = {}
     linked = 0
     for key, vals in state.items():
@@ -85,12 +94,16 @@ def main():
         if vset:
             linked += 1
         mask = vals[5] if len(vals) > 5 else 0
+        is_act = key in active
         for city in vset:
             ct = cities.setdefault(city,
-                                   {'total': 0, 'ops': {}, 'years': {}, 'months': {},
-                                    'opm': {}})
+                                   {'total': 0, 'act': 0, 'ops': {}, 'opsa': {},
+                                    'years': {}, 'months': {}, 'opm': {}})
             ct['total'] += 1
             ct['ops'][op] = ct['ops'].get(op, 0) + 1
+            if is_act:
+                ct['act'] += 1
+                ct['opsa'][op] = ct['opsa'].get(op, 0) + 1
             y = year_of.get(key)
             if y:
                 ct['years'][str(y)] = ct['years'].get(str(y), 0) + 1
@@ -112,7 +125,9 @@ def main():
     # רק ערים עם נוכחות ממשית, ממוינות לפי גודל
     out = {'updated': datetime.date.today().isoformat(),
            'cities': {c: {'total': d['total'],
+                          'act': d.get('act', 0),
                           'ops': sorted(d['ops'].items(), key=lambda x: -x[1]),
+                          'opsa': {str(o): n for o, n in d.get('opsa', {}).items()},
                           'years': d['years'],
                           **({'months': dict(sorted(d['months'].items()))}
                              if d.get('months') else {}),
