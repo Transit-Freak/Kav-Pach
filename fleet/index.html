@@ -163,12 +163,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 14 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 15 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='14';
+window.FLEET_BUILD='15';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -282,6 +282,7 @@ async function loadCities(){
 // בחירת חודש בעיר: רינדור + גלילה לגרף החברות (דיווח שלמה: "לא קורה
 // כלום" — השינוי קרה מעל/מתחת לאזור הנראה ולא הורגש)
 function pickMon(v){
+  if(v===CITYMON)return;
   if(v===CITYMON) return;
   CITYMON=v;render();
   setTimeout(()=>{const p=document.querySelector('.cols2 .panel');p&&p.scrollIntoView({behavior:'smooth',block:'start'});},60);
@@ -339,8 +340,8 @@ function cityView(c){
   </div>
   ${mk.length?`<div class="filters" style="margin:12px 0 2px;align-items:center">
     <span style="font-size:13px;font-weight:700;color:var(--mut)">תקופה:</span>
-    <button class="fchip ${CITYMON===''?'on':''}" onclick="CITYMON='';render()">כל המידע</button>
-    <select class="mselect" onchange="pickMon(this.value)" oninput="pickMon(this.value)">
+    <button class="fchip ${CITYMON===''?'on':''}" onclick="event.preventDefault();CITYMON='';setTimeout(render,0)">כל המידע</button>
+    <select class="mselect" onchange="pickMon(this.value)">
       <option value="">בחירת חודש…</option>
       ${mk.map(m=>`<option value="${m}" ${CITYMON===m?'selected':''}>${mfmt(m)}</option>`).join('')}
     </select>
