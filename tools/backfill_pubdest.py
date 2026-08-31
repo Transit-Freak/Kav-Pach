@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-"""סריקה היסטורית של תחנות היעד לפרסום (בקשת שלמה 31.08.2026).
+"""סריקה היסטורית של תחנות היעד לפרסום ושינויי עיר (בקשת שלמה 31.08.2026).
 
-עוברת על ארכיון הסדנא (16.01.2022 → 24.07.2026) בדגימה דו-שבועית,
-מחשבת לכל דגימה את קבוצת תחנות-היעד (התחנה האחרונה של כל מסלול פעיל,
-לפי מק"ט — אותה הגדרה כמו המעקב היומי), ורושמת אירוע על כל תחנה
-שהפכה או חדלה להיות יעד — עם התאריך ההיסטורי האמיתי.
+עוברת על ארכיון הסדנא (2022 → אתמול) בדגימה דו-שבועית ורושמת, עם
+התאריך ההיסטורי האמיתי:
+  · תחנה שהפכה/חדלה להיות תחנת יעד (התחנה האחרונה של מסלול, לפי מק"ט)
+  · שינוי שם היעד שעל שלט האוטובוס (st='ren', ישן ← חדש; העיקר לשלמה —
+    בלי פירוט קווים: כשהשם משתנה הוא משתנה לכל הקווים)
+  · שינוי העיר של כל תחנה שהיא (k='city', כמו במעקב היומי)
 
 רצה בנתחים: כל נתח מעבד כמה דגימות ונדחף מיד — המונים באתר עולים
 תוך כדי הסריקה, לא בסופה. בטוחה להרצה חוזרת (אירועים לא מוכפלים).
@@ -123,7 +125,10 @@ def day_dest_map(day):
         # שובר-שוויון דטרמיניסטי כדי שלא ייווצרו אירועי-סרק מריצוד
         hs = max(v[5].items(), key=lambda kv: (kv[1], kv[0]))[0] if v[5] else ''
         out[k] = (sorted(v[0])[:12], v[1], v[2], v[3], v[4], hs)
-    return out
+    # כל התחנות (לא רק תחנות יעד) — לזיהוי שינויי עיר היסטוריים
+    allstops = {str(code): [name, la, lo, city]
+                for code, name, la, lo, city in stops.values() if code}
+    return out, allstops
 
 
 def _exists(url):
@@ -157,15 +162,16 @@ def hs_fmt(h):
 def add_event(shist, months, code, ev):
     day = ev['d']
     hc = shist.setdefault(code, [])
-    if any(e.get('d') == day and e.get('k') == 'pubdest' and e.get('st') == ev['st'] for e in hc):
+    if any(e.get('d') == day and e.get('k') == ev['k'] and e.get('st') == ev.get('st')
+           for e in hc):
         return False
     hc.append(ev)
     hc.sort(key=lambda e: e.get('d', ''))
     mon = day[:7]
     mp = f'{OUTDIR}/changes/stops-{mon}.json'
     mm = months.setdefault(mon, jload(mp, {'month': mon, 'changes': []}))
-    if not any(x.get('c') == code and x.get('d') == day and x.get('k') == 'pubdest'
-               and x.get('st') == ev['st'] for x in mm['changes']):
+    if not any(x.get('c') == code and x.get('d') == day and x.get('k') == ev['k']
+               and x.get('st') == ev.get('st') for x in mm['changes']):
         mm['changes'].append({'c': code, **ev})
     return True
 
@@ -196,7 +202,7 @@ def main():
             st['ptr'] = (ptr + datetime.timedelta(days=STEP_DAYS)).isoformat()
             continue
         try:
-            dest = day_dest_map(day)
+            dest, allstops = day_dest_map(day)
         except (Exception, SystemExit) as e:
             # קובץ קיים אך שבור/קטוע — מנסים את היום הבא בחלון במקום ליפול
             print(f'{day}: כשל בקריאה ({e}) — ממשיכים ליום הבא', flush=True)
@@ -233,6 +239,18 @@ def main():
                                   'la': dest[code][3], 'lo': dest[code][4],
                                   'oh': hs_fmt(oh), 'nh': hs_fmt(nh)}):
                         n_ev += 1
+        # שינוי עיר (בקשת שלמה): גם הוא נסרק היסטורית ומתפרסם מיד
+        prev_city = st.get('prev_city')
+        if prev_city is not None:
+            for code in allstops.keys() & prev_city.keys():
+                oc, nc = prev_city[code], allstops[code][3]
+                if oc and nc and oc != nc:
+                    name, la, lo, _ = allstops[code]
+                    if add_event(shist, months, code,
+                                 {'d': day.isoformat(), 'k': 'city', 'n': name,
+                                  'oc': oc, 'nc': nc, 'la': la, 'lo': lo}):
+                        n_ev += 1
+        st['prev_city'] = {k: v[3] for k, v in allstops.items() if v[3]}
         st['prev'] = {k: list(v) for k, v in dest.items()}
         st['prev_day'] = day.isoformat()
         st['ptr'] = (day + datetime.timedelta(days=STEP_DAYS)).isoformat()
