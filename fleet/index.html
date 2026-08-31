@@ -163,12 +163,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 12 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 13 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='12';
+window.FLEET_BUILD='13';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -466,7 +466,7 @@ function table(vs,opsArr){
   ${shown.map((v,i)=>{const on=isActive(v);const mv=on?null:movedTo(v);
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
-    <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" class="tg" style="cursor:help;font-size:10px">מיגון</span>`:''}${v._gp?` <span title="נעלם חודש+ וחזר ${v._gp.length} פעמים — תקלה אפשרית; התאריכים בכרטיס הרכב" style="cursor:help;font-size:10px;background:#FEF3C7;color:#92400E;border-radius:6px;padding:2px 6px;font-weight:700">תקלה</span>`:''}</td>
+    <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" class="tg" style="cursor:help;font-size:10px">מיגון</span>`:''}</td>
     ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}${OFCOK?`<td>${v._ok!=null?fmt(v._ok):'—'}</td>`:''}
@@ -515,6 +515,10 @@ function opView(ref){
   const as_=ARMOK?o.vehicles.filter(v=>v._ar&&v._ar.includes('s')).length:0;
   const armCards=(ay?`<button class="type ${ARF==='y'?'on':''}" onclick="ARF=ARF==='y'?null:'y';LIMIT=200;render()"><b>${fmt(ay)}</b><span>ממוגן ירי</span></button>`:'')+
     (as_?`<button class="type ${ARF==='s'?'on':''}" onclick="ARF=ARF==='s'?null:'s';LIMIT=200;render()"><b>${fmt(as_)}</b><span>ממוגן אבנים</span></button>`:'');
+  // חשמליים כחלק מהפילוח (בקשת שלמה) — לחיצה מסננת כמו כל סוג
+  const elc=OFCOK?o.vehicles.filter(v=>v._el).length:0;
+  const elCards=OFCOK&&elc?`<button class="type ${ELF===1?'on':''}" onclick="ELF=ELF===1?null:1;LIMIT=200;render()"><b>${fmt(elc)}</b><span>חשמליים</span></button>
+    <button class="type ${ELF===0?'on':''}" onclick="ELF=ELF===0?null:0;LIMIT=200;render()"><b>${fmt(o.vehicles.length-elc)}</b><span>לא חשמליים</span></button>`:'';
   // קטגוריות סוג וגודל מהמאגר הרשמי (בקשת שלמה) — לחיצה מסננת כמו כל סוג
   let ofCards='';
   if(OFCOK){
@@ -532,7 +536,7 @@ function opView(ref){
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
-      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armCards}</div>${ofCards}</div>`:''}
+      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armCards}${elCards}</div>${ofCards}</div>`:''}
   ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם ${YEARF?`היו בשימוש בשנת ${YEARF}`:'פעילים בפועל'}</p>
       ${calYears.length>1?`<div class="filters">
         <button class="fchip ${YEARF===null?'on':''}" onclick="YEARF=null;render()">היום</button>
@@ -550,8 +554,6 @@ function opView(ref){
       ${enr&&kab?`<button class="fchip ${KABF==='l'?'on':''}" onclick="KABF=KABF==='l'?null:'l';LIMIT=200;render()">רכבי קו</button>
       <button class="fchip ${KABF==='k'?'on':''}" onclick="KABF=KABF==='k'?null:'k';LIMIT=200;render()">רכבי קבלן</button>`:''}
       ${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">ממוגנים</button>`:''}
-      ${OFCOK?`<button class="fchip ${ELF===1?'on':''}" onclick="ELF=ELF===1?null:1;LIMIT=200;render()">חשמליים</button>
-      <button class="fchip ${ELF===0?'on':''}" onclick="ELF=ELF===0?null:0;LIMIT=200;render()" title="לפי שדה ההנעה במאגר ציי הרכב הרשמי; רכב ותיק שאינו במאגר נספר כלא-חשמלי">לא חשמליים</button>`:''}
     </div>
     ${table(vs,null)}
     <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו.</p>
