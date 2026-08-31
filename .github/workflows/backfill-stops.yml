@@ -6,11 +6,7 @@ name: backfill-stops
 
 on:
   schedule:
-    # שלושה חלונות קצרים במקום ריצת-ענק אחת: כל חלון דוחף את ממצאיו מיד,
-    # והמונים באתר מטפסים לאורך הלילה (בקשת שלמה: עדכון עם כל מציאה)
-    - cron: '15 0 * * *'   # 03:15 ישראל
-    - cron: '15 2 * * *'   # 05:15
-    - cron: '15 4 * * *'   # 07:15
+    - cron: '15 0 * * *'   # 03:15 ישראל בקיץ — שעה שקטה מול ה-API שלהם
   push:
     branches: [main]
     paths:
@@ -70,14 +66,14 @@ jobs:
             MAXT=$(cat line-history/data/.stops-canary)
           fi
           echo "MAX_TARGETS=$MAXT"
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=50 MAX_TARGETS=$MAXT \
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=160 MAX_TARGETS=$MAXT \
             python3 tools/backfill_stops.py
           rm -f line-history/data/.stops-canary
 
       - name: עוגני ארכיון לקווים שקטים (בלי אף אירוע רישום מאז 2022)
         if: ${{ inputs.regonly != '1' }}
         run: |
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=20 \
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=35 \
             python3 tools/backfill_stop_anchors.py
 
       - name: הפרשי תחנות בין גרסאות שמולאו (מקומי, בלי רשת)
@@ -89,7 +85,7 @@ jobs:
       - name: איתור תאריך לשינויי תחנות — חיפוש בינארי בארכיון
         if: ${{ inputs.regonly != '1' }}
         run: |
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=25 \
+          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=45 \
             python3 tools/backfill_stop_dates.py
 
       - name: Commit (לענף שהריץ)

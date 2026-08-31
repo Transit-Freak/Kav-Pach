@@ -5,13 +5,7 @@ name: line-history
 
 on:
   schedule:
-    # כמה חלונות מהלילה והלאה — הריצה הראשונה שפוגשת לוח חדש מעבדת אותו,
-    # והשאר מדלגות בשקט (שומר הלוח-החדש למטה). כך הממצאים עולים לאתר
-    # שעות לפני הבוקר, בלי ריצות סרק (בקשת שלמה: "לא לחכות עד הבוקר")
-    - cron: '30 0 * * *'   # 03:30 ישראל
-    - cron: '30 3 * * *'   # 06:30
-    - cron: '30 5 * * *'   # 08:30
-    - cron: '30 7 * * *'   # 10:30 — העוגן המקורי
+    - cron: '30 7 * * *'   # 10:30 ישראל בקיץ — אחרי חלון הפרסום של משרד התחבורה
   push:
     branches: [main]   # הבסיס נבנה פעם אחת על main — לא על ענפי עבודה
     paths:
@@ -51,25 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: האם פורסם לוח חדש? (מדלגים בשקט אם לא)
-        id: fresh
-        run: |
-          set -euo pipefail
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-          LM=$(curl -sI --connect-timeout 20 --retry 5 -A "$UA" \
-            "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip" \
-            | tr -d '\r' | grep -i '^last-modified:' | cut -d' ' -f2- || true)
-          PREV=$(cat line-history/data/feed-mark.txt 2>/dev/null || true)
-          echo "לוח בשרת: $LM · מעובד אחרון: $PREV"
-          if [ "${{ github.event_name }}" = "schedule" ] && [ -n "$LM" ] && [ "$LM" = "$PREV" ]; then
-            echo "go=0" >> "$GITHUB_OUTPUT"; echo "הלוח לא התחלף — מדלגים"
-          else
-            echo "go=1" >> "$GITHUB_OUTPUT"
-            printf '%s' "$LM" > line-history/data/feed-mark.txt
-          fi
-
       - name: Fetch GTFS
-        if: steps.fresh.outputs.go == '1'
         run: |
           set -euo pipefail
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
@@ -78,7 +54,6 @@ jobs:
           unzip -o gtfs.zip stops.txt stop_times.txt trips.txt routes.txt shapes.txt agency.txt calendar.txt
 
       - name: Diff line & stop history
-        if: steps.fresh.outputs.go == '1'
         run: |
           set -euo pipefail
           # קובץ סימון ליישור חד-פעמי (תיקון גאומטריות בלי רישום אירועים)
@@ -98,7 +73,6 @@ jobs:
       # רץ כאן, והתוצאות נדחפות באותו commit. כשל של שרת הרישוי לא מפיל
       # את הצינור — ההשוואה הבאה תתפוס את הפער.
       - name: מעקב תגבורים (רכבים מרובים באותה נסיעה)
-        if: steps.fresh.outputs.go == '1'
         run: |
           OUTDIR=line-history/data python3 tools/scan_vcnt_daily.py || echo "שרת הרישוי לא זמין — נשלים בריצה הבאה"
 
@@ -106,7 +80,6 @@ jobs:
       # לבד מהארכיון את שעות-היציאה מיום פעילותו האחרון, ספציפית לכל קו.
       # עד 2 קבוצות-יום בריצה — ביום רגיל אפס-שתיים בודדות חוצות את סף השנה.
       - name: לו"ז אחרון לקווים שבוטלו (שנה ומעלה)
-        if: steps.fresh.outputs.go == '1'
         run: |
           OUTDIR=line-history/data MAX_DAYS=2 python3 tools/last_sched.py || echo "הארכיון לא זמין — נשלים בריצה הבאה"
 
@@ -115,7 +88,6 @@ jobs:
       # ב-kavbug-data/; ריפו קו-באג מושך אותן בסנכרון קטן והאתר שלו נשאר
       # באותה כתובת בדיוק.
       - name: סריקת קו באג (עיקופי אוטובוסים) על אותו GTFS
-        if: steps.fresh.outputs.go == '1'
         continue-on-error: true
         run: |
           set -e
@@ -141,7 +113,6 @@ jobs:
           compression-level: 0
 
       - name: Commit (לענף שהריץ — main בריצה המתוזמנת)
-        if: steps.fresh.outputs.go == '1'
         run: |
           set -euo pipefail
           BR="${GITHUB_REF_NAME:-main}"
