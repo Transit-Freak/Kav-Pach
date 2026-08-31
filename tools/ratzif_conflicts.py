@@ -113,7 +113,8 @@ def main():
     for r in rows:
         desc = r[c['stop_desc']] if 'stop_desc' in c else ''
         city = (re.search(r'עיר:\s*([^:]*?)\s*רציף', desc) or [None, ''])[1].strip()
-        plat = (re.search(r'רציף:\s*(\S+)', desc) or [None, ''])[1].strip()
+        # "רציף:" ריק נגמר במילה "קומה:" — לתפוס רק ערך אמיתי שביניהן
+        plat = (re.search(r'רציף:\s*([^:]*?)\s*(?:קומה|$)', desc) or [None, ''])[1].strip()
         stops[r[c['stop_id']]] = {'code': r[c['stop_code']], 'name': r[c['stop_name']],
                                   'city': city, 'plat': plat}
 

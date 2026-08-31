@@ -5,54 +5,84 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>רציף כפול — הקו הבוחן</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--ink:#1e2440;--dim:#5a6280;--brd:#c7d2f0;--tint:#eef2fb;--blue:#1E5BC6;--deep:#043e7e;--warn:#d97706;--shadow:0 1px 4px rgba(30,36,64,.08)}
+  :root{
+    --bg:#eceff5;--ink:#141a2e;--dim:#5a6280;
+    --board:#101a33;--board2:#0b1327;--line:#22304f;
+    --amber:#ffc247;--amber2:#ffdd9a;--white:#f3f6ff;--red:#ff6b5e;
+    --chip:#1c2a4a;--brd:#c5cede;--shadow:0 2px 10px rgba(16,26,51,.14)
+  }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif}
-  .wrap{max-width:880px;margin:0 auto;padding:18px 14px 40px}
-  h1{font-size:26px;margin:6px 0 2px}
-  .sub{color:var(--dim);font-size:14px;line-height:1.55;margin-bottom:12px}
-  .kpis{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
-  .kpi{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:10px 16px;box-shadow:var(--shadow)}
-  .kpi b{font-size:22px;color:var(--deep);font-variant-numeric:tabular-nums}
-  .kpi span{display:block;font-size:12.5px;color:var(--dim)}
-  input[type=search]{width:100%;padding:12px 14px;border:1px solid var(--brd);border-radius:12px;font:inherit;font-size:15px;background:#fff}
-  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .wrap{max-width:920px;margin:0 auto;padding:16px 12px 44px}
+  a.home{color:var(--dim);font-size:13px;text-decoration:none}
+
+  /* ==== הכותרת: שלט מסוף ==== */
+  .hero{background:linear-gradient(180deg,var(--board),var(--board2));border-radius:18px;padding:22px 22px 18px;margin:10px 0 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .hero::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.015) 3px 4px);pointer-events:none}
+  .hero h1{margin:0;font-size:30px;font-weight:900;color:var(--amber);letter-spacing:.5px}
+  .hero .tag{display:inline-block;background:var(--chip);color:var(--amber2);border:1px solid var(--line);border-radius:8px;padding:3px 10px;font-size:12px;margin-bottom:10px}
+  .hero p{color:#aeb9d6;font-size:14px;line-height:1.6;margin:10px 0 0;max-width:640px}
+  .hero p b{color:var(--white)}
+  .stats{display:flex;gap:26px;margin-top:16px;flex-wrap:wrap}
+  .stat b{display:block;font-family:'IBM Plex Mono',monospace;font-size:27px;color:var(--white);direction:ltr;text-align:right}
+  .stat span{font-size:12px;color:#8fa0c5}
+  .stat.hot b{color:var(--amber)}
+
+  /* ==== חיפוש וסינון ==== */
+  input[type=search]{width:100%;padding:12px 15px;border:1px solid var(--brd);border-radius:12px;font:inherit;font-size:15px;background:#fff;box-shadow:var(--shadow)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
   .fchip{border:1px solid var(--brd);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}
-  .fchip.on{background:var(--blue);border-color:var(--blue);color:#fff}
-  .stn{background:var(--card);border:1px solid var(--brd);border-radius:14px;margin:12px 0;overflow:hidden;box-shadow:var(--shadow)}
-  .shead{padding:12px 16px;background:var(--tint);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
-  .shead b{font-size:16px}
-  .shead .c{color:var(--dim);font-size:13px}
-  .row{display:flex;gap:12px;align-items:baseline;padding:10px 16px;border-top:1px solid var(--tint);flex-wrap:wrap}
-  .tm{font-weight:900;font-size:17px;color:var(--deep);font-variant-numeric:tabular-nums;min-width:52px}
-  .days{font-size:12px;color:var(--dim);min-width:56px}
-  .ln{background:var(--tint);border:1px solid var(--brd);border-radius:8px;padding:3px 10px;font-size:13.5px}
-  .ln b{color:var(--blue)}
-  .note{background:#fff8ed;border:1px solid #f2d9ad;border-radius:12px;padding:11px 16px;font-size:13.5px;line-height:1.6;margin:14px 0;color:var(--ink)}
-  .more{display:block;margin:14px auto;border:none;background:var(--blue);color:#fff;border-radius:999px;padding:11px 22px;font:inherit;cursor:pointer}
-  .empty{padding:30px;text-align:center;color:var(--dim)}
-  a.home{color:var(--blue);font-size:13.5px;text-decoration:none}
+  .fchip.on{background:var(--board);border-color:var(--board);color:var(--amber)}
+
+  /* ==== לוח תחנה ==== */
+  .stn{background:var(--board);border-radius:16px;margin:14px 0;overflow:hidden;box-shadow:var(--shadow)}
+  .shead{padding:13px 18px 11px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--amber)}
+  .shead b{font-size:16.5px;color:var(--white)}
+  .shead .c{color:#8fa0c5;font-size:12.5px}
+  .shead .n{background:var(--amber);color:var(--board);border-radius:7px;padding:2px 9px;font-weight:900;font-size:13px}
+  .brow{display:grid;grid-template-columns:74px 1fr;gap:4px 14px;padding:11px 18px;border-top:1px solid var(--line);align-items:start}
+  .brow:nth-child(even){background:rgba(255,255,255,.02)}
+  .tm{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:21px;color:var(--amber);line-height:1.1}
+  .tm small{display:block;font-family:'Rubik';font-weight:400;font-size:10.5px;color:#8fa0c5;letter-spacing:.3px}
+  .lns{display:flex;flex-direction:column;gap:5px}
+  .ln{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  .ln .no{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15.5px;color:var(--white);background:var(--chip);border-radius:6px;padding:1px 9px;min-width:44px;text-align:center;direction:ltr}
+  .ln .dest{color:#d7deef;font-size:13.5px}
+  .ln .op{color:#8fa0c5;font-size:12px}
+  .vs{color:var(--red);font-size:11px;font-weight:700;letter-spacing:1px;margin:1px 0 -2px}
+  .morerows{padding:10px 18px;color:#8fa0c5;font-size:12.5px;border-top:1px solid var(--line)}
+  .more{display:block;margin:16px auto;border:1px solid var(--brd);background:#fff;color:var(--ink);border-radius:999px;padding:11px 24px;font:inherit;cursor:pointer;box-shadow:var(--shadow)}
+  .empty{padding:34px;text-align:center;color:var(--dim)}
+  .note{background:#fff;border:1px solid var(--brd);border-right:4px solid var(--amber);border-radius:12px;padding:12px 16px;font-size:13.5px;line-height:1.65;margin:18px 0;color:var(--ink)}
+  @media(max-width:520px){.hero h1{font-size:24px}.stats{gap:18px}.brow{grid-template-columns:64px 1fr;padding:10px 13px}.shead{padding:11px 13px 9px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="home" href="../" >→ הקו הבוחן</a>
-  <h1>רציף כפול</h1>
-  <div class="sub">מקרים שבהם לפי לוח הזמנים הרשמי של משרד התחבורה, שני קווים שונים (או יותר) אמורים לצאת <b>מאותו רציף מוצא באותה דקה בדיוק</b> — באותם ימי פעילות. רציף אחד לא יכול לארח שני אוטובוסים שיוצאים באותו רגע. נבדקות רק תחנות מוצא — היציאה הראשונה של המסלול, שבה האוטובוס עומד ברציף.</div>
-  <div class="kpis" id="kpis"></div>
-  <input id="q" type="search" placeholder="חיפוש עיר, תחנה או מספר קו…">
-  <div class="filters">
-    <button class="fchip on" data-f="all">הכול</button>
-    <button class="fchip" data-f="term">רק מסופים ותחנות מרכזיות</button>
-    <button class="fchip" data-f="multi">רציפים עם 3 קווים ומעלה</button>
+  <a class="home" href="../">→ הקו הבוחן</a>
+
+  <div class="hero">
+    <span class="tag">מתוך לוח הזמנים הרשמי של משרד התחבורה · מתעדכן לילית</span>
+    <h1>רציף כפול</h1>
+    <p>רציף מוצא אחד. דקה אחת. <b>שני אוטובוסים או יותר שאמורים לצאת ממנו בו-זמנית</b> — לפי הרישוי עצמו. נבדקות אך ורק תחנות מוצא, הנקודה שבה האוטובוס עומד ברציף ומעלה נוסעים לפני היציאה. מה שמוצג כאן פיזית בלתי אפשרי: או שהרישוי לא מעודכן, או שאיחור מובנה בשטח.</p>
+    <div class="stats" id="stats"></div>
   </div>
-  <div id="view"><div class="empty">טוען…</div></div>
-  <div class="note"><b>מה זה אומר ומה זה לא:</b> אלה זמני הרישוי המתוכננים — לא מה שקורה בשטח בפועל. חלופות של אותו קו ובאותו כיוון לא נספרות (כפילות רישומית, לא התנגשות). ימי הפעילות נלקחים מלוח calendar; חריגים נקודתיים של תאריך בודד לא נבדקים. שני קווים באותה דקה מאותו רציף פירושם אחד מהשניים: או שהרישוי לא מעודכן, או שבשטח מישהו יוצא באיחור מובנה.</div>
+
+  <input id="q" type="search" placeholder="חיפוש עיר, מסוף או מספר קו…">
+  <div class="filters">
+    <button class="fchip on" data-f="term">מסופים ותחנות מרכזיות</button>
+    <button class="fchip" data-f="all">כל תחנות המוצא</button>
+    <button class="fchip" data-f="multi">3 קווים ומעלה בדקה</button>
+    <button class="fchip" data-f="day">בלי יציאות 00:00</button>
+  </div>
+  <div id="view"><div class="empty">טוען את הלוח…</div></div>
+
+  <div class="note"><b>איך לקרוא את זה:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית, לא התנגשות), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשיש חפיפה בימי הפעילות של שני הקווים. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — לכן יש להן מסנן משלהן.</div>
 </div>
 <script>
-window.RZ_BUILD='2';
+window.RZ_BUILD='4';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -63,55 +93,61 @@ window.RZ_BUILD='2';
   }).catch(function(){});
 })();
 const $=s=>document.querySelector(s);
-let D=null,Q='',F='all',LIMIT=40;
+let D=null,Q='',F='term',NOMID=false,LIMIT=30;
 function expand(d){
-  // הפורמט הדחוס: st=[code,name,city,plat] · c=[stIdx,t,days,[[n,dest,opIdx],..]]
   d.conflicts=(d.c||[]).map(r=>{const s=d.st[r[0]];
     return {code:s[0],name:s[1],city:s[2],plat:s[3],t:r[1],days:r[2],
             lines:r[3].map(l=>({n:l[0],dest:l[1],op:d.ops[l[2]]}))};});
   return d;
 }
 const fmt=n=>n.toLocaleString('he');
-const isTerm=x=>x.plat||/מסוף|ת\.\s*מרכזית|תחנה מרכזית|מרכזית|רציף/.test(x.name);
+const isTerm=x=>(x.plat&&!x.plat.includes('קומה'))||/מסוף|ת\.\s*מרכזית|תחנה מרכזית|מרכזית|רציף|מתחם/.test(x.name);
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function render(){
   if(!D)return;
   const q=Q.trim();
   let cs=D.conflicts.filter(x=>{
     if(F==='term'&&!isTerm(x))return false;
     if(F==='multi'&&x.lines.length<3)return false;
+    if(NOMID&&x.t==='00:00')return false;
     if(!q)return true;
     return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q);
   });
-  // קיבוץ לפי תחנה
   const by={},order=[];
   for(const x of cs){const k=x.code+'|'+x.name;if(!by[k]){by[k]=[];order.push(k);}by[k].push(x);}
   order.sort((a,b)=>by[b].length-by[a].length);
   let html='';
   for(const k of order.slice(0,LIMIT)){
     const xs=by[k],s=xs[0];
-    html+=`<div class="stn"><div class="shead"><b>${esc(s.name)}</b><span class="c">${esc(s.city||'')}${s.plat?' · רציף '+esc(s.plat):''} · מק"ט ${esc(s.code)} · ${fmt(xs.length)} התנגשויות</span></div>`;
-    for(const x of xs.slice(0,30)){
-      html+=`<div class="row"><span class="tm">${esc(x.t)}</span><span class="days">ימים: ${esc(x.days)}</span>`+
-        x.lines.map(l=>`<span class="ln"><b>${esc(l.n)}</b> ${l.dest?'ל'+esc(l.dest):''} · ${esc(l.op)}</span>`).join('')+`</div>`;
+    html+=`<div class="stn"><div class="shead"><span><b>${esc(s.name)}</b> <span class="c">· ${esc(s.city||'')}${s.plat&&!s.plat.includes('קומה')?' · רציף '+esc(s.plat):''} · מק"ט ${esc(s.code)}</span></span><span class="n">${fmt(xs.length)} התנגשויות</span></div>`;
+    for(const x of xs.slice(0,25)){
+      html+=`<div class="brow"><div class="tm">${esc(x.t)}<small>ימים ${esc(x.days)}</small></div><div class="lns">`+
+        x.lines.map((l,i)=>(i?'<div class="vs">— בו-זמנית —</div>':'')+
+          `<div class="ln"><span class="no">${esc(l.n)||'—'}</span><span class="dest">${l.dest?'אל '+esc(l.dest):''}</span><span class="op">${esc(l.op)}</span></div>`).join('')+
+        `</div></div>`;
     }
-    if(xs.length>30)html+=`<div class="row" style="color:var(--dim);font-size:13px">ועוד ${fmt(xs.length-30)} באותה תחנה…</div>`;
+    if(xs.length>25)html+=`<div class="morerows">ועוד ${fmt(xs.length-25)} התנגשויות באותה תחנה — חיפוש התחנה יציג את כולן</div>`;
     html+='</div>';
   }
-  if(!order.length)html='<div class="empty">לא נמצאו התנגשויות מתאימות</div>';
-  else if(order.length>LIMIT)html+=`<button class="more" onclick="LIMIT+=40;render()">עוד תחנות (${fmt(order.length-LIMIT)} נותרו)</button>`;
+  if(!order.length)html='<div class="empty">לא נמצאו התנגשויות מתאימות לסינון</div>';
+  else if(order.length>LIMIT)html+=`<button class="more" onclick="LIMIT+=30;render()">עוד תחנות · ${fmt(order.length-LIMIT)} נותרו</button>`;
   $('#view').innerHTML=html;
-  $('#kpis').innerHTML=`<div class="kpi"><b>${fmt(D.total)}</b><span>התנגשויות רציף</span></div>
-    <div class="kpi"><b>${fmt(D.stations)}</b><span>תחנות מוצא</span></div>
-    <div class="kpi"><b>${esc((D.updated||'').split('-').reverse().join('.'))}</b><span>לוח הזמנים שנבדק · מתעדכן לילית</span></div>`;
+  const shown=cs.length;
+  $('#stats').innerHTML=`<div class="stat hot"><b>${fmt(D.total)}</b><span>התנגשויות בלוח הארצי</span></div>
+    <div class="stat"><b>${fmt(D.stations)}</b><span>תחנות מוצא</span></div>
+    <div class="stat"><b>${fmt(shown)}</b><span>מוצגות בסינון הנוכחי</span></div>
+    <div class="stat"><b>${esc((D.updated||'').split('-').reverse().join('.'))}</b><span>הלוח שנבדק</span></div>`;
 }
-function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 document.querySelectorAll('.fchip').forEach(b=>b.addEventListener('click',()=>{
-  F=b.dataset.f;document.querySelectorAll('.fchip').forEach(x=>x.classList.toggle('on',x===b));LIMIT=40;render();
+  const f=b.dataset.f;
+  if(f==='day'){NOMID=!NOMID;b.classList.toggle('on',NOMID);}
+  else{F=f;document.querySelectorAll('.fchip[data-f]:not([data-f=day])').forEach(x=>x.classList.toggle('on',x===b));}
+  LIMIT=30;render();
 }));
-$('#q').addEventListener('input',e=>{Q=e.target.value;LIMIT=40;render();});
+$('#q').addEventListener('input',e=>{Q=e.target.value;LIMIT=30;render();});
 fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})
 .then(d=>{D=expand(d);render();})
-.catch(()=>{$('#view').innerHTML='<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה, או שמריצים ידנית את ratzif ב-Actions.</div>';});
+.catch(()=>{$('#view').innerHTML='<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה.</div>';});
 </script>
 </body>
 </html>
