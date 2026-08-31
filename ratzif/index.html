@@ -67,7 +67,7 @@
   <input id="fCity" list="cities" placeholder="מרחב: כל הארץ — הקלידו עיר…" style="min-width:170px;background:#fff;border:1px solid var(--brd);border-radius:7px;padding:7px 10px;font:inherit;font-size:13px"><datalist id="cities"></datalist>
   <select id="fOp"><option value="">מפעיל: הכול</option></select>
   <select id="fWin"><option value="">חלון: יום שלם</option><option value="am">שיא הבוקר 06:00–09:00</option><option value="pm">שיא הערב 15:00–19:00</option><option value="nomid">בלי יציאות 00:00</option></select>
-  <select id="fSev"><option value="">חומרה: הכול</option><option value="3">3 אוטובוסים ומעלה בדקה</option></select>
+  <select id="fSev"><option value="">יוצאים יחד: 2 ומעלה</option><option value="3">3 ומעלה</option><option value="4">4 ומעלה</option><option value="5">5 ומעלה</option><option value="8">8 ומעלה</option></select>
   <select id="fView"><option value="grp">תצוגה: צמד קווים בשורה אחת</option><option value="each">תצוגה: כל מופע בנפרד</option></select>
   <input id="q" type="search" placeholder="חיפוש תחנה או מספר קו…">
   <button class="csv" onclick="XDL()">ייצוא CSV ↓</button>
@@ -77,7 +77,7 @@
 <div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. הכמות נספרת באוטובוסים, לא בקווים: כל נסיעה ברישוי היא אוטובוס, וקו מתוגבר בכמה אוטובוסים באותה דקה (מסומן "N אוטובוסים יחד") תופס את כולם — גם קו בודד עם תגבור כפול הוא התנגשות. חומרה: <span class="sev s2"></span>2 אוטובוסים בדקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
 <div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='13';
+window.RZ_BUILD='14';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -88,12 +88,12 @@ window.RZ_BUILD='13';
   }).catch(function(){});
 })();
 const $=s=>document.querySelector(s);
-let D=null,LIMIT=100,SORTK='sev',SORTD=-1,CUR=[],EXP=new Set();
+let D=null,LIMIT=100,SORTK='sev',SORTD=-1,CUR=[],EXP=new Set(),OCC=new Set();
 function expand(d){
   d.conflicts=(d.c||[]).map(r=>{const s=d.st[r[0]];
     const lines=r[3].map(l=>({n:l[0],dest:l[1],op:d.ops[l[2]],cnt:l[3]||1}));
     return {code:s[0],name:s[1],city:s[2],plat:(s[3]&&!s[3].includes('קומה'))?s[3]:'',t:r[1],days:r[2],
-            lines,bus:r[4]||lines.length};});
+            lines,bus:r[4]||lines.length,ix:r[0]};});
   return d;
 }
 const fmt=n=>n.toLocaleString('he');
@@ -120,7 +120,7 @@ function filt(){
     if(win==='am'&&!(x.t>='06:00'&&x.t<'09:00'))return false;
     if(win==='pm'&&!(x.t>='15:00'&&x.t<'19:00'))return false;
     if(win==='nomid'&&x.t==='00:00')return false;
-    if(sev==='3'&&x.bus<3)return false;
+    if(sev&&x.bus<+sev)return false;
     if(!q)return true;
     return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q);
   });
@@ -168,10 +168,20 @@ function render(){
     const shown=open?x.occ:x.occ?x.occ.slice(0,14):[];
     const times=x.occ&&x.occ.length>1?`<div class="mut" style="white-space:normal;line-height:1.6;border-top:1px dashed #dde4ee;margin-top:4px;padding-top:3px">בשעות: ${shown.map(o=>`<span title="ימים ${esc(fmtDays(o.days))}">${esc(o.t)}</span>`).join(' · ')}${x.occ.length>14?` <a href="#" onclick="event.preventDefault();EXP.has('${esc(x.gk)}')?EXP.delete('${esc(x.gk)}'):EXP.add('${esc(x.gk)}');render()" style="color:var(--blue);font-weight:700;text-decoration:none">${open?'· הצגה מקוצרת':`· ועוד ${fmt(x.occ.length-14)} — הצגת כולן`}</a>`:''}</div>`:'';
     html+=`<tr><td class="tt c-t">${tcell}</td>
-      <td class="c-stn"><span class="stn">${esc(x.name)}</span><div class="mut" style="white-space:nowrap">${esc(x.city||'')} · מק"ט ${esc(x.code)}</div></td>
+      <td class="c-stn"><span class="stn">${esc(x.name)}</span><div class="mut" style="white-space:nowrap">${esc(x.city||'')} · מק"ט ${esc(x.code)}</div><a href="#" onclick="event.preventDefault();OCC.has(${x.ix})?OCC.delete(${x.ix}):OCC.add(${x.ix});render()" style="font-size:12px;color:var(--blue);font-weight:700;text-decoration:none">${OCC.has(x.ix)?'▲ סגירת לוח הרציף':'▼ מתי הרציף תפוס ומתי פנוי'}</a></td>
       <td class="c-plat">${x.plat?esc(x.plat):'<span class="mut" title="למסוף אין מספרי רציפים ברישוי — ייתכן שהקווים יוצאים מרציפים פיזיים שונים החולקים תחנה אחת">אין מספור</span>'}</td><td class="c-days" style="white-space:nowrap">${esc(fmtDays(x.daysAll||x.days))}</td>
       <td class="lz c-lns">${x.lines.map(l=>`<div class="l"><b>${esc(l.n)||'—'}</b>${l.cnt>1?` <b style="color:var(--bad);background:#fdeeec;border-radius:4px;padding:0 6px">${l.cnt} אוטובוסים יחד</b>`:''} <span>${l.dest?'אל '+esc(l.dest):''}</span> <i>· ${esc(l.op)}</i></div>`).join('')}${times}</td>
       <td style="white-space:nowrap"><span class="sev ${(x.busMax||x.bus)>=3?'s3':'s2'}"></span>${x.busMax||x.bus} אוטובוסים בדקה${x.occ&&x.occ.length>1?` · ${fmt(x.occ.length)} מופעים`:''}</td></tr>`;
+    if(OCC.has(x.ix)&&D.occ&&D.occ[x.ix]){
+      const B=D.occ[x.ix],ttl=['ימי חול (א׳–ה׳)','שישי','שבת'];
+      let inner='';
+      for(let bi=0;bi<3;bi++){
+        if(!B[bi]||!B[bi].length)continue;
+        inner+=`<div style="margin:4px 0"><b style="font-size:12px">${ttl[bi]}:</b> `+
+          B[bi].map(([t,n])=>`<span style="display:inline-block;margin:1px 2px;padding:1px 7px;border-radius:5px;font-size:12px;font-variant-numeric:tabular-nums;${n>1?'background:#fdeeec;color:var(--bad);font-weight:700':'background:#f1f4f8;color:#38445a'}">${esc(t)}${n>1?' ·'+n:''}</span>`).join('')+'</div>';
+      }
+      html+=`<tr><td colspan="6" style="background:#fbfcfe;border-right:3px solid var(--blue)"><div style="font-size:12px;color:var(--dim);margin-bottom:2px">כל היציאות המתוזמנות מהתחנה הזו · אדום = ${'2'} אוטובוסים ומעלה באותה דקה · <b>דקה שלא מופיעה — הרציף פנוי בה</b></div>${inner}</td></tr>`;
+    }
   }
   html+='</table>';
   if(!CUR.length)html='<div class="empty">אין התנגשויות מתאימות לסינון</div>';

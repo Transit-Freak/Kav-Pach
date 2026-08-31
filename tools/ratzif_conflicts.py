@@ -138,6 +138,7 @@ def main():
         groups.setdefault((sid, dep), []).append(t)
 
     conflicts = []
+    occ_all = {}   # sid -> {dep: (חול-מקס, שישי, שבת)} — לוח התפוסה המלא
     for (sid, dep), ts in groups.items():
         entries = []
         for rid, svc, th in ts:
@@ -157,6 +158,9 @@ def main():
                 if m >> i & 1:
                     per_day[i] += 1
         peak = max(per_day)
+        wk = max(per_day[:5]) if per_day[:5] else 0
+        if wk or per_day[5] or per_day[6]:
+            occ_all.setdefault(sid, {})[dep] = (wk, per_day[5], per_day[6])
         if peak < 2:
             continue
         peak_day = per_day.index(peak)
@@ -184,6 +188,7 @@ def main():
         days_txt = ''.join(DAYS_HE[i] for i in qdays)
         conflicts.append({'code': st.get('code', ''), 'name': st.get('name', ''),
                           'city': st.get('city', ''), 'plat': st.get('plat', ''),
+                          'sid': sid,
                           't': dep, 'days': days_txt, 'lines': lines_out, 'bus': peak})
 
     conflicts.sort(key=lambda x: (x['city'], x['name'], x['t']))
@@ -194,12 +199,14 @@ def main():
     # דחיסה (הקובץ המלא יצא 11MB): תחנות ומפעילים נשמרים פעם אחת,
     # וכל התנגשות היא מערך קצר — העמוד פורש חזרה בטעינה
     st_tbl, op_tbl, st_ix, op_ix = [], [], {}, {}
+    st_sid = {}
     comp = []
     for x in conflicts:
         sk = (x['code'], x['name'], x['city'], x['plat'])
         if sk not in st_ix:
             st_ix[sk] = len(st_tbl)
             st_tbl.append(list(sk))
+            st_sid[st_ix[sk]] = x['sid']
         ls = []
         for n, dest, op, cnt in x['lines']:
             if op not in op_ix:
@@ -207,9 +214,21 @@ def main():
                 op_tbl.append(op)
             ls.append([n, dest, op_ix[op], cnt])
         comp.append([st_ix[sk], x['t'], x['days'], ls, x['bus']])
+    # לוח התפוסה: לכל תחנת-התנגשות, כל דקות היציאה שלה בשלושה לוחות
+    # (חול/שישי/שבת) עם מונה האוטובוסים — דקה שלא מופיעה = הרציף פנוי
+    occ = {}
+    for ix, sid in st_sid.items():
+        data = occ_all.get(sid) or {}
+        buckets = [[], [], []]
+        for t in sorted(data):
+            w, f, sa = data[t]
+            if w: buckets[0].append([t, w])
+            if f: buckets[1].append([t, f])
+            if sa: buckets[2].append([t, sa])
+        occ[str(ix)] = buckets
     out = {'updated': day.isoformat(), 'total': len(conflicts),
            'stations': len(per_stop), 'top': top,
-           'st': st_tbl, 'ops': op_tbl, 'c': comp}
+           'st': st_tbl, 'ops': op_tbl, 'c': comp, 'occ': occ}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     tmp = OUT + '.tmp'
     with open(tmp, 'w', encoding='utf-8') as f:
