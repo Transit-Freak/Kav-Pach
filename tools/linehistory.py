@@ -552,7 +552,7 @@ for rdesc,c in cur.items():
             verb='השתנתה' if len(nms)==1 else 'השתנו'
             chg.append(f"{', '.join(nms)} — {verb} מ{PDT[o]} ל{PDT[v]}")
         if chg:
-            t='שינוי בכללי העצירה: '+' · '.join(chg)
+            t='שינוי בהגדרות האיסוף וההורדה: '+' · '.join(chg)
             note=(note+' · '+t) if note else t
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
     if add: ch['add']=[name.get(x,x) for x in add][:15]
