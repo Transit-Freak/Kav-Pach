@@ -163,12 +163,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 15 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 16 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='15';
+window.FLEET_BUILD='16';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -283,7 +283,6 @@ async function loadCities(){
 // כלום" — השינוי קרה מעל/מתחת לאזור הנראה ולא הורגש)
 function pickMon(v){
   if(v===CITYMON)return;
-  if(v===CITYMON) return;
   CITYMON=v;render();
   setTimeout(()=>{const p=document.querySelector('.cols2 .panel');p&&p.scrollIntoView({behavior:'smooth',block:'start'});},60);
 }
@@ -318,13 +317,14 @@ function cityView(c){
   const mmax=mk.length?Math.max(...mk.map(m=>months[m])):1;
   if(CITYMON&&months[CITYMON]===undefined) CITYMON='';
   const opm=d.opm||null;
-  // שורות גרף החברות — לפי החודש הנבחר או כל המידע
+  // גרף החברות — כל המידע תמיד; החודש הנבחר מסומן בכתום בתוך הפס
+  // (בקשת שלמה: "שתמיד זה יראה את כל המידע")
   let opRows, opsTitle;
   if(CITYMON&&opm){
-    const rows=Object.entries(opm).map(([ref,m])=>[ref,m[CITYMON]||0]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
-    const rmx=rows.length?rows[0][1]:1;
-    opsTitle='החברות שפעלו בעיר בחודש שנבחר';
-    opRows=rows.slice(0,12).map(([ref,n])=>`<div class="yrow lbl"><span style="font-weight:700">${esc(opName(+ref))}</span><div class="ybar"><i style="width:${Math.max(5,n/rmx*100)}%;background:#E87511"></i></div><span class="c">${fmt(n)}</span></div>`).join('')||'<div class="empty">אין נתוני חברות לחודש הזה</div>';
+    opsTitle='החברות שפועלות בעיר · בכתום: החודש שנבחר';
+    opRows=d.ops.slice(0,12).map(([ref,n])=>{
+      const m=(opm[String(ref)]||{})[CITYMON]||0;
+      return `<div class="yrow lbl" style="grid-template-columns:110px 1fr 128px"><span style="font-weight:700">${esc(opName(ref))}</span><div class="ybar"><b class="tot" style="width:${Math.max(5,n/mx*100)}%"><i style="width:${n?Math.round(m/n*100):0}%;background:#E87511"></i></b></div><span class="c">${m?`<b style="color:#E87511">${fmt(m)} בחודש</b> · `:''}${fmt(n)} סה"כ</span></div>`;}).join('');
   }else{
     opsTitle='החברות שפועלות בעיר'+(CITYMON?` · ${mfmt(CITYMON)} (הפילוח החודשי לפי חברה ייבנה בריצה הקרובה)`:'');
     const opsa=d.opsa||null;
@@ -345,22 +345,23 @@ function cityView(c){
       <option value="">בחירת חודש…</option>
       ${mk.map(m=>`<option value="${m}" ${CITYMON===m?'selected':''}>${mfmt(m)}</option>`).join('')}
     </select>
-    ${CITYMON?`<span class="fchip on" style="background:#E87511;border-color:#E87511">מציג את ${mfmt(CITYMON)} בלבד</span>`:''}
+    ${CITYMON?`<span class="fchip on" style="background:#E87511;border-color:#E87511">בכתום: ${mfmt(CITYMON)}</span>`:''}
   </div>`:''}
   <div class="cols2">
     <div class="panel"><p class="ptitle">${opsTitle}</p>
       ${opRows}
     </div>
     ${(()=>{
-      // שנתונים — מסונן לחודש הנבחר כשיש פילוח (בקשת שלמה)
+      // שנתונים — כל המידע תמיד; החודש הנבחר בכתום בתוך הפס
       const ymd=CITYMON&&d.ym?d.ym:null;
-      const vals=ymd?Object.fromEntries(Object.keys(d.years).map(y=>[y,(ymd[y]||{})[CITYMON]||0])):d.years;
-      const keys=Object.keys(vals).map(Number).filter(y=>vals[y]>0).sort((a,b)=>b-a);
-      const vmax=keys.length?Math.max(...keys.map(y=>vals[y])):1;
-      const ttl=CITYMON?'כמה אוטובוסים מכל שנתון פעלו בעיר בחודש שנבחר'+(ymd?'':' (הפילוח החודשי ייבנה בריצה הקרובה — מוצג הכללי)'):'כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר';
+      const keys=Object.keys(d.years).map(Number).filter(y=>d.years[y]>0).sort((a,b)=>b-a);
+      const vmax=keys.length?Math.max(...keys.map(y=>d.years[y])):1;
+      const ttl=ymd?'כמה אוטובוסים מכל שנתון · בכתום: החודש שנבחר':'כמה אוטובוסים מכל שנתון מבצעים נסיעות בעיר'+(CITYMON&&!ymd?' (הפילוח החודשי ייבנה בריצה הקרובה)':'');
       return keys.length?`<div class="panel"><p class="ptitle">${ttl}</p>
-      ${keys.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';
-        return `<div class="yrow"><span>${y}</span><div class="ybar"><i style="width:${Math.max(4,vals[y]/vmax*100)}%;background:${CITYMON&&ymd?'#E87511':col}"></i></div><span class="c">${fmt(vals[y])}</span></div>`;}).join('')}
+      ${keys.map(y=>{const col=y>=y0-4?'#1B7A3D':y>=y0-8?'#9AB8A6':'#B3B9C6';const tot=d.years[y];
+        const m=ymd?((ymd[y]||{})[CITYMON]||0):null;
+        const bar=m!=null?`<b class="tot" style="width:${Math.max(4,tot/vmax*100)}%"><i style="width:${tot?Math.round(m/tot*100):0}%;background:#E87511"></i></b>`:`<i style="width:${Math.max(4,tot/vmax*100)}%;background:${col}"></i>`;
+        return `<div class="yrow"><span>${y}</span><div class="ybar">${bar}</div><span class="c">${m!=null&&m?`<b style="color:#E87511">${fmt(m)}</b> · `:''}${fmt(tot)}</span></div>`;}).join('')}
     </div>`:'<div class="panel"><p class="ptitle">שנתונים</p><div class="empty">שנות הייצור יתווספו עם ההעשרה הממשלתית</div></div>';})()}
   </div>
   <p class="note">רכב משויך לעיר רק אם היא מוצא או יעד של קו שבו שידר — קווים שרק חולפים דרך העיר אינם נספרים. הנתונים מצטברים ככל שהסריקה מתקדמת.</p>`;
