@@ -94,6 +94,9 @@ def main():
                                     'ag': r[c['agency_id']]}
     c, rows = load_small(url, cd, 'agency.txt')
     ag = {r[c['agency_id']]: r[c['agency_name']] for r in rows}
+    # רכבות ורכבלים אינם רציפי אוטובוס — "תחנת" הרכבת ב-GTFS היא כל
+    # המתחם, ושתי רכבות באותה דקה זה שגרה, לא התנגשות
+    RAIL = {a for a, n in ag.items() if any(w in n for w in ('רכבת', 'רכבל', 'כרמלית'))}
 
     c, rows = load_small(url, cd, 'calendar.txt')
     svc_days = {}
@@ -130,7 +133,7 @@ def main():
         by_line = {}
         for rid, svc in ts:
             ro = routes.get(rid)
-            if not ro:
+            if not ro or ro['ag'] in RAIL:
                 continue
             key = ro['mk'] + '|' + ro['dir']
             by_line.setdefault(key, []).append((rid, svc))
