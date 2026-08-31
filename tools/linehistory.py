@@ -533,15 +533,26 @@ for rdesc,c in cur.items():
     if pd_changed:
         # 1 = אין הורדה (העלאה בלבד), 2 = אין העלאה (הורדה בלבד) — המיפוי
         # היה הפוך וכתב "העלאה בלבד" על תחנות סופיות (דיווח שלמה, קו 12 טבריה)
-        lblp={1:'העלאה בלבד',2:'הורדה בלבד',3:'לא עוצר לנוסעים'}
+        # ניסוח אנושי ומקובץ (בקשת שלמה): "איסוף והורדה" במקום "רגילה",
+        # וכשכמה תחנות עברו אותו שינוי — רשימה אחת ומשפט אחד
+        PDT={0:'איסוף והורדה',1:'איסוף בלבד',2:'הורדה בלבד',3:'ללא עצירה לנוסעים'}
         now={x[0]:x[4] for x in c['stopinfo'] if len(x)>4}
         was=prev_pd_of(rdesc)
-        chg=[f"{name.get(k,k)}: {lblp.get(was.get(k,0),'רגילה')} ← {lblp.get(v,'רגילה')}"
-             for k,v in sorted(now.items()) if was.get(k,0)!=v][:6]
-        chg+= [f"{oldname(k)}: {lblp.get(v,'')} ← רגילה" for k,v in sorted(was.items())
-               if k not in now and k in c['codes']][:6]
+        groups={}
+        for k,v in sorted(now.items()):
+            o=was.get(k,0)
+            if o!=v:
+                groups.setdefault((o,v),[]).append(name.get(k,k))
+        for k,v in sorted(was.items()):
+            if k not in now and k in c['codes']:
+                groups.setdefault((v,0),[]).append(oldname(k))
+        chg=[]
+        for (o,v),nms in groups.items():
+            nms=nms[:8]
+            verb='השתנתה' if len(nms)==1 else 'השתנו'
+            chg.append(f"{', '.join(nms)} — {verb} מ{PDT[o]} ל{PDT[v]}")
         if chg:
-            t='מגבלת עלייה/ירידה: '+' · '.join(chg)
+            t='שינוי בכללי העצירה: '+' · '.join(chg)
             note=(note+' · '+t) if note else t
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
     if add: ch['add']=[name.get(x,x) for x in add][:15]

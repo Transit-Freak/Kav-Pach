@@ -540,7 +540,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     // 1 = אין הורדה (העלאה בלבד), 2 = אין העלאה (הורדה בלבד) — כפי שהצנרת
     // מקודדת (tools/linehistory.py). המיפוי היה הפוך והציג "העלאה בלבד"
     // על תחנות סופיות (דיווח שלמה, תחנה 787)
-    const PD = { 1: "העלאה בלבד", 2: "הורדה בלבד", 3: "לא עוצר לנוסעים" };
+    const PD = { 1: "איסוף נוסעים בלבד (בלי הורדה)", 2: "הורדת נוסעים בלבד (בלי איסוף)", 3: "לא עוצר לנוסעים" };
     const popHtml = (s, status) =>
       `<b>${esc(s[1])}</b>${status ? `<br><span class="pst">${status}</span>` : ""}` +
       (PD[s[4]] ? `<br><span class="pst">⛔ ${PD[s[4]]}</span>` : "") +
