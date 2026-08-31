@@ -19,6 +19,15 @@ on:
       - 'tools/enrich_stop_lines.py'
       - 'tools/rebuild_lines_index.py'
   workflow_dispatch:
+    inputs:
+      regmax:
+        description: 'תקציב דקות לרישום ההיסטורי (ברירת מחדל 80)'
+        required: false
+        default: ''
+      regonly:
+        description: 'ריצת רישום-בלבד (1 = לדלג על שאר השלבים)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -41,12 +50,14 @@ jobs:
         run: |
           set -euo pipefail
           # בקנרית מגבילים גם את הרישום הארצי לטעימה קצרה
-          MAXMIN=80
+          MAXMIN="${{ inputs.regmax || '80' }}"
+          [ -z "$MAXMIN" ] && MAXMIN=80
           [ -f line-history/data/.stops-canary ] && MAXMIN=3
           OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=$MAXMIN \
             python3 tools/backfill_stops_registry.py
 
       - name: Fill historical stop sequences from Stride
+        if: ${{ inputs.regonly != '1' }}
         run: |
           set -euo pipefail
           # קובץ קנרית: מספר מטרות מוגבל לבדיקה ראשונה, נמחק אחרי שימוש
@@ -60,6 +71,7 @@ jobs:
           rm -f line-history/data/.stops-canary
 
       - name: עוגני ארכיון לקווים שקטים (בלי אף אירוע רישום מאז 2022)
+        if: ${{ inputs.regonly != '1' }}
         run: |
           OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=35 \
             python3 tools/backfill_stop_anchors.py
@@ -71,6 +83,7 @@ jobs:
         run: OUTDIR=line-history/data python3 tools/enrich_stop_lines.py
 
       - name: איתור תאריך לשינויי תחנות — חיפוש בינארי בארכיון
+        if: ${{ inputs.regonly != '1' }}
         run: |
           OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=45 \
             python3 tools/backfill_stop_dates.py
