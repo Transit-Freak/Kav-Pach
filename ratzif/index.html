@@ -55,6 +55,7 @@
   <select id="fOp"><option value="">מפעיל: הכול</option></select>
   <select id="fWin"><option value="">חלון: יום שלם</option><option value="am">שיא הבוקר 06:00–09:00</option><option value="pm">שיא הערב 15:00–19:00</option><option value="nomid">בלי יציאות 00:00</option></select>
   <select id="fSev"><option value="">חומרה: הכול</option><option value="3">3 קווים ומעלה</option></select>
+  <select id="fView"><option value="grp">תצוגה: צמד קווים בשורה אחת</option><option value="each">תצוגה: כל מופע בנפרד</option></select>
   <input id="q" type="search" placeholder="חיפוש תחנה או מספר קו…">
   <button class="csv" onclick="XDL()">ייצוא CSV ↓</button>
 </div>
@@ -63,7 +64,7 @@
 <div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. חומרה: <span class="sev s2"></span>2 קווים באותה דקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
 <div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='7';
+window.RZ_BUILD='8';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -110,9 +111,26 @@ function filt(){
     return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q);
   });
 }
+function group(rows){
+  // אותו צמד/שלישיית קווים באותו רציף — שורה אחת עם כל השעות (בקשת שלמה)
+  const g={},order=[];
+  for(const x of rows){
+    const sig=x.lines.map(l=>l.n+'§'+l.op).sort().join('|');
+    const k=x.code+'|'+x.plat+'|'+sig;
+    if(!g[k]){g[k]={...x,occ:[]};order.push(k);}
+    g[k].occ.push({t:x.t,days:x.days});
+  }
+  return order.map(k=>{const r=g[k];
+    r.occ.sort((a,b)=>a.t>b.t?1:-1);
+    const du=new Set();r.occ.forEach(o=>[...o.days].forEach(c=>du.add(c)));
+    r.daysAll=[...du].join('');
+    return r;});
+}
 function srt(rows){
   const k=SORTK,d=SORTD;
-  const key={t:x=>x.t,stn:x=>x.name+x.t,sev:x=>x.lines.length*10000+ +x.t.replace(':','')/10000}[k]||(x=>x.t);
+  const key={t:x=>x.occ?x.occ[0].t:x.t,stn:x=>x.name+(x.occ?x.occ[0].t:x.t),
+             n:x=>x.occ?x.occ.length:1,
+             sev:x=>x.lines.length*100000+(x.occ?x.occ.length:1)}[k]||(x=>x.t);
   return rows.slice().sort((a,b)=>{const x=key(a),y=key(b);return (x>y?1:x<y?-1:0)*d;});
 }
 function hd(k,label){
@@ -121,14 +139,21 @@ function hd(k,label){
 }
 function render(){
   if(!D)return;
-  CUR=srt(filt());
-  let html=`<table><tr>${hd('t','שעה')}${hd('stn','מסוף / תחנת מוצא')}<th>רציף</th><th>מק"ט</th><th>ימים</th><th>קווים מתנגשים</th>${hd('sev','חומרה')}</tr>`;
+  const grouped=$('#fView').value==='grp';
+  let rows=filt();
+  if(grouped)rows=group(rows);
+  CUR=srt(rows);
+  const timeHd=grouped?hd('n','מופעים ביום')+'':hd('t','שעה');
+  let html=`<table><tr>${timeHd}${hd('stn','מסוף / תחנת מוצא')}<th>רציף</th><th>מק"ט</th><th>ימים</th><th>קווים מתנגשים</th>${hd('sev','חומרה')}</tr>`;
   for(const x of CUR.slice(0,LIMIT)){
-    html+=`<tr><td class="tt">${esc(x.t)}</td>
+    const tcell=x.occ
+      ?`<b style="font-size:15px">${x.occ.length===1?esc(x.occ[0].t):fmt(x.occ.length)+' פעמים'}</b>${x.occ.length>1?`<div class="mut" style="max-width:160px;line-height:1.5;white-space:normal">${x.occ.slice(0,10).map(o=>`<span title="ימים ${esc(fmtDays(o.days))}">${esc(o.t)}</span>`).join(' · ')}${x.occ.length>10?` ·ועוד ${fmt(x.occ.length-10)}`:''}</div>`:''}`
+      :esc(x.t);
+    html+=`<tr><td class="tt">${tcell}</td>
       <td><span class="stn">${esc(x.name)}</span><div class="mut">${esc(x.city||'')}</div></td>
-      <td>${x.plat?esc(x.plat):'<span class="mut" title="למסוף אין מספרי רציפים ברישוי — ייתכן שהקווים יוצאים מרציפים פיזיים שונים החולקים תחנה אחת">אין מספור</span>'}</td><td class="mut">${esc(x.code)}</td><td style="white-space:nowrap">${esc(fmtDays(x.days))}</td>
+      <td>${x.plat?esc(x.plat):'<span class="mut" title="למסוף אין מספרי רציפים ברישוי — ייתכן שהקווים יוצאים מרציפים פיזיים שונים החולקים תחנה אחת">אין מספור</span>'}</td><td class="mut">${esc(x.code)}</td><td style="white-space:nowrap">${esc(fmtDays(x.daysAll||x.days))}</td>
       <td class="lz">${x.lines.map(l=>`<div class="l"><b>${esc(l.n)||'—'}</b> <span>${l.dest?'אל '+esc(l.dest):''}</span> <i>· ${esc(l.op)}</i></div>`).join('')}</td>
-      <td style="white-space:nowrap"><span class="sev ${x.lines.length>=3?'s3':'s2'}"></span>${x.lines.length} קווים</td></tr>`;
+      <td style="white-space:nowrap"><span class="sev ${x.lines.length>=3?'s3':'s2'}"></span>${x.lines.length} קווים${x.occ&&x.occ.length>1?` · ×${fmt(x.occ.length)}`:''}</td></tr>`;
   }
   html+='</table>';
   if(!CUR.length)html='<div class="empty">אין התנגשויות מתאימות לסינון</div>';
@@ -136,19 +161,19 @@ function render(){
   $('#morewrap').innerHTML=CUR.length>LIMIT?`<button class="more" onclick="LIMIT+=200;render()">עוד ${fmt(Math.min(200,CUR.length-LIMIT))} שורות · ${fmt(CUR.length-LIMIT)} נותרו</button>`:'';
   $('#meta').innerHTML=`<span>לוח נבדק: <b>${esc((D.updated||'').split('-').reverse().join('.'))}</b></span>
     <span>התנגשויות בלוח: <b>${fmt(D.total)}</b></span>
-    <span>מוצגות בסינון: <b>${fmt(CUR.length)}</b></span>
+    <span>מוצגות בסינון: <b>${fmt(CUR.length)}</b>${$('#fView').value==='grp'?' צמדים':''}</span>
     <span>תחנות מוצא: <b>${fmt(D.stations)}</b></span>`;
 }
 function XDL(){
-  const rows=[['שעה','תחנה','עיר','רציף','מק"ט','ימים','מס\' קווים','קווים','מפעילים']];
-  for(const x of CUR)rows.push([x.t,x.name,x.city,x.plat,x.code,fmtDays(x.days),x.lines.length,
+  const rows=[['שעות','תחנה','עיר','רציף','מק"ט','ימים','מס\' קווים','קווים','מפעילים']];
+  for(const x of CUR)rows.push([x.occ?x.occ.map(o=>o.t).join(' | '):x.t,x.name,x.city,x.plat,x.code,fmtDays(x.daysAll||x.days),x.lines.length,
     x.lines.map(l=>l.n+(l.dest?' אל '+l.dest:'')).join(' | '),[...new Set(x.lines.map(l=>l.op))].join(' | ')]);
   const cell=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const blob=new Blob(['﻿'+rows.map(r=>r.map(cell).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='ratzif-kaful-'+(D.updated||'')+'.csv';a.click();
 }
-['fScope','fOp','fWin','fSev'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;render();}));
+['fScope','fOp','fWin','fSev','fView'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;render();}));
 $('#fCity').addEventListener('input',()=>{LIMIT=100;render();});
 $('#q').addEventListener('input',()=>{LIMIT=100;render();});
 fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})
