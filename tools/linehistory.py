@@ -438,8 +438,7 @@ for rdesc,c in cur.items():
     hs_changed=bool(pv.get('hs')) and bool(c.get('hs')) and pv['hs']!=c['hs']
     ct_changed=bool(pv.get('ct')) and bool(c.get('ct')) and pv['ct']!=c['ct']
     if not geo and not stp and not op_changed and not tt_changed \
-       and not wa_changed and not pd_changed and not ty_changed \
-       and not hs_changed and not ct_changed:
+       and not wa_changed and not pd_changed and not ty_changed:
         # תיקון עבר: קבצים שהסיווג בהם התיישן לפני שנוסף המעקב — מרעננים
         # בשקט את המטא-נתונים בלי להמציא אירוע על שינוי שקרה מזמן
         p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -483,7 +482,7 @@ for rdesc,c in cur.items():
         if ren:
             codes_eff=[ren.get(y,y) for y in c['codes']]
             if codes_eff==old_codes and not geo and not (op_changed or tt_changed
-               or ty_changed or wa_changed or pd_changed or hs_changed or ct_changed):
+               or ty_changed or wa_changed or pd_changed):
                 # רק מספרי תחנות הוחלפו — מרעננים בשקט את הרשימה בגרסה
                 # האחרונה, בלי להמציא אירוע-קו על החלפת רישום
                 p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -522,10 +521,6 @@ for rdesc,c in cur.items():
         kind='access'
     elif pd_changed and not geo and not stp and not op_changed:
         kind='board'
-    elif ct_changed and not geo and not stp and not op_changed:
-        kind='city'
-    elif hs_changed and not geo and not stp and not op_changed:
-        kind='pubdest'
     elif not geo and not stp:
         kind='operator'
     else:
@@ -689,7 +684,7 @@ def sev(code,ev):
     shist.setdefault(code,[])
     shist[code]=[e for e in shist[code] if not (e['d']==TODAY and e['k']==ev['k'])]
     shist[code].append({'d':TODAY,**ev})
-ns=nd=nr=nm=0
+ns=nd=nr=nm=ncty=npd_t=0
 # ביישור: מצב-התחנות רק מתרענן בשקט (למשל קליטת המסופים שסוננו בעבר) —
 # בלי לרשום אירועי "חדשה", כי אלה לא תחנות שבאמת נוספו היום.
 if not first_run and not REBASE:
@@ -714,13 +709,16 @@ if not first_run and not REBASE:
             sev(c0,{'k':'new','n':v[0],'t':v[3],'la':v[1],'lo':v[2]}); ns+=1; continue
         if pv[0]!=v[0]:
             sev(c0,{'k':'renamed','on':pv[0],'nn':v[0],'t':v[3],'la':v[1],'lo':v[2]}); nr+=1
+        # עיר הרישום של התחנה השתנתה (בקשת שלמה) — אירוע תחנה, לא קו
+        if len(pv)>3 and pv[3] and v[3] and pv[3]!=v[3]:
+            sev(c0,{'k':'city','n':v[0],'oc':pv[3],'nc':v[3],'la':v[1],'lo':v[2]}); ncty+=1
         d=dist_m(pv[1],pv[2],v[1],v[2])
         if d>MOVE_M:
             sev(c0,{'k':'moved','n':v[0],'t':v[3],'dist':round(d),'ola':pv[1],'olo':pv[2],'la':v[1],'lo':v[2]}); nm+=1
     for c0,pv in prev_stops.items():
         if c0 not in cur_stops:
             sev(c0,{'k':'del','n':pv[0],'t':pv[3],'la':pv[1],'lo':pv[2],'lines':pv[4]}); nd+=1
-print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {nm}')
+print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {nm} | שינוי עיר {ncty} | יעד-לפרסום {npd_t}')
 
 # ---- אינדקס + מצב ----
 # האינדקס כולל את כל הווריאנטים שיש להם קובץ — גם כאלה שכבר לא ברישום
@@ -770,6 +768,36 @@ idx.sort(key=lambda x:(x['line'],x['rd']))
 json.dump({'gen':TODAY,'first':first_run,'lines':idx},
           open(f'{OUTDIR}/lines.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(chm,open(chpath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+# ---- תחנות יעד לפרסום (בקשת שלמה): תחנה שהפכה או חדלה להיות היעד
+# שכתוב על שלט האוטובוס. המפתח: "עיר|תחנה" מתוך trip_headsign; אירוע
+# נרשם על התחנה עצמה. בריצה הראשונה רק נשמר מצב — בלי הצפת אירועים.
+_pdst_path=f'{OUTDIR}/pubdest-state.json'
+_pdst_prev=jload(_pdst_path,None)
+_pdst={}
+for _rid,_h in _hs.items():
+    if '_' not in _h or _rid not in routes: continue
+    _cty,_stp=_h.split('_',1)
+    _k=f'{_cty.strip()}|{_stp.strip()}'
+    _pdst.setdefault(_k,set()).add(routes[_rid]['line'])
+_pdst={k:sorted(v) for k,v in _pdst.items()}
+if _pdst_prev is not None and not first_run and not REBASE:
+    _nc_ix={}
+    for _c0,_v in cur_stops.items():
+        _nc_ix.setdefault(f'{_v[3]}|{_v[0]}',_c0)
+    for _k in _pdst.keys()-_pdst_prev.keys():
+        _c0=_nc_ix.get(_k)
+        if _c0:
+            _v=cur_stops[_c0]
+            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
+                     'st':'in','ln':_pdst[_k][:8]}); npd_t+=1
+    for _k in _pdst_prev.keys()-_pdst.keys():
+        _c0=_nc_ix.get(_k)
+        if _c0:
+            _v=cur_stops[_c0]
+            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
+                     'st':'out','ln':(_pdst_prev.get(_k) or [])[:8]}); npd_t+=1
+json.dump(_pdst,open(_pdst_path,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+
 json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 # 'tt' נשמר כדי שאפשר יהיה לזהות שינוי בסוג הקו. במצב שנוצר לפני השדה הזה

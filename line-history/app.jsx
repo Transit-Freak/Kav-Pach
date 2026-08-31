@@ -27,8 +27,6 @@ const KINDS = {
   stops:       { label: "שינוי תחנות", color: "#b45309" },
   operator:    { label: "החלפת מפעיל", color: "#0f766e" },
   dest:        { label: "שינוי יעד", color: "#9333ea" },
-  pubdest:     { label: "שינוי תחנת היעד לפרסום", color: "#7e22ce" },
-  city:        { label: "שינוי עיר", color: "#b91c1c" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
   renamed:     { label: "שינוי שם תחנת קצה", color: "#b45309" },
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
@@ -71,7 +69,7 @@ function isRemovedYear(l) {
 const CAT_GROUPS = [
   { title: "ביטולים", items: ["removed-year", "removed-now", "removed-past"] },
   { title: "שינויי מסלול", items: ["route", "endpoint"] },
-  { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del", "pubdest", "city"] },
+  { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode"] },
   { title: "שינויים טכניים", items: ["redraw"] },
@@ -89,8 +87,6 @@ const CAT_LABELS = {
   new: "וריאנט חדש ברישום",
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
-  pubdest: "שינוי תחנת היעד לפרסום (מה שכתוב על שלט האוטובוס)",
-  city: "שינוי עיר המוצא או היעד",
   renum: "שינוי מספר קו",
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
@@ -115,6 +111,8 @@ const SKINDS = {
   del:     { label: "בוטלה", color: "#dc2626" },
   renamed: { label: "שינוי שם", color: "#b45309" },
   moved:   { label: "הזזת מיקום", color: "#2563eb" },
+  city:    { label: "שינוי עיר", color: "#b91c1c" },
+  pubdest: { label: "תחנת יעד לפרסום", color: "#7e22ce" },
 };
 
 // פענוח polyline (precision 5)
@@ -838,7 +836,7 @@ const osTags = (map) => {
 const KIND_GROUPS_N = [
   { tag: "kg_rem", label: "ביטולי קווים", kinds: ["removed"] },
   { tag: "kg_new", label: "קווים חדשים", kinds: ["new"] },
-  { tag: "kg_route", label: "מסלול ותחנות", kinds: ["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del", "pubdest", "city"] },
+  { tag: "kg_route", label: "מסלול ותחנות", kinds: ["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"] },
   { tag: "kg_ident", label: "יעד, מספר ומפעיל", kinds: ["dest", "renum", "renamed", "operator", "mode"] },
 ];
 // "ההרשמות שלי": כל מה שנרשם מהדפדפן הזה (צ'יפים + המרכז), עם ✖ להסרה
@@ -2544,6 +2542,8 @@ function StopsTab({ sel, selN }) {
                         חצים ריקים משני הצדדים. כשהוא חסר מוצג היעד בלבד. */}
                     {/* dir=ltr על זוג הקואורדינטות: בטקסט עברי הפסיק והרווח
                         מקבלים כיוון RTL וסדר lat/lon התהפך ויזואלית */}
+                    {c.k === "city" && <> · <s>{c.oc}</s> ← <b>{c.nc}</b></>}
+                    {c.k === "pubdest" && <> · {c.st === "in" ? "הפכה לתחנת היעד שעל שלט האוטובוס" : "אינה עוד תחנת היעד שעל השלט"}{c.ln && c.ln.length ? <> · קו {c.ln.slice(0, 8).join(", ")}</> : null}</>}
                     {c.k === "moved" && (c.ola != null
                       ? <> · הוזזה <b>{c.dist || c.m} מ׳</b> · <s dir="ltr">({c.ola}, {c.olo})</s> ← <b dir="ltr">({c.la}, {c.lo})</b></>
                       : <> · הוזזה <b>{c.dist || c.m} מ׳</b> · אל <b dir="ltr">({c.la}, {c.lo})</b></>)}
