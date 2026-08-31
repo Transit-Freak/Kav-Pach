@@ -67,7 +67,11 @@
   <input id="fCity" list="cities" placeholder="מרחב: כל הארץ — הקלידו עיר…" style="min-width:170px;background:#fff;border:1px solid var(--brd);border-radius:7px;padding:7px 10px;font:inherit;font-size:13px"><datalist id="cities"></datalist>
   <select id="fOp"><option value="">מפעיל: הכול</option></select>
   <select id="fWin"><option value="">חלון: יום שלם</option><option value="am">שיא הבוקר 06:00–09:00</option><option value="pm">שיא הערב 15:00–19:00</option><option value="nomid">בלי יציאות 00:00</option></select>
-  <select id="fSev"><option value="">יוצאים יחד: הכול (2+)</option><option value="e2">בדיוק 2</option><option value="lt4">פחות מ-4</option><option value="lt6">פחות מ-6</option><option value="3">3 ומעלה</option><option value="4">4 ומעלה</option><option value="5">5 ומעלה</option><option value="8">8 ומעלה</option></select>
+  <span style="display:inline-flex;gap:4px;align-items:center;background:#fff;border:1px solid var(--brd);border-radius:7px;padding:2px 4px 2px 8px">
+    <span style="font-size:12.5px;color:#38445a">יוצאים יחד</span>
+    <select id="fSevOp" style="border:none;background:none;font:inherit;font-size:13px;color:#38445a;cursor:pointer"><option value="ge">לפחות</option><option value="eq">בדיוק</option><option value="lt">פחות מ-</option></select>
+    <input id="fSevN" type="number" min="2" max="99" placeholder="הכול" style="width:52px;border:none;background:#f1f4f8;border-radius:5px;padding:4px 6px;font:inherit;font-size:13px;text-align:center">
+  </span>
   <select id="fView"><option value="stn">תצוגה: תחנה לפי שעות</option><option value="grp">תצוגה: צמד קווים בשורה אחת</option><option value="each">תצוגה: כל מופע בנפרד</option></select>
   <input id="q" type="search" placeholder="חיפוש תחנה או מספר קו…">
   <button class="csv" onclick="XDL()">ייצוא CSV ↓</button>
@@ -77,7 +81,7 @@
 <div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. הכמות נספרת באוטובוסים, לא בקווים: כל נסיעה ברישוי היא אוטובוס, וקו מתוגבר בכמה אוטובוסים באותה דקה (מסומן "N אוטובוסים יחד") תופס את כולם — גם קו בודד עם תגבור כפול הוא התנגשות. חומרה: <span class="sev s2"></span>2 אוטובוסים בדקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
 <div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='19';
+window.RZ_BUILD='20';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -93,7 +97,10 @@ function expand(d){
   d.conflicts=(d.c||[]).map(r=>{const s=d.st[r[0]];
     const lines=r[3].map(l=>({n:l[0],dest:l[1],op:d.ops[l[2]],cnt:l[3]||1}));
     return {code:s[0],name:s[1],city:s[2],plat:(s[3]&&!s[3].includes('קומה'))?s[3]:'',t:r[1],days:r[2],
-            lines,bus:r[4]||lines.length,ix:r[0]};});
+            lines,bus:r[4]||lines.length,ix:r[0]};})
+    // תחנות תפעוליות (חניוני היערכות) אינן רציפי נוסעים — מוסתרות (בקשת שלמה)
+    .filter(x=>!/תפעולי/.test(x.name||''));
+  d.total=d.conflicts.length;
   return d;
 }
 const fmt=n=>n.toLocaleString('he');
@@ -111,7 +118,8 @@ const isTerm=x=>x.plat||/מסוף|ת\.\s*מרכזית|תחנה מרכזית|מר
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function filt(){
   const q=$('#q').value.trim(),city=$('#fCity').value,op=$('#fOp').value,
-        win=$('#fWin').value,sev=$('#fSev').value,scope=$('#fScope').value;
+        win=$('#fWin').value,scope=$('#fScope').value,
+        sevOp=$('#fSevOp').value,sevN=+($('#fSevN').value||0);
   return D.conflicts.filter(x=>{
     if(scope==='term'&&!isTerm(x))return false;
     if(scope==='plat'&&!x.plat)return false;
@@ -120,10 +128,10 @@ function filt(){
     if(win==='am'&&!(x.t>='06:00'&&x.t<'09:00'))return false;
     if(win==='pm'&&!(x.t>='15:00'&&x.t<'19:00'))return false;
     if(win==='nomid'&&x.t==='00:00')return false;
-    if(sev){
-      if(sev==='e2'){if(x.bus!==2)return false;}
-      else if(sev.startsWith('lt')){if(x.bus>=+sev.slice(2))return false;}
-      else if(x.bus<+sev)return false;
+    if(sevN){
+      if(sevOp==='ge'&&x.bus<sevN)return false;
+      if(sevOp==='eq'&&x.bus!==sevN)return false;
+      if(sevOp==='lt'&&x.bus>=sevN)return false;
     }
     if(!q)return true;
     return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q);
@@ -254,9 +262,10 @@ function XDL(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='ratzif-kaful-'+(D.updated||'')+'.csv';a.click();
 }
-['fScope','fOp','fWin','fSev','fView'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;render();}));
+['fScope','fOp','fWin','fSevOp','fView'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;render();}));
 $('#fCity').addEventListener('input',()=>{LIMIT=100;render();});
 $('#q').addEventListener('input',()=>{LIMIT=100;render();});
+$('#fSevN').addEventListener('input',()=>{LIMIT=100;render();});
 fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})
 .then(d=>{
   D=expand(d);
