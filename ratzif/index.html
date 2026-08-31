@@ -52,7 +52,7 @@
   <div class="note"><b>מה זה אומר ומה זה לא:</b> אלה זמני הרישוי המתוכננים — לא מה שקורה בשטח בפועל. חלופות של אותו קו ובאותו כיוון לא נספרות (כפילות רישומית, לא התנגשות). ימי הפעילות נלקחים מלוח calendar; חריגים נקודתיים של תאריך בודד לא נבדקים. שני קווים באותה דקה מאותו רציף פירושם אחד מהשניים: או שהרישוי לא מעודכן, או שבשטח מישהו יוצא באיחור מובנה.</div>
 </div>
 <script>
-window.RZ_BUILD='1';
+window.RZ_BUILD='2';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -64,6 +64,13 @@ window.RZ_BUILD='1';
 })();
 const $=s=>document.querySelector(s);
 let D=null,Q='',F='all',LIMIT=40;
+function expand(d){
+  // הפורמט הדחוס: st=[code,name,city,plat] · c=[stIdx,t,days,[[n,dest,opIdx],..]]
+  d.conflicts=(d.c||[]).map(r=>{const s=d.st[r[0]];
+    return {code:s[0],name:s[1],city:s[2],plat:s[3],t:r[1],days:r[2],
+            lines:r[3].map(l=>({n:l[0],dest:l[1],op:d.ops[l[2]]}))};});
+  return d;
+}
 const fmt=n=>n.toLocaleString('he');
 const isTerm=x=>x.plat||/מסוף|ת\.\s*מרכזית|תחנה מרכזית|מרכזית|רציף/.test(x.name);
 function render(){
@@ -73,7 +80,7 @@ function render(){
     if(F==='term'&&!isTerm(x))return false;
     if(F==='multi'&&x.lines.length<3)return false;
     if(!q)return true;
-    return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q||l.mk===q);
+    return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q);
   });
   // קיבוץ לפי תחנה
   const by={},order=[];
@@ -103,7 +110,7 @@ document.querySelectorAll('.fchip').forEach(b=>b.addEventListener('click',()=>{
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;LIMIT=40;render();});
 fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})
-.then(d=>{D=d;render();})
+.then(d=>{D=expand(d);render();})
 .catch(()=>{$('#view').innerHTML='<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה, או שמריצים ידנית את ratzif ב-Actions.</div>';});
 </script>
 </body>
