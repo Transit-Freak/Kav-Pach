@@ -63,9 +63,18 @@ def origin_rows(url, cd):
 
 
 def main():
-    day = datetime.date.today() - datetime.timedelta(days=1)
-    url = S3.format(y=day.year, m=f'{day.month:02d}', d=f'{day.day:02d}')
-    cd = central_dir(url)
+    # הארכיון של אתמול נבנה במהלך היום — נסוגים אחורה עד יום שקיים
+    day, cd, url = None, None, None
+    for back in range(1, 7):
+        day = datetime.date.today() - datetime.timedelta(days=back)
+        url = S3.format(y=day.year, m=f'{day.month:02d}', d=f'{day.day:02d}')
+        try:
+            cd = central_dir(url)
+            break
+        except Exception as e:
+            print(f'{day}: אין ארכיון ({type(e).__name__}) — צעד אחורה', flush=True)
+    if cd is None:
+        raise SystemExit('אין אף יום זמין בארכיון בשבוע האחרון')
 
     c, rows = load_small(url, cd, 'trips.txt')
     trip2 = {r[c['trip_id']]: (r[c['route_id']], r[c['service_id']]) for r in rows}
