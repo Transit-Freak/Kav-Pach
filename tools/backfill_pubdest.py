@@ -46,7 +46,14 @@ def day_dest_map(day):
     cd = central_dir(url)
 
     c, rows = member_rows(url, cd, 'routes.txt')
-    short = {r[c['route_id']]: (r[c['route_short_name']] or '') for r in rows}
+    short, rdesc = {}, {}
+    # לולאה אחת: rows הוא איטרטור חד-פעמי — לולאה שנייה תקבל כלום
+    for r in rows:
+        rid = r[c['route_id']]
+        short[rid] = r[c['route_short_name']] or ''
+        if 'route_desc' in c:
+            # זהות מסלול יציבה (מק"ט-כיוון-חלופה) — ממנה נדע מאיפה לאן עבר היעד
+            rdesc[rid] = r[c['route_desc']] or ''
 
     c, rows = member_rows(url, cd, 'trips.txt')
     rep = {}
@@ -95,16 +102,22 @@ def day_dest_map(day):
                                   float(r[c['stop_lat']] or 0), float(r[c['stop_lon']] or 0), city)
 
     dest = {}
+    rdpos = {}   # זהות מסלול -> [מק"ט תחנת היעד, מספר הקו]
     for t, (seq, sid) in last.items():
         st = stops.get(sid)
         if not st:
             continue
         code, name, la, lo, city = st
-        ln = short.get(trip2rid[t], '')
+        rid = trip2rid[t]
+        ln = short.get(rid, '')
+        rd = rdesc.get(rid, '')
+        if rd:
+            rdpos[rd] = [str(code), ln]
         e = dest.setdefault(str(code), [set(), name, city, la, lo])
         if ln:
             e[0].add(ln)
-    return {k: (sorted(v[0])[:12], v[1], v[2], v[3], v[4]) for k, v in dest.items()}
+    return ({k: (sorted(v[0])[:12], v[1], v[2], v[3], v[4]) for k, v in dest.items()},
+            rdpos)
 
 
 def _exists(url):
@@ -132,17 +145,29 @@ def next_existing(day):
 def add_event(shist, months, code, ev):
     day = ev['d']
     hc = shist.setdefault(code, [])
-    if any(e.get('d') == day and e.get('k') == 'pubdest' and e.get('st') == ev['st'] for e in hc):
-        return False
-    hc.append(ev)
-    hc.sort(key=lambda e: e.get('d', ''))
+    old = next((e for e in hc if e.get('d') == day and e.get('k') == 'pubdest'
+                and e.get('st') == ev['st']), None)
+    fresh = old is None
+    if old is not None:
+        # אירוע קיים מריצה קודמת בלי פירוט מאיפה-לאן — משודרג במקום
+        if ev.get('mv') and not old.get('mv'):
+            old.update(ev)
+        else:
+            return False
+    else:
+        hc.append(ev)
+        hc.sort(key=lambda e: e.get('d', ''))
     mon = day[:7]
     mp = f'{OUTDIR}/changes/stops-{mon}.json'
     mm = months.setdefault(mon, jload(mp, {'month': mon, 'changes': []}))
-    if not any(x.get('c') == code and x.get('d') == day and x.get('k') == 'pubdest'
-               and x.get('st') == ev['st'] for x in mm['changes']):
+    mold = next((x for x in mm['changes'] if x.get('c') == code and x.get('d') == day
+                 and x.get('k') == 'pubdest' and x.get('st') == ev['st']), None)
+    if mold is not None:
+        if ev.get('mv') and not mold.get('mv'):
+            mold.update(ev)
+    else:
         mm['changes'].append({'c': code, **ev})
-    return True
+    return fresh
 
 
 def main():
@@ -171,28 +196,48 @@ def main():
             st['ptr'] = (ptr + datetime.timedelta(days=STEP_DAYS)).isoformat()
             continue
         try:
-            dest = day_dest_map(day)
+            dest, rdpos = day_dest_map(day)
         except (Exception, SystemExit) as e:
             # קובץ קיים אך שבור/קטוע — מנסים את היום הבא בחלון במקום ליפול
             print(f'{day}: כשל בקריאה ({e}) — ממשיכים ליום הבא', flush=True)
             st['ptr'] = (day + datetime.timedelta(days=1)).isoformat()
             continue
         prev = st.get('prev')
+        prev_rd = st.get('prev_rd') or {}
         if prev is not None:
+            # מה השינוי בפועל: לכל מסלול שהיעד שלו זז — מאיזו תחנה לאיזו
+            mv_in, mv_out = {}, {}
+            for rd, (ncode, nline) in rdpos.items():
+                o = prev_rd.get(rd)
+                if not o or o[0] == ncode:
+                    continue
+                old_name = (prev.get(o[0]) or [None, ''])[1]
+                new_name = dest[ncode][1] if ncode in dest else ''
+                pair = [nline or o[1], old_name]
+                if pair not in mv_in.setdefault(ncode, []):
+                    mv_in[ncode].append(pair)
+                pair = [nline or o[1], new_name]
+                if pair not in mv_out.setdefault(o[0], []):
+                    mv_out[o[0]].append(pair)
             for code in dest.keys() - prev.keys():
                 lns, name, city, la, lo = dest[code]
-                if add_event(shist, months, code,
-                             {'d': day.isoformat(), 'k': 'pubdest', 'st': 'in',
-                              'n': name, 't': city, 'la': la, 'lo': lo, 'ln': lns[:8]}):
+                ev = {'d': day.isoformat(), 'k': 'pubdest', 'st': 'in',
+                      'n': name, 't': city, 'la': la, 'lo': lo, 'ln': lns[:8]}
+                if mv_in.get(code):
+                    ev['mv'] = mv_in[code][:6]
+                if add_event(shist, months, code, ev):
                     n_ev += 1
             for code in prev.keys() - dest.keys():
                 pl = prev[code]
-                if add_event(shist, months, code,
-                             {'d': day.isoformat(), 'k': 'pubdest', 'st': 'out',
-                              'n': pl[1], 't': pl[2], 'la': pl[3], 'lo': pl[4],
-                              'ln': (pl[0] or [])[:8]}):
+                ev = {'d': day.isoformat(), 'k': 'pubdest', 'st': 'out',
+                      'n': pl[1], 't': pl[2], 'la': pl[3], 'lo': pl[4],
+                      'ln': (pl[0] or [])[:8]}
+                if mv_out.get(code):
+                    ev['mv'] = mv_out[code][:6]
+                if add_event(shist, months, code, ev):
                     n_ev += 1
         st['prev'] = {k: list(v) for k, v in dest.items()}
+        st['prev_rd'] = rdpos
         st['prev_day'] = day.isoformat()
         st['ptr'] = (day + datetime.timedelta(days=STEP_DAYS)).isoformat()
         n_smp += 1

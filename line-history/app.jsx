@@ -666,7 +666,9 @@ let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "201
 let MONTHS_P = null;
 let PUBDEST_P = null;
 const getPubdest = () => PUBDEST_P || (PUBDEST_P = dfetch("data/pubdest-state.json")
-  .then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
+  .then((r) => (r.ok ? r.json() : {}))
+  .then((d) => (d && d.v === 2 ? d.stops || {} : d))   // פורמט v2 עוטף במפתח stops
+  .catch(() => ({})));
 const getMonths = () => MONTHS_P || (MONTHS_P = dfetch("data/months.json")
   .then((r) => r.json())
   .catch((e) => { MONTHS_P = null; throw e; }));
@@ -2555,7 +2557,12 @@ function StopsTab({ sel, selN }) {
                     {/* dir=ltr על זוג הקואורדינטות: בטקסט עברי הפסיק והרווח
                         מקבלים כיוון RTL וסדר lat/lon התהפך ויזואלית */}
                     {c.k === "city" && <> · <s>{c.oc}</s> ← <b>{c.nc}</b></>}
-                    {c.k === "pubdest" && <> · {c.st === "in" ? "הפכה לתחנת היעד שעל שלט האוטובוס" : "אינה עוד תחנת היעד שעל השלט"}{c.ln && c.ln.length ? <> · קו {c.ln.slice(0, 8).join(", ")}</> : null}</>}
+                    {c.k === "pubdest" && <> · {c.st === "in" ? "הפכה לתחנת היעד שעל שלט האוטובוס" : "אינה עוד תחנת היעד שעל השלט"}{
+                      /* מה השינוי בפועל (בקשת שלמה): מאיזו תחנה הגיע היעד
+                         ולאן עבר — לא רק שהיה שינוי */
+                      c.mv && c.mv.length
+                        ? <> · {c.mv.slice(0, 6).map(([l, s2]) => (l ? "קו " + l : "מסלול ללא מספר") + (s2 ? (c.st === "in" ? " (היעד היה: " + s2 + ")" : " (היעד עבר אל: " + s2 + ")") : "")).join("; ")}</>
+                        : c.ln && c.ln.length ? <> · קו {c.ln.slice(0, 8).join(", ")}</> : null}</>}
                     {c.k === "moved" && (c.ola != null
                       ? <> · הוזזה <b>{c.dist || c.m} מ׳</b> · <s dir="ltr">({c.ola}, {c.olo})</s> ← <b dir="ltr">({c.la}, {c.lo})</b></>
                       : <> · הוזזה <b>{c.dist || c.m} מ׳</b> · אל <b dir="ltr">({c.la}, {c.lo})</b></>)}
