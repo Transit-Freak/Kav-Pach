@@ -163,12 +163,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 11 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 12 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='11';
+window.FLEET_BUILD='12';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -618,11 +618,40 @@ function buildOfficial(){
   OFCOK=n>0;
 }
 // נפילות-וחזרות: רכב שנעלם חודש קלנדרי מלא וחזר לשדר (תקלה אפשרית)
-const PHBASE='https://github.com/Transit-Freak/kav-bochan/releases/download/photos/';
+let PHBASE='https://github.com/Transit-Freak/kav-bochan/releases/download/photos/';
+let PHFB=null;
 async function loadPhotos(){
   if(PH!==null) return;
   try{const r=await fetch('data/fleet-photos.json',{cache:'no-cache'});PH=r.ok?await r.json():{p:{}};}
   catch(e){PH={p:{}};}
+  if(PH.base) PHBASE=PH.base;
+}
+// רכב בלי תמונה משלו מקבל "דגם קרוב" (בקשת יצחק): אותה חברה + אותו
+// דגם + אותו אשכול (צביעה שונה בין אשכולות!), ואם אין — חברה + דגם
+function buildPhotoFB(){
+  if(!DATA||!PH||!PH.p) return;
+  PHFB={};
+  for(const o of DATA.operators)for(const v of o.vehicles){
+    const c=v[0].replace(/\D/g,'').replace(/^0+/,'');
+    if(!PH.p[c]) continue;
+    const m=gM(v); if(!m) continue;
+    const cl=(OFC&&OFC.of&&OFC.of[c])?OFC.of[c][6]:null;
+    if(cl&&!PHFB[o.ref+'|'+m+'|'+cl]) PHFB[o.ref+'|'+m+'|'+cl]=c;
+    if(!PHFB[o.ref+'|'+m]) PHFB[o.ref+'|'+m]=c;
+  }
+}
+function phBlock(clean,ref,model){
+  if(!PH||!PH.p) return '';
+  if(PH.p[clean]) return phGallery(clean,8);
+  if(!model) return '';
+  if(PHFB===null) buildPhotoFB();
+  if(!PHFB) return '';
+  const cl=(OFC&&OFC.of&&OFC.of[clean])?OFC.of[clean][6]:null;
+  let donor=cl?PHFB[ref+'|'+model+'|'+cl]:null;
+  const sameCl=!!donor;
+  if(!donor) donor=PHFB[ref+'|'+model];
+  if(!donor||donor===clean) return '';
+  return `<div style="font-size:12px;color:var(--dim);padding:4px 0 0">אין עדיין תמונה של הרכב הזה עצמו — מוצג רכב זהה: אותו דגם, אותה חברה${sameCl?' ואותו אשכול (אותה צביעה)':''}</div>`+phGallery(donor,4);
 }
 // עד כמה תמונות לרכב; קליק פותח בגודל מלא
 function phGallery(clean,mx){
@@ -723,7 +752,7 @@ async function showV(plate){
     ${ar?`<span class="st mv" title="לפי מאגר ״ציי רכב אוטובוסים״ של משרד התחבורה${ARM.updated?` (${fd(ARM.updated)})`:''}">${arLbl(ar)}</span>`:''}
     <span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span>
     <button class="xlsbtn sharebtn" style="padding:7px 13px;font-size:12px" onclick="SHAREV('${plate.replace(/'/g,'')}')" title="מעתיק קישור שפותח את כרטיס הרכב הזה ישירות">שיתוף</button>
-    <button class="x" aria-label="סגירה">✕</button></div>${phGallery(clean,8)}${rows}</div>`;
+    <button class="x" aria-label="סגירה">✕</button></div>${phBlock(clean,recs[0][0].ref,gM(fv))}${rows}</div>`;
   ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
   document.body.appendChild(ovl);
 }
