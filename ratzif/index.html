@@ -81,7 +81,7 @@
 <div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. הכמות נספרת באוטובוסים, לא בקווים: כל נסיעה ברישוי היא אוטובוס, וקו מתוגבר בכמה אוטובוסים באותה דקה (מסומן "N אוטובוסים יחד") תופס את כולם — גם קו בודד עם תגבור כפול הוא התנגשות. חומרה: <span class="sev s2"></span>2 אוטובוסים בדקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. נסיעות שמתחילות אחרי חצות רשומות ברישוי כ-00:xx (בראש הלוח); זמני "24:xx" שקיימים ברישוי הם תחנות-אמצע של נסיעות ערב, לא יציאות מרציף — אומת מול הקובץ הגולמי. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
 <div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='22';
+window.RZ_BUILD='23';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -215,10 +215,10 @@ function occPanel(ix){
     });
     if(!busy.length)continue;
     inner+=`<div style="margin:4px 0"><b style="font-size:12px">${ttl[bi]}:</b> `+
-      busy.map(([t,n])=>`<span style="display:inline-block;margin:1px 2px;padding:1px 7px;border-radius:5px;font-size:12px;font-variant-numeric:tabular-nums;background:#fdeeec;color:var(--bad);font-weight:700">${esc(t)}${n>1?' ·'+n:''}</span>`).join('')+'</div>';
+      busy.map(([t,n,lns])=>`<span onclick="const i=this.querySelector('i');if(i)i.hidden=!i.hidden" title="${lns?'קווים: '+esc(lns):''}" style="display:inline-block;cursor:pointer;margin:1px 2px;padding:1px 7px;border-radius:5px;font-size:12px;font-variant-numeric:tabular-nums;background:#fdeeec;color:var(--bad);font-weight:700">${esc(t)}${n>1?' ·'+n:''}${lns?`<i hidden style="font-style:normal;font-weight:600;color:#7c2d12"> — קו ${esc(lns)}</i>`:''}</span>`).join('')+'</div>';
   }
   if(!inner)return `<div style="font-size:12px;color:var(--dim)">אין ברציף הזה דקות עמוסות — כל היציאות בודדות ומרווחות</div>`;
-  return `<div style="font-size:12px;color:var(--dim);margin-bottom:2px">מתי הרציף תפוס: דקה עם 2 אוטובוסים ומעלה, או יציאות בדקות צמודות</div>${inner}`;
+  return `<div style="font-size:12px;color:var(--dim);margin-bottom:2px">מתי הרציף תפוס: דקה עם 2 אוטובוסים ומעלה, או יציאות בדקות צמודות · לחיצה על שעה מציגה את הקווים</div>${inner}`;
 }
 function render(){
   if(!D)return;

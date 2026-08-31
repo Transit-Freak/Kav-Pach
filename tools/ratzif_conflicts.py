@@ -160,7 +160,8 @@ def main():
         peak = max(per_day)
         wk = max(per_day[:5]) if per_day[:5] else 0
         if wk or per_day[5] or per_day[6]:
-            occ_all.setdefault(sid, {})[dep] = (wk, per_day[5], per_day[6])
+            _lns = ','.join(sorted({e[3]['n'] for e in entries if e[3]['n']})[:6])
+            occ_all.setdefault(sid, {})[dep] = (wk, per_day[5], per_day[6], _lns)
         if peak < 2:
             continue
         peak_day = per_day.index(peak)
@@ -221,10 +222,10 @@ def main():
         data = occ_all.get(sid) or {}
         buckets = [[], [], []]
         for t in sorted(data):
-            w, f, sa = data[t]
-            if w: buckets[0].append([t, w])
-            if f: buckets[1].append([t, f])
-            if sa: buckets[2].append([t, sa])
+            w, f, sa, lns = data[t]
+            if w: buckets[0].append([t, w, lns])
+            if f: buckets[1].append([t, f, lns])
+            if sa: buckets[2].append([t, sa, lns])
         occ[str(ix)] = buckets
     out = {'updated': day.isoformat(), 'total': len(conflicts),
            'stations': len(per_stop), 'top': top,
