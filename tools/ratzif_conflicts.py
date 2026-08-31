@@ -20,7 +20,11 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from backfill_geo import S3, central_dir, member_rows, stream_member  # noqa: E402
+from backfill_geo import central_dir, member_rows, stream_member  # noqa: E402
+
+# בניגוד ל-backfill_geo (שם S3 הוא רק שם השרת), כאן צריך את הנתיב המלא
+S3 = ('https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
+      '/gtfs_archive/{y}/{m}/{d}/israel-public-transportation.zip')
 
 OUT = 'ratzif/data/conflicts.json'
 DAYS_HE = 'אבגדהוש'
