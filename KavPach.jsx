@@ -710,14 +710,13 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
-          {/* צי הרכבים — אפליקציה עצמאית בתיקיית fleet/ (עדיין בבנייה) */}
+          {/* צי הרכבים — אפליקציה עצמאית בתיקיית fleet/ */}
           <a
             href="fleet/"
             className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
             style={{ background: 'linear-gradient(155deg,#0b1220 0%,#10172a 52%,#475569 100%)' }}
           >
             <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#94a3b8' }} />
-            <span className="absolute top-5 left-5 bg-amber-300 text-amber-950 px-4 py-1.5 rounded-full font-black text-xs">🚧 בבנייה</span>
             <div className="relative">
               <div className="flex items-center justify-between mb-6 h-28">
                 <svg width="126" height="90" viewBox="4 14 56 40" className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1"><path d="M6 16h16l4 5h32v32H6z" fill="#3b82f6"/><path d="M6 16h16l4 5h32v5H6z" fill="#2563eb"/><rect x="16" y="30" width="32" height="16" rx="4" fill="none" stroke="#fff" strokeWidth="2.6"/><path d="M16 39h32" stroke="#fff" strokeWidth="2.2"/><circle cx="23" cy="46" r="2.8" fill="#fff"/><circle cx="41" cy="46" r="2.8" fill="#fff"/><rect x="20" y="33" width="6" height="4" rx="1" fill="#fff"/><rect x="28" y="33" width="6" height="4" rx="1" fill="#fff"/><rect x="36" y="33" width="6" height="4" rx="1" fill="#fff"/></svg>
