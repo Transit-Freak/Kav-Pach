@@ -163,12 +163,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 10 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 11 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='10';
+window.FLEET_BUILD='11';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -187,7 +187,7 @@ window.FLEET_BUILD='10';
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n', ELF=null, YRF=null;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n', ELF=null, YRF=null, PH=null;
 // תווית מיגון לרכב (v._ar: 'y' ירי / 's' אבנים / 'ys' שניהם)
 const arLbl=a=>a==='ys'?'ממוגן ירי ואבנים':(a&&a.includes('y')?'ממוגן ירי':'ממוגן אבנים');
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
@@ -422,6 +422,10 @@ function typeView(t){
     </div>
   </div>
   <div class="panel"><p class="ptitle">כל הרכבים מהדגם הזה</p>
+    ${(()=>{if(!PH||!PH.p)return '';const seen=[],raw={};
+      for(const [,v] of all){const c=v[0].replace(/\D/g,'').replace(/^0+/,'');
+        if(PH.p[c]&&!seen.includes(c)){seen.push(c);raw[c]=v[0];}if(seen.length>=6)break;}
+      return seen.length?'<div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0">'+seen.map(c=>`<img src="${PHBASE+c}-1.jpg" loading="lazy" style="height:110px;border-radius:10px;cursor:pointer;flex:0 0 auto" onclick="showV(event.target.dataset.p)" data-p="${esc(raw[c])}" alt="רכב מהדגם">`).join('')+'</div>':'';})()}
     ${yrKeys.length>1?`<p class="ptitle" style="margin-top:10px">לפי שנתון — לחיצה מסננת</p><div class="filters">
       <button class="fchip ${YRF===null?'on':''}" onclick="YRF=null;LIMIT=200;render()">כל השנתונים</button>
       ${yrKeys.map(y=>`<button class="fchip ${YRF===y?'on':''}" onclick="YRF=YRF===${y}?null:${y};LIMIT=200;render()">${y} · ${fmt(yrs[y].n)}${yrs[y].n-yrs[y].act?` (${fmt(yrs[y].n-yrs[y].act)} ירדו)`:''}</button>`).join('')}
@@ -614,6 +618,21 @@ function buildOfficial(){
   OFCOK=n>0;
 }
 // נפילות-וחזרות: רכב שנעלם חודש קלנדרי מלא וחזר לשדר (תקלה אפשרית)
+const PHBASE='https://github.com/Transit-Freak/kav-bochan/releases/download/photos/';
+async function loadPhotos(){
+  if(PH!==null) return;
+  try{const r=await fetch('data/fleet-photos.json',{cache:'no-cache'});PH=r.ok?await r.json():{p:{}};}
+  catch(e){PH={p:{}};}
+}
+// עד כמה תמונות לרכב; קליק פותח בגודל מלא
+function phGallery(clean,mx){
+  if(!PH||!PH.p||!PH.p[clean]) return '';
+  const n=Math.min(PH.p[clean],mx||6);
+  let h='<div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0">';
+  for(let i=1;i<=n;i++){const u=PHBASE+clean+'-'+i+'.jpg';
+    h+=`<img src="${u}" loading="lazy" style="height:130px;border-radius:10px;cursor:zoom-in;flex:0 0 auto" onclick="window.open('${u}')" alt="תמונת הרכב">`;}
+  return h+'</div>';
+}
 async function loadGaps(){
   if(GAPS!==null) return;
   try{const r=await fetch('data/fleet-gaps.json',{cache:'no-cache'});GAPS=r.ok?await r.json():{};}
@@ -655,7 +674,7 @@ async function showV(plate){
   if(!recs.length) return;
   const fv=recs[0][1];
   const clean=plate.replace(/-/g,'').replace(/^0+/,'');
-  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays(),loadOfficial(),loadGaps()]);
+  const [gov]=await Promise.all([shard(clean.slice(-1)).then(s=>s[clean]),loadKM(),loadArmor(),loadDays(),loadOfficial(),loadGaps(),loadPhotos()]);
   const ofc=OFC&&OFC.of?OFC.of[clean]:null;
   const ar=ARM&&ARM.armor?ARM.armor[clean]:null;
   const on=recs.some(([,v])=>isActive(v));
@@ -704,7 +723,7 @@ async function showV(plate){
     ${ar?`<span class="st mv" title="לפי מאגר ״ציי רכב אוטובוסים״ של משרד התחבורה${ARM.updated?` (${fd(ARM.updated)})`:''}">${arLbl(ar)}</span>`:''}
     <span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span>
     <button class="xlsbtn sharebtn" style="padding:7px 13px;font-size:12px" onclick="SHAREV('${plate.replace(/'/g,'')}')" title="מעתיק קישור שפותח את כרטיס הרכב הזה ישירות">שיתוף</button>
-    <button class="x" aria-label="סגירה">✕</button></div>${rows}</div>`;
+    <button class="x" aria-label="סגירה">✕</button></div>${phGallery(clean,8)}${rows}</div>`;
   ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
   document.body.appendChild(ovl);
 }
@@ -834,7 +853,7 @@ $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=nu
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();applyHash();render();
-  Promise.all([loadKM(),loadArmor(),loadOfficial(),loadGaps()]).then(()=>{buildKm();buildArmor();buildOfficial();buildGaps();render();});})
+  Promise.all([loadKM(),loadArmor(),loadOfficial(),loadGaps(),loadPhotos()]).then(()=>{buildKm();buildArmor();buildOfficial();buildGaps();render();});})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
 </body>
