@@ -679,6 +679,37 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
+          {/* רציף כפול — התנגשויות רציף מוצא (אפליקציה עצמאית בתיקיית ratzif/) */}
+          <a
+            href="ratzif/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#083344 0%,#155e75 52%,#0891b2 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-20" style={{ background: '#22d3ee' }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28">
+                {/* הסמל: רציף אחד, שני אוטובוסים דחוסים בו, שעון אחד לשניהם */}
+                <svg width="126" height="96" viewBox="0 0 63 48" className="drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1">
+                  <rect x="2" y="2" width="59" height="9" rx="2.5" fill="#a5f3fc"/>
+                  <text x="31.5" y="9" fontSize="6.2" fontWeight="800" fill="#083344" textAnchor="middle" fontFamily="Rubik,Arial">רציף 1</text>
+                  <path d="M14 13v31" stroke="#e0f2fe" strokeWidth="2" strokeDasharray="4 3" fill="none"/>
+                  <path d="M49 13v31" stroke="#e0f2fe" strokeWidth="2" strokeDasharray="4 3" fill="none"/>
+                  <rect x="17.5" y="14" width="13" height="32" rx="4" fill="#f8fafc" stroke="#334155" strokeWidth="1.1"/>
+                  <rect x="19.5" y="15.5" width="9" height="3.6" rx="1.6" fill="#1e293b"/>
+                  <rect x="20" y="22" width="8" height="20" rx="2.5" fill="#e2e8f0"/>
+                  <rect x="32.5" y="14" width="13" height="32" rx="4" fill="#f8fafc" stroke="#334155" strokeWidth="1.1"/>
+                  <rect x="34.5" y="15.5" width="9" height="3.6" rx="1.6" fill="#1e293b"/>
+                  <rect x="35" y="22" width="8" height="20" rx="2.5" fill="#e2e8f0"/>
+                  <circle cx="31.5" cy="30" r="7.6" fill="#fbbf24" stroke="#78350f" strokeWidth="1.2"/>
+                  <path d="M31.5 30 V25.4 M31.5 30 L35 31.8" stroke="#78350f" strokeWidth="1.6" strokeLinecap="round" fill="none"/>
+                </svg>
+              </div>
+              <h2 className="text-3xl font-[900] text-cyan-200">רציף כפול</h2>
+              <p className="text-cyan-100/80 font-bold mt-2 text-sm leading-relaxed">שני אוטובוסים או יותר שאמורים לצאת מאותו רציף מוצא באותה דקה — לפי לוח הרישוי הרשמי</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-cyan-300 text-cyan-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
+
           {/* צי הרכבים — אפליקציה עצמאית בתיקיית fleet/ (עדיין בבנייה) */}
           <a
             href="fleet/"
