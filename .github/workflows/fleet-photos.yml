@@ -1,0 +1,91 @@
+name: fleet-photos
+
+# תמונות רכבים (בקשת שלמה) — בלי לתפוס מקום בריפו: התמונות חיות
+# ב-Releases (אחסון נפרד שלא נספר במשקל). מעלים תמונות ששמן הוא
+# מספר הרכב לפריט "קליטת תמונות", והאוטומציה: מכווצת, מוחקת EXIF
+# (כולל מיקום GPS!), מעבירה לפריט "התמונות" ומעדכנת אינדקס זעיר.
+
+on:
+  schedule:
+    - cron: '25 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: Transit-Freak/kav-bochan
+    steps:
+      - uses: actions/checkout@v4
+      - name: ודא שפריטי ה-Release קיימים
+        run: |
+          gh release view photos-inbox -R "$R" >/dev/null 2>&1 || gh release create photos-inbox -R "$R" \
+            --title "קליטת תמונות — גררו לכאן קבצים בשם מספר הרכב" --latest=false --prerelease \
+            --notes "מעלים כאן תמונה ששמה הוא מספר הרכב (עם או בלי מקפים), למשל 23334202.jpg. כמה תמונות לאותו רכב: 23334202-2.jpg. תוך שעה לכל היותר התמונה תכווץ, תנוקה ממידע מיקום ותופיע בכרטיס הרכב באתר. אפשר גם להריץ ידנית את fleet-photos ב-Actions כדי לא לחכות."
+          gh release view photos -R "$R" >/dev/null 2>&1 || gh release create photos -R "$R" \
+            --title "התמונות (מעובדות — לא לגעת)" --latest=false \
+            --notes "התמונות המכווצות שהאתר מציג. נוצר אוטומטית מפריט הקליטה."
+      - name: בדוק אם יש מה לעבד
+        id: chk
+        run: |
+          n=$(gh release view photos-inbox -R "$R" --json assets -q '.assets | length')
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "בתיבת הקליטה: $n קבצים"
+      - name: התקנת כלי תמונה
+        if: steps.chk.outputs.count != '0'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick libheif-examples > /dev/null
+      - name: עיבוד
+        if: steps.chk.outputs.count != '0'
+        run: |
+          set -e
+          mkdir -p /tmp/inbox /tmp/out
+          gh release download photos-inbox -R "$R" -D /tmp/inbox
+          python3 - <<'PYEOF'
+          import json, os, re, subprocess, glob
+          idxp='fleet/data/fleet-photos.json'
+          idx=json.load(open(idxp,encoding='utf-8')) if os.path.exists(idxp) else {'p':{}}
+          idx.setdefault('p',{})
+          ok=[]
+          for f in sorted(glob.glob('/tmp/inbox/*')):
+              base=os.path.basename(f); stem,ext=os.path.splitext(base)
+              if ext.lower() not in ('.jpg','.jpeg','.png','.webp','.heic','.heif'):
+                  print('דילוג (לא תמונה):',base); continue
+              m=re.match(r'^[\d\-\s.]*\d',stem)
+              plate=re.sub(r'\D','',m.group(0)).lstrip('0') if m else ''
+              if len(plate)<5:
+                  print('דילוג (השם אינו מספר רכב):',base); continue
+              src=f
+              if ext.lower() in ('.heic','.heif'):
+                  subprocess.run(['heif-convert',f,f+'.jpg'],check=True,capture_output=True); src=f+'.jpg'
+              n=idx['p'].get(plate,0)+1
+              out=f'/tmp/out/{plate}-{n}.jpg'
+              subprocess.run(['convert',src,'-auto-orient','-strip','-resize','1400x1400>','-quality','82',out],check=True)
+              idx['p'][plate]=n
+              ok.append(base)
+              print('נקלט:',base,'→',os.path.basename(out),f'({os.path.getsize(out)//1024}KB)')
+          json.dump(idx,open(idxp,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+          open('/tmp/processed.txt','w').write('\n'.join(ok))
+          print('סה"כ רכבים עם תמונות:',len(idx['p']))
+          PYEOF
+          # העלאת המעובדות ומחיקת המקורות מהקליטה
+          if ls /tmp/out/*.jpg >/dev/null 2>&1; then
+            gh release upload photos -R "$R" /tmp/out/*.jpg --clobber
+          fi
+          while IFS= read -r a; do
+            [ -n "$a" ] && gh release delete-asset photos-inbox "$a" -R "$R" -y || true
+          done < /tmp/processed.txt
+      - name: עדכון האינדקס באתר
+        if: steps.chk.outputs.count != '0'
+        run: |
+          git config user.name kav-bochan-bot
+          git config user.email bot@users.noreply.github.com
+          git add fleet/data/fleet-photos.json
+          git diff --cached --quiet && exit 0
+          git commit -m "צי הרכבים: קליטת תמונות חדשות"
+          for i in 1 2 3 4; do git push && exit 0; git pull --rebase && continue; done
+          git push
