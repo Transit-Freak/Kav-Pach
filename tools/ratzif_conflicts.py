@@ -129,35 +129,40 @@ def main():
 
     conflicts = []
     for (sid, dep), ts in groups.items():
-        if len(ts) < 2:
-            continue
-        # זהות קו = מק"ט+כיוון; חלופות של אותו קו-כיוון מאוחדות
-        by_line = {}
+        entries = []
         for rid, svc, th in ts:
             ro = routes.get(rid)
             if not ro or ro['ag'] in RAIL:
                 continue
+            entries.append((rid, svc, th, ro))
+        if not entries:
+            continue
+        # כמויות (הערת יצחק, מודיעין עילית): כל נסיעה ברישוי היא אוטובוס.
+        # קו מתוגבר ב-4 נסיעות באותה דקה תופס 4 מקומות — גם לבדו זו
+        # התנגשות. סופרים אוטובוסים לכל יום-שבוע ולוקחים את היום העמוס.
+        per_day = [0] * 7
+        for rid, svc, th, ro in entries:
+            m = svc_days.get(svc, 0)
+            for i in range(7):
+                if m >> i & 1:
+                    per_day[i] += 1
+        peak = max(per_day)
+        if peak < 2:
+            continue
+        peak_day = per_day.index(peak)
+        qdays = [i for i in range(7) if per_day[i] >= 2]
+        by_line = {}
+        for rid, svc, th, ro in entries:
             key = ro['mk'] + '|' + ro['dir']
-            by_line.setdefault(key, []).append((rid, svc, th))
-        if len(by_line) < 2:
-            continue
-        # חפיפת ימים בין שני קווים שונים לפחות
-        lines_out, seen_pairs_mask = [], 0
-        keys = list(by_line)
-        pair_mask = 0
-        for i in range(len(keys)):
-            for j in range(i + 1, len(keys)):
-                for _, s1, _t1 in by_line[keys[i]]:
-                    for _, s2, _t2 in by_line[keys[j]]:
-                        pair_mask |= svc_days.get(s1, 0) & svc_days.get(s2, 0)
-        if not pair_mask:
-            continue
+            e = by_line.setdefault(key, {'ro': ro, 'th': th, 'cnt': 0})
+            if svc_days.get(svc, 0) >> peak_day & 1:
+                e['cnt'] += 1
         st = stops.get(sid, {})
-        for key in keys:
-            rid, svc, th = by_line[key][0]
-            ro = routes[rid]
-            # היעד לפרסום (trip_headsign, "עיר_תחנה") — מה שעל שלט האוטובוס;
-            # נפילה חזרה לפירוק שם המסלול כשהשדה ריק
+        lines_out = []
+        for key, e in sorted(by_line.items(), key=lambda x: -x[1]['cnt']):
+            if not e['cnt']:
+                continue
+            ro, th = e['ro'], e['th']
             if th and '_' in th:
                 city_, stop_ = th.split('_', 1)
                 dest = f'{stop_}, {city_}'
@@ -165,11 +170,11 @@ def main():
                 dest = th
             else:
                 dest = ro['long'].split('<->')[-1].split('-')[0] if '<->' in ro['long'] else ''
-            lines_out.append([ro['n'], dest, ag.get(ro['ag'], '')])
-        days_txt = ''.join(DAYS_HE[i] for i in range(7) if pair_mask >> i & 1)
+            lines_out.append([ro['n'], dest, ag.get(ro['ag'], ''), e['cnt']])
+        days_txt = ''.join(DAYS_HE[i] for i in qdays)
         conflicts.append({'code': st.get('code', ''), 'name': st.get('name', ''),
                           'city': st.get('city', ''), 'plat': st.get('plat', ''),
-                          't': dep, 'days': days_txt, 'lines': lines_out})
+                          't': dep, 'days': days_txt, 'lines': lines_out, 'bus': peak})
 
     conflicts.sort(key=lambda x: (x['city'], x['name'], x['t']))
     from collections import Counter
@@ -186,12 +191,12 @@ def main():
             st_ix[sk] = len(st_tbl)
             st_tbl.append(list(sk))
         ls = []
-        for n, dest, op in x['lines']:
+        for n, dest, op, cnt in x['lines']:
             if op not in op_ix:
                 op_ix[op] = len(op_tbl)
                 op_tbl.append(op)
-            ls.append([n, dest, op_ix[op]])
-        comp.append([st_ix[sk], x['t'], x['days'], ls])
+            ls.append([n, dest, op_ix[op], cnt])
+        comp.append([st_ix[sk], x['t'], x['days'], ls, x['bus']])
     out = {'updated': day.isoformat(), 'total': len(conflicts),
            'stations': len(per_stop), 'top': top,
            'st': st_tbl, 'ops': op_tbl, 'c': comp}
