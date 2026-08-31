@@ -1,69 +1,14 @@
 name: probe-publisher
 
-# השלמה נקודתית (בקשת שלמה): האירוע שנבלע בקו 165 קריית גת.
-# מריץ את write_events של מנוע הארכיון על צמד הימים 10-11.07.2025 —
-# אותו קוד, אותו פורמט, בלי כתיבה ידנית — ודוחף את התוצאה.
+# בדיקת-כיס לשימוש חוזר: מריצים ידנית קטע בדיקה מול הרשת כשצריך.
+# כרגע במצב שקט — לא רץ מעצמו ולא שולח מיילים.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/probe-publisher.yml'
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   probe:
-    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: השלמת האירוע החסר בקו 165
-        run: |
-          python3 - <<'PYEOF'
-          import sys
-          sys.path.insert(0, 'tools')
-          from backfill_new_routes import day_full_cal
-          import audit_archive_daily as A
-
-          OLD, YOUNG = '2025-07-10', '2025-07-11'
-          RDS = ['15165-1-#', '15165-2-#']
-          gy = day_full_cal(YOUNG, RDS)
-          go = day_full_cal(OLD, RDS)
-          rds, geo = [], []
-          for rd in RDS:
-              y, o = gy.get(rd), go.get(rd)
-              if not (y and y.get('stops') and o and o.get('stops')):
-                  print(rd, '— חסר בארכיון באחד הימים')
-                  continue
-              ys = [str(s[0]) for s in y['stops']]
-              os_ = [str(s[0]) for s in o['stops']]
-              if ys != os_:
-                  rds.append(rd)
-                  print(rd, f'— הרצף השתנה: {len(os_)} → {len(ys)} תחנות')
-              elif (y.get('shp') or '') != (o.get('shp') or ''):
-                  geo.append(rd)
-                  print(rd, '— רק השרטוט השתנה')
-              else:
-                  print(rd, '— ללא שינוי בין הימים')
-          n = A.write_events(YOUNG, OLD, rds, geo)
-          print('נכתבו', n, 'אירועים')
-          PYEOF
-
-      - name: דחיפה
-        run: |
-          git config user.name kav-bochan-bot
-          git config user.email bot@users.noreply.github.com
-          git add line-history/data
-          git diff --cached --quiet && { echo "אין מה לדחוף"; exit 0; }
-          git commit -m "קו 165 קריית גת: השלמת אירוע המסלול מ-11.07.2025 מהארכיון"
-          for i in 1 2 3 4; do
-            git push && exit 0
-            git pull --rebase && continue
-          done
-          git push
+      - run: echo "אין בדיקה פעילה כרגע"

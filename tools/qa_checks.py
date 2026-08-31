@@ -71,7 +71,10 @@ def run():
                 if codes is not None and prev_codes is not None and codes == prev_codes:
                     hit('noop_events', f'{rd} · {d} · {k}')
             elif codes is not None and prev_codes is not None and codes != prev_codes \
-                    and k not in ('new', 'baseline', 'snapshot', 'times', 'removed'):
+                    and k not in ('new', 'baseline', 'snapshot', 'times', 'removed') \
+                    and v.get('src') != 'ob':
+                # src=ob: אירוע ששוחזר מהארכיון יום-מול-יום — התאריך שלו
+                # אמיתי גם כשאין רשימות ➕/➖ (שינוי סדר, כמו קו 165)
                 hit('undated_gaps', f'{rd} · {d}')
             # השינוי שנבלע בקו 165 קריית גת: רצף היום שונה מהגרסה המתועדת
             # האחרונה, ואין שום אירוע מסלול שמספר מתי. הסריקה הישנה זרקה
