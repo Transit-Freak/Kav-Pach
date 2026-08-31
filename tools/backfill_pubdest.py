@@ -107,18 +107,26 @@ def day_dest_map(day):
     return {k: (sorted(v[0])[:12], v[1], v[2], v[3], v[4]) for k, v in dest.items()}
 
 
+def _exists(url):
+    """בדיקת קיום מהירה (HEAD) — בלי ניסיונות ההורדה האיטיים של העוזר."""
+    import urllib.request
+    try:
+        req = urllib.request.Request(url, method='HEAD')
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
 def next_existing(day):
-    for back in range(7):
+    """היום הקיים הראשון בחלון הדגימה, או None (חור בארכיון / קצה)."""
+    for back in range(STEP_DAYS):
         d = day + datetime.timedelta(days=back)
         if d > ARC1:
-            return None, None
-        url = S3.format(y=d.year, m=f'{d.month:02d}', d=f'{d.day:02d}')
-        try:
-            central_dir(url)
-            return d, url
-        except Exception:
-            continue
-    return None, None
+            return None
+        if _exists(S3.format(y=d.year, m=f'{d.month:02d}', d=f'{d.day:02d}')):
+            return d
+    return None
 
 
 def add_event(shist, months, code, ev):
@@ -148,12 +156,27 @@ def main():
     n_ev = n_smp = 0
     while n_smp < MAX_SAMPLES and (time.monotonic() - t0) / 60 < MAX_MIN:
         ptr = datetime.date.fromisoformat(st['ptr'])
-        day, url = next_existing(ptr)
-        if day is None:
+        if ptr > ARC1:
             st['done'] = True
             print('הגענו לקצה הארכיון — הסריקה ההיסטורית הושלמה')
             break
-        dest = day_dest_map(day)
+        day = next_existing(ptr)
+        if day is None:
+            if ptr + datetime.timedelta(days=STEP_DAYS) > ARC1:
+                st['done'] = True
+                print('הגענו לקצה הארכיון — הסריקה ההיסטורית הושלמה')
+                break
+            # חור בארכיון (כמו תחילת יולי 2022) — מדלגים חלון ולא מוותרים
+            print(f'{ptr}: חור בארכיון — דילוג חלון', flush=True)
+            st['ptr'] = (ptr + datetime.timedelta(days=STEP_DAYS)).isoformat()
+            continue
+        try:
+            dest = day_dest_map(day)
+        except (Exception, SystemExit) as e:
+            # קובץ קיים אך שבור/קטוע — מנסים את היום הבא בחלון במקום ליפול
+            print(f'{day}: כשל בקריאה ({e}) — ממשיכים ליום הבא', flush=True)
+            st['ptr'] = (day + datetime.timedelta(days=1)).isoformat()
+            continue
         prev = st.get('prev')
         if prev is not None:
             for code in dest.keys() - prev.keys():
