@@ -155,16 +155,17 @@
         <button class="mode" data-m="type">דגם</button>
         <button class="mode" data-m="plate">מספר רכב</button>
         <button class="xlsbtn" onclick="XDL()" title="מוריד את הטבלה של המסך הנוכחי כקובץ CSV שנפתח באקסל">⬇ אקסל</button>
+        <button class="xlsbtn" onclick="SHARE()" title="מעתיק קישור שפותח בדיוק את המסך הנוכחי — כולל החיפוש והסינון שבחרתם">שיתוף</button>
       </div>
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 8 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 9 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='8';
+window.FLEET_BUILD='9';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -183,7 +184,7 @@ window.FLEET_BUILD='8';
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n';
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n', ELF=null;
 // תווית מיגון לרכב (v._ar: 'y' ירי / 's' אבנים / 'ys' שניהם)
 const arLbl=a=>a==='ys'?'ממוגן ירי ואבנים':(a&&a.includes('y')?'ממוגן ירי':'ממוגן אבנים');
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
@@ -246,8 +247,11 @@ function home(){
       if(key) hits.sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
     else hits.sort((a,b)=>a[1][2]<b[1][2]?1:a[1][2]>b[1][2]?-1:0);
     if(ARF) hits=hits.filter(h=>h[1]._ar&&(ARF===1||h[1]._ar.includes(ARF)));
+    if(ELF!==null) hits=hits.filter(h=>(h[1]._el?1:0)===ELF);
     return kpis()+`<div class="panel"><p class="ptitle">${clean?`תוצאות למספר רכב "${esc(f)}" · ${fmt(hits.length)}`:`כל הרכבים במעקב · ${fmt(hits.length)}`}</p>
-      ${ARMOK?`<div class="filters"><button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">ממוגנים בלבד</button></div>`:''}
+      <div class="filters">${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">ממוגנים בלבד</button>`:''}
+      ${OFCOK?`<button class="fchip ${ELF===1?'on':''}" onclick="ELF=ELF===1?null:1;LIMIT=200;render()">חשמליים</button>
+      <button class="fchip ${ELF===0?'on':''}" onclick="ELF=ELF===0?null:0;LIMIT=200;render()">לא חשמליים</button>`:''}</div>
       ${hits.length?table(hits.map(h=>h[1]),hits.map(h=>h[0])):'<div class="empty">לא נמצא רכב מתאים</div>'}</div>`;
   }
   // מיון החברות לפי רכבי החברה הפעילים בחודש האחרון — בלי רכבי קבלן
@@ -396,6 +400,7 @@ function typeView(t){
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
   if(ARF) pairs=pairs.filter(p=>p[1]._ar&&(ARF===1||p[1]._ar.includes(ARF)));
+  if(ELF!==null) pairs=pairs.filter(p=>(p[1]._el?1:0)===ELF);
   if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0,ok:v=>v._ok||0}[SORTK];
     if(key) pairs=pairs.slice().sort((a,b)=>{const x=key(a[1]),y=key(b[1]);return (x>y?1:x<y?-1:0)*SORTD;});}
   return `<button class="back" onclick="history.back()">→ חזרה לכל הדגמים</button>
@@ -413,6 +418,8 @@ function typeView(t){
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
       <button class="fchip ${STATF===0?'on':''}" onclick="STATF=0;LIMIT=200;render()">ירדו מהשירות</button>
       ${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">ממוגנים</button>`:''}
+      ${OFCOK?`<button class="fchip ${ELF===1?'on':''}" onclick="ELF=ELF===1?null:1;LIMIT=200;render()">חשמליים</button>
+      <button class="fchip ${ELF===0?'on':''}" onclick="ELF=ELF===0?null:0;LIMIT=200;render()">לא חשמליים</button>`:''}
     </div>
     ${table(pairs.map(p=>p[1]),pairs.map(p=>p[0]))}
     <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו · עמודת החברה מראה למי כל רכב שייך.</p>
@@ -484,6 +491,7 @@ function opView(ref){
   if(ARF) vs=vs.filter(v=>v._ar&&(ARF===1||v._ar.includes(ARF)));
   if(BTF) vs=vs.filter(v=>v._bt===BTF);
   if(BSF) vs=vs.filter(v=>v._bs===BSF);
+  if(ELF!==null) vs=vs.filter(v=>(v._el?1:0)===ELF);
   vs=sortVs(vs);
   // כרטיסי מיגון בפילוח סוג הרכב (בקשת שלמה): לחיצה מסננת כמו כל סוג
   const ay=ARMOK?o.vehicles.filter(v=>v._ar&&v._ar.includes('y')).length:0;
@@ -517,7 +525,7 @@ function opView(ref){
         return `<div class="yrow yact"><span>${y}</span><div class="ybar"><b class="tot" style="width:${Math.max(4,years[y]/ymax*100)}%"><i style="width:${years[y]?Math.round(act/years[y]*100):0}%;background:${c}"></i></b></div><span class="c"><b style="color:var(--ok)">${fmt(act)} ${YEARF?`בשנת ${YEARF}`:'פעילים'}</b> · ${fmt(years[y])} סה"כ</span></div>`;}).join('')}
       <p class="note">${YEARF?`רכב נספר לשנת ${YEARF} אם שידר נסיעות במהלכה (לפי חלון הפעילות שנמדד בדאטאבוס). הנתונים מכסים מ-${minSeen} ואילך — ורק את התקופה שכבר נסרקה.`:'"פעיל" = שידר במהלך החודש האחרון. רכב שלא שידר חודש ומעלה נחשב כמי שירד מהשירות.'}</p>
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
-  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}${ARF?' · '+(ARF==='y'?'ממוגני ירי':ARF==='s'?'ממוגני אבנים':'ממוגנים'):''}${BTF?' · '+esc(BTF):''}${BSF?' · '+esc(BSF):''}</p>
+  <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}${ARF?' · '+(ARF==='y'?'ממוגני ירי':ARF==='s'?'ממוגני אבנים':'ממוגנים'):''}${BTF?' · '+esc(BTF):''}${BSF?' · '+esc(BSF):''}${ELF!==null?' · '+(ELF?'חשמליים':'לא חשמליים'):''}</p>
     <div class="filters">
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
@@ -525,6 +533,8 @@ function opView(ref){
       ${enr&&kab?`<button class="fchip ${KABF==='l'?'on':''}" onclick="KABF=KABF==='l'?null:'l';LIMIT=200;render()">רכבי קו</button>
       <button class="fchip ${KABF==='k'?'on':''}" onclick="KABF=KABF==='k'?null:'k';LIMIT=200;render()">רכבי קבלן</button>`:''}
       ${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">ממוגנים</button>`:''}
+      ${OFCOK?`<button class="fchip ${ELF===1?'on':''}" onclick="ELF=ELF===1?null:1;LIMIT=200;render()">חשמליים</button>
+      <button class="fchip ${ELF===0?'on':''}" onclick="ELF=ELF===0?null:0;LIMIT=200;render()" title="לפי שדה ההנעה במאגר ציי הרכב הרשמי; רכב ותיק שאינו במאגר נספר כלא-חשמלי">לא חשמליים</button>`:''}
     </div>
     ${table(vs,null)}
     <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו.</p>
@@ -586,7 +596,7 @@ function buildOfficial(){
   let n=0;
   for(const o of DATA.operators) for(const v of o.vehicles){
     const f=OFC.of[v[0].replace(/\D/g,'').replace(/^0+/,'')];
-    if(f){v._bt=f[4]||null;v._bs=f[5]||null;if(f[0]!=null)v._ok=f[0];n++;}
+    if(f){v._bt=f[4]||null;v._bs=f[5]||null;if(f[0]!=null)v._ok=f[0];v._el=(f[3]||'').includes('חשמל')?1:0;n++;}
   }
   OFCOK=n>0;
 }
@@ -738,19 +748,68 @@ function XDL(){
   }
   if(D.length>1) dlCSV(name,D);
 }
-function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;ARF=null;BTF=null;BSF=null;LIMIT=200;render();window.scrollTo({top:0});}
+function go(ref){if(ref!==null)history.pushState({sub:1},'');VIEW=ref===null?{t:'home'}:{t:'op',ref};TYPEF=null;KABF=null;STATF=null;YEARF=null;SORTK=null;ARF=null;BTF=null;BSF=null;ELF=null;LIMIT=200;render();window.scrollTo({top:0});}
 // חץ "אחורה" של הדפדפן מחזיר למסך הבית במקום לצאת מהאתר
 window.addEventListener('popstate',()=>{VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';LIMIT=200;render();window.scrollTo({top:0});});
 function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
+// שיתוף (בקשת יצחק): קישור שמשחזר את המסך המדויק — מצב, חיפוש וסינונים
+function toast(t){const d=document.createElement('div');d.textContent=t;
+  d.style.cssText='position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:#1e2440;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.3)';
+  document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
+function SHARE(){
+  const p=new URLSearchParams();
+  if(MODE!=='op')p.set('m',MODE);
+  if(Q)p.set('q',Q);
+  if(VIEW.t==='op')p.set('op',VIEW.ref);
+  if(CITYSEL)p.set('city',CITYSEL);
+  if(CITYMON)p.set('mon',CITYMON);
+  if(TYPESEL)p.set('model',TYPESEL);
+  if(STATF!==null)p.set('st',STATF);
+  if(ARF)p.set('ar',ARF===1?'1':ARF);
+  if(ELF!==null)p.set('el',ELF);
+  if(TYPEF)p.set('tf',TYPEF);
+  if(BTF)p.set('bt',BTF);
+  if(BSF)p.set('bs',BSF);
+  if(KABF)p.set('kb',KABF);
+  if(TSORT!=='n')p.set('ts',TSORT);
+  const u=location.origin+location.pathname+(p.toString()?'#'+p.toString():'');
+  if(navigator.share){navigator.share({url:u}).catch(()=>{});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(u).then(()=>toast('הקישור הועתק — הדבקה בכל צ׳אט תפתח את המסך הזה')).catch(()=>prompt('העתקה ידנית:',u));
+  else prompt('העתקה ידנית:',u);
+}
+function applyHash(){
+  if(!location.hash||location.hash.length<2)return;
+  try{
+    const p=new URLSearchParams(location.hash.slice(1));
+    const gv=k=>{const x=p.get(k);return x===null||x===''?null:x;};
+    if(gv('m'))MODE=gv('m');
+    if(gv('q')){Q=gv('q');$('#q').value=Q;}
+    document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x.dataset.m===MODE));
+    $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש דגם או יצרן…':'חיפוש מספר רכב…';
+    if(gv('op')!==null)VIEW={t:'op',ref:+gv('op')};
+    if(gv('city'))CITYSEL=gv('city');
+    if(gv('mon'))CITYMON=gv('mon');
+    if(gv('model'))TYPESEL=gv('model');
+    if(gv('st')!==null)STATF=+gv('st');
+    if(gv('ar'))ARF=gv('ar')==='1'?1:gv('ar');
+    if(gv('el')!==null)ELF=+gv('el');
+    if(gv('tf'))TYPEF=gv('tf');
+    if(gv('bt'))BTF=gv('bt');
+    if(gv('bs'))BSF=gv('bs');
+    if(gv('kb'))KABF=gv('kb');
+    if(gv('ts'))TSORT=gv('ts');
+  }catch(e){}
+}
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
   $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש דגם או יצרן…':'חיפוש מספר רכב…';
-  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;BTF=null;BSF=null;LIMIT=200;render();
+  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;BTF=null;BSF=null;ELF=null;LIMIT=200;render();
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
 fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
-.then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();render();
+.then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();applyHash();render();
   Promise.all([loadKM(),loadArmor(),loadOfficial(),loadGaps()]).then(()=>{buildKm();buildArmor();buildOfficial();buildGaps();render();});})
 .catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
 </script>
