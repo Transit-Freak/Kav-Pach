@@ -2313,13 +2313,13 @@ function StopsTab({ sel, selN }) {
   useEffect(() => setLatHide(false), [sel, selN]);
   const closeLat = () => {
     setLatHide(true);
-    if ((location.hash || "").includes("stop=")) history.replaceState(null, "", location.pathname + location.search);
+    if ((location.hash || "").includes("stop=")) history.replaceState(null, "", "#t=stops");
   };
   // גם סגירה עקיפה — שינוי או מחיקה של החיפוש — מנקה את הכתובת, כדי
   // שלחיצה חוזרת על קישור התחנה תיחשב לניווט חדש ותפתח את הפאנל
   useEffect(() => {
     if (sel && q.trim() !== sel && (location.hash || "").includes("stop="))
-      history.replaceState(null, "", location.pathname + location.search);
+      history.replaceState(null, "", "#t=stops");
   }, [q, sel]);
   const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
   useEffect(() => setLim(250), [q, mon, kinds, onlyNs]);
@@ -2775,8 +2775,16 @@ function RecheckNotice() {
 function App() {
   const [idx, setIdx] = useState(null);
   const [err, setErr] = useState(null);
-  const [tab, setTab] = useState(() =>
-    decodeURIComponent((location.hash || "").slice(1)).startsWith("stop=") ? "stops" : "lines");
+  // ‎#t=stops‎ וכד' — הטאב נשמר בכתובת, כדי שריענון לא יחזיר לעמוד הראשי
+  const [tab, setTab] = useState(() => {
+    const h = decodeURIComponent((location.hash || "").slice(1));
+    if (h.startsWith("stop=")) return "stops";
+    if (h.startsWith("t=")) {
+      const t = h.slice(2);
+      if (t === "stops" || TABS.some((x) => x.k === t)) return t;
+    }
+    return "lines";
+  });
   const [q, setQ] = usePersistedQ("lh-q-main");
   const [kats, setKats] = useState(() => new Set());   // קטגוריות מסומנות (בחירה מרובה)
   const [katOpen, setKatOpen] = useState(false);
@@ -2790,7 +2798,7 @@ function App() {
   const isDigestH = (h) => h.startsWith("digest=");
   const parseDigest = (h) => { const [c, d] = h.slice(7).split("@"); return { city: c, days: parseInt(d) || 7 }; };
   const [dig, setDig] = useState(() => (isDigestH(H0) ? parseDigest(H0) : null));
-  const _plainH = H0 && !H0.startsWith("2012/") && !isStopH(H0) && !isDigestH(H0);
+  const _plainH = H0 && !H0.startsWith("2012/") && !isStopH(H0) && !isDigestH(H0) && !H0.startsWith("t=");
   const [rd, setRd] = useState(() => (_plainH ? splitRdDate(H0)[0] : null));
   const [rdDate, setRdDate] = useState(() => (_plainH ? splitRdDate(H0)[1] : null));
   const [stopSel, setStopSel] = useState(() => (isStopH(H0) ? H0.slice(5) : null));
@@ -2824,6 +2832,7 @@ function App() {
       if (h.startsWith("2012/")) { setRd(null); setK12(h.slice(5)); return; }
       if (isStopH(h)) { setRd(null); setStopSel(h.slice(5)); setStopSelN((n) => n + 1); setTab("stops"); return; }
       if (isDigestH(h)) { setRd(null); setK12(null); setDig(parseDigest(h)); return; }
+      if (h.startsWith("t=")) { setRd(null); setK12(null); const t = h.slice(2); if (t === "stops" || t === "lines" || TABS.some((x) => x.k === t)) setTab(t); return; }
       // כתובת של קו נקראה רק בטעינה הראשונה: מי שהדביק קישור לקו בשורת
       // הכתובת של לשונית פתוחה, או ערך את הכתובת ידנית, נשאר במסך הקודם.
       // pushState/replaceState אינם מפעילים hashchange, ולכן אין כאן לולאה.
@@ -2837,9 +2846,15 @@ function App() {
     setDig(null); setK12(null); setRdDate(null); history.pushState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
   const open12 = (k) => { history.pushState({ k12: k }, "", "#2012/" + encodeURIComponent(k)); setK12(k); };
   const switchLine = (r) => { history.replaceState({ rd: r }, "", "#" + encodeURIComponent(r)); setRd(r); };
-  const backToList = () => {
+  // הכתובת חוזרת לשורש רק בטאב "קווים"; בכל טאב אחר נשאר ‎#t=<טאב>‎ —
+  // כך ריענון מחזיר לאותו מקום ולא לעמוד הראשי (בקשת שלמה)
+  const clearHashKeepTab = (t) => {
+    const tt = typeof t === "string" ? t : tab;
+    history.replaceState(null, "", tt && tt !== "lines" ? "#t=" + tt : location.pathname + location.search);
+  };
+  const backToList = (t) => {
     setRd(null);
-    if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+    clearHashKeepTab(t);
   };
   const toggleKat = (k) => setKats((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const [rty, setRty] = useState(0);
@@ -2937,20 +2952,20 @@ function App() {
         </div>
       </header>
       <div className="tabs" role="tablist" aria-label="אזורי האתר">
-        <button role="tab" aria-selected={tab === "lines"} className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList(); }}>🚌 קווים</button>
-        <button role="tab" aria-selected={tab === "stops"} className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList(); }}>🚏 תחנות</button>
+        <button role="tab" aria-selected={tab === "lines"} className={"tab" + (tab === "lines" ? " on" : "")} title="חיפוש בכל קווי האוטובוס בארץ והיסטוריית השינויים של כל קו" onClick={() => { setTab("lines"); backToList("lines"); }}>🚌 קווים</button>
+        <button role="tab" aria-selected={tab === "stops"} className={"tab" + (tab === "stops" ? " on" : "")} title="חיפוש תחנות והיסטוריית השינויים שלהן — שינוי שם, הזזה, ביטול" onClick={() => { setTab("stops"); backToList("stops"); }}>🚏 תחנות</button>
         {TABS.map((t) => (
           <button key={t.k} role="tab" aria-selected={tab === t.k} className={"tab" + (tab === t.k ? " on" : "")} title={t.tip}
-            onClick={() => { setTab(t.k); backToList(); }}>{t.icon} {t.label}</button>
+            onClick={() => { setTab(t.k); backToList(t.k); }}>{t.icon} {t.label}</button>
         ))}
       </div>
       {!rd && !k12 && !dig && <NotifyCenter cities={notifyCities} />}
       {dig ? (
         <DigestPage city={dig.city} days={dig.days} openLine={openLine}
-          onBack={() => { setDig(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
+          onBack={() => { setDig(null); clearHashKeepTab(); }} />
       ) : k12 ? (
         <Line2012Page k12={k12} anchorRd={anc12[k12] || null} openLine={openLine}
-          onBack={() => { setK12(null); if (location.hash) history.replaceState(null, "", location.pathname + location.search); }} />
+          onBack={() => { setK12(null); clearHashKeepTab(); }} />
       ) : tab === "stops" ? <StopsTab sel={stopSel} selN={stopSelN} /> : (TABS.some((t) => t.k === tab) && !rd) ? (
         idx ? <ModesTab idx={idx} openLine={openLine} spec={TABS.find((t) => t.k === tab)} />
           : <div className="card">טוען את רשימת הקווים…</div>
