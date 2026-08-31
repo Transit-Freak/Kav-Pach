@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   process:
+    environment: photos-approval
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
