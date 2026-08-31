@@ -32,6 +32,7 @@ CHECKS = {
     'pd_inverted': 'תחנה ראשונה "הורדה בלבד" או אחרונה "העלאה בלבד" — חשד להיפוך דגלים (הבאג של קו 12 טבריה)',
     'add_not_in_stops': 'תחנה ברשימת ➕ שאינה מופיעה ברצף התחנות של הגרסה — חשד לערבוב רשימות',
     'rem_in_stops': 'תחנה ברשימת ➖ שעדיין מופיעה ברצף התחנות — חשד לערבוב רשימות',
+    'undoc_change': 'רצף התחנות של היום שונה מהגרסה האחרונה המתועדת בלי אירוע מסלול ביניהן (המקרה של קו 165 קריית גת — הסריקה הישנה זרקה שינויי-סדר; המעבר השני משלים)',
 }
 
 
@@ -72,6 +73,13 @@ def run():
             elif codes is not None and prev_codes is not None and codes != prev_codes \
                     and k not in ('new', 'baseline', 'snapshot', 'times', 'removed'):
                 hit('undated_gaps', f'{rd} · {d}')
+            # השינוי שנבלע בקו 165 קריית גת: רצף היום שונה מהגרסה המתועדת
+            # האחרונה, ואין שום אירוע מסלול שמספר מתי. הסריקה הישנה זרקה
+            # שינויים שלא הוסיפו/הורידו תחנות (הסרת ביקור כפול, שינוי סדר);
+            # המעבר השני של הסריקה סוגר את המחלקה — המונה כאן עוקב אחריה
+            elif codes is not None and prev_codes is not None and codes != prev_codes \
+                    and k in ('baseline', 'snapshot'):
+                hit('undoc_change', f'{rd} · {d}')
             if k in ('route', 'redraw', 'extend', 'shorten', 'terminal', 'stops',
                      'stops-add', 'stops-del') and not stops and not v.get('shp'):
                 hit('empty_geo', f'{rd} · {d} · {k}')

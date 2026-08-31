@@ -1,68 +1,14 @@
 name: probe-publisher
 
-# בדיקת-כיס (שאלת שלמה): האם קיים ב-data.gov.il מידע על אוטובוסים
-# ממוגני ירי — מאגר ייעודי או שדה מיגון במאגרי הרכב. קריאה בלבד,
-# לעולם לא נכשלת (בלי מיילים אדומים) — הממצאים בלוג.
+# בדיקת-כיס לשימוש חוזר: מריצים ידנית קטע בדיקה מול הרשת כשצריך.
+# כרגע במצב שקט — לא רץ בדחיפות ולא שולח מיילים.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/probe-publisher.yml'
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   probe:
-    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-
-      - name: תיארוך השינוי בקו 165 קריית גת
-        run: |
-          python3 - <<'EOF' || echo "שגיאה"
-          import datetime
-          import sys
-          sys.path.insert(0, 'tools')
-          from backfill_new_routes import day_full_cal
-
-          RD = '15165-1-#'
-          def sig(ds):
-              try:
-                  g = day_full_cal(ds, [RD])
-              except (Exception, SystemExit):
-                  return None
-              v = g.get(RD)
-              if not v or not v.get('stops'):
-                  return None
-              return tuple(str(s[0]) for s in v['stops'])
-
-          lo = datetime.date(2023, 12, 17)
-          hi = datetime.date(2026, 7, 25)
-          slo = sig(lo.isoformat()); shi = sig(hi.isoformat())
-          print('קצוות:', lo, len(slo or []), 'תחנות ·', hi, len(shi or []), 'תחנות')
-          if not slo or not shi:
-              raise SystemExit(0)
-          steps = 0
-          while (hi - lo).days > 1 and steps < 18:
-              mid = lo + (hi - lo) / 2
-              sm = None; probe = mid; tries = 0
-              while sm is None and tries < 5:   # יום חסר בארכיון — צעד קדימה
-                  sm = sig(probe.isoformat())
-                  if sm is None:
-                      probe += datetime.timedelta(days=1); tries += 1
-              steps += 1
-              if sm is None:
-                  print('חור ארכיון סביב', mid); break
-              print(f'  {probe}: {len(sm)} תחנות · {"כמו הישן" if sm==slo else ("כמו החדש" if sm==shi else "שונה משניהם!")}')
-              if sm == slo:
-                  lo = probe
-              else:
-                  hi = probe; shi = sm
-          print(f'ההשתנות אותרה בין {lo} ל-{hi}')
-          a = set(sig(lo.isoformat()) or []); b = set(sig(hi.isoformat()) or [])
-          print('ירדו מקטים:', sorted(a - b), '· נוספו:', sorted(b - a))
-          EOF
+      - run: echo "אין בדיקה פעילה כרגע"
