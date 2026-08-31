@@ -1,14 +1,57 @@
 name: probe-publisher
 
-# בדיקת-כיס לשימוש חוזר: מריצים ידנית קטע בדיקה מול הרשת כשצריך.
-# כרגע במצב שקט — לא רץ מעצמו ולא שולח מיילים.
+# בדיקת-כיס (שאלת שלמה): כמה אחורה קיים ארכיון GTFS ישראלי ציבורי?
+# בודק TransitFeeds, Wayback Machine וה-S3 של הסדנא. קריאה בלבד.
 
 on:
+  push:
+    paths:
+      - '.github/workflows/probe-publisher.yml'
   workflow_dispatch:
 
 jobs:
   probe:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - run: echo "אין בדיקה פעילה כרגע"
+      - name: הגרסה הישנה ביותר ב-TransitFeeds
+        run: |
+          python3 - <<'PYEOF' || echo "נכשל"
+          import urllib.request, re, json
+          def get(u):
+              rq=urllib.request.Request(u, headers={'User-Agent':'Mozilla/5.0'})
+              return urllib.request.urlopen(rq, timeout=30).read().decode('utf-8','replace')
+          # עמוד הגרסאות של פיד משרד התחבורה — העמוד האחרון = הישן ביותר
+          base='https://transitfeeds.com/p/ministry-of-transport-and-road-safety/820'
+          h=get(base)
+          pages=[int(x) for x in re.findall(r'\?p=(\d+)', h)] or [1]
+          last=max(pages)
+          h2=get(f'{base}?p={last}')
+          dates=re.findall(r'(\d{1,2} \w+ \d{4})', h2)
+          vers=re.findall(r'/820/(\d{8})', h2)
+          print('TransitFeeds: עמודים', last, '· גרסאות ישנות בעמוד האחרון:', sorted(set(vers))[:5], dates[-3:] if dates else '')
+          PYEOF
+      - name: Wayback על כתובות ה-GTFS הממשלתיות
+        run: |
+          python3 - <<'PYEOF' || echo "נכשל"
+          import urllib.request, json
+          def cdx(url):
+              u=f'https://web.archive.org/cdx/search/cdx?url={url}&output=json&limit=5&fl=timestamp,mimetype,length&filter=statuscode:200'
+              try:
+                  d=json.loads(urllib.request.urlopen(u, timeout=40).read() or b'[]')
+                  return d[1:] if len(d)>1 else []
+              except Exception as e:
+                  return [['שגיאה', str(e)[:60]]]
+          for target in ['ftp.mot.gov.il/GTFS/*','gtfs.mot.gov.il/*','ftp.mot.gov.il/gtfs*','mot.gov.il/GTFS*']:
+              rows=cdx(target)
+              print(target,'→', rows if rows else 'אין תפיסות')
+          PYEOF
+      - name: הימים הישנים ביותר ב-S3 של הסדנא
+        run: |
+          python3 - <<'PYEOF' || echo "נכשל"
+          import urllib.request, re
+          u='https://openbus-stride-public.s3.eu-west-1.amazonaws.com/?list-type=2&prefix=gtfs_archive/&delimiter=/&max-keys=10'
+          h=urllib.request.urlopen(u, timeout=30).read().decode()
+          print('שנים ב-S3 של הסדנא:', re.findall(r'gtfs_archive/(\d{4})/', h))
+          PYEOF
