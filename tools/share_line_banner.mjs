@@ -2,7 +2,8 @@
 // קלט: JSON של מספרי קווים · פלט: PNG לכל קו בשם line-h<hex>.png
 import fs from 'fs';
 const [,, numsFile, outDir, chromePath] = process.argv;
-const { chromium } = await import(process.env.PW_IMPORT || 'playwright-core');
+const _pw = await import(process.env.PW_IMPORT || 'playwright-core');
+const chromium = _pw.chromium || _pw.default.chromium;
 const nums = JSON.parse(fs.readFileSync(numsFile, 'utf8'));
 fs.mkdirSync(outDir, { recursive: true });
 const b = await chromium.launch({ executablePath: chromePath, args: ['--no-sandbox'] });
