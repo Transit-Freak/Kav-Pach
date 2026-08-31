@@ -15,7 +15,7 @@ permissions:
 jobs:
   gen:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
           import json
           nums=sorted({(e.get('line') or '') for e in json.load(open('line-history/data/lines.json',encoding='utf-8'))['lines']} - {''})
           have={l.strip() for l in open('have.txt')} if __import__('os').path.exists('have.txt') else set()
-          missing=[n for n in nums if f'line-h{n.encode().hex()}.png' not in have][:1200]
+          missing=[n for n in nums if f'line-h{n.encode().hex()}.png' not in have][:6000]
           json.dump(missing,open('missing.json','w',encoding='utf-8'),ensure_ascii=False)
           done=[n for n in nums if f'line-h{n.encode().hex()}.png' in have]
           json.dump(sorted(set(done)|set(missing)),open('s/line-banners.json','w',encoding='utf-8'),ensure_ascii=False)
