@@ -160,8 +160,18 @@ def main():
         peak = max(per_day)
         wk = max(per_day[:5]) if per_day[:5] else 0
         if wk or per_day[5] or per_day[6]:
-            _lns = ','.join(sorted({e[3]['n'] for e in entries if e[3]['n']})[:6])
-            occ_all.setdefault(sid, {})[dep] = (wk, per_day[5], per_day[6], _lns)
+            # רשימת הקווים לכל דקה — עם מונה לקו מתוגבר ("64×2"), אחרת
+            # "2 אוטובוסים — קו 64" נראה כסתירה (דיווח שלמה)
+            def _lnstr(dayi):
+                cnt = {}
+                for _rid, _svc, _th, _ro in entries:
+                    if svc_days.get(_svc, 0) >> dayi & 1 and _ro['n']:
+                        cnt[_ro['n']] = cnt.get(_ro['n'], 0) + 1
+                return ','.join((f'{n}×{c}' if c > 1 else n)
+                                for n, c in sorted(cnt.items())[:6])
+            wk_day = max(range(5), key=lambda i: per_day[i])
+            occ_all.setdefault(sid, {})[dep] = (wk, per_day[5], per_day[6],
+                                                _lnstr(wk_day), _lnstr(5), _lnstr(6))
         if peak < 2:
             continue
         peak_day = per_day.index(peak)
@@ -222,10 +232,10 @@ def main():
         data = occ_all.get(sid) or {}
         buckets = [[], [], []]
         for t in sorted(data):
-            w, f, sa, lns = data[t]
-            if w: buckets[0].append([t, w, lns])
-            if f: buckets[1].append([t, f, lns])
-            if sa: buckets[2].append([t, sa, lns])
+            w, f, sa, lw, lf, ls = data[t]
+            if w: buckets[0].append([t, w, lw])
+            if f: buckets[1].append([t, f, lf])
+            if sa: buckets[2].append([t, sa, ls])
         occ[str(ix)] = buckets
     out = {'updated': day.isoformat(), 'total': len(conflicts),
            'stations': len(per_stop), 'top': top,
