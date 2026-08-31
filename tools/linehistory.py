@@ -53,6 +53,13 @@ def hs_fmt(h):
     p=(h or '').split('_',1)
     return f'{p[1]}, {p[0]}' if len(p)==2 and p[0] and p[1] else (h or '')
 
+def hs_core(h):
+    # שם התחנה שעל השלט בלבד — בלי רכיב העיר ובלי גרשיים/רווחים: מסלולים
+    # שונים כותבים את אותו יעד עם/בלי עיר, ובחירת-הרוב מתנדנדת ביניהם
+    p=(h or '').split('_',1)
+    core=p[1] if len(p)==2 and p[1] else (h or '')
+    return re.sub(r"['\"׳״`]",'',re.sub(r'\s+',' ',core)).strip()
+
 # ---- polyline encoding (precision 5) — קומפקטי פי ~10 מרשימת קואורדינטות ----
 def enc_num(v,out):
     v=int(round(v)); v=~(v<<1) if v<0 else v<<1
@@ -808,7 +815,7 @@ if _pdst_prev is not None and not first_run and not REBASE:
     for _c0 in _phs.keys()&_phs_prev.keys():
         # שלט מספרי = מספר רכבת (מתחלף תדיר) — לא שינוי שם אמיתי
         if _phs[_c0].isdigit() or _phs_prev[_c0].isdigit(): continue
-        if _phs[_c0]!=_phs_prev[_c0]:
+        if hs_core(_phs[_c0])!=hs_core(_phs_prev[_c0]):
             _v=cur_stops.get(_c0)
             if _v:
                 sev(_c0,{'k':'pubdest','st':'ren','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],

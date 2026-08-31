@@ -159,6 +159,17 @@ def hs_fmt(h):
     return f'{p[1]}, {p[0]}' if len(p) == 2 and p[0] and p[1] else (h or '')
 
 
+def hs_core(h):
+    """שם התחנה שעל השלט בלבד — בלי רכיב העיר ובלי הבדלי גרשיים/רווחים.
+
+    ההשוואה חייבת להיות על הליבה: לתחנה אחת מגיעים מסלולים שכותבים
+    "הר חוצבים" ומסלולים שכותבים "ירושלים_הר חוצבים", ובחירת-הרוב
+    מתנדנדת ביניהם — 13 אירועי-סרק על תחנה אחת (גולדה/שלמה הלוי)."""
+    p = (h or '').split('_', 1)
+    core = p[1] if len(p) == 2 and p[1] else (h or '')
+    return re.sub(r"['\"׳״`]", '', re.sub(r'\s+', ' ', core)).strip()
+
+
 def add_event(shist, months, code, ev):
     day = ev['d']
     hc = shist.setdefault(code, [])
@@ -232,7 +243,7 @@ def main():
                 # שלט מספרי = מספר רכבת (מתחלף תדיר) — לא שינוי שם אמיתי
                 if oh.isdigit() or nh.isdigit():
                     continue
-                if oh and nh and oh != nh:
+                if oh and nh and hs_core(oh) != hs_core(nh):
                     if add_event(shist, months, code,
                                  {'d': day.isoformat(), 'k': 'pubdest', 'st': 'ren',
                                   'n': dest[code][1], 't': dest[code][2],
