@@ -1,0 +1,77 @@
+name: pubdest-hist
+
+# סריקה היסטורית של תחנות היעד לפרסום (בקשת שלמה): הארכיון נסרק אחורה
+# מ-2022 ועד אתמול בדגימה דו-שבועית, וכל נתח קטן נדחף מיד — כך שהמונים
+# בעמוד התחנות עולים תוך כדי הסריקה, בלי לחכות לסופה. כשהסריקה מגיעה
+# לקצה הארכיון היא מכבה את עצמה, והמעקב היומי ממשיך משם.
+
+on:
+  schedule:
+    - cron: '25 */2 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pubdest-hist.yml'
+      - 'tools/backfill_pubdest.py'
+  workflow_dispatch:
+    inputs:
+      loops:
+        description: 'מספר נתחים בריצה (ברירת מחדל 22)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: pubdest-hist-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: סריקה בנתחים — כל ממצא נדחף מיד
+        run: |
+          set -uo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          BR="${GITHUB_REF_NAME:-main}"
+          LOOPS="${{ inputs.loops || '22' }}"; [ -z "$LOOPS" ] && LOOPS=22
+          DONE=0
+          for i in $(seq 1 "$LOOPS"); do
+            echo "=== נתח $i/$LOOPS ==="
+            OUTDIR=line-history/data MAX_SAMPLES=3 MAX_MIN=14 \
+              python3 tools/backfill_pubdest.py | tee /tmp/pd.log || break
+            grep -q 'הושלמה' /tmp/pd.log && DONE=1
+            git add line-history/data/pubdest-hist-state.json \
+                    line-history/data/stops-hist.json \
+                    line-history/data/changes/
+            if ! git diff --cached --quiet; then
+              git commit -qm "data: תחנות יעד לפרסום — ממצאים היסטוריים (נתח, נדחף מיד)"
+              pushed=0
+              for r in 1 2 3 4; do
+                if git push -q origin HEAD:"$BR"; then pushed=1; break; fi
+                git pull --rebase -q origin "$BR" || { git rebase --abort || true; break; }
+              done
+              if [ "$pushed" != 1 ]; then
+                # התנגשות אמיתית: מוותרים על הנתח וחוזרים עליו מנקודת המצב
+                # הקודמת — קובץ המצב והאירועים נכתבים יחד, אז אין אובדן.
+                echo "push conflict — redoing chunk"
+                git fetch -q origin "$BR" && git reset --hard "origin/$BR"
+              fi
+            fi
+            [ "$DONE" = 1 ] && break
+          done
+          if [ "$DONE" = 1 ]; then
+            echo "הסריקה ההיסטורית הושלמה — מכבה את התזמון"
+            curl -sf -X PUT \
+              -H "Authorization: Bearer ${{ github.token }}" \
+              -H "Accept: application/vnd.github+json" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/workflows/pubdest-hist.yml/disable" || true
+          fi
