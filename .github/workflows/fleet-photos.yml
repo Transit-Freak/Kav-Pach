@@ -14,15 +14,16 @@ permissions:
   contents: write
 
 jobs:
-  process:
-    environment: photos-approval
+  # שלב 1 — בדיקה שקטה: רץ כל שעה, לא דורש אישור, רק סופר מה בקליטה
+  chk:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
+    outputs:
+      count: ${{ steps.c.outputs.count }}
     env:
       GH_TOKEN: ${{ github.token }}
       R: Transit-Freak/kav-bochan
     steps:
-      - uses: actions/checkout@v4
       - name: ודא שפריטי ה-Release קיימים
         run: |
           gh release view photos-inbox -R "$R" >/dev/null 2>&1 || gh release create photos-inbox -R "$R" \
@@ -31,17 +32,28 @@ jobs:
           gh release view photos -R "$R" >/dev/null 2>&1 || gh release create photos -R "$R" \
             --title "התמונות (מעובדות — לא לגעת)" --latest=false \
             --notes "התמונות המכווצות שהאתר מציג. נוצר אוטומטית מפריט הקליטה."
-      - name: בדוק אם יש מה לעבד
-        id: chk
+      - name: ספירת הקליטה
+        id: c
         run: |
           n=$(gh release view photos-inbox -R "$R" --json assets -q '.assets | length')
           echo "count=$n" >> "$GITHUB_OUTPUT"
           echo "בתיבת הקליטה: $n קבצים"
+
+  # שלב 2 — רק כשיש תמונות: עוצר על שער האישור (מייל אליך), ואז מעבד
+  process:
+    needs: chk
+    if: needs.chk.outputs.count != '0'
+    environment: photos-approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: Transit-Freak/kav-bochan
+    steps:
+      - uses: actions/checkout@v4
       - name: התקנת כלי תמונה
-        if: steps.chk.outputs.count != '0'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick libheif-examples > /dev/null
       - name: עיבוד
-        if: steps.chk.outputs.count != '0'
         run: |
           set -e
           mkdir -p /tmp/inbox /tmp/out
@@ -81,7 +93,6 @@ jobs:
             [ -n "$a" ] && gh release delete-asset photos-inbox "$a" -R "$R" -y || true
           done < /tmp/processed.txt
       - name: עדכון האינדקס באתר
-        if: steps.chk.outputs.count != '0'
         run: |
           git config user.name kav-bochan-bot
           git config user.email bot@users.noreply.github.com
