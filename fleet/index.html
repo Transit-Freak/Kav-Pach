@@ -36,6 +36,8 @@
   .mode.on{background:var(--ink);color:#fff}
   .xlsbtn{border:none;cursor:pointer;background:#166534;color:#fff;border-radius:999px;padding:11px 15px;font:700 12.5px 'Rubik',sans-serif;box-shadow:var(--shadow);white-space:nowrap}
   .xlsbtn:hover{background:#14532d}
+  .sharebtn{background:#1E5BC6}
+  .sharebtn:hover{background:#164399}
   .sub{font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.6;margin:8px 0 14px}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
   .kpi{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:12px 16px}
@@ -120,6 +122,7 @@
     #q{flex:1 1 100%;height:44px;font-size:16px}
     .modes{flex-wrap:wrap;width:100%}
     .mode,.xlsbtn{flex:1 0 auto;padding:11px 12px;min-height:42px}
+    .sharebtn{flex:0 1 auto}
     .sub{margin-top:10px}
     .kpis{grid-template-columns:1fr 1fr;gap:8px}
     .kpi{padding:10px 12px}
@@ -155,17 +158,17 @@
         <button class="mode" data-m="type">דגם</button>
         <button class="mode" data-m="plate">מספר רכב</button>
         <button class="xlsbtn" onclick="XDL()" title="מוריד את הטבלה של המסך הנוכחי כקובץ CSV שנפתח באקסל">⬇ אקסל</button>
-        <button class="xlsbtn" onclick="SHARE()" title="מעתיק קישור שפותח בדיוק את המסך הנוכחי — כולל החיפוש והסינון שבחרתם">שיתוף</button>
+        <button class="xlsbtn sharebtn" onclick="SHARE()" title="מעתיק קישור שפותח בדיוק את המסך הנוכחי — כולל החיפוש והסינון שבחרתם">שיתוף</button>
       </div>
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 9 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 10 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='9';
+window.FLEET_BUILD='10';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -184,7 +187,7 @@ window.FLEET_BUILD='9';
 const COLORS={3:'#1B7A3D',4:'#0F766E',5:'#1E5BC6',6:'#334155',14:'#0E7490',15:'#E87511',16:'#B45309',18:'#7C3AED',21:'#BE185D',25:'#C2410C',30:'#1E5BC6',31:'#1E5BC6',32:'#1E5BC6',33:'#4D7C0F',34:'#A16207',35:'#9333EA',37:'#0369A1',38:'#0369A1'};
 const PALETTE=['#475569','#B91C1C','#15803D','#6D28D9','#0E7490','#A16207','#BE185D','#374151'];
 const $=s=>document.querySelector(s);
-let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n', ELF=null;
+let DATA=null, MODE='op', Q='', VIEW={t:'home'}, TYPEF=null, KABF=null, STATF=null, YEARF=null, SORTK=null, SORTD=-1, LIMIT=200, OFF=0, CITIES=null, CITYSEL=null, TYPESEL=null, KM=null, KMOK=false, CITYMON='', ARM=null, ARMOK=false, ARF=null, OFC=null, OFCOK=false, BTF=null, BSF=null, GAPS=null, GPOK=false, TSORT='n', ELF=null, YRF=null;
 // תווית מיגון לרכב (v._ar: 'y' ירי / 's' אבנים / 'ys' שניהם)
 const arLbl=a=>a==='ys'?'ממוגן ירי ואבנים':(a&&a.includes('y')?'ממוגן ירי':'ממוגן אבנים');
 // שמות מובנים לסוגי הרכב במקום הסיווגים הרשמיים של מאגר הרישוי
@@ -372,10 +375,11 @@ function typeHome(f){
   const agg={};
   for(const o of DATA.operators) for(const v of o.vehicles){
     const t=gM(v); if(!t) continue;
-    const g=agg[t]||(agg[t]={n:0,act:0,gp:0,ops:new Set()});
+    const g=agg[t]||(agg[t]={n:0,act:0,gp:0,ops:new Set(),types:new Set()});
     g.n++; if(isActive(v))g.act++; if(v._gp)g.gp++; g.ops.add(o.ref);
+    const bt=gT(v); if(bt)g.types.add(bt);
   }
-  let rows=Object.entries(agg).filter(([t])=>!f||t.includes(f));
+  let rows=Object.entries(agg).filter(([t,g])=>!f||t.includes(f)||[...g.types].some(x=>x&&x.includes(f)));
   if(TSORT==='g'&&GPOK) rows=rows.filter(([t,g])=>g.n>=20).sort((a,b)=>b[1].gp/b[1].n-a[1].gp/a[1].n);
   else rows.sort((a,b)=>b[1].n-a[1].n);
   const total=rows.length;
@@ -385,7 +389,7 @@ function typeHome(f){
     <button class="fchip ${TSORT==='g'?'on':''}" onclick="TSORT='g';render()" title="דגמים לפי אחוז הרכבים שנעלמו חודש+ וחזרו (תקלה אפשרית) — מ-20 רכבים ומעלה">הכי מקולקלים</button>
     ${GPOK&&GAPS.from?`<span style="font-size:12px;color:var(--mut);align-self:center">נתוני הנפילות נבדקים בטווח ${GAPS.from.slice(5)+'.'+GAPS.from.slice(0,4)}–${GAPS.to.slice(5)+'.'+GAPS.to.slice(0,4)} · מתרחב אחורה מדי לילה</span>`:''}
   </div>${TSORT==='g'&&!GPOK?`<div class="panel"><div class="empty">נתוני הנפילות עדיין נטענים או לא זמינים — נסו לרענן</div></div>`:''}<div class="cards">${rows.map(([t,g],i)=>
-    `<button class="card" style="background:${TCOLORS[i%TCOLORS.length]}" onclick="history.pushState({sub:1},'');TYPESEL=${JSON.stringify(t).replace(/"/g,'&quot;')};STATF=null;SORTK=null;LIMIT=200;render();window.scrollTo({top:0})">
+    `<button class="card" style="background:${TCOLORS[i%TCOLORS.length]}" onclick="history.pushState({sub:1},'');TYPESEL=${JSON.stringify(t).replace(/"/g,'&quot;')};STATF=null;SORTK=null;YRF=null;LIMIT=200;render();window.scrollTo({top:0})">
       <h2 style="font-size:1.05rem;word-break:break-word">${esc(t)}</h2><div class="n">${TSORT==='g'?Math.round(100*g.gp/g.n)+'%':fmt(g.n)}</div>
       ${TSORT==='g'?`<div style="font-size:13px;font-weight:700;opacity:.92;margin-top:-2px">נפלו וחזרו — תקלה אפשרית</div>`:''}
       <div class="pills"><span>${fmt(g.act)} פעילים</span>${g.n-g.act?`<span class="r">${fmt(g.n-g.act)} ירדו</span>`:''}${g.gp?`<span>${fmt(g.gp)} נפלו וחזרו</span>`:''}<span>${g.ops.size} חברות</span></div>
@@ -398,7 +402,12 @@ function typeView(t){
   const act=all.filter(p=>isActive(p[1])).length;
   const byOp={}; for(const [o] of all) byOp[o.ref]=(byOp[o.ref]||0)+1;
   const ops=Object.entries(byOp).sort((a,b)=>b[1]-a[1]); const mx=ops.length?ops[0][1]:1;
+  // פילוח שנתונים (בקשת יצחק: הדגם לבדו לא מספיק — צריך לראות כל שנתון)
+  const yrs={};
+  for(const [,v] of all){const y=gY(v);if(!y)continue;const g=yrs[y]||(yrs[y]={n:0,act:0});g.n++;if(isActive(v))g.act++;}
+  const yrKeys=Object.keys(yrs).map(Number).sort((a,b)=>b-a);
   let pairs=STATF===null?all:all.filter(p=>isActive(p[1])===!!STATF);
+  if(YRF) pairs=pairs.filter(p=>gY(p[1])===YRF);
   if(ARF) pairs=pairs.filter(p=>p[1]._ar&&(ARF===1||p[1]._ar.includes(ARF)));
   if(ELF!==null) pairs=pairs.filter(p=>(p[1]._el?1:0)===ELF);
   if(SORTK){const key={p:v=>v[0],f:v=>v[1],l:v=>v[2],y:v=>gY(v)||0,m:v=>gM(v)||'',t:v=>gT(v)||'',r:v=>gR(v)||0,kd:v=>v._kd||0,kt:v=>v._kt||0,ok:v=>v._ok||0}[SORTK];
@@ -413,6 +422,10 @@ function typeView(t){
     </div>
   </div>
   <div class="panel"><p class="ptitle">כל הרכבים מהדגם הזה</p>
+    ${yrKeys.length>1?`<p class="ptitle" style="margin-top:10px">לפי שנתון — לחיצה מסננת</p><div class="filters">
+      <button class="fchip ${YRF===null?'on':''}" onclick="YRF=null;LIMIT=200;render()">כל השנתונים</button>
+      ${yrKeys.map(y=>`<button class="fchip ${YRF===y?'on':''}" onclick="YRF=YRF===${y}?null:${y};LIMIT=200;render()">${y} · ${fmt(yrs[y].n)}${yrs[y].n-yrs[y].act?` (${fmt(yrs[y].n-yrs[y].act)} ירדו)`:''}</button>`).join('')}
+    </div>`:''}
     <div class="filters">
       <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
       <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
@@ -690,6 +703,7 @@ async function showV(plate){
     ${gT(fv)?`<span class="tg">${esc(gT(fv))}</span>`:''}
     ${ar?`<span class="st mv" title="לפי מאגר ״ציי רכב אוטובוסים״ של משרד התחבורה${ARM.updated?` (${fd(ARM.updated)})`:''}">${arLbl(ar)}</span>`:''}
     <span class="st ${on?'on':'off'}">${on?'פעיל':'ירד מהשירות'}</span>
+    <button class="xlsbtn sharebtn" style="padding:7px 13px;font-size:12px" onclick="SHAREV('${plate.replace(/'/g,'')}')" title="מעתיק קישור שפותח את כרטיס הרכב הזה ישירות">שיתוף</button>
     <button class="x" aria-label="סגירה">✕</button></div>${rows}</div>`;
   ovl.addEventListener('click',e=>{if(e.target===ovl||e.target.classList.contains('x'))ovl.remove();});
   document.body.appendChild(ovl);
@@ -756,6 +770,13 @@ function render(){$('#view').innerHTML=VIEW.t==='op'?opView(VIEW.ref):home();}
 function toast(t){const d=document.createElement('div');d.textContent=t;
   d.style.cssText='position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:#1e2440;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.3)';
   document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
+function SHAREV(plate){
+  const u=location.origin+location.pathname+'#v='+encodeURIComponent(plate);
+  if(navigator.share){navigator.share({url:u}).catch(()=>{});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText)
+    navigator.clipboard.writeText(u).then(()=>toast('הקישור לכרטיס הרכב הועתק')).catch(()=>prompt('העתקה ידנית:',u));
+  else prompt('העתקה ידנית:',u);
+}
 function SHARE(){
   const p=new URLSearchParams();
   if(MODE!=='op')p.set('m',MODE);
@@ -772,6 +793,7 @@ function SHARE(){
   if(BSF)p.set('bs',BSF);
   if(KABF)p.set('kb',KABF);
   if(TSORT!=='n')p.set('ts',TSORT);
+  if(YRF)p.set('yr',YRF);
   const u=location.origin+location.pathname+(p.toString()?'#'+p.toString():'');
   if(navigator.share){navigator.share({url:u}).catch(()=>{});return;}
   if(navigator.clipboard&&navigator.clipboard.writeText)
@@ -799,12 +821,14 @@ function applyHash(){
     if(gv('bs'))BSF=gv('bs');
     if(gv('kb'))KABF=gv('kb');
     if(gv('ts'))TSORT=gv('ts');
+    if(gv('yr'))YRF=+gv('yr');
+    if(gv('v'))setTimeout(()=>showV(gv('v')),400);
   }catch(e){}
 }
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
   MODE=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));
   $('#q').placeholder=MODE==='op'?'חיפוש חברה…':MODE==='city'?'חיפוש עיר…':MODE==='type'?'חיפוש דגם או יצרן…':'חיפוש מספר רכב…';
-  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;BTF=null;BSF=null;ELF=null;LIMIT=200;render();
+  VIEW={t:'home'};CITYSEL=null;TYPESEL=null;CITYMON='';ARF=null;BTF=null;BSF=null;ELF=null;YRF=null;LIMIT=200;render();
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
