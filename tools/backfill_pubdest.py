@@ -221,21 +221,9 @@ def main():
             continue
         prev = st.get('prev')
         if prev is not None:
-            for code in dest.keys() - prev.keys():
-                lns, name, city, la, lo, hs = dest[code]
-                if add_event(shist, months, code,
-                             {'d': day.isoformat(), 'k': 'pubdest', 'st': 'in',
-                              'n': name, 't': city, 'la': la, 'lo': lo, 'ln': lns[:8]}):
-                    n_ev += 1
-            for code in prev.keys() - dest.keys():
-                pl = prev[code]
-                if add_event(shist, months, code,
-                             {'d': day.isoformat(), 'k': 'pubdest', 'st': 'out',
-                              'n': pl[1], 't': pl[2], 'la': pl[3], 'lo': pl[4],
-                              'ln': (pl[0] or [])[:8]}):
-                    n_ev += 1
-            # השינוי שחשוב (בקשת שלמה): שם היעד שעל השלט השתנה — אירוע
-            # אחד על התחנה, בלי קווים (כשהשם משתנה הוא משתנה לכולם)
+            # רק שינוי השם שעל השלט (בקשת שלמה): אירועי "הפכה/חדלה להיות
+            # תחנת יעד" הוסרו — קווים שנכנסים ויוצאים מהפיד (חילופי תקופות
+            # לוח) ייצרו מהם רעש, ולשינויי קווים יש קטגוריה משלהם
             for code in dest.keys() & prev.keys():
                 pl = prev[code]
                 oh = pl[5] if len(pl) > 5 else ''

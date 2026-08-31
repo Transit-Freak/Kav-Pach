@@ -800,18 +800,9 @@ _pdst={k:sorted(v)[:12] for k,v in _pdst.items()}
 # שובר-שוויון דטרמיניסטי כדי שלא ייווצרו אירועי-סרק מריצוד
 _phs={k:max(v.items(),key=lambda kv:(kv[1],kv[0]))[0] for k,v in _phc.items()}
 if _pdst_prev is not None and not first_run and not REBASE:
-    for _c0 in _pdst.keys()-_pdst_prev.keys():
-        _v=cur_stops.get(_c0)
-        if _v:
-            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
-                     'st':'in','ln':_pdst[_c0][:8]}); npd_t+=1
-    for _c0 in _pdst_prev.keys()-_pdst.keys():
-        _v=cur_stops.get(_c0) or (prev_stops.get(_c0) if isinstance(prev_stops.get(_c0),list) else None)
-        if _v:
-            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3] if len(_v)>3 else '','la':_v[1],'lo':_v[2],
-                     'st':'out','ln':(_pdst_prev.get(_c0) or [])[:8]}); npd_t+=1
-    # השינוי שחשוב (בקשת שלמה): שם היעד שעל השלט השתנה — אירוע אחד על
-    # התחנה, בלי קווים (כשהשם משתנה הוא משתנה לכל הקווים שמסתיימים בה)
+    # רק שינוי השם שעל השלט (בקשת שלמה): אירועי "הפכה/חדלה להיות תחנת
+    # יעד" הוסרו — קווים שנכנסים ויוצאים מהפיד ייצרו מהם רעש, ולשינויי
+    # קווים יש קטגוריה משלהם. המצב (_pdst) עדיין נשמר לתגית הסגולה.
     for _c0 in _phs.keys()&_phs_prev.keys():
         # שלט מספרי = מספר רכבת (מתחלף תדיר) — לא שינוי שם אמיתי
         if _phs[_c0].isdigit() or _phs_prev[_c0].isdigit(): continue
