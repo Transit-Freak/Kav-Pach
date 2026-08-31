@@ -749,7 +749,13 @@ function AltCompare({ rd, altRd, label, onClose }) {
    וכל שינוי שאינו שינוי לו"ז. */
 const SCHED_DAYS = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
 const SCHED_LBL = { "א": "ראשון", "ב": "שני", "ג": "שלישי", "ד": "רביעי", "ה": "חמישי", "ו": "שישי", "ש": "שבת" };
-function SchedBox({ rd }) {
+// היום בשבוע שאירוע לו"ז נגע בו — נשלף מנוסח ההערה ("ימי ראשון" / "שבת")
+const schedDayOf = (note) => {
+  const m = /\((?:ימי )?([א-ת]+)/.exec(note || "");
+  return { "ראשון": "א", "שני": "ב", "שלישי": "ג", "רביעי": "ד",
+           "חמישי": "ה", "שישי": "ו", "שבת": "ש" }[m && m[1]] || null;
+};
+function SchedBox({ rd, vs, selD, isLast }) {
   const [d, setD] = useState(null);
   useEffect(() => {
     let ok = true;
@@ -762,20 +768,40 @@ function SchedBox({ rd }) {
   }, [rd]);
   // אין נתונים — קו שאינו פעיל היום, או שקובצי הלו"ז טרם נבנו: שקט
   if (!d) return null;
-  const hasTb = SCHED_DAYS.some((b) => (d.days[b] || []).some((t) => Array.isArray(t)));
+  // הלו"ז של אז (בקשת שלמה): כשנבחרה גרסה ישנה משחזרים אחורה מהלו"ז של
+  // היום — כל אירוע לו"ז שמאוחר מהגרסה מוחזר לשעות הישנות שלו (tl).
+  // מהחדש לישן, כך שהאירוע הקרוב ביותר לגרסה קובע אחרון = המצב בזמנה.
+  const past = !isLast && selD;
+  let days = d.days, touched = new Set();
+  if (past) {
+    days = {};
+    for (const b of SCHED_DAYS) days[b] = (d.days[b] || []).map((t) => Array.isArray(t) ? t[0] : t);
+    (vs || []).filter((v) => (v.k === "sched" || v.k === "freq") && v.tl != null && v.d > selD)
+      .sort((a, b) => b.d.localeCompare(a.d))
+      .forEach((v) => {
+        const L = schedDayOf(v.note);
+        if (L) { days[L] = String(v.tl || "").split(",").map((s) => s.trim()).filter(Boolean); touched.add(L); }
+      });
+  }
+  const hasTb = !past && SCHED_DAYS.some((b) => (days[b] || []).some((t) => Array.isArray(t)));
   return (
     <details className="schedbox">
-      <summary>🕐 הלו"ז המלא של החלופה — כל שעות היציאה{hasTb ? " · יש תגבורים" : ""}</summary>
+      <summary>🕐 {past ? `הלו"ז כפי שהיה בגרסת ${selD.split("-").reverse().join(".")}` : 'הלו"ז המלא של החלופה — כל שעות היציאה'}{hasTb ? " · יש תגבורים" : ""}</summary>
       <div className="schednote">
-        מפרסום הרישוי ל-10 הימים הקרובים (נכון ל-{d.g.split("-").reverse().join(".")}) —
-        זה הלו"ז הנוכחי, והוא מוצג בכל גרסה שנבחרת. שעה מודגשת עם ×N
-        פירושה ש-N אוטובוסים יוצאים באותה שעה (תגבור).
+        {past ? <>
+          משוחזר אחורה מאירועי הלו"ז המתועדים של הקו. ימים שסומנו ✱ הם
+          ימים ששוחזרו משינוי מתועד; לימים בלי שינוי מתועד מוצג הלו"ז של היום.
+        </> : <>
+          מפרסום הרישוי ל-10 הימים הקרובים (נכון ל-{d.g.split("-").reverse().join(".")}) —
+          זה הלו"ז הנוכחי. שעה מודגשת עם ×N
+          פירושה ש-N אוטובוסים יוצאים באותה שעה (תגבור).
+        </>}
       </div>
       <table className="schedtbl"><tbody>
-        {SCHED_DAYS.filter((b) => (d.days[b] || []).length).map((b) => (
+        {SCHED_DAYS.filter((b) => (days[b] || []).length).map((b) => (
           <tr key={b}>
-            <th>{SCHED_LBL[b]}</th>
-            <td>{(d.days[b] || []).map((t, i) => Array.isArray(t)
+            <th>{SCHED_LBL[b]}{past && touched.has(b) ? " ✱" : ""}</th>
+            <td>{(days[b] || []).map((t, i) => Array.isArray(t)
               ? <span key={i} className="tchip tb" title={`${t[1]} אוטובוסים יוצאים בשעה זו (תגבור)`}>{t[0]} ×{t[1]}</span>
               : <span key={i} className="tchip">{t}</span>)}</td>
           </tr>
@@ -1465,6 +1491,24 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               {" · "}{ntr === 1 ? "נסיעה אחת ביום" : `${ntr.toLocaleString()} נסיעות ביום`}</span>
           )}
           {" · מק״ט "}{lf.rd} · {vs.length} גרסאות מתועדות</div>
+        {/* תקופות שבהן הקו לא היה ברישום — סיכום בולט (בקשת שלמה: הביטול
+            נבלע בין עשרות כרטיסי גרסאות ולא נראה) */}
+        {(() => {
+          const per = []; let start = null;
+          for (const v of vs) {
+            if (v.k === "removed") { if (!start) start = v.d; }
+            else if (v.k === "new" && start) { per.push([start, v.d]); start = null; }
+          }
+          if (start) per.push([start, null]);
+          const span = (a, b) => {
+            const days = Math.round((new Date(b || Date.now()) - new Date(a)) / 864e5);
+            return days >= 60 ? Math.round(days / 30.44) + " חודשים" : days + " ימים";
+          };
+          return per.map(([a, b]) => (
+            <div className="offband" key={a}>⏸️ הקו לא היה ברישום: <b>{fmtD(a)}</b>
+              {b ? <> עד <b>{fmtD(b)}</b> ({span(a, b)}) — ואז חזר לפעול</> : <> ({span(a, null)}) — ועדיין לא חזר</>}</div>
+          ));
+        })()}
         {/* רק "שירות לפי דרישה" מקבל הערה, כי היא נושאת מידע שאינו במקום
             אחר: הקו יושב בין קווי האוטובוס ונראה רגיל לחלוטין, ואי אפשר
             לדעת ממנו שהנסיעה מותנית בהזמנה. לשאר הסוגים התווית בשורת
@@ -1480,7 +1524,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             מפורסם להם לוח זמנים, ולכן כדאי לבדוק מול המפעיל איך הנסיעה מוזמנת בפועל.
           </div>
         )}
-        <SchedBox rd={rd} />
+        <SchedBox rd={rd} vs={vs} selD={sel != null && vs[sel] ? vs[sel].d : null}
+          isLast={sel == null || sel >= vs.length - 1} />
         {anc && !NO_2012.has(lf.tt || "") && (
           <div className="a2012">
             <b>2012</b> · {anc.f} ← {anc.l} · {anc.n} תחנות
