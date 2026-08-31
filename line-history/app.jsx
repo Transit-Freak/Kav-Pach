@@ -1423,7 +1423,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           {/* שיתוף כמו בהקו המדלג: גיליון השיתוף של הטלפון, ובנפילה — העתקה */}
           <button className="sharebtn" title="שיתוף הקישור לעמוד הקו הזה — כל ההיסטוריה שלו"
             onClick={(e) => {
-              const url = location.origin + location.pathname + "#" + encodeURIComponent(rd);
+              // דף-שיתוף ייעודי: מציג בוואטסאפ את שם הקו וסמל האתר, ומקפיץ לדף (בקשת שלמה)
+              const url = location.origin + location.pathname.replace(/line-history\/?[^/]*$/, "") + "s/l-" + fsafe(rd) + ".html";
               const b = e.currentTarget;
               // "הועתק" רק אחרי שההעתקה באמת הצליחה; בגיליון השיתוף של
               // הטלפון אין מה להכריז (ציד הבאגים, סבב ב)

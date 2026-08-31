@@ -169,12 +169,12 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 16 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 17 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
 <script>
-window.FLEET_BUILD='16';
+window.FLEET_BUILD='17';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -829,7 +829,8 @@ function toast(t){const d=document.createElement('div');d.textContent=t;
   d.style.cssText='position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:#1e2440;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.3)';
   document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
 function SHAREV(plate){
-  const u=location.origin+location.pathname+'#v='+encodeURIComponent(plate);
+  // דף-שיתוף ייעודי: מציג בוואטסאפ את מספר הרכב וסמל האתר (בקשת שלמה)
+  const u=location.origin+location.pathname.replace(/fleet\/?[^/]*$/,'')+'s/v-'+encodeURIComponent(plate)+'.html';
   if(navigator.share){navigator.share({url:u}).catch(()=>{});return;}
   if(navigator.clipboard&&navigator.clipboard.writeText)
     navigator.clipboard.writeText(u).then(()=>toast('הקישור לכרטיס הרכב הועתק')).catch(()=>prompt('העתקה ידנית:',u));
