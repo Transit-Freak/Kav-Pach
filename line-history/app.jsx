@@ -27,6 +27,8 @@ const KINDS = {
   stops:       { label: "שינוי תחנות", color: "#b45309" },
   operator:    { label: "החלפת מפעיל", color: "#0f766e" },
   dest:        { label: "שינוי יעד", color: "#9333ea" },
+  pubdest:     { label: "שינוי תחנת היעד לפרסום", color: "#7e22ce" },
+  city:        { label: "שינוי עיר", color: "#b91c1c" },
   renum:       { label: "שינוי מספר", color: "#be185d" },
   renamed:     { label: "שינוי שם תחנת קצה", color: "#b45309" },
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
@@ -69,7 +71,7 @@ function isRemovedYear(l) {
 const CAT_GROUPS = [
   { title: "ביטולים", items: ["removed-year", "removed-now", "removed-past"] },
   { title: "שינויי מסלול", items: ["route", "endpoint"] },
-  { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
+  { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del", "pubdest", "city"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode"] },
   { title: "שינויים טכניים", items: ["redraw"] },
@@ -87,6 +89,8 @@ const CAT_LABELS = {
   new: "וריאנט חדש ברישום",
   operator: "החלפת מפעיל",
   dest: "שינוי יעד",
+  pubdest: "שינוי תחנת היעד לפרסום (מה שכתוב על שלט האוטובוס)",
+  city: "שינוי עיר המוצא או היעד",
   renum: "שינוי מספר קו",
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
@@ -834,7 +838,7 @@ const osTags = (map) => {
 const KIND_GROUPS_N = [
   { tag: "kg_rem", label: "ביטולי קווים", kinds: ["removed"] },
   { tag: "kg_new", label: "קווים חדשים", kinds: ["new"] },
-  { tag: "kg_route", label: "מסלול ותחנות", kinds: ["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del"] },
+  { tag: "kg_route", label: "מסלול ותחנות", kinds: ["route", "redraw", "extend", "shorten", "terminal", "stops", "stops-add", "stops-del", "pubdest", "city"] },
   { tag: "kg_ident", label: "יעד, מספר ומפעיל", kinds: ["dest", "renum", "renamed", "operator", "mode"] },
 ];
 // "ההרשמות שלי": כל מה שנרשם מהדפדפן הזה (צ'יפים + המרכז), עם ✖ להסרה

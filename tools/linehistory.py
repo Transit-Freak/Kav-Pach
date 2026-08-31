@@ -40,6 +40,19 @@ MAX_LINES_LIST=12  # כמה קווים לשמור ברשומת תחנה שבוט
 def city(d):
     m=re.search(r'עיר:\s*(.*?)\s*רציף:', d or ''); return m.group(1).strip() if m else ''
 
+def route_cities(long):
+    """ערי המוצא והיעד משם המסלול "תחנה-עיר<->תחנה-עיר-מק"."""
+    out=[]
+    for side in (long or '').split('<->'):
+        side=re.sub(r'(-\d+[א-ת]?#?\s*)+$','',side).strip()
+        out.append(side.rsplit('-',1)[1].strip() if '-' in side else '')
+    return ' ← '.join(out) if len(out)==2 and all(out) else ''
+
+def hs_fmt(h):
+    # trip_headsign בפורמט "עיר_תחנה" — לתצוגה: "תחנה, עיר"
+    p=(h or '').split('_',1)
+    return f'{p[1]}, {p[0]}' if len(p)==2 and p[0] and p[1] else (h or '')
+
 # ---- polyline encoding (precision 5) — קומפקטי פי ~10 מרשימת קואורדינטות ----
 def enc_num(v,out):
     v=int(round(v)); v=~(v<<1) if v<0 else v<<1
@@ -129,6 +142,7 @@ else:
 # הנסיעה הקטן ביותר. שוויון נשבר לפי מזהה השרטוט.
 rep={}          # route_id -> (trip_id, shape_id)
 _wa={}          # route_id -> נגישות (1/2)
+_hs={}          # route_id -> תחנת היעד לפרסום (trip_headsign)
 _cnt={}         # route_id -> {shape_id: כמה נסיעות}
 _first={}       # (route_id, shape_id) -> מזהה הנסיעה הקטן ביותר
 _ntr={}         # rd -> מספר הנסיעות שבתוקף היום
@@ -151,6 +165,9 @@ for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
         # הוא תכונה של הקו ולא של הנסיעה.
         wa=(r.get('wheelchair_accessible') or '').strip()
         if wa in ('1','2'): _wa[rid]=wa
+        if rid not in _hs:
+            _hh=(r.get('trip_headsign') or '').strip()
+            if _hh: _hs[rid]=_hh
         elif wa not in ('','0'): unk.note('wheelchair_accessible',wa,TODAY,rid)
 for rid,shapes in _cnt.items():
     sh=min(shapes,key=lambda x:(-shapes[x],x))
@@ -236,6 +253,7 @@ for rid,(t,sh) in rep.items():
     cur[info['rd']]={'line':info['line'],'long':info['long'],'op':agencies.get(info['ag'],''),
                      'ty':linetype.get(mk,''),'tt':info.get('tt'),'pts':pts,'codes':codes,
                      'wa':_wa.get(rid,''),'ntr':_ntr.get(info['rd'],0),
+                     'hs':_hs.get(rid,''),'ct':route_cities(info['long']),
                      # איבר חמישי בתחנה = מגבלת עלייה/ירידה; 0 נשמר כרשימה
                      # קצרה כדי שקבצים ישנים וחדשים ייראו זהים כשאין מגבלה
                      'stopinfo':[[stops[s]['c'],stops[s]['n'],stops[s]['la'],stops[s]['lo']]
@@ -415,8 +433,13 @@ for rdesc,c in cur.items():
     # אלה השינויים החשובים ביותר בקו.
     wa_changed=bool(pv.get('wa')) and bool(c.get('wa')) and pv['wa']!=c['wa']
     pd_changed=('pd_h' in pv) and pv.get('pd_h')!=c.get('pd_h')
+    # תחנת היעד לפרסום (שלט האוטובוס) ועיר המוצא/יעד — שניהם בלתי נראים
+    # בתחנות ובשרטוט; נבדקים רק כששני הצדדים קיימים (שדה חדש במצב ישן)
+    hs_changed=bool(pv.get('hs')) and bool(c.get('hs')) and pv['hs']!=c['hs']
+    ct_changed=bool(pv.get('ct')) and bool(c.get('ct')) and pv['ct']!=c['ct']
     if not geo and not stp and not op_changed and not tt_changed \
-       and not wa_changed and not pd_changed and not ty_changed:
+       and not wa_changed and not pd_changed and not ty_changed \
+       and not hs_changed and not ct_changed:
         # תיקון עבר: קבצים שהסיווג בהם התיישן לפני שנוסף המעקב — מרעננים
         # בשקט את המטא-נתונים בלי להמציא אירוע על שינוי שקרה מזמן
         p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -460,7 +483,7 @@ for rdesc,c in cur.items():
         if ren:
             codes_eff=[ren.get(y,y) for y in c['codes']]
             if codes_eff==old_codes and not geo and not (op_changed or tt_changed
-               or ty_changed or wa_changed or pd_changed):
+               or ty_changed or wa_changed or pd_changed or hs_changed or ct_changed):
                 # רק מספרי תחנות הוחלפו — מרעננים בשקט את הרשימה בגרסה
                 # האחרונה, בלי להמציא אירוע-קו על החלפת רישום
                 p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -499,6 +522,10 @@ for rdesc,c in cur.items():
         kind='access'
     elif pd_changed and not geo and not stp and not op_changed:
         kind='board'
+    elif ct_changed and not geo and not stp and not op_changed:
+        kind='city'
+    elif hs_changed and not geo and not stp and not op_changed:
+        kind='pubdest'
     elif not geo and not stp:
         kind='operator'
     else:
@@ -554,6 +581,12 @@ for rdesc,c in cur.items():
         if chg:
             t='שינוי בהגדרות האיסוף וההורדה: '+' · '.join(chg)
             note=(note+' · '+t) if note else t
+    if hs_changed:
+        t=f"תחנת היעד לפרסום שוּנתה: {hs_fmt(pv['hs'])} ← {hs_fmt(c['hs'])}"
+        note=(note+' · '+t) if note else t
+    if ct_changed:
+        t=f"שינוי עיר: {pv['ct']} ← {c['ct']}"
+        note=(note+' · '+t) if note else t
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
     if add: ch['add']=[name.get(x,x) for x in add][:15]
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
@@ -742,7 +775,8 @@ json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_as
 # 'tt' נשמר כדי שאפשר יהיה לזהות שינוי בסוג הקו. במצב שנוצר לפני השדה הזה
 # הוא פשוט חסר, ולכן ההשוואה מדלגת בשקט בריצה הראשונה ולא ממציאה אירוע.
 state_out={rdesc:{'sh_h':c['sh_h'],'st_h':c['st_h'],'codes':c['codes'],'line':c['line'],
-                  'op':c['op'],'tt':c.get('tt'),'ty':c.get('ty',''),'wa':c.get('wa',''),'pd_h':c.get('pd_h','')}
+                  'op':c['op'],'tt':c.get('tt'),'ty':c.get('ty',''),'wa':c.get('wa',''),'pd_h':c.get('pd_h',''),
+                  'hs':c.get('hs',''),'ct':c.get('ct','')}
            for rdesc,c in cur.items()}
 state_out.update(carry)   # רשומים ללא נסיעות פעילות — נגררים קדימה
 json.dump(state_out,
