@@ -664,6 +664,9 @@ let ANC_SET = new Set();   // המק"טים שהוצלבו — לסינון "201
    היומי וטאב התחנות) ביקשו אותו כל אחת בנפרד. כשל מנקה את המטמון כדי
    שכפתור "נסו שוב" באמת ינסה שוב. */
 let MONTHS_P = null;
+let PUBDEST_P = null;
+const getPubdest = () => PUBDEST_P || (PUBDEST_P = dfetch("data/pubdest-state.json")
+  .then((r) => (r.ok ? r.json() : {})).catch(() => ({})));
 const getMonths = () => MONTHS_P || (MONTHS_P = dfetch("data/months.json")
   .then((r) => r.json())
   .catch((e) => { MONTHS_P = null; throw e; }));
@@ -2291,6 +2294,11 @@ function StopsTab({ sel, selN }) {
   const [yr, setYr] = useState("");   // שנה נבחרת בבוחר החודשים
   const [chs, setChs] = useState(null);
   const [hist, setHist] = useState(null);   // קורות-חיים מצטברים לכל תחנה
+  // תחנות היעד-לפרסום הנוכחיות (בקשת שלמה): הידע הקיים מוצג כבר עכשיו,
+  // ומתעדכן מעצמו עם כל ריצה יומית — בלי לחכות לאירועי שינוי
+  const [pdst, setPdst] = useState(null);
+  useEffect(() => { getPubdest().then(setPdst); }, []);
+  const pdOf = (t, n) => (pdst && t && n && pdst[t + "|" + n]) || null;
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
   const [onlyNs, setOnlyNs] = useState(false);           // רק תחנות שהיו ברישום ולא בשירות
   const [katOpen, setKatOpen] = useState(false);
@@ -2523,6 +2531,9 @@ function StopsTab({ sel, selN }) {
                     <span className="nm">
                       {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
                       <StopCode code={c.c} />
+                      {pdOf(c.t, c.nn || c.n) && <TipTag cls="pdflag"
+                        tip={"התחנה הזו כתובה כרגע על שלט היעד של " + (pdOf(c.t, c.nn || c.n).length === 1 ? "קו " : "הקווים ") + pdOf(c.t, c.nn || c.n).slice(0, 10).join(", ") + " — לפי הלוח העדכני, מתעדכן יומית"}>
+                        יעד לפרסום</TipTag>}
                       <a className="latlink" href={"#stop=" + c.c} title="אילו קווים עצרו בתחנה ומה השתנה"
                         onClick={(e) => e.stopPropagation()}>🚌 קווים</a>
                     </span>
@@ -2566,6 +2577,9 @@ function StopsTab({ sel, selN }) {
                   <div className="srow ghead">
                     <span className="nm"><b>{nm}</b>
                       <StopCode code={g.code} />
+                      {pdOf(head.t, nm) && <TipTag cls="pdflag"
+                        tip={"התחנה הזו כתובה כרגע על שלט היעד של " + (pdOf(head.t, nm).length === 1 ? "קו " : "הקווים ") + pdOf(head.t, nm).slice(0, 10).join(", ") + " — לפי הלוח העדכני, מתעדכן יומית"}>
+                        יעד לפרסום</TipTag>}
                       <a className="latlink" href={"#stop=" + g.code} title="אילו קווים עצרו בתחנה ומה השתנה"
                         onClick={(e) => e.stopPropagation()}>🚌 קווים</a></span>
                     <span className="meta">{head.t ? head.t + " · " : ""}{g.evs.length} שינויים</span>
