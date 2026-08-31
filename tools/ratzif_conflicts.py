@@ -81,7 +81,8 @@ def main():
         raise SystemExit('אין אף יום זמין בארכיון בשבוע האחרון')
 
     c, rows = load_small(url, cd, 'trips.txt')
-    trip2 = {r[c['trip_id']]: (r[c['route_id']], r[c['service_id']]) for r in rows}
+    trip2 = {r[c['trip_id']]: (r[c['route_id']], r[c['service_id']],
+                               r[c['trip_headsign']] if 'trip_headsign' in c else '') for r in rows}
 
     c, rows = load_small(url, cd, 'routes.txt')
     routes = {}
@@ -132,12 +133,12 @@ def main():
             continue
         # זהות קו = מק"ט+כיוון; חלופות של אותו קו-כיוון מאוחדות
         by_line = {}
-        for rid, svc in ts:
+        for rid, svc, th in ts:
             ro = routes.get(rid)
             if not ro or ro['ag'] in RAIL:
                 continue
             key = ro['mk'] + '|' + ro['dir']
-            by_line.setdefault(key, []).append((rid, svc))
+            by_line.setdefault(key, []).append((rid, svc, th))
         if len(by_line) < 2:
             continue
         # חפיפת ימים בין שני קווים שונים לפחות
@@ -146,16 +147,24 @@ def main():
         pair_mask = 0
         for i in range(len(keys)):
             for j in range(i + 1, len(keys)):
-                for _, s1 in by_line[keys[i]]:
-                    for _, s2 in by_line[keys[j]]:
+                for _, s1, _t1 in by_line[keys[i]]:
+                    for _, s2, _t2 in by_line[keys[j]]:
                         pair_mask |= svc_days.get(s1, 0) & svc_days.get(s2, 0)
         if not pair_mask:
             continue
         st = stops.get(sid, {})
         for key in keys:
-            rid, svc = by_line[key][0]
+            rid, svc, th = by_line[key][0]
             ro = routes[rid]
-            dest = ro['long'].split('<->')[-1].split('-')[0] if '<->' in ro['long'] else ''
+            # היעד לפרסום (trip_headsign, "עיר_תחנה") — מה שעל שלט האוטובוס;
+            # נפילה חזרה לפירוק שם המסלול כשהשדה ריק
+            if th and '_' in th:
+                city_, stop_ = th.split('_', 1)
+                dest = f'{stop_}, {city_}'
+            elif th:
+                dest = th
+            else:
+                dest = ro['long'].split('<->')[-1].split('-')[0] if '<->' in ro['long'] else ''
             lines_out.append([ro['n'], dest, ag.get(ro['ag'], '')])
         days_txt = ''.join(DAYS_HE[i] for i in range(7) if pair_mask >> i & 1)
         conflicts.append({'code': st.get('code', ''), 'name': st.get('name', ''),
