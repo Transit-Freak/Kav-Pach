@@ -768,34 +768,30 @@ idx.sort(key=lambda x:(x['line'],x['rd']))
 json.dump({'gen':TODAY,'first':first_run,'lines':idx},
           open(f'{OUTDIR}/lines.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(chm,open(chpath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-# ---- תחנות יעד לפרסום (בקשת שלמה): תחנה שהפכה או חדלה להיות היעד
-# שכתוב על שלט האוטובוס. המפתח: "עיר|תחנה" מתוך trip_headsign; אירוע
-# נרשם על התחנה עצמה. בריצה הראשונה רק נשמר מצב — בלי הצפת אירועים.
+# ---- תחנות יעד לפרסום (בקשת שלמה): התחנה שכתובה על שלט האוטובוס.
+# הזיהוי לפי מק"ט התחנה האחרונה של כל מסלול פעיל — לא לפי השוואת שמות
+# (שם השלט מקוצר מול שם הרישום, ורק 14% תאמו). אירוע נרשם על התחנה
+# עצמה כשהיא הופכת/חדלה להיות יעד. בריצה הראשונה רק נשמר מצב.
 _pdst_path=f'{OUTDIR}/pubdest-state.json'
 _pdst_prev=jload(_pdst_path,None)
+if _pdst_prev and any('|' in k for k in list(_pdst_prev)[:5]):
+    _pdst_prev=None   # פורמט ישן (מפתח שם) — בסיס חדש בלי אירועי-סרק
 _pdst={}
-for _rid,_h in _hs.items():
-    if '_' not in _h or _rid not in routes: continue
-    _cty,_stp=_h.split('_',1)
-    _k=f'{_cty.strip()}|{_stp.strip()}'
-    _pdst.setdefault(_k,set()).add(routes[_rid]['line'])
-_pdst={k:sorted(v) for k,v in _pdst.items()}
+for _rd,_c in cur.items():
+    if _c.get('codes'):
+        _pdst.setdefault(str(_c['codes'][-1]),set()).add(_c['line'])
+_pdst={k:sorted(v)[:12] for k,v in _pdst.items()}
 if _pdst_prev is not None and not first_run and not REBASE:
-    _nc_ix={}
-    for _c0,_v in cur_stops.items():
-        _nc_ix.setdefault(f'{_v[3]}|{_v[0]}',_c0)
-    for _k in _pdst.keys()-_pdst_prev.keys():
-        _c0=_nc_ix.get(_k)
-        if _c0:
-            _v=cur_stops[_c0]
+    for _c0 in _pdst.keys()-_pdst_prev.keys():
+        _v=cur_stops.get(_c0)
+        if _v:
             sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
-                     'st':'in','ln':_pdst[_k][:8]}); npd_t+=1
-    for _k in _pdst_prev.keys()-_pdst.keys():
-        _c0=_nc_ix.get(_k)
-        if _c0:
-            _v=cur_stops[_c0]
-            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
-                     'st':'out','ln':(_pdst_prev.get(_k) or [])[:8]}); npd_t+=1
+                     'st':'in','ln':_pdst[_c0][:8]}); npd_t+=1
+    for _c0 in _pdst_prev.keys()-_pdst.keys():
+        _v=cur_stops.get(_c0) or (prev_stops.get(_c0) if isinstance(prev_stops.get(_c0),list) else None)
+        if _v:
+            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3] if len(_v)>3 else '','la':_v[1],'lo':_v[2],
+                     'st':'out','ln':(_pdst_prev.get(_c0) or [])[:8]}); npd_t+=1
 json.dump(_pdst,open(_pdst_path,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 
 json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))

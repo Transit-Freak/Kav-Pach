@@ -2298,7 +2298,7 @@ function StopsTab({ sel, selN }) {
   // ומתעדכן מעצמו עם כל ריצה יומית — בלי לחכות לאירועי שינוי
   const [pdst, setPdst] = useState(null);
   useEffect(() => { getPubdest().then(setPdst); }, []);
-  const pdOf = (t, n) => (pdst && t && n && pdst[t + "|" + n]) || null;
+  const pdOf = (code) => (pdst && code && pdst[String(code)]) || null;
   const [kinds, setKinds] = useState(() => new Set());   // סימון מרובה, כמו בקווים
   const [onlyNs, setOnlyNs] = useState(false);           // רק תחנות שהיו ברישום ולא בשירות
   const [katOpen, setKatOpen] = useState(false);
@@ -2531,8 +2531,8 @@ function StopsTab({ sel, selN }) {
                     <span className="nm">
                       {c.k === "renamed" ? <><s>{c.on}</s> ← <b>{c.nn}</b></> : <b>{c.n}</b>}
                       <StopCode code={c.c} />
-                      {pdOf(c.t, c.nn || c.n) && <TipTag cls="pdflag"
-                        tip={"התחנה הזו כתובה כרגע על שלט היעד של " + (pdOf(c.t, c.nn || c.n).length === 1 ? "קו " : "הקווים ") + pdOf(c.t, c.nn || c.n).slice(0, 10).join(", ") + " — לפי הלוח העדכני, מתעדכן יומית"}>
+                      {pdOf(c.c) && <TipTag cls="pdflag"
+                        tip={"התחנה הזו היא כרגע יעד הקצה של " + (pdOf(c.c).length === 1 ? "קו " : "הקווים ") + pdOf(c.c).slice(0, 10).join(", ") + " — לפי הלוח העדכני, מתעדכן יומית"}>
                         יעד לפרסום</TipTag>}
                       <a className="latlink" href={"#stop=" + c.c} title="אילו קווים עצרו בתחנה ומה השתנה"
                         onClick={(e) => e.stopPropagation()}>🚌 קווים</a>
@@ -2577,8 +2577,8 @@ function StopsTab({ sel, selN }) {
                   <div className="srow ghead">
                     <span className="nm"><b>{nm}</b>
                       <StopCode code={g.code} />
-                      {pdOf(head.t, nm) && <TipTag cls="pdflag"
-                        tip={"התחנה הזו כתובה כרגע על שלט היעד של " + (pdOf(head.t, nm).length === 1 ? "קו " : "הקווים ") + pdOf(head.t, nm).slice(0, 10).join(", ") + " — לפי הלוח העדכני, מתעדכן יומית"}>
+                      {pdOf(g.code) && <TipTag cls="pdflag"
+                        tip={"התחנה הזו היא כרגע יעד הקצה של " + (pdOf(g.code).length === 1 ? "קו " : "הקווים ") + pdOf(g.code).slice(0, 10).join(", ") + " — לפי הלוח העדכני, מתעדכן יומית"}>
                         יעד לפרסום</TipTag>}
                       <a className="latlink" href={"#stop=" + g.code} title="אילו קווים עצרו בתחנה ומה השתנה"
                         onClick={(e) => e.stopPropagation()}>🚌 קווים</a></span>
