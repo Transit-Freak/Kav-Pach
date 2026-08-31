@@ -100,12 +100,22 @@ def main():
     RAIL = {a for a, n in ag.items() if any(w in n for w in ('רכבת', 'רכבל', 'כרמלית'))}
 
     c, rows = load_small(url, cd, 'calendar.txt')
+    # אותה יציאה מפוצלת ב-GTFS לכמה רשומות-שירות עם טווחי תאריכים שונים
+    # (לוח רגיל / בין הזמנים / חודש הבא). השוואה לפי ימי-שבוע בלבד ספרה
+    # יציאה אחת כ"5 אוטובוסים" (תפס שלמה, קרית אונו). לכן כל יום-שבוע
+    # נבדק מול תאריך קונקרטי: המופע הראשון שלו מהיום הנבדק והלאה, ורק
+    # שירות שהתאריך הזה בתוך הטווח שלו נספר.
+    targets = []
+    for i in range(7):
+        delta = (i - (day.weekday() + 1) % 7) % 7
+        targets.append((day + datetime.timedelta(days=delta)).strftime('%Y%m%d'))
     svc_days = {}
     dcols = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
     for r in rows:
         m = 0
-        for i, d in enumerate(dcols):
-            if r[c[d]] == '1':
+        sd, ed = r[c['start_date']], r[c['end_date']]
+        for i, d0 in enumerate(dcols):
+            if r[c[d0]] == '1' and sd <= targets[i] <= ed:
                 m |= 1 << i
         svc_days[r[c['service_id']]] = m
 
