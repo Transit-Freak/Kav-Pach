@@ -74,10 +74,10 @@
 </div>
 <div class="tblwrap"><div class="empty">טוען את הלוח…</div></div>
 <div id="morewrap"></div>
-<div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. הכמות נספרת באוטובוסים, לא בקווים: כל נסיעה ברישוי היא אוטובוס, וקו מתוגבר בכמה אוטובוסים באותה דקה (מסומן ×N) תופס את כולם — גם קו בודד עם תגבור כפול הוא התנגשות. חומרה: <span class="sev s2"></span>2 אוטובוסים בדקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
+<div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. הכמות נספרת באוטובוסים, לא בקווים: כל נסיעה ברישוי היא אוטובוס, וקו מתוגבר בכמה אוטובוסים באותה דקה (מסומן "N אוטובוסים יחד") תופס את כולם — גם קו בודד עם תגבור כפול הוא התנגשות. חומרה: <span class="sev s2"></span>2 אוטובוסים בדקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
 <div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='12';
+window.RZ_BUILD='13';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -170,7 +170,7 @@ function render(){
     html+=`<tr><td class="tt c-t">${tcell}</td>
       <td class="c-stn"><span class="stn">${esc(x.name)}</span><div class="mut" style="white-space:nowrap">${esc(x.city||'')} · מק"ט ${esc(x.code)}</div></td>
       <td class="c-plat">${x.plat?esc(x.plat):'<span class="mut" title="למסוף אין מספרי רציפים ברישוי — ייתכן שהקווים יוצאים מרציפים פיזיים שונים החולקים תחנה אחת">אין מספור</span>'}</td><td class="c-days" style="white-space:nowrap">${esc(fmtDays(x.daysAll||x.days))}</td>
-      <td class="lz c-lns">${x.lines.map(l=>`<div class="l"><b>${esc(l.n)||'—'}</b>${l.cnt>1?` <b style="color:var(--bad)">×${l.cnt}</b>`:''} <span>${l.dest?'אל '+esc(l.dest):''}</span> <i>· ${esc(l.op)}</i></div>`).join('')}${times}</td>
+      <td class="lz c-lns">${x.lines.map(l=>`<div class="l"><b>${esc(l.n)||'—'}</b>${l.cnt>1?` <b style="color:var(--bad);background:#fdeeec;border-radius:4px;padding:0 6px">${l.cnt} אוטובוסים יחד</b>`:''} <span>${l.dest?'אל '+esc(l.dest):''}</span> <i>· ${esc(l.op)}</i></div>`).join('')}${times}</td>
       <td style="white-space:nowrap"><span class="sev ${(x.busMax||x.bus)>=3?'s3':'s2'}"></span>${x.busMax||x.bus} אוטובוסים בדקה${x.occ&&x.occ.length>1?` · ${fmt(x.occ.length)} מופעים`:''}</td></tr>`;
   }
   html+='</table>';
@@ -185,7 +185,7 @@ function render(){
 function XDL(){
   const rows=[['שעות','תחנה','עיר','רציף','מק"ט','ימים','אוטובוסים בדקה','קווים','מפעילים']];
   for(const x of CUR)rows.push([x.occ?x.occ.map(o=>o.t).join(' | '):x.t,x.name,x.city,x.plat,x.code,fmtDays(x.daysAll||x.days),x.busMax||x.bus,
-    x.lines.map(l=>l.n+(l.cnt>1?' x'+l.cnt:'')+(l.dest?' אל '+l.dest:'')).join(' | '),[...new Set(x.lines.map(l=>l.op))].join(' | ')]);
+    x.lines.map(l=>l.n+(l.cnt>1?' ('+l.cnt+' אוטובוסים)':'')+(l.dest?' אל '+l.dest:'')).join(' | '),[...new Set(x.lines.map(l=>l.op))].join(' | ')]);
   const cell=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const blob=new Blob(['﻿'+rows.map(r=>r.map(cell).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
