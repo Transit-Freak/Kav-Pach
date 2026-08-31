@@ -775,43 +775,45 @@ json.dump(chm,open(chpath,'w',encoding='utf-8'),ensure_ascii=False,separators=('
 _pdst_path=f'{OUTDIR}/pubdest-state.json'
 _pdraw=jload(_pdst_path,None)
 if isinstance(_pdraw,dict) and _pdraw.get('v')==2:
-    _pdst_prev=_pdraw.get('stops'); _prd_prev=_pdraw.get('rds') or {}
+    _pdst_prev=_pdraw.get('stops'); _phs_prev=_pdraw.get('hs') or {}
 else:
-    _pdst_prev=_pdraw; _prd_prev={}
+    _pdst_prev=_pdraw; _phs_prev={}
     if _pdst_prev and any('|' in k for k in list(_pdst_prev)[:5]):
         _pdst_prev=None   # פורמט ישן (מפתח שם) — בסיס חדש בלי אירועי-סרק
-_pdst={}; _prd={}
+_pdst={}; _phc={}
 for _rd,_c in cur.items():
     if _c.get('codes'):
-        _pdst.setdefault(str(_c['codes'][-1]),set()).add(_c['line'])
-        _prd[_rd]=[str(_c['codes'][-1]),_c['line']]
+        _c0=str(_c['codes'][-1])
+        _pdst.setdefault(_c0,set()).add(_c['line'])
+        if _c.get('hs'):
+            _phc.setdefault(_c0,{})
+            _phc[_c0][_c['hs']]=_phc[_c0].get(_c['hs'],0)+1
 _pdst={k:sorted(v)[:12] for k,v in _pdst.items()}
+# שם השלט של כל תחנת יעד = הנפוץ ביותר בין המסלולים שמסתיימים בה;
+# שובר-שוויון דטרמיניסטי כדי שלא ייווצרו אירועי-סרק מריצוד
+_phs={k:max(v.items(),key=lambda kv:(kv[1],kv[0]))[0] for k,v in _phc.items()}
 if _pdst_prev is not None and not first_run and not REBASE:
-    # מה השינוי בפועל (בקשת שלמה): לכל מסלול שהיעד שלו זז — מאיפה לאן
-    _sname=lambda c0:(cur_stops.get(c0) or (prev_stops.get(c0) if isinstance(prev_stops.get(c0),list) else None) or [''])[0]
-    _mvin={};_mvout={}
-    for _rd,_v2 in _prd.items():
-        _o=_prd_prev.get(_rd)
-        if not _o or _o[0]==_v2[0]: continue
-        _p=[_v2[1],_sname(_o[0])]
-        if _p not in _mvin.setdefault(_v2[0],[]): _mvin[_v2[0]].append(_p)
-        _p=[_v2[1],_sname(_v2[0])]
-        if _p not in _mvout.setdefault(_o[0],[]): _mvout[_o[0]].append(_p)
     for _c0 in _pdst.keys()-_pdst_prev.keys():
         _v=cur_stops.get(_c0)
         if _v:
-            _e={'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
-                'st':'in','ln':_pdst[_c0][:8]}
-            if _mvin.get(_c0): _e['mv']=_mvin[_c0][:6]
-            sev(_c0,_e); npd_t+=1
+            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
+                     'st':'in','ln':_pdst[_c0][:8]}); npd_t+=1
     for _c0 in _pdst_prev.keys()-_pdst.keys():
         _v=cur_stops.get(_c0) or (prev_stops.get(_c0) if isinstance(prev_stops.get(_c0),list) else None)
         if _v:
-            _e={'k':'pubdest','n':_v[0],'t':_v[3] if len(_v)>3 else '','la':_v[1],'lo':_v[2],
-                'st':'out','ln':(_pdst_prev.get(_c0) or [])[:8]}
-            if _mvout.get(_c0): _e['mv']=_mvout[_c0][:6]
-            sev(_c0,_e); npd_t+=1
-json.dump({'v':2,'stops':_pdst,'rds':_prd},open(_pdst_path,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+            sev(_c0,{'k':'pubdest','n':_v[0],'t':_v[3] if len(_v)>3 else '','la':_v[1],'lo':_v[2],
+                     'st':'out','ln':(_pdst_prev.get(_c0) or [])[:8]}); npd_t+=1
+    # השינוי שחשוב (בקשת שלמה): שם היעד שעל השלט השתנה — אירוע אחד על
+    # התחנה, בלי קווים (כשהשם משתנה הוא משתנה לכל הקווים שמסתיימים בה)
+    for _c0 in _phs.keys()&_phs_prev.keys():
+        # שלט מספרי = מספר רכבת (מתחלף תדיר) — לא שינוי שם אמיתי
+        if _phs[_c0].isdigit() or _phs_prev[_c0].isdigit(): continue
+        if _phs[_c0]!=_phs_prev[_c0]:
+            _v=cur_stops.get(_c0)
+            if _v:
+                sev(_c0,{'k':'pubdest','st':'ren','n':_v[0],'t':_v[3],'la':_v[1],'lo':_v[2],
+                         'oh':hs_fmt(_phs_prev[_c0]),'nh':hs_fmt(_phs[_c0])}); npd_t+=1
+json.dump({'v':2,'stops':_pdst,'hs':_phs},open(_pdst_path,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 
 json.dump(stm,open(spath,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(shist,open(f'{OUTDIR}/stops-hist.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
