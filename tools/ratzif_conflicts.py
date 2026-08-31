@@ -155,23 +155,36 @@ def main():
             rid, svc = by_line[key][0]
             ro = routes[rid]
             dest = ro['long'].split('<->')[-1].split('-')[0] if '<->' in ro['long'] else ''
-            lines_out.append({'n': ro['n'], 'mk': ro['mk'], 'dest': dest,
-                              'op': ag.get(ro['ag'], ''),
-                              'days': ''.join(DAYS_HE[i] for i in range(7)
-                                              if svc_days.get(svc, 0) >> i & 1)})
+            lines_out.append([ro['n'], dest, ag.get(ro['ag'], '')])
         days_txt = ''.join(DAYS_HE[i] for i in range(7) if pair_mask >> i & 1)
         conflicts.append({'code': st.get('code', ''), 'name': st.get('name', ''),
                           'city': st.get('city', ''), 'plat': st.get('plat', ''),
                           't': dep, 'days': days_txt, 'lines': lines_out})
 
     conflicts.sort(key=lambda x: (x['city'], x['name'], x['t']))
-    # תחנה עם הכי הרבה התנגשויות — לסיכום בעמוד
     from collections import Counter
     per_stop = Counter((x['code'], x['name'], x['city']) for x in conflicts)
     top = [{'code': k[0], 'name': k[1], 'city': k[2], 'n': v}
            for k, v in per_stop.most_common(12)]
+    # דחיסה (הקובץ המלא יצא 11MB): תחנות ומפעילים נשמרים פעם אחת,
+    # וכל התנגשות היא מערך קצר — העמוד פורש חזרה בטעינה
+    st_tbl, op_tbl, st_ix, op_ix = [], [], {}, {}
+    comp = []
+    for x in conflicts:
+        sk = (x['code'], x['name'], x['city'], x['plat'])
+        if sk not in st_ix:
+            st_ix[sk] = len(st_tbl)
+            st_tbl.append(list(sk))
+        ls = []
+        for n, dest, op in x['lines']:
+            if op not in op_ix:
+                op_ix[op] = len(op_tbl)
+                op_tbl.append(op)
+            ls.append([n, dest, op_ix[op]])
+        comp.append([st_ix[sk], x['t'], x['days'], ls])
     out = {'updated': day.isoformat(), 'total': len(conflicts),
-           'stations': len(per_stop), 'top': top, 'conflicts': conflicts}
+           'stations': len(per_stop), 'top': top,
+           'st': st_tbl, 'ops': op_tbl, 'c': comp}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     tmp = OUT + '.tmp'
     with open(tmp, 'w', encoding='utf-8') as f:
