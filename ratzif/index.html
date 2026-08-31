@@ -5,84 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>רציף כפול — הקו הבוחן</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&family=IBM+Plex+Mono:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#eceff5;--ink:#141a2e;--dim:#5a6280;
-    --board:#101a33;--board2:#0b1327;--line:#22304f;
-    --amber:#ffc247;--amber2:#ffdd9a;--white:#f3f6ff;--red:#ff6b5e;
-    --chip:#1c2a4a;--brd:#c5cede;--shadow:0 2px 10px rgba(16,26,51,.14)
-  }
+  :root{--blue:#0b57a4;--blue2:#094a8c;--ink:#1a2433;--dim:#5b6779;--brd:#c3cddc;--tint:#eaf1fa;--bg:#fafbfc;--warn:#e8a13c;--bad:#cf3f36}
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif}
-  .wrap{max-width:920px;margin:0 auto;padding:16px 12px 44px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Assistant',system-ui,sans-serif}
   a.home{color:var(--dim);font-size:13px;text-decoration:none}
-
-  /* ==== הכותרת: שלט מסוף ==== */
-  .hero{background:linear-gradient(180deg,var(--board),var(--board2));border-radius:18px;padding:22px 22px 18px;margin:10px 0 14px;box-shadow:var(--shadow);position:relative;overflow:hidden}
-  .hero::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.015) 3px 4px);pointer-events:none}
-  .hero h1{margin:0;font-size:30px;font-weight:900;color:var(--amber);letter-spacing:.5px}
-  .hero .tag{display:inline-block;background:var(--chip);color:var(--amber2);border:1px solid var(--line);border-radius:8px;padding:3px 10px;font-size:12px;margin-bottom:10px}
-  .hero p{color:#aeb9d6;font-size:14px;line-height:1.6;margin:10px 0 0;max-width:640px}
-  .hero p b{color:var(--white)}
-  .stats{display:flex;gap:26px;margin-top:16px;flex-wrap:wrap}
-  .stat b{display:block;font-family:'IBM Plex Mono',monospace;font-size:27px;color:var(--white);direction:ltr;text-align:right}
-  .stat span{font-size:12px;color:#8fa0c5}
-  .stat.hot b{color:var(--amber)}
-
-  /* ==== חיפוש וסינון ==== */
-  input[type=search]{width:100%;padding:12px 15px;border:1px solid var(--brd);border-radius:12px;font:inherit;font-size:15px;background:#fff;box-shadow:var(--shadow)}
-  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
-  .fchip{border:1px solid var(--brd);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink)}
-  .fchip.on{background:var(--board);border-color:var(--board);color:var(--amber)}
-
-  /* ==== לוח תחנה ==== */
-  .stn{background:var(--board);border-radius:16px;margin:14px 0;overflow:hidden;box-shadow:var(--shadow)}
-  .shead{padding:13px 18px 11px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:2px solid var(--amber)}
-  .shead b{font-size:16.5px;color:var(--white)}
-  .shead .c{color:#8fa0c5;font-size:12.5px}
-  .shead .n{background:var(--amber);color:var(--board);border-radius:7px;padding:2px 9px;font-weight:900;font-size:13px}
-  .brow{display:grid;grid-template-columns:74px 1fr;gap:4px 14px;padding:11px 18px;border-top:1px solid var(--line);align-items:start}
-  .brow:nth-child(even){background:rgba(255,255,255,.02)}
-  .tm{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:21px;color:var(--amber);line-height:1.1}
-  .tm small{display:block;font-family:'Rubik';font-weight:400;font-size:10.5px;color:#8fa0c5;letter-spacing:.3px}
-  .lns{display:flex;flex-direction:column;gap:5px}
-  .ln{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-  .ln .no{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15.5px;color:var(--white);background:var(--chip);border-radius:6px;padding:1px 9px;min-width:44px;text-align:center;direction:ltr}
-  .ln .dest{color:#d7deef;font-size:13.5px}
-  .ln .op{color:#8fa0c5;font-size:12px}
-  .vs{color:var(--red);font-size:11px;font-weight:700;letter-spacing:1px;margin:1px 0 -2px}
-  .morerows{padding:10px 18px;color:#8fa0c5;font-size:12.5px;border-top:1px solid var(--line)}
-  .more{display:block;margin:16px auto;border:1px solid var(--brd);background:#fff;color:var(--ink);border-radius:999px;padding:11px 24px;font:inherit;cursor:pointer;box-shadow:var(--shadow)}
+  .top{background:#fff;border-bottom:3px solid var(--blue);padding:14px 22px 12px}
+  .top h1{margin:0;font-size:22px;font-weight:800;color:var(--blue)}
+  .top .sub{font-size:13.5px;color:var(--dim);margin-top:3px;line-height:1.5;max-width:760px}
+  .meta{display:flex;gap:20px;margin-top:10px;font-size:13px;color:#38445a;flex-wrap:wrap}
+  .meta b{color:var(--blue);font-variant-numeric:tabular-nums}
+  .bar{display:flex;gap:8px;padding:10px 22px;background:#f1f4f8;border-bottom:1px solid #dde4ee;font-size:13px;align-items:center;flex-wrap:wrap}
+  select,.csv{background:#fff;border:1px solid var(--brd);border-radius:7px;padding:7px 10px;color:#38445a;font:inherit;font-size:13px;cursor:pointer}
+  .csv{color:var(--blue);font-weight:700}
+  input[type=search]{flex:1;min-width:170px;background:#fff;border:1px solid var(--brd);border-radius:7px;padding:7px 11px;font:inherit;font-size:13.5px}
+  .tblwrap{margin:14px 22px;overflow-x:auto;background:#fff;box-shadow:0 1px 3px rgba(20,35,60,.08);border-radius:6px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:760px}
+  th{background:var(--blue);color:#fff;font-weight:700;padding:9px 12px;text-align:right;font-size:12.5px;cursor:pointer;user-select:none;white-space:nowrap}
+  th .arr{opacity:.7;font-size:10px}
+  td{padding:8px 12px;border-bottom:1px solid #e8edf4;vertical-align:top}
+  tr:nth-child(even) td{background:#f7f9fc}
+  .tt{font-variant-numeric:tabular-nums;font-weight:800;color:var(--blue);font-size:15px;white-space:nowrap}
+  .stn{font-weight:700}
+  .mut{color:var(--dim);font-size:12px}
+  .lz{display:flex;flex-direction:column;gap:3px}
+  .lz .l b{background:var(--tint);border:1px solid #c9d9ef;border-radius:4px;padding:0 7px;color:var(--blue);font-variant-numeric:tabular-nums}
+  .lz .l span{color:#38445a}
+  .lz .l i{color:var(--dim);font-style:normal;font-size:12px}
+  .sev{display:inline-block;width:10px;height:10px;border-radius:2px;margin-left:5px;vertical-align:-1px}
+  .s2{background:var(--warn)}.s3{background:var(--bad)}
+  .foot{padding:0 22px 26px;font-size:12.5px;color:var(--dim);line-height:1.6}
+  .more{display:block;margin:0 auto 14px;border:1px solid var(--brd);background:#fff;color:var(--blue);border-radius:7px;padding:9px 22px;font:inherit;font-weight:700;cursor:pointer}
   .empty{padding:34px;text-align:center;color:var(--dim)}
-  .note{background:#fff;border:1px solid var(--brd);border-right:4px solid var(--amber);border-radius:12px;padding:12px 16px;font-size:13.5px;line-height:1.65;margin:18px 0;color:var(--ink)}
-  @media(max-width:520px){.hero h1{font-size:24px}.stats{gap:18px}.brow{grid-template-columns:64px 1fr;padding:10px 13px}.shead{padding:11px 13px 9px}}
+  .note{background:#fff;border:1px solid var(--brd);border-right:4px solid var(--warn);border-radius:8px;padding:11px 15px;font-size:13px;line-height:1.65;margin:0 22px 18px;color:var(--ink)}
+  @media(max-width:560px){.top{padding:12px 12px 10px}.bar{padding:8px 12px}.tblwrap{margin:10px 12px}.note{margin:0 12px 14px}.foot{padding:0 12px 22px}}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="top">
   <a class="home" href="../">→ הקו הבוחן</a>
-
-  <div class="hero">
-    <span class="tag">מתוך לוח הזמנים הרשמי של משרד התחבורה · מתעדכן לילית</span>
-    <h1>רציף כפול</h1>
-    <p>רציף מוצא אחד. דקה אחת. <b>שני אוטובוסים או יותר שאמורים לצאת ממנו בו-זמנית</b> — לפי הרישוי עצמו. נבדקות אך ורק תחנות מוצא, הנקודה שבה האוטובוס עומד ברציף ומעלה נוסעים לפני היציאה. מה שמוצג כאן פיזית בלתי אפשרי: או שהרישוי לא מעודכן, או שאיחור מובנה בשטח.</p>
-    <div class="stats" id="stats"></div>
-  </div>
-
-  <input id="q" type="search" placeholder="חיפוש עיר, מסוף או מספר קו…">
-  <div class="filters">
-    <button class="fchip on" data-f="term">מסופים ותחנות מרכזיות</button>
-    <button class="fchip" data-f="all">כל תחנות המוצא</button>
-    <button class="fchip" data-f="multi">3 קווים ומעלה בדקה</button>
-    <button class="fchip" data-f="day">בלי יציאות 00:00</button>
-  </div>
-  <div id="view"><div class="empty">טוען את הלוח…</div></div>
-
-  <div class="note"><b>איך לקרוא את זה:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית, לא התנגשות), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשיש חפיפה בימי הפעילות של שני הקווים. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — לכן יש להן מסנן משלהן.</div>
+  <h1>התנגשויות רציף מוצא — לוח הרישוי הארצי</h1>
+  <div class="sub">שני קווים או יותר שמתוזמנים לצאת מאותו רציף מוצא באותה דקה, באותם ימי פעילות — לפי לוח הזמנים הרשמי (GTFS). נבדקות אך ורק תחנות מוצא: הנקודה שבה האוטובוס עומד ברציף לפני היציאה.</div>
+  <div class="meta" id="meta"></div>
 </div>
+<div class="bar">
+  <select id="fScope"><option value="term">מסופים ותחנות מרכזיות</option><option value="plat">רק רציפים ממוספרים (הטענה החזקה)</option><option value="all">כל תחנות המוצא</option></select>
+  <input id="fCity" list="cities" placeholder="מרחב: כל הארץ — הקלידו עיר…" style="min-width:170px;background:#fff;border:1px solid var(--brd);border-radius:7px;padding:7px 10px;font:inherit;font-size:13px"><datalist id="cities"></datalist>
+  <select id="fOp"><option value="">מפעיל: הכול</option></select>
+  <select id="fWin"><option value="">חלון: יום שלם</option><option value="am">שיא הבוקר 06:00–09:00</option><option value="pm">שיא הערב 15:00–19:00</option><option value="nomid">בלי יציאות 00:00</option></select>
+  <select id="fSev"><option value="">חומרה: הכול</option><option value="3">3 קווים ומעלה</option></select>
+  <input id="q" type="search" placeholder="חיפוש תחנה או מספר קו…">
+  <button class="csv" onclick="XDL()">ייצוא CSV ↓</button>
+</div>
+<div class="tblwrap"><div class="empty">טוען את הלוח…</div></div>
+<div id="morewrap"></div>
+<div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. חומרה: <span class="sev s2"></span>2 קווים באותה דקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
+<div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='4';
+window.RZ_BUILD='6';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -93,61 +74,85 @@ window.RZ_BUILD='4';
   }).catch(function(){});
 })();
 const $=s=>document.querySelector(s);
-let D=null,Q='',F='term',NOMID=false,LIMIT=30;
+let D=null,LIMIT=100,SORTK='sev',SORTD=-1,CUR=[];
 function expand(d){
   d.conflicts=(d.c||[]).map(r=>{const s=d.st[r[0]];
-    return {code:s[0],name:s[1],city:s[2],plat:s[3],t:r[1],days:r[2],
+    return {code:s[0],name:s[1],city:s[2],plat:(s[3]&&!s[3].includes('קומה'))?s[3]:'',t:r[1],days:r[2],
             lines:r[3].map(l=>({n:l[0],dest:l[1],op:d.ops[l[2]]}))};});
   return d;
 }
 const fmt=n=>n.toLocaleString('he');
-const isTerm=x=>(x.plat&&!x.plat.includes('קומה'))||/מסוף|ת\.\s*מרכזית|תחנה מרכזית|מרכזית|רציף|מתחם/.test(x.name);
+const isTerm=x=>x.plat||/מסוף|ת\.\s*מרכזית|תחנה מרכזית|מרכזית|רציף|מתחם/.test(x.name);
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function render(){
-  if(!D)return;
-  const q=Q.trim();
-  let cs=D.conflicts.filter(x=>{
-    if(F==='term'&&!isTerm(x))return false;
-    if(F==='multi'&&x.lines.length<3)return false;
-    if(NOMID&&x.t==='00:00')return false;
+function filt(){
+  const q=$('#q').value.trim(),city=$('#fCity').value,op=$('#fOp').value,
+        win=$('#fWin').value,sev=$('#fSev').value,scope=$('#fScope').value;
+  return D.conflicts.filter(x=>{
+    if(scope==='term'&&!isTerm(x))return false;
+    if(scope==='plat'&&!x.plat)return false;
+    if(city&&!(x.city||'').includes(city))return false;
+    if(op&&!x.lines.some(l=>l.op===op))return false;
+    if(win==='am'&&!(x.t>='06:00'&&x.t<'09:00'))return false;
+    if(win==='pm'&&!(x.t>='15:00'&&x.t<'19:00'))return false;
+    if(win==='nomid'&&x.t==='00:00')return false;
+    if(sev==='3'&&x.lines.length<3)return false;
     if(!q)return true;
     return (x.city||'').includes(q)||(x.name||'').includes(q)||x.lines.some(l=>l.n===q);
   });
-  const by={},order=[];
-  for(const x of cs){const k=x.code+'|'+x.name;if(!by[k]){by[k]=[];order.push(k);}by[k].push(x);}
-  order.sort((a,b)=>by[b].length-by[a].length);
-  let html='';
-  for(const k of order.slice(0,LIMIT)){
-    const xs=by[k],s=xs[0];
-    html+=`<div class="stn"><div class="shead"><span><b>${esc(s.name)}</b> <span class="c">· ${esc(s.city||'')}${s.plat&&!s.plat.includes('קומה')?' · רציף '+esc(s.plat):''} · מק"ט ${esc(s.code)}</span></span><span class="n">${fmt(xs.length)} התנגשויות</span></div>`;
-    for(const x of xs.slice(0,25)){
-      html+=`<div class="brow"><div class="tm">${esc(x.t)}<small>ימים ${esc(x.days)}</small></div><div class="lns">`+
-        x.lines.map((l,i)=>(i?'<div class="vs">— בו-זמנית —</div>':'')+
-          `<div class="ln"><span class="no">${esc(l.n)||'—'}</span><span class="dest">${l.dest?'אל '+esc(l.dest):''}</span><span class="op">${esc(l.op)}</span></div>`).join('')+
-        `</div></div>`;
-    }
-    if(xs.length>25)html+=`<div class="morerows">ועוד ${fmt(xs.length-25)} התנגשויות באותה תחנה — חיפוש התחנה יציג את כולן</div>`;
-    html+='</div>';
-  }
-  if(!order.length)html='<div class="empty">לא נמצאו התנגשויות מתאימות לסינון</div>';
-  else if(order.length>LIMIT)html+=`<button class="more" onclick="LIMIT+=30;render()">עוד תחנות · ${fmt(order.length-LIMIT)} נותרו</button>`;
-  $('#view').innerHTML=html;
-  const shown=cs.length;
-  $('#stats').innerHTML=`<div class="stat hot"><b>${fmt(D.total)}</b><span>התנגשויות בלוח הארצי</span></div>
-    <div class="stat"><b>${fmt(D.stations)}</b><span>תחנות מוצא</span></div>
-    <div class="stat"><b>${fmt(shown)}</b><span>מוצגות בסינון הנוכחי</span></div>
-    <div class="stat"><b>${esc((D.updated||'').split('-').reverse().join('.'))}</b><span>הלוח שנבדק</span></div>`;
 }
-document.querySelectorAll('.fchip').forEach(b=>b.addEventListener('click',()=>{
-  const f=b.dataset.f;
-  if(f==='day'){NOMID=!NOMID;b.classList.toggle('on',NOMID);}
-  else{F=f;document.querySelectorAll('.fchip[data-f]:not([data-f=day])').forEach(x=>x.classList.toggle('on',x===b));}
-  LIMIT=30;render();
-}));
-$('#q').addEventListener('input',e=>{Q=e.target.value;LIMIT=30;render();});
+function srt(rows){
+  const k=SORTK,d=SORTD;
+  const key={t:x=>x.t,stn:x=>x.name+x.t,sev:x=>x.lines.length*10000+ +x.t.replace(':','')/10000}[k]||(x=>x.t);
+  return rows.slice().sort((a,b)=>{const x=key(a),y=key(b);return (x>y?1:x<y?-1:0)*d;});
+}
+function hd(k,label){
+  const on=SORTK===k?`<span class="arr">${SORTD>0?'▲':'▼'}</span>`:'';
+  return `<th onclick="SORTD=SORTK==='${k}'?-SORTD:-1;SORTK='${k}';render()">${label} ${on}</th>`;
+}
+function render(){
+  if(!D)return;
+  CUR=srt(filt());
+  let html=`<table><tr>${hd('t','שעה')}${hd('stn','מסוף / תחנת מוצא')}<th>רציף</th><th>מק"ט</th><th>ימים</th><th>קווים מתנגשים</th>${hd('sev','חומרה')}</tr>`;
+  for(const x of CUR.slice(0,LIMIT)){
+    html+=`<tr><td class="tt">${esc(x.t)}</td>
+      <td><span class="stn">${esc(x.name)}</span><div class="mut">${esc(x.city||'')}</div></td>
+      <td>${x.plat?esc(x.plat):'<span class="mut" title="למסוף אין מספרי רציפים ברישוי — ייתכן שהקווים יוצאים מרציפים פיזיים שונים החולקים תחנה אחת">אין מספור</span>'}</td><td class="mut">${esc(x.code)}</td><td>${esc(x.days)}</td>
+      <td class="lz">${x.lines.map(l=>`<div class="l"><b>${esc(l.n)||'—'}</b> <span>${l.dest?'אל '+esc(l.dest):''}</span> <i>· ${esc(l.op)}</i></div>`).join('')}</td>
+      <td style="white-space:nowrap"><span class="sev ${x.lines.length>=3?'s3':'s2'}"></span>${x.lines.length} קווים</td></tr>`;
+  }
+  html+='</table>';
+  if(!CUR.length)html='<div class="empty">אין התנגשויות מתאימות לסינון</div>';
+  $('.tblwrap').innerHTML=html;
+  $('#morewrap').innerHTML=CUR.length>LIMIT?`<button class="more" onclick="LIMIT+=200;render()">עוד ${fmt(Math.min(200,CUR.length-LIMIT))} שורות · ${fmt(CUR.length-LIMIT)} נותרו</button>`:'';
+  $('#meta').innerHTML=`<span>לוח נבדק: <b>${esc((D.updated||'').split('-').reverse().join('.'))}</b></span>
+    <span>התנגשויות בלוח: <b>${fmt(D.total)}</b></span>
+    <span>מוצגות בסינון: <b>${fmt(CUR.length)}</b></span>
+    <span>תחנות מוצא: <b>${fmt(D.stations)}</b></span>`;
+}
+function XDL(){
+  const rows=[['שעה','תחנה','עיר','רציף','מק"ט','ימים','מס\' קווים','קווים','מפעילים']];
+  for(const x of CUR)rows.push([x.t,x.name,x.city,x.plat,x.code,x.days,x.lines.length,
+    x.lines.map(l=>l.n+(l.dest?' אל '+l.dest:'')).join(' | '),[...new Set(x.lines.map(l=>l.op))].join(' | ')]);
+  const cell=v=>{v=String(v??'');return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const blob=new Blob(['﻿'+rows.map(r=>r.map(cell).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='ratzif-kaful-'+(D.updated||'')+'.csv';a.click();
+}
+['fScope','fOp','fWin','fSev'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;render();}));
+$('#fCity').addEventListener('input',()=>{LIMIT=100;render();});
+$('#q').addEventListener('input',()=>{LIMIT=100;render();});
 fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})
-.then(d=>{D=expand(d);render();})
-.catch(()=>{$('#view').innerHTML='<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה.</div>';});
+.then(d=>{
+  D=expand(d);
+  // אכלוס המסננים מהנתונים
+  const cc={};D.conflicts.forEach(x=>{if(x.city)cc[x.city]=(cc[x.city]||0)+1;});
+  $('#cities').innerHTML=Object.entries(cc).sort((a,b)=>b[1]-a[1])
+    .map(([c,n])=>`<option value="${esc(c)}">${fmt(n)} התנגשויות</option>`).join('');
+  $('#fOp').innerHTML='<option value="">מפעיל: הכול</option>'+(D.ops||[]).filter(Boolean).sort()
+    .map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  render();
+})
+.catch(()=>{$('.tblwrap').innerHTML='<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה.</div>';});
 </script>
 </body>
 </html>
