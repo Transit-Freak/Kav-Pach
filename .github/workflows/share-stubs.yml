@@ -20,6 +20,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+      - name: באנרים לקווים — רינדור החסרים בלבד
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R: Transit-Freak/kav-bochan
+        run: |
+          set -e
+          gh release view share-img -R "$R" >/dev/null 2>&1 || gh release create share-img -R "$R" \
+            --title "תמונות שיתוף (אוטומטי — לא לגעת)" --latest=false \
+            --notes "באנרים לקווים לתצוגת שיתוף בוואטסאפ. נוצר אוטומטית."
+          gh release view share-img -R "$R" --json assets -q '.assets[].name' > have.txt || true
+          python3 - <<'PYEOF'
+          import json
+          nums=sorted({(e.get('line') or '') for e in json.load(open('line-history/data/lines.json',encoding='utf-8'))['lines']} - {''})
+          have={l.strip() for l in open('have.txt')} if __import__('os').path.exists('have.txt') else set()
+          missing=[n for n in nums if f'line-h{n.encode().hex()}.png' not in have][:1200]
+          json.dump(missing,open('missing.json','w',encoding='utf-8'),ensure_ascii=False)
+          done=[n for n in nums if f'line-h{n.encode().hex()}.png' in have]
+          json.dump(sorted(set(done)|set(missing)),open('s/line-banners.json','w',encoding='utf-8'),ensure_ascii=False)
+          print('קווים:',len(nums),'| חסרים לרינדור:',len(missing))
+          PYEOF
+          if [ "$(python3 -c "import json;print(len(json.load(open('missing.json'))))")" != "0" ]; then
+            npm install --no-save playwright-core >/dev/null 2>&1
+            node tools/share_line_banner.mjs missing.json bnr "$(which google-chrome || which chromium-browser)"
+            gh release upload share-img -R "$R" bnr/*.png --clobber
+          fi
       - name: יצירת דפי השיתוף
         run: python3 tools/share_stubs.py
       - name: דחיפה

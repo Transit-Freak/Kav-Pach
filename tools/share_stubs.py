@@ -22,8 +22,10 @@ STUB = '''<!doctype html><html lang="he"><head><meta charset="utf-8">
 <link rel="icon" href="{icon}"><link rel="apple-touch-icon" href="{icon}">
 <meta property="og:title" content="{title}">
 <meta property="og:description" content="{desc}">
-<meta property="og:image" content="{icon}">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="{img}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="refresh" content="0;url={url}">
 <script>location.replace({url_js});</script>
 </head><body style="font-family:sans-serif;text-align:center;padding:40px" dir="rtl">
@@ -31,11 +33,11 @@ STUB = '''<!doctype html><html lang="he"><head><meta charset="utf-8">
 </body></html>'''
 
 
-def write_stub(name, title, desc, url, icon):
+def write_stub(name, title, desc, url, icon, img=None):
     p = os.path.join(OUT, name)
     content = STUB.format(title=html.escape(title), desc=html.escape(desc),
                           url=html.escape(url), url_js=json.dumps(url),
-                          icon=html.escape(icon))
+                          icon=html.escape(icon), img=html.escape(img or icon))
     try:
         if open(p, encoding='utf-8').read() == content:
             return False
@@ -59,6 +61,10 @@ def main():
         lines = json.load(open('line-history/data/lines.json', encoding='utf-8'))['lines']
     except Exception:
         lines = []
+    try:
+        rendered = set(json.load(open(f'{OUT}/line-banners.json', encoding='utf-8')))
+    except Exception:
+        rendered = set()
     for e in lines:
         rd = e.get('rd') or ''
         if not rd:
@@ -69,8 +75,10 @@ def main():
         desc = (f'ההיסטוריה המלאה של קו {line}' + (f' אל {dest}' if dest else '')
                 + f' · {e.get("op") or ""} · באתר הקו הבוחן').strip(' ·')
         url = f'{BASE}/line-history/#{rd}'
+        img = (f'https://github.com/Transit-Freak/kav-bochan/releases/download/share-img/line-h{line.encode().hex()}.png'
+               if line and line in rendered else f'{BASE}/line-history/og-image.png')
         w += write_stub(f'l-{fsafe(rd)}.html', title, desc, url,
-                        f'{BASE}/line-history/icon-512.png')
+                        f'{BASE}/line-history/icon-180.png', img)
         n += 1
 
     # --- צי הרכבים: כל רכב ---
@@ -86,7 +94,7 @@ def main():
                         or 'כרטיס הרכב המלא') + ' · באתר הקו הבוחן'
                 url = f'{BASE}/fleet/#v={plate}'
                 w += write_stub(f'v-{plate.replace("/", "")}.html', title, desc, url,
-                                f'{BASE}/fleet/icon-512.png')
+                                f'{BASE}/fleet/icon-180.png', f'{BASE}/fleet/og-image.png')
                 n += 1
     except Exception as e:
         print('צי: דילוג —', type(e).__name__, e, file=sys.stderr)
@@ -103,7 +111,7 @@ def main():
                     + ' · באתר הקו הבוחן')
             url = f'{BASE}/ratzif/#st={code}'
             w += write_stub(f'r-{code}.html', title, desc, url,
-                            f'{BASE}/ratzif/icon-512.png')
+                            f'{BASE}/ratzif/icon-180.png', f'{BASE}/ratzif/og-image.png')
             n += 1
     except Exception as e:
         print('רציף: דילוג —', type(e).__name__, e, file=sys.stderr)
