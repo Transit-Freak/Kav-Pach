@@ -2523,7 +2523,9 @@ function StopsTab({ sel, selN }) {
                 <input type="checkbox" checked={kinds.has(k)} onChange={() => toggleKind(k)} />
                 <i className="katdot" style={{ background: v.color }} />
                 <span className="katlab">{v.label}</span>
-                <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
+                {/* בזמן החלפת תקופה המונה הראה 0 מטעה לכמה שניות (בקשת
+                    שלמה) — עד שהנתונים נטענים כתוב בו "טוען" */}
+                <b className="katc">{chs === null ? "טוען…" : (counts[k] || 0).toLocaleString()}</b>
               </label>
             ))}
             {/* תחנות שלא נמצאו במסלול של אף קו מהמתועדים אצלנו. חלקן
@@ -2535,7 +2537,7 @@ function StopsTab({ sel, selN }) {
               <input type="checkbox" checked={onlyNs} onChange={() => setOnlyNs(!onlyNs)} />
               <i className="katdot" style={{ background: "#64748b" }} />
               <span className="katlab">רק תחנות שלא נמצאו במסלול של אף קו</span>
-              <b className="katc">{nsCount.toLocaleString()}</b>
+              <b className="katc">{chs === null ? "טוען…" : nsCount.toLocaleString()}</b>
             </label>
             {kinds.size > 0 && (
               <button className="katclear" onClick={() => setKinds(new Set())}>✖ נקה את הבחירה</button>
@@ -3031,7 +3033,8 @@ function App() {
                         <input type="checkbox" checked={kats.has(k)} onChange={() => toggleKat(k)} />
                         <i className="katdot" style={{ background: catColor(k) }} />
                         <span className="katlab">{CAT_LABELS[k]}</span>
-                        <b className="katc">{(counts[k] || 0).toLocaleString()}</b>
+                        {/* עד שאינדקס הקווים נטען המונה הראה 0 מטעה */}
+                        <b className="katc">{idx === null ? "טוען…" : (counts[k] || 0).toLocaleString()}</b>
                       </label>
                     ))}
                   </React.Fragment>
