@@ -175,7 +175,7 @@
 </div>
 
 <script>
-window.FLEET_BUILD='18';
+window.FLEET_BUILD='19';
 // ריפוי-עצמי של מטמון (בקשת שלמה — שלא יצטרך לנקות ידנית כל פעם):
 // GitHub Pages מחזיק את הדף במטמון עד ~10 דקות ובניידים לפעמים הרבה
 // יותר, ורענון רגיל לא תמיד מאמת מול השרת. לכן בכל טעינה הדף שואל את
@@ -892,10 +892,15 @@ document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{
 }));
 $('#q').addEventListener('input',e=>{Q=e.target.value;VIEW={t:'home'};CITYSEL=null;TYPESEL=null;LIMIT=200;render();});
 
-fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+fetch('data/fleet.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw {nd:r.status===404};return r.json();})
 .then(d=>{d.operators=d.operators.filter(o=>![2,20,21].includes(o.ref)&&!/^מפעיל \d+$/.test(o.name));DATA=d;OFF=d.v===2?1:0;buildX();applyHash();render();
   Promise.all([loadKM(),loadArmor(),loadOfficial(),loadGaps(),loadPhotos()]).then(()=>{buildKm();buildArmor();buildOfficial();buildGaps();render();});})
-.catch(()=>{$('#view').innerHTML='<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>';});
+.catch(e=>{
+  // תקלת רשת אינה "אין נתונים" — ההודעה הקודמת הטעתה גולש בלי קליטה
+  $('#view').innerHTML = (e&&e.nd)
+    ? '<div class="msg">עוד אין נתונים — הריצו את ה-workflow ‏fleet-scan ב-GitHub Actions.</div>'
+    : '<div class="msg">📡 הנתונים לא ירדו — כנראה תקלת אינטרנט רגעית.<br><button onclick="location.reload()" style="margin-top:10px;border:1.5px solid var(--acc,#2563eb);background:#fff;color:var(--acc,#2563eb);border-radius:9999px;padding:7px 18px;font:inherit;font-weight:800;cursor:pointer">↻ נסו שוב</button></div>';
+});
 </script>
 </body>
 </html>

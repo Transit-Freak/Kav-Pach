@@ -89,7 +89,7 @@
 <div class="note"><b>איך לקרוא:</b> אלה זמני הרישוי המתוכננים, לא מדידת שטח. חלופות של אותו קו באותו כיוון אוחדו (כפילות רישומית), רכבות ורכבלים סוננו, והתנגשות נספרת רק כשימי הפעילות של הקווים חופפים. הכמות נספרת באוטובוסים, לא בקווים: כל נסיעה ברישוי היא אוטובוס, וקו מתוגבר בכמה אוטובוסים באותה דקה (מסומן "N אוטובוסים יחד") תופס את כולם — גם קו בודד עם תגבור כפול הוא התנגשות. חומרה: <span class="sev s2"></span>2 אוטובוסים בדקה · <span class="sev s3"></span>3 ומעלה. יציאות 00:00 חשודות כזמן ממלא-מקום ברישוי — מסנן החלון מאפשר להסתירן. נסיעות שמתחילות אחרי חצות רשומות ברישוי כ-00:xx (בראש הלוח); זמני "24:xx" שקיימים ברישוי הם תחנות-אמצע של נסיעות ערב, לא יציאות מרציף — אומת מול הקובץ הגולמי. <b>חשוב:</b> כשלמסוף אין מספרי רציפים ברישוי ("אין מספור"), ייתכן שהקווים יוצאים מרציפים פיזיים שונים שחולקים תחנה אחת — הטענה החזקה ביותר היא בשורות עם מספר רציף מפורש.</div>
 <div class="foot">מקורות: לוח הזמנים הארצי GTFS של משרד התחבורה, נמשך מארכיון הסדנא לידע ציבורית · המערכת רצה מחדש בכל לילה · חלק מ"הקו הבוחן"</div>
 <script>
-window.RZ_BUILD='26';
+window.RZ_BUILD='27';
 (function(){
   fetch('index.html?v='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{
     var m=/RZ_BUILD='(\d+)'/.exec(t);
@@ -287,25 +287,37 @@ function XDL(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='ratzif-kaful-'+(D.updated||'')+'.csv';a.click();
 }
-['fScope','fOp','fWin','fSevOp','fView'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;render();}));
-$('#fCity').addEventListener('input',()=>{LIMIT=100;render();});
-$('#q').addEventListener('input',()=>{LIMIT=100;render();});
-$('#fSevN').addEventListener('input',()=>{LIMIT=100;render();});
-fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw 0;return r.json()})
+// הבחירות נשמרות מקומית — ריענון מחזיר לאותו סינון ותצוגה (בקשת שלמה)
+const FKEYS=['fScope','fCity','fOp','fWin','fSevOp','fSevN','fView','q'];
+function saveF(){try{const o={};FKEYS.forEach(k=>{o[k]=$('#'+k).value;});localStorage.setItem('rz-f',JSON.stringify(o));}catch(e){}}
+function loadF(){try{const o=JSON.parse(localStorage.getItem('rz-f')||'{}');FKEYS.forEach(k=>{if(o[k]!=null&&$('#'+k))$('#'+k).value=o[k];});}catch(e){}}
+['fScope','fOp','fWin','fSevOp','fView'].forEach(id=>$('#'+id).addEventListener('change',()=>{LIMIT=100;saveF();render();}));
+$('#fCity').addEventListener('input',()=>{LIMIT=100;saveF();render();});
+$('#q').addEventListener('input',()=>{LIMIT=100;saveF();render();});
+$('#fSevN').addEventListener('input',()=>{LIMIT=100;saveF();render();});
+fetch('data/conflicts.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw {nd:r.status===404};return r.json()})
 .then(d=>{
   D=expand(d);
-  const m0=/st=([^&]+)/.exec(location.hash);
-  if(m0){const c0=decodeURIComponent(m0[1]);const hit=D.conflicts.find(x=>x.code===c0);
-    if(hit){$('#q').value=hit.name;$('#fScope').value='all';}}
   // אכלוס המסננים מהנתונים
   const cc={};D.conflicts.forEach(x=>{if(x.city)cc[x.city]=(cc[x.city]||0)+1;});
   $('#cities').innerHTML=Object.entries(cc).sort((a,b)=>b[1]-a[1])
     .map(([c,n])=>`<option value="${esc(c)}">${fmt(n)} התנגשויות</option>`).join('');
   $('#fOp').innerHTML='<option value="">מפעיל: הכול</option>'+(D.ops||[]).filter(Boolean).sort()
     .map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+  // שחזור הסינון מהביקור הקודם (אחרי אכלוס הרשימות, כדי שהערך ייתפס);
+  // קישור שיתוף עם ‎#st=‎ גובר על מה שנשמר
+  loadF();
+  const m0=/st=([^&]+)/.exec(location.hash);
+  if(m0){const c0=decodeURIComponent(m0[1]);const hit=D.conflicts.find(x=>x.code===c0);
+    if(hit){$('#q').value=hit.name;$('#fScope').value='all';}}
   render();
 })
-.catch(()=>{$('.tblwrap').innerHTML='<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה.</div>';});
+.catch(e=>{
+  // תקלת רשת אינה "אין נתונים" — מי שנוסע בלי קליטה קיבל הודעה מטעה
+  $('.tblwrap').innerHTML = (e&&e.nd)
+    ? '<div class="empty">עוד אין נתונים — המערכת תרוץ הלילה לראשונה.</div>'
+    : '<div class="empty">📡 הנתונים לא ירדו — כנראה תקלת אינטרנט רגעית.<br><button onclick="location.reload()" style="margin-top:10px;border:1.5px solid #0e7490;background:#fff;color:#0e7490;border-radius:9999px;padding:7px 18px;font:inherit;font-weight:800;cursor:pointer">↻ נסו שוב</button></div>';
+});
 </script>
 </body>
 </html>
