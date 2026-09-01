@@ -1,0 +1,107 @@
+name: probe-tlv-terms
+
+# שאלת שלמה: לא רואים תנאי שימוש ב-GIS של עיריית תל אביב — יש בכלל כאלה?
+# חשוב כי הפיילוט של הסככות מאמן מודל על האורתופוטו שלהם, ותנאי govmap
+# אוסרים בדיוק את זה. צריך לדעת מה תל אביב אומרת.
+# שני מקומות לחפש: שדות הרישוי שמוטמעים במטא-דאטה של ArcGIS עצמה
+# (copyrightText / licenseInfo / documentInfo), ועמודי התנאים של האתרים.
+# לא כותב כלום לריפו; הממצאים בלוג הריצה.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: שדות הרישוי במטא-דאטה של שירותי ArcGIS
+        run: |
+          meta() {
+            echo "=== $1"
+            curl -sk --max-time 30 "$1" -H 'User-Agent: Mozilla/5.0' | python3 -c "
+          import json,sys
+          try: d=json.load(sys.stdin)
+          except Exception as e: print('לא JSON:',e); raise SystemExit
+          keys=['serviceDescription','description','copyrightText','licenseInfo',
+                'documentInfo','mapName','name','capabilities','maxRecordCount']
+          for k in keys:
+              v=d.get(k)
+              if v not in (None,'',{},[]):
+                  print(f'  {k} = {json.dumps(v,ensure_ascii=False)[:900]}')
+          if not any(d.get(k) for k in ('copyrightText','licenseInfo')):
+              print('  ** אין copyrightText ואין licenseInfo **')
+          " || echo '  (כשל)'
+            echo "---"
+          }
+          meta "https://gisn.tel-aviv.gov.il/arcgis/rest/services/WM/IView2Ortho2025WM/MapServer?f=json"
+          meta "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer?f=json"
+          meta "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer/24?f=json"
+          meta "https://gisn.tel-aviv.gov.il/arcgis/rest/services?f=json"
+          meta "https://gisn.tel-aviv.gov.il/arcgis/rest/info?f=json"
+
+      - name: חיפוש קישורי "תנאי שימוש" בעמודי המפה והדאטה הפתוחה
+        run: |
+          scan() {
+            echo "=== $1"
+            code=$(curl -sk -o /tmp/p.html -w '%{http_code}' --max-time 30 \
+                   -H 'User-Agent: Mozilla/5.0' "$1")
+            echo "  HTTP $code · $(wc -c </tmp/p.html) בתים"
+            python3 - <<'PY'
+          import re,html
+          t=open('/tmp/p.html',encoding='utf-8',errors='replace').read()
+          pat=r'(תנאי[^<"\']{0,25}שימוש|תקנון|זכויות יוצרים|רישיון|terms|licen[sc]e|copyright|disclaimer)'
+          seen=set()
+          for m in re.finditer(r'<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',t,re.S|re.I):
+              href,txt=m.group(1),re.sub(r'<[^>]+>','',m.group(2))
+              txt=html.unescape(txt).strip()
+              if re.search(pat,href+' '+txt,re.I) and (href,txt) not in seen:
+                  seen.add((href,txt)); print('  קישור:',txt[:60],'->',href[:130])
+          for m in re.finditer(pat,t,re.I):
+              s=max(0,m.start()-90); frag=re.sub(r'<[^>]+>',' ',t[s:m.end()+150])
+              frag=' '.join(html.unescape(frag).split())
+              if frag not in seen:
+                  seen.add(frag); print('  אזכור:',frag[:220])
+          if len(seen)==0: print('  ** לא נמצא שום אזכור של תנאים/רישיון/זכויות **')
+          PY
+            echo "---"
+          }
+          scan "https://opendata.tel-aviv.gov.il/"
+          scan "https://gisn.tel-aviv.gov.il/iview2js4/index.aspx"
+          scan "https://www5.tel-aviv.gov.il/tlv4u/gis/"
+          scan "https://www.tel-aviv.gov.il/Pages/HomePage.aspx"
+
+      - name: עמודי תנאים אפשריים — האם קיימים בכלל
+        run: |
+          t() {
+            code=$(curl -sk -o /tmp/t.html -w '%{http_code}' --max-time 25 \
+                   -H 'User-Agent: Mozilla/5.0' "$1")
+            echo "HTTP $code  $(wc -c </tmp/t.html | tr -d ' ') בתים  $1"
+            if [ "$code" = "200" ]; then
+              python3 -c "
+          import re,html,sys
+          t=open('/tmp/t.html',encoding='utf-8',errors='replace').read()
+          t=re.sub(r'<script.*?</script>|<style.*?</style>','',t,flags=re.S|re.I)
+          t=' '.join(html.unescape(re.sub(r'<[^>]+>',' ',t)).split())
+          print('   ',t[:700])"
+            fi
+          }
+          t "https://opendata.tel-aviv.gov.il/Pages/terms.aspx"
+          t "https://opendata.tel-aviv.gov.il/terms"
+          t "https://www.tel-aviv.gov.il/Pages/TermsOfUse.aspx"
+          t "https://www.tel-aviv.gov.il/Pages/Terms.aspx"
+          t "https://www.tel-aviv.gov.il/Pages/Takanon.aspx"
+          t "https://www.tel-aviv.gov.il/Pages/privacy.aspx"
+          t "https://gisn.tel-aviv.gov.il/robots.txt"
+          t "https://opendata.tel-aviv.gov.il/robots.txt"
+          t "https://www.tel-aviv.gov.il/robots.txt"
+
+      - name: מנוע החיפוש של אתר העירייה — "תנאי שימוש"
+        run: |
+          curl -sk --max-time 30 -H 'User-Agent: Mozilla/5.0' \
+            "https://www.tel-aviv.gov.il/_api/search/query?querytext='%D7%AA%D7%A0%D7%90%D7%99%20%D7%A9%D7%99%D7%9E%D7%95%D7%A9'&rowlimit=10" \
+            -H 'Accept: application/json;odata=verbose' | head -c 1500 || true
+          echo; echo '---'
