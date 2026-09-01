@@ -1,0 +1,76 @@
+name: sakachot-pilot
+
+# פיילוט הסככות (בקשת שלמה): המערכת לומדת לזהות סככות מתצלום האוויר
+# של עיריית תל אביב ומצליבה מול תחנות הרישוי. ריצה ידנית לפי שלבים.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'שלב: A דגימות · B ערכת אימון · C אימון · D הרצה על תחנות'
+        required: true
+        default: 'A'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sakachot-pilot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore lab from release
+        if: ${{ inputs.stage != 'A' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create sakachot-pilot --notes "קבצי הביניים של פיילוט הסככות" 2>/dev/null || true
+          mkdir -p sakachot-lab
+          for f in train.zip shelter-model.pt; do
+            gh release download sakachot-pilot -p "$f" -D /tmp/lab 2>/dev/null || true
+          done
+          [ -f /tmp/lab/train.zip ] && unzip -q /tmp/lab/train.zip -d . || true
+          [ -f /tmp/lab/shelter-model.pt ] && cp /tmp/lab/shelter-model.pt sakachot-lab/ || true
+          ls sakachot-lab || true
+
+      - name: Deps
+        run: |
+          pip install -q pillow
+          if [ "${{ inputs.stage }}" = "C" ] || [ "${{ inputs.stage }}" = "D" ]; then
+            pip install -q ultralytics --no-warn-script-location
+          fi
+
+      - name: Run stage
+        run: STAGE='${{ inputs.stage }}' python3 tools/sakachot_pilot.py
+
+      - name: Save big outputs to release
+        if: ${{ inputs.stage == 'B' || inputs.stage == 'C' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create sakachot-pilot --notes "קבצי הביניים של פיילוט הסככות" 2>/dev/null || true
+          if [ "${{ inputs.stage }}" = "B" ]; then
+            zip -qr /tmp/train.zip sakachot-lab/train
+            gh release upload sakachot-pilot /tmp/train.zip --clobber
+          else
+            gh release upload sakachot-pilot sakachot-lab/shelter-model.pt --clobber
+          fi
+
+      - name: Commit small outputs
+        if: ${{ inputs.stage == 'A' || inputs.stage == 'D' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sakachot-lab/samples sakachot-lab/results.json sakachot-lab/suspects 2>/dev/null || true
+          git diff --cached --quiet && { echo unchanged; exit 0; }
+          git commit -m "sakachot-pilot: תוצרי שלב ${{ inputs.stage }}"
+          for i in 1 2 3; do
+            if git push origin HEAD:main; then break; fi
+            git pull --rebase origin main || { git rebase --abort; break; }
+          done
