@@ -22,34 +22,15 @@ jobs:
             curl -sk --max-time 20 "$1" -H 'User-Agent: Mozilla/5.0' | head -c 600
             echo; echo "---"
           }
-          # שלב 4: המבחן המכריע לרעיון של שלמה — האם "מבנים" כולל סככות?
-          echo "=== שכבות מבנה בקטלוג IView2"
-          curl -sk --max-time 60 "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer?f=json" -H 'User-Agent: Mozilla/5.0' \
-            | python3 -c "
-          import json,sys,re
-          d=json.load(sys.stdin)
-          for l in d.get('layers') or []:
-              if re.search('מבנ|סככ|גגון|קל', l.get('name','')):
-                  print(l['id'], l['name'], l.get('geometryType',''))
-          "
-          echo "--- שאילתה מרחבית: אבן גבירול/ארלוזורוב, רדיוס 40 מ, שכבת מבנים (24) של מפת הבסיס"
+          # שלב 5: אילו סוגי מבנה קיימים בכלל בשכבה — יש קטגוריית סככה?
+          echo "=== ערכי t_sug_mivne בשכבת המבנים"
           curl -sk --max-time 60 -H 'User-Agent: Mozilla/5.0' \
-            "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer/24/query?geometry=34.7818,32.0879&geometryType=esriGeometryPoint&inSR=4326&distance=40&units=esriSRUnit_Meter&outFields=*&returnGeometry=true&f=json" \
+            "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer/24/query?where=1%3D1&groupByFieldsForStatistics=t_sug_mivne&outStatistics=%5B%7B%22statisticType%22%3A%22count%22%2C%22onStatisticField%22%3A%22oid_mivne%22%2C%22outStatisticFieldName%22%3A%22n%22%7D%5D&f=json" \
             | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          fs=d.get('features') or []
-          print('פוליגונים שנמצאו:',len(fs),'| שגיאה:' ,d.get('error'))
-          def area(rings):
-              a=0
-              for r in rings:
-                  s2=0
-                  for i in range(len(r)-1):
-                      s2+=r[i][0]*r[i+1][1]-r[i+1][0]*r[i][1]
-                  a+=abs(s2)/2
-              return a
-          for f in fs[:12]:
-              g=f.get('geometry') or {}
-              print(round(area(g.get('rings') or [])),'מ\"ר |', json.dumps(f.get('attributes'),ensure_ascii=False)[:120])
+          if d.get('error'): print('שגיאה:',d['error'])
+          for f in d.get('features') or []:
+              a=f['attributes']; print(a.get('t_sug_mivne'),'·',a.get('n'))
           "
           echo "---"
