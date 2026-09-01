@@ -52,6 +52,10 @@
       <button class="btn" id="symstops" title="משולש שגודלו לפי מספר תחנות האוטובוס הפעילות בתוך האזור">🚏 תחנות · משולש</button>
       <button class="btn" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
       <button class="btn" id="symscore" title="כוכב בצבע ובגודל לפי ציון השירות הרשמי של משרד התחבורה (0–100)">⭐ ציון משרד התחבורה · כוכב</button>
+      <button class="btn" id="symuf" title="ממוצע: כל כמה דקות יוצא אוטובוס שימושי בשעות השיא — בבוקר אל האזור, אחה״צ ממנו">🚌 תדירות שימושית</button>
+      <button class="btn" id="symcov" title="איזה חלק משטח האזור נמצא בהליכת 10 דקות אמיתית מתחנה">🗺️ כיסוי שטח</button>
+      <button class="btn" id="symfar" title="כמה דקות הולך העובד במפעל המרוחק ביותר באזור עד התחנה הקרובה">🚶 הנקודה הרחוקה</button>
+      <button class="btn" id="symbest" title="התדירות של הקו החזק ביותר באזור בשיא הבוקר">🔝 הקו התדיר</button>
       <div class="lp-sec">שכבות מפה</div>
       <button class="btn" id="sabtn" title="צביעת המפה לפי המדד החברתי-כלכלי (למ״ס 2021)">🗺️ אשכולות חברתי-כלכלי</button>
       <div class="lp-sec">מדידה</div>
@@ -376,13 +380,33 @@ const SC100=[[90,'#1a9c3e','#fff','מצוין'],[80,'#52c234','#fff','טוב מ�
   [30,'#f59d20','#fff','חלש'],[20,'#ef7215','#fff','גרוע'],[10,'#e11d1d','#fff','גרוע מאוד'],[0,'#b91c1c','#fff','גרוע מאוד']];
 function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#b91c1c',fg:'#fff',label:'גרוע מאוד'};}
   const scol=(sf)=>sc100(sf).bg;
+  // ארבע שכבות המבחנים (איריס 01.09) — מדרגות זמניות עד הגדרה סופית.
+  // ההמרה: ערך גולמי -> ציון 0-100 על סקאלת עשר המדרגות.
+  const bandScore=(v,bands,fallback)=>{for(const[t,sc]of bands)if(v<=t)return sc;return fallback};
+  const LAYERS={
+    uf:{cap:'🚌 אוטובוס שימושי בממוצע (בבוקר אל האזור, אחה״צ ממנו)',
+        score:p=>{const d=p.pkd||0;if(!d)return 0;return bandScore(420/d,[[5,95],[8,85],[12,75],[17,65],[25,55],[35,45],[50,35],[80,25],[180,15]],5)},
+        pop:p=>{const d=p.pkd||0;return d?`🚌 <b>${d}</b> יציאות שימושיות בשעות השיא — אוטובוס בממוצע כל <b>~${Math.round(420/d)} דק׳</b>`:'<b style="color:#b91c1c">אפס יציאות שימושיות בשעות השיא</b>'}},
+    cov:{cap:'🗺️ אחוז שטח האזור בהליכת 10 דק׳ מתחנה',
+        score:p=>('cv' in p)?p.cv:null,
+        pop:p=>('cv' in p)?`🗺️ <b>${p.cv}%</b> משטח האזור בטווח 10 דק׳ הליכה אמיתית מתחנה`:'אין חישוב כיסוי לאזור הזה'},
+    far:{cap:'🚶 הליכת העובד במפעל המרוחק ביותר',
+        score:p=>p.ww==null?0:bandScore(p.ww,[[5,95],[8,85],[11,75],[14,65],[18,55],[22,45],[28,35],[35,25],[45,15]],5),
+        pop:p=>p.ww==null?'<b style="color:#b91c1c">אין תחנות בסביבת האזור</b>':`🚶 מהנקודה המרוחקת ביותר באזור הולכים <b>${Math.round(p.ww)} דק׳</b> לתחנה הקרובה`},
+    best:{cap:'🔝 תדירות הקו החזק ביותר בשיא הבוקר',
+        score:p=>{const b=p.bl||0;if(!b)return 0;return bandScore(180/b,[[5,95],[10,80],[15,70],[20,60],[30,45],[45,30],[60,20]],10)},
+        pop:p=>{const b=p.bl||0;return b?`🔝 הקו החזק ביותר: אוטובוס כל <b>~${Math.round(180/b)} דק׳</b> בבוקר (${b} יציאות 06–09)`:'<b style="color:#b91c1c">אין אף קו עם יציאות בוקר</b>'}}};
+
   // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
   document.getElementById('hpeak').parentElement.style.visibility='hidden';   // פסק הדין קבוע — המתג לא רלוונטי
   document.getElementById('hscopeseg').style.visibility=SYMMODE=='freq'?'visible':'hidden';
   document.getElementById('hsin').classList.toggle('on',HEATSCOPE=='in');
   document.getElementById('hsall').classList.toggle('on',HEATSCOPE=='all');
+  const sc100chips=SC100.slice().reverse().map(([t,bg,,label])=>`<i style="background:${bg}" title="${label}"></i>${t}`).join(' ');
   document.getElementById('hleg').innerHTML=
-    SYMMODE=='score'
+    LAYERS[SYMMODE]
+      ? LAYERS[SYMMODE].cap+' — ציון 0–100: '+sc100chips+' · <i style="background:#94a3b8"></i> אין נתון <span style="color:#94a3b8">· מדרגות זמניות לבחינה</span>'
+      : SYMMODE=='score'
       ? '⭐ ציון משרד התחבורה (0–100): '+SC100.slice().reverse().map(([t,bg,,label])=>`<i style="background:${bg}" title="${label}"></i>${t}`).join(' ')+' · <i style="background:#94a3b8"></i> אין ציון'
       : (SYMMODE=='stops'||SYMMODE=='freq')
       ? (SYMMODE=='stops'?'🚏 תחנות בתוך האזור: ':'🕐 יציאות אוטובוס ביום חול: ')+
@@ -417,6 +441,10 @@ function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציו�
       const v=HEATSCOPE=='in'?di:di+dg;
       marker=L.circleMarker([p.la,p.lo],{radius:hsiz(v),color:'#fff',weight:2.5,fillColor:hcol(v),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
         .bindPopup(head+(v?`יציאות אוטובוס ביום חול: <b>${v}</b><br><span style="color:#64748b">${HEATSCOPE=='in'?'קווים שנכנסים פנימה':'כולל שערי הכניסה'} · קווים: ${li+lg}</span>`:`<b style="color:#dc2626">אפס יציאות ביום חול</b>`));
+    }else if(LAYERS[SYMMODE]){
+      const L2=LAYERS[SYMMODE], sc=L2.score(p), c=sc100(sc);
+      marker=L.circleMarker([p.la,p.lo],{radius:sc==null?8:Math.round(8+(sc/100)*13),color:'#fff',weight:2.2,fillColor:c.bg,fillOpacity:isPlan(p)?.45:.88,dashArray:isPlan(p)?'4 3':null})
+        .bindPopup(head+L2.pop(p)+`<br><span style="color:#64748b">מדרגה: ${c.label}</span>`);
     }else if(SYMMODE=='score'){
       const sf=p.sf;
       // מדרג גדלים דרמטי (בקשת איריס): ציון 20 ≈ 16px, 50 ≈ 26px, 100 ≈ 46px
@@ -525,10 +553,10 @@ document.getElementById('modebtn').onclick=()=>{
 // ברירת המחדל (סיכום איריס 24.08): פסק הדין — עמידה בתקן בשלושה צבעים;
 // שאר השכבות והסמלים בבחירה ידנית, כדי לא להציף את הגולש במידע
 let SYMMODE='lines';
-for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score']])
+for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symcov','cov'],['symfar','far'],['symbest','best']])
   document.getElementById(id).onclick=()=>{
     SYMMODE=mode;
-    for(const [id2,m2] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score']])
+    for(const [id2,m2] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symcov','cov'],['symfar','far'],['symbest','best']])
       document.getElementById(id2).classList.toggle('on',m2===mode);
     if(heatview.style.display==='none')openHeatmap(true); else openHeatmap(false);
   };
