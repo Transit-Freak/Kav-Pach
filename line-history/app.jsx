@@ -147,6 +147,12 @@ function decodeShape(str) {
 
 function fsafe(rd) { return rd.replace(/#/g, "H").replace(/\//g, "_"); }
 function fmtD(d) { return (d || "").split("-").reverse().join("."); }
+// הסיומת "(2025-07-10 ← 2025-07-11)" בהערות הסריקה בלבלה (בקשת שלמה) —
+// בתצוגה היא הופכת למשפט שאומר במפורש מתי חל השינוי
+function noteFix(s) {
+  return String(s || "").replace(/\s*\((\d{4}-\d{2}-\d{2}) ← (\d{4}-\d{2}-\d{2})\)/g,
+    (_, a, b) => " · השינוי חל ב-" + fmtD(b) + "; יום קודם (" + fmtD(a) + ") עוד היה כמו קודם");
+}
 function fmtM(d) { const p = (d || "").split("-"); return p[1] + "." + p[0]; }
 function gapDays(a, b) { return Math.round((new Date(b) - new Date(a)) / 864e5); }
 // חיפוש סלחני לגרשיים: בנתונים כתוב רשל''צ (שני גרשים) והמשתמש מקליד
@@ -1686,7 +1692,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   <TipTag cls="rvflag" tip="השינוי הקודם התבטל כאן — רצף התחנות חזר למה שהיה לפניו">
                     ↩ החזרת המצב הקודם</TipTag>
                 ) : null}
-                {x.note && <span className="evnote"> {x.note}</span>}
+                {x.note && <span className="evnote"> {noteFix(x.note)}</span>}
               </div>
               {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
                   בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
@@ -1731,7 +1737,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
              שבוטל בלי שום אירוע לו"ז מקבל, שנה אחרי הביטול, את שעות-היציאה
              שלו מיום-הארכיון האחרון שבו פעל */
           <div className="tsnap-wrap">
-            <div className="mut">🛈 {v.note} — נכון ל-{fmtD(v.d)}, היום האחרון שבו הקו מופיע בארכיון.</div>
+            <div className="mut">🛈 {noteFix(v.note)} — נכון ל-{fmtD(v.d)}, היום האחרון שבו הקו מופיע בארכיון.</div>
             <table className="tsnap"><tbody>
               {v.tb.map(([label, ts]) => (
                 <tr key={label}>
@@ -1743,7 +1749,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           </div>
         ) : !gv.shp && !((gv.stops || []).length > 1) ? (
           <div className="nogeo">
-            🛈 {v.note || "אין פירוט לגרסה זו"}<br />
+            🛈 {noteFix(v.note) || "אין פירוט לגרסה זו"}<br />
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
         ) : (<>
@@ -2132,7 +2138,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
                     {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
-                    {c.note ? <span className="lnote">{c.note}</span> : null}
+                    {c.note ? <span className="lnote">{noteFix(c.note)}</span> : null}
                   </a>
                 );
               })}
@@ -2246,7 +2252,7 @@ function RecentChanges({ idx, openLine, onAll }) {
                 <span className="ldest">{m.dest || c.rd}</span>
                 <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
                 {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
-                    {c.note ? <span className="lnote">{c.note}</span> : null}
+                    {c.note ? <span className="lnote">{noteFix(c.note)}</span> : null}
               </a>
             );
           })}
