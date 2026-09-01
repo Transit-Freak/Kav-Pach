@@ -244,11 +244,11 @@ def write_events(young, old, rds, geo_rds=()):
             lost = [c for c in co if co[c] > cy.get(c, 0)]
             gained = [c for c in cy if cy[c] > co.get(c, 0)]
             if lost and not gained and len(lost) == 1 and co[lost[0]] == 2 and cy.get(lost[0], 0) == 1:
-                note2 = (f'{NOTE} — הביקור החוזר בתחנת {nm[lost[0]]} בוטל: '
-                         f'האוטובוס עבר בה פעמיים ומעכשיו פעם אחת ({old} ← {young})')
+                note2 = (f'{NOTE} — העצירה החוזרת בתחנת {nm[lost[0]]} ירדה מהרישום: '
+                         f'הלוח כלל עצירה שנייה בה באותה נסיעה, ומעכשיו היא רשומה פעם אחת ({old} ← {young})')
             elif gained and not lost and len(gained) == 1 and cy[gained[0]] == 2 and co.get(gained[0], 0) == 1:
-                note2 = (f'{NOTE} — נוסף ביקור חוזר בתחנת {nm[gained[0]]}: '
-                         f'האוטובוס עובר בה פעמיים ({old} ← {young})')
+                note2 = (f'{NOTE} — נוספה לרישום עצירה חוזרת בתחנת {nm[gained[0]]}: '
+                         f'הלוח כולל עצירה שנייה בה באותה נסיעה ({old} ← {young})')
             else:
                 note2 = f'{NOTE} — סדר העצירה השתנה ({old} ← {young})'
         elif not add and not rem:
