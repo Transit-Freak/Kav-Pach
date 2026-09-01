@@ -1,0 +1,110 @@
+name: probe-open-imagery
+
+# שאלת שלמה: האם יש בישראל מקור תצלום/מידע עם רישיון פתוח ברור, שאפשר
+# לאמן עליו בלי לבקש רשות. govmap אוסר אימון מודלים מפורשות, ולתל אביב
+# אין תנאים לשרת ה-GIS. הגישוש בודק את החלופות הפתוחות באמת:
+#   1. data.gov.il — מה הרישיון הרשמי של הדאטה הממשלתי (שדה CKAN),
+#      והאם יש שם בכלל אורתופוטו.
+#   2. OSM — כמה תחנות אוטובוס בישראל כבר מתויגות shelter=yes/no.
+#      זה מידע, לא תצלום, ורישיון ODbL פתוח.
+#   3. Mapillary — תצלומי רחוב ב-CC-BY-SA שמתירים אימון. מה הכיסוי בישראל?
+#   4. OpenAerialMap — תצלומי אוויר פתוחים. יש כיסוי בישראל?
+# לא כותב כלום לריפו; הממצאים בלוג הריצה.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: data.gov.il — הרישיון הרשמי של הדאטה הממשלתי
+        run: |
+          q() {
+            echo "════════ חיפוש: $1"
+            curl -s --max-time 40 -H 'User-Agent: Mozilla/5.0' \
+              "https://data.gov.il/api/3/action/package_search?q=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")&rows=8" \
+              -o /tmp/d.json || { echo '  (כשל רשת)'; return; }
+            python3 - <<'PY'
+          import json
+          try: d = json.load(open('/tmp/d.json'))
+          except Exception as e: print('  לא JSON:', e); raise SystemExit
+          r = (d.get('result') or {})
+          print(f"  סה\"כ תוצאות: {r.get('count')}")
+          for p in (r.get('results') or [])[:8]:
+              print(f"  · {p.get('title','')[:70]}")
+              print(f"      רישיון: {p.get('license_title') or '—'} [{p.get('license_id') or '—'}]")
+              print(f"      ארגון:  {(p.get('organization') or {}).get('title','')[:50]}")
+              fmts = sorted({(x.get('format') or '').upper() for x in (p.get('resources') or []) if x.get('format')})
+              print(f"      פורמט: {', '.join(fmts) or '—'}")
+          PY
+            echo
+          }
+          q "אורתופוטו"
+          q "תצלום אוויר"
+          q "תחנות אוטובוס"
+          echo "════════ רשימת הרישיונות שהפורטל מכיר"
+          curl -s --max-time 40 "https://data.gov.il/api/3/action/license_list" \
+            | python3 -c "
+          import json,sys
+          for l in json.load(sys.stdin).get('result',[]):
+              print(f\"  {l.get('id')}: {l.get('title')}  {l.get('url') or ''}\")" || echo '  (כשל)'
+
+      - name: OSM — כמה תחנות אוטובוס בישראל מתויגות עם סככה
+        run: |
+          ov() {
+            echo "── $2"
+            curl -s --max-time 180 -H 'User-Agent: kav-bochan-probe' \
+              --data-urlencode "data=$1" https://overpass-api.de/api/interpreter -o /tmp/o.json || {
+                echo '   (כשל רשת)'; return; }
+            python3 -c "
+          import json
+          d=json.load(open('/tmp/o.json'))
+          els=d.get('elements') or []
+          if els and 'tags' in els[0] and 'total' in els[0].get('tags',{}):
+              print('   ספירה:', els[0]['tags']['total'])
+          else:
+              print('   אלמנטים:', len(els))" || echo '   (פענוח נכשל)'
+          }
+          A='[out:json][timeout:170];area["ISO3166-1"="IL"][admin_level=2]->.a;'
+          ov "${A}node[highway=bus_stop](area.a);out count;"                'כל תחנות האוטובוס ב-OSM בישראל'
+          ov "${A}node[highway=bus_stop][shelter](area.a);out count;"        'מתוכן: יש תיוג shelter כלשהו'
+          ov "${A}node[highway=bus_stop][shelter=yes](area.a);out count;"    'מתוכן: shelter=yes'
+          ov "${A}node[highway=bus_stop][\"ref:IL:mot\"](area.a);out count;" 'מתוכן: יש מק"ט משרד התחבורה (ניתן להצלבה!)'
+          ov "${A}nwr[amenity=shelter](area.a);out count;"                   'עצמי shelter נפרדים'
+
+      - name: Mapillary — כיסוי תצלומי רחוב בישראל (CC-BY-SA)
+        run: |
+          echo "── האם ה-API עונה בלי טוקן"
+          curl -s -o /tmp/m.json -w '   HTTP %{http_code}\n' --max-time 30 \
+            "https://graph.mapillary.com/images?bbox=34.76,32.05,34.80,32.09&limit=1" || true
+          head -c 400 /tmp/m.json; echo
+          echo "── עמוד הרישיון הרשמי"
+          curl -s --max-time 30 -H 'User-Agent: Mozilla/5.0' \
+            "https://help.mapillary.com/hc/en-us/articles/115001770409-CC-BY-SA-license-for-open-data" \
+            | python3 -c "
+          import re,html,sys
+          t=sys.stdin.read()
+          t=re.sub(r'<script.*?</script>|<style.*?</style>','',t,flags=re.S|re.I)
+          t=' '.join(html.unescape(re.sub(r'<[^>]+>',' ',t)).split())
+          i=t.lower().find('cc-by-sa')
+          print('  ', t[max(0,i-200):i+1200] if i>0 else t[:1200])" || echo '  (כשל)'
+
+      - name: OpenAerialMap — האם יש תצלומי אוויר פתוחים מעל ישראל
+        run: |
+          curl -s --max-time 40 -H 'User-Agent: Mozilla/5.0' \
+            "https://api.openaerialmap.org/meta?bbox=34.2,29.4,35.9,33.4&limit=20" -o /tmp/oam.json || true
+          python3 - <<'PY'
+          import json
+          try: d = json.load(open('/tmp/oam.json'))
+          except Exception as e: print('  לא JSON:', e); raise SystemExit
+          res = d.get('results') or []
+          print(f"  נמצאו {d.get('meta',{}).get('found','?')} תצלומים בתיבה של ישראל")
+          for r in res[:10]:
+              print(f"  · {str(r.get('title'))[:60]} · {r.get('acquisition_end','')[:10]}"
+                    f" · gsd={r.get('gsd')} · רישיון={r.get('license')}")
+          PY
