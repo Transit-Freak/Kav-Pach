@@ -331,7 +331,7 @@ def stage_f():
         בתצלום הוא "יש סככה"; (ב) מוצאת אי-התאמות אמיתיות — הסקר אומר
         סככה והתצלום אומר שאין, או להפך. אלה ממצאים בפני עצמם."""
     res = json.load(open(OUT / 'results.json', encoding='utf-8'))
-    tp = pathlib.Path('parks/data/tiltan-stops.json')
+    tp = OUT / 'tiltan-stops.json'
     if not tp.exists():
         print('אין קובץ תלתן — הריצו tools/tiltan_stations.py'); return
     T = json.load(open(tp, encoding='utf-8'))['stops']

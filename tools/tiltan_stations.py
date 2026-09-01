@@ -19,7 +19,7 @@ import sys
 
 SRC = pathlib.Path(os.environ.get('TILTAN_DIR', '/tmp/claude-0/-home-user-kav-bochan/'
                                   '83b02d2f-2c1e-5817-a32e-be01db41bb83/scratchpad/stations'))
-OUT = pathlib.Path(os.environ.get('TILTAN_OUT', 'data/tiltan-stops.json'))
+OUT = pathlib.Path(os.environ.get('TILTAN_OUT', 'sakachot-lab/tiltan-stops.json'))
 
 # השדות שנשמרים. שאר 40+ השדות נזרקים כדי שהקובץ יישאר קטן מספיק לאתר.
 KEEP = {
