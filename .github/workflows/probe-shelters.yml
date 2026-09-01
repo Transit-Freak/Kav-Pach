@@ -1,0 +1,61 @@
+name: probe-shelters
+
+# גישוש (שאלת שלמה): האם קיים מאגר ממשלתי/עירוני שמתעד אם לתחנה יש
+# סככה או רק שלט. לא כותב כלום לריפו — הממצאים בלוג הריצה.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: חיפוש במאגר הנתונים הממשלתי (CKAN)
+        run: |
+          python3 - <<'PY'
+          import json, urllib.parse, urllib.request
+          def get(u):
+              try:
+                  req = urllib.request.Request(u, headers={'User-Agent': 'Mozilla/5.0'})
+                  with urllib.request.urlopen(req, timeout=45) as r:
+                      return json.load(r)
+              except Exception as e:
+                  return {'_err': f'{type(e).__name__}: {e}'}
+          for q in ['סככה', 'סככות', 'תחנות אוטובוס', 'רהיטי רחוב', 'נגישות תחנות',
+                    'מצאי תחנות', 'תחנות הסעה', 'bus stop', 'shelter']:
+              u = 'https://data.gov.il/api/3/action/package_search?rows=8&q=' + urllib.parse.quote(q)
+              d = get(u)
+              if d.get('_err'):
+                  print(f'== {q}: {d["_err"]}'); continue
+              res = (d.get('result') or {}).get('results') or []
+              print(f'== "{q}" — {(d.get("result") or {}).get("count", 0)} תוצאות')
+              for p in res:
+                  org = ((p.get('organization') or {}).get('title') or '')[:28]
+                  fmts = ','.join(sorted({(r.get('format') or '').upper() for r in (p.get('resources') or [])}))
+                  print(f'   · {p.get("title","")[:62]} | {org} | {fmts}')
+              print()
+          PY
+
+      - name: בדיקת שכבות תחנות/סככות ב-GIS עירוניים פתוחים
+        run: |
+          probe() {
+            echo "=== $1"
+            curl -sk --max-time 30 "$1" -H 'User-Agent: Mozilla/5.0' | head -c 1500
+            echo; echo "---"
+          }
+          # תל אביב: השכבות שכבר מצאנו — מה השדות של "תחנות אוטובוס משרד התחבורה"
+          probe "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer/956?f=json"
+          # חיפוש שכבות עם 'סככ' בקטלוג
+          curl -sk --max-time 60 "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer?f=json" -H 'User-Agent: Mozilla/5.0' \
+            | python3 -c "
+          import json,sys,re
+          d=json.load(sys.stdin)
+          print('=== שכבות שקשורות לרהיטי רחוב / סככות / תחנות')
+          for l in d.get('layers') or []:
+              if re.search('סככ|רהיט|ריהוט|שלט|עמוד|תחנות אוטובוס|צל', l.get('name','')):
+                  print(' ', l['id'], l['name'], l.get('geometryType',''))
+          "
