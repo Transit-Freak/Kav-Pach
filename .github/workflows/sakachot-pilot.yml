@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: 'שלב: A דגימות · B ערכת אימון · C אימון · D הרצה על תחנות · E חיפוש מורחב לחשודות'
+        description: 'שלב: A דגימות · B ערכת אימון · C אימון · D הרצה על תחנות · E חיפוש מורחב · F הצלבה מול סקר תלתן'
         required: true
         default: 'A'
 
@@ -64,7 +64,7 @@ jobs:
           fi
 
       - name: Commit small outputs
-        if: ${{ inputs.stage == 'A' || inputs.stage == 'D' || inputs.stage == 'E' }}
+        if: ${{ inputs.stage == 'A' || inputs.stage == 'D' || inputs.stage == 'E' || inputs.stage == 'F' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

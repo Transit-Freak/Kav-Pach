@@ -325,6 +325,48 @@ def stage_e():
     print(f'תחנות שכנראה "לא במקום" (סככה שלהן נמצאה רחוק): {len(found)}')
 
 
+def stage_f():
+    """הצלבה דו-כיוונית מול סקר תלתן (בקשת שלמה 01.09):
+    (א) מפענחת מה משמעות קודי SHED_STRUC — הקוד שמתלכד עם מה שנראה
+        בתצלום הוא "יש סככה"; (ב) מוצאת אי-התאמות אמיתיות — הסקר אומר
+        סככה והתצלום אומר שאין, או להפך. אלה ממצאים בפני עצמם."""
+    res = json.load(open(OUT / 'results.json', encoding='utf-8'))
+    tp = pathlib.Path('parks/data/tiltan-stops.json')
+    if not tp.exists():
+        print('אין קובץ תלתן — הריצו tools/tiltan_stations.py'); return
+    T = json.load(open(tp, encoding='utf-8'))['stops']
+    tab = {}          # קוד סככה בסקר -> מה המודל ראה
+    pairs = []
+    for st in res['stops']:
+        t = T.get(str(st['code']).lstrip('0'))
+        if not t or 'shed' in t is None:
+            continue
+        shed = t.get('shed')
+        if shed is None:
+            continue
+        seen = st['v'] != 'no_shelter'      # המודל זיהה סככה בתצלום
+        d = tab.setdefault(shed, {'סככה בתצלום': 0, 'בלי סככה בתצלום': 0})
+        d['סככה בתצלום' if seen else 'בלי סככה בתצלום'] += 1
+        pairs.append((st, t, shed, seen))
+    print('הצלבת קוד הסקר מול התצלום:')
+    for shed in sorted(tab):
+        d = tab[shed]
+        tot = d['סככה בתצלום'] + d['בלי סככה בתצלום']
+        pct = 100 * d['סככה בתצלום'] // max(1, tot)
+        print(f"  SHED_STRUC={shed}: {tot:>5} תחנות · המודל ראה סככה ב-{pct}%")
+    # הקוד שבו אחוז הזיהוי הגבוה ביותר = "יש סככה"
+    if tab:
+        best = max(tab, key=lambda k: tab[k]['סככה בתצלום'] / max(1, sum(tab[k].values())))
+        print(f"\n→ הקוד שמתלכד עם סככה בתצלום: SHED_STRUC={best}")
+        mism = [(st, t) for st, t, shed, seen in pairs if shed == best and not seen]
+        print(f"→ אי-התאמות: {len(mism)} תחנות שהסקר מסמן כסככה ובתצלום אין")
+        for st, t in mism[:10]:
+            print(f"   {st['name']} ({st['code']}) · {t.get('city','')}")
+        json.dump({'gen': time.strftime('%Y-%m-%d'), 'decoded_code': best,
+                   'table': tab, 'mismatch': [s['code'] for s, _ in mism]},
+                  open(OUT / 'tiltan-crosscheck.json', 'w', encoding='utf-8'), ensure_ascii=False)
+
+
 if __name__ == '__main__':
     OUT.mkdir(exist_ok=True)
-    {'A': stage_a, 'B': stage_b, 'C': stage_c, 'D': stage_d, 'E': stage_e}[STAGE]()
+    {'A': stage_a, 'B': stage_b, 'C': stage_c, 'D': stage_d, 'E': stage_e, 'F': stage_f}[STAGE]()
