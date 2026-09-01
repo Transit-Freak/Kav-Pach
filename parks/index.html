@@ -243,8 +243,13 @@ function renderTable(){
   const pb=document.getElementById('stplan');
   pb.style.display=pl?'flex':'none';
   pb.textContent='🏗️ אזורים בהקמה';
+// חיפוש סלחני (בקשת איריס 01.09): "אזור תעשייה בית שמש" מוצא את
+// "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
+const _qn=s=>String(s||'').replace(/["'׳״]/g,'').replace(/איזור/g,'אזור').replace(/תעשייה/g,'תעשיה').replace(/\s+/g,' ');
+const qMatch=(hay,f)=>{const H=_qn(hay);return _qn(f).split(' ').filter(Boolean).every(t=>H.includes(t));};
+
   pb.classList.toggle('on',!!SHOWPLAN);
-  let rows=IDX.filter(p=>ZTYPES[ztOf(p)]&&(SHOWPLAN||!isPlan(p))&&(!f || (p.name+' '+(p.city||'')).includes(f)));
+  let rows=IDX.filter(p=>ZTYPES[ztOf(p)]&&(SHOWPLAN||!isPlan(p))&&(!f || qMatch(p.name+' '+(p.city||''),f)));
   const val=(p,k)=>(k=='li'||k=='lg'||k=='ln')?cnt(p,k):(k=='pk'?pkc(p):(k=='sf'?(p.sf??-1):(p[k]??'')));
   // אזור בלי נתון במדד שממיינים לפיו יורד לסוף בשני הכיוונים — כדי שמיון
   // עולה יראה את הגרועים באמת ולא את חסרי-הנתון
@@ -283,7 +288,7 @@ q.oninput=()=>{renderTable(); if(heatview.style.display!=='none') openHeatmap(fa
 q.addEventListener('keydown',e=>{
   if(e.key!=='Enter') return;
   const f=(q.value||'').trim(); if(!f||!IDX.length) return;
-  const m=IDX.filter(p=>(p.name+' '+(p.city||'')).includes(f))
+  const m=IDX.filter(p=>qMatch(p.name+' '+(p.city||''),f))
     .sort((a,b)=>((b.name===f)-(a.name===f)) || (b.name.startsWith(f)-a.name.startsWith(f)) || a.name.length-b.name.length);
   if(m.length){e.preventDefault();q.blur();openPark(m[0].f,true);}
 });
@@ -392,7 +397,7 @@ function openHeatmap(fit=true){
   for(const p of IDX){
     if(!ZTYPES[ztOf(p)]) continue;
     if(!SHOWPLAN&&isPlan(p)) continue;
-    if(f && !(p.name+' '+(p.city||'')).includes(f)) continue;
+    if(f && !qMatch(p.name+' '+(p.city||''),f)) continue;
     const li=cnt(p,'li'), lg=cnt(p,'lg'), ln=cnt(p,'ln');
     const tot=zcount(p);
     const head=`<b>${esc(p.name)}</b>${isPlan(p)?' <span style="color:#b45309">🏗️ טרם נבנה</span>':''}${p.city?'<br>'+esc(p.city):''}<br>`;
