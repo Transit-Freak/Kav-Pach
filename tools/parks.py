@@ -133,9 +133,22 @@ def union_area_km2(polys, cl):
     # דגימת רשת ~25מ' על ה-bbox וספירת תאים שבתוך פוליגון כלשהו.
     if len(polys) <= 1:
         return sum(poly_area_km2(p, cl) for p in polys)
+    # בלי חפיפת תיבות-גבול אין כפילות — סכימה מדויקת (גם מונע שגיאת
+    # קוונטיזציה של הרשת באזורים זעירים, שהפילה את בדיקת-הקבע)
+    def _bb(pp):
+        return (min(a for a, b in pp), max(a for a, b in pp),
+                min(b for a, b in pp), max(b for a, b in pp))
+    bbs = [_bb(pp) for pp in polys]
+    overlap = any(not (bbs[i][1] < bbs[j][0] or bbs[j][1] < bbs[i][0] or
+                       bbs[i][3] < bbs[j][2] or bbs[j][3] < bbs[i][2])
+                  for i in range(len(bbs)) for j in range(i + 1, len(bbs)))
+    if not overlap:
+        return sum(poly_area_km2(p, cl) for p in polys)
     la1 = min(a for p in polys for a, b in p); la2 = max(a for p in polys for a, b in p)
     lo1 = min(b for p in polys for a, b in p); lo2 = max(b for p in polys for a, b in p)
-    sla = 25 / 110540.0; slo = 25 / (111320.0 * cl)
+    _span = max((la2 - la1) * 110540.0, (lo2 - lo1) * 111320.0 * cl)
+    _cell = max(2.0, min(25.0, _span / 200.0))   # ~200 תאים לצלע, לא פחות מ-2 מ'
+    sla = _cell / 110540.0; slo = _cell / (111320.0 * cl)
     hit = tot = 0
     ga = la1
     while ga <= la2:

@@ -148,6 +148,120 @@ for p in P:
         bad.append(f"{p['name']}: walkN=0 אבל יש {len(z['lines'])} קווים בקובץ האזור")
 check('אזור בלי קווים נספרים באמת ריק ברשימת הקווים', 'עיקרון', bad)
 
+
+# ==== בדיקות-נסיגה לממצאי הסיירת (01.09.2026) — כל באג שתוקן מקבל שומר ====
+import math
+import random
+
+
+def poly_area_km2(pts, cl):
+    a = 0.0
+    for i in range(len(pts)):
+        x1, y1 = pts[i][1] * 111.320 * cl, pts[i][0] * 110.540
+        x2, y2 = pts[(i + 1) % len(pts)][1] * 111.320 * cl, pts[(i + 1) % len(pts)][0] * 110.540
+        a += x1 * y2 - x2 * y1
+    return abs(a) / 2
+
+
+def in_poly(la, lo, pts):
+    ins = False
+    j = len(pts) - 1
+    for i in range(len(pts)):
+        if (pts[i][0] > la) != (pts[j][0] > la):
+            xx = (pts[j][1] - pts[i][1]) * (la - pts[i][0]) / (pts[j][0] - pts[i][0] + 1e-15) + pts[i][1]
+            if lo < xx:
+                ins = not ins
+        j = i
+    return ins
+
+
+# 8. שטח = איחוד, לא סכימה (ממצא: פוליגונים חופפים נספרו פעמיים)
+bad = []
+for p in P:
+    z = zones.get(p['f'])
+    if not z or not z.get('polys') or len(z['polys']) < 2:
+        continue
+    cl = math.cos(math.radians(p['la']))
+    ssum = sum(poly_area_km2(pp, cl) for pp in z['polys'])
+    if (p.get('area') or 0) > ssum * 1.05 + 0.011:   # סובלנות לעיגול האינדקס (2 ספרות)
+        bad.append(f"{p['name']}: שטח {p.get('area')} גדול מסכום הפוליגונים {ssum:.2f} — ספירה כפולה")
+check('שטח האזור אינו עולה על איחוד הפוליגונים', 'סיירת · שטח כפול (מישור אדומים)', bad)
+
+# 9. המרכז נמצא בתוך תיבת-הגבול של כל הפוליגונים (ממצא: מרכז מוטה עד 930 מ')
+bad = []
+for p in P:
+    z = zones.get(p['f'])
+    if not z or not z.get('polys'):
+        continue
+    la = [q[0] for pp in z['polys'] for q in pp]
+    lo = [q[1] for pp in z['polys'] for q in pp]
+    if not (min(la) - 0.002 <= p['la'] <= max(la) + 0.002 and
+            min(lo) - 0.002 <= p['lo'] <= max(lo) + 0.002):
+        bad.append(f"{p['name']}: המרכז ({p['la']},{p['lo']}) מחוץ לגבולות הפוליגונים")
+check('מרכז האזור בתוך גבולות הפוליגונים', 'סיירת · מרכז לא מעודכן אחרי מיזוג', bad)
+
+# 10. אין מק"ט תחנה כפול ברשימה (ממצא: מע"ר ב"ש 64 שורות ל-18 תחנות)
+bad = []
+for p in P:
+    z = zones.get(p['f'])
+    if not z:
+        continue
+    codes = [str(s.get('c')) for s in z.get('stops') or [] if s.get('c')]
+    dup = len(codes) - len(set(codes))
+    if dup:
+        bad.append(f"{p['name']}: {dup} שורות תחנה כפולות מנפחות את המונים")
+check('אין שורות תחנה כפולות באותו אזור', 'סיירת · תחנות משוכפלות', bad)
+
+# 11. תחנה בתוך האזור לא יורשת זמן-חסימה (ממצא: "בפנים · 145 דק׳")
+bad = []
+for p in P:
+    z = zones.get(p['f'])
+    if not z:
+        continue
+    for s in z.get('stops') or []:
+        if s.get('t') == 'in' and (s.get('wt') or 0) > 15:
+            bad.append(f"{p['name']} · {s.get('n')}: תחנה בתוך האזור עם {s['wt']} דק׳ הליכה")
+check('אין תחנה "בתוך האזור" עם זמן הליכה חריג', 'סיירת · ירושת חסימה', bad)
+
+# 12. כיסוי מלא אינו מתיישב עם נקודה רחוקה מעל 10 דק'
+bad = []
+for p in P:
+    if p.get('cv') == 100 and (p.get('ww') or 0) > 10:
+        bad.append(f"{p['name']}: כיסוי 100% אך הנקודה הרחוקה {p['ww']} דק׳")
+check('כיסוי 100% אינו סותר את הנקודה הרחוקה', 'עיקרון פנימי', bad)
+
+# 13. cv אמיתי — חישוב מחדש על מדגם קבוע (ממצא: זיהום מנקודות ההיקף)
+random.seed(11)
+samp = random.sample([p for p in P if 'cv' in p and zones.get(p['f'])], k=min(20, len(P)))
+bad = []
+for p in samp:
+    z = zones[p['f']]
+    st = [s for s in z.get('stops') or [] if not (s.get('t') == 'blocked' and s.get('te') == 'blocked')]
+    if not st or not z.get('polys'):
+        continue
+    cl = math.cos(math.radians(p['la']))
+    sla, slo = 75 / 110540.0, 75 / (111320.0 * cl)
+    hit = tot = 0
+    for ring in z['polys']:
+        la1, la2 = min(a for a, b in ring), max(a for a, b in ring)
+        lo1, lo2 = min(b for a, b in ring), max(b for a, b in ring)
+        ga = la1
+        while ga <= la2:
+            go = lo1
+            while go <= lo2:
+                if in_poly(ga, go, ring):
+                    tot += 1
+                    d = min(math.hypot((ga - s['la']) * 110540.0, (go - s['lo']) * 111320.0 * cl) for s in st)
+                    if d * 1.3 / 75.0 <= 10:
+                        hit += 1
+                go += slo
+            ga += sla
+    if tot >= 5:
+        calc = hit * 100.0 / tot
+        if abs(calc - p['cv']) > 6:
+            bad.append(f"{p['name']}: cv={p['cv']} מול חישוב-מחדש {calc:.0f} (רשת שטח בלבד)")
+check('cv = אחוז שטח אמיתי (מדגם 20 אזורים)', 'סיירת · זיהום מנקודות ההיקף', bad)
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump({'generated': datetime.date.today().isoformat(),
            'pass': not fails, 'fails': fails},
