@@ -1,0 +1,42 @@
+name: probe-link
+
+# בדיקת קישור מקוצר ששלמה שלח — לאן הוא מוביל ומה יש שם.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'הקישור לבדיקה'
+        required: true
+        default: 'https://apq9h.app.goo.gl/tSqF'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: פתיחת הקישור המקוצר
+        run: |
+          U='${{ inputs.url }}'
+          echo "=== שרשרת ההפניות"
+          curl -sIL --max-time 30 "$U" -H 'User-Agent: Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120 Mobile' \
+            | grep -i "^HTTP/\|^location:" || echo "(אין כותרות)"
+          echo
+          echo "=== היעד הסופי"
+          FIN=$(curl -sL -o /dev/null -w '%{url_effective}' --max-time 30 "$U" -H 'User-Agent: Mozilla/5.0 (Linux; Android 12) Mobile')
+          echo "$FIN"
+          echo
+          echo "=== תוכן הדף"
+          curl -sL --max-time 30 "$U" -H 'User-Agent: Mozilla/5.0 (Linux; Android 12) Mobile' | python3 -c "
+          import sys,re,html
+          t=sys.stdin.read()
+          # קישורים ומטא-תגיות שמסגירים את היעד האמיתי
+          for m in re.findall(r'(?i)(?:href|content|data-href)=[\"\x27]([^\"\x27]{12,200})[\"\x27]', t)[:15]:
+              print('  קישור:', m)
+          t2=re.sub(r'(?is)<(script|style).*?</\1>',' ',t)
+          t2=html.unescape(re.sub(r'<[^>]+>',' ',t2))
+          print('  טקסט:', re.sub(r'\s+',' ',t2).strip()[:800])
+          "
