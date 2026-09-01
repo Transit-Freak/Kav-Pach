@@ -62,18 +62,18 @@ for p in P:
         wd = l.get('wd') or []
         am = sum(1 for t in wd if AM(t))
         pm = sum(1 for t in wd if PM(t))
-        # הכלל הממומש: בפנים/בשער נספרים שני החלונות; כיווניות רק ל"5–10 דק'"
-        if l.get('t') in ('in', 'gate'):
-            calc += am + pm
-        elif l.get('dr') == 'in':
+        # הכלל של איריס (01.09): הסינון הכיווני חל על כל התחנות —
+        # בבוקר רק הנכנסים, אחה"צ רק היוצאים, גם בפנים וגם בשער.
+        dr = l.get('dr')
+        if dr == 'in':
             calc += am
-        elif l.get('dr') == 'out':
+        elif dr == 'out':
             calc += pm
-        elif l.get('dr') == '?':
-            calc += am + pm
+        else:
+            calc += am + pm      # כיוון לא ידוע — שני החלונות
     if calc != (p.get('pkd') or 0):
         bad.append(f"{p['name']}: pkd באינדקס {p.get('pkd')} מול חישוב מחדש {calc}")
-check('pkd תואם חישוב-מחדש מהכלל הממומש (in/gate: שני חלונות)', 'זיהוי סחף צנרת', bad)
+check('pkd = ספירה כיוונית על כל התחנות', 'הגדרת איריס 01.09', bad)
 
 # 3. bl1 = הכיוון הבודד החזק, בלי סכימת כיוונים (מקור: ממצא איריס צמח 01.09)
 bad = []
