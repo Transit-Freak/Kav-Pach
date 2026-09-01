@@ -37,7 +37,7 @@
     <input id="q" type="search" placeholder="חיפוש אזור או יישוב…" title="הקלידו שם אזור תעשייה או יישוב — הרשימה מסתננת תוך כדי הקלדה">
     <!-- עיצוב אור 08.2026: מתג ההיקף עבר מהמפה אל הכותרת, כמו ברפרנס.
          מוצג רק כשמסך המפה הארצית פתוח (כלל ה-:has שב-style.css) -->
-    <span class="seg" id="hscopeseg"><button class="btn on" id="hsin" title="סופרים רק קווים שנכנסים לתוך שטח האזור עצמו">🏭 נכנסים פנימה</button><button class="btn" id="hsall" title="סופרים גם קווים שעוצרים בשערי הכניסה, עד 5 דקות הליכה">🚪 גם שערי כניסה</button></span>
+    <span class="seg" id="hscopeseg"><button class="btn on" id="hsin" title="סופרים רק קווים שנכנסים לתוך שטח האזור עצמו">🏭 נכנסים פנימה</button><button class="btn" id="hsall" title="סופרים גם קווים שעוצרים סמוך לגבול האזור — עד 5 דקות הליכה מהנקודה הקרובה ביותר על קו הגבול (לא בהכרח שער כניסה)">🚪 גם סמוך לגבול</button></span>
     <span class="lp-wrap">
     <button class="btn ghost" id="layersbtn" title="כל שכבות ומצבי התצוגה במקום אחד">🗂️ שכבות</button>
     <div id="layerspanel" class="layers-panel" style="display:none">
@@ -55,8 +55,8 @@
       <div class="lp-sec">שכבות מפה</div>
       <button class="btn" id="sabtn" title="צביעת המפה לפי המדד החברתי-כלכלי (למ״ס 2021)">🗺️ אשכולות חברתי-כלכלי</button>
       <div class="lp-sec">מדידה</div>
-      <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור או עד הכניסה">🎯 מדידה: מרכז</button>
-      <div style="font-size:11px;font-weight:600;color:#64748b;max-width:230px;line-height:1.45">עד לאן נמדד זמן ההליכה מהתחנה: <b>מרכז</b> = ללב האזור ("להגיע לעבודה") · <b>כניסה</b> = לקצה הקרוב. לחיצה מחליפה ומעדכנת את כל המספרים.</div>
+      <button class="btn" id="modebtn" title="מדידת זמן ההליכה: עד מרכז האזור, או עד הנקודה הקרובה ביותר על גבול האזור">🎯 מדידה: מרכז</button>
+      <div style="font-size:11px;font-weight:600;color:#64748b;max-width:230px;line-height:1.45">עד לאן נמדד זמן ההליכה מהתחנה: <b>מרכז</b> = ללב האזור ("להגיע לעבודה") · <b>גבול</b> = לנקודה הקרובה ביותר על קו הגבול של האזור (לא בהכרח שער כניסה — השערים אינם ממופים). לחיצה מחליפה ומעדכנת את כל המספרים.</div>
     </div>
     </span>
     <!-- עיצוב אור 08.2026: הלוגו עלה לכותרת הלבנה, בקצה השמאלי -->
@@ -77,7 +77,7 @@
           <th data-k="li" class="num" title="כמה קווי אוטובוס עוצרים בתוך שטח האזור עצמו — כולל קווים שאינם פעילים בשעות השיא (ראו עמודת שעות שיא) · לחיצה ממיינת">קווים בפנים <span class="arr"></span></th>
           <th data-k="lg" class="num" title="קווים שהתחנה שלהם עד 5 דקות הליכה אמיתית מהאזור · לחיצה ממיינת">קרוב 🚶 <span class="arr"></span></th>
           <th data-k="ln" class="num" title="קווים שהתחנה שלהם במרחק 5–10 דקות הליכה — אפשרי אך לא נוח יומיומית · לחיצה ממיינת">רחוק 🚶 <span class="arr"></span></th>
-          <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או בשערי הכניסה">שעות שיא ⏰ <span class="arr"></span></th>
+          <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או סמוך לגבול האזור">שעות שיא ⏰ <span class="arr"></span></th>
           <th data-k="sf" class="num" style="display:none" title="הציון המשוקלל של משרד התחבורה לאזור הסטטיסטי (זמינות, נגישות, תחרותיות, אמינות)">ציון משרד התחבורה 📈 <span class="arr"></span></th>
           <th data-k="in" class="num" title="מספר תחנות האוטובוס שבתוך גבולות האזור · לחיצה ממיינת">תחנות בפנים <span class="arr"></span></th>
         </tr></thead>
@@ -181,7 +181,7 @@ function hasSv(){return IDX.some(p=>p.sf!=null)}
 const STLBL={planned:'טרם נבנה — אזור מתוכנן/בהקמה',partial:'בנוי חלקית'};
 function walkTxt(s){
   const wt=sWt(s),wm=sWm(s);
-  if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)`;
+  if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'גבול'} האזור)`;
   if(s.d!=null) return `${s.d} מ׳ (מרחק אווירי — אין נתוני הליכה)`;
   return '';
 }
@@ -336,11 +336,11 @@ function openHeatmap(fit=true){
     +'<div class="gapcards">'+card('gc-c','🏙️','מרכז',g.cN)+card('gc-p','🌄','פריפריה',g.pN)+'</div>'
     +'<details class="gapwhy"><summary>❓ איך ההשוואה מחושבת</summary>'
     +'<div class="gw-l"><b>① מחלקים את הארץ לשתיים:</b> כל אזורי התעשייה הפעילים ('+(g.cN+g.pN)+') מחולקים לפי המרחק מתל אביב — עד 45 ק״מ נחשב ״מרכז״ ('+g.cN+' אזורים), רחוק יותר נחשב ״פריפריה״ ('+g.pN+' אזורים).</div>'
-    +'<div class="gw-l"><b>② סופרים קווים לכל אזור:</b> '+(HEATSCOPE=='in'?'קו אוטובוס נספר רק אם הוא נכנס לתוך האזור עצמו (המצב שנבחר: ״נכנסים פנימה בלבד״)':'קו אוטובוס נספר אם הוא נכנס לתוך האזור או עוצר עד 5 דקות הליכה משער הכניסה (המצב שנבחר: ״כולל שערי כניסה״)')+'. קו עם שני כיוונים נספר פעם אחת — בלי ניפוח.</div>'
+    +'<div class="gw-l"><b>② סופרים קווים לכל אזור:</b> '+(HEATSCOPE=='in'?'קו אוטובוס נספר רק אם הוא נכנס לתוך האזור עצמו (המצב שנבחר: ״נכנסים פנימה בלבד״)':'קו אוטובוס נספר אם הוא נכנס לתוך האזור או עוצר עד 5 דקות הליכה מהנקודה הקרובה ביותר על גבול האזור (המצב שנבחר: ״כולל סמוכות לגבול״)')+'. קו עם שני כיוונים נספר פעם אחת — בלי ניפוח.</div>'
     +(g.hasDep?'<div class="gw-l"><b>③ סופרים גם את הלו״ז:</b> לכל הקווים האלה סופרים את כל היציאות ביום חול רגיל. למה זה חשוב? אזור עם 3 קווים שיוצאים כל רבע שעה מקבל הרבה יותר שירות מאזור עם 3 קווים שיוצאים פעמיים ביום — מספר הקווים לבד לא מגלה את זה.</div>':'')
     +'<div class="gw-l"><b>'+(g.hasDep?'④':'③')+' משווים ממוצעים:</b> לכל קבוצה מחשבים ממוצע קווים לאזור'+(g.hasDep?', ממוצע יציאות ביום':'')+', ואת אחוז האזורים שאף קו לא מגיע אליהם בכלל. ״פי X״ = הממוצע במרכז חלקי הממוצע בפריפריה, ופסי הצבע מציירים את היחס הזה בעין.</div>'
     +(g.cSf!=null&&g.pSf!=null?'<div class="gw-l"><b>⭐ ציון השירות הכולל:</b> הציון המשוקלל הרשמי שמשרד התחבורה נותן לרמת השירות בכל אזור סטטיסטי (0–100, משקלל זמינות ואמינות). כאן מוצג הממוצע שלו בכל קבוצה — מדד חיצוני ובלתי תלוי שמאשש את אותה תמונה.</div>':'')
-    +'<div class="gw-l">ההשוואה מחושבת מחדש בכל שינוי של כפתורי הספירה למעלה ושל מצב המדידה (מרכז/כניסה) בפאנל השכבות.</div>'
+    +'<div class="gw-l">ההשוואה מחושבת מחדש בכל שינוי של כפתורי הספירה למעלה ושל מצב המדידה (מרכז/גבול) בפאנל השכבות.</div>'
     +'</details>';}catch(e){}
   footHome(true);
   if(heatLayer) heatLayer.clearLayers();
@@ -509,7 +509,7 @@ function saMode(on){
 // מתג מדידה: מרכז (ברירת-מחדל) / כניסה — מרענן את התצוגה הנוכחית
 document.getElementById('modebtn').onclick=()=>{
   WALKMODE = WALKMODE=='c'?'e':'c';
-  document.getElementById('modebtn').textContent = WALKMODE=='c'?'🎯 מדידה: מרכז':'🚪 מדידה: כניסה';
+  document.getElementById('modebtn').textContent = WALKMODE=='c'?'🎯 מדידה: מרכז':'🚪 מדידה: גבול';
   renderTable();
   if(heatview.style.display!=='none') openHeatmap(false);   // שמור תצוגה בהחלפת מצב
   const h=decodeURIComponent((location.hash||'').slice(1));
@@ -825,7 +825,7 @@ function openPark(f,push=true){
       </div>`;
     }
     h+=svcbox;   // ⭐ ציון משרד התחבורה למעלה, לפני רשימות הקווים
-    if(!lines.length&&!_plan) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'כניסת'} האזור)</div>`;
+    if(!lines.length&&!_plan) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אין שירות תחבורה ציבורית שמגיע לאזור הזה במרחק הליכה סביר (במדידה עד ${WALKMODE=='c'?'מרכז':'גבול'} האזור)</div>`;
     else if(!nin) h+=`<div class="gap" style="display:inline-block;margin-bottom:8px">⚠ אף קו לא נכנס לתוך האזור — השירות כולו מהכניסה/הסביבה</div>`;
     if(lines.length){
       // ספירה לפי קו אמיתי (מק"ט) — שני כיוונים = קו אחד; ופירוק בפנים/שיא (בקשת איריס)
