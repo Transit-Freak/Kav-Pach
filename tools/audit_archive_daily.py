@@ -232,9 +232,25 @@ def write_events(young, old, rds, geo_rds=()):
             kind = 'redraw'
             note2 = f'{NOTE} — תיקון שרטוט בלבד ({old} ← {young})'
         elif not add and not rem and yseq != oseq:
-            # אותן תחנות בסדר אחר — שינוי מסלול לכל דבר (נזרק בעבר בטעות)
+            # אותן תחנות בסדר אחר — שינוי מסלול לכל דבר (נזרק בעבר בטעות).
+            # מקרה נפוץ שהניסוח הכללי הסתיר (קו 165 קרית גת, בקשת שלמה):
+            # ביקור חוזר באותה תחנה שבוטל/נוסף — אומרים את זה במפורש
             kind = 'route'
-            note2 = f'{NOTE} — סדר העצירה השתנה ({old} ← {young})'
+            from collections import Counter
+            cy, co = Counter(yseq), Counter(oseq)
+            nm = {str(s[0]): s[1] for s in gy['stops']}
+            for s in go['stops']:
+                nm.setdefault(str(s[0]), s[1])
+            lost = [c for c in co if co[c] > cy.get(c, 0)]
+            gained = [c for c in cy if cy[c] > co.get(c, 0)]
+            if lost and not gained and len(lost) == 1 and co[lost[0]] == 2 and cy.get(lost[0], 0) == 1:
+                note2 = (f'{NOTE} — הביקור החוזר בתחנת {nm[lost[0]]} בוטל: '
+                         f'האוטובוס עבר בה פעמיים ומעכשיו פעם אחת ({old} ← {young})')
+            elif gained and not lost and len(gained) == 1 and cy[gained[0]] == 2 and co.get(gained[0], 0) == 1:
+                note2 = (f'{NOTE} — נוסף ביקור חוזר בתחנת {nm[gained[0]]}: '
+                         f'האוטובוס עובר בה פעמיים ({old} ← {young})')
+            else:
+                note2 = f'{NOTE} — סדר העצירה השתנה ({old} ← {young})'
         elif not add and not rem:
             continue
         else:
