@@ -200,6 +200,70 @@ def has_route_record(rd, ds):
     return False
 
 
+def dup_stop_flags(ds, rd, code):
+    """כשעצירה מופיעה פעמיים באותה נסיעה — איך הוגדרו הרשומות ברישום?
+
+    מחזיר את רשימת (pickup_type, drop_off_type) של הופעות התחנה, לפי
+    הסדר, מנסיעה שכוללת את הכפילות ביום ds. דרישת שלמה (קו 165): אם
+    טוענים שהרישום הגדיר עצירה — מציינים זאת באירוע, אחרי בדיקה."""
+    url = f"{S3}/gtfs_archive/{ds[:4]}/{ds[5:7]}/{ds[8:10]}/israel-public-transportation.zip"
+    members = central_dir(url)
+    c, rows = member_rows(url, members, 'routes.txt')
+    rids = set()
+    for r in rows:
+        p = r[c['route_desc']].strip().split('-')
+        if len(p) >= 3 and f"{p[0].lstrip('0')}-{p[1]}-{p[2]}" == rd:
+            rids.add(r[c['route_id']])
+    if not rids:
+        return None
+    c, rows = member_rows(url, members, 'trips.txt')
+    tids = {r[c['trip_id']].encode() for r in rows if r[c['route_id']] in rids}
+    c, rows = member_rows(url, members, 'stops.txt')
+    sids = {r[c['stop_id']].encode() for r in rows if (r[c['stop_code']] or '') == str(code)}
+    if not sids:
+        return None
+    per_trip = collections.defaultdict(list)
+    buf = [b'']
+    hdr = {}
+
+    def on_st(data):
+        buf[0] += data
+        *lines, buf[0] = buf[0].split(b'\n')
+        for ln in lines:
+            if not hdr:
+                for i, h in enumerate(ln.decode('utf-8-sig').strip().split(',')):
+                    hdr[h.strip()] = i
+                continue
+            f = ln.split(b',')
+            try:
+                t = f[hdr['trip_id']].strip()
+                if t in tids and f[hdr['stop_id']].strip() in sids:
+                    per_trip[t].append((int(f[hdr['stop_sequence']]),
+                                        f[hdr.get('pickup_type', -1)].decode() if 'pickup_type' in hdr else '',
+                                        f[hdr.get('drop_off_type', -1)].decode() if 'drop_off_type' in hdr else ''))
+            except (IndexError, ValueError):
+                continue
+
+    stream_member(url, members, 'stop_times.txt', on_st)
+    for t, lst in per_trip.items():
+        if len(lst) >= 2:
+            lst.sort()
+            return [(pu.strip(), do.strip()) for _, pu, do in lst]
+    return None
+
+
+def dup_flags_clause(fl):
+    """ניסוח מה שהרישום הגדיר עבור הרשומה החוזרת — רק כשנבדק בפועל."""
+    if not fl or len(fl) < 2:
+        return ''
+    pu, do = fl[-1]
+    if pu == '1' and do == '1':
+        return ' · הרשומה החוזרת הוגדרה ברישום כנקודת מעבר בלבד (בלי עלייה ובלי ירידה)'
+    if pu in ('', '0'):
+        return ' · גם הרשומה החוזרת הוגדרה ברישום כעצירה שמותר לעלות בה'
+    return ''
+
+
 def write_events(young, old, rds, geo_rds=()):
     """אירוע לכל וריאנט שהשתנה בין old ל-young: רצף, סדר, או שרטוט בלבד."""
     n = 0
@@ -244,11 +308,20 @@ def write_events(young, old, rds, geo_rds=()):
             lost = [c for c in co if co[c] > cy.get(c, 0)]
             gained = [c for c in cy if cy[c] > co.get(c, 0)]
             if lost and not gained and len(lost) == 1 and co[lost[0]] == 2 and cy.get(lost[0], 0) == 1:
+                try:
+                    fc = dup_flags_clause(dup_stop_flags(old, rd, lost[0]))
+                except (Exception, SystemExit):
+                    fc = ''
                 note2 = (f'{NOTE} — העצירה החוזרת בתחנת {nm[lost[0]]} ירדה מהרישום: '
-                         f'הלוח כלל עצירה שנייה בה באותה נסיעה, ומעכשיו היא רשומה פעם אחת ({old} ← {young})')
+                         f'הלוח כלל עצירה שנייה בה באותה נסיעה, ומעכשיו היא רשומה פעם אחת'
+                         f'{fc} ({old} ← {young})')
             elif gained and not lost and len(gained) == 1 and cy[gained[0]] == 2 and co.get(gained[0], 0) == 1:
+                try:
+                    fc = dup_flags_clause(dup_stop_flags(young, rd, gained[0]))
+                except (Exception, SystemExit):
+                    fc = ''
                 note2 = (f'{NOTE} — נוספה לרישום עצירה חוזרת בתחנת {nm[gained[0]]}: '
-                         f'הלוח כולל עצירה שנייה בה באותה נסיעה ({old} ← {young})')
+                         f'הלוח כולל עצירה שנייה בה באותה נסיעה{fc} ({old} ← {young})')
             else:
                 note2 = f'{NOTE} — סדר העצירה השתנה ({old} ← {young})'
         elif not add and not rem:
