@@ -1,0 +1,89 @@
+name: probe-osm-provenance
+
+# הערת שלמה: תחנות ה-OSM בישראל יובאו מה-GTFS, ולכן הצלבה מולן היא
+# הצלבה של משרד התחבורה מול עצמו — חסרת ערך כאימות.
+# זה נכון לגבי המיקום ולגבי תגית ref (המק"ט). אבל ב-GTFS אין שדה סככה
+# כלל, ולכן 5,899 תיוגי ה-shelter חייבים להגיע ממקום אחר.
+# השאלה: ממי ומתי. אם מחשבון ייבוא אחד בתאריך אחד — זה ייבוא, וייתכן
+# שממקור ממשלתי, כלומר עדיין מעגלי. אם ממאות ממפים לאורך שנים — זו
+# עבודת שטח אנושית, והמקור באמת בלתי תלוי.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: מי תייג את הסככות ב-OSM ומתי
+        run: |
+          A='[out:json][timeout:300];area["ISO3166-1"="IL"][admin_level=2]->.a;'
+          curl -s --max-time 300 -H 'User-Agent: kav-bochan-provenance' \
+            --data-urlencode "data=${A}node[highway=bus_stop][shelter](area.a);out meta;" \
+            https://overpass-api.de/api/interpreter -o /tmp/p.json || true
+          python3 - <<'PY'
+          import json, collections
+          try:
+              d = json.load(open('/tmp/p.json'))
+          except Exception as e:
+              print('כשל בקריאת התשובה:', e); raise SystemExit
+          els = d.get('elements') or []
+          print(f'תחנות עם תיוג סככה: {len(els)}\n')
+
+          users = collections.Counter(e.get('user', '?') for e in els)
+          days  = collections.Counter((e.get('timestamp') or '')[:10] for e in els)
+          years = collections.Counter((e.get('timestamp') or '')[:4] for e in els)
+          csets = collections.Counter(e.get('changeset') for e in els)
+
+          print(f'ממפים שונים: {len(users)} · ימים שונים: {len(days)} · '
+                f'ערכות שינוי שונות: {len(csets)}\n')
+
+          print('15 הממפים הגדולים (וכמה אחוז מהסך):')
+          for u, n in users.most_common(15):
+              print(f'  {n:6,}  {100*n/len(els):5.1f}%  {u}')
+
+          print('\nהתפלגות לפי שנה (שנת העריכה האחרונה של כל תחנה):')
+          for y, n in sorted(years.items()):
+              print(f'  {y}: {n:6,}  {"█" * max(1, round(60*n/max(years.values())))}')
+
+          print('\n10 הימים הצפופים ביותר:')
+          for dy, n in days.most_common(10):
+              print(f'  {dy}: {n:6,}')
+
+          print('\n10 ערכות השינוי הגדולות ביותר (ייבוא מסיבי ייראה כאן):')
+          for cs, n in csets.most_common(10):
+              print(f'  changeset {cs}: {n:6,} תחנות')
+
+          top = users.most_common(1)
+          if top:
+              share = 100 * top[0][1] / len(els)
+              print(f'\n>>> הממפה הגדול ביותר אחראי ל-{share:.1f}% מהתיוגים.')
+              print('    ריכוז גבוה + מעט ערכות שינוי = ייבוא. פיזור = עבודת שטח.')
+          PY
+
+      - name: להשוואה — מי מתחזק את שדה ה-ref (זה כן אמור להיראות כייבוא)
+        run: |
+          sleep 25
+          A='[out:json][timeout:300];area["ISO3166-1"="IL"][admin_level=2]->.a;'
+          curl -s --max-time 300 -H 'User-Agent: kav-bochan-provenance' \
+            --data-urlencode "data=${A}node[highway=bus_stop][shelter!~\".\"](area.a);out meta 4000;" \
+            https://overpass-api.de/api/interpreter -o /tmp/q.json || true
+          python3 - <<'PY'
+          import json, collections
+          try:
+              d = json.load(open('/tmp/q.json'))
+          except Exception as e:
+              print('כשל:', e); raise SystemExit
+          els = d.get('elements') or []
+          print(f'מדגם תחנות ללא תיוג סככה: {len(els)}')
+          users = collections.Counter(e.get('user', '?') for e in els)
+          print('הממפים הגדולים בקבוצה הזו:')
+          for u, n in users.most_common(8):
+              print(f'  {n:6,}  {100*n/max(1,len(els)):5.1f}%  {u}')
+          print('\nאם אותו חשבון שולט בשתי הקבוצות — הכול ייבוא אחד.')
+          print('אם הקבוצות נשלטות ע"י חשבונות שונים — התיוג נעשה בנפרד.')
+          PY
