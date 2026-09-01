@@ -262,6 +262,21 @@ for p in samp:
             bad.append(f"{p['name']}: cv={p['cv']} מול חישוב-מחדש {calc:.0f} (רשת שטח בלבד)")
 check('cv = אחוז שטח אמיתי (מדגם 20 אזורים)', 'סיירת · זיהום מנקודות ההיקף', bad)
 
+
+# 14. הנקודה הרחוקה סבירה ביחס לגודל האזור (ממצא 01.09: ניתוב שמקיף גדר
+#     החזיר 379 דק׳ באזור של 0.29 קמ"ר — נענש אזור על כשל טכני)
+bad = []
+for p in P:
+    ww = p.get('ww')
+    ar = p.get('area')
+    if not ww or not ar or ar <= 0:
+        continue
+    # קוטר אופייני (מ׳) ≈ sqrt(שטח)*1000; בהליכה של 75 מ׳/דק׳
+    diag_min = math.sqrt(ar) * 1000 / 75.0
+    if ww > max(4 * diag_min, diag_min + 25):
+        bad.append(f"{p['name']}: הנקודה הרחוקה {ww} דק׳ באזור של {ar} קמ\"ר — חשוד ככשל ניתוב")
+check('הנקודה הרחוקה סבירה ביחס לגודל האזור', 'ממצא 01.09 · שער בנימין 379 דק׳', bad)
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump({'generated': datetime.date.today().isoformat(),
            'pass': not fails, 'fails': fails},

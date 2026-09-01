@@ -1095,9 +1095,21 @@ for pi, pk in enumerate(parks):
             _dest = [(s['la'], s['lo']) for s in outstops][:60]
             try:
                 _rows = _osrm_walk(_cand, _dest, (pk['cen'][0], pk['cen'][1]))
-                _secs = [r[1] for r in _rows if r[1] is not None]
-                if _secs:
-                    _worst = max(_secs) / 60.0
+                # שומר-שפיות: ניתוב שמקיף גדר/כביש מהיר מחזיר מסלול ענק
+                # (שער בנימין: 379 דק׳ באזור של 0.29 קמ"ר). מסלול ארוך פי 3
+                # מהאומדן האווירי הוא כשל ניתוב, לא הליכה אמיתית — נזרק,
+                # והאזור לא נענש על תקלה טכנית.
+                _pair = []
+                for _q, _r in zip(_cand, _rows):
+                    if _r[1] is None:
+                        continue
+                    _airq = next((t for t, qq in _air if qq is _q), None)
+                    _m = _r[1] / 60.0
+                    if _airq and _m > max(3 * _airq, _airq + 10):
+                        continue
+                    _pair.append(_m)
+                if _pair:
+                    _worst = max(_pair)
                     _worst_src = 'osrm'
             except Exception:
                 pass       # כשל ניתוב — נשארים באומדן האווירי, מסומן ככזה
