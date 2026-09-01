@@ -1,47 +1,50 @@
 name: probe-govmap
 
-# בדיקת GovMap (מרשם הכתובות הארצי) כמקור חיפוש כתובות למחירון:
-# אילו endpoints עונים והאם CORS מאפשר קריאה מהאתר. דוח בלבד.
+# רעיון שלמה: האם התצלום האווירי הארצי (govmap / מפ"י) שמיש לפיילוט —
+# איכות, כיסוי, ותנאי שימוש. כתובת אחת ארצית במקום עשרות עיריות.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/probe-govmap.yml'
-      - 'tools/probe_govmap.py'
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: probe-govmap-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  run:
-    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+  probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v4
-
-      - name: בדיקה
+      - name: שירותי המפה הארציים
         run: |
-          mkdir -p fares/checks
-          python3 tools/probe_govmap.py
+          j() {
+            echo "=== $1"
+            curl -sk --max-time 30 "$1" -H 'User-Agent: Mozilla/5.0' | head -c 1200
+            echo; echo "---"
+          }
+          # govmap — נקודות הקצה הידועות
+          j "https://ags.govmap.gov.il/arcgis/rest/services?f=json"
+          j "https://open.govmap.gov.il/arcgis/rest/services?f=json"
+          j "https://gisserver.mapi.gov.il/arcgis/rest/services?f=json"
+          # מרכז המיפוי הישראלי (מפ"י) — שירותי אורתופוטו
+          j "https://mapi.gov.il/arcgis/rest/services?f=json"
+          j "https://orthophoto.mapi.gov.il/arcgis/rest/services?f=json"
+          # שירות אריחים ציבורי של govmap
+          j "https://cdn.govmap.gov.il/arcgis/rest/services?f=json"
 
-      - name: Commit
+      - name: תנאי שימוש govmap ומפ"י
         run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          cp fares/checks/govmap-probe.json /tmp/probe.json
-          for i in 1 2 3; do
-            git fetch origin main && git reset --hard origin/main
-            mkdir -p fares/checks && cp /tmp/probe.json fares/checks/govmap-probe.json
-            git add fares/checks/govmap-probe.json
-            if git diff --cached --quiet; then echo 'אין שינוי'; break; fi
-            git commit -m 'data: בדיקת GovMap כמקור כתובות למחירון'
-            if git push origin HEAD:main; then break; fi
-            echo "push rejected — retry $i"; sleep 10
-          done
+          txt() {
+            echo "=== $1"
+            curl -skL --max-time 30 "$1" -H 'User-Agent: Mozilla/5.0' | python3 -c "
+          import sys,re,html
+          t=sys.stdin.read()
+          t=re.sub(r'(?is)<(script|style).*?</\1>',' ',t)
+          t=html.unescape(re.sub(r'<[^>]+>',' ',t))
+          t=re.sub(r'\s+',' ',t).strip()
+          print(t[:2000] if t else '(ריק)')
+          "
+            echo; echo "---"
+          }
+          txt "https://www.govmap.gov.il/terms"
+          txt "https://www.gov.il/he/departments/general/mapi_terms_of_use"
+          txt "https://www.gov.il/he/departments/survey_of_israel"
