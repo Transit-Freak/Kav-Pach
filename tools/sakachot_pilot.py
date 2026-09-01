@@ -190,8 +190,14 @@ def stage_c():
     yaml.write_text(f"path: {root.resolve()}\ntrain: train/images\nval: val/images\nnames:\n  0: shelter\n")
     m = YOLO('yolov8n.pt')
     m.train(data=str(yaml), epochs=60, imgsz=512, batch=8, device='cpu',
-            project=str(OUT / 'runs'), name='shelter', exist_ok=True, verbose=False)
-    best = OUT / 'runs/shelter/weights/best.pt'
+            project=str((OUT / 'runs').resolve()), name='shelter', exist_ok=True, verbose=False)
+    # ultralytics עלול להפנות את התוצרים לתיקיית ההגדרות שלו — הנתיב
+    # האמין הוא זה שהמאמן עצמו מדווח (שעתיים אבדו על ההנחה ההפוכה)
+    best = pathlib.Path(getattr(m.trainer, 'best', '') or '')
+    if not best.is_file():
+        cands = sorted(pathlib.Path.home().rglob('best.pt'), key=lambda x: x.stat().st_mtime)
+        cands += sorted((OUT / 'runs').rglob('best.pt'), key=lambda x: x.stat().st_mtime)
+        best = cands[-1]
     shutil.copy(best, OUT / 'shelter-model.pt')
     metrics = m.val(data=str(yaml))
     print('mAP50:', getattr(metrics.box, 'map50', '?'))
@@ -234,7 +240,7 @@ def stage_d():
         except Exception:
             continue
         im = Image.open(io.BytesIO(img)).convert('RGB')
-        r = m.predict(im, conf=0.4, verbose=False)[0]
+        r = m.predict(im, conf=0.3, verbose=False)[0]
         best_d = None
         for b in r.boxes.xyxy.tolist() if r.boxes is not None else []:
             px_x = (b[0] + b[2]) / 2

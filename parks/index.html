@@ -159,6 +159,10 @@ const SC100=[[90,'#1a9c3e','#fff','מצוין'],[80,'#52c234','#fff','טוב מ�
   [60,'#d3df3a','#3f3f05','בינוני-טוב'],[50,'#f5e42a','#493d03','בינוני'],[40,'#f5c02a','#4a3403','בינוני-חלש'],
   [30,'#f59d20','#fff','חלש'],[20,'#ef7215','#fff','גרוע'],[10,'#e11d1d','#fff','גרוע מאוד'],[0,'#b91c1c','#fff','גרוע מאוד']];
 function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#b91c1c',fg:'#fff',label:'גרוע מאוד'};}
+// חיפוש סלחני (בקשת איריס 01.09): "אזור תעשייה בית שמש" מוצא את
+// "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
+const _qn=s=>String(s||'').replace(/["'׳״]/g,'').replace(/איזור/g,'אזור').replace(/תעשייה/g,'תעשיה').replace(/\s+/g,' ');
+const qMatch=(hay,f)=>{const H=_qn(hay);return _qn(f).split(' ').filter(Boolean).every(t=>H.includes(t));};
 let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מחדל) · 'e'=עד הכניסה/קצה
 let HEATMODE='peak';   // מפת חום: 'peak'=שעות שיא של יום עבודה (ברירת-מחדל) · 'day'=כל היום
 let HEATSCOPE='in';   // 'in'=נכנסים פנימה בלבד (ברירת-מחדל) · 'all'=בפנים+שערי כניסה
@@ -221,7 +225,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='41';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='42';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -256,10 +260,6 @@ function renderTable(){
   const pb=document.getElementById('stplan');
   pb.style.display=pl?'flex':'none';
   pb.textContent='🏗️ אזורים בהקמה';
-// חיפוש סלחני (בקשת איריס 01.09): "אזור תעשייה בית שמש" מוצא את
-// "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
-const _qn=s=>String(s||'').replace(/["'׳״]/g,'').replace(/איזור/g,'אזור').replace(/תעשייה/g,'תעשיה').replace(/\s+/g,' ');
-const qMatch=(hay,f)=>{const H=_qn(hay);return _qn(f).split(' ').filter(Boolean).every(t=>H.includes(t));};
 
   pb.classList.toggle('on',!!SHOWPLAN);
   let rows=IDX.filter(p=>ZTYPES[ztOf(p)]&&(SHOWPLAN||!isPlan(p))&&(!f || qMatch(p.name+' '+(p.city||''),f)));
@@ -408,14 +408,14 @@ function openHeatmap(fit=true){
   const sc100chips=SC100.slice().reverse().map(([t,bg,,label])=>`<i style="background:${bg}" title="${label}"></i>${t}`).join(' ');
   document.getElementById('hleg').innerHTML=
     LAYERS[SYMMODE]
-      ? LAYERS[SYMMODE].cap+' — ציון 0–100: '+sc100chips+' · <i style="background:#94a3b8"></i> אין נתון <span style="color:#94a3b8">· מדרגות זמניות לבחינה</span>'
+      ? LAYERS[SYMMODE].cap+' (נמדד ממרכז האזור ✚) — ציון 0–100: '+sc100chips+' · <i style="background:#94a3b8"></i> אין נתון <span style="color:#94a3b8">· מדרגות זמניות לבחינה</span>'
       : SYMMODE=='score'
       ? '⭐ ציון משרד התחבורה (0–100): '+SC100.slice().reverse().map(([t,bg,,label])=>`<i style="background:${bg}" title="${label}"></i>${t}`).join(' ')+' · <i style="background:#94a3b8"></i> אין ציון'
       : (SYMMODE=='stops'||SYMMODE=='freq')
       ? (SYMMODE=='stops'?'🚏 תחנות בתוך האזור: ':'🕐 יציאות אוטובוס ביום חול: ')+
         `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${T[0]} · `+
         `<i style="background:#84cc16"></i> ${T[0]+1}–${T[1]} · <i style="background:#16a34a"></i> ${T[1]+1}–${T[2]} · `+
-        `<i style="background:#065f46"></i> ${T[2]}+`
+        `<i style="background:#065f46"></i> ${T[2]+1}+`
       : (()=>{const c=(sz,cl)=>`<span style="display:inline-block;width:${sz}px;height:${sz}px;border-radius:50%;background:${cl};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;vertical-align:middle;flex:none"></span>`;
         // מקרא אחד לצבע ולגודל יחד (בקשת איריס) — לא מדד משוקלל: שני מבחנים, והחמור קובע
         return `🎯 <b>צבע וגודל העיגול = עמידה בתקן הנגישות לעבודה.</b> שלושה מבחנים — תדירות מצטברת, כיסוי שטח, והקו החזק — והחמור מביניהם קובע (אין שקלול):<br>`+
@@ -443,7 +443,7 @@ function openHeatmap(fit=true){
       const di=WALKMODE=='e'?(p.dwie||0):(p.dwi||0), dg=WALKMODE=='e'?(p.dwge||0):(p.dwg||0);
       const v=HEATSCOPE=='in'?di:di+dg;
       marker=L.circleMarker([p.la,p.lo],{radius:hsiz(v),color:'#fff',weight:2.5,fillColor:hcol(v),fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
-        .bindPopup(head+(v?`יציאות אוטובוס ביום חול: <b>${v}</b><br><span style="color:#64748b">${HEATSCOPE=='in'?'קווים שנכנסים פנימה':'כולל שערי הכניסה'} · קווים: ${li+lg}</span>`:`<b style="color:#dc2626">אפס יציאות ביום חול</b>`));
+        .bindPopup(head+(v?`יציאות אוטובוס ביום חול: <b>${v}</b><br><span style="color:#64748b">${HEATSCOPE=='in'?'קווים שנכנסים פנימה':'כולל שערי הכניסה'} · קווים: ${HEATSCOPE=='in'?li:li+lg}</span>`:`<b style="color:#dc2626">אפס יציאות ביום חול</b>`));
     }else if(LAYERS[SYMMODE]){
       const L2=LAYERS[SYMMODE], sc=L2.score(p), c=sc100(sc);
       marker=L.circleMarker([p.la,p.lo],{radius:sc==null?8:Math.round(8+(sc/100)*13),color:'#fff',weight:2.2,fillColor:c.bg,fillOpacity:isPlan(p)?.45:.88,dashArray:isPlan(p)?'4 3':null})
@@ -453,7 +453,7 @@ function openHeatmap(fit=true){
       // מדרג גדלים דרמטי (בקשת איריס): ציון 20 ≈ 16px, 50 ≈ 26px, 100 ≈ 46px
       marker=L.marker([p.la,p.lo],{icon:starIcon(sf==null?9:Math.round(10+Math.pow(sf/100,1.8)*46),scol(sf)),opacity:isPlan(p)?.5:1})
         .bindPopup(head+(sf==null?'אין ציון משרד התחבורה לאזור הזה'
-          :`⭐ ציון השירות של משרד התחבורה<div style="text-align:center;font-size:26px;font-weight:900;color:${scol(sf)}">${sf}%</div><span style="color:#64748b">0–100 · משקלל זמינות, נגישות, תחרותיות ואמינות</span>`));
+          :`⭐ ציון השירות של משרד התחבורה<div style="text-align:center;font-size:26px;font-weight:900;color:${scol(sf)}">${sf}</div><span style="color:#64748b">0–100 · משקלל זמינות, נגישות, תחרותיות ואמינות</span>`));
     }else{
       // פסק הדין: צבע + גודל = עמידה בתקן הנגישות. שאלה אחת, שלושה צבעים.
       // אדום = אין תחנה בהליכה או אין שירות שימושי; כתום = נכשל בתדירות
@@ -566,7 +566,8 @@ for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','fr
 // פער מרכז–פריפריה: מחושב מכל האזורים הפעילים; "מרכז" = עד 45 ק"מ מתל אביב
 function gapStats(){
   const dKm=p=>{const dy=(p.la-32.08)*110.5,dx=(p.lo-34.78)*93.0;return Math.hypot(dx,dy)};
-  const act=IDX.filter(p=>!isPlan(p));
+  const f2=(q.value||'').trim();
+  const act=IDX.filter(p=>ZTYPES[ztOf(p)]&&!isPlan(p)&&(!f2||qMatch(p.name+' '+(p.city||''),f2)));
   const C=act.filter(p=>dKm(p)<=45),P=act.filter(p=>dKm(p)>45);
   const svc=p=>HEATSCOPE=='in'?cnt(p,'li'):cnt(p,'li')+cnt(p,'lg');   // מכבד את מצב הספירה שנבחר
   const avg=a=>a.length?(a.reduce((s,p)=>s+svc(p),0)/a.length):0;
@@ -850,7 +851,7 @@ function openPark(f,push=true){
     const se=socioOf(d.city);
     const sa2=(SOCIOSA&&SOCIOSA.zones&&SOCIOSA.zones[f])||null;
     if(se||sa2){
-      const scol2=x=>x<=3?'#b91c1c':(x<=6?'#b45309':'#15803d');
+      const scol2=x=>x<=3?'#b91c1c':(x<=7?'#b45309':'#15803d');
       boxes+=`<div class="offbox" style="background:#fefce8;border-color:#fde68a">
         <div class="offh" style="color:#854d0e">🏘️ מדד חברתי-כלכלי · הלמ"ס${((SOCIOSA&&SOCIOSA.year)||(SOCIO&&SOCIO.year))?` · ${(SOCIOSA&&SOCIOSA.year)||SOCIO.year}`:''}</div>
         <div class="stats" style="margin:6px 0 0">
@@ -878,11 +879,11 @@ function openPark(f,push=true){
       h+=`<h2>קווים (${mkAll.size} — ${inTxt}${mkPk.size<mkAll.size?` · ${mkPk.size} פעילים בשעות השיא`:''}) · לחצו לשעות המלאות</h2>`;
       // הקו החזק ביותר — התנאי השלישי (איריס): בוקר לכיוון האזור, לפי מקט
       const blPer={};
-      ((d.lines)||[]).forEach(L=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length;const mk2=L.mk||L.num;blPer[mk2]=(blPer[mk2]||0)+(L.dr==='out'?0:am);});
+      ((d.lines)||[]).forEach(L=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length;const mk2=L.mk||L.num;if(L.dr!=='out'&&am>(blPer[mk2]||0))blPer[mk2]=am;});
       const blZ=Object.keys(blPer).length?Math.max(...Object.values(blPer)):0;
       const blMk=Object.keys(blPer).find(k=>blPer[k]===blZ);
       const blNum=(lines.find(L=>String(L.mk||L.num)===String(blMk))||{}).num||blMk;
-      h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ}</b>${blZ?` · הקו החזק ביותר (קו ${esc(String(blNum))}): <b>${blZ}</b> יציאות בוקר — ${blZ>=9?'עומד לבדו בתקן (כל ≤20 דק׳) ✓':'מתחת לתקן הקו הבודד (9 = כל 20 דק׳) ✗'}`:''}</div>`;
+      h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ}</b>${blZ?` · הקו החזק ביותר (קו ${esc(String(blNum))}, בכיוון בודד): <b>${blZ}</b> יציאות בוקר — ${blZ>=9?'עומד לבדו בתקן (כל ≤20 דק׳) ✓':'מתחת לתקן הקו הבודד (9 = כל 20 דק׳) ✗'}`:''}</div>`;
     }
     // קווים לא-סדירים: קו בלי אף יציאה בשעות השיא מוצג בקבוצה מקופלת.
     // קווי תלמידים ולילה כלל אינם בנתונים — מוחרגים במקור לפי הקטלוג הרשמי.
@@ -894,7 +895,7 @@ function openPark(f,push=true){
       const wd=L2.wd||[];
       const mh=medHead(wd);
       const pa=peakAmL(wd), pc=peakCol(pa, wd.length);
-      return `<div class="line" data-rid="${L2.rid||''}" data-c="${pc}" onclick="this.classList.toggle('open');drawRouteEl(this)">
+      return `<div class="line" data-rid="${L2.rid||''}" data-c="${headCol(mh)}" onclick="this.classList.toggle('open');drawRouteEl(this)">
         <div class="lhead"><span class="lnum" style="background:${pc}" title="${wd.length?`${pa} הגעות בשיא הבוקר (06–09)${mh!=null?` · תדירות אופיינית ביום: כל ~${mh} דק׳`:''}`:'אין נסיעות ביום חול'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
           <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span></div>
