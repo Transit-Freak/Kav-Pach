@@ -1,0 +1,47 @@
+name: probe-terms
+
+# תנאי השימוש של שכבות ה-GIS העירוניות (שאלת שלמה): האם מותר להשתמש
+# בתצלומי האוויר לניתוח, ובאילו תנאים. לא כותב כלום לריפו.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: תנאי שימוש — עיריית תל אביב
+        run: |
+          fetch() {
+            echo "=== $1"
+            curl -skL --max-time 30 "$1" -H 'User-Agent: Mozilla/5.0' \
+              | python3 -c "
+          import sys,re,html
+          t=sys.stdin.read()
+          t=re.sub(r'(?is)<(script|style).*?</\1>',' ',t)
+          t=html.unescape(re.sub(r'<[^>]+>',' ',t))
+          t=re.sub(r'\s+',' ',t).strip()
+          print(t[:2500] if t else '(ריק)')
+          "
+            echo; echo "---"
+          }
+          # מטא-דאטה רשמית של שירותי המפה (copyrightText / licenseInfo)
+          echo "=== copyrightText / licenseInfo של שירותי האורתופוטו"
+          for svc in WM/IView2Ortho2025WM IView2Ortho2023 IView2MapHeb; do
+            curl -sk --max-time 30 "https://gisn.tel-aviv.gov.il/arcgis/rest/services/$svc/MapServer?f=json" \
+              -H 'User-Agent: Mozilla/5.0' | python3 -c "
+          import json,sys
+          try: d=json.load(sys.stdin)
+          except Exception: print('  (לא JSON)'); raise SystemExit
+          print('  $svc → copyright:', repr(d.get('copyrightText'))[:200], '| license:', repr(d.get('licenseInfo'))[:200])
+          "
+          done
+          echo
+          # עמודי תנאי השימוש והנתונים הפתוחים
+          fetch "https://www.tel-aviv.gov.il/Pages/TermsOfUse.aspx"
+          fetch "https://opendata.tel-aviv.gov.il/Pages/Terms.aspx"
+          fetch "https://www.tel-aviv.gov.il/Residents/Environment/Pages/GIS.aspx"
