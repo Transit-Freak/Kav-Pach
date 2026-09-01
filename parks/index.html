@@ -162,6 +162,25 @@ function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציו�
 // "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
 const _qn=s=>String(s||'').replace(/["'׳״]/g,'').replace(/איזור/g,'אזור').replace(/תעשייה/g,'תעשיה').replace(/\s+/g,' ');
 const qMatch=(hay,f)=>{const H=_qn(hay);return _qn(f).split(' ').filter(Boolean).every(t=>H.includes(t));};
+// ── קישור למפה הממשלתית (govmap) — הפורמט הרשמי מכפתור השיתוף שלהם.
+// ההמרה לרשת ישראל כוילה מול 33,688 נקודות של סקר תלתן (שגיאה ~5 מ׳).
+function wgs84ToITM(lat,lon){
+  const A=6378137.0,F=1/298.257222101,E2=2*F-F*F,K0=1.0000067;
+  const LON0=35.2045169444444*Math.PI/180, LAT0=31.7343936111111*Math.PI/180;
+  const FE=219529.584, FN=626907.39, DX=-63.26, DY=-41.82;
+  const M=(la)=>{const e2=E2,e4=E2*E2,e6=E2*E2*E2;
+    return A*((1-e2/4-3*e4/64-5*e6/256)*la-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*la)
+      +(15*e4/256+45*e6/1024)*Math.sin(4*la)-(35*e6/3072)*Math.sin(6*la));};
+  const la=lat*Math.PI/180, lo=lon*Math.PI/180, ep2=E2/(1-E2);
+  const n=A/Math.sqrt(1-E2*Math.pow(Math.sin(la),2)), t=Math.pow(Math.tan(la),2);
+  const c=ep2*Math.pow(Math.cos(la),2), a=(lo-LON0)*Math.cos(la);
+  const x=FE+K0*n*(a+(1-t+c)*Math.pow(a,3)/6+(5-18*t+t*t+72*c-58*ep2)*Math.pow(a,5)/120);
+  const y=FN+K0*(M(la)-M(LAT0)+n*Math.tan(la)*(a*a/2+(5-t+9*c+4*c*c)*Math.pow(a,4)/24
+      +(61-58*t+t*t+600*c-330*ep2)*Math.pow(a,6)/720));
+  return [x+DX,y+DY];
+}
+const govmapUrl=(lat,lon)=>{const [x,y]=wgs84ToITM(lat,lon);
+  return `https://www.govmap.gov.il?c=${x.toFixed(2)}%2C${y.toFixed(2)}&bb=1&zb=1&rb=1&in=1`;};
 let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מחדל) · 'e'=עד הכניסה/קצה
 let HEATMODE='peak';   // מפת חום: 'peak'=שעות שיא של יום עבודה (ברירת-מחדל) · 'day'=כל היום
 let HEATSCOPE='in';   // 'in'=נכנסים פנימה בלבד (ברירת-מחדל) · 'all'=בפנים+שערי כניסה
@@ -233,7 +252,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='45';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='46';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -877,6 +896,7 @@ function openPark(f,push=true){
       const pkdZ=((d.lines)||[]).reduce((s,L)=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length,pm=wd.filter(t=>'15:00'<=t&&t<'19:00').length;
         return s+(L.t==='in'||L.t==='gate'?am+pm:(L.dr==='in'?am:(L.dr==='out'?pm:am+pm)))},0);   // תמיד מדידת מרכז — כהגדרת התקן
       const inTxt=mkIn.size===mkAll.size?'כולם עוצרים בתוך האזור':mkIn.size===0?'אף אחד לא עוצר בפנים':`${mkIn.size} עוצרים בתוך האזור`;
+      h+=`<div style="margin:6px 0 10px"><a href="${govmapUrl(d.polys[0][0][0],d.polys[0][0][1])}" target="_blank" rel="noopener" class="gmbtn" title="פותח את המפה הממשלתית (govmap) ממוקדת על האזור — רחובות, שמות מקומות ותצלום אוויר רשמי">🗺️ פתיחה במפה הממשלתית</a></div>`;
       h+=`<h2>קווים (${mkAll.size} — ${inTxt}${mkPk.size<mkAll.size?` · ${mkPk.size} פעילים בשעות השיא`:''}) · לחצו לשעות המלאות</h2>`;
       // הקו החזק ביותר — התנאי השלישי (איריס): בוקר לכיוון האזור, לפי מקט
       const blPer={};
