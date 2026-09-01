@@ -74,8 +74,22 @@ jobs:
           ov "${A}node[highway=bus_stop](area.a);out count;"                'כל תחנות האוטובוס ב-OSM בישראל'
           ov "${A}node[highway=bus_stop][shelter](area.a);out count;"        'מתוכן: יש תיוג shelter כלשהו'
           ov "${A}node[highway=bus_stop][shelter=yes](area.a);out count;"    'מתוכן: shelter=yes'
-          ov "${A}node[highway=bus_stop][\"ref:IL:mot\"](area.a);out count;" 'מתוכן: יש מק"ט משרד התחבורה (ניתן להצלבה!)'
           ov "${A}nwr[amenity=shelter](area.a);out count;"                   'עצמי shelter נפרדים'
+          # השאלה המכרעת: האם אפשר לחבר את תיוגי OSM למק"ט שלנו. בלי מפתח
+          # משותף התיוגים חסרי ערך עבורנו. נבדקות כל וריאציות המפתח הנפוצות.
+          for k in 'ref:IL:mot' 'ref' 'gtfs:stop_id' 'ref:gtfs' 'operator:ref' 'ref:IL:MOT'; do
+            ov "${A}node[highway=bus_stop][\"$k\"](area.a);out count;" "מפתח הצלבה \"$k\""
+          done
+          echo '── דוגמת תגיות מלאה משלוש תחנות עם סככה (לראות מה באמת יש שם)'
+          curl -s --max-time 120 -H 'User-Agent: kav-bochan-probe' \
+            --data-urlencode "data=${A}node[highway=bus_stop][shelter=yes](area.a);out tags 3;" \
+            https://overpass-api.de/api/interpreter -o /tmp/s.json || true
+          python3 -c "
+          import json
+          try: d=json.load(open('/tmp/s.json'))
+          except Exception as e: print('   (כשל)',e); raise SystemExit
+          for e in (d.get('elements') or [])[:3]:
+              print('   ', json.dumps(e.get('tags',{}),ensure_ascii=False)[:400])" || true
 
       - name: Mapillary — כיסוי תצלומי רחוב בישראל (CC-BY-SA)
         run: |
