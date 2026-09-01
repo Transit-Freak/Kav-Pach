@@ -77,9 +77,12 @@ jobs:
           ov "${A}nwr[amenity=shelter](area.a);out count;"                   'עצמי shelter נפרדים'
           # השאלה המכרעת: האם אפשר לחבר את תיוגי OSM למק"ט שלנו. בלי מפתח
           # משותף התיוגים חסרי ערך עבורנו. נבדקות כל וריאציות המפתח הנפוצות.
-          for k in 'ref:IL:mot' 'ref' 'gtfs:stop_id' 'ref:gtfs' 'operator:ref' 'ref:IL:MOT'; do
+          # Overpass מגביל קצב — הפסקה בין שאילתות, אחרת מוחזר HTML ולא JSON
+          for k in 'ref:IL:mot' 'ref' 'gtfs:stop_id' 'ref:gtfs' 'operator:ref'; do
+            sleep 20
             ov "${A}node[highway=bus_stop][\"$k\"](area.a);out count;" "מפתח הצלבה \"$k\""
           done
+          sleep 20
           echo '── דוגמת תגיות מלאה משלוש תחנות עם סככה (לראות מה באמת יש שם)'
           curl -s --max-time 120 -H 'User-Agent: kav-bochan-probe' \
             --data-urlencode "data=${A}node[highway=bus_stop][shelter=yes](area.a);out tags 3;" \
