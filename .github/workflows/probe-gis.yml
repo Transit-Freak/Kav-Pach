@@ -22,15 +22,12 @@ jobs:
             curl -sk --max-time 20 "$1" -H 'User-Agent: Mozilla/5.0' | head -c 600
             echo; echo "---"
           }
-          # govmap — שירותי ArcGIS הארציים (מפ"י): רשימת השירותים
-          probe "https://ags.govmap.gov.il/arcgis/rest/services?f=json"
-          probe "https://ags.govmap.gov.il/arcgis/rest/services/AdditionalData/MapServer?f=json"
-          probe "https://govmap.gov.il/arcgis/rest/services?f=json"
-          # gis-net (הפלטפורמה של קרית מלאכי ועוד עשרות רשויות)
-          probe "https://v5.gis-net.co.il/arcgis/rest/services?f=json"
-          probe "https://v5.gis-net.co.il/proxy/proxy.ashx?https://v5.gis-net.co.il/arcgis/rest/services?f=json"
-          probe "https://v5.gis-net.co.il/v5/KiryatMalachi"
-          # תל אביב — GIS עירוני עצמאי עם REST פתוח
-          probe "https://gisn.tel-aviv.gov.il/arcgis/rest/services?f=json"
-          # ירושלים
-          probe "https://gis.jerusalem.muni.il/arcgis/rest/services?f=json"
+          # שלב 2: צלילה לתל אביב — שהגישוש הראשון מצא פתוחה
+          big() {
+            echo "=== $1"
+            curl -sk --max-time 30 "$1" -H 'User-Agent: Mozilla/5.0' | head -c 4000
+            echo; echo "---"
+          }
+          big "https://gisn.tel-aviv.gov.il/arcgis/rest/services/OpenData?f=json"
+          big "https://gisn.tel-aviv.gov.il/arcgis/rest/services/WM?f=json"
+          big "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer?f=json"
