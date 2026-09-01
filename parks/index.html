@@ -53,7 +53,6 @@
       <button class="btn" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
       <button class="btn" id="symscore" title="כוכב בצבע ובגודל לפי ציון השירות הרשמי של משרד התחבורה (0–100)">⭐ ציון משרד התחבורה · כוכב</button>
       <button class="btn" id="symuf" title="ממוצע: כל כמה דקות יוצא אוטובוס שימושי בשעות השיא — בבוקר אל האזור, אחה״צ ממנו">🚌 תדירות שימושית</button>
-      <button class="btn" id="symcov" title="איזה חלק משטח האזור נמצא בהליכת 10 דקות אמיתית מתחנה">🗺️ כיסוי שטח</button>
       <button class="btn" id="symfar" title="כמה דקות הולך העובד במפעל המרוחק ביותר באזור עד התחנה הקרובה">🚶 הנקודה הרחוקה</button>
       <button class="btn" id="symbest" title="התדירות של הקו החזק ביותר באזור בשיא הבוקר">🔝 הקו התדיר</button>
       <div class="lp-sec">שכבות מפה</div>
@@ -234,7 +233,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='44';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='45';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -399,9 +398,6 @@ function openHeatmap(fit=true){
     uf:{cap:'🚌 אוטובוס שימושי בממוצע (בבוקר אל האזור, אחה״צ ממנו)',
         score:p=>{const d=p.pkd||0;if(!d)return 0;return bandScore(420/d,[[5,95],[8,85],[12,75],[17,65],[25,55],[35,45],[50,35],[80,25],[180,15]],5)},
         pop:p=>{const d=p.pkd||0;return d?`🚌 <b>${d}</b> יציאות שימושיות בשעות השיא — אוטובוס בממוצע כל <b>~${Math.round(420/d)} דק׳</b>`:'<b style="color:#b91c1c">אפס יציאות שימושיות בשעות השיא</b>'}},
-    cov:{cap:'🗺️ אחוז שטח האזור בהליכת 10 דק׳ מתחנה (מדרוג מתוח — החציון הארצי 100%)',
-        score:p=>{if(!('cv' in p))return null;const c=p.cv;return c>=100?95:c>=95?80:c>=90?70:c>=80?60:c>=70?50:c>=60?40:c>=45?28:c>=30?15:5},
-        pop:p=>('cv' in p)?`🗺️ <b>${p.cv}%</b> משטח האזור בטווח 10 דק׳ הליכה אמיתית מתחנה`:'אין חישוב כיסוי לאזור הזה'},
     far:{cap:'🚶 הליכת העובד במפעל המרוחק ביותר',
         score:p=>p.ww==null?0:bandScore(p.ww,[[5,95],[8,85],[11,75],[14,65],[18,55],[22,45],[28,35],[35,25],[45,15]],5),
         pop:p=>p.ww==null?'<b style="color:#b91c1c">אין תחנות בסביבת האזור</b>':`🚶 מהנקודה המרוחקת ביותר באזור הולכים <b>${Math.round(p.ww)} דק׳</b> לתחנה הקרובה`},
@@ -426,12 +422,10 @@ function openHeatmap(fit=true){
         `<i style="background:#84cc16"></i> ${T[0]+1}–${T[1]} · <i style="background:#16a34a"></i> ${T[1]+1}–${T[2]} · `+
         `<i style="background:#065f46"></i> ${T[2]+1}+`
       : (()=>{const c=(sz,cl)=>`<span style="display:inline-block;width:${sz}px;height:${sz}px;border-radius:50%;background:${cl};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;vertical-align:middle;flex:none"></span>`;
-        // מקרא אחד לצבע ולגודל יחד (בקשת איריס) — לא מדד משוקלל: שני מבחנים, והחמור קובע
-        return `🎯 <b>צבע וגודל העיגול = עמידה בתקן הנגישות לעבודה.</b> שלושה מבחנים — תדירות מצטברת, כיסוי שטח, והקו החזק — והחמור מביניהם קובע (אין שקלול):<br>`+
-        c(18,'#16a34a')+` <b style="color:#15803d">גדול וירוק — עומד בתקן</b>: 21+ יציאות בשעות השיא בכיוון הנסיעה (בבוקר פנימה, אחה״צ החוצה, כל הקווים יחד), וגם 90%+ מהשטח בהליכת 10 דק׳ מתחנה, וגם לפחות קו אחד שמגיע בעצמו כל 20 דק׳ בבוקר<br>`+
-        c(13,'#ea580c')+` <b style="color:#c2410c">בינוני וכתום — חלקי</b>: נכשל באחד מהמבחנים · `+
-        c(9,'#dc2626')+` <b style="color:#b91c1c">קטן ואדום — אין נגישות</b>: אין תחנה במרחק הליכה, אין שירות בשיא, או כיסוי מתחת ל-60%<br>`+
-        `<span style="font-weight:600;color:#64748b">טבעת סגולה = אזור תעסוקה (משרדים/מסחר) · טבעת כהה = תשתית (נמל, זיקוק...)</span>`;})();
+        // הציון המשוקלל (הגדרת איריס 01.09) — סקאלת עשר המדרגות
+        return `🎯 <b>הציון המשוקלל של האתר (0–100)</b> — צבע וגודל העיגול לפי הציון:<br>`+
+          SC100.slice().reverse().map(([t,bg,,lab])=>`${c(Math.round(9+t/100*13),bg)} ${t}+ ${lab}`).join(' · ')+
+          `<br><span style="font-weight:600;color:#64748b">מרכיבי הציון: תדירות שימושית בשעות השיא <b>15%</b> · תדירות הקו התדיר בשיא הבוקר <b>35%</b> · הליכת העובד מהנקודה המרוחקת באזור <b>25%</b> · הליכה ממרכז האזור לתחנה הקרובה <b>25%</b> · טבעת סגולה = אזור תעסוקה, טבעת כהה = תשתית</span>`;})();
   const triIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
     html:`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20"><polygon points="10,2 19,18 1,18" fill="${c}" stroke="#fff" stroke-width="1.6"/></svg>`});
   const starIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
@@ -464,24 +458,22 @@ function openHeatmap(fit=true){
         .bindPopup(head+(sf==null?'אין ציון משרד התחבורה לאזור הזה'
           :`⭐ ציון השירות של משרד התחבורה<div style="text-align:center;font-size:26px;font-weight:900;color:${scol(sf)}">${sf}</div><span style="color:#64748b">0–100 · משקלל זמינות, נגישות, תחרותיות ואמינות</span>`));
     }else{
-      // פסק הדין: צבע + גודל = עמידה בתקן הנגישות. שאלה אחת, שלושה צבעים.
-      // אדום = אין תחנה בהליכה או אין שירות שימושי; כתום = נכשל בתדירות
-      // הכיוונית (<21) או בכיסוי השטח (<90%); ירוק = עומד בשניהם.
-      const walkN=(p.li||0)+(p.lg||0)+(p.ln||0);
-      const cvv=('cv' in p)?p.cv:null;
-      const pkdV=p.pkd||0;
-      // התנאי השלישי (החלטת איריס 25.08.2026): הקו החזק ביותר לבדו חייב
-      // להגיע לפחות כל 20 דק' בבוקר (9 יציאות ב-06-09) — מצטבר לבדו מטעה
-      const blV=(p.bl==null)?null:p.bl;
-      const vr=(walkN===0||pkdV===0||(cvv!=null&&cvv<60))?'r':((pkdV<21||(cvv!=null&&cvv<90)||(blV!=null&&blV<9))?'o':'g');
-      const VC={r:'#dc2626',o:'#ea580c',g:'#16a34a'}[vr], VS={r:9,o:14,g:20}[vr];
-      const vTxt={r:'אין נגישות לעבודה בתחבורה ציבורית',o:'נגישות חלקית — נכשל באחד המבחנים',g:'עומד בתקן הנגישות לעבודה'}[vr];
-      const body=`<b style="color:${VC}">${vTxt}</b><br>`+
-        `יציאות שיא בכיוון הנסיעה (כל הקווים יחד): <b>${pkdV}</b> ${pkdV>=21?'✓':'✗ (התקן: 21)'}<br>`+
-        `כיסוי הליכה: ${cvv!=null?`<b>${cvv}%</b> מהשטח עד 10 דק׳ מתחנה ${cvv>=90?'✓':'✗ (התקן: 90%)'}`:'לא חושב'}<br>`+
-        (blV!=null?`הקו החזק ביותר: <b>${blV}</b> יציאות בוקר לכיוון האזור ${blV>=9?'✓':'✗ (התקן: 9 = כל 20 דק׳)'}<br>`:'')+
-        `<span style="color:#64748b">קווים בתקן ההליכה (ממרכז האזור): ${walkN} · מהם עוצרים בפנים: ${p.li||0}</span>`;
-      marker=L.circleMarker([p.la,p.lo],{radius:VS,color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,fillColor:VC,fillOpacity:isPlan(p)?.45:.85,dashArray:isPlan(p)?'4 3':null})
+      // הציון המשוקלל (הגדרת איריס 01.09) — מחושב בצנרת ומוצג כאן על
+      // סקאלת עשר המדרגות: צבע = הציון, גודל = הציון.
+      const sc=(p.score==null?null:p.score), k=sc100(sc), pr=p.sparts||{};
+      const hw=(v,m)=>v?`כל ~${Math.round(m/v)} דק׳`:'אין';
+      const body=(sc==null?'<b>אין מספיק נתונים לציון</b>'
+        :`<div style="font-size:24px;font-weight:900;color:${k.bg};text-align:center;line-height:1.1">${sc}</div>`+
+         `<div style="text-align:center;font-weight:800;margin-bottom:6px;color:${k.bg}">${k.label}</div>`+
+         `<span style="color:#475569;font-size:12.5px;line-height:1.75">`+
+         `תדירות שימושית · ציון ${pr.uf??'—'} <span style="color:#94a3b8">(${hw(p.pkd,420)})</span><br>`+
+         `הקו התדיר · ציון ${pr.bl??'—'} <span style="color:#94a3b8">(${hw(p.bl1,180)})</span><br>`+
+         `הנקודה הרחוקה · ציון ${pr.far??'—'} <span style="color:#94a3b8">(${p.ww!=null?Math.round(p.ww)+' דק׳ הליכה':'—'})</span><br>`+
+         `תחנה קרובה מהמרכז · ציון ${pr.near??'—'} <span style="color:#94a3b8">(${p.nearw!=null?Math.round(p.nearw)+' דק׳':'—'})</span>`+
+         `</span>`);
+      marker=L.circleMarker([p.la,p.lo],{radius:sc==null?8:Math.round(8+(sc/100)*14),
+        color:({emp:'#7c3aed',infra:'#334155'})[ztOf(p)]||'#fff',weight:2.5,
+        fillColor:k.bg,fillOpacity:isPlan(p)?.45:.9,dashArray:isPlan(p)?'4 3':null})
         .bindPopup(head+body);
     }
     marker.addTo(heatLayer);
@@ -565,10 +557,10 @@ document.getElementById('modebtn').onclick=()=>{
 // ברירת המחדל (סיכום איריס 24.08): פסק הדין — עמידה בתקן בשלושה צבעים;
 // שאר השכבות והסמלים בבחירה ידנית, כדי לא להציף את הגולש במידע
 let SYMMODE='lines';
-for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symcov','cov'],['symfar','far'],['symbest','best']])
+for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symfar','far'],['symbest','best']])
   document.getElementById(id).onclick=()=>{
     SYMMODE=mode;
-    for(const [id2,m2] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symcov','cov'],['symfar','far'],['symbest','best']])
+    for(const [id2,m2] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symfar','far'],['symbest','best']])
       document.getElementById(id2).classList.toggle('on',m2===mode);
     if(heatview.style.display==='none')openHeatmap(true); else openHeatmap(false);
   };

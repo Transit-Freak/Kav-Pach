@@ -25,7 +25,8 @@ CAL = os.environ.get('CAL', 'calendar.txt')
 OUTDIR = os.environ.get('OUTDIR', 'parks-out')
 
 GATE_M = 150      # עד כאן מגבול הפארק — "כניסה"
-NEAR_M = 450      # עד כאן — "צומת/ליד"; רחוק יותר לא רלוונטי לפארק
+NEAR_M = 1500     # החלטת איריס 01.09: נכללות תחנות עד 20 דק׳ הליכה
+                  # (75 מ׳/דק׳ × 20). הסיווג הסופי לפי הליכה אמיתית.
 COVER_M = 400     # רדיוס הליכה סבירה לחישוב כיסוי שטח
 MIN_AREA_KM2 = 0.04
 GAP_MIN = 90      # פער בדקות בין הגעות עוקבות שנחשב "חור" בשירות
@@ -471,8 +472,9 @@ for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
         d = 0 if inside else min(dist_to_poly_m(la, lo, pts, pk['cl']) for pts in pk['polys'])
         if not inside and d > NEAR_M:
             continue
-        junction = bool(JUNCTION_RE.search(r.get('stop_name', '')))
-        tier = 'near' if junction else ('in' if inside else ('gate' if d <= GATE_M else 'near'))
+        # החלטת איריס 01.09: שם התחנה ("צומת", "מחלף") אינו קובע דבר —
+        # רק מרחק ההליכה. הכלל הישן דחק 762 תחנות ל"רחוק", 82 מהן בתוך האזור.
+        tier = 'in' if inside else ('gate' if d <= GATE_M else 'near')
         stop_hits[r['stop_id']].append((pi, tier, int(d)))
         stop_info[r['stop_id']] = (r.get('stop_name', ''), r.get('stop_code', ''),
                                    round(la, 5), round(lo, 5), city_of(r.get('stop_desc', '')))
@@ -561,6 +563,9 @@ for (sid, rid, gk), mins in deps.items():
 # best-effort ומוגבל-זמן — כשל/מגבלת-קצב נופלים חזרה לגאומטרי, לא שוברים בנייה.
 OSRM_URL = os.environ.get('OSRM_URL', '')
 WALK_OK_SEC, WALK_FAR_SEC = 300, 600   # 5 / 10 דקות הליכה
+WALK_MAX_SEC = 1200                    # 20 דק׳ — מעבר לכך התחנה אינה נספרת.
+# תיקון הקליף (החלטת איריס 01.09): תחנה של 11 דק׳ אינה נמחקת עוד —
+# היא מסווגת 'far', הקווים שלה נספרים, והמרחק נענש בציון ההליכה.
 OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
 OSRM_SLEEP = float(os.environ.get('OSRM_SLEEP', '0.4'))   # השהיה בין קריאות (קצב שרת ציבורי; מקומי=0)
 
@@ -708,6 +713,8 @@ def _walk_tier(geo_tier, sec):
         return 'gate'
     if sec <= WALK_FAR_SEC:
         return 'near'
+    if sec <= WALK_MAX_SEC:
+        return 'far'       # 10–20 דק׳: נספרת, המרחק נענש בציון ההליכה
     return 'blocked'
 
 # סיווג-מחדש: כל hit -> (pi, d, tc, te, cm, cmin, em, emin)
@@ -796,7 +803,7 @@ for sid, hits in stop_hits.items():
 
 # ---- הרכבת פלט לכל פארק ----
 os.makedirs(OUTDIR, exist_ok=True)
-TIER_RANK = {'in': 0, 'gate': 1, 'near': 2, 'blocked': 3}
+TIER_RANK = {'in': 0, 'gate': 1, 'near': 2, 'far': 3, 'blocked': 4}
 w1, w2 = [int(x[:2]) * 60 + int(x[3:]) for x in GAP_WIN]
 
 # אינדקס מרחבי לשבילים (פעם אחת) — בלעדיו כל פארק סורק את כל עשרות-אלפי
@@ -870,15 +877,48 @@ def build_lines(stops_here, tk):
         if any(is_peak(t) for t in (L.get('wd') or [])):
             if k0 not in peak_best or r0 < peak_best[k0]:
                 peak_best[k0] = r0
+    # 'far' (10–20 דק׳) מצטרף לספירת "רחוק" — הקווים נספרים, והמרחק נענש
+    # בציון ההליכה (תיקון הקליף, החלטת איריס 01.09)
     counts = (sum(1 for v in best_line.values() if v == TIER_RANK['in']),
               sum(1 for v in best_line.values() if v == TIER_RANK['gate']),
-              sum(1 for v in best_line.values() if v == TIER_RANK['near']))
+              sum(1 for v in best_line.values() if v in (TIER_RANK['near'], TIER_RANK['far'])))
     peaks = (sum(1 for v in peak_best.values() if v == TIER_RANK['in']),
              sum(1 for v in peak_best.values() if v == TIER_RANK['gate']))
     # סך יציאות ביום חול (לו"ז): כל כיוון/חלופה נספר פעם אחת — נפח השירות בפועל
     deps_cnt = (sum(len(L.get('wd') or []) for L in lines if L['t'] == 'in'),
                 sum(len(L.get('wd') or []) for L in lines if L['t'] == 'gate'))
     return lines, counts, peaks, deps_cnt
+
+
+
+# ==== הציון המשוקלל (הגדרת איריס דור-און, 01.09.2026) ====================
+# ארבעה רכיבים, כל אחד 0–100, במשקלים 15/35/25/25. הגבול שייך למדרגה
+# הטובה ("בדיוק 10 דק'" = 80). הציון הסופי 0–100 על סקאלת עשר המדרגות.
+IRIS_HEADWAY = [(5, 100), (10, 90), (15, 85), (20, 80), (30, 70), (40, 60), (60, 55)]
+IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65), (20, 55)]
+IRIS_W = {'uf': .15, 'bl': .35, 'far': .25, 'near': .25}
+
+
+def _band(v, table):
+    if v is None or v <= 0:
+        return 0
+    for t, sc in table:
+        if v <= t:
+            return sc
+    return 0
+
+
+def iris_score(pkd, bl1, ww, near_walk):
+    """pkd/bl1 = יציאות שיא · ww = הנקודה הרחוקה · near_walk = מהמרכז לתחנה."""
+    c = {
+        # תדירות שימושית: ממוצע על שני חלונות השיא (7 שעות = 420 דק׳)
+        'uf': _band(420.0 / pkd if pkd else None, IRIS_HEADWAY),
+        # הקו התדיר: הכיוון הבודד החזק בשיא הבוקר (3 שעות = 180 דק׳)
+        'bl': _band(180.0 / bl1 if bl1 else None, IRIS_HEADWAY),
+        'far': _band(ww, IRIS_WALK),
+        'near': _band(near_walk, IRIS_WALK),
+    }
+    return round(sum(c[k] * IRIS_W[k] for k in IRIS_W)), c
 
 index = []
 out_i = 0
@@ -1039,27 +1079,36 @@ for pi, pk in enumerate(parks):
                             _pts_grid.append((_ga, _go))
                     _go += _slo
                 _ga += _sla
-        _worst = 0.0; _cov = 0
-        # cov10 = "אחוז שטח" — נמדד על רשת הפנים בלבד; worst על הכול
-        # (כולל ההיקף). אזור צר מרשת 75מ' נופל חזרה לנקודות ההיקף.
-        _cov_src = _pts_grid if _pts_grid else _pts
+        _air = []   # (דקות אוויריות, נקודה) לכל נקודת דגימה
         for _p in _pts:
             _best = min(math.hypot((_p[0] - round(_s['la'], 5)) * 110540.0,
                                    (_p[1] - round(_s['lo'], 5)) * 111320.0 * _cl2)
                         for _s in outstops)
-            _t = _best * 1.3 / 75.0
-            _worst = max(_worst, _t)
-        for _p in _cov_src:
-            _best = min(math.hypot((_p[0] - round(_s['la'], 5)) * 110540.0,
-                                   (_p[1] - round(_s['lo'], 5)) * 111320.0 * _cl2)
-                        for _s in outstops)
-            if _best * 1.3 / 75.0 <= 10:
-                _cov += 1
-        if not _pts:
-            _pts = [pk['cen']]; _cov_src = _pts
-        _covp = _cov * 100.0 / max(1, len(_cov_src))
-        # 99.7% לא מתעגל ל"100% מהשטח" כשקיימת נקודה מעל 10 דק'
-        strict_m = {'worst': round(_worst, 1),
+            _air.append((_best * 1.3 / 75.0, _p))
+        _worst = max((t for t, _ in _air), default=0.0)
+        _worst_src = 'air'
+        # החלטת איריס 01.09: הנקודה הרחוקה היא הליכה אמיתית של עובד —
+        # לא מרחק אווירי. מנתבים ב-OSRM את 12 המועמדות הרחוקות ביותר
+        # (המקסימום האמיתי נמצא ביניהן כמעט תמיד) ולוקחים את הגדולה.
+        if OSRM_URL and outstops and _air:
+            _cand = [q for _, q in sorted(_air, key=lambda x: -x[0])[:12]]
+            _dest = [(s['la'], s['lo']) for s in outstops][:60]
+            try:
+                _rows = _osrm_walk(_cand, _dest, (pk['cen'][0], pk['cen'][1]))
+                _secs = [r[1] for r in _rows if r[1] is not None]
+                if _secs:
+                    _worst = max(_secs) / 60.0
+                    _worst_src = 'osrm'
+            except Exception:
+                pass       # כשל ניתוב — נשארים באומדן האווירי, מסומן ככזה
+        # הכיסוי נשאר על רשת השטח בלבד (תיקון הסיירת: נקודות ההיקף זיהמו
+        # את "אחוז השטח"). השכבה יורדת מהאתר, הנתון נשמר לאזורים חריגים.
+        _cov_src = _pts_grid if _pts_grid else _pts
+        _gset = {(round(a, 6), round(b, 6)) for a, b in _cov_src}
+        _grid_t = [t for t, q in _air if (round(q[0], 6), round(q[1], 6)) in _gset]
+        _cov = sum(1 for t in _grid_t if t <= 10)
+        _covp = _cov * 100.0 / max(1, len(_grid_t))
+        strict_m = {'worst': round(_worst, 1), 'wsrc': _worst_src,
                     'cov10': (min(99, int(_covp)) if _worst > 10 else round(_covp))}
     else:
         strict_m = None
@@ -1084,7 +1133,8 @@ for pi, pk in enumerate(parks):
     json.dump(rec, open(os.path.join(OUTDIR, fn), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     index.append({'f': fn, 'name': pk['name'], 'city': city, 'area': rec['area'],
-                  **({'ww': strict_m['worst'], 'cv': strict_m['cov10']} if strict_m else {}),
+                  **({'ww': strict_m['worst'], 'cv': strict_m['cov10'],
+                      'wsrc': strict_m.get('wsrc')} if strict_m else {}),
                   'lines': len(lines_c),
                   'li': lic, 'lg': lgc, 'ln': lnc,             # מרכז (ברירת-מחדל)
                   'lie': lie, 'lge': lge, 'lne': lne,          # קצה (כניסה)
@@ -1196,19 +1246,21 @@ if used_rids and os.path.exists(SHAPES):
         _d = json.load(open(_fp, encoding='utf-8'))
         _cen = (_e['la'], _e['lo']); _cl = math.cos(math.radians(_cen[0]))
         _sbc = {s['c']: s for s in _d.get('stops') or []}
+        # החלטת איריס 01.09: הכלל "בבוקר רק הנכנסים, אחה"צ רק היוצאים"
+        # חל על כל התחנות — גם בתוך האזור וגם בשער. קודם הוא הופעל רק על
+        # תחנות 5–10 דק', כלומר 75% מהספירה לא נבדקה לכיוון בכלל.
         for _key in ('lines', 'linesE'):
             for _L in _d.get(_key) or []:
-                if _L['t'] == 'near':
-                    _s = _sbc.get(_L['code'])
-                    _L['dr'] = _classify_dir(_L['rid'], _s['la'], _s['lo'], _cen, _cl) if _s else '?'
+                _s = _sbc.get(_L['code'])
+                _L['dr'] = _classify_dir(_L['rid'], _s['la'], _s['lo'], _cen, _cl) if _s else '?'
         _pkd = 0
         for _L in _d.get('lines') or []:
             _wd = _L.get('wd') or []
             _am = sum(1 for t in _wd if _AM(t)); _pm = sum(1 for t in _wd if _PM(t))
-            if _L['t'] in ('in', 'gate'): _pkd += _am + _pm
-            elif _L.get('dr') == 'in': _pkd += _am
-            elif _L.get('dr') == 'out': _pkd += _pm
-            elif _L.get('dr') == '?': _pkd += _am + _pm
+            _dr = _L.get('dr')
+            if _dr == 'in': _pkd += _am          # אל האזור — רק שיא הבוקר
+            elif _dr == 'out': _pkd += _pm       # מהאזור — רק שיא אחה"צ
+            else: _pkd += _am + _pm              # כיוון לא ידוע — שני החלונות
         # התנאי השלישי לירוק (החלטת איריס 25.08.2026): "הקו החזק ביותר" —
         # יציאות הבוקר לכיוון האזור של הקו (מקט) החזק ביותר. ירוק דורש ≥9
         # (אוטובוס לפחות כל 20 דק' ב-06:00–09:00), אחרת המצטבר לבדו מטעה.
@@ -1234,6 +1286,19 @@ if used_rids and os.path.exists(SHAPES):
             _b1[_k1] = _b1.get(_k1, 0) + _a
         # חלופות של אותו כיוון (218+218א לאותו יעד) הן שירות אחד לנוסע
         _e['bl1'] = max(_b1.values()) if _b1 else 0
+        # ── הציון המשוקלל של איריס (01.09) — מחושב פעם אחת, משמש בכל התוצרים.
+        # "תחנות" = דקות ההליכה ממרכז האזור אל התחנה הקרובה ביותר.
+        _wts = [_s.get('wt') for _s in _d.get('stops') or []
+                if _s.get('wt') is not None and _s.get('t') != 'blocked']
+        if not _wts:   # תחנות שבתוך האזור אינן מנותבות — אומדן אווירי מהמרכז
+            _wts = [math.hypot((_s['la'] - _cen[0]) * 110540.0,
+                               (_s['lo'] - _cen[1]) * 111320.0 * _cl) * 1.3 / 75.0
+                    for _s in _d.get('stops') or [] if _s.get('t') != 'blocked']
+        _near = min(_wts) if _wts else None
+        _sc, _parts = iris_score(_pkd, _e['bl1'], _e.get('ww'), _near)
+        _e['score'] = _sc
+        _e['sparts'] = _parts
+        _e['nearw'] = round(_near, 1) if _near is not None else None
     json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     print('ספירה כיוונית: pkd נכתב לכל האזורים')
