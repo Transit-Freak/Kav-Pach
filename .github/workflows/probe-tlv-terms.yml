@@ -128,6 +128,33 @@ jobs:
           full "https://opendata.tel-aviv.gov.il/he/Pages/FAQ.aspx"
           full "https://opendata.tel-aviv.gov.il/en/pages/faq.aspx"
           full "https://apiportal.tel-aviv.gov.il/"
+          # תנאי השימוש הכלליים של אתר העירייה — הקישור נמצא בתחתית העמוד הראשי
+          full "https://www.tel-aviv.gov.il/About/Pages/TermsofService.aspx"
+          # בצופה המפות עצמו יש דיאלוג תנאים (spnTerms/imgTerms) — מאיפה הטקסט?
+          full "https://gisn.tel-aviv.gov.il/iview2js4/Terms.aspx"
+          full "https://gisn.tel-aviv.gov.il/iview2js4/terms.htm"
+          full "https://gisn.tel-aviv.gov.il/iview2js4/Terms.html"
+
+      - name: הטקסט של דיאלוג התנאים בתוך צופה המפות
+        run: |
+          curl -sk --max-time 30 -H 'User-Agent: Mozilla/5.0' \
+            "https://gisn.tel-aviv.gov.il/iview2js4/index.aspx" -o /tmp/v.html
+          python3 - <<'PY'
+          import re, html
+          t = open('/tmp/v.html', encoding='utf-8', errors='replace').read()
+          # הבלוק סביב spnTerms — הטקסט המשפטי אמור לשבת שם או בקובץ שהוא טוען
+          for key in ('spnTerms', 'imgTerms', 'Terms'):
+              for m in re.finditer(key, t):
+                  s = max(0, m.start() - 400)
+                  frag = t[s:m.end() + 1500]
+                  txt = ' '.join(html.unescape(re.sub(r'<[^>]+>', ' ', frag)).split())
+                  if len(txt) > 60:
+                      print(f'── {key} @{m.start()}:'); print('  ', txt[:800]); print()
+                  break
+          print('── קבצים שהעמוד טוען ובשמם terms/תנאים:')
+          for m in re.finditer(r'["\']([^"\']*(?:erms|akanon|licen)[^"\']*)["\']', t):
+              print('  ', m.group(1)[:160])
+          PY
 
       - name: מנוע החיפוש של אתר העירייה — "תנאי שימוש"
         run: |
