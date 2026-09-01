@@ -1,0 +1,34 @@
+name: parks-invariants
+
+# בדיקות-הקבע של אתר הנגישות (אישור איריס 01.09): רצות כל לילה על
+# הנתונים החיים. כישלון = הריצה נכשלת ושלמה מקבל התראה במייל.
+
+on:
+  schedule:
+    - cron: '20 4 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tools/parks_invariants.py']
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    if: github.ref == 'refs/heads/main' || github.event_name != 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: הרצת בדיקות הקבע
+        run: python3 tools/parks_invariants.py
+      - name: עדכון קובץ הסטטוס
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add parks/checks/invariants.json 2>/dev/null || true
+          git diff --cached --quiet && exit 0
+          git commit -m "data: סטטוס בדיקות-הקבע של אתר הנגישות"
+          for i in 1 2 3; do git push origin HEAD:main && break; git pull --rebase origin main || break; done

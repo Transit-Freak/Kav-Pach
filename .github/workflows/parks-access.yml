@@ -135,6 +135,9 @@ jobs:
           ls /tmp/parksout | head -5
           echo "files: $(ls /tmp/parksout | wc -l)"
 
+      - name: שער בדיקות-הקבע — נתונים שבורים לא מתפרסמים (אישור איריס 01.09)
+        run: DATA_DIR=/tmp/parksout OUT=/tmp/parksout/invariants.json python3 tools/parks_invariants.py
+
       - name: Commit results (לענף שהריץ — main בריצה השבועית)
         run: |
           set -euo pipefail
