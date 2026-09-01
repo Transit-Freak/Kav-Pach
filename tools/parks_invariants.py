@@ -276,7 +276,18 @@ for p in P:
     # להיות רחוק לגמרי כדין. האומדן מחבר את השניים.
     z = zones.get(p.get('f')) or {}
     dnear = min((s.get('d', 0) for s in (z.get('stops') or [])), default=0)
-    diag_m = math.sqrt(ar) * 1000
+    # המרחק בפועל הוא אלכסון ה-bbox, לא sqrt(שטח): רצועת תעשייה צרה
+    # וארוכה (גוש עציון — 0.18 קמ"ר אבל 1320 מ׳ אלכסון) קיבלה אומדן של
+    # 424 מ׳ ונפסלה בטעות. נופלים ל-sqrt רק אם אין פוליגונים.
+    _pts = [q for ring in (z.get('polys') or []) for q in ring]
+    if _pts:
+        _la = [q[0] for q in _pts]
+        _lo = [q[1] for q in _pts]
+        _cl = math.cos(math.radians(sum(_la) / len(_la)))
+        diag_m = math.hypot((max(_la) - min(_la)) * 110540.0,
+                            (max(_lo) - min(_lo)) * 111320.0 * _cl)
+    else:
+        diag_m = math.sqrt(ar) * 1000
     air_min = (diag_m + dnear) * 1.3 / 75.0
     if ww > max(4 * air_min, air_min + 25):
         bad.append(f"{p['name']}: הנקודה הרחוקה {ww} דק׳ באזור של {ar} קמ\"ר "
