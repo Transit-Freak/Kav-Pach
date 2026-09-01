@@ -148,10 +148,10 @@ function decodeShape(str) {
 function fsafe(rd) { return rd.replace(/#/g, "H").replace(/\//g, "_"); }
 function fmtD(d) { return (d || "").split("-").reverse().join("."); }
 // הסיומת "(2025-07-10 ← 2025-07-11)" בהערות הסריקה בלבלה (בקשת שלמה) —
-// בתצוגה היא הופכת למשפט שאומר במפורש מתי חל השינוי
+// בתצוגה נשאר רק מתי בוצע, זהו
 function noteFix(s) {
   return String(s || "").replace(/\s*\((\d{4}-\d{2}-\d{2}) ← (\d{4}-\d{2}-\d{2})\)/g,
-    (_, a, b) => " · השינוי חל ב-" + fmtD(b) + "; יום קודם (" + fmtD(a) + ") עוד היה כמו קודם");
+    (_, a, b) => " · בוצע ב-" + fmtD(b));
 }
 function fmtM(d) { const p = (d || "").split("-"); return p[1] + "." + p[0]; }
 function gapDays(a, b) { return Math.round((new Date(b) - new Date(a)) / 864e5); }
