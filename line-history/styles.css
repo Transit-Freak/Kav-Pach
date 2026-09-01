@@ -268,8 +268,6 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
   padding: 1px 7px; font-size: 11px; font-weight: 800; color: #475569; cursor: help; }
 
 /* עדות ממאגר מגיעים 2012 — חמש שנים לפני תחילת הארכיון */
-.pdflag { background: #f5f0ff; border: 1px solid #ddd0f5; border-radius: 7px;
-  color: #6d28d9; font-size: 11px; padding: 1px 8px; font-weight: 700; cursor: help; }
 .m12flag { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 7px;
   padding: 1px 7px; font-size: 11px; font-weight: 800; color: #047857; cursor: help; }
 
@@ -292,8 +290,6 @@ a.lrow, a.sib { text-decoration: none; color: inherit; }
 /* נגישות הקו ומגבלות עלייה/ירידה בתחנה */
 .wa.yes { color: #0d9488; font-weight: 800; }
 .wa.no { color: #b45309; font-weight: 800; }
-.pdflag { color: #a16207; font-weight: 800; font-size: 11px; }
-
 /* --- מה השתנה לאחרונה (מסך הפתיחה) --- */
 .recent { margin-top: 4px; }
 .rechead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 12px 0 0; }
