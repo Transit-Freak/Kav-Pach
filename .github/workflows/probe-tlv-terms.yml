@@ -104,7 +104,8 @@ jobs:
           full() {
             echo "════════ $1"
             code=$(curl -sk -o /tmp/f.html -w '%{http_code}' --max-time 30 \
-                   -H 'User-Agent: Mozilla/5.0' -H 'Accept-Language: he,en' "$1")
+                   -H 'User-Agent: Mozilla/5.0' -H 'Accept-Language: he,en' "$1" \
+                   || echo 000)
             echo "HTTP $code · $(wc -c </tmp/f.html | tr -d ' ') בתים"
             [ "$code" = "200" ] || { echo; return; }
             python3 -c "
