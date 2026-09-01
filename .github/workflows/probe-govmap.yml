@@ -48,3 +48,24 @@ jobs:
           txt "https://www.govmap.gov.il/terms"
           txt "https://www.gov.il/he/departments/general/mapi_terms_of_use"
           txt "https://www.gov.il/he/departments/survey_of_israel"
+
+      - name: נקודות קצה מהתיעוד הרשמי של govmap API
+        run: |
+          t() {
+            echo "=== $1"
+            code=$(curl -sk -o /tmp/o.txt -w '%{http_code}' --max-time 25 "$1" -H 'User-Agent: Mozilla/5.0' -H 'Referer: https://www.govmap.gov.il/')
+            echo "  HTTP $code"
+            head -c 400 /tmp/o.txt; echo; echo "---"
+          }
+          # ה-API המתועד: חיפוש, שכבות, והטמעה
+          t "https://ags.govmap.gov.il/Search/SearchLocation"
+          t "https://ags.govmap.gov.il/Layers/Layers"
+          t "https://ags.govmap.gov.il/Identify/IdentifyByXY"
+          t "https://www.govmap.gov.il/api/layers"
+          t "https://ags.govmap.gov.il/api/layers"
+          # WMS/WMTS סטנדרטיים — אם קיימים, זו הדרך הנכונה לאריחים
+          t "https://open.govmap.gov.il/geoserver/opendata/wms?service=WMS&request=GetCapabilities"
+          t "https://ags.govmap.gov.il/arcgis/services?wsdl"
+          # מפ"י — שירותי אורתופוטו מתועדים
+          t "https://api.mapi.gov.il/api/layers"
+          t "https://open.mapi.gov.il/arcgis/rest/services?f=json"
