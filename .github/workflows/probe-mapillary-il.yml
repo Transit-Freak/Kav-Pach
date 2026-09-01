@@ -41,9 +41,13 @@ jobs:
               print('   אלמנטים:', len(els))"
             sleep 25
           }
+          # השאילתה החשובה ביותר רצה ראשונה, לפני שהגבלת הקצב נכנסת
           ov "${A}nwr[mapillary](area.a);out count;"            'עצמים עם תגית mapillary=* (מזהה תמונה ספציפית)'
-          ov "${A}nwr[~\"^source\"~\"[Mm]apillary\"](area.a);out count;" 'עצמים עם source=Mapillary'
+          sleep 45
           ov "${A}node[highway=bus_stop][mapillary](area.a);out count;"  'מתוכם: תחנות אוטובוס'
+          sleep 45
+          ov "${A}nwr[~\"^source\"~\"[Mm]apillary\"](area.a);out count;" 'עצמים עם source=Mapillary'
+          sleep 45
           ov "${A}nwr[\"survey:date\"](area.a);out count;"       'לשם השוואה: עצמים עם survey:date (סקר שטח אמיתי)'
 
       - name: KartaView — מקור תצלומי רחוב פתוח, בלי טוקן
