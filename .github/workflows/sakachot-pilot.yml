@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: 'שלב: A דגימות · B ערכת אימון · C אימון · D הרצה על תחנות'
+        description: 'שלב: A דגימות · B ערכת אימון · C אימון · D הרצה על תחנות · E חיפוש מורחב לחשודות'
         required: true
         default: 'A'
 
@@ -42,7 +42,7 @@ jobs:
       - name: Deps
         run: |
           pip install -q pillow
-          if [ "${{ inputs.stage }}" = "C" ] || [ "${{ inputs.stage }}" = "D" ]; then
+          if [ "${{ inputs.stage }}" = "C" ] || [ "${{ inputs.stage }}" = "D" ] || [ "${{ inputs.stage }}" = "E" ]; then
             pip install -q ultralytics --no-warn-script-location
           fi
 
@@ -63,7 +63,7 @@ jobs:
           fi
 
       - name: Commit small outputs
-        if: ${{ inputs.stage == 'A' || inputs.stage == 'D' }}
+        if: ${{ inputs.stage == 'A' || inputs.stage == 'D' || inputs.stage == 'E' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

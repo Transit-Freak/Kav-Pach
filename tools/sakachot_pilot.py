@@ -267,6 +267,58 @@ def stage_d():
             pass
 
 
+def stage_e():
+    """חיפוש מתרחב לחשודות בלבד + כלל השיוך של שלמה: סככה שנמצאה
+    משויכת לתחנה רק אם היא התחנה הרשומה הקרובה ביותר אליה (בפער ברור
+    מהבאה בתור) — אם תחנה אחרת קרובה יותר, "זו לא היא"."""
+    from ultralytics import YOLO
+    from PIL import Image
+    m = YOLO(str(OUT / 'shelter-model.pt'))
+    res = json.load(open(OUT / 'results.json', encoding='utf-8'))
+    stops = res['stops']
+    allxy = [(s['code'], *merc(s['lon'], s['lat'])) for s in stops]
+    suspects = [s for s in stops if s['v'] == 'no_shelter']
+    print(f'חשודות לחיפוש מורחב: {len(suspects)}')
+    found = []
+    for i, s in enumerate(suspects):
+        sx, sy = merc(s['lon'], s['lat'])
+        dets = []
+        # רשת 3x3 של חלונות 52 מ' = כיסוי ~156x156 מ' סביב הרישום
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                lon = s['lon'] + dx * (2 * HALF) / (111320 * math.cos(math.radians(s['lat'])))
+                lat = s['lat'] + dy * (2 * HALF) / 110540
+                try:
+                    img, (cx, cy) = crop(lon, lat)
+                except Exception:
+                    continue
+                im = Image.open(io.BytesIO(img)).convert('RGB')
+                r = m.predict(im, conf=0.45, verbose=False)[0]
+                for b in (r.boxes.xyxy.tolist() if r.boxes is not None else []):
+                    wx = (cx - HALF) + (b[0] + b[2]) / 2 / PX * 2 * HALF
+                    wy = (cy + HALF) - (b[1] + b[3]) / 2 / PX * 2 * HALF
+                    dets.append((wx, wy))
+                time.sleep(PAUSE)
+        best = None
+        for wx, wy in dets:
+            dist_me = math.hypot(wx - sx, wy - sy)
+            # כלל שלמה: אם תחנה רשומה אחרת קרובה יותר לסככה — זו לא היא
+            others = sorted(math.hypot(wx - ox, wy - oy)
+                            for c, ox, oy in allxy if c != s['code'])
+            other_d = others[0] if others else 1e9
+            if dist_me < other_d - 20 and (best is None or dist_me < best[0]):
+                best = (dist_me, wx, wy, other_d)
+        if best:
+            found.append({'code': s['code'], 'name': s['name'],
+                          'dist': round(best[0]), 'other_stop_dist': round(best[3])})
+            print(f"  {s['code']} {s['name']}: סככה במרחק {best[0]:.0f} מ' מהרישום (התחנה האחרת הקרובה: {best[3]:.0f} מ')")
+        if (i + 1) % 20 == 0:
+            print(f'  {i+1}/{len(suspects)}…', flush=True)
+    json.dump({'gen': time.strftime('%Y-%m-%d'), 'found': found},
+              open(OUT / 'displaced.json', 'w', encoding='utf-8'), ensure_ascii=False)
+    print(f'תחנות שכנראה "לא במקום" (סככה שלהן נמצאה רחוק): {len(found)}')
+
+
 if __name__ == '__main__':
     OUT.mkdir(exist_ok=True)
-    {'A': stage_a, 'B': stage_b, 'C': stage_c, 'D': stage_d}[STAGE]()
+    {'A': stage_a, 'B': stage_b, 'C': stage_c, 'D': stage_d, 'E': stage_e}[STAGE]()
