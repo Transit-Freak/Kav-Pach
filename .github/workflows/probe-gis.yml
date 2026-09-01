@@ -22,15 +22,15 @@ jobs:
             curl -sk --max-time 20 "$1" -H 'User-Agent: Mozilla/5.0' | head -c 600
             echo; echo "---"
           }
-          # שלב 5: אילו סוגי מבנה קיימים בכלל בשכבה — יש קטגוריית סככה?
-          echo "=== ערכי t_sug_mivne בשכבת המבנים"
+          # שלב 6: בן כמה הסקר? שדות התאריך של פוליגוני "תחנת אוטובוס"
+          echo "=== דוגמת פוליגוני תחנת אוטובוס עם כל השדות"
           curl -sk --max-time 60 -H 'User-Agent: Mozilla/5.0' \
-            "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer/24/query?where=1%3D1&groupByFieldsForStatistics=t_sug_mivne&outStatistics=%5B%7B%22statisticType%22%3A%22count%22%2C%22onStatisticField%22%3A%22oid_mivne%22%2C%22outStatisticFieldName%22%3A%22n%22%7D%5D&f=json" \
+            "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2MapHeb/MapServer/24/query?where=t_sug_mivne%3D%27%D7%AA%D7%97%D7%A0%D7%AA%20%D7%90%D7%95%D7%98%D7%95%D7%91%D7%95%D7%A1%27&outFields=*&resultRecordCount=3&returnGeometry=false&f=json" \
             | python3 -c "
           import json,sys
           d=json.load(sys.stdin)
-          if d.get('error'): print('שגיאה:',d['error'])
           for f in d.get('features') or []:
-              a=f['attributes']; print(a.get('t_sug_mivne'),'·',a.get('n'))
+              print(json.dumps(f['attributes'],ensure_ascii=False))
+          print('שדות:',[fl['name']+':'+fl.get('type','') for fl in d.get('fields') or []])
           "
           echo "---"
