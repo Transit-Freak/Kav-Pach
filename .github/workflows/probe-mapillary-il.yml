@@ -1,0 +1,78 @@
+name: probe-mapillary-il
+
+# שאלת שלמה: כמה מידע יש ל-Mapillary בישראל?
+# זה קובע אם יש בכלל מקור אימות עצמאי לסככות — אחרי ש-OSM נפסל
+# (הנתונים שם מיובאים מ-GTFS ע"י הבוט gtfs2osm-il).
+#
+# ה-API של Mapillary דורש טוקן. לכן נמדד בשלוש דרכים עקיפות:
+#   1. עצמים ב-OSM בישראל שנושאים תגית mapillary=* או source=Mapillary
+#      — כל תגית כזו היא עדות שממפה ראה שם תמונה של Mapillary.
+#   2. KartaView — מקור תצלומי רחוב פתוח מתחרה, API בלי טוקן כלל.
+#   3. בדיקה אם נקודות קצה כלשהן של Mapillary עונות בלי הזדהות.
+# לא כותב כלום לריפו; הממצאים בלוג הריצה.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: כמה עצמים ב-OSM בישראל מצביעים על Mapillary
+        run: |
+          A='[out:json][timeout:280];area["ISO3166-1"="IL"][admin_level=2]->.a;'
+          ov() {
+            echo "── $2"
+            curl -s --max-time 290 -H 'User-Agent: kav-bochan-probe' \
+              --data-urlencode "data=$1" https://overpass-api.de/api/interpreter -o /tmp/o.json || {
+                echo '   (כשל רשת)'; return; }
+            python3 -c "
+          import json
+          try: d=json.load(open('/tmp/o.json'))
+          except Exception as e: print('   (הוגבל קצב / לא JSON)'); raise SystemExit
+          els=d.get('elements') or []
+          if els and 'total' in (els[0].get('tags') or {}):
+              print('   ספירה:', els[0]['tags']['total'])
+          else:
+              print('   אלמנטים:', len(els))"
+            sleep 25
+          }
+          ov "${A}nwr[mapillary](area.a);out count;"            'עצמים עם תגית mapillary=* (מזהה תמונה ספציפית)'
+          ov "${A}nwr[~\"^source\"~\"[Mm]apillary\"](area.a);out count;" 'עצמים עם source=Mapillary'
+          ov "${A}node[highway=bus_stop][mapillary](area.a);out count;"  'מתוכם: תחנות אוטובוס'
+          ov "${A}nwr[\"survey:date\"](area.a);out count;"       'לשם השוואה: עצמים עם survey:date (סקר שטח אמיתי)'
+
+      - name: KartaView — מקור תצלומי רחוב פתוח, בלי טוקן
+        run: |
+          echo "── תמונות בתיבה של גוש דן"
+          curl -s --max-time 60 -H 'User-Agent: kav-bochan-probe' \
+            "https://api.openstreetcam.org/2.0/photo/?bbTopLeft=32.15,34.72&bbBottomRight=32.02,34.87&itemsPerPage=1" \
+            -o /tmp/k.json || true
+          python3 -c "
+          import json
+          try: d=json.load(open('/tmp/k.json'))
+          except Exception as e: print('   לא JSON:',e); raise SystemExit
+          print('   סטטוס:', (d.get('status') or {}).get('apiMessage'))
+          print('   סה\"כ בתיבה:', (d.get('result') or {}).get('totalFilteredItems'))" || true
+          echo "── סדרות נסיעה בישראל"
+          curl -s --max-time 60 -H 'User-Agent: kav-bochan-probe' \
+            "https://api.openstreetcam.org/2.0/sequence/?bbTopLeft=33.4,34.2&bbBottomRight=29.4,35.9&itemsPerPage=1" \
+            -o /tmp/k2.json || true
+          head -c 700 /tmp/k2.json; echo
+
+      - name: האם נקודות קצה של Mapillary עונות בלי הזדהות
+        run: |
+          t() {
+            code=$(curl -s -o /tmp/m.txt -w '%{http_code}' --max-time 25 \
+                   -H 'User-Agent: Mozilla/5.0' "$1" || echo 000)
+            echo "HTTP $code  $1"
+            head -c 220 /tmp/m.txt; echo; echo
+          }
+          t "https://graph.mapillary.com/images?bbox=34.76,32.05,34.80,32.09&limit=1"
+          t "https://tiles.mapillary.com/maps/vtp/mly1_public/2/14/9700/6700"
+          t "https://a.mapillary.com/v3/images?bbox=34.76,32.05,34.80,32.09&per_page=1"
+          t "https://www.mapillary.com/developer/api-documentation"
