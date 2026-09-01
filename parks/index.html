@@ -218,6 +218,15 @@ function medHead(wd){
 function headCol(h){if(h==null)return'#334155';if(h<=20)return'#16a34a';if(h<=60)return'#ea580c';return'#dc2626'}
 function peakAmL(wd){return (wd||[]).filter(t=>'06:00'<=t&&t<'09:00').length}
 function peakCol(a,daily){if(!daily)return'#334155';if(a>=9)return'#16a34a';if(a>=3)return'#ea580c';if(a>=1)return'#b45309';return'#dc2626'}
+function lineHw(pa){return pa>=1?180/pa:null}
+// מדרגות איריס לקו התדיר (01.09) — אותן מדרגות בציון המשוקלל ובצבע
+function lineScore(pa,daily){
+  if(!daily)return null;
+  const h=lineHw(pa); if(h==null)return 0;
+  for(const [t,sc] of [[5,100],[10,90],[15,85],[20,80],[30,70],[40,60],[60,55]]) if(h<=t) return sc;
+  return 0;
+}
+
 
 function fmtGap(g){const h=Math.floor(g[2]/60),m=g[2]%60;return `${g[0]}←${g[1]} (${h?h+'ש׳':''}${m?m+'ד׳':''})`}
 function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
@@ -225,7 +234,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='43';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='44';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -635,7 +644,7 @@ function drawAllRoutes(d){
   for(const L2 of lines){
     if(!L2.rid||seen.has(L2.rid)) continue;
     seen.add(L2.rid);
-    const col=headCol(medHead(L2.wd||[]));
+    const col=(x=>x==null?'#94a3b8':sc100(x).bg)(lineScore(peakAmL(L2.wd||[]),(L2.wd||[]).length));
     fetch('data/shp/'+L2.rid+'.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(sh=>{
       if(window._allRoutes!==al) return;   // כבר עברו לאזור אחר
       L.polyline(decPoly(sh.e),{color:col,weight:3.5,opacity:.75})
@@ -897,11 +906,14 @@ function openPark(f,push=true){
     const rowOf=(L2)=>{
       const wd=L2.wd||[];
       const mh=medHead(wd);
-      const pa=peakAmL(wd), pc=peakCol(pa, wd.length);
+      const pa=peakAmL(wd);
       // "כל X דק' בשיא" — המספר שהציון מבוסס עליו, גלוי על הכרטיס
       const _hw=pa>=2?Math.round(180/pa):null;
-      return `<div class="line" data-rid="${L2.rid||''}" data-c="${headCol(mh)}" onclick="this.classList.toggle('open');drawRouteEl(this)">
-        <div class="lhead"><span class="lnum" style="background:${pc}" title="${wd.length?`${pa} הגעות בשיא הבוקר (06–09)${mh!=null?` · תדירות אופיינית ביום: כל ~${mh} דק׳`:''}`:'אין נסיעות ביום חול'}">${esc(L2.num)}</span>
+      // צבע לפי סקאלת עשר המדרגות (בקשת איריס) — אותו סרגל כמו במפה
+      const _ls=lineScore(pa, wd.length), _lc=_ls==null?{bg:'#94a3b8',fg:'#fff',label:'אין נסיעות ביום חול'}:sc100(_ls);
+      const pc=_lc.bg;
+      return `<div class="line" data-rid="${L2.rid||''}" data-c="${pc}" onclick="this.classList.toggle('open');drawRouteEl(this)">
+        <div class="lhead"><span class="lnum" style="background:${pc};color:${_lc.fg}" title="${wd.length?`${_lc.label} · ${pa} הגעות בשיא הבוקר (06–09)${_hw?` = כל ~${_hw} דק׳`:''}${mh!=null?` · תדירות אופיינית ביום: כל ~${mh} דק׳`:''}`:'אין נסיעות ביום חול'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
           <span class="pkhw" title="תדירות בשעת שיא הבוקר (06:00–09:00) — המדד שהציון מבוסס עליו">${pa>=2?`בשיא: כל ~${_hw} דק׳`:(pa===1?'בשיא: יציאה אחת':'בשיא: אין יציאות')}</span>
           <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span></div>
@@ -921,7 +933,7 @@ function openPark(f,push=true){
       for(const L2 of noPkLines) h+=rowOf(L2);
       h+=`</details>`;
     }
-    h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = הגעות בשיא הבוקר (06–09)</b>: ירוק = 9+ (אוטובוס כל ≤20 דק׳, עומד בתקן) · כתום = 3–8 · חום = 1–2 · אדום = אפס בשיא (גם אם יש נסיעות בשאר היום) · אפור = אין נסיעות ביום חול.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): קרוב ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה נספרת (המחוון בפאנל יכול להציגה עד 20 דק׳). הכפתור <b>"מדידה"</b> בפאנל השכבות מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות הקו בשיא הבוקר (06:00–09:00)</b>, על סקאלת עשר המדרגות של האתר: ${[[100,'עד 5 דק׳'],[90,'5–10'],[85,'10–15'],[80,'15–20'],[70,'20–30'],[60,'30–40'],[55,'40–60'],[0,'מעל שעה']].map(([v,t])=>`<i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${sc100(v).bg};vertical-align:-1px"></i> ${t}`).join(' · ')} · <i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#94a3b8;vertical-align:-1px"></i> אין נסיעות ביום חול. הקווים ממוינים מהתדיר ביותר ומטה.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): קרוב ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה נספרת (המחוון בפאנל יכול להציגה עד 20 דק׳). הכפתור <b>"מדידה"</b> בפאנל השכבות מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{
     // באג: ההודעה נכתבה לפאנל שנשאר מוסתר כשהטעינה נכשלה — המשתמש לחץ
