@@ -1154,6 +1154,16 @@ if used_rids and os.path.exists(SHAPES):
         json.dump(_d, open(_fp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
         _e['pkd'] = _pkd
         _e['bl'] = max(_per_mk.values()) if _per_mk else 0
+        # bl1 (ממצא איריס, צמח 01.09): הכיוון הבודד החזק ביותר — בלי סכימת
+        # שני כיווני אותו מקט, שניפחה 40 אזורים מעל סף ה-9
+        _bl1 = 0
+        for _L in _d.get('lines') or []:
+            if _L.get('dr') == 'out':
+                continue
+            _a = sum(1 for t in (_L.get('wd') or []) if _AM(t))
+            if _a > _bl1:
+                _bl1 = _a
+        _e['bl1'] = _bl1
     json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     print('ספירה כיוונית: pkd נכתב לכל האזורים')
