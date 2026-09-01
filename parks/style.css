@@ -218,3 +218,6 @@ body:has(#heatview[style*="display: flex"]) .top #hscopeseg{display:inline-flex}
 
 /* 761–1100: הכותרת נשברת לשורות במקום לגלוש אופקית */
 @media(max-width:1100px){.top{flex-wrap:wrap}}
+
+/* תדירות השיא על כרטיס הקו (ממצא איריס) */
+.pkhw{font-size:11.5px;font-weight:800;padding:1px 8px;border-radius:7px;background:#eef2fb;color:#334155;border:1px solid #c7d2f0;white-space:nowrap}

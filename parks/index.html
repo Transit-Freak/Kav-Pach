@@ -225,7 +225,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='42';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='43';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -889,15 +889,21 @@ function openPark(f,push=true){
     // קווי תלמידים ולילה כלל אינם בנתונים — מוחרגים במקור לפי הקטלוג הרשמי.
     const isPkT=t=>('06:00'<=t&&t<'09:00')||('15:00'<=t&&t<'19:00');
     const _pkMks=new Set(lines.filter(L=>(L.wd||[]).some(isPkT)).map(L=>L.mk||L.num));
-    const pkLines=lines.filter(L=>_pkMks.has(L.mk||L.num));
+    // הקו החזק בשיא מוצג ראשון (ממצא איריס 01.09): המיון לפי מספר הקו
+    // דחף קווים חלשים לראש הרשימה — קו 28 בצמח היה 13, ולכן "לא נראה"
+    const _pkAm=L=>(L.wd||[]).filter(t=>'06:00'<=t&&t<'09:00').length;
+    const pkLines=lines.filter(L=>_pkMks.has(L.mk||L.num)).sort((a,b)=>_pkAm(b)-_pkAm(a));
     const noPkLines=lines.filter(L=>!_pkMks.has(L.mk||L.num));
     const rowOf=(L2)=>{
       const wd=L2.wd||[];
       const mh=medHead(wd);
       const pa=peakAmL(wd), pc=peakCol(pa, wd.length);
+      // "כל X דק' בשיא" — המספר שהציון מבוסס עליו, גלוי על הכרטיס
+      const _hw=pa>=2?Math.round(180/pa):null;
       return `<div class="line" data-rid="${L2.rid||''}" data-c="${headCol(mh)}" onclick="this.classList.toggle('open');drawRouteEl(this)">
         <div class="lhead"><span class="lnum" style="background:${pc}" title="${wd.length?`${pa} הגעות בשיא הבוקר (06–09)${mh!=null?` · תדירות אופיינית ביום: כל ~${mh} דק׳`:''}`:'אין נסיעות ביום חול'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
+          <span class="pkhw" title="תדירות בשעת שיא הבוקר (06:00–09:00) — המדד שהציון מבוסס עליו">${pa>=2?`בשיא: כל ~${_hw} דק׳`:(pa===1?'בשיא: יציאה אחת':'בשיא: אין יציאות')}</span>
           <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span></div>
         <div class="lsub">תחנה: ${esc(L2.stop)} · יום חול: ${wd.length? wd.length+' הגעות · ראשונה '+wd[0]+' · אחרונה '+wd[wd.length-1] : 'אין שירות'}</div>
         ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap" title="בין ${g[0]} ל-${g[1]} אין אף הגעה של הקו — המתנה של ${fmtGap(g).split('(')[1].replace(')','')} בלי אוטובוס (נחשב חור: 90 דק׳ ומעלה ביום חול 05:30–20:00)">⛔ חור בשירות ${fmtGap(g)}</span>`).join('')}</div>`:''}
