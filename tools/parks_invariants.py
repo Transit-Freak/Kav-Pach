@@ -271,10 +271,16 @@ for p in P:
     ar = p.get('area')
     if not ww or not ar or ar <= 0:
         continue
-    # קוטר אופייני (מ׳) ≈ sqrt(שטח)*1000; בהליכה של 75 מ׳/דק׳
-    diag_min = math.sqrt(ar) * 1000 / 75.0
-    if ww > max(4 * diag_min, diag_min + 25):
-        bad.append(f"{p['name']}: הנקודה הרחוקה {ww} דק׳ באזור של {ar} קמ\"ר — חשוד ככשל ניתוב")
+    # הנקודה הרחוקה = מהפינה הגרועה עד התחנה הקרובה, ולכן היא תלויה גם
+    # במרחק התחנות ולא רק בגודל האזור: אזור זעיר שכל תחנותיו רחוקות יכול
+    # להיות רחוק לגמרי כדין. האומדן מחבר את השניים.
+    z = zones.get(p.get('f')) or {}
+    dnear = min((s.get('d', 0) for s in (z.get('stops') or [])), default=0)
+    diag_m = math.sqrt(ar) * 1000
+    air_min = (diag_m + dnear) * 1.3 / 75.0
+    if ww > max(4 * air_min, air_min + 25):
+        bad.append(f"{p['name']}: הנקודה הרחוקה {ww} דק׳ באזור של {ar} קמ\"ר "
+                   f"והתחנה הקרובה במרחק {dnear} מ׳ — חשוד ככשל ניתוב")
 check('הנקודה הרחוקה סבירה ביחס לגודל האזור', 'ממצא 01.09 · שער בנימין 379 דק׳', bad)
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)

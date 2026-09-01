@@ -1091,7 +1091,12 @@ for pi, pk in enumerate(parks):
         # לא מרחק אווירי. מנתבים ב-OSRM את 12 המועמדות הרחוקות ביותר
         # (המקסימום האמיתי נמצא ביניהן כמעט תמיד) ולוקחים את הגדולה.
         if OSRM_URL and outstops and _air:
-            _cand = [q for _, q in sorted(_air, key=lambda x: -x[0])[:12]]
+            # האומדן האווירי נוסע יחד עם המועמד. קודם הוא נשלף מ-_air לפי
+            # זהות אובייקט, ואם החיפוש לא מצא התאמה הוחזר None — ואז תנאי
+            # השומר היה נכשל בשקט ומעביר את הערך השגוי הלאה. זה מה שאיפשר
+            # לביתר עילית לקבל 31.7 דק׳ עם תחנה במרחק 0 מ׳.
+            _top = sorted(_air, key=lambda x: -x[0])[:12]
+            _cand = [q for _, q in _top]
             _dest = [(s['la'], s['lo']) for s in outstops][:60]
             try:
                 _rows = _osrm_walk(_cand, _dest, (pk['cen'][0], pk['cen'][1]))
@@ -1100,12 +1105,11 @@ for pi, pk in enumerate(parks):
                 # מהאומדן האווירי הוא כשל ניתוב, לא הליכה אמיתית — נזרק,
                 # והאזור לא נענש על תקלה טכנית.
                 _pair = []
-                for _q, _r in zip(_cand, _rows):
+                for (_airq, _q), _r in zip(_top, _rows):
                     if _r[1] is None:
                         continue
-                    _airq = next((t for t, qq in _air if qq is _q), None)
                     _m = _r[1] / 60.0
-                    if _airq and _m > max(3 * _airq, _airq + 10):
+                    if _m > max(3 * _airq, _airq + 10):
                         continue
                     _pair.append(_m)
                 if _pair:
