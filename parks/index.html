@@ -195,7 +195,7 @@ function hasSv(){return IDX.some(p=>p.sf!=null)}
 const STLBL={planned:'טרם נבנה — אזור מתוכנן/בהקמה',partial:'בנוי חלקית'};
 function walkTxt(s){
   const wt=sWt(s),wm=sWm(s);
-  if(wt!=null) return `🚶 ${wt} דק׳ · ${wm} מ׳ הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'גבול'} האזור)`;
+  if(wt!=null) return `🚶 ${wt} דק׳${wm!=null?` · ${wm} מ׳`:''} הליכה אמיתית (עד ${WALKMODE=='c'?'מרכז':'גבול'} האזור)`;
   if(s.d!=null) return `${s.d} מ׳ (מרחק אווירי — אין נתוני הליכה)`;
   return '';
 }

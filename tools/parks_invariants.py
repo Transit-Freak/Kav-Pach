@@ -81,11 +81,13 @@ for p in P:
     z = zones.get(p['f'])
     if not z or 'bl1' not in p:
         continue
-    calc = 0
+    b1 = {}
     for l in z.get('lines') or []:
         if l.get('dr') == 'out':
             continue
-        calc = max(calc, sum(1 for t in (l.get('wd') or []) if AM(t)))
+        k1 = (l.get('mk') or l.get('num'), l.get('dest'))
+        b1[k1] = b1.get(k1, 0) + sum(1 for t in (l.get('wd') or []) if AM(t))
+    calc = max(b1.values()) if b1 else 0
     if calc != (p.get('bl1') or 0):
         bad.append(f"{p['name']}: bl1={p.get('bl1')} מול חישוב {calc}")
     if (p.get('bl1') or 0) > (p.get('bl') or 0):

@@ -128,8 +128,30 @@ for pts in unnamed:
         best[0]['polys'].append(pts)
     else:
         parks.append({'name': '', 'noname': True, 'polys': [pts], 'cen': (cla, clo), 'cl': cl})
+def union_area_km2(polys, cl):
+    # ממצא הסיירת: פוליגונים חופפים באותו אזור נסכמו כפול. לאיחוד אמיתי —
+    # דגימת רשת ~25מ' על ה-bbox וספירת תאים שבתוך פוליגון כלשהו.
+    if len(polys) <= 1:
+        return sum(poly_area_km2(p, cl) for p in polys)
+    la1 = min(a for p in polys for a, b in p); la2 = max(a for p in polys for a, b in p)
+    lo1 = min(b for p in polys for a, b in p); lo2 = max(b for p in polys for a, b in p)
+    sla = 25 / 110540.0; slo = 25 / (111320.0 * cl)
+    hit = tot = 0
+    ga = la1
+    while ga <= la2:
+        go = lo1
+        while go <= lo2:
+            tot += 1
+            if any(in_poly(ga, go, pp) for pp in polys):
+                hit += 1
+            go += slo
+        ga += sla
+    box_km2 = (la2 - la1) * 110.540 * (lo2 - lo1) * 111.320 * cl
+    return box_km2 * hit / max(1, tot)
+
+
 for pk in parks:
-    pk['area'] = sum(poly_area_km2(p, pk['cl']) for p in pk['polys'])
+    pk['area'] = union_area_km2(pk['polys'], pk['cl'])
 parks = [p for p in parks if p['area'] >= MIN_AREA_KM2]
 if OFFICIAL_ONLY:
     parks = []   # מתעלמים מ-OSM; כל האזורים ייווצרו מהדאטהסט הרשמי בהמשך
@@ -236,7 +258,7 @@ if os.path.exists(MOT):
                 same = pk; break
         if same is not None:
             same['polys'].extend(mpolys)
-            same['area'] = sum(poly_area_km2(p, same['cl']) for p in same['polys'])
+            same['area'] = union_area_km2(same['polys'], same['cl'])
             # אותו שם: אם האזור עצמו מהשכבה — הגבול כולו רשמי (1); אם המקור
             # OSM — הגאומטריה מעורבת ולכן רק אימות (2)
             same['mot'] = same.get('mot') or 2
@@ -395,6 +417,13 @@ if os.environ.get('EMIT_REGIONS'):
     print('אזורים שנפלטו:', len(regions), '->', out)
     raise SystemExit(0)
 CELL = 0.02   # ~2 ק"מ
+# ממצא הסיירת: המרכז נקבע מהפוליגון הראשון ולא עודכן במיזוגים — סטייה
+# עד ~930 מ' שמזהמת את ההליכה-למרכז, הסיווגים וכיוון הנסיעה
+for pk in parks:
+    if len(pk['polys']) > 1:
+        _av = [q for _pp in pk['polys'] for q in _pp]
+        pk['cen'] = (sum(a for a, b in _av) / len(_av), sum(b for a, b in _av) / len(_av))
+        pk['cl'] = math.cos(math.radians(pk['cen'][0]))
 grid = defaultdict(list)
 for i, pk in enumerate(parks):
     la1, la2, lo1, lo2 = bbox(pk)
@@ -421,8 +450,9 @@ for r in csv.DictReader(open(STOPS, encoding='utf-8-sig')):
     for pi in grid.get((int(la / CELL), int(lo / CELL)), []):
         pk = parks[pi]
         la1, la2, lo1, lo2 = pk['bbox']
-        pad = NEAR_M / 100000
-        if not (la1 - pad < la < la2 + pad and lo1 - pad < lo < lo2 + pad):
+        pad_la = NEAR_M / 110540.0
+        pad_lo = NEAR_M / (111320.0 * pk['cl'])
+        if not (la1 - pad_la < la < la2 + pad_la and lo1 - pad_lo < lo < lo2 + pad_lo):
             continue
         inside = any(in_poly(la, lo, pts) for pts in pk['polys'])
         d = 0 if inside else min(dist_to_poly_m(la, lo, pts, pk['cl']) for pts in pk['polys'])
@@ -437,6 +467,13 @@ print('תחנות בטווח של פארק כלשהו:', len(stop_hits))
 
 # ---- לוח שנה: שירותים תקפים היום, לפי יום ----
 today = datetime.date.today()
+# תיקון שלמה (קו 373) — לוח עתידי שכבר "בתוקף" ברישום נמרח על הנוכחי:
+# שירות נספר ליום מסוים רק אם טווח התוקף שלו מכסה את המופע *הבא* של
+# אותו יום (אותו כלל שחיסל את ×5 ברציף כפול). אגב זה גם מגן מחגים.
+_wd_target = {}
+for _i, _dn in enumerate(('monday', 'tuesday', 'wednesday', 'thursday',
+                          'friday', 'saturday', 'sunday')):
+    _wd_target[_dn] = today + datetime.timedelta(days=(_i - today.weekday()) % 7)
 svc_days = {}
 if os.path.exists(CAL):
     for r in csv.DictReader(open(CAL, encoding='utf-8-sig')):
@@ -445,11 +482,11 @@ if os.path.exists(CAL):
             d2 = datetime.datetime.strptime(r['end_date'], '%Y%m%d').date()
         except (ValueError, KeyError):
             continue
-        if not (d1 <= today <= d2):
-            continue
-        svc_days[r['service_id']] = {k for k in
-            ('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday')
-            if r.get(k) == '1'}
+        days = {k for k in
+                ('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday')
+                if r.get(k) == '1' and d1 <= _wd_target[k] <= d2}
+        if days:
+            svc_days[r['service_id']] = days
 
 # ---- קווים ----
 trip_meta = {}   # trip_id -> (route_id, service_id)
@@ -732,11 +769,11 @@ for sid, hits in stop_hits.items():
         if es is not None and es > WALK_FAR_SEC:
             if (em is not None and em > 10 * max(d, 50) + 1000) or _nb_ok(pi, sid, _sla, _slo, 1):
                 em = es = None
-        if cs is None and not _nb_ok(pi, sid, _sla, _slo, 3):
+        if cs is None and tier != 'in' and not _nb_ok(pi, sid, _sla, _slo, 3):
             _inh = _nb_long(pi, sid, _sla, _slo, 3)
             if _inh is None: _inh = _zone_long.get((pi, 3))
             if _inh is not None: cs = _inh
-        if es is None and not _nb_ok(pi, sid, _sla, _slo, 1):
+        if es is None and tier != 'in' and not _nb_ok(pi, sid, _sla, _slo, 1):
             _inh = _nb_long(pi, sid, _sla, _slo, 1)
             if _inh is None: _inh = _zone_long.get((pi, 1))
             if _inh is not None: es = _inh
@@ -800,6 +837,8 @@ def build_lines(stops_here, tk):
                         gaps.append([hhmm(a), hhmm(b), b - a])
                 if mins and win and win[0] - w1 >= GAP_MIN:
                     gaps.insert(0, [GAP_WIN[0], hhmm(win[0]), win[0] - w1])
+                if mins and win and w2 - win[-1] >= GAP_MIN:
+                    gaps.append([hhmm(win[-1]), GAP_WIN[1], w2 - win[-1]])
                 rec['gaps'] = gaps
         if any(rec[gk] for gk, _ in DAYGROUPS):
             lines.append(rec)
@@ -847,6 +886,15 @@ for pi, pk in enumerate(parks):
                 nm, code, la, lo, city = stop_info[sid]
                 stops_here.append({'sid': sid, 'n': nm, 'c': code, 'la': la, 'lo': lo, 'd': d, 'city': city,
                                    'tc': tc, 'te': te, 'wmc': cm, 'wtc': cmin, 'wme': em, 'wte': emin})
+    # דה-דופ לתצוגה ולמונים (ממצא הסיירת): כמה stop_id לאותו מק"ט —
+    # שורה אחת, הטובה ביותר; הקווים ממשיכים להיבנות מכל הרשומות
+    _bycode = {}
+    for s in stops_here:
+        k = s['c'] or s['sid']
+        cur = _bycode.get(k)
+        if cur is None or (TIER_RANK.get(s['tc'], 9), s['d']) < (TIER_RANK.get(cur['tc'], 9), cur['d']):
+            _bycode[k] = s
+    stops_uniq = list(_bycode.values())
     # קווים+ספירות פעמיים: מרכז (ברירת-מחדל) וקצה (כניסה)
     lines_c, (lic, lgc, lnc), (pki, pkg), (dwi, dwg) = build_lines(stops_here, 'tc')
     lines_e, (lie, lge, lne), (pkie, pkge), (dwie, dwge) = build_lines(stops_here, 'te')
@@ -931,7 +979,7 @@ for pi, pk in enumerate(parks):
     outstops = [{'n': s['n'], 'c': s['c'], 'la': s['la'], 'lo': s['lo'], 'd': s['d'],
                  't': s['tc'], 'te': s['te'], 'wt': s['wtc'], 'wm': s['wmc'],
                  'wte': s['wte'], 'wme': s['wme']}
-                for s in stops_here if not (s['tc'] == 'blocked' and s['te'] == 'blocked')]
+                for s in stops_uniq if not (s['tc'] == 'blocked' and s['te'] == 'blocked')]
     svc_sc = service_scores(pk)
     # מדידה מחמירה (בקשת איריס 23.08): "להולך הרגל לא אכפת הממוצע" —
     # דוגמים את היקף הפוליגון (קודקודים + כל ~150מ' לאורך צלע), ולכל נקודה
@@ -939,6 +987,7 @@ for pi, pk in enumerate(parks):
     # worst = הקצה הגרוע ביותר; cov10 = אחוז הנקודות בטווח 10 דקות.
     if outstops:
         _pts = []
+        _pts_grid = []   # רשת השטח בלבד — ממצא הסיירת: נקודות ההיקף זיהמו את אחוז-השטח
         _seen_g = set()   # דה-דופ נקודות רשת בין טבעות חופפות
         _cl2 = math.cos(math.radians(pk['cen'][0]))
         # המדידה על קואורדינטות בדיוק הפלט (5 ספרות) — כדי שחישוב חוזר מהקבצים
@@ -974,21 +1023,28 @@ for pi, pk in enumerate(parks):
                         if _key not in _seen_g:
                             _seen_g.add(_key)
                             _pts.append((_ga, _go))
+                            _pts_grid.append((_ga, _go))
                     _go += _slo
                 _ga += _sla
         _worst = 0.0; _cov = 0
+        # cov10 = "אחוז שטח" — נמדד על רשת הפנים בלבד; worst על הכול
+        # (כולל ההיקף). אזור צר מרשת 75מ' נופל חזרה לנקודות ההיקף.
+        _cov_src = _pts_grid if _pts_grid else _pts
         for _p in _pts:
             _best = min(math.hypot((_p[0] - round(_s['la'], 5)) * 110540.0,
                                    (_p[1] - round(_s['lo'], 5)) * 111320.0 * _cl2)
                         for _s in outstops)
             _t = _best * 1.3 / 75.0
             _worst = max(_worst, _t)
-            if _t <= 10:
+        for _p in _cov_src:
+            _best = min(math.hypot((_p[0] - round(_s['la'], 5)) * 110540.0,
+                                   (_p[1] - round(_s['lo'], 5)) * 111320.0 * _cl2)
+                        for _s in outstops)
+            if _best * 1.3 / 75.0 <= 10:
                 _cov += 1
         if not _pts:
-            _pts = [pk['cen']]
-            _covp = 0.0
-        _covp = _cov * 100.0 / len(_pts)
+            _pts = [pk['cen']]; _cov_src = _pts
+        _covp = _cov * 100.0 / max(1, len(_cov_src))
         # 99.7% לא מתעגל ל"100% מהשטח" כשקיימת נקודה מעל 10 דק'
         strict_m = {'worst': round(_worst, 1),
                     'cov10': (min(99, int(_covp)) if _worst > 10 else round(_covp))}
@@ -1023,7 +1079,7 @@ for pi, pk in enumerate(parks):
                   'pkie': pkie, 'pkge': pkge,
                   'dwi': dwi, 'dwg': dwg,                      # יציאות ביום חול (בפנים/שער)
                   'dwie': dwie, 'dwge': dwge,
-                  'in': sum(1 for s in stops_here if s['tc'] == 'in'),
+                  'in': sum(1 for s in stops_uniq if s['tc'] == 'in'),
                   'cov': cov, 'la': round(pk['cen'][0], 4), 'lo': round(pk['cen'][1], 4),
                   'off': 1 if off else 0,
                   'ly': 'hub' if pk.get('hub') else 'ind',
@@ -1156,14 +1212,15 @@ if used_rids and os.path.exists(SHAPES):
         _e['bl'] = max(_per_mk.values()) if _per_mk else 0
         # bl1 (ממצא איריס, צמח 01.09): הכיוון הבודד החזק ביותר — בלי סכימת
         # שני כיווני אותו מקט, שניפחה 40 אזורים מעל סף ה-9
-        _bl1 = 0
+        _b1 = {}
         for _L in _d.get('lines') or []:
             if _L.get('dr') == 'out':
                 continue
             _a = sum(1 for t in (_L.get('wd') or []) if _AM(t))
-            if _a > _bl1:
-                _bl1 = _a
-        _e['bl1'] = _bl1
+            _k1 = (_L.get('mk') or _L.get('num'), _L.get('dest'))
+            _b1[_k1] = _b1.get(_k1, 0) + _a
+        # חלופות של אותו כיוון (218+218א לאותו יעד) הן שירות אחד לנוסע
+        _e['bl1'] = max(_b1.values()) if _b1 else 0
     json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     print('ספירה כיוונית: pkd נכתב לכל האזורים')
