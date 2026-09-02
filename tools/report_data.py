@@ -13,6 +13,7 @@
 """
 import collections
 import datetime
+import zoneinfo
 import json
 import math
 import os
@@ -357,11 +358,11 @@ def build():
         {'what': 'ציון השירות של משרד התחבורה', 'src': svc.get('src'), 'date': svc.get('updated'), 'note': f"{len(svc.get('areas') or [])} אזורים סטטיסטיים; האזור מקבל את ציון האזור הסטטיסטי שבו הוא נמצא"},
         {'what': 'אימות קיום, מבנים וחלק מהגבולות', 'src': 'OpenStreetMap (ODbL)', 'date': jdate('parks/osm-check/osm-approved.json', 'generated'), 'note': 'פאנל אימות; 129 אזורים מאומתים'},
         {'what': 'זמני הליכה אמיתיים', 'src': 'OSRM על רשת OpenStreetMap, פרופיל הליכה מותאם (כבישים פרטיים ורמפות מותרים), 5 קמ״ש', 'date': gen, 'note': 'שומר גאומטרי לכשלי ניתוב'},
-        {'what': 'סטטוס בנייה (אזורים בהקמה מוחרגים)', 'src': 'צפיפות מבנים ב-OSM', 'date': jdate('parks/checks/built-status.json', 'checked'), 'note': ''},
+        {'what': 'סטטוס בנייה (אזורים בהקמה מוחרגים)', 'src': 'צפיפות מבנים ב-OSM', 'date': (jdate('parks/checks/built-status.json', 'checked') or '')[:10], 'note': ''},  # יום בלבד — השעה שם ב-UTC
         {'what': 'אשכול חברתי-כלכלי', 'src': (socio or {}).get('source') or 'למ"ס', 'date': str((socio or {}).get('year') or ''), 'note': ''},
     ]
     data = {
-        'generated': datetime.datetime.now().strftime('%d.%m.%Y %H:%M'), 'gtfs_date': gen,
+        'generated': datetime.datetime.now(zoneinfo.ZoneInfo('Asia/Jerusalem')).strftime('%d.%m.%Y %H:%M'), 'gtfs_date': gen,  # שעון ישראל
         'formula': {'headway_bands': IRIS_HEADWAY, 'walk_bands': IRIS_WALK, 'weights': IRIS_W, 'version': '02.09.2026',
                     'scale': SCALE, 'peak_am': '06:00–09:00 אל האזור', 'peak_pm': '15:00–19:00 מהאזור'},
         'national': national, 'regions': regions, 'sector': sector, 'socio': socio,

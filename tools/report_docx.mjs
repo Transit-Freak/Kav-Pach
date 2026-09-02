@@ -66,7 +66,7 @@ const kids = [];
 // שער
 kids.push(new Paragraph({ spacing: { before: 2600, after: 200 }, alignment: AlignmentType.RIGHT, bidirectional: true, children: [run('נגישות אזורי התעשייה בישראל לתחבורה ציבורית', { size: 52, bold: true, color: DEEP })] }));
 kids.push(P([run(`תמונת מצב ארצית · ${N.n} אזורי תעשייה ותעסוקה`, { size: 28, color: BRAND })], { after: 400 }));
-kids.push(P([run(`נתוני משרד התחבורה (GTFS) מיום ${data.gtfs_date} · הדו"ח חושב מהנתונים החיים ב-${data.generated}`, { size: 20, color: MUT })]));
+kids.push(P([run(`נתוני משרד התחבורה (GTFS) מיום ${data.gtfs_date} · הדו"ח חושב מהנתונים החיים ב-${data.generated} (שעון ישראל)`, { size: 20, color: MUT })]));
 kids.push(P([run('הקו הבוחן · אתר "נגישות אזורי תעשייה" · transit-freak.github.io/kav-bochan/parks', { size: 20, color: MUT })]));
 kids.push(P([run('[מקום להקדמה של איריס]', { size: 22, color: 'B45309', italics: true })], { after: 0 }));
 kids.push(Break());
@@ -243,7 +243,7 @@ for (const e of data.examples) {
 // נספח
 kids.push(H1('נספח: איך לאמת כל מספר'));
 kids.push(P('כל אזור שמופיע בדו"ח ניתן לפתיחה באתר: הציון, רכיביו, רשימת הקווים המלאה עם לוחות הזמנים, והמפה. הדו"ח נבנה אוטומטית מאותם קבצים שהאתר קורא.'));
-kids.push(P(`נוסחה ${F.version} · GTFS ${data.gtfs_date} · הדו"ח חושב ${data.generated}`));
+kids.push(P(`נוסחה ${F.version} · GTFS ${data.gtfs_date} · הדו"ח חושב ${data.generated} (שעון ישראל)`));
 
 // ── מסמך ──────────────────────────────────────────────────────────────────
 const doc = new Document({
