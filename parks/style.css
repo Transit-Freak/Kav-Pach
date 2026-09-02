@@ -89,6 +89,20 @@
   .sch-cv{align-self:flex-start;font-size:15px;font-weight:900;padding:1px 9px;border-radius:7px;font-variant-numeric:tabular-nums}
   .sch-raw{font-size:11px;color:#475569;font-weight:700}
   .stat.sm{font-size:11.5px;padding:4px 10px} .stat.sm b{font-size:13px}
+  /* בטלפון הבלוק תפס מסך שלם והציון היה רבע מרוחב המסך (הערת שלמה 02.09) */
+  @media (max-width:600px){
+    .scorehero{gap:6px;padding:8px 10px}
+    .sch-main{gap:8px}
+    .sch-lbl{font-size:12px}
+    .sch-big{font-size:24px;padding:4px 11px;min-width:50px;border-radius:9px}
+    .sch-sub{font-size:10px}
+    .sch-comps{gap:5px}
+    .sch-c{padding:5px 8px;gap:1px}
+    .sch-cl{font-size:11px}
+    .sch-cv{font-size:13px;padding:0 7px}
+    .sch-raw{font-size:10.5px}
+    .motbig{font-size:20px;padding:4px 10px}
+  }
   /* תיבת משרד התחבורה: הציון המשוקלל שלהם בשורה משלו, גדול; ארבעת המדדים מתחתיו */
   .motmain{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
   .motbig{font-size:26px;font-weight:900;line-height:1;padding:6px 14px;border-radius:10px;font-variant-numeric:tabular-nums}

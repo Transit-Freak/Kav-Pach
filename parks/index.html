@@ -259,7 +259,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='51';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='52';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -875,7 +875,7 @@ function openPark(f,push=true){
       const hw=(v,m)=>v?`כל ~${Math.round(m/v)} דק׳`:'אין יציאות';
       const comp=(lbl,w,v,raw,tip)=>{const c=sc100(v==null?null:v);return `<div class="sch-c" title="${tip}"><span class="sch-cl">${lbl} <small>${w}%</small></span><span class="sch-cv" style="background:${c.bg};color:${c.fg}">${v==null?'—':v}</span><span class="sch-raw">${raw}</span></div>`;};
       return `<div class="scorehero">
-        <div class="sch-main"><div class="sch-lbl">🎯 הציון המשוקלל של האתר</div><div class="sch-big" style="background:${k.bg};color:${k.fg}">${sc==null?'—':sc}</div><div class="sch-sub">0–100 · נוסחת 02.09</div></div>
+        <div class="sch-main"><div class="sch-lbl">🎯 הציון המשוקלל של האתר</div><div class="sch-big" style="background:${k.bg};color:${k.fg}">${sc==null?'—':sc}</div><div class="sch-sub">0–100</div></div>
         <div class="sch-comps">
           ${comp('הקו החזק בשיא הבוקר',40,sp.bl,_pi?hw(_pi.bl1,180):'—','הקו עם הכי הרבה יציאות 06–09 בכיוון האזור')}
           ${comp('הנקודה הרחוקה',30,sp.far,_pi&&_pi.ww!=null?`${Math.round(_pi.ww)} דק׳ הליכה`:'—','הליכה מהמפעל המרוחק ביותר לתחנה הקרובה אליו')}
