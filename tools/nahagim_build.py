@@ -199,9 +199,12 @@ def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70):
     out.sort(key=lambda m: m['f'])
     dedup = []
     for mv in out:
-        # שתי הוראות בטווח 25 מ׳ הן כפילות מחפיפת החתיכות (גם כשהסיווג שונה — ימינה/שמאלה
-        # באותה נקודה זה מה שהקפיץ את הבאנר במחלף עד הלום); הראשונה נשארת
-        if dedup and (mv['f'] - dedup[-1]['f']) * pl.total < 25:
+        # כפילות = אותה הוראה (אותו סיווג ואותה יציאה בכיכר) שחוזרת בטווח 25 מ׳ — זה מה
+        # שחפיפת החתיכות מייצרת. ימינה ואז שמאלה כמה מטרים אחר כך (צומת מוסט) היא
+        # שתי פניות אמיתיות ונשארת (שאלת שלמה 02.09). הזוג ימינה/שמאלה שקפץ במחלף עד
+        # הלום נבע מהמיקום השגוי, שכבר מטופל במיקום המונוטוני.
+        if dedup and dedup[-1]['kind'] == mv['kind'] and dedup[-1].get('exit') == mv.get('exit') \
+                and (mv['f'] - dedup[-1]['f']) * pl.total < 25:
             continue
         dedup.append(mv)
     ratio = round(matched_m / pl.total, 3) if pl.total else None
