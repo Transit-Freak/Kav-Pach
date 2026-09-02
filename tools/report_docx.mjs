@@ -261,6 +261,11 @@ const doc = new Document({
       heading1: { paragraph: { outlineLevel: 1 } },
       heading2: { paragraph: { outlineLevel: 2 } },
     },
+    // שורות תוכן העניינים (toc 1 / toc 2 = "Contents 1/2" ב-LibreOffice): ימין-לשמאל, כמו שאר המסמך
+    paragraphStyles: [
+      { id: 'TOC1', name: 'toc 1', basedOn: 'Normal', next: 'Normal', paragraph: { bidirectional: true, alignment: AlignmentType.RIGHT, spacing: { before: 60, after: 60 } }, run: { size: 22, font: FONT } },
+      { id: 'TOC2', name: 'toc 2', basedOn: 'Normal', next: 'Normal', paragraph: { bidirectional: true, alignment: AlignmentType.RIGHT, indent: { right: 360 } }, run: { size: 20, font: FONT, color: '444444' } },
+    ],
   },
   numbering: { config: [{ reference: 'bul', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.RIGHT, style: { paragraph: { indent: { left: 0, right: 360, hanging: 260 } } } }] }] },
   sections: [{
