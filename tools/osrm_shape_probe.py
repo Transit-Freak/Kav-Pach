@@ -322,7 +322,8 @@ def write(results):
         L.append('')
     # דוגמה: ההוראות שהיו מוצגות לנהג בקו הראשון, מהבדיקה הטובה
     ex = results[0] if results else None
-    best = next((k for k in ('bus route/1leg', 'car route/1leg', 'bus match') if ex and k in ex['tests'] and 'maneuvers' in ex['tests'][k]), None)
+    # הדוגמה מהשיטה שעבדה בפועל: התאמת מפה. הניתוב דרך נקודות ביניים נתן רשימות חסרות משמעות.
+    best = next((k for k in ('bus match', 'bus route/1leg', 'car route/1leg') if ex and k in ex['tests'] and 'maneuvers' in ex['tests'][k]), None)
     if ex and best:
         L += [f"## דוגמה: ההוראות לנהג — {ex['agency']} {ex['short']} · {ex['long'][:50]} ({best})", '']
         EXIT_HE = ['', 'הראשונה', 'השנייה', 'השלישית', 'הרביעית', 'החמישית', 'השישית']
