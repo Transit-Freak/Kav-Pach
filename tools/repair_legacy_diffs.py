@@ -63,6 +63,10 @@ def main():
             # מה שאינו נובע מההפרש בין שתי הרשימות אינו שינוי, לא משנה איזה בסיס
             # השוואה השתמש בו כותב ישן. רשומות בלי הצהרה על שינוי לא מקבלות אחת.
             inconsistent = False
+            # מק"טים בלי שמות (rc בלי rem, ac בלי add) — שארית של כותב שאסף מק"טים
+            # של כל מה שירד אי-פעם; באתר לא נראה, אבל סותר את הכלל ומבלבל ביקורת
+            if ALL and prev is not None and ((rc and not rem) or (ac and not add)):
+                inconsistent = True
             if ALL and prev is not None and (rem or add):
                 a2, r2 = diff(prev['stops'], st)
                 inconsistent = ({str(c) for c in rc if c} != {str(s[0]) for s in r2}) or \
