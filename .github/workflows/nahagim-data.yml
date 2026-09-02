@@ -1,0 +1,79 @@
+name: nahagim-data
+
+# נתונים מוכנים ל"קו הנהגים" (אפליקציית הנהגים של שלמה): לכל קו ב-GTFS —
+# נסיעה מייצגת, תחנות, צורה, והוראות נהיגה מהתאמת מפה ב-OSRM עם פרופיל אוטובוס.
+# הפלט נדחף לענף orphan בשם nahagim-data (נדרס בכל ריצה, כדי לא לנפח את הריפו)
+# ומוגש מ-raw.githubusercontent.com. ראה tools/nahagim_build.py.
+
+on:
+  schedule:
+    - cron: '0 8 * * 0'   # ראשון 08:00 UTC (11:00 ישראל בקיץ) — שעה אחרי הבנייה השבועית של האזורים
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nahagim-data
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          ok=0
+          for a in 1 2 3 4 5 6 7 8; do
+            echo "== GTFS attempt $a =="
+            if curl -fSL --connect-timeout 40 --max-time 1800 -A "$UA" \
+                 -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"; then
+              ok=1; break; fi
+            echo "GTFS server not responding; waiting 60s"; sleep 60
+          done
+          [ "$ok" = "1" ] || { echo "GTFS unreachable"; exit 1; }
+          ls -la gtfs.zip
+
+      - name: OSRM — פרופיל אוטובוס, מפת ישראל
+        run: |
+          set -euo pipefail
+          mkdir -p osrm && cd osrm
+          curl -fSL --connect-timeout 20 --max-time 600 --retry 15 --retry-all-errors --retry-delay 60 \
+            -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
+          IMG=osrm/osrm-backend:latest
+          docker pull "$IMG" >/dev/null
+          cp ../tools/osrm/bus-il.lua ./bus-il.lua
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-extract   -p /data/bus-il.lua /data/map.osm.pbf >/dev/null
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-partition  /data/map.osrm >/dev/null
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-customize  /data/map.osrm >/dev/null
+          docker run -d --name osrm -p 5000:5000 -v "$PWD:/data" "$IMG" \
+            osrm-routed --algorithm mld --max-matching-size 2000 /data/map.osrm
+          up=0
+          for i in $(seq 1 40); do
+            if curl -fsS "http://localhost:5000/nearest/v1/driving/34.78,32.08" >/dev/null 2>&1; then up=1; break; fi
+            sleep 2
+          done
+          [ "$up" = "1" ] || { echo "OSRM failed"; docker logs osrm || true; exit 1; }
+
+      - name: בנייה
+        run: python3 tools/nahagim_build.py gtfs.zip --osrm http://localhost:5000 --out nahagim-out --workers 6
+
+      - name: פרסום לענף nahagim-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cat nahagim-out/stats.json
+          cd nahagim-out
+          git init -q -b nahagim-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "nahagim-data $(date -u +%F): נסיעה מייצגת, צורה והוראות נהיגה לכל קו"
+          git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" nahagim-data
+          echo "https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/nahagim-data/index.json"
