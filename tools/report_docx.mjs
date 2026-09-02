@@ -254,13 +254,13 @@ const doc = new Document({
   creator: 'הקו הבוחן', title: 'נגישות אזורי התעשייה בישראל לתחבורה ציבורית',
   features: { updateFields: true },   // תוכן העניינים מתמלא בפתיחה ב-Word
   styles: {
-    default: { document: { run: { font: FONT, size: 22, rightToLeft: true } } },
-    // רמות מתאר מפורשות לכותרות: Word משלים אותן לפי שם הסגנון, LibreOffice לא —
-    // ובלעדיהן עדכון תוכן העניינים בהמרה ל-PDF לא מוצא אף כותרת
-    paragraphStyles: [
-      { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, paragraph: { outlineLevel: 1 } },
-      { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, paragraph: { outlineLevel: 2 } },
-    ],
+    default: {
+      document: { run: { font: FONT, size: 22, rightToLeft: true } },
+      // רמות מתאר מפורשות לכותרות המובנות: Word משלים אותן לפי שם הסגנון, LibreOffice לא —
+      // ובלעדיהן עדכון תוכן העניינים בהמרה ל-PDF לא מוצא אף כותרת
+      heading1: { paragraph: { outlineLevel: 1 } },
+      heading2: { paragraph: { outlineLevel: 2 } },
+    },
   },
   numbering: { config: [{ reference: 'bul', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.RIGHT, style: { paragraph: { indent: { left: 0, right: 360, hanging: 260 } } } }] }] },
   sections: [{
