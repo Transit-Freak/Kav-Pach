@@ -91,11 +91,19 @@ class Polyline:
             self.cum.append(self.cum[-1] + math.hypot(self.xy[i][0] - self.xy[i - 1][0], self.xy[i][1] - self.xy[i - 1][1]))
         self.total = self.cum[-1] or 1.0
 
-    def locate(self, lat, lon):
+    def locate(self, lat, lon, f_min=0.0):
+        """הנקודה הקרובה ביותר על הצורה → (שבר לאורכה, מרחק במטרים). f_min מגביל את
+        החיפוש לחלק שאחרי שבר נתון: הוראות מגיעות לפי סדר הנסיעה, ובלולאה (מחלף,
+        רמפה) המסלול עובר פעמיים באותו מקום — בלי ההגבלה ההוראה נדבקת למעבר הלא נכון."""
         px, py = lon * self.kx, lat * self.ky
         best, best_len = float('inf'), 0.0
         xy = self.xy
-        for i in range(1, len(xy)):
+        start = 1
+        if f_min > 0:
+            target = f_min * self.total
+            while start < len(xy) - 1 and self.cum[start] < target:
+                start += 1
+        for i in range(start, len(xy)):
             ax, ay = xy[i - 1]
             bx, by = xy[i]
             dx, dy = bx - ax, by - ay
@@ -158,6 +166,7 @@ def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70):
             break
         i += chunk_pts - 2
     out, matched_m, conf, failed = [], 0.0, [], 0
+    cursor = 0.0     # ההוראות מונוטוניות לאורך הקו: כל אחת נמצאת אחרי הקודמת (עד 60 מ׳ אחורה, לחפיפת החתיכות)
     for ch in chunks:
         if len(ch) < 2:
             continue
@@ -181,15 +190,18 @@ def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70):
                     if not mv:
                         continue
                     lon, lat = st['maneuver']['location']
-                    f, d = pl.locate(lat, lon)
+                    f, d = pl.locate(lat, lon, f_min=max(0.0, cursor - 60.0 / pl.total))
                     if d > 60:       # הוראה רחוקה מהצורה — לא שלנו
                         continue
+                    cursor = max(cursor, f)
                     mv['f'] = round(f, 5)
                     out.append(mv)
     out.sort(key=lambda m: m['f'])
     dedup = []
     for mv in out:
-        if dedup and dedup[-1]['kind'] == mv['kind'] and (mv['f'] - dedup[-1]['f']) * pl.total < 25:
+        # שתי הוראות בטווח 25 מ׳ הן כפילות מחפיפת החתיכות (גם כשהסיווג שונה — ימינה/שמאלה
+        # באותה נקודה זה מה שהקפיץ את הבאנר במחלף עד הלום); הראשונה נשארת
+        if dedup and (mv['f'] - dedup[-1]['f']) * pl.total < 25:
             continue
         dedup.append(mv)
     ratio = round(matched_m / pl.total, 3) if pl.total else None
