@@ -247,12 +247,79 @@ if os.path.exists(SVCIDX):
     except Exception as e:
         print('טעינת מדדי שירות נכשלה:', e)
 
-def service_scores(pk):
-    """ציוני מדדי השירות לאזור: ממוצע משוקלל של האזורים הסטטיסטיים שהוא חופף."""
+def _svc_avg(hits):
+    """ממוצע משוקלל של המדדים; hits = {אינדקס אזור סטטיסטי: משקל}."""
+    def wavg(k):
+        vals = [(_svc[i].get(k), w) for i, w in hits.items() if isinstance(_svc[i].get(k), (int, float))]
+        if not vals:
+            return None
+        return round(sum(v * w for v, w in vals) / sum(w for _, w in vals), 1)
+    return {'av': wavg('av'), 'ac': wavg('ac'), 'co': wavg('co'), 're': wavg('re'), 'fs': wavg('fs'),
+            'n': len(hits), 'sa_city': _svc[max(hits, key=hits.get)].get('city', '')}
+
+
+def _grid_pts(polys, step_m, cap=300):
+    """נקודות רשת בתוך פוליגון (רשימת טבעות), בריווח step_m, עד cap נקודות."""
+    pts_all = [p for rg in polys for p in rg]
+    la1 = min(p[0] for p in pts_all); la2 = max(p[0] for p in pts_all)
+    lo1 = min(p[1] for p in pts_all); lo2 = max(p[1] for p in pts_all)
+    cl = math.cos(math.radians((la1 + la2) / 2))
+    sla = step_m / 110540.0; slo = step_m / (111320.0 * cl)
+    out = []
+    la = la1
+    while la <= la2:
+        lo = lo1
+        while lo <= lo2:
+            if any(in_poly(la, lo, rg) for rg in polys):
+                out.append((la, lo))
+            lo += slo
+        la += sla
+    if len(out) > cap:
+        k = len(out) / cap
+        out = [out[int(i * k)] for i in range(cap)]
+    return out
+
+
+SVC_INSIDE_MIN = 0.5   # לפחות מחצית משטח האזור הסטטיסטי בתוך אזור התעשייה
+
+
+def _svc_inside(pk):
+    """החלטת שלמה 02.09: ציון המשרד נלקח רק מאזור סטטיסטי שיושב בתוך אזור
+    התעשייה עצמו — לפחות 50% משטחו בתוך הפוליגון. אזור סטטיסטי של שכונה סמוכה
+    שרק נוגע בגבול (או שהאזור נוגע בו) אינו נספר. כמה כאלה — משוקלל לפי השטח
+    שבפנים. מחזיר None כשאין."""
+    rings = [rg for rg in pk['polys'] if len(rg) >= 4]
+    if not rings or not _svc:
+        return None
+    pts = [p for rg in rings for p in rg]
+    zb = (min(p[0] for p in pts), min(p[1] for p in pts), max(p[0] for p in pts), max(p[1] for p in pts))
+    hits, shares = {}, {}
+    for i, a in enumerate(_svc):
+        bb = a['bb']
+        if bb[2] < zb[0] or bb[0] > zb[2] or bb[3] < zb[1] or bb[1] > zb[3]:
+            continue
+        km2 = a.get('km2') or 0.5
+        g = _grid_pts(a['polys'], max(40.0, math.sqrt(km2 * 1e6) / 15.0))
+        if not g:
+            continue
+        f_in = sum(1 for la, lo in g if any(in_poly(la, lo, rg) for rg in rings)) / len(g)
+        if f_in >= SVC_INSIDE_MIN:
+            hits[i] = f_in * km2
+            shares[i] = f_in
+    if not hits:
+        return None
+    out = _svc_avg(hits)
+    out['share'] = round(max(shares.values()), 2)          # החלק הגדול ביותר של א"ס שבפנים
+    out['km2_in'] = round(sum(hits.values()), 3)
+    return out
+
+
+def _svc_wide(pk):
+    """השיטה הקודמת — כל אזור סטטיסטי שהאזור חופף (מרכז + נקודות גבול), משוקלל.
+    נשמרת להקשר בלבד ("האזור הסטטיסטי הסובב"); לא משמשת להשוואה."""
     if not _svc:
         return None
     cen = pk['cen']
-    # דוגמים את הפוליגון: המרכז + קודקודי הגבול, ובודקים בכל אזור סטטיסטי
     sample = [cen] + [p for rg in pk['polys'] for p in rg[::max(1, len(rg) // 12)]][:24]
     hits = {}
     for i, a in enumerate(_svc):
@@ -264,17 +331,21 @@ def service_scores(pk):
                 w = 2.0 if (la, lo) == cen else 1.0
                 hits[i] = hits.get(i, 0) + w
                 break
-    if not hits:
+    return _svc_avg(hits) if hits else None
+
+
+def service_scores(pk):
+    """ציוני משרד התחבורה לאזור: ההשוואה רק עם אזור סטטיסטי שבתוך האזור (mode='inside');
+    הערך של הסביבה (wide) מצורף להקשר. None כשאין לא זה ולא זה."""
+    inside = _svc_inside(pk)
+    wide = _svc_wide(pk)
+    if not inside and not wide:
         return None
-    tot = sum(hits.values())
-    def wavg(k):
-        vals = [(_svc[i].get(k), w) for i, w in hits.items() if isinstance(_svc[i].get(k), (int, float))]
-        if not vals:
-            return None
-        return round(sum(v * w for v, w in vals) / sum(w for _, w in vals), 1)
-    return {'av': wavg('av'), 'ac': wavg('ac'), 'co': wavg('co'),
-            're': wavg('re'), 'fs': wavg('fs'), 'n': len(hits),
-            'sa_city': _svc[max(hits, key=hits.get)].get('city', '')}
+    out = dict(inside) if inside else {'av': None, 'ac': None, 'co': None, 're': None, 'fs': None, 'n': 0, 'sa_city': ''}
+    out['mode'] = 'inside' if inside else 'none'
+    if wide:
+        out['wide'] = wide
+    return out
 
 # ---- מקור שלישי: אזורי תעשייה-תעסוקה של משרד התחבורה ----
 # הגבולות מהשכבה הרשמית של משרד התחבורה עצמו (parks/osm-check/mot-zones.json,
@@ -1261,9 +1332,10 @@ for pi, pk in enumerate(parks):
                   'zt': zt,
                   'mt': pk.get('mot') or 0,   # 1=הגבול מהשכבה הרשמית · 2=אומת מולה, הגבול מ-OSM
                   'st': built_status(pk['cen']),
-                  'sf': (svc_sc or {}).get('fs'),     # ציון משוקלל רשמי
+                  'sf': (svc_sc or {}).get('fs'),     # ציון משוקלל רשמי — רק מאזור סטטיסטי שבתוך האזור
                   'sr': (svc_sc or {}).get('re'),     # אמינות רשמית
-                  'sa': (svc_sc or {}).get('av')})    # זמינות רשמית
+                  'sa': (svc_sc or {}).get('av'),     # זמינות רשמית
+                  'sfw': ((svc_sc or {}).get('wide') or {}).get('fs')})   # הסובב — להקשר בלבד
     out_i += 1
 index.sort(key=lambda x: (x['city'], x['name']))
 json.dump(index, open(os.path.join(OUTDIR, 'parks.json'), 'w', encoding='utf-8'),

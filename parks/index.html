@@ -909,20 +909,25 @@ function openPark(f,push=true){
       </div>`;
     }
     if(d.svc){   // התיבה נבנית בנפרד ומוצגת מעל רשימות הקווים (בקשת איריס)
-      const v=d.svc, sc=x=>(x==null?'—':x);
+      // החלטת שלמה 02.09: השוואה רק כשאזור סטטיסטי של המשרד יושב בתוך אזור התעשייה
+      // (mode='inside'). אחרת מוצג הציון של הסביבה ("wide") להקשר בלבד, באפור ועם כוכבית.
+      const v0=d.svc, inside=v0.mode==='inside'||(v0.mode==null&&v0.fs!=null), w=v0.wide||null;
+      const v=inside?v0:(w||v0), sc=x=>(x==null?'—':x);
       // צביעה לפי סולם 0-100 של המשרד: אדום עד 30, כתום עד 55, ירוק מעל
       const col=x=>x==null?'#94a3b8':(x<30?'#b91c1c':(x<45?'#c2410c':(x<60?'#a16207':(x<75?'#4d7c0f':'#15803d'))));
-      const cell=(lbl,x,t)=>`<span class="stat" title="${t}">${lbl} <b style="color:${col(x)}">${sc(x)}</b></span>`;
-      svcbox+=`<div class="offbox" style="background:#f5f3ff;border-color:#ddd6fe">
-        <div class="offh" style="color:#5b21b6">📈 מדדי השירות הרשמיים · משרד התחבורה${d.svcmeta&&d.svcmeta.updated?` · עדכון ${esc(d.svcmeta.updated)}`:''}</div>
-        <div class="motmain" title="הציון הכולל של המשרד לאזור הסטטיסטי, 0–100 — שקלול ארבעת המדדים שמתחת"><span class="motlbl">ציון משוקלל של המשרד</span><span class="motbig" style="background:${col(v.fs)};color:#fff">${sc(v.fs)}</span></div>
+      const cell=(lbl,x,t)=>`<span class="stat" title="${t}">${lbl} <b style="color:${inside?col(x):'#64748b'}">${sc(x)}${(!inside&&x!=null)?'*':''}</b></span>`;
+      svcbox+=`<div class="offbox" style="background:${inside?'#f5f3ff':'#f8fafc'};border-color:${inside?'#ddd6fe':'#e2e8f0'}">
+        <div class="offh" style="color:${inside?'#5b21b6':'#475569'}">📈 מדדי השירות הרשמיים · משרד התחבורה${d.svcmeta&&d.svcmeta.updated?` · עדכון ${esc(d.svcmeta.updated)}`:''}${inside?'':' · להקשר בלבד'}</div>
+        <div class="motmain" title="${inside?'הציון הכולל של המשרד לאזור הסטטיסטי שבתוך אזור התעשייה, 0–100':'ציון האזור הסטטיסטי הסובב — אין אזור סטטיסטי בתוך האזור, אין השוואה ישירה'}"><span class="motlbl">${inside?'ציון משוקלל של המשרד':'ציון המשרד לסביבה*'}</span><span class="motbig" style="background:${inside?col(v.fs):'#94a3b8'};color:#fff">${sc(v.fs)}${(!inside&&v.fs!=null)?'*':''}</span></div>
         <div class="stats" style="margin:4px 0 0">
           ${cell('זמינות',v.av,'תדירות ופריסת שעות השירות')}
           ${cell('נגישות',v.ac,'לאן אפשר להגיע בזמן נסיעה נתון')}
           ${cell('תחרותיות',v.co,'זמן הנסיעה בתחבורה ציבורית מול רכב פרטי')}
           ${cell('אמינות',v.re,'עמידה בלוח הזמנים')}
         </div>
-        <div class="note" style="margin:6px 0 0">הציונים הם של האזור${v.n>1?`ים הסטטיסטיים (${v.n}) שהאזור חופף`:' הסטטיסטי שבו האזור נמצא'}${v.sa_city?` · ${esc(v.sa_city)}`:''} — לא של האזור עצמו, אך מייצגים את איכות השירות בסביבתו לפי המשרד.</div>
+        <div class="note" style="margin:6px 0 0">${inside
+          ?`הציון ניתן לאזור סטטיסטי של הלמ"ס שיושב בתוך אזור התעשייה${v0.share?` (${Math.round(v0.share*100)}% משטחו בפנים)`:''}${v0.n>1?` · ${v0.n} אזורים סטטיסטיים, משוקלל`:''}${v0.sa_city?` · ${esc(v0.sa_city)}`:''} — השוואה ישירה.`
+          :`* אין למשרד אזור סטטיסטי בתוך אזור התעשייה. הציונים שמוצגים הם של האזור הסטטיסטי הסובב${w&&w.sa_city?` (${esc(w.sa_city)})`:''} — שכונות המגורים שמסביב — ולכן אינם השוואה לציון האזור. מוצגים להקשר בלבד.`}</div>
         <details style="margin:6px 0 0;font-size:12px"><summary style="cursor:pointer;font-weight:700;color:#5b21b6">❓ מה מודד כל מדד</summary>
           <div class="note" style="margin:4px 0 0"><b>זמינות</b> — כמה שירות יש: תדירות הקווים ופריסת שעות הפעילות.<br>
           <b>נגישות</b> — לאן מגיעים: היקף היעדים שאפשר להגיע אליהם בזמן נסיעה נתון.<br>

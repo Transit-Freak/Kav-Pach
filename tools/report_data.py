@@ -284,6 +284,7 @@ def build():
     def row(p):
         return {'name': p['name'], 'city': p.get('city') or '—', 'score': p['score'],
                 'mot': (round(p['sf']) if p.get('sf') is not None else None),
+                'motw': (round(p['sfw']) if p.get('sfw') is not None else None),   # הסובב — להקשר
                 'bl_headway': (round(180 / p['bl1']) if p.get('bl1') else None),
                 'far': (round(p['ww']) if p.get('ww') is not None else None), 'area': p.get('area'),
                 'sparts': p.get('sparts')}
@@ -427,12 +428,17 @@ def build():
         return {**row(p), 'f': p['f'], 'gap': round(p['score'] - p['sf']), 'sub': {MOTF[k]: sv.get(k) for k in MOTF},
                 'strong': [k for k in ('bl', 'uf', 'far', 'near') if (sp_.get(k) or 0) >= 80],
                 'weak_mot': [MOTF[k] for k in MOTF if sv.get(k) is not None and sv[k] < 40]}
+    # השוואה רק כשאזור סטטיסטי של המשרד יושב בתוך האזור (החלטת שלמה 02.09); לשאר יש רק "סובב" להקשר
     withmot = [p for p in P if p.get('sf') is not None]
-    mot_gaps = {'fields': MOTF,
+    def named_row(p):
+        r = mot_row(p) if p.get('sf') is not None else {**row(p), 'f': p['f'], 'gap': None, 'sub': {}, 'strong': [], 'weak_mot': []}
+        r['direct'] = p.get('sf') is not None
+        return r
+    mot_gaps = {'fields': MOTF, 'rule': f'אזור סטטיסטי שלפחות {int(0.5 * 100)}% משטחו בתוך אזור התעשייה',
                 'ours_high': [mot_row(p) for p in sorted(withmot, key=lambda p: -(p['score'] - p['sf']))[:8]],
                 'mot_high': [mot_row(p) for p in sorted(withmot, key=lambda p: (p['score'] - p['sf']))[:8]],
-                'named': [mot_row(p) for p in withmot if any(k in p['name'] for k in ('צומת הקריות', 'גב ים', 'צור שלום'))],
-                'n': len(withmot), 'corr': None}
+                'named': [named_row(p) for p in P if any(k in p['name'] for k in ('צומת הקריות', 'גב ים', 'צור שלום'))],
+                'n': len(withmot), 'n_wide_only': sum(1 for p in P if p.get('sf') is None and p.get('sfw') is not None), 'corr': None}
     try:
         mot_gaps['corr'] = round(statistics.correlation([p['score'] for p in withmot], [p['sf'] for p in withmot]), 2)
     except Exception:
@@ -449,7 +455,7 @@ def build():
         {'what': 'מסלולי הקווים, התחנות ולוחות הזמנים', 'src': 'קובץ ה-GTFS הרשמי של משרד התחבורה והבטיחות בדרכים (gtfs.mot.gov.il)', 'date': gen, 'note': 'יום חול רגיל; קווי תלמידים ולילה מוחרגים'},
         {'what': 'גבולות אזורי התעשייה — הרשימה הרשמית', 'src': 'שכבת "תחום אזורי תעשיה תעסוקה", משרד התחבורה, data.gov.il', 'date': gen, 'note': 'נמשך מחדש בכל בנייה שבועית'},
         {'what': 'מפעלים, שטחים ומחוז', 'src': '"רשימת איזורי תעשייה", משרד הכלכלה והתעשייה, data.gov.il', 'date': gen, 'note': '29 אזורים מוצמדים'},
-        {'what': 'ציון השירות של משרד התחבורה', 'src': svc.get('src'), 'date': svc.get('updated'), 'note': f"{len(svc.get('areas') or [])} אזורים סטטיסטיים; האזור מקבל את ציון האזור הסטטיסטי שבו הוא נמצא"},
+        {'what': 'ציון השירות של משרד התחבורה', 'src': svc.get('src'), 'date': svc.get('updated'), 'note': f"{len(svc.get('areas') or [])} אזורים סטטיסטיים; להשוואה נלקח רק אזור סטטיסטי שלפחות מחציתו בתוך אזור התעשייה — {len(withmot)} אזורים"},
         {'what': 'אימות קיום, מבנים וחלק מהגבולות', 'src': 'OpenStreetMap (ODbL)', 'date': jdate('parks/osm-check/osm-approved.json', 'generated'), 'note': 'פאנל אימות; 129 אזורים מאומתים'},
         {'what': 'זמני הליכה אמיתיים', 'src': 'OSRM על רשת OpenStreetMap, פרופיל הליכה מותאם (כבישים פרטיים ורמפות מותרים), 5 קמ״ש', 'date': gen, 'note': 'שומר גאומטרי לכשלי ניתוב'},
         {'what': 'סטטוס בנייה (אזורים בהקמה מוחרגים)', 'src': 'צפיפות מבנים ב-OSM', 'date': (jdate('parks/checks/built-status.json', 'checked') or '')[:10], 'note': ''},  # יום בלבד — השעה שם ב-UTC
