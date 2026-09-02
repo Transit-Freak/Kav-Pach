@@ -81,7 +81,7 @@ kids.push(H1('1. מקורות הנתונים'));
 kids.push(P('כל נתון בדו"ח ובאתר נשאב ממקור ציבורי מזוהה. הטבלה מפרטת מאיזה מאגר הגיע כל רכיב, ומתי.'));
 kids.push(T(['הנתון', 'המאגר', 'תאריך', 'הערה'], data.sources.map(s => [s.what, s.src, fmt(s.date), s.note || '']), [0.24, 0.40, 0.12, 0.24]));
 kids.push(Note('הדו"ח נבנה מחדש מהנתונים החיים בכל הרצה, כמו האתר עצמו. אין בו מספר מוקלד.'));
-kids.push(Break());
+kids.push(sp());
 
 // 3. שיטת החישוב
 kids.push(H1('2. שיטת החישוב'));
@@ -109,7 +109,7 @@ kids.push(T(['ציון', ...F.scale.slice().reverse().map(([t]) => `${t}`)], [['
 kids.push(Note('ירוק רק מ-90. 70–89 צהוב, 50–69 כתום, ומתחת לזה מאדום ועד שחור.'));
 kids.push(H2('שכבות המבחנים במפה'));
 kids.push(P('שלוש שכבות מפה מציגות כל רכיב תדירות והליכה בנפרד, על אותן מדרגות של הרכיב המקביל בציון, כדי שהשכבה והציון לא יסתרו זה את זה. שכבת "תחנות" מונה תחנות פעילות בתוך הפוליגון בלבד, ושכבת "תדירות" את כל יציאות היום.'));
-kids.push(Break());
+kids.push(sp());
 
 // 4. השוואה בינלאומית
 kids.push(H1('3. השוואה לתקנים בינלאומיים'));
@@ -123,7 +123,7 @@ kids.push(T(['רמת שירות', 'מרווח בין אוטובוסים', 'תי�
   ['E', '31–60', 'שירות זמין במהלך השעה', '55–40'], ['F', 'מעל 60', 'שירות לא אטרקטיבי לכל הנוסעים', '15–0'],
 ], [0.14, 0.22, 0.42, 0.22], { center: true }));
 kids.push(Note('החפיפה למדרגות הדו"ח קרובה לאחד-לאחד. הבדל אחד: ב-TCQSM המעבר מ-E ל-F הוא צעד של דרגה אחת, בעוד שבדו"ח קו של יותר משעה וחצי מקבל 0. המהדורה השלישית של המדריך (2013) המירה את האותיות לתיאור מילולי אך שמרה על הספים.'));
-kids.push(Break());
+kids.push(sp());
 
 // 5. מדריך שימוש באתר
 kids.push(H1('4. מדריך שימוש באתר'));
@@ -217,7 +217,8 @@ kids.push(T(['הרשות', 'האזור המשורת', 'ציון', 'האזור ה
   [0.12, 0.18, 0.07, 0.18, 0.07, 0.07, 0.31], { center: true, size: 16 }));
 kids.push(Break());
 
-// 10. חריגים
+// 10. חריגים — עמוד נפרד לכל אחד (המפרט), ובו גם מפת האזור כחלק מההסבר
+const MAP_LEGEND = 'גבול כחול = האזור · ✚ = מרכז האזור · תחנות: ירוק = בתוך האזור, ירוק בהיר = עד 5 דק׳ הליכה, צהוב = 5–10, כתום = 10–20 · רקע: © OpenStreetMap contributors';
 kids.push(H1('9. אזורים חריגים'));
 for (const o of data.outliers) {
   kids.push(H2(o.city && o.city !== '—' ? `${o.name} · ${o.city}` : o.name));
@@ -225,6 +226,8 @@ for (const o of data.outliers) {
     [[[`${o.score}`, scaleColor(o.score), inkOn(scaleColor(o.score))], fmt(o.mot), `${o.area} קמ"ר`, o.bl_headway ? `כל ~${o.bl_headway} דק׳` : 'אין קו בשיא', o.far != null ? `${o.far} דק׳` : 'אין תחנות']],
     [0.16, 0.2, 0.16, 0.24, 0.24], { center: true }));
   kids.push(P([run(`${o.kind}. `, { bold: true }), run(o.text)]));
+  const omap = o.f ? `map-${o.f.replace('.json', '')}.png` : null;
+  if (omap && fs.existsSync(IMG(omap))) { kids.push(Img(omap, 520)); kids.push(Note(MAP_LEGEND)); }
   kids.push(Break());
 }
 
@@ -234,7 +237,7 @@ kids.push(P('ארבעה אזורים על רקע מפת רחובות (OpenStreet
 for (const e of data.examples) {
   const mapf = `map-${e.f.replace('.json', '')}.png`;
   kids.push(H2(`${e.name} · ${e.city} · ציון ${e.score}`));
-  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 560)); kids.push(Note('גבול כחול = האזור · ✚ = מרכז האזור · תחנות: ירוק = בתוך האזור, ירוק בהיר = עד 5 דק׳ הליכה, צהוב = 5–10, כתום = 10–20 · רקע: © OpenStreetMap contributors')); }
+  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 560)); kids.push(Note(MAP_LEGEND)); }
   else kids.push(Note('[המפה נוצרת בבניית GitHub Actions — סביבת העבודה המקומית חוסמת את שרת האריחים]'));
   kids.push(P(`שטח ${e.area} קמ"ר · ${e.lines ?? '—'} קווים · הקו החזק ${e.bl_headway ? `כל ~${e.bl_headway} דק׳` : 'אין'} · הנקודה הרחוקה ${e.ww != null ? Math.round(e.ww) + ' דק׳' : '—'} · ממרכז האזור לתחנה ${e.nearw != null ? Math.round(e.nearw) + ' דק׳' : '—'}`));
   kids.push(Break());

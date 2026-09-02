@@ -316,17 +316,23 @@ def build():
     outliers = []
     for p in sorted(P, key=lambda p: -(p.get('area') or 0)):
         if (p.get('area') or 0) >= 1.0 and p['score'] < 40:
-            outliers.append({**row(p), 'kind': 'ענק בלי שירות',
+            outliers.append({**row(p), 'f': p['f'], 'kind': 'ענק בלי שירות',
                              'text': f"{p.get('area')} קמ״ר, ציון {p['score']}. " + (f"הקו החזק כל ~{round(180/p['bl1'])} דק׳" if p.get('bl1') else 'אין אף קו בשיא הבוקר') + (f", העובד המרוחק הולך {round(p['ww'])} דק׳." if p.get('ww') is not None else '.')})
     for p in P:
         if p.get('sf') is not None and p['sf'] < 30 and p['score'] >= 80:
-            outliers.append({**row(p), 'kind': 'המשרד נמוך, אנחנו גבוה',
+            outliers.append({**row(p), 'f': p['f'], 'kind': 'המשרד נמוך, אנחנו גבוה',
                              'text': f"ציון משרד {round(p['sf'])} מול {p['score']} אצלנו: קו כל ~{round(180/p['bl1']) if p.get('bl1') else '—'} דק׳ ותחנות קרובות — המשרד מודד תחרותיות מול רכב ויעדים, לא הגעת עובד."})
     mishor = [p for p in P if 'מישור אדומים' in p['name']]
     if mishor and not any(o['name'] == mishor[0]['name'] for o in outliers):
         p = mishor[0]
-        outliers.insert(0, {**row(p), 'kind': 'האזור הגדול שנפל', 'text': f"{p.get('area')} קמ״ר, ציון {p['score']}."})
+        outliers.insert(0, {**row(p), 'f': p['f'], 'kind': 'האזור הגדול שנפל', 'text': f"{p.get('area')} קמ״ר, ציון {p['score']}."})
     outliers = outliers[:6]   # חופף לעשירייה התחתונה — שישה מספיקים לעמוד לכל אחד
+    # לכל חריג גם גבול, מרכז ותחנות — למפה שבעמוד שלו (המפרט: עמוד נפרד והסבר לכל אחד)
+    for o in outliers:
+        p = next(q for q in P if q['f'] == o['f'])
+        z = Z.get(o['f']) or {}
+        o.update({'la': p['la'], 'lo': p['lo'], 'polys': z.get('polys'),
+                  'stops': [{'la': s['la'], 'lo': s['lo'], 't': s.get('t'), 'n': s.get('n')} for s in z.get('stops') or []]})
     # ── דוגמאות למפות (סעיף 11) ────────────────────────────────────────────
     def pick(cond, key):
         c = [p for p in P if cond(p) and 0.2 <= (p.get('area') or 0) <= 3 and (p.get('lines') or 0) > 0]
@@ -376,8 +382,22 @@ def build():
 
 
 # ── תרשימים ─────────────────────────────────────────────────────────────────
+def _mpl_does_bidi():
+    """matplotlib 3.11 ומעלה מסדר עברית ימין-לשמאל בעצמו; סידור נוסף הופך את הטקסט."""
+    try:
+        import matplotlib
+        major, minor = (int(x) for x in matplotlib.__version__.split('.')[:2])
+        return (major, minor) >= (3, 11)
+    except Exception:
+        return False
+
+
 def he(s):
-    """עברית ל-matplotlib: סידור ביצועי (bidi) אם קיים, אחרת החזרה כפי שהיא."""
+    """עברית ל-matplotlib: בגרסאות ישנות סידור ביצועי (bidi), בחדשות — כפי שהיא."""
+    if _mpl_does_bidi():
+        import re
+        # קו מפריד בין מספרים (70–89) מתהפך בסידור של matplotlib ל-89–70; מקף רגיל נשאר בכיוון הנכון
+        return re.sub(r'(?<=\d)–(?=\d)', '-', str(s))
     try:
         from bidi.algorithm import get_display
         return get_display(str(s))

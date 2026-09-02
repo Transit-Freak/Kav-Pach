@@ -106,14 +106,20 @@ def render(ex, out):
 def main():
     data = json.load(open(REP / 'data.json', encoding='utf-8'))
     IMG.mkdir(parents=True, exist_ok=True)
+    # ארבע הדוגמאות של סעיף 11 וששת החריגים של סעיף 10 (מישור אדומים בשניהם — פעם אחת)
+    items, seen = [], set()
+    for ex in (data.get('examples') or []) + (data.get('outliers') or []):
+        if ex.get('f') and ex['f'] not in seen:
+            seen.add(ex['f'])
+            items.append(ex)
     ok = 0
-    for ex in data.get('examples') or []:
+    for ex in items:
         out = IMG / f"map-{ex['f'].replace('.json', '')}.png"
         try:
             ok += bool(render(ex, out))
         except Exception as e:
             print('  מפה נכשלה:', ex.get('name'), e)
-    print(f'מפות: {ok} מתוך {len(data.get("examples") or [])}')
+    print(f'מפות: {ok} מתוך {len(items)}')
 
 
 if __name__ == '__main__':
