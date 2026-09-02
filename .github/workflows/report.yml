@@ -39,7 +39,8 @@ jobs:
       - name: PDF לתצוגה מקדימה (LibreOffice)
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq libreoffice-writer fonts-dejavu >/dev/null
-          cd parks/report && soffice --headless --norestore --convert-to pdf "נגישות-אזורי-תעשייה.docx" >/dev/null 2>&1 || echo "PDF failed"
+          # תת-מעטפת: ה-cd לא ישפיע על הנתיבים בשורות הבאות
+          (cd parks/report && soffice --headless --norestore --convert-to pdf "נגישות-אזורי-תעשייה.docx" >/dev/null 2>&1) || echo "PDF failed"
           ls -la parks/report/*.pdf 2>/dev/null || true
           # תמונות העמודים הראשונים — כדי לראות בלוג/בריפו איך זה יצא
           python3 - <<'PY'
