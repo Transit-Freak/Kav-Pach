@@ -331,7 +331,9 @@ kids.push(zoneList(data.no_peak_zones || []));
 if (data.excluded) {
   kids.push(sp());
   kids.push(H2('אזורים שהוצאו מהדירוג, ולמה'));
-  kids.push(P(`ביד, אחרי בדיקה (איריס דור-און ומקורות פתוחים): ${(data.excluded.manual || []).length} אזורים. אוטומטית, לפי ספירת מבנים ב-OpenStreetMap ("בהקמה"/"טרם נבנה"): ${data.excluded.auto_n} אזורים.`));
+  kids.push(P(`ביד, אחרי בדיקה (איריס דור-און ומקורות פתוחים): ${(data.excluded.manual || []).length} אזורים. אוטומטית, לפי ספירת מבנים ב-OpenStreetMap ("טרם נבנה" — בלי מבנים ובלי סימני חיים): ${data.excluded.auto_n} אזורים.`));
+  if (data.excluded.partial_n)
+    kids.push(Note(`עוד ${data.excluded.partial_n} אזורים מסומנים בבדיקת המבנים "בנוי חלקית" (מעט מבנים ממופים, אבל תחנות בפנים, רשת כבישים או עסקים). הם נשארים בדירוג: הסימון משקף בעיקר מיפוי חלקי של מבנים ב-OpenStreetMap, שחלש יותר ביישובים ערביים ובפארקים עם מבנים גדולים ומעטים — לא סטטוס בנייה. ביניהם: ${(data.excluded.partial_names || []).slice(0, 8).join(', ')}.`));
   if ((data.excluded.manual || []).length)
     kids.push(T(['האזור', 'הסיבה', 'המקור'], data.excluded.manual.map(x => [x.name, x.reason || '', x.source || '']), [0.22, 0.48, 0.30], { size: 16 }));
   if ((data.excluded.auto || []).length) {

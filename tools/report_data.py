@@ -366,10 +366,14 @@ def build():
         excluded['manual'] = json.load(open(ROOT / 'parks/exclusions.json', encoding='utf-8')).get('zones') or []
     except Exception:
         pass
-    auto = [z for z in bst.values() if z.get('st') in ('planned', 'partial')]
+    # אוטומטית מוחרגים רק "טרם נבנה"; "בנוי חלקית" נשאר בדירוג (מיפוי חלקי ב-OSM, לא סטטוס בנייה)
+    auto = [z for z in bst.values() if z.get('st') == 'planned']
     excluded['auto_n'] = len(auto)
     excluded['auto'] = [{'name': z['name'], 'city': z.get('city') or '—', 'area': z.get('area'), 'st': z['st'], 'bld': z.get('bld')}
                         for z in sorted(auto, key=lambda z: -(z.get('area') or 0))]
+    partial = [z for z in bst.values() if z.get('st') == 'partial']
+    excluded['partial_n'] = len(partial)
+    excluded['partial_names'] = [z['name'] for z in sorted(partial, key=lambda z: -(z.get('area') or 0))]
     # ── פירוק הפער לרכיבים (שאלת איריס 02.09, נקודה 3: למה הפערים קטנים) ────
     def decomp(G):
         if not G:
