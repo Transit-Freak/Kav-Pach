@@ -81,18 +81,34 @@ for p in P:
     z = zones.get(p['f'])
     if not z or 'bl1' not in p:
         continue
-    b1 = {}
+    b1t = {}
     for l in z.get('lines') or []:
         if l.get('dr') == 'out':
             continue
         k1 = (l.get('mk') or l.get('num'), l.get('dest'))
-        b1[k1] = b1.get(k1, 0) + sum(1 for t in (l.get('wd') or []) if AM(t))
-    calc = max(b1.values()) if b1 else 0
-    if calc != (p.get('bl1') or 0):
+        b1t.setdefault(k1, []).extend(l.get('wd') or [])
+    # אותו כלל כמו tools/parks.py (headway_equiv): קו שעתי = שעתי גם כשהיציאה
+    # השלישית נופלת ב-09:10 (ממצא איריס 02.09, מישור אדומים קו 169)
+    def equiv(times):
+        cnt = sum(1 for t in times if AM(t))
+        win = sorted(t for t in times if '06:00' <= t < '09:30')
+        if len(win) >= 3:
+            mins = [int(t[:2]) * 60 + int(t[3:5]) for t in win]
+            gaps = sorted(b - a for a, b in zip(mins, mins[1:]))
+            med = gaps[len(gaps) // 2]
+            if mins[-1] - mins[0] >= 120 and med > 0:
+                return max(cnt, round(180.0 / med, 2)), cnt
+        return cnt, cnt
+    eq = [equiv(v) for v in b1t.values()]
+    calc = max((q for q, _ in eq), default=0)
+    calc_c = max((c for _, c in eq), default=0)
+    if abs(calc - (p.get('bl1') or 0)) > 0.01:
         bad.append(f"{p['name']}: bl1={p.get('bl1')} מול חישוב {calc}")
-    if (p.get('bl1') or 0) > (p.get('bl') or 0):
-        bad.append(f"{p['name']}: bl1 ({p.get('bl1')}) גדול מ-bl ({p.get('bl')}) — בלתי אפשרי")
-check('bl1 = כיוון בודד חזק ביותר, ו-bl1 ≤ bl', 'ממצא איריס · צמח מפעלים', bad)
+    if 'bl1c' in p and calc_c != (p.get('bl1c') or 0):
+        bad.append(f"{p['name']}: bl1c={p.get('bl1c')} מול ספירה {calc_c}")
+    if (p.get('bl1c', p.get('bl1')) or 0) > (p.get('bl') or 0):
+        bad.append(f"{p['name']}: ספירת הכיוון הבודד ({p.get('bl1c', p.get('bl1'))}) גדולה מ-bl ({p.get('bl')}) — בלתי אפשרי")
+check('bl1 = כיוון בודד חזק ביותר (מרווח חציוני לקו שעתי), והספירה ≤ bl', 'ממצא איריס · צמח מפעלים · מישור אדומים', bad)
 
 # 4. כיסוי בטווח 0–100, והנקודה הרחוקה קיימת כשיש תחנות (מקור: שקף הכללים · מבחן 2)
 bad = []

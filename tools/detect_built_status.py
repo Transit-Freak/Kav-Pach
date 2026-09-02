@@ -74,6 +74,9 @@ def in_poly(la, lo, pts):
 for z in zones:
     z['bld'] = 0
     z['constr'] = 0
+    # מבנים לכל חלק של הפוליגון (באותו סדר של polys) — לנקודה הרחוקה:
+    # חלק מנותק בלי אף מבנה (מחצבה, שטח עתודה) אינו מקום שעובד הולך ממנו.
+    z['bparts'] = [0] * len(z['polys'])
 
 T0 = time.time()
 fails = 0
@@ -97,9 +100,12 @@ for i in range(0, len(zones), CHUNK):
             b = z['bbox']
             if not (b[0] <= la <= b[2] and b[1] <= lo <= b[3]):
                 continue
-            if any(in_poly(la, lo, rg) for rg in z['polys']):
+            ri = next((i for i, rg in enumerate(z['polys']) if in_poly(la, lo, rg)), None)
+            if ri is not None:
                 if z[kind] is not None:
                     z[kind] += 1
+                    if kind == 'bld':
+                        z['bparts'][ri] += 1
                 break
     print(f'{min(i + CHUNK, len(zones))}/{len(zones)} | {int(time.time() - T0)}s')
     time.sleep(2)
@@ -204,7 +210,8 @@ for z in zones:
     cnt[st or 'לא-מסומן'] += 1
     rec = {'name': z['name'], 'city': z['city'], 'la': z['la'], 'lo': z['lo'],
            'area': z['area'], 'bld': bld, 'bpk': bpk, 'constr': z['constr'],
-           'stops_in': z['in'], 'st': st}
+           'stops_in': z['in'], 'st': st,
+           'nparts': len(z['polys']), 'bparts': (z['bparts'] if bld is not None else None)}
     for k in ('roads', 'works', 'biz'):
         if z.get(k):
             rec[k] = z[k]

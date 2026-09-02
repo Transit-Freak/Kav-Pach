@@ -176,22 +176,55 @@ print('פארקים אחרי קיבוץ וסינון שטח:', len(parks), '(מ�
 # כדי שגם שינוי קל בגבול בין ריצות לא ינתק את האזור מהסטטוס שלו.
 BUILT = os.environ.get('BUILT_STATUS', 'parks/checks/built-status.json')
 _built = []
+_bstat_all = []   # כל האזורים שנבדקו — למבנים לפי חלק פוליגון (נקודה רחוקה)
 if os.path.exists(BUILT):
     try:
-        _built = [z for z in json.load(open(BUILT, encoding='utf-8'))['zones']
-                  if z.get('st') in ('planned', 'partial')]
+        _bstat_all = json.load(open(BUILT, encoding='utf-8'))['zones']
+        _built = [z for z in _bstat_all if z.get('st') in ('planned', 'partial')]
         print('סטטוס בנייה נטען:', len(_built), 'אזורים לא-בנויים-במלואם')
     except Exception as e:
         print('טעינת סטטוס בנייה נכשלה:', e)
 
-def built_status(cen):
+def _bstat_near(cen, pool):
     best = None
     cl = math.cos(math.radians(cen[0]))
-    for z in _built:
+    for z in pool:
         d = math.hypot((z['lo'] - cen[1]) * 111320 * cl, (z['la'] - cen[0]) * 110540)
         if d <= 300 and (best is None or d < best[1]):
-            best = (z['st'], d)
-    return best[0] if best else ''
+            best = (z, d)
+    return best[0] if best else None
+
+def built_status(cen):
+    z = _bstat_near(cen, _built)
+    return z['st'] if z else ''
+
+def built_parts(cen, polys):
+    """מספר המבנים (OSM) בכל טבעת של הפוליגון, באותו סדר של polys; None אם אין נתון.
+    בדיקת המבנים סופרת רק טבעות של 4 נקודות ומעלה — כאן מיישרים לרשימה המלאה."""
+    z = _bstat_near(cen, _bstat_all)
+    bp = z.get('bparts') if z else None
+    if not bp:
+        return None
+    big = [i for i, rg in enumerate(polys) if len(rg) >= 4]
+    if len(big) != len(bp):
+        return None      # הגבול השתנה מאז הבדיקה — לא מנחשים
+    out = [0] * len(polys)
+    for i, n in zip(big, bp):
+        out[i] = n
+    return out
+
+# ---- אזורים שהוצאו מהדירוג ביד (parks/exclusions.json) ----
+# לא מאוכלסים, לא פעילים או מתקנים סגורים — לפי בדיקת איריס 02.09 ומקורות פתוחים.
+# כל שורה: שם (כפי שמופיע בשכבה) וסיבה. הסיבה מופיעה גם בדו"ח.
+EXCL_FILE = os.environ.get('PARKS_EXCLUSIONS', 'parks/exclusions.json')
+EXCLUDED_NAMES = {}
+if os.path.exists(EXCL_FILE):
+    try:
+        for _x in json.load(open(EXCL_FILE, encoding='utf-8')).get('zones') or []:
+            EXCLUDED_NAMES[_x['name'].strip()] = _x.get('reason', '')
+        print('אזורים מוחרגים ביד:', len(EXCLUDED_NAMES))
+    except Exception as e:
+        print('טעינת ההחרגות נכשלה:', e)
 
 # ---- מדדי השירות של משרד התחבורה (זמינות/נגישות/תחרותיות/אמינות) ----
 # ציונים רשמיים לכל אזור סטטיסטי. לכל אזור תעשייה מחפשים את האזורים
@@ -943,6 +976,22 @@ def _band(v, table):
     return 0
 
 
+def headway_equiv(times):
+    """יציאות בוקר לכיוון האזור (HH:MM) → (יציאות שקולות ב-3 שעות, ספירה ב-06:00–09:00).
+    קו שעתי שיציאתו השלישית נופלת ב-09:10 נספר 2 בחלון — אבל המרווח שלו 60 דק׳.
+    כשיש לפחות 3 יציאות ב-06:00–09:30 שפרושות על שעתיים ומעלה, השקולות =
+    max(ספירה, 180/המרווח החציוני); אחרת הספירה כמו קודם."""
+    cnt = sum(1 for t in times if '06:00' <= t < '09:00')
+    win = sorted(t for t in times if '06:00' <= t < '09:30')
+    if len(win) >= 3:
+        mins = [int(t[:2]) * 60 + int(t[3:5]) for t in win]
+        gaps = sorted(b - a for a, b in zip(mins, mins[1:]))
+        med = gaps[len(gaps) // 2]
+        if mins[-1] - mins[0] >= 120 and med > 0:
+            return max(cnt, round(180.0 / med, 2)), cnt
+    return cnt, cnt
+
+
 def iris_score(pkd, bl1, ww, near_walk):
     """pkd/bl1 = יציאות שיא · ww = הנקודה הרחוקה · near_walk = מהמרכז לתחנה."""
     c = {
@@ -963,6 +1012,10 @@ for pi, pk in enumerate(parks):
     # אזורי הקמה (טרם נבנה / בנוי חלקית) אינם באתר כלל — בקשת שלמה 25.08.
     # כשהבנייה בשטח תושלם, בדיקת המבנים השבועית תחזיר אותם אוטומטית.
     if built_status(pk['cen']):
+        continue
+    # החרגה ידנית (parks/exclusions.json): לא מאוכלס / לא פעיל / מתקן סגור
+    if pk['name'].strip() in EXCLUDED_NAMES:
+        print('  מוחרג:', pk['name'], '—', EXCLUDED_NAMES[pk['name'].strip()])
         continue
     stops_here = []
     for sid, hits in stop_hits.items():
@@ -1081,7 +1134,15 @@ for pi, pk in enumerate(parks):
         # המדידה על קואורדינטות בדיוק הפלט (5 ספרות) — כדי שחישוב חוזר מהקבצים
         # שנכתבו ייתן בדיוק את אותם worst/cov10, בלי סחף סביב סף ה-90
         _rings5 = [[(round(_a, 5), round(_b, 5)) for _a, _b in _r] for _r in pk['polys']]
-        for _ring in _rings5:
+        # ממצא איריס 02.09 (מישור אדומים): חלק מנותק של פוליגון משרד התחבורה בלי
+        # אף מבנה (מחצבה, שטח עתודה) נתן "עובד" שהולך 36 דק׳ מנקודה שאין בה
+        # מפעל. חלק כזה לא נדגם לנקודה הרחוקה — כשיש נתון מבנים לפי חלק, ורק
+        # כשלפחות חלק אחד באזור בנוי. בלי הנתון הכול נדגם, כמו קודם.
+        _bp = built_parts(pk['cen'], pk['polys'])
+        _skip_parts = {i for i, n in enumerate(_bp) if n == 0} if (_bp and any(_bp)) else set()
+        for _ri, _ring in enumerate(_rings5):
+            if _ri in _skip_parts:
+                continue
             # היקף במרווח קבוע (~100מ' לאורך הקשת, מינימום 4 נקודות לטבעת) —
             # דגימה לפי קודקודים תלויה בצפיפות הדיגיטציה של OSM ומעוותת את cov10
             _RL = _ring_len(_ring, _cl2)
@@ -1328,15 +1389,20 @@ if used_rids and os.path.exists(SHAPES):
         _e['bl'] = max(_per_mk.values()) if _per_mk else 0
         # bl1 (ממצא איריס, צמח 01.09): הכיוון הבודד החזק ביותר — בלי סכימת
         # שני כיווני אותו מקט, שניפחה 40 אזורים מעל סף ה-9
-        _b1 = {}
+        _b1t = {}
         for _L in _d.get('lines') or []:
             if _L.get('dr') == 'out':
                 continue
-            _a = sum(1 for t in (_L.get('wd') or []) if _AM(t))
             _k1 = (_L.get('mk') or _L.get('num'), _L.get('dest'))
-            _b1[_k1] = _b1.get(_k1, 0) + _a
-        # חלופות של אותו כיוון (218+218א לאותו יעד) הן שירות אחד לנוסע
-        _e['bl1'] = max(_b1.values()) if _b1 else 0
+            _b1t.setdefault(_k1, []).extend(_L.get('wd') or [])
+        # חלופות של אותו כיוון (218+218א לאותו יעד) הן שירות אחד לנוסע.
+        # ממצא איריס 02.09 (מישור אדומים, קו 169): קו שעתי שמגיע ב-07:10, 08:10,
+        # 09:10 נספר קודם כ-2 יציאות ב-06:00–09:00 → "כל 90 דק׳". עכשיו:
+        # יציאות שקולות = max(ספירה, 180/מרווח חציוני) — המרווח נמדד על יציאות
+        # 06:00–09:30 כשיש לפחות 3 שפרושות על שעתיים. bl1c = הספירה הגולמית.
+        _eq = {k: headway_equiv(v) for k, v in _b1t.items()}
+        _e['bl1'] = max((q for q, _ in _eq.values()), default=0)
+        _e['bl1c'] = max((c for _, c in _eq.values()), default=0)
         # ── הציון המשוקלל של איריס (01.09) — מחושב פעם אחת, משמש בכל התוצרים.
         # "תחנות" = דקות ההליכה ממרכז האזור אל התחנה הקרובה ביותר.
         # תחנות שבתוך האזור אינן מנותבות ואין להן wt — הן מקבלות אומדן אווירי
