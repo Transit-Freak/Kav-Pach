@@ -1,0 +1,87 @@
+{
+ "rd": "10391-2-א",
+ "stop": "10345",
+ "checked": "02.09.2026 15:29",
+ "days": [
+  {
+   "d": "2024-08-15",
+   "status": "רשום",
+   "n_stops": 37,
+   "stop_present": true
+  },
+  {
+   "d": "2025-07-01",
+   "status": "הווריאנט לא רשום ביום הזה"
+  },
+  {
+   "d": "2025-07-08",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-07-15",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-07-22",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-07-29",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-08-05",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-08-12",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-08-19",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-08-26",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2025-08-31",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2026-07-01",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2026-07-15",
+   "status": "רשום",
+   "n_stops": 36,
+   "stop_present": false
+  },
+  {
+   "d": "2026-08-15",
+   "status": "הווריאנט לא רשום ביום הזה"
+  }
+ ]
+}
