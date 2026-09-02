@@ -1,0 +1,90 @@
+name: probe-osrm-shape
+
+# בדיקה חד-פעמית (הרצה ידנית): האם הטריק של "קו הנהגים" — צורת GTFS כנקודות
+# ביניים ל-OSRM — משחזר את מסלול האוטובוס על קווים אמיתיים בישראל. שני שרתי
+# OSRM על מפת ישראל: פרופיל רכב רשמי (כמו שרת ההדגמה הציבורי) ופרופיל אוטובוס
+# (tools/osrm/bus-il.lua). התוצאה: docs/osrm-shape-probe.md
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-osrm-shape
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch GTFS
+        run: |
+          set -euo pipefail
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+          ok=0
+          for a in 1 2 3 4 5 6; do
+            echo "== GTFS attempt $a =="
+            if curl -fSL --connect-timeout 40 --max-time 1800 -A "$UA" \
+                 -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"; then
+              ok=1; break; fi
+            echo "GTFS server not responding; waiting 60s"; sleep 60
+          done
+          [ "$ok" = "1" ] || { echo "GTFS unreachable"; exit 1; }
+          ls -la gtfs.zip
+
+      - name: OSRM × 2 — פרופיל רכב רשמי ופרופיל אוטובוס, מפת ישראל
+        run: |
+          set -euo pipefail
+          mkdir -p osrm && cd osrm
+          curl -fSL --connect-timeout 20 --max-time 600 --retry 15 --retry-all-errors --retry-delay 60 \
+            -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
+          echo "pbf: $(du -h map.osm.pbf | cut -f1)"
+          IMG=osrm/osrm-backend:latest
+          docker pull "$IMG" >/dev/null
+          for prof in car bus; do
+            mkdir -p "$prof" && ln -f map.osm.pbf "$prof/map.osm.pbf"
+            if [ "$prof" = car ]; then P=/opt/car.lua; else cp ../tools/osrm/bus-il.lua "$prof/bus-il.lua"; P=/data/bus-il.lua; fi
+            echo "== extract $prof ($P) =="
+            docker run --rm -v "$PWD/$prof:/data" "$IMG" osrm-extract   -p "$P" /data/map.osm.pbf >/dev/null
+            docker run --rm -v "$PWD/$prof:/data" "$IMG" osrm-partition  /data/map.osrm >/dev/null
+            docker run --rm -v "$PWD/$prof:/data" "$IMG" osrm-customize  /data/map.osrm >/dev/null
+          done
+          docker run -d --name osrm-car -p 5000:5000 -v "$PWD/car:/data" "$IMG" \
+            osrm-routed --algorithm mld --max-matching-size 1000 --max-viaroute-size 1000 /data/map.osrm
+          docker run -d --name osrm-bus -p 5001:5000 -v "$PWD/bus:/data" "$IMG" \
+            osrm-routed --algorithm mld --max-matching-size 1000 --max-viaroute-size 1000 /data/map.osrm
+          for port in 5000 5001; do
+            up=0
+            for i in $(seq 1 40); do
+              if curl -fsS "http://localhost:$port/nearest/v1/driving/34.78,32.08" >/dev/null 2>&1; then up=1; break; fi
+              sleep 2
+            done
+            [ "$up" = "1" ] || { echo "OSRM $port failed"; docker logs osrm-car || true; docker logs osrm-bus || true; exit 1; }
+          done
+          # בדיקת עשן לפרופיל האוטובוס: נת"צ ברחוב יפו בירושלים (access=no + bus=yes) —
+          # רכב פרטי צריך לעקוף, אוטובוס עובר ישר. אם המספרים זהים, הפרופיל לא נטען.
+          for port in 5000 5001; do
+            m=$(curl -fsS "http://localhost:$port/route/v1/driving/35.2137,31.7846;35.2218,31.7836?overview=false" \
+                | python3 -c "import json,sys;print(int(json.load(sys.stdin)['routes'][0]['distance']))")
+            echo "יפו ירושלים, כיכר צה\"ל → מחנה יהודה (פורט $port): ${m} מ׳"
+          done
+
+      - name: הבדיקה
+        run: python3 tools/osrm_shape_probe.py gtfs.zip http://localhost:5000 http://localhost:5001
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/osrm-shape-probe.md docs/osrm-shape-probe.json
+          git diff --cached --quiet && { echo unchanged; exit 0; }
+          git commit -m "probe: צורת GTFS כנקודות ביניים ל-OSRM — תוצאות על קווים אמיתיים"
+          for i in 1 2 3; do
+            git push origin HEAD:main && break
+            git pull --rebase origin main || { git rebase --abort; break; }
+          done
