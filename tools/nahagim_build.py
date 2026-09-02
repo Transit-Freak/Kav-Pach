@@ -210,6 +210,13 @@ def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70):
         if dedup and dedup[-1]['kind'] == mv['kind'] and dedup[-1].get('exit') == mv.get('exit') \
                 and (mv['f'] - dedup[-1]['f']) * pl.total < 25:
             continue
+        # שתי הוראות שונות באותה נקודה (מחלף: היצמדו לשמאל ואז לימין, קו 17 גן יבנה→אשדוד,
+        # 18.7 ק"מ) — לנהג זו הוראה אחת מורכבת, לא שתיים שמתחלפות
+        if dedup and (mv['f'] - dedup[-1]['f']) * pl.total < 25 and dedup[-1]['kind'] != 'roundabout' and mv['kind'] != 'roundabout':
+            last = dedup[-1]
+            last['text'] = f"{last['text']}, ואז {mv['text']}"
+            last['then'] = mv['kind']
+            continue
         dedup.append(mv)
     ratio = round(matched_m / pl.total, 3) if pl.total else None
     status = 'none' if not chunks or failed == len(chunks) else \
