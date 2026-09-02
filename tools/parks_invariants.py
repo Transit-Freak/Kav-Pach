@@ -94,10 +94,10 @@ for p in P:
         win = sorted(t for t in times if '06:00' <= t < '09:30')
         if len(win) >= 3:
             mins = [int(t[:2]) * 60 + int(t[3:5]) for t in win]
-            gaps = sorted(b - a for a, b in zip(mins, mins[1:]))
-            med = gaps[len(gaps) // 2]
-            if mins[-1] - mins[0] >= 120 and med > 0:
-                return max(cnt, round(180.0 / med, 2)), cnt
+            span = mins[-1] - mins[0]
+            if span >= 120:
+                avg_gap = span / (len(mins) - 1)
+                return min(cnt + 1, max(cnt, round(180.0 / avg_gap, 2))), cnt
         return cnt, cnt
     eq = [equiv(v) for v in b1t.values()]
     calc = max((q for q, _ in eq), default=0)
