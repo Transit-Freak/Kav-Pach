@@ -218,6 +218,8 @@ def load_shp(base):
     f_name = pick(flds, 'NAME', 'SHEM', 'SHEM_EZOR')
     f_city = pick(flds, 'CITY', 'YISHUV', 'SHEM_YISHUV')
     f_dist = pick(flds, 'DISTRICT', 'MAHOZ')
+    # תיוג מגזר רשמי (עמודת MINORITY בשכבה) — לסעיף הפערים בדו"ח של איריס
+    f_min = pick(flds, 'MINORITY', 'MIGZAR', 'SECTOR')
     f_taba = pick(flds, 'TABA_NUM', 'TABA')
     f_bruto = pick(flds, 'BRUTOAREA', 'BRUTO')
     print('מיפוי שדות:', dict(name=f_name, city=f_city, district=f_dist,
@@ -233,6 +235,7 @@ def load_shp(base):
         at = {'name': str(d.get(f_name) or ''),
               'city': str(d.get(f_city) or '') if f_city else '',
               'district': str(d.get(f_dist) or '') if f_dist else '',
+              'minority': str(d.get(f_min) or '').strip() if f_min else '',
               'taba': str(d.get(f_taba) or '') if f_taba else '',
               'bruto': d.get(f_bruto) if f_bruto else 0}
         rings = []
@@ -265,7 +268,7 @@ def load_kml(path):
         return None
     out = []
     for pm in fa(root, 'Placemark'):
-        at = {'name': '', 'city': '', 'district': '', 'taba': '', 'bruto': 0}
+        at = {'name': '', 'city': '', 'district': '', 'minority': '', 'taba': '', 'bruto': 0}
         for sd in fa(pm, 'SimpleData') + fa(pm, 'Data'):
             k = keyof(sd.get('name'))
             if not k:
@@ -444,9 +447,9 @@ for at, raw_rings in records:
         skipped.append({'name': nm, 'why': 'רשומה כפולה בשכבה'}); continue
     _seen.append((nm, cla, clo))
     ly = 'hub' if HUB_RE.search(nm) else 'ind'
-    zones.append({'name': nm, 'city': city, 'district': dist, 'taba': taba,
+    zones.append({'name': nm, 'city': city, 'district': dist, 'minority': (at.get('minority') or '').strip(), 'taba': taba,
                   'ly': ly, 'polys': rings})
-    report.append({'name': nm, 'city': city, 'district': dist, 'taba': taba,
+    report.append({'name': nm, 'city': city, 'district': dist, 'minority': (at.get('minority') or '').strip(), 'taba': taba,
                    'ly': ly, 'area_km2': area, 'bruto_km2': round(bruto, 3),
                    'rings': len(rings),
                    'ratio_ok': bool(bruto <= 0.01 or bruto / 3 <= area <= bruto * 3)})
