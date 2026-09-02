@@ -18,6 +18,7 @@ import json
 import math
 import os
 import pathlib
+import re
 import statistics
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -312,43 +313,129 @@ def build():
                'near': 'הליכה ממרכז האזור: ' + (f"{round(hi['nearw'])} דק׳" if hi.get('nearw') is not None else '—') + ' מול ' + (f"{round(lo['nearw'])} דק׳" if lo.get('nearw') is not None else '—')}[main]
         gaps.append({'city': city, 'n': len(zs), 'hi': row(hi), 'lo': row(lo), 'gap': hi['score'] - lo['score'], 'why': why})
     gaps.sort(key=lambda g: -g['gap'])
-    # ── חריגים (סעיף 10) ───────────────────────────────────────────────────
-    outliers = []
-    for p in sorted(P, key=lambda p: -(p.get('area') or 0)):
-        if (p.get('area') or 0) >= 1.0 and p['score'] < 40:
-            outliers.append({**row(p), 'f': p['f'], 'kind': 'ענק בלי שירות',
-                             'text': f"{p.get('area')} קמ״ר, ציון {p['score']}. " + (f"הקו החזק כל ~{round(180/p['bl1'])} דק׳" if p.get('bl1') else 'אין אף קו בשיא הבוקר') + (f", העובד המרוחק הולך {round(p['ww'])} דק׳." if p.get('ww') is not None else '.')})
-    for p in P:
-        if p.get('sf') is not None and p['sf'] < 30 and p['score'] >= 80:
-            outliers.append({**row(p), 'f': p['f'], 'kind': 'המשרד נמוך, אנחנו גבוה',
-                             'text': f"ציון משרד {round(p['sf'])} מול {p['score']} אצלנו: קו כל ~{round(180/p['bl1']) if p.get('bl1') else '—'} דק׳ ותחנות קרובות — המשרד מודד תחרותיות מול רכב ויעדים, לא הגעת עובד."})
-    mishor = [p for p in P if 'מישור אדומים' in p['name']]
-    if mishor and not any(o['name'] == mishor[0]['name'] for o in outliers):
-        p = mishor[0]
-        outliers.insert(0, {**row(p), 'f': p['f'], 'kind': 'האזור הגדול שנפל', 'text': f"{p.get('area')} קמ״ר, ציון {p['score']}."})
-    outliers = outliers[:6]   # חופף לעשירייה התחתונה — שישה מספיקים לעמוד לכל אחד
-    # לכל חריג גם גבול, מרכז ותחנות — למפה שבעמוד שלו (המפרט: עמוד נפרד והסבר לכל אחד)
-    for o in outliers:
-        p = next(q for q in P if q['f'] == o['f'])
-        z = Z.get(o['f']) or {}
-        o.update({'la': p['la'], 'lo': p['lo'], 'polys': z.get('polys'),
-                  'stops': [{'la': s['la'], 'lo': s['lo'], 't': s.get('t'), 'n': s.get('n')} for s in z.get('stops') or []]})
-    # ── דוגמאות למפות (סעיף 11) ────────────────────────────────────────────
-    def pick(cond, key):
-        c = [p for p in P if cond(p) and 0.2 <= (p.get('area') or 0) <= 3 and (p.get('lines') or 0) > 0]
-        return sorted(c, key=key)[:1]
-    ex = pick(lambda p: p['score'] >= 90, lambda p: -p['score']) + \
-         pick(lambda p: 70 <= p['score'] < 90, lambda p: -(p.get('area') or 0)) + \
-         pick(lambda p: p['score'] < 50 and p.get('ww'), lambda p: -(p.get('ww') or 0)) + mishor[:1]
-    seen = set(); examples = []
-    for p in ex:
-        if p['f'] in seen:
-            continue
-        seen.add(p['f'])
+    # ── דוגמאות (בקשת איריס 02.09, נקודות 8–11): שתי דוגמאות מכל סוג ─────────
+    # הגרועים ביותר · המצטיינים · המצטיינים מחוץ למרכזי הערים (= הפריפריה, מעל
+    # 45 ק"מ מתל אביב). אתרי פסולת ומחצבות אינם דוגמה ל"אזור תעשייה בלי שירות".
+    NOT_EXAMPLE = re.compile(r'פסולת|מטמנ|מחצב|זיקוק')
+    def enrich(p, kind, text):
         z = Z.get(p['f']) or {}
-        examples.append({**row(p), 'f': p['f'], 'la': p['la'], 'lo': p['lo'],
-                         'polys': z.get('polys'), 'stops': [{'la': s['la'], 'lo': s['lo'], 't': s.get('t'), 'n': s.get('n')} for s in z.get('stops') or []],
-                         'nearw': p.get('nearw'), 'ww': p.get('ww'), 'lines': p.get('lines')})
+        st = z.get('stops') or []
+        inside = []
+        for s in st:
+            if s.get('t') == 'in' and s.get('n') and s['n'] not in inside:
+                inside.append(s['n'])
+        return {**row(p), 'f': p['f'], 'la': p['la'], 'lo': p['lo'], 'kind': kind, 'text': text,
+                'polys': z.get('polys'), 'stops': [{'la': s['la'], 'lo': s['lo'], 't': s.get('t'), 'n': s.get('n')} for s in st],
+                'nearw': p.get('nearw'), 'ww': p.get('ww'), 'lines': p.get('lines'),
+                'streets': inside[:4], 'region': p.get('_reg'), 'periphery': d_tlv(p) > CENTER_KM}
+    def describe(p):
+        bl = f"הקו החזק כל ~{round(180 / p['bl1'])} דק׳" if p.get('bl1') else 'אין אף קו בשיא הבוקר'
+        far = f"העובד המרוחק הולך {round(p['ww'])} דק׳" if p.get('ww') is not None else 'אין תחנה בטווח 20 דקות הליכה'
+        near = f"ממרכז האזור לתחנה {round(p['nearw'])} דק׳" if p.get('nearw') is not None else ''
+        return f"{p.get('area')} קמ״ר, {p.get('lines') or 0} קווים. {bl}; {far}" + (f"; {near}" if near else '') + '.'
+    cand = [p for p in big if not NOT_EXAMPLE.search(p['name'])]
+    worst = sorted(cand, key=lambda p: (p['score'], -(p.get('area') or 0)))[:2]
+    best = sorted(cand, key=lambda p: (-p['score'], -(p.get('pkd') or 0)))[:2]
+    # "מחוץ למרכזי הערים": יותר מ-12 ק"מ מכל אחד מארבעת מרכזי המטרופולין
+    CORES = [(32.08, 34.78, 'תל אביב'), (32.79, 34.99, 'חיפה'), (31.78, 35.22, 'ירושלים'), (31.25, 34.79, 'באר שבע')]
+    def outside_cores(p):
+        return all(math.hypot((p['la'] - la) * 110.5, (p['lo'] - lo) * 94.2) > 12 for la, lo, _ in CORES)
+    best_out = sorted([p for p in cand if outside_cores(p) and p['f'] not in {q['f'] for q in best}],
+                      key=lambda p: (-p['score'], -(p.get('pkd') or 0)))[:2]
+    examples = [enrich(p, 'הגרועים ביותר', describe(p)) for p in worst] + \
+               [enrich(p, 'המצטיינים', describe(p)) for p in best] + \
+               [enrich(p, 'המצטיינים מחוץ למרכזי הערים', describe(p)) for p in best_out]
+    outliers = []   # הוחלף בדוגמאות (איריס 02.09); נשאר כמפתח ריק לתאימות
+    # ── רשימות מלאות (איריס 02.09, נקודה 2): בלי תחנה בטווח / בלי יציאה בשיא / הוצאו ─
+    try:
+        bst = {z['name']: z for z in json.load(open(ROOT / 'parks/checks/built-status.json', encoding='utf-8'))['zones']}
+    except Exception:
+        bst = {}
+    def lst(p):
+        b = bst.get(p['name']) or {}
+        return {'name': p['name'], 'city': p.get('city') or '—', 'area': p.get('area'), 'region': p.get('_reg'), 'score': p['score'],
+                'lines': p.get('lines') or 0, 'far': (round(p['ww']) if p.get('ww') is not None else None),
+                'buildings': b.get('bld'), 'stops_near': len((Z.get(p['f']) or {}).get('stops') or [])}
+    no_stop_zones = [lst(p) for p in sorted(P, key=lambda p: -(p.get('area') or 0)) if p.get('ww') is None]
+    no_peak_zones = [lst(p) for p in sorted(P, key=lambda p: -(p.get('area') or 0)) if not p.get('pkd')]
+    excluded = {'manual': [], 'auto_n': 0, 'auto': []}
+    try:
+        excluded['manual'] = json.load(open(ROOT / 'parks/exclusions.json', encoding='utf-8')).get('zones') or []
+    except Exception:
+        pass
+    auto = [z for z in bst.values() if z.get('st') in ('planned', 'partial')]
+    excluded['auto_n'] = len(auto)
+    excluded['auto'] = [{'name': z['name'], 'city': z.get('city') or '—', 'area': z.get('area'), 'st': z['st'], 'bld': z.get('bld')}
+                        for z in sorted(auto, key=lambda z: -(z.get('area') or 0))]
+    # ── פירוק הפער לרכיבים (שאלת איריס 02.09, נקודה 3: למה הפערים קטנים) ────
+    def decomp(G):
+        if not G:
+            return None
+        m = {k: mean([(p.get('sparts') or {}).get(k) for p in G]) for k in IRIS_W}
+        return {'n': len(G), 'score_mean': mean([p['score'] for p in G]), 'comp': m,
+                'weighted': {k: round((m[k] or 0) * IRIS_W[k], 1) for k in IRIS_W},
+                'area_median': median([p.get('area') for p in G]),
+                'pct_small': pct(sum(1 for p in G if (p.get('area') or 0) <= 0.3), len(G)),
+                'bl_headway_median': median([hw(p.get('bl1'), 180) for p in G if p.get('bl1')]),
+                'far_median': median([p.get('ww') for p in G]),
+                'pct_no_bl': pct(sum(1 for p in G if not p.get('bl1')), len(G))}
+    decomposition = collections.OrderedDict()
+    decomposition['מרכז (עד 45 ק"מ)'] = decomp(C)
+    decomposition['פריפריה'] = decomp(R)
+    for k, v in reg4.items():
+        decomposition[f'מחוז: {k}'] = decomp(v)
+    if M:
+        decomposition['ללא תיוג מגזרי'] = decomp([p for p in P if not p.get('_min')])
+        bed = [p for p in M if 'בדואים' in (p['_min'] or '')]
+        if bed:
+            decomposition['בדואים'] = decomp(bed)
+        gm = [p for p in M if p['_min'] == 'מיעוטים כללי']
+        if gm:
+            decomposition['מיעוטים כללי'] = decomp(gm)
+    # ── התפלגויות לתרשימי העובדות המשלימות (איריס 02.09: "גם בגרפים") ──────
+    def band_count(vals, bands, none_label):
+        out = collections.OrderedDict((lbl, 0) for lbl, _ in bands)
+        out[none_label] = 0
+        for v in vals:
+            if v is None:
+                out[none_label] += 1
+                continue
+            for lbl, f in bands:
+                if f(v):
+                    out[lbl] += 1
+                    break
+        return out
+    dist = {
+        'far': band_count([p.get('ww') for p in P],
+                          [('עד 5 דק׳', lambda v: v <= 5), ('5–10 דק׳', lambda v: v <= 10), ('10–15 דק׳', lambda v: v <= 15),
+                           ('15–20 דק׳', lambda v: v <= 20), ('מעל 20 דק׳', lambda v: True)], 'אין תחנה בטווח'),
+        'bl': band_count([hw(p.get('bl1'), 180) if p.get('bl1') else None for p in P],
+                         [('עד 10 דק׳', lambda v: v <= 10), ('10–15', lambda v: v <= 15), ('15–21', lambda v: v <= 21), ('21–30', lambda v: v <= 30),
+                          ('30–60', lambda v: v <= 60), ('60–90', lambda v: v <= 90), ('מעל 90', lambda v: True)], 'אין קו בשיא'),
+        'concentration': [],
+    }
+    dec = max(1, round(n / 10))
+    for i in range(10):
+        chunk = pk_all[i * dec:(i + 1) * dec] if i < 9 else pk_all[9 * dec:]
+        dist['concentration'].append({'label': f'עשירון {i + 1}', 'pct': pct(sum(chunk), tot_pk)})
+    # ── פערים מול ציון משרד התחבורה (איריס 02.09, נקודה 12) ───────────────
+    MOTF = collections.OrderedDict((('av', 'זמינות'), ('ac', 'נגישות'), ('co', 'תחרותיות'), ('re', 'אמינות')))
+    def mot_row(p):
+        sv = (Z.get(p['f']) or {}).get('svc') or {}
+        sp_ = p.get('sparts') or {}
+        return {**row(p), 'f': p['f'], 'gap': round(p['score'] - p['sf']), 'sub': {MOTF[k]: sv.get(k) for k in MOTF},
+                'strong': [k for k in ('bl', 'uf', 'far', 'near') if (sp_.get(k) or 0) >= 80],
+                'weak_mot': [MOTF[k] for k in MOTF if sv.get(k) is not None and sv[k] < 40]}
+    withmot = [p for p in P if p.get('sf') is not None]
+    mot_gaps = {'fields': MOTF,
+                'ours_high': [mot_row(p) for p in sorted(withmot, key=lambda p: -(p['score'] - p['sf']))[:8]],
+                'mot_high': [mot_row(p) for p in sorted(withmot, key=lambda p: (p['score'] - p['sf']))[:8]],
+                'named': [mot_row(p) for p in withmot if any(k in p['name'] for k in ('צומת הקריות', 'גב ים', 'צור שלום'))],
+                'n': len(withmot), 'corr': None}
+    try:
+        mot_gaps['corr'] = round(statistics.correlation([p['score'] for p in withmot], [p['sf'] for p in withmot]), 2)
+    except Exception:
+        pass
     # ── מקורות ותאריכים (סעיף 2) ───────────────────────────────────────────
     gen = next((Z[p['f']].get('gen') for p in P if Z.get(p['f'], {}).get('gen')), today)
     svc = json.load(open(ROOT / 'parks/checks/service-indices.json', encoding='utf-8'))
@@ -374,6 +461,8 @@ def build():
         'national': national, 'regions': regions, 'sector': sector, 'socio': socio,
         'top10': top10, 'bottom10': bottom10, 'min_area_for_top': 0.3,
         'gaps_within_city': gaps[:10], 'outliers': outliers, 'examples': examples, 'sources': sources,
+        'no_stop_zones': no_stop_zones, 'no_peak_zones': no_peak_zones, 'excluded': excluded,
+        'decomposition': decomposition, 'dist': dist, 'mot_gaps': mot_gaps,
     }
     charts(data)
     json.dump(data, open(OUT / 'data.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
@@ -459,6 +548,36 @@ def charts(data):
         bars(sg, 'bl_headway_median', 'מרווח הקו החזק בשיא — חציון', ' דק׳', 'bar-sector-bl.png', True)
     if data.get('socio') and data['socio'].get('groups'):
         bars(data['socio']['groups'], 'score_mean', 'הציון המשוקלל לפי אשכול חברתי-כלכלי של הרשות', '', 'bar-socio-score.png')
+
+    # העובדות המשלימות בתרשימים (איריס 02.09): התפלגויות וריכוזיות
+    def hbar(labels, vals, title, fn, unit='', colors=None):
+        fig, ax = plt.subplots(figsize=(6.2, 0.5 * len(labels) + 1.4), dpi=180)
+        y = list(range(len(labels)))
+        ax.barh(y, vals, height=0.55, color=colors or BRAND, zorder=3)
+        top = max(vals + [1])
+        for i, v in enumerate(vals):
+            ax.text(v + top * 0.015, i, he(f'{v}{unit}'), va='center', ha='left', fontsize=10.5, fontweight='bold', color='#0f172a')
+        ax.set_yticks(y); ax.set_yticklabels([he(l) for l in labels], fontsize=10.5)
+        ax.invert_yaxis(); ax.set_xlim(0, top * 1.28)
+        ax.set_title(he(title), fontsize=12, fontweight='bold', color='#043e7e', loc='right')
+        for s in ('top', 'right', 'left'):
+            ax.spines[s].set_visible(False)
+        ax.tick_params(axis='x', labelsize=9, colors='#64748b'); ax.grid(axis='x', color='#e2e8f0', zorder=0)
+        plt.tight_layout(); fig.savefig(IMG / fn, facecolor='white'); plt.close(fig)
+
+    D = data.get('dist') or {}
+    n_all = data['national']['n']
+    if D.get('far'):
+        hbar(list(D['far']), list(D['far'].values()), f'הליכת העובד מהנקודה הרחוקה — {n_all} אזורים', 'bar-far-dist.png', ' אזורים')
+    if D.get('bl'):
+        hbar(list(D['bl']), list(D['bl'].values()), 'מרווח הקו החזק בשיא הבוקר — אזורים לפי מדרגה', 'bar-bl-dist.png', ' אזורים')
+    if D.get('concentration'):
+        hbar([c['label'] for c in D['concentration']], [c['pct'] for c in D['concentration']],
+             'ריכוזיות השירות: חלקו של כל עשירון אזורים ביציאות השיא', 'bar-concentration.png', '%')
+    Nn = data['national']
+    hbar(['בלי אף קו בטווח 20 דק׳ הליכה', 'בלי אף יציאה שימושית בשיא', 'הנקודה הרחוקה מעל 20 דק׳ או בלי תחנה'],
+         [Nn['no_line_n'], Nn['no_peak_n'], round(Nn['stats']['pct_far_over20'] * n_all / 100)],
+         f'אזורים בלי שירות — מתוך {n_all}', 'bar-noservice.png', ' אזורים', ['#c00d18', '#e63c14', '#ee7a16'])
 
 
 if __name__ == '__main__':

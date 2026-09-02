@@ -57,7 +57,7 @@ function T(headers, rows, widths, o = {}) {
            ...rows.map(r => new TableRow({ children: r.map((c, i) => {
              const [txt, fill, fg] = Array.isArray(c) ? c : [c, undefined, undefined]; return cell(txt, i, false, fill, fg); }) }))] });
 }
-const sp = (t, o = {}) => new Paragraph({ spacing: { after: o.after ?? 60 }, children: [] });
+const sp = (t, o = {}) => new Paragraph({ bidirectional: true, alignment: AlignmentType.RIGHT, spacing: { after: o.after ?? 60 }, children: [] });
 
 // ── תוכן ──────────────────────────────────────────────────────────────────
 const N = data.national, F = data.formula, R = data.regions;
@@ -151,9 +151,17 @@ kids.push(sp());
 kids.push(H2('עובדות משלימות'));
 kids.push(Bullet(`${N.no_line_n} אזורים (${N.no_line_pct}%) בלי אף קו אוטובוס בטווח 20 דקות הליכה.`));
 kids.push(Bullet(`${N.no_peak_n} אזורים בלי אף יציאה שימושית בשעות השיא.`));
-kids.push(Bullet(`השירות מרוכז: עשירית האזורים המובילים מרכזת ${N.top10_share}% מכל יציאות השיא בארץ; 5% המובילים מרכזים ${N.top5_share}%. האזור החציוני מקבל ${N.median_peak_departures} יציאות שימושיות בשיא.`));
+kids.push(Bullet(`ריכוזיות השירות: 10% מהאזורים (המשורתים ביותר) מקבלים ${N.top10_share}% מכל יציאות האוטובוס בשעות השיא בארץ, ו-5% המובילים מקבלים ${N.top5_share}%. האזור החציוני מקבל ${N.median_peak_departures} יציאות שימושיות בשיא.`));
 kids.push(Bullet(`הליכת העובד המרוחק — חציון ארצי ${fmt(N.stats.far_median, ' דק׳')}; ב-${N.stats.pct_far_over20}% מהאזורים היא מעל 20 דקות או שאין תחנה כלל.`));
 kids.push(Bullet(`הקו החזק — חציון ארצי: אוטובוס כל ${fmt(N.stats.bl_headway_median, ' דק׳')} בשיא הבוקר. ב-${N.stats.pct_bl_le15}% מהאזורים הוא כל רבע שעה או פחות, וב-${N.stats.pct_bl_ge60}% פעם בשעה או יותר.`));
+kids.push(Note('הרשימות המלאות — האזורים בלי תחנה בטווח, האזורים בלי יציאה בשיא, והאזורים שהוצאו מהדירוג — בנספח ב.'));
+kids.push(Break());
+kids.push(H2('אותן עובדות, בתרשימים'));
+kids.push(Img('bar-noservice.png', 500));
+kids.push(Img('bar-far-dist.png', 500));
+kids.push(Img('bar-bl-dist.png', 500));
+kids.push(Img('bar-concentration.png', 500));
+kids.push(Note('ריכוזיות: האזורים מסודרים לפי מספר יציאות השיא ומחולקים לעשרה עשירונים שווים; העמודה היא חלקו של כל עשירון בסך היציאות הארצי.'));
 kids.push(Break());
 
 // 7. פערים
@@ -198,6 +206,21 @@ if (data.socio && data.socio.groups) {
   kids.push(Img('bar-socio-score.png', 500));
   kids.push(Note('האשכול לבדו מטעה: רשויות באשכול נמוך במרכז הארץ (בני ברק, למשל) משורתות היטב בזכות המיקום, ולכן הפער החברתי-כלכלי נראה כאן קטן מהפער הגאוגרפי.'));
 }
+// למה הפערים קטנים ממה שמצפים — פירוק לרכיבים (שאלת איריס 02.09, נקודה 3)
+if (data.decomposition) {
+  kids.push(Break());
+  kids.push(H2('למה הפערים קטנים ממה שמצפים — פירוק הציון לרכיבים'));
+  kids.push(P('הציון הוא סכום משוקלל של ארבעה רכיבים (0–100 כל אחד): הקו החזק 40%, הנקודה הרחוקה 30%, התדירות הממוצעת 20%, ההליכה ממרכז האזור 10%. הטבלה מציגה לכל קבוצה את ממוצע כל רכיב, ואת תרומתו לציון אחרי השקלול.'));
+  const DK = ['bl', 'far', 'uf', 'near'], DN = { bl: 'הקו החזק (40%)', far: 'הנקודה הרחוקה (30%)', uf: 'תדירות ממוצעת (20%)', near: 'ממרכז האזור (10%)' };
+  kids.push(T(['קבוצה', 'אזורים', 'ציון', ...DK.map(k => DN[k]), 'שטח חציוני', 'עד 0.3 קמ"ר', 'הקו החזק (חציון)'],
+    Object.entries(data.decomposition).filter(([, d]) => d).map(([k, d]) => [k, `${d.n}`, [`${fmt(d.score_mean)}`, scaleColor(d.score_mean), inkOn(scaleColor(d.score_mean))],
+      ...DK.map(c => `${fmt(d.comp[c])} (${fmt(d.weighted[c])})`), `${fmt(d.area_median, ' קמ"ר')}`, `${d.pct_small}%`, fmt(d.bl_headway_median, ' דק׳')]),
+    [0.16, 0.07, 0.08, 0.12, 0.12, 0.12, 0.11, 0.09, 0.07, 0.06], { center: true, size: 16, tight: true }));
+  kids.push(Note('בכל תא של רכיב: ממוצע הרכיב, ובסוגריים תרומתו לציון אחרי השקלול.'));
+  kids.push(P('מה רואים: כמעט כל הפער בין הקבוצות נמצא בשני רכיבי התדירות (הקו החזק והתדירות הממוצעת). שני רכיבי ההליכה, שהם 40% מהציון, כמעט זהים בכל הקבוצות — כי רוב אזורי התעשייה בישראל קטנים, ובאזור קטן כל תחנה קרובה לכל נקודה. אזור של 0.2 קמ"ר עם תחנה אחת מקבל 80–100 בשני רכיבי ההליכה בלי קשר לשירות בתחנה. ולכן שתי קבוצות שנבדלות מאוד בתדירות נבדלות בציון פחות ממה שנראה בשטח.'));
+  kids.push(P('בחתך המגזרי מצטרף גורם שני: השוואה בין אזורים, לא בין אוכלוסיות. אזורי התעשייה ביישובים הבדואיים הם קבוצה קטנה, ורובם יושבים על כביש ראשי שעובר בו קו בין-עירוני; מה שאין ביישוב עצמו לא נמדד כאן. הפער האמיתי בין הקבוצות נראה בעמודות התדירות הגולמיות (הקו החזק, חציון בדקות) ולא רק בציון.'));
+  kids.push(Note('הפרשנות של הצוות; המספרים כפי שהם. מי שרוצה פערים חדים יותר יכול לשקול משקל גבוה יותר לתדירות — זו החלטה של הדו"ח, לא של הנתונים.'));
+}
 kids.push(Break());
 
 // 8. עשירייה כפולה
@@ -218,31 +241,73 @@ kids.push(T(['הרשות', 'האזור המשורת', 'ציון', 'האזור ה
   [0.12, 0.18, 0.07, 0.18, 0.07, 0.07, 0.31], { center: true, size: 16 }));
 kids.push(Break());
 
-// 10. חריגים — עמוד נפרד לכל אחד (המפרט), ובו גם מפת האזור כחלק מההסבר
-const MAP_LEGEND = 'גבול כחול = האזור · ✚ = מרכז האזור · תחנות: ירוק = בתוך האזור, ירוק בהיר = עד 5 דק׳ הליכה, צהוב = 5–10, כתום = 10–20 · רקע: © OpenStreetMap contributors';
-kids.push(H1('9. אזורים חריגים'));
-for (const o of data.outliers) {
-  kids.push(H2(o.city && o.city !== '—' ? `${o.name} · ${o.city}` : o.name));
-  kids.push(T(['הציון שלנו', 'ציון משרד התחבורה', 'שטח', 'הקו החזק בשיא', 'הנקודה הרחוקה'],
-    [[[`${o.score}`, scaleColor(o.score), inkOn(scaleColor(o.score))], fmt(o.mot), `${o.area} קמ"ר`, o.bl_headway ? `כל ~${o.bl_headway} דק׳` : 'אין קו בשיא', o.far != null ? `${o.far} דק׳` : 'אין תחנות']],
-    [0.16, 0.2, 0.16, 0.24, 0.24], { center: true }));
-  kids.push(P([run(`${o.kind}. `, { bold: true }), run(o.text)]));
-  const omap = o.f ? `map-${o.f.replace('.json', '')}.png` : null;
-  if (omap && fs.existsSync(IMG(omap))) { kids.push(Img(omap, 520)); kids.push(Note(MAP_LEGEND)); }
+// 9. פערים מול ציון משרד התחבורה (איריס 02.09, נקודה 12)
+if (data.mot_gaps) {
+  const MG = data.mot_gaps;
+  kids.push(H1('9. כשהציון שלנו וציון משרד התחבורה חולקים'));
+  kids.push(P(`ציון משרד התחבורה אינו מודד את אותו הדבר. הוא ניתן לאזור סטטיסטי (לא לאזור התעשייה), והוא ממוצע של ארבעה מדדים לתושבי האזור: ${Object.values(MG.fields).join(', ')}. "תחרותיות" משווה את זמן הנסיעה באוטובוס ליעדים מול הנסיעה ברכב; "נגישות" סופרת לכמה יעדים מגיעים בזמן נתון. הדו"ח הזה מודד דבר אחד: האם עובד מגיע לאזור בשעות השיא, ברגל מהתחנה. לכן אזור תעשייה שיושב על ציר אוטובוסים מרכזי יכול לקבל אצלנו 90 ומעלה, ובמדד המשרד 35–40, כי לתושבי האזור הסטטיסטי שלו (למשל שכונות ותיקות מסביב) הנסיעה ברכב עדיין מהירה בהרבה.`));
+  if (MG.corr != null) kids.push(Note(`על ${MG.n} האזורים שיש להם ציון משרד: מתאם ${MG.corr} בין שני הציונים — אותו כיוון, לא אותו סרגל.`));
+  const motTable = rows => T(['האזור', 'הרשות', 'הציון שלנו', 'ציון המשרד', 'פער', ...Object.values(MG.fields), 'הקו החזק', 'הנקודה הרחוקה'],
+    rows.map(r => [r.name, r.city, [`${r.score}`, scaleColor(r.score), inkOn(scaleColor(r.score))], fmt(r.mot), `${r.gap > 0 ? '+' : ''}${r.gap}`,
+      ...Object.values(MG.fields).map(k => fmt(r.sub[k] != null ? Math.round(r.sub[k]) : null)), r.bl_headway ? `כל ~${r.bl_headway} דק׳` : 'אין', r.far != null ? `${r.far} דק׳` : '—']),
+    [0.20, 0.11, 0.08, 0.08, 0.06, 0.08, 0.08, 0.08, 0.08, 0.08, 0.07], { center: true, size: 15, tight: true });
+  if (MG.named && MG.named.length) {
+    kids.push(H2('הדוגמאות שנשאלו: צומת הקריות, גב ים, צור שלום'));
+    kids.push(motTable(MG.named));
+    kids.push(P('בשלושתן התמונה זהה: הקו החזק כל 5–7 דקות, תחנה בתוך האזור, והעובד המרוחק בטווח 5–12 דקות הליכה — כל ארבעת הרכיבים שלנו 75 ומעלה. ארבעת המדדים של המשרד לאותו אזור סטטיסטי מופיעים בעמודות; הנמוכים שבהם הם בדרך כלל "תחרותיות" ו"נגישות" — נסיעה ליעדים ברחבי המטרופולין מול רכב, שאינה השאלה של הדו"ח.'));
+  }
+  kids.push(H2('הפערים הגדולים ביותר לשני הכיוונים'));
+  kids.push(P('אצלנו גבוה, במשרד נמוך:')); kids.push(motTable(MG.ours_high));
+  kids.push(sp());
+  kids.push(P('במשרד גבוה, אצלנו נמוך:')); kids.push(motTable(MG.mot_high));
+  kids.push(Note('הכיוון השני (המשרד גבוה, אנחנו נמוכים) הוא לרוב אזור בתוך עיר משורתת שהתחנות סביבו קרובות לשכונות אבל לא לאזור עצמו, או אזור גדול שהקצה שלו רחוק מכל תחנה.'));
   kids.push(Break());
 }
 
-// 11. מפות
-kids.push(H1('10. מפות של אזורים לדוגמה'));
-kids.push(P('ארבעה אזורים על רקע מפת רחובות (OpenStreetMap): גבול האזור, התחנות בצבעי הסיווג לפי מרחק ההליכה, ומרכז האזור.'));
+// 10. דוגמאות — שתיים מכל סוג (איריס 02.09, נקודות 8–11), עמוד לכל אזור, עם מפה
+const MAP_LEGEND = 'גבול כחול = האזור · ✚ = מרכז האזור · תחנות: ירוק = בתוך האזור, ירוק בהיר = עד 5 דק׳ הליכה, צהוב = 5–10, כתום = 10–20 · רקע: © OpenStreetMap contributors';
+kids.push(H1('10. דוגמאות: הגרועים ביותר, המצטיינים, והמצטיינים מחוץ למרכזי הערים'));
+kids.push(P(`שתי דוגמאות מכל סוג, מתוך האזורים בשטח ${data.min_area_for_top} קמ"ר ומעלה. "מחוץ למרכזי הערים" = יותר מ-12 ק"מ מכל אחד מארבעת מרכזי המטרופולין (תל אביב, חיפה, ירושלים, באר שבע). אתרי פסולת ומחצבות אינם דוגמה. כל דוגמה על רקע מפת רחובות: גבול האזור, התחנות בצבעי מרחק ההליכה, ומרכז האזור.`));
+let lastKind = null;
 for (const e of data.examples) {
+  if (e.kind !== lastKind) { if (lastKind) kids.push(Break()); kids.push(H2(e.kind)); lastKind = e.kind; }
+  else kids.push(Break());
   const mapf = `map-${e.f.replace('.json', '')}.png`;
-  kids.push(H2(`${e.name} · ${e.city} · ציון ${e.score}`));
-  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 560)); kids.push(Note(MAP_LEGEND)); }
+  kids.push(P([run(`${e.name} · ${e.city}`, { bold: true, size: 26, color: BRAND })]));
+  kids.push(T(['הציון שלנו', 'ציון משרד התחבורה', 'שטח', 'קווים', 'הקו החזק בשיא', 'הנקודה הרחוקה', 'ממרכז האזור לתחנה'],
+    [[[`${e.score}`, scaleColor(e.score), inkOn(scaleColor(e.score))], fmt(e.mot), `${e.area} קמ"ר`, `${e.lines ?? '—'}`, e.bl_headway ? `כל ~${e.bl_headway} דק׳` : 'אין קו בשיא', e.ww != null ? `${Math.round(e.ww)} דק׳` : 'אין תחנה בטווח', e.nearw != null ? `${Math.round(e.nearw)} דק׳` : '—']],
+    [0.12, 0.15, 0.12, 0.09, 0.18, 0.17, 0.17], { center: true, size: 17 }));
+  if (e.streets && e.streets.length) kids.push(P(`תחנות בתוך האזור (לזיהוי המקום): ${e.streets.join(' · ')}`));
+  else if (e.stops && e.stops.length) kids.push(P(`התחנות הקרובות: ${[...new Set(e.stops.filter(s => s.n).map(s => s.n))].slice(0, 4).join(' · ')}`));
+  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 520)); kids.push(Note(MAP_LEGEND)); }
   else kids.push(Note('[המפה נוצרת בבניית GitHub Actions — סביבת העבודה המקומית חוסמת את שרת האריחים]'));
-  kids.push(P(`שטח ${e.area} קמ"ר · ${e.lines ?? '—'} קווים · הקו החזק ${e.bl_headway ? `כל ~${e.bl_headway} דק׳` : 'אין'} · הנקודה הרחוקה ${e.ww != null ? Math.round(e.ww) + ' דק׳' : '—'} · ממרכז האזור לתחנה ${e.nearw != null ? Math.round(e.nearw) + ' דק׳' : '—'}`));
-  kids.push(Break());
 }
+kids.push(Break());
+
+// נספח ב: הרשימות המלאות (איריס 02.09, נקודות 2, 5–7)
+kids.push(H1('נספח ב: רשימות מלאות'));
+const zoneList = rows => T(['האזור', 'הרשות', 'מחוז', 'שטח', 'קווים', 'הנקודה הרחוקה', 'מבנים (OSM)', 'תחנות בסביבה'],
+  rows.map(r => [r.name, r.city, r.region || '—', `${fmt(r.area, ' קמ"ר')}`, `${r.lines}`, r.far != null ? `${r.far} דק׳` : 'אין תחנה בטווח', fmt(r.buildings), `${r.stops_near}`]),
+  [0.26, 0.14, 0.10, 0.10, 0.07, 0.13, 0.10, 0.10], { center: true, size: 16, tight: true });
+kids.push(H2(`אזורים בלי אף תחנה בטווח 20 דקות הליכה (${(data.no_stop_zones || []).length})`));
+kids.push(P('הרף: תחנת אוטובוס פעילה בטווח 20 דקות הליכה אמיתית מכל נקודה באזור. אזורים שהוצאו מהדירוג (בהקמה, לא פעילים, מתקנים סגורים) אינם כאן — הם בטבלה השלישית.'));
+kids.push(zoneList(data.no_stop_zones || []));
+kids.push(sp());
+kids.push(H2(`אזורים בלי אף יציאת אוטובוס שימושית בשעות השיא (${(data.no_peak_zones || []).length})`));
+kids.push(P('יש בהם תחנה בטווח, אבל אף קו לא נכנס בשיא הבוקר ולא יוצא בשיא אחר הצהריים (קווי תלמידים ולילה אינם נספרים).'));
+kids.push(zoneList(data.no_peak_zones || []));
+if (data.excluded) {
+  kids.push(sp());
+  kids.push(H2('אזורים שהוצאו מהדירוג, ולמה'));
+  kids.push(P(`ביד, אחרי בדיקה (איריס דור-און ומקורות פתוחים): ${(data.excluded.manual || []).length} אזורים. אוטומטית, לפי ספירת מבנים ב-OpenStreetMap ("בהקמה"/"טרם נבנה"): ${data.excluded.auto_n} אזורים.`));
+  if ((data.excluded.manual || []).length)
+    kids.push(T(['האזור', 'הסיבה', 'המקור'], data.excluded.manual.map(x => [x.name, x.reason || '', x.source || '']), [0.22, 0.48, 0.30], { size: 16 }));
+  if ((data.excluded.auto || []).length) {
+    kids.push(sp());
+    kids.push(T(['האזור', 'הרשות', 'שטח', 'סטטוס', 'מבנים (OSM)'], data.excluded.auto.map(x => [x.name, x.city, `${fmt(x.area, ' קמ"ר')}`, x.st === 'planned' ? 'טרם נבנה' : 'בנוי חלקית', fmt(x.bld)]), [0.36, 0.20, 0.14, 0.15, 0.15], { center: true, size: 16, tight: true }));
+  }
+}
+kids.push(Break());
 
 // נספח
 kids.push(H1('נספח: איך לאמת כל מספר'));
@@ -255,7 +320,8 @@ const doc = new Document({
   features: { updateFields: true },   // תוכן העניינים מתמלא בפתיחה ב-Word
   styles: {
     default: {
-      document: { run: { font: FONT, size: 22, rightToLeft: true } },
+      // ברירת המחדל של כל פסקה: ימין-לשמאל ומיושר לימין (איריס 02.09: "הכל מיושר לימין")
+      document: { run: { font: FONT, size: 22, rightToLeft: true }, paragraph: { alignment: AlignmentType.RIGHT } },
       // רמות מתאר מפורשות לכותרות המובנות: Word משלים אותן לפי שם הסגנון, LibreOffice לא —
       // ובלעדיהן עדכון תוכן העניינים בהמרה ל-PDF לא מוצא אף כותרת
       heading1: { paragraph: { outlineLevel: 1 } },
