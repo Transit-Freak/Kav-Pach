@@ -1,0 +1,66 @@
+name: fetch-doc
+
+# הורדת מסמך ציבורי ממכונת Actions ושמירת הטקסט שלו ב-docs/fetched/ —
+# לשימוש כשהמסמך חסום מסביבת העבודה (למשל gov.il). PDF מומר לטקסט,
+# HTML מנוקה מתגיות. הקובץ נשמר בענף שהריץ, עם שורת מקור ותאריך.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'כתובת המסמך'
+        required: true
+      out:
+        description: 'נתיב היעד (טקסט) בתוך הריפו'
+        required: true
+        default: 'docs/fetched/doc.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: כלי המרה
+        run: sudo apt-get install -y -qq poppler-utils >/dev/null
+
+      - name: הורדה והמרה לטקסט
+        run: |
+          set -euo pipefail
+          U='${{ inputs.url }}'
+          OUT='${{ inputs.out }}'
+          mkdir -p "$(dirname "$OUT")"
+          curl -fsSL --max-time 120 --retry 3 -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' -o /tmp/doc.bin "$U"
+          file /tmp/doc.bin
+          if file /tmp/doc.bin | grep -qi pdf; then
+            pdftotext -layout /tmp/doc.bin /tmp/doc.txt
+          else
+            python3 -c "
+          import sys,re,html
+          t=open('/tmp/doc.bin',encoding='utf-8',errors='ignore').read()
+          t=re.sub(r'(?is)<(script|style).*?</\1>',' ',t)
+          t=html.unescape(re.sub(r'<[^>]+>','\n',t))
+          open('/tmp/doc.txt','w',encoding='utf-8').write(re.sub(r'\n\s*\n+','\n\n',t))
+          "
+          fi
+          {
+            echo "מקור: $U"
+            echo "הורד: $(TZ=Asia/Jerusalem date '+%Y-%m-%d %H:%M') (שעון ישראל)"
+            echo
+            cat /tmp/doc.txt
+          } > "$OUT"
+          wc -c "$OUT"
+
+      - name: שמירה בענף שהריץ
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${{ inputs.out }}"
+          git diff --cached --quiet && { echo "ללא שינוי"; exit 0; }
+          git commit -m "docs: מסמך שהורד ממכונת Actions — ${{ inputs.out }}"
+          git push origin HEAD:"$GITHUB_REF_NAME"
