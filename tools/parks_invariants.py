@@ -310,9 +310,13 @@ for p in P:
             continue
         ac = math.hypot((s['la'] - cen[0]) * 110540.0, (s['lo'] - cen[1]) * 111320.0 * cl)
         wm, wme, d = s.get('wm'), s.get('wme'), s.get('d') or 0
-        if wm is not None and wm > max(2.5 * ac, ac + 400) + 1:
+        # 2% סלחנות: הצנרת מודדת את המרכז בדיוק מלא, האינדקס מעגל ל-4 ספרות
+        # (~10 מ׳). תחנה שיושבת בדיוק על פי 2.5 עוברת בצנרת ונתפסת כאן —
+        # בבנייה הראשונה עם השומר נשארו 6 כאלה, כולן ב-2.50–2.51.
+        TOL = 1.02
+        if wm is not None and wm > max(2.5 * ac, ac + 400) * TOL:
             bad.append(f"{p['name']} · {s.get('n','')}: הליכה למרכז {wm} מ׳ מול {ac:.0f} מ׳ אווירי")
-        elif wme is not None and wme > max(2.5 * max(d, 20), max(d, 20) + 400) + 1:
+        elif wme is not None and wme > max(2.5 * max(d, 20), max(d, 20) + 400) * TOL:
             bad.append(f"{p['name']} · {s.get('n','')}: הליכה לקצה {wme} מ׳ מול {d} מ׳ אווירי")
         elif s.get('wte') is not None and s.get('wt') is not None and s['wte'] > s['wt'] + 0.5:
             bad.append(f"{p['name']} · {s.get('n','')}: לקצה {s['wte']} דק׳ > למרכז {s['wt']} דק׳")

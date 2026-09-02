@@ -107,8 +107,10 @@ jobs:
           echo "pbf: $(du -h map.osm.pbf | cut -f1)"
           IMG=osrm/osrm-backend:latest
           docker pull "$IMG"
-          # foot.lua מגיע בתוך ה-image ב-/opt/foot.lua
-          docker run --rm -v "$PWD:/data" "$IMG" osrm-extract   -p /opt/foot.lua /data/map.osm.pbf
+          # פרופיל הליכה מותאם (tools/osrm/foot-il.lua): הרשמי מ-/opt/foot.lua, ועליו
+          # היתר לכבישים פרטיים ולרמפות של כבישים ראשיים — ממצא שלמה 02.09 (יואב).
+          cp ../tools/osrm/foot-il.lua ./foot-il.lua
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-extract   -p /data/foot-il.lua /data/map.osm.pbf
           docker run --rm -v "$PWD:/data" "$IMG" osrm-partition  /data/map.osrm
           docker run --rm -v "$PWD:/data" "$IMG" osrm-customize  /data/map.osrm
           docker run -d --name osrm -p 5000:5000 -v "$PWD:/data" "$IMG" \
@@ -121,6 +123,13 @@ jobs:
             sleep 2
           done
           [ "$up" = "1" ] || { echo "OSRM failed to start"; docker logs osrm || true; exit 1; }
+          # בדיקת עשן לפרופיל: מסעף שער אברהם (37501) → מרכז פארק תעסוקה יואב.
+          # אווירי 461 מ׳; הפרופיל הרשמי נתן 1,428 מ׳ כי הקיף כבישים פרטיים.
+          # אם הפרופיל המותאם לא נטען, המספר יחזור ל-1,400+ והבנייה נעצרת כאן.
+          m=$(curl -fsS "http://localhost:5000/route/v1/foot/34.7921,31.76144;34.7889,31.7583?overview=false" \
+              | python3 -c "import json,sys;print(int(json.load(sys.stdin)['routes'][0]['distance']))")
+          echo "בדיקת פרופיל — יואב, מסעף שער אברהם → מרכז: ${m} מ׳ (אווירי 461)"
+          [ "$m" -lt 1000 ] || { echo "::error::הפרופיל המותאם לא נטען — עדיין מקיף (${m} מ׳)"; exit 1; }
 
       - name: Build park accessibility data (רשמי + OSM מאומת)
         run: |
