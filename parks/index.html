@@ -153,12 +153,15 @@ const tblview=document.getElementById('tblview'), wrap=document.getElementById('
       heatview=document.getElementById('heatview'), q=document.getElementById('q'),
       tbody=document.querySelector('#tbl tbody');
 let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sortDir=-1;
-// סקאלת הציונים המלאה (בקשת איריס 01.09): 10 מדרגות, לא דיכוטומיה.
+// סקאלת הציונים המלאה (בקשת איריס 01.09, גוונים ותוויות מספריות 02.09), לא דיכוטומיה.
 // משמשת את ציון משרד התחבורה, ומוכנה לציון המשוקלל שלנו כשיאושר.
-const SC100=[[90,'#1a9c3e','#fff','מצוין'],[80,'#52c234','#fff','טוב מאוד'],[70,'#a4d465','#1a2e05','טוב'],
-  [60,'#d3df3a','#3f3f05','בינוני-טוב'],[50,'#f5e42a','#493d03','בינוני'],[40,'#f5c02a','#4a3403','בינוני-חלש'],
-  [30,'#f59d20','#fff','חלש'],[20,'#ef7215','#fff','חלש מאוד'],[10,'#e11d1d','#fff','גרוע'],[0,'#b91c1c','#fff','גרוע מאוד']];
-function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#b91c1c',fg:'#fff',label:'גרוע מאוד'};}
+// הסרגל של איריס (02.09): 11 גוונים מאדום כהה (0) לירוק כהה (100), תוויות
+// במספרים ולא במילים. הגבולות נשארו — ציון 70 ומעלה הוא הגוון של 70 —
+// כך שסף הירוק במפה לא זז. [סף, רקע, צבע טקסט, תווית]
+const SC100=[[100,'#109e3a','#fff','100'],[90,'#3eaf2b','#fff','90'],[80,'#70be3b','#14330a','80'],[70,'#a9d047','#1a2e05','70'],
+  [60,'#d4dc2f','#3f3f05','60'],[50,'#fada1e','#493d03','50'],[40,'#faa61c','#4a3403','40'],
+  [30,'#f58220','#fff','30'],[20,'#f25218','#fff','20'],[10,'#e20e11','#fff','10'],[0,'#b00016','#fff','0']];
+function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#b00016',fg:'#fff',label:'0'};}
 // חיפוש סלחני (בקשת איריס 01.09): "אזור תעשייה בית שמש" מוצא את
 // "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
 const _qn=s=>String(s||'').replace(/["'׳״]/g,'').replace(/איזור/g,'אזור').replace(/תעשייה/g,'תעשיה').replace(/\s+/g,' ');
@@ -254,7 +257,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='49';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='50';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -440,7 +443,8 @@ function openHeatmap(fit=true){
   const swS=(sz,cl)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20" style="vertical-align:middle;flex:none"><path d="M10 1.5 12.6 7.2 18.8 7.9 14.2 12.1 15.5 18.2 10 15.1 4.5 18.2 5.8 12.1 1.2 7.9 7.4 7.2 Z" fill="${cl}" stroke="#94a3b8" stroke-width="1"/></svg>`;
   const row=items=>`<span style="display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center">${items.map(s=>`<span style="white-space:nowrap;display:inline-flex;align-items:center;gap:4px">${s}</span>`).join('')}</span>`;
   const why=(title,html)=>`<details class="legwhy"><summary>❓ ${title}</summary><div>${html}</div></details>`;
-  const sc10=sw=>SC100.slice().reverse().map(([t,bg,,lab])=>`${sw(Math.round(9+t/100*13),bg)} ${t}+ ${lab}`);
+  // כמו בסרגל של איריס: גוון ומספר, בלי מילים
+  const sc10=sw=>SC100.slice().reverse().map(([t,bg])=>`${sw(Math.round(9+t/100*13),bg)} ${t}`);
   const noData=(sw,txt)=>`${sw(9,'#94a3b8')} ${txt}`;
   const bins5=()=>[[0,'0'],[1,`1–${T[0]}`],[T[0]+1,`${T[0]+1}–${T[1]}`],[T[1]+1,`${T[1]+1}–${T[2]}`],[T[2]+1,`${T[2]+1}+`]];
   document.getElementById('hleg').innerHTML=(()=>{
@@ -453,7 +457,7 @@ function openHeatmap(fit=true){
         why('מה השכבה הזאת מודדת',exp+' <span style="color:#94a3b8">אותן מדרגות כמו ברכיב המקביל של הציון המשוקלל (02.09).</span>');
     }
     if(SYMMODE=='score'){
-      const items=SC100.slice().reverse().map(([t,bg,,lab])=>`${swS(Math.round(10+Math.pow(t/100,1.8)*14),bg)} ${t}+ ${lab}`);
+      const items=SC100.slice().reverse().map(([t,bg])=>`${swS(Math.round(10+Math.pow(t/100,1.8)*14),bg)} ${t}`);
       return `⭐ <b>ציון השירות של משרד התחבורה (0–100)</b> — צבע וגודל הכוכב לפי הציון:<br>`+row([...items,noData(swS,'אין ציון')])+
         why('מה מודד הציון הזה','זה לא ציון שלנו. משרד התחבורה מחשב אותו לכל אזור סטטיסטי בארץ (שכבת ״מדדי שירות בתחבורה ציבורית״ מפורטל תלתן, גרסת נובמבר 2025), והאזור מקבל את הציון של האזור הסטטיסטי שהוא נמצא בו. ארבעה מדדים משוקללים לציון אחד:<br><b>זמינות</b> — כמה שירות יש: תדירות הקווים ופריסת שעות הפעילות.<br><b>נגישות</b> — לאן מגיעים: היקף היעדים שאפשר להגיע אליהם בזמן נסיעה נתון.<br><b>תחרותיות</b> — כמה זה משתלם: זמן הנסיעה בתחבורה ציבורית מול אותה נסיעה ברכב פרטי.<br><b>אמינות</b> — כמה זה מדויק: עמידת הנסיעות בלוח הזמנים המתוכנן.');
     }
@@ -506,8 +510,7 @@ function openHeatmap(fit=true){
       const sc=(p.score==null?null:p.score), k=sc100(sc), pr=p.sparts||{};
       const hw=(v,m)=>v?`כל ~${Math.round(m/v)} דק׳`:'אין';
       const body=(sc==null?'<b>אין מספיק נתונים לציון</b>'
-        :`<div style="font-size:24px;font-weight:900;color:${k.bg};text-align:center;line-height:1.1">${sc}</div>`+
-         `<div style="text-align:center;font-weight:800;margin-bottom:6px;color:${k.bg}">${k.label}</div>`+
+        :`<div style="font-size:24px;font-weight:900;color:${k.bg};text-align:center;line-height:1.1;margin-bottom:6px">${sc}</div>`+
          `<span style="color:#475569;font-size:12.5px;line-height:1.75">`+
          `תדירות שימושית · ציון ${pr.uf??'—'} <span style="color:#94a3b8">(${hw(p.pkd,420)})</span><br>`+
          `הקו התדיר · ציון ${pr.bl??'—'} <span style="color:#94a3b8">(${hw(p.bl1,180)})</span><br>`+
@@ -1009,7 +1012,7 @@ function openPark(f,push=true){
       for(const L2 of noPkLines) h+=rowOf(L2);
       h+=`</details>`;
     }
-    h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות הקו בשיא הבוקר (06:00–09:00)</b>, על סקאלת עשר המדרגות של האתר: ${[[100,'עד 5 דק׳'],[90,'5–10'],[80,'10–15'],[70,'15–21'],[65,'21–30'],[55,'30–40'],[40,'40–60'],[15,'60–90'],[0,'מעל 90']].map(([v,t])=>`<i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${sc100(v).bg};vertical-align:-1px"></i> ${t}`).join(' · ')} · <i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#94a3b8;vertical-align:-1px"></i> אין נסיעות ביום חול. הקווים ממוינים מהתדיר ביותר ומטה.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): קרוב ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה נספרת (המחוון בפאנל יכול להציגה עד 20 דק׳). הכפתור <b>"מדידה"</b> בפאנל השכבות מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
+    h+=boxes;h+=`<div class="note">🎨 <b>צבע מספר הקו = תדירות הקו בשיא הבוקר (06:00–09:00)</b>, על סרגל הציונים של האתר: ${[[100,'עד 5 דק׳'],[90,'5–10'],[80,'10–15'],[70,'15–21'],[65,'21–30'],[55,'30–40'],[40,'40–60'],[15,'60–90'],[0,'מעל 90']].map(([v,t])=>`<i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${sc100(v).bg};vertical-align:-1px"></i> ${t}`).join(' · ')} · <i style="display:inline-block;width:11px;height:11px;border-radius:3px;background:#94a3b8;vertical-align:-1px"></i> אין נסיעות ביום חול. הקווים ממוינים מהתדיר ביותר ומטה.</div><div class="note">🚶 סיווג לפי <b>זמן הליכה אמיתי</b> (OSRM): קרוב ≤5 דק׳ · רחוק 5–10 דק׳ · מעל 10 דק׳ אינה נספרת (המחוון בפאנל יכול להציגה עד 20 דק׳). הכפתור <b>"מדידה"</b> בפאנל השכבות מחליף בין מדידה עד <b>מרכז האזור</b> (ברירת-מחדל — "להגיע לעבודה") לבין עד <b>הכניסה</b> (הקצה הקרוב). היכן שאין נתוני-הליכה מסתמכים על מרחק אווירי. ⚠ האזורים מהמאגר הרשמי (משרד הכלכלה, 🏛️) ומ-OpenStreetMap אחרי אימות קיום (🗺️); חישוב ההליכה תלוי בשלמות מיפוי הכבישים ב-OSM. "חור בשירות" = 90 דק׳ ומעלה בלי הגעה בין 05:30–20:00 ביום חול.</div>`;
     panel.innerHTML=h;
   }).catch(()=>{
     // באג: ההודעה נכתבה לפאנל שנשאר מוסתר כשהטעינה נכשלה — המשתמש לחץ
