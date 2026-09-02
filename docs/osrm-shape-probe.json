@@ -1,0 +1,1246 @@
+[
+ {
+  "route_id": "2259",
+  "trip_id": "2592261_020926",
+  "shape_id": "166370",
+  "agency": "דן",
+  "short": "5",
+  "long": "ת. רכבת תל אביב סבידור/על פרשת דרכים-תל אביב יפו<->מסוף הלוחמים/משרד הרישוי-תל אביב יפו-10",
+  "len_m": 12652.444601842024,
+  "pts": 447,
+  "why": "עירוני מוכר — דן 5",
+  "shape_len_m": 12612,
+  "tests": {
+   "car route/95": {
+    "dist_m": 20764,
+    "ratio": 1.646,
+    "turns": 57,
+    "roundabouts": 4,
+    "roundabouts_with_exit": 0,
+    "fake_turns_app": 23,
+    "dev": {
+     "max_m": 386,
+     "p95_m": 226,
+     "over30_pct": 24.9
+    }
+   },
+   "car route/300": {
+    "dist_m": 54725,
+    "ratio": 4.339,
+    "turns": 199,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 2,
+    "fake_turns_app": 74,
+    "dev": {
+     "max_m": 746,
+     "p95_m": 372,
+     "over30_pct": 44.0
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 54726,
+    "ratio": 4.339,
+    "turns": 194,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 7,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 746,
+     "p95_m": 384,
+     "over30_pct": 49.4
+    }
+   },
+   "bus route/95": {
+    "dist_m": 19429,
+    "ratio": 1.541,
+    "turns": 47,
+    "roundabouts": 4,
+    "roundabouts_with_exit": 0,
+    "fake_turns_app": 16,
+    "dev": {
+     "max_m": 386,
+     "p95_m": 204,
+     "over30_pct": 18.1
+    }
+   },
+   "bus route/300": {
+    "dist_m": 51108,
+    "ratio": 4.052,
+    "turns": 189,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 2,
+    "fake_turns_app": 52,
+    "dev": {
+     "max_m": 746,
+     "p95_m": 374,
+     "over30_pct": 39.7
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 51109,
+    "ratio": 4.052,
+    "turns": 179,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 7,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 746,
+     "p95_m": 385,
+     "over30_pct": 44.8
+    }
+   },
+   "bus match": {
+    "dist_m": 12639,
+    "ratio": 1.002,
+    "turns": 21,
+    "roundabouts": 3,
+    "roundabouts_with_exit": 3,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 30,
+     "p95_m": 7,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.984
+   }
+  }
+ },
+ {
+  "route_id": "7023",
+  "trip_id": "584792715_020926",
+  "shape_id": "144761",
+  "agency": "אגד",
+  "short": "480",
+  "long": "ת. מרכזית ירושלים קומה 3/רציפים-ירושלים<->ת. רכבת תל אביב - סבידור/הורדה-תל אביב יפו-3#",
+  "len_m": 62764.69444570369,
+  "pts": 1086,
+  "why": "בינעירוני מוכר — אגד 480",
+  "shape_len_m": 62634,
+  "tests": {
+   "car route/95": {
+    "dist_m": 138085,
+    "ratio": 2.205,
+    "turns": 124,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 8,
+    "fake_turns_app": 48,
+    "dev": {
+     "max_m": 1295,
+     "p95_m": 368,
+     "over30_pct": 39.4
+    }
+   },
+   "car route/300": {
+    "error": "HTTP Error 400: Bad Request"
+   },
+   "car route/1leg": {
+    "error": "HTTP Error 400: Bad Request"
+   },
+   "bus route/95": {
+    "dist_m": 145286,
+    "ratio": 2.32,
+    "turns": 122,
+    "roundabouts": 11,
+    "roundabouts_with_exit": 10,
+    "fake_turns_app": 41,
+    "dev": {
+     "max_m": 1295,
+     "p95_m": 286,
+     "over30_pct": 38.3
+    }
+   },
+   "bus route/300": {
+    "error": "HTTP Error 400: Bad Request"
+   },
+   "bus route/1leg": {
+    "error": "HTTP Error 400: Bad Request"
+   },
+   "bus match": {
+    "dist_m": 62602,
+    "ratio": 0.999,
+    "turns": 16,
+    "roundabouts": 1,
+    "roundabouts_with_exit": 1,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 24,
+     "p95_m": 12,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.981
+   }
+  }
+ },
+ {
+  "route_id": "11689",
+  "trip_id": "584809235_020926",
+  "shape_id": "153868",
+  "agency": "סופרבוס",
+  "short": "1",
+  "long": "מרכזית הקריות/איסוף מטרונית-קרית מוצקין<->ת. מרכזית חוף הכרמל/הורדה מטרונית-חיפה-20",
+  "len_m": 25435.793488965777,
+  "pts": 809,
+  "why": "מטרונית / נתיב ייעודי",
+  "shape_len_m": 25366,
+  "tests": {
+   "car route/95": {
+    "dist_m": 95675,
+    "ratio": 3.772,
+    "turns": 133,
+    "roundabouts": 30,
+    "roundabouts_with_exit": 27,
+    "fake_turns_app": 80,
+    "dev": {
+     "max_m": 1234,
+     "p95_m": 999,
+     "over30_pct": 55.2
+    }
+   },
+   "car route/300": {
+    "dist_m": 258946,
+    "ratio": 10.208,
+    "turns": 315,
+    "roundabouts": 73,
+    "roundabouts_with_exit": 68,
+    "fake_turns_app": 258,
+    "dev": {
+     "max_m": 1234,
+     "p95_m": 999,
+     "over30_pct": 57.4
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 258946,
+    "ratio": 10.209,
+    "turns": 300,
+    "roundabouts": 73,
+    "roundabouts_with_exit": 73,
+    "fake_turns_app": 2,
+    "dev": {
+     "max_m": 1234,
+     "p95_m": 999,
+     "over30_pct": 59.0
+    }
+   },
+   "bus route/95": {
+    "dist_m": 55938,
+    "ratio": 2.205,
+    "turns": 109,
+    "roundabouts": 18,
+    "roundabouts_with_exit": 16,
+    "fake_turns_app": 6,
+    "dev": {
+     "max_m": 645,
+     "p95_m": 330,
+     "over30_pct": 28.0
+    }
+   },
+   "bus route/300": {
+    "dist_m": 149148,
+    "ratio": 5.88,
+    "turns": 316,
+    "roundabouts": 45,
+    "roundabouts_with_exit": 41,
+    "fake_turns_app": 24,
+    "dev": {
+     "max_m": 645,
+     "p95_m": 314,
+     "over30_pct": 36.2
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 149148,
+    "ratio": 5.88,
+    "turns": 311,
+    "roundabouts": 45,
+    "roundabouts_with_exit": 45,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 645,
+     "p95_m": 318,
+     "over30_pct": 37.7
+    }
+   },
+   "bus match": {
+    "dist_m": 25328,
+    "ratio": 0.999,
+    "turns": 17,
+    "roundabouts": 4,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 19,
+     "p95_m": 7,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.982
+   }
+  }
+ },
+ {
+  "route_id": "15174",
+  "trip_id": "15129570_020926",
+  "shape_id": "122317",
+  "agency": "ירושלים-אבו-תור-ענאתא איחוד",
+  "short": "276",
+  "long": "מסוף סולטאן סולימאן-ירושלים<->תחנה מרכזית סולטן סולימאן/רחוב סולטן סולימאן-ירושלים-3#",
+  "len_m": 8969.126914914625,
+  "pts": 629,
+  "why": "עירוני ירושלים (נת\"צים)",
+  "shape_len_m": 8945,
+  "tests": {
+   "car route/95": {
+    "dist_m": 16773,
+    "ratio": 1.875,
+    "turns": 36,
+    "roundabouts": 8,
+    "roundabouts_with_exit": 6,
+    "fake_turns_app": 3,
+    "dev": {
+     "max_m": 358,
+     "p95_m": 178,
+     "over30_pct": 17.6
+    }
+   },
+   "car route/300": {
+    "dist_m": 37773,
+    "ratio": 4.223,
+    "turns": 51,
+    "roundabouts": 8,
+    "roundabouts_with_exit": 6,
+    "fake_turns_app": 11,
+    "dev": {
+     "max_m": 792,
+     "p95_m": 353,
+     "over30_pct": 37.4
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 37773,
+    "ratio": 4.223,
+    "turns": 52,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 9,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 792,
+     "p95_m": 355,
+     "over30_pct": 40.1
+    }
+   },
+   "bus route/95": {
+    "dist_m": 15631,
+    "ratio": 1.748,
+    "turns": 35,
+    "roundabouts": 8,
+    "roundabouts_with_exit": 6,
+    "fake_turns_app": 2,
+    "dev": {
+     "max_m": 358,
+     "p95_m": 160,
+     "over30_pct": 13.6
+    }
+   },
+   "bus route/300": {
+    "dist_m": 34797,
+    "ratio": 3.89,
+    "turns": 47,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 5,
+    "fake_turns_app": 6,
+    "dev": {
+     "max_m": 554,
+     "p95_m": 342,
+     "over30_pct": 35.6
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 34798,
+    "ratio": 3.89,
+    "turns": 48,
+    "roundabouts": 8,
+    "roundabouts_with_exit": 8,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 554,
+     "p95_m": 343,
+     "over30_pct": 38.3
+    }
+   },
+   "bus match": {
+    "dist_m": 8917,
+    "ratio": 0.997,
+    "turns": 14,
+    "roundabouts": 2,
+    "roundabouts_with_exit": 2,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 10,
+     "p95_m": 4,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.985
+   }
+  }
+ },
+ {
+  "route_id": "10776",
+  "trip_id": "7837349_020926",
+  "shape_id": "91104",
+  "agency": "אגד",
+  "short": "85",
+  "long": "החשמל/הגיבורים-חיפה<->טרומפלדור/התיכון-חיפה-1#",
+  "len_m": 6523.761561381771,
+  "pts": 291,
+  "why": "עירוני חיפה",
+  "shape_len_m": 6509,
+  "tests": {
+   "car route/95": {
+    "dist_m": 18328,
+    "ratio": 2.816,
+    "turns": 26,
+    "roundabouts": 8,
+    "roundabouts_with_exit": 3,
+    "fake_turns_app": 21,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 783,
+     "over30_pct": 27.8
+    }
+   },
+   "car route/300": {
+    "dist_m": 41480,
+    "ratio": 6.373,
+    "turns": 75,
+    "roundabouts": 13,
+    "roundabouts_with_exit": 7,
+    "fake_turns_app": 59,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 892,
+     "over30_pct": 32.7
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 41480,
+    "ratio": 6.373,
+    "turns": 78,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 9,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 910,
+     "over30_pct": 37.6
+    }
+   },
+   "bus route/95": {
+    "dist_m": 17805,
+    "ratio": 2.735,
+    "turns": 24,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 2,
+    "fake_turns_app": 21,
+    "dev": {
+     "max_m": 1213,
+     "p95_m": 999,
+     "over30_pct": 36.1
+    }
+   },
+   "bus route/300": {
+    "dist_m": 40434,
+    "ratio": 6.212,
+    "turns": 71,
+    "roundabouts": 11,
+    "roundabouts_with_exit": 5,
+    "fake_turns_app": 59,
+    "dev": {
+     "max_m": 1213,
+     "p95_m": 999,
+     "over30_pct": 40.1
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 40435,
+    "ratio": 6.212,
+    "turns": 74,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 7,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 1213,
+     "p95_m": 999,
+     "over30_pct": 46.6
+    }
+   },
+   "bus match": {
+    "dist_m": 6536,
+    "ratio": 1.004,
+    "turns": 7,
+    "roundabouts": 1,
+    "roundabouts_with_exit": 1,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 9,
+     "p95_m": 6,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.984
+   }
+  }
+ },
+ {
+  "route_id": "17535",
+  "trip_id": "54602032_020926",
+  "shape_id": "166238",
+  "agency": "דן באר שבע",
+  "short": "23",
+  "long": "גשר ת. רכבת ב''ש צפון/התבונה-באר שבע<->ת.מרכזית/עירוניים לדרום-באר שבע-20",
+  "len_m": 12872.269617036181,
+  "pts": 791,
+  "why": "עירוני באר שבע",
+  "shape_len_m": 12829,
+  "tests": {
+   "car route/95": {
+    "dist_m": 15191,
+    "ratio": 1.184,
+    "turns": 15,
+    "roundabouts": 25,
+    "roundabouts_with_exit": 9,
+    "fake_turns_app": 33,
+    "dev": {
+     "max_m": 73,
+     "p95_m": 21,
+     "over30_pct": 1.6
+    }
+   },
+   "car route/300": {
+    "dist_m": 29287,
+    "ratio": 2.283,
+    "turns": 43,
+    "roundabouts": 47,
+    "roundabouts_with_exit": 25,
+    "fake_turns_app": 83,
+    "dev": {
+     "max_m": 868,
+     "p95_m": 216,
+     "over30_pct": 9.7
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 29288,
+    "ratio": 2.283,
+    "turns": 43,
+    "roundabouts": 48,
+    "roundabouts_with_exit": 48,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 868,
+     "p95_m": 228,
+     "over30_pct": 10.2
+    }
+   },
+   "bus route/95": {
+    "dist_m": 15680,
+    "ratio": 1.222,
+    "turns": 20,
+    "roundabouts": 26,
+    "roundabouts_with_exit": 10,
+    "fake_turns_app": 32,
+    "dev": {
+     "max_m": 73,
+     "p95_m": 22,
+     "over30_pct": 2.2
+    }
+   },
+   "bus route/300": {
+    "dist_m": 30225,
+    "ratio": 2.356,
+    "turns": 51,
+    "roundabouts": 49,
+    "roundabouts_with_exit": 27,
+    "fake_turns_app": 78,
+    "dev": {
+     "max_m": 868,
+     "p95_m": 210,
+     "over30_pct": 11.2
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 30225,
+    "ratio": 2.356,
+    "turns": 51,
+    "roundabouts": 50,
+    "roundabouts_with_exit": 50,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 868,
+     "p95_m": 221,
+     "over30_pct": 11.8
+    }
+   },
+   "bus match": {
+    "dist_m": 12784,
+    "ratio": 0.996,
+    "turns": 10,
+    "roundabouts": 19,
+    "roundabouts_with_exit": 19,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 23,
+     "p95_m": 8,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.983
+   }
+  }
+ },
+ {
+  "route_id": "10173",
+  "trip_id": "6693966_020926",
+  "shape_id": "166067",
+  "agency": "אגד",
+  "short": "9א",
+  "long": "תחנה תפעולית/ביטוח לאומי-ירושלים<->קמפוס ספרא/מסוף הכניסה לאוניברסיטה-ירושלים-1#",
+  "len_m": 6998.6009334922455,
+  "pts": 462,
+  "why": "עירוני קצר, אקראי",
+  "shape_len_m": 6983,
+  "tests": {
+   "car route/95": {
+    "dist_m": 41954,
+    "ratio": 6.008,
+    "turns": 120,
+    "roundabouts": 4,
+    "roundabouts_with_exit": 3,
+    "fake_turns_app": 33,
+    "dev": {
+     "max_m": 1228,
+     "p95_m": 999,
+     "over30_pct": 55.6
+    }
+   },
+   "car route/300": {
+    "dist_m": 54231,
+    "ratio": 7.766,
+    "turns": 182,
+    "roundabouts": 4,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 111,
+    "dev": {
+     "max_m": 1228,
+     "p95_m": 999,
+     "over30_pct": 51.0
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 54229,
+    "ratio": 7.766,
+    "turns": 180,
+    "roundabouts": 5,
+    "roundabouts_with_exit": 5,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 1228,
+     "p95_m": 999,
+     "over30_pct": 54.7
+    }
+   },
+   "bus route/95": {
+    "dist_m": 36611,
+    "ratio": 5.243,
+    "turns": 103,
+    "roundabouts": 3,
+    "roundabouts_with_exit": 2,
+    "fake_turns_app": 27,
+    "dev": {
+     "max_m": 1228,
+     "p95_m": 999,
+     "over30_pct": 53.9
+    }
+   },
+   "bus route/300": {
+    "dist_m": 49575,
+    "ratio": 7.1,
+    "turns": 164,
+    "roundabouts": 4,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 89,
+    "dev": {
+     "max_m": 1228,
+     "p95_m": 999,
+     "over30_pct": 46.6
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 49573,
+    "ratio": 7.099,
+    "turns": 161,
+    "roundabouts": 5,
+    "roundabouts_with_exit": 5,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 1228,
+     "p95_m": 999,
+     "over30_pct": 50.4
+    }
+   },
+   "bus match": {
+    "dist_m": 6993,
+    "ratio": 1.001,
+    "turns": 19,
+    "roundabouts": 1,
+    "roundabouts_with_exit": 1,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 10,
+     "p95_m": 7,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.978
+   }
+  }
+ },
+ {
+  "route_id": "10113",
+  "trip_id": "585053145_140926",
+  "shape_id": "165054",
+  "agency": "אגד",
+  "short": "70",
+  "long": "זלמן שזר/חיל הים-ראשון לציון<->גולדה מאיר/הסחלב-ראשון לציון-1#",
+  "len_m": 6602.45826228792,
+  "pts": 246,
+  "why": "עירוני קצר, אקראי",
+  "shape_len_m": 6596,
+  "tests": {
+   "car route/95": {
+    "dist_m": 12870,
+    "ratio": 1.951,
+    "turns": 26,
+    "roundabouts": 10,
+    "roundabouts_with_exit": 3,
+    "fake_turns_app": 9,
+    "dev": {
+     "max_m": 299,
+     "p95_m": 213,
+     "over30_pct": 24.8
+    }
+   },
+   "car route/300": {
+    "dist_m": 31434,
+    "ratio": 4.766,
+    "turns": 69,
+    "roundabouts": 16,
+    "roundabouts_with_exit": 9,
+    "fake_turns_app": 18,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 999,
+     "over30_pct": 43.8
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 31435,
+    "ratio": 4.766,
+    "turns": 66,
+    "roundabouts": 18,
+    "roundabouts_with_exit": 18,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 999,
+     "over30_pct": 51.4
+    }
+   },
+   "bus route/95": {
+    "dist_m": 12870,
+    "ratio": 1.951,
+    "turns": 26,
+    "roundabouts": 10,
+    "roundabouts_with_exit": 3,
+    "fake_turns_app": 9,
+    "dev": {
+     "max_m": 299,
+     "p95_m": 213,
+     "over30_pct": 24.8
+    }
+   },
+   "bus route/300": {
+    "dist_m": 31434,
+    "ratio": 4.766,
+    "turns": 69,
+    "roundabouts": 16,
+    "roundabouts_with_exit": 9,
+    "fake_turns_app": 18,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 999,
+     "over30_pct": 43.8
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 31435,
+    "ratio": 4.766,
+    "turns": 66,
+    "roundabouts": 18,
+    "roundabouts_with_exit": 18,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 1169,
+     "p95_m": 999,
+     "over30_pct": 51.4
+    }
+   },
+   "bus match": {
+    "dist_m": 6611,
+    "ratio": 1.002,
+    "turns": 3,
+    "roundabouts": 5,
+    "roundabouts_with_exit": 5,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 13,
+     "p95_m": 6,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.986
+   }
+  }
+ },
+ {
+  "route_id": "19687",
+  "trip_id": "41657955_140926",
+  "shape_id": "162223",
+  "agency": "מטרופולין",
+  "short": "532",
+  "long": "מסוף קדמה-רמת השרון<->ת.מרכזית תל אביב קומה 6/הורדה-תל אביב יפו-1#",
+  "len_m": 18219.875436057006,
+  "pts": 597,
+  "why": "בינוני, אקראי",
+  "shape_len_m": 18165,
+  "tests": {
+   "car route/95": {
+    "dist_m": 41647,
+    "ratio": 2.293,
+    "turns": 77,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 34,
+    "dev": {
+     "max_m": 1263,
+     "p95_m": 999,
+     "over30_pct": 36.7
+    }
+   },
+   "car route/300": {
+    "dist_m": 59017,
+    "ratio": 3.249,
+    "turns": 136,
+    "roundabouts": 19,
+    "roundabouts_with_exit": 14,
+    "fake_turns_app": 116,
+    "dev": {
+     "max_m": 1263,
+     "p95_m": 352,
+     "over30_pct": 38.4
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 59017,
+    "ratio": 3.249,
+    "turns": 135,
+    "roundabouts": 19,
+    "roundabouts_with_exit": 19,
+    "fake_turns_app": 2,
+    "dev": {
+     "max_m": 1263,
+     "p95_m": 414,
+     "over30_pct": 43.1
+    }
+   },
+   "bus route/95": {
+    "dist_m": 37751,
+    "ratio": 2.078,
+    "turns": 58,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 25,
+    "dev": {
+     "max_m": 1263,
+     "p95_m": 999,
+     "over30_pct": 26.9
+    }
+   },
+   "bus route/300": {
+    "dist_m": 57080,
+    "ratio": 3.142,
+    "turns": 119,
+    "roundabouts": 17,
+    "roundabouts_with_exit": 12,
+    "fake_turns_app": 95,
+    "dev": {
+     "max_m": 1263,
+     "p95_m": 363,
+     "over30_pct": 38.1
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 57081,
+    "ratio": 3.142,
+    "turns": 114,
+    "roundabouts": 17,
+    "roundabouts_with_exit": 17,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 1263,
+     "p95_m": 414,
+     "over30_pct": 42.7
+    }
+   },
+   "bus match": {
+    "dist_m": 18138,
+    "ratio": 0.999,
+    "turns": 12,
+    "roundabouts": 5,
+    "roundabouts_with_exit": 5,
+    "fake_turns_app": 2,
+    "dev": {
+     "max_m": 15,
+     "p95_m": 8,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.986
+   }
+  }
+ },
+ {
+  "route_id": "9877",
+  "trip_id": "9719865_020926",
+  "shape_id": "166271",
+  "agency": "אגד",
+  "short": "271",
+  "long": "מסוף אוניברסיטת ת''א -תל אביב יפו<->שדרות ירושלים/מפרץ שלמה-חולון-1#",
+  "len_m": 19659.62171640667,
+  "pts": 726,
+  "why": "בינוני, אקראי",
+  "shape_len_m": 19595,
+  "tests": {
+   "car route/95": {
+    "dist_m": 37828,
+    "ratio": 1.93,
+    "turns": 56,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 24,
+    "dev": {
+     "max_m": 1332,
+     "p95_m": 953,
+     "over30_pct": 27.7
+    }
+   },
+   "car route/300": {
+    "dist_m": 64838,
+    "ratio": 3.309,
+    "turns": 148,
+    "roundabouts": 18,
+    "roundabouts_with_exit": 10,
+    "fake_turns_app": 82,
+    "dev": {
+     "max_m": 1104,
+     "p95_m": 362,
+     "over30_pct": 35.2
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 64839,
+    "ratio": 3.309,
+    "turns": 147,
+    "roundabouts": 19,
+    "roundabouts_with_exit": 19,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 1104,
+     "p95_m": 371,
+     "over30_pct": 38.7
+    }
+   },
+   "bus route/95": {
+    "dist_m": 28611,
+    "ratio": 1.46,
+    "turns": 31,
+    "roundabouts": 9,
+    "roundabouts_with_exit": 4,
+    "fake_turns_app": 20,
+    "dev": {
+     "max_m": 1009,
+     "p95_m": 244,
+     "over30_pct": 13.5
+    }
+   },
+   "bus route/300": {
+    "dist_m": 51140,
+    "ratio": 2.61,
+    "turns": 114,
+    "roundabouts": 18,
+    "roundabouts_with_exit": 10,
+    "fake_turns_app": 78,
+    "dev": {
+     "max_m": 1104,
+     "p95_m": 296,
+     "over30_pct": 29.9
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 51141,
+    "ratio": 2.61,
+    "turns": 112,
+    "roundabouts": 19,
+    "roundabouts_with_exit": 19,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 1104,
+     "p95_m": 302,
+     "over30_pct": 33.6
+    }
+   },
+   "bus match": {
+    "dist_m": 19563,
+    "ratio": 0.998,
+    "turns": 14,
+    "roundabouts": 7,
+    "roundabouts_with_exit": 7,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 14,
+     "p95_m": 7,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.985
+   }
+  }
+ },
+ {
+  "route_id": "18879",
+  "trip_id": "585756687_060926",
+  "shape_id": "138877",
+  "agency": "קווים",
+  "short": "176",
+  "long": "ההגנה/חי''ש-רחובות<->הר''ן/קדושת לוי-ביתר עילית-20",
+  "len_m": 55585.84967940144,
+  "pts": 1971,
+  "why": "בינעירוני ארוך, אקראי",
+  "shape_len_m": 55512,
+  "tests": {
+   "car route/95": {
+    "dist_m": 59084,
+    "ratio": 1.064,
+    "turns": 22,
+    "roundabouts": 28,
+    "roundabouts_with_exit": 11,
+    "fake_turns_app": 14,
+    "dev": {
+     "max_m": 322,
+     "p95_m": 32,
+     "over30_pct": 5.2
+    }
+   },
+   "car route/300": {
+    "dist_m": 70327,
+    "ratio": 1.267,
+    "turns": 46,
+    "roundabouts": 32,
+    "roundabouts_with_exit": 14,
+    "fake_turns_app": 40,
+    "dev": {
+     "max_m": 751,
+     "p95_m": 120,
+     "over30_pct": 9.8
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 70328,
+    "ratio": 1.267,
+    "turns": 45,
+    "roundabouts": 33,
+    "roundabouts_with_exit": 33,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 751,
+     "p95_m": 124,
+     "over30_pct": 10.7
+    }
+   },
+   "bus route/95": {
+    "dist_m": 59084,
+    "ratio": 1.064,
+    "turns": 22,
+    "roundabouts": 28,
+    "roundabouts_with_exit": 11,
+    "fake_turns_app": 14,
+    "dev": {
+     "max_m": 322,
+     "p95_m": 32,
+     "over30_pct": 5.2
+    }
+   },
+   "bus route/300": {
+    "dist_m": 70171,
+    "ratio": 1.264,
+    "turns": 46,
+    "roundabouts": 32,
+    "roundabouts_with_exit": 14,
+    "fake_turns_app": 40,
+    "dev": {
+     "max_m": 751,
+     "p95_m": 120,
+     "over30_pct": 9.9
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 70172,
+    "ratio": 1.264,
+    "turns": 45,
+    "roundabouts": 33,
+    "roundabouts_with_exit": 33,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 751,
+     "p95_m": 125,
+     "over30_pct": 10.7
+    }
+   },
+   "bus match": {
+    "dist_m": 55424,
+    "ratio": 0.998,
+    "turns": 10,
+    "roundabouts": 22,
+    "roundabouts_with_exit": 22,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 18,
+     "p95_m": 6,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.972
+   }
+  }
+ },
+ {
+  "route_id": "36702",
+  "trip_id": "586101932_020926",
+  "shape_id": "161814",
+  "agency": "אגד",
+  "short": "408",
+  "long": "ת. מרכזית ירושלים/יפו-ירושלים<->תיכון מקיף ערבי/יוספטל-רמלה-3א",
+  "len_m": 50996.96014768715,
+  "pts": 1318,
+  "why": "בינעירוני ארוך, אקראי",
+  "shape_len_m": 50890,
+  "tests": {
+   "car route/95": {
+    "dist_m": 101402,
+    "ratio": 1.993,
+    "turns": 55,
+    "roundabouts": 29,
+    "roundabouts_with_exit": 18,
+    "fake_turns_app": 37,
+    "dev": {
+     "max_m": 928,
+     "p95_m": 370,
+     "over30_pct": 39.3
+    }
+   },
+   "car route/300": {
+    "dist_m": 321956,
+    "ratio": 6.327,
+    "turns": 265,
+    "roundabouts": 68,
+    "roundabouts_with_exit": 51,
+    "fake_turns_app": 111,
+    "dev": {
+     "max_m": 1281,
+     "p95_m": 999,
+     "over30_pct": 52.0
+    }
+   },
+   "car route/1leg": {
+    "dist_m": 321956,
+    "ratio": 6.327,
+    "turns": 264,
+    "roundabouts": 70,
+    "roundabouts_with_exit": 70,
+    "fake_turns_app": 1,
+    "dev": {
+     "max_m": 1281,
+     "p95_m": 999,
+     "over30_pct": 53.1
+    }
+   },
+   "bus route/95": {
+    "dist_m": 98553,
+    "ratio": 1.937,
+    "turns": 47,
+    "roundabouts": 28,
+    "roundabouts_with_exit": 17,
+    "fake_turns_app": 32,
+    "dev": {
+     "max_m": 928,
+     "p95_m": 302,
+     "over30_pct": 35.9
+    }
+   },
+   "bus route/300": {
+    "dist_m": 326704,
+    "ratio": 6.42,
+    "turns": 267,
+    "roundabouts": 66,
+    "roundabouts_with_exit": 49,
+    "fake_turns_app": 94,
+    "dev": {
+     "max_m": 1281,
+     "p95_m": 999,
+     "over30_pct": 48.6
+    }
+   },
+   "bus route/1leg": {
+    "dist_m": 326704,
+    "ratio": 6.42,
+    "turns": 266,
+    "roundabouts": 68,
+    "roundabouts_with_exit": 68,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 1281,
+     "p95_m": 999,
+     "over30_pct": 49.5
+    }
+   },
+   "bus match": {
+    "dist_m": 50825,
+    "ratio": 0.999,
+    "turns": 13,
+    "roundabouts": 13,
+    "roundabouts_with_exit": 13,
+    "fake_turns_app": 0,
+    "dev": {
+     "max_m": 20,
+     "p95_m": 9,
+     "over30_pct": 0.0
+    },
+    "pieces": 1,
+    "confidence": 0.983
+   }
+  }
+ }
+]
