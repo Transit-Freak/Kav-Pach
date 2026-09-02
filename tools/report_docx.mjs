@@ -72,7 +72,8 @@ kids.push(P([run('[מקום להקדמה של איריס]', { size: 22, color: '
 kids.push(Break());
 
 // תוכן עניינים
-kids.push(H1('תוכן העניינים'));
+// כותרת התוכן בלי רמת כותרת — כדי שלא תופיע בתוך התוכן עצמו
+kids.push(new Paragraph({ bidirectional: true, alignment: AlignmentType.RIGHT, spacing: { before: 240, after: 160 }, children: [run('תוכן העניינים', { size: 34, bold: true, color: DEEP })] }));
 kids.push(new TableOfContents('תוכן', { hyperlink: true, headingStyleRange: '1-2' }));
 kids.push(Break());
 
@@ -252,7 +253,15 @@ kids.push(P(`נוסחה ${F.version} · GTFS ${data.gtfs_date} · הדו"ח חו
 const doc = new Document({
   creator: 'הקו הבוחן', title: 'נגישות אזורי התעשייה בישראל לתחבורה ציבורית',
   features: { updateFields: true },   // תוכן העניינים מתמלא בפתיחה ב-Word
-  styles: { default: { document: { run: { font: FONT, size: 22, rightToLeft: true } } } },
+  styles: {
+    default: { document: { run: { font: FONT, size: 22, rightToLeft: true } } },
+    // רמות מתאר מפורשות לכותרות: Word משלים אותן לפי שם הסגנון, LibreOffice לא —
+    // ובלעדיהן עדכון תוכן העניינים בהמרה ל-PDF לא מוצא אף כותרת
+    paragraphStyles: [
+      { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true, paragraph: { outlineLevel: 1 } },
+      { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true, paragraph: { outlineLevel: 2 } },
+    ],
+  },
   numbering: { config: [{ reference: 'bul', levels: [{ level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.RIGHT, style: { paragraph: { indent: { left: 0, right: 360, hanging: 260 } } } }] }] },
   sections: [{
     properties: { page: { size: { width: PAGE_W, height: PAGE_H }, margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN } } },
