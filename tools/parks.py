@@ -650,8 +650,12 @@ if OSRM_URL:
         except Exception:
             cache = {}
     newcache = {}
+    # גרסת פרופיל ההליכה בתוך המפתח: בבנייה הראשונה עם foot-il.lua רק 2 זוגות
+    # נותבו מחדש ו-21,826 הגיעו מהמטמון של הפרופיל הישן — הפרופיל החדש לא נגע
+    # בהליכה לתחנות בכלל. שינוי פרופיל חייב לפסול את המטמון מעצמו.
+    WALK_PROFILE = 'foot-il-1'
     def _ckey(sid, pk):
-        return '%s|%.3f|%.3f' % (sid, pk['cen'][0], pk['cen'][1])
+        return '%s|%s|%.3f|%.3f' % (WALK_PROFILE, sid, pk['cen'][0], pk['cen'][1])
 
     park_cands = defaultdict(list)   # pi -> [(sid, la, lo)]
     for sid, hits in stop_hits.items():
@@ -701,7 +705,8 @@ if OSRM_URL:
     os.makedirs(OUTDIR, exist_ok=True)
     json.dump(newcache, open(os.path.join(OUTDIR, 'walk-cache.json'), 'w'), separators=(',', ':'))
     print('OSRM: נותבו', routed, '| מ-cache', fromcache, '| נכשלו', failed,
-          '| זוגות', len(walk), '| דולגו (תקציב)', skipped, '| cache', len(newcache))
+          '| זוגות', len(walk), '| דולגו (תקציב)', skipped, '| cache', len(newcache),
+          '| פרופיל', WALK_PROFILE)
 
 def _walk_tier(geo_tier, sec):
     # סיווג לפי זמן-הליכה אמיתי — כולל צמתים: צומת ≤5 דק' הליכה נגיש ונספר.
@@ -769,6 +774,7 @@ def _nb_ok(pi, sid, sla, slo, ix):
             return True
     return False
 
+_guard_fired = [0, 0]   # [מרכז, קצה] — כמה הליכות השומר הגאומטרי החליף באומדן אווירי
 for sid, hits in stop_hits.items():
     nh = []
     _nm0, _c0, _sla, _slo, _city0 = stop_info[sid]
@@ -794,10 +800,10 @@ for sid, hits in stop_hits.items():
         def _implausible(walk_m, air_m):
             return walk_m is not None and walk_m > max(2.5 * air_m, air_m + 400)
         if _implausible(cm, _air_c):
-            cm = int(_air_c * 1.3); cs = int(cm / 83.0 * 60)
+            cm = int(_air_c * 1.3); cs = int(cm / 83.0 * 60); _guard_fired[0] += 1
         _air_e = max(d, 20)
         if _implausible(em, _air_e):
-            em = int(_air_e * 1.3); es = int(em / 83.0 * 60)
+            em = int(_air_e * 1.3); es = int(em / 83.0 * 60); _guard_fired[1] += 1
         # הקצה קרוב מהמרכז בהגדרה; דגימת גבול של 8 נקודות מפספסת לפעמים את
         # הנקודה הקרובה לתחנה (הרחבה כרמיאל: מרכז 20 דק׳, "קצה" 46)
         if cs is not None and es is not None and es > cs:
@@ -819,6 +825,8 @@ for sid, hits in stop_hits.items():
         nh.append((pi, d, _walk_tier(tier, cs), _walk_tier(tier, es),
                    cm, _mins(cs), em, _mins(es)))
     stop_hits[sid] = nh
+# כמה פעמים השומר עדיין נדרש אחרי הפרופיל המותאם — מדד לאיכות הניתוב
+print('שומר גאומטרי: הוחלפו', _guard_fired[0], 'הליכות למרכז ו-', _guard_fired[1], 'לקצה באומדן אווירי')
 
 # ---- הרכבת פלט לכל פארק ----
 os.makedirs(OUTDIR, exist_ok=True)
@@ -1325,12 +1333,20 @@ if used_rids and os.path.exists(SHAPES):
         _e['bl1'] = max(_b1.values()) if _b1 else 0
         # ── הציון המשוקלל של איריס (01.09) — מחושב פעם אחת, משמש בכל התוצרים.
         # "תחנות" = דקות ההליכה ממרכז האזור אל התחנה הקרובה ביותר.
-        _wts = [_s.get('wt') for _s in _d.get('stops') or []
-                if _s.get('wt') is not None and _s.get('t') != 'blocked']
-        if not _wts:   # תחנות שבתוך האזור אינן מנותבות — אומדן אווירי מהמרכז
-            _wts = [math.hypot((_s['la'] - _cen[0]) * 110540.0,
-                               (_s['lo'] - _cen[1]) * 111320.0 * _cl) * 1.3 / 75.0
-                    for _s in _d.get('stops') or [] if _s.get('t') != 'blocked']
+        # תחנות שבתוך האזור אינן מנותבות ואין להן wt — הן מקבלות אומדן אווירי
+        # תמיד, לא רק כשאין אף תחנה מנותבת. קודם, ברגע שתחנה חיצונית אחת קיבלה
+        # ניתוב, התחנות הפנימיות נעלמו מהמינימום: שער בנימין — תחנה 80 מ׳
+        # מהמרכז, ו-nearw קפץ מ-1.4 ל-14 דק׳ (ממצא 02.09). המהירות 83 מ׳/דק׳
+        # כמו בערכים המנותבים שהאומדן מתחרה בהם.
+        _wts = []
+        for _s in _d.get('stops') or []:
+            if _s.get('t') == 'blocked':
+                continue
+            if _s.get('wt') is not None:
+                _wts.append(_s['wt'])
+            else:
+                _wts.append(math.hypot((_s['la'] - _cen[0]) * 110540.0,
+                                       (_s['lo'] - _cen[1]) * 111320.0 * _cl) * 1.3 / 83.0)
         _near = min(_wts) if _wts else None
         _sc, _parts = iris_score(_pkd, _e['bl1'], _e.get('ww'), _near)
         _e['score'] = _sc

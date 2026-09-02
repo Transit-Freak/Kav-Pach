@@ -322,6 +322,21 @@ for p in P:
             bad.append(f"{p['name']} · {s.get('n','')}: לקצה {s['wte']} דק׳ > למרכז {s['wt']} דק׳")
 check('הליכה לתחנה סבירה ביחס למרחק האווירי', 'ממצא שלמה 02.09 · פארק תעסוקה יואב', bad)
 
+# 16. nearw לא ארוך מהאומדן האווירי לתחנה שבתוך האזור (ממצא 02.09, שער
+#     בנימין: תחנה 80 מ׳ מהמרכז, ו-nearw=14 כי הפנימיות נשמטו מהמינימום).
+bad = []
+for p in P:
+    z = zones.get(p.get('f')) or {}
+    nw = p.get('nearw')
+    if nw is None or None in (p.get('la'), p.get('lo')):
+        continue
+    cl = math.cos(math.radians(p['la']))
+    ins = [math.hypot((s['la'] - p['la']) * 110540.0, (s['lo'] - p['lo']) * 111320.0 * cl) * 1.3 / 83.0
+           for s in z.get('stops') or [] if s.get('t') == 'in']
+    if ins and nw > min(ins) + 1.0:
+        bad.append(f"{p['name']}: nearw={nw} דק׳ אבל תחנה בתוך האזור במרחק ~{min(ins):.1f} דק׳ מהמרכז")
+check('nearw אינו מתעלם מתחנות שבתוך האזור', 'ממצא 02.09 · שער בנימין', bad)
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump({'generated': datetime.date.today().isoformat(),
            'pass': not fails, 'fails': fails},
