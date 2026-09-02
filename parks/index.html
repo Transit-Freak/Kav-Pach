@@ -158,10 +158,12 @@ let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sort
 // הסרגל של איריס (02.09): 11 גוונים מאדום כהה (0) לירוק כהה (100), תוויות
 // במספרים ולא במילים. הגבולות נשארו — ציון 70 ומעלה הוא הגוון של 70 —
 // כך שסף הירוק במפה לא זז. [סף, רקע, צבע טקסט, תווית]
-const SC100=[[100,'#109e3a','#fff','100'],[90,'#3eaf2b','#fff','90'],[80,'#70be3b','#14330a','80'],[70,'#a9d047','#1a2e05','70'],
-  [60,'#d4dc2f','#3f3f05','60'],[50,'#fada1e','#493d03','50'],[40,'#faa61c','#4a3403','40'],
-  [30,'#f58220','#fff','30'],[20,'#f25218','#fff','20'],[10,'#e20e11','#fff','10'],[0,'#b00016','#fff','0']];
-function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#b00016',fg:'#fff',label:'0'};}
+// הסרגל המחמיר (איריס 02.09 10:16): ירוק רק מ-90, 70 צהוב, 50–60 כתום,
+// 40 ומטה מאדום ועד שחור. הגבולות לא זזו — רק הגוונים.
+const SC100=[[100,'#14b03d','#fff','100'],[90,'#8cc63f','#12300a','90'],[80,'#cfd41f','#3a3a05','80'],[70,'#f8d420','#493d03','70'],
+  [60,'#f5a11a','#4a2e03','60'],[50,'#ee7a16','#fff','50'],[40,'#e63c14','#fff','40'],
+  [30,'#c00d18','#fff','30'],[20,'#8e0b1e','#fff','20'],[10,'#3f0a18','#fff','10'],[0,'#050505','#fff','0']];
+function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#050505',fg:'#fff',label:'0'};}
 // חיפוש סלחני (בקשת איריס 01.09): "אזור תעשייה בית שמש" מוצא את
 // "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
 const _qn=s=>String(s||'').replace(/["'׳״]/g,'').replace(/איזור/g,'אזור').replace(/תעשייה/g,'תעשיה').replace(/\s+/g,' ');
@@ -257,7 +259,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='50';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='51';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -866,11 +868,26 @@ function openPark(f,push=true){
     const _pi=IDX.find(x=>x.f===f), _plan=!!(_pi&&_pi.st==='planned');
     let h=`<h2 style="margin:0 0 8px">${esc(d.name)}${d.city?` · ${esc(d.city)}`:''}</h2>
     ${_plan?'<div class="plannote">🏗️ אזור בהקמה — טרם נבנה. היעדר קווים צפוי בשלב זה ואינו נחשב חור בשירות</div>':''}
-    <div class="stats">
-      <span class="stat" title="שטח האזור בקילומטרים רבועים">שטח <b>${d.area}</b> קמ"ר</span>
-      <span class="stat" title="תחנות אוטובוס שנמצאות בתוך גבולות האזור עצמו">תחנות בפנים <b>${nin}</b></span>
-      <span class="stat" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב 🚶 <b>${ngate}</b></span>
-      <span class="stat" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
+    ${(()=>{
+      // הציון המשוקלל בראש העמוד (איריס 02.09): גדול, ולידו ארבעת הרכיבים
+      // עם ציון הרכיב והנתון הגולמי שמאחוריו. הנתונים מהאינדקס (_pi).
+      const sc=_pi?_pi.score:null, sp=(_pi&&_pi.sparts)||{}, k=sc100(sc);
+      const hw=(v,m)=>v?`כל ~${Math.round(m/v)} דק׳`:'אין יציאות';
+      const comp=(lbl,w,v,raw,tip)=>{const c=sc100(v==null?null:v);return `<div class="sch-c" title="${tip}"><span class="sch-cl">${lbl} <small>${w}%</small></span><span class="sch-cv" style="background:${c.bg};color:${c.fg}">${v==null?'—':v}</span><span class="sch-raw">${raw}</span></div>`;};
+      return `<div class="scorehero">
+        <div class="sch-main"><div class="sch-lbl">🎯 הציון המשוקלל של האתר</div><div class="sch-big" style="background:${k.bg};color:${k.fg}">${sc==null?'—':sc}</div><div class="sch-sub">0–100 · נוסחת 02.09</div></div>
+        <div class="sch-comps">
+          ${comp('הקו החזק בשיא הבוקר',40,sp.bl,_pi?hw(_pi.bl1,180):'—','הקו עם הכי הרבה יציאות 06–09 בכיוון האזור')}
+          ${comp('הנקודה הרחוקה',30,sp.far,_pi&&_pi.ww!=null?`${Math.round(_pi.ww)} דק׳ הליכה`:'—','הליכה מהמפעל המרוחק ביותר לתחנה הקרובה אליו')}
+          ${comp('תדירות ממוצעת בשיא',20,sp.uf,_pi?hw(_pi.pkd,420):'—','כל היציאות השימושיות ב-7 שעות השיא, לכיוון')}
+          ${comp('הליכה ממרכז האזור',10,sp.near,_pi&&_pi.nearw!=null?`${Math.round(_pi.nearw)} דק׳`:'—','ממרכז הפוליגון לתחנה הקרובה')}
+        </div>
+      </div>`;})()}
+    <div class="stats" style="margin:0 0 10px">
+      <span class="stat sm" title="שטח האזור בקילומטרים רבועים">שטח <b>${d.area}</b> קמ"ר</span>
+      <span class="stat sm" title="תחנות אוטובוס שנמצאות בתוך גבולות האזור עצמו">תחנות בפנים <b>${nin}</b></span>
+      <span class="stat sm" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב 🚶 <b>${ngate}</b></span>
+      <span class="stat sm" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
     </div>`;
     let boxes='', svcbox='';
     if(!d.strict&&!(d.stops||[]).length&&(d.lines||[]).length===0){
@@ -918,8 +935,8 @@ function openPark(f,push=true){
       const cell=(lbl,x,t)=>`<span class="stat" title="${t}">${lbl} <b style="color:${col(x)}">${sc(x)}</b></span>`;
       svcbox+=`<div class="offbox" style="background:#f5f3ff;border-color:#ddd6fe">
         <div class="offh" style="color:#5b21b6">📈 מדדי השירות הרשמיים · משרד התחבורה${d.svcmeta&&d.svcmeta.updated?` · עדכון ${esc(d.svcmeta.updated)}`:''}</div>
-        <div class="stats" style="margin:6px 0 0">
-          ${cell('ציון משוקלל',v.fs,'הציון הכולל של המשרד לאזור הסטטיסטי, 0–100')}
+        <div class="motmain" title="הציון הכולל של המשרד לאזור הסטטיסטי, 0–100 — שקלול ארבעת המדדים שמתחת"><span class="motlbl">ציון משוקלל של המשרד</span><span class="motbig" style="background:${col(v.fs)};color:#fff">${sc(v.fs)}</span></div>
+        <div class="stats" style="margin:4px 0 0">
           ${cell('זמינות',v.av,'תדירות ופריסת שעות השירות')}
           ${cell('נגישות',v.ac,'לאן אפשר להגיע בזמן נסיעה נתון')}
           ${cell('תחרותיות',v.co,'זמן הנסיעה בתחבורה ציבורית מול רכב פרטי')}
