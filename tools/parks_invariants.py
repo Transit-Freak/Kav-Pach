@@ -91,6 +91,8 @@ for p in P:
     # השלישית נופלת ב-09:10 (ממצא איריס 02.09, מישור אדומים קו 169)
     def equiv(times):
         cnt = sum(1 for t in times if AM(t))
+        if cnt > 4:          # התיקון רק לקווים דלילים — כמו ב-tools/parks.py
+            return cnt, cnt
         win = sorted(t for t in times if '06:00' <= t < '09:30')
         if len(win) >= 3:
             mins = [int(t[:2]) * 60 + int(t[3:5]) for t in win]
