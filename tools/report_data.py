@@ -336,10 +336,11 @@ def build():
     cand = [p for p in big if not NOT_EXAMPLE.search(p['name'])]
     worst = sorted(cand, key=lambda p: (p['score'], -(p.get('area') or 0)))[:2]
     best = sorted(cand, key=lambda p: (-p['score'], -(p.get('pkd') or 0)))[:2]
-    # "מחוץ למרכזי הערים": יותר מ-12 ק"מ מכל אחד מארבעת מרכזי המטרופולין
+    # "מחוץ למרכזי הערים": יותר מ-15 ק"מ מכל אחד מארבעת מרכזי המטרופולין
+    # (15 ולא 12: הקריות של חיפה נמצאות 12–13 ק"מ ממרכז חיפה והן לב המטרופולין)
     CORES = [(32.08, 34.78, 'תל אביב'), (32.79, 34.99, 'חיפה'), (31.78, 35.22, 'ירושלים'), (31.25, 34.79, 'באר שבע')]
     def outside_cores(p):
-        return all(math.hypot((p['la'] - la) * 110.5, (p['lo'] - lo) * 94.2) > 12 for la, lo, _ in CORES)
+        return all(math.hypot((p['la'] - la) * 110.5, (p['lo'] - lo) * 94.2) > 15 for la, lo, _ in CORES)
     best_out = sorted([p for p in cand if outside_cores(p) and p['f'] not in {q['f'] for q in best}],
                       key=lambda p: (-p['score'], -(p.get('pkd') or 0)))[:2]
     examples = [enrich(p, 'הגרועים ביותר', describe(p)) for p in worst] + \
