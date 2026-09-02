@@ -64,6 +64,9 @@
   @media (max-width:900px){.wrap{grid-template-columns:1fr}}
   #map{height:520px;border-radius:14px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,.08)}
   .panel{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.08);padding:14px 16px;max-height:640px;overflow-y:auto}
+  /* במובייל הפאנל גולל עם הדף. קופסת גלילה של 640px בתוך דף שגולל = גלילה
+     בתוך גלילה, ורשימת 119 קווים דרך חלון של חצי מסך (ממצא 02.09) */
+  @media (max-width:900px){.panel{max-height:none;overflow:visible}}
   .stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
   .stat{background:var(--tint);border:1px solid var(--tintbrd);border-radius:10px;padding:6px 12px;font-size:12.5px;font-weight:800;color:var(--brand-deep)}
   .stat b{font-size:15px}
@@ -135,6 +138,14 @@
 .seg .btn.on{background:var(--brand);color:#fff}
 .mapwrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
 .maplegend{margin-top:8px;background:#fff;border-radius:10px;padding:8px 12px;font-size:11.5px;font-weight:800;color:#475569;box-shadow:0 2px 10px rgba(0,0,0,.08);line-height:1.75}
+/* ריבועי צבע במקרא המפה. הכלל הקודם היה על .legend בלבד, ולכן ה-<i> בתוך
+   .maplegend היו בלי גודל — בלתי נראים (הסיבה ש"המקרא לא תואם", איריס 02.09) */
+.maplegend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-left:4px;vertical-align:-1px}
+.legwhy{margin-top:6px;font-weight:600}
+.legwhy summary{cursor:pointer;font-weight:800;color:#5b21b6}
+.legwhy div{margin-top:4px;color:#475569;line-height:1.7;font-weight:600}
+/* כפתור החזרה מתצוגת מסלול, במובייל, צף על המפה */
+#routeback{position:absolute;bottom:14px;left:14px;z-index:1000;box-shadow:0 4px 16px rgba(0,0,0,.25)}
 .maplegend:empty,.maplegend:not(:has(span:not(:empty))){display:none}
 .mapwrap2{position:relative}
 .mapctl{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(255,255,255,.96);border-radius:12px;padding:8px 12px;box-shadow:0 2px 12px rgba(0,0,0,.18);max-width:330px;display:flex;flex-direction:column;gap:4px}

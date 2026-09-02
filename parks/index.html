@@ -48,7 +48,7 @@
       <button class="btn" id="ztinfra" style="display:none" title="נמלים, שדות תעופה, בתי זיקוק, מחזור">⚙️ תשתית</button>
       <button class="btn" id="stplan" style="display:none" title="אזורים שעדיין לא נבנו">🏗️ כולל אזורים בהקמה</button>
       <div class="lp-sec">סמל המפה הארצית</div>
-      <button class="btn on" id="symlines" title="צבע וגודל העיגול לפי עמידה בתקן הנגישות — שלושה צבעים בלבד. יוחלף בסקאלה המלאה כשתיסגר נוסחת המדד המשוקלל">🎯 עמידה בתקן · עיגול</button>
+      <button class="btn on" id="symlines" title="צבע וגודל העיגול לפי הציון המשוקלל של האתר (0–100) על סקאלת עשר המדרגות — הנוסחה שהוגדרה 01.09">🎯 הציון המשוקלל · עיגול</button>
       <button class="btn" id="symstops" title="משולש שגודלו לפי מספר תחנות האוטובוס הפעילות בתוך האזור">🚏 תחנות · משולש</button>
       <button class="btn" id="symfreq" title="עיגול שגודלו לפי מספר יציאות האוטובוס ביום חול — התדירות בפועל">🕐 תדירות · עיגול</button>
       <button class="btn" id="symscore" title="כוכב בצבע ובגודל לפי ציון השירות הרשמי של משרד התחבורה (0–100)">⭐ ציון משרד התחבורה · כוכב</button>
@@ -157,7 +157,7 @@ let map=null, layer=null, heatmap=null, heatLayer=null, IDX=[], sortK='li', sort
 // משמשת את ציון משרד התחבורה, ומוכנה לציון המשוקלל שלנו כשיאושר.
 const SC100=[[90,'#1a9c3e','#fff','מצוין'],[80,'#52c234','#fff','טוב מאוד'],[70,'#a4d465','#1a2e05','טוב'],
   [60,'#d3df3a','#3f3f05','בינוני-טוב'],[50,'#f5e42a','#493d03','בינוני'],[40,'#f5c02a','#4a3403','בינוני-חלש'],
-  [30,'#f59d20','#fff','חלש'],[20,'#ef7215','#fff','גרוע'],[10,'#e11d1d','#fff','גרוע מאוד'],[0,'#b91c1c','#fff','גרוע מאוד']];
+  [30,'#f59d20','#fff','חלש'],[20,'#ef7215','#fff','חלש מאוד'],[10,'#e11d1d','#fff','גרוע'],[0,'#b91c1c','#fff','גרוע מאוד']];
 function sc100(v){if(v==null)return{bg:'#94a3b8',fg:'#fff',label:'אין ציון'};for(const[t,bg,fg,label]of SC100)if(v>=t)return{bg,fg,label};return{bg:'#b91c1c',fg:'#fff',label:'גרוע מאוד'};}
 // חיפוש סלחני (בקשת איריס 01.09): "אזור תעשייה בית שמש" מוצא את
 // "איזור תעשיה צפוני" בבית שמש — כל מילה מותאמת בנפרד, באיות מנורמל
@@ -253,7 +253,7 @@ function pill(v,cls){return `<span class="pill ${v? cls:'p0'}">${v}</span>`}
 // רענון נתונים: הדפדפן שומר בזיכרון את קובצי הנתונים לפי הכתובת, ולכן
 // עדכון בשרת לא נראה למי שכבר ביקר. הוספת מספר גרסה + תאריך לכתובת
 // מכריחה הורדה מחדש — בכל דחיפה של הקוד ובכל יום.
-var VER='47';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
+var VER='48';   // גרסת הקוד — מוצהרת כאן כי DV נגזר ממנה
 const DV='?v='+VER+'-'+new Date().toISOString().slice(0,10);   // גרסת הנתונים נגזרת מגרסת הקוד — מונה אחד
 let SOCIO=null,SOCIOSA=null;
 function normCity(x){return String(x||'').replace(/["'׳״]/g,'').replace(/\s*-\s*/g,' ').replace(/קריית/g,'קרית').replace(/ייה/g,'יה').replace(/\s+/g,' ').trim()}
@@ -379,7 +379,7 @@ function openHeatmap(fit=true){
     +'<div class="gw-l"><b>① מחלקים את הארץ לשתיים:</b> כל אזורי התעשייה הפעילים ('+(g.cN+g.pN)+') מחולקים לפי המרחק מתל אביב — עד 45 ק״מ נחשב ״מרכז״ ('+g.cN+' אזורים), רחוק יותר נחשב ״פריפריה״ ('+g.pN+' אזורים).</div>'
     +'<div class="gw-l"><b>② סופרים קווים לכל אזור:</b> '+(HEATSCOPE=='in'?'קו אוטובוס נספר רק אם הוא נכנס לתוך האזור עצמו (המצב שנבחר: ״נכנסים פנימה בלבד״)':'קו אוטובוס נספר אם הוא נכנס לתוך האזור או עוצר עד 5 דקות הליכה מהנקודה הקרובה ביותר על גבול האזור (המצב שנבחר: ״כולל סמוכות לגבול״)')+'. קו עם שני כיוונים נספר פעם אחת — בלי ניפוח.</div>'
     +(g.hasDep?'<div class="gw-l"><b>③ סופרים גם את הלו״ז:</b> לכל הקווים האלה סופרים את כל היציאות ביום חול רגיל. למה זה חשוב? אזור עם 3 קווים שיוצאים כל רבע שעה מקבל הרבה יותר שירות מאזור עם 3 קווים שיוצאים פעמיים ביום — מספר הקווים לבד לא מגלה את זה.</div>':'')
-    +'<div class="gw-l"><b>'+(g.hasDep?'④':'③')+' משווים ממוצעים:</b> לכל קבוצה מחשבים ממוצע קווים לאזור'+(g.hasDep?', ממוצע יציאות ביום':'')+', ואת אחוז האזורים שאף קו לא מגיע אליהם בכלל. ״פי X״ = הממוצע במרכז חלקי הממוצע בפריפריה, ופסי הצבע מציירים את היחס הזה בעין.</div>'
+    +'<div class="gw-l"><b>'+(g.hasDep?'④':'③')+' משווים בין שתי הקבוצות:</b> לכל קבוצה מחשבים כמה קווי אוטובוס מגיעים לאזור אחד בממוצע'+(g.hasDep?', כמה יציאות יש לו ביום בממוצע':'')+', ואיזה חלק מהאזורים בקבוצה נשאר בלי אף קו. אחר כך מחלקים את ממוצע המרכז בממוצע הפריפריה: '+g.cAvg.toFixed(1)+' קווים לאזור במרכז, חלקי '+g.pAvg.toFixed(1)+' בפריפריה, = <b>פי '+ratio.toFixed(1)+'</b>. זה כל מה שהמספר אומר: לאזור תעשייה במרכז יש בממוצע פי '+ratio.toFixed(1)+' יותר קווים מאשר לאזור בפריפריה. פסי הצבע בשני הכרטיסים מציירים את אותו יחס.</div>'
     +(g.cSf!=null&&g.pSf!=null?'<div class="gw-l"><b>⭐ ציון השירות הכולל:</b> הציון המשוקלל הרשמי שמשרד התחבורה נותן לרמת השירות בכל אזור סטטיסטי (0–100, משקלל זמינות ואמינות). כאן מוצג הממוצע שלו בכל קבוצה — מדד חיצוני ובלתי תלוי שמאשש את אותה תמונה.</div>':'')
     +'<div class="gw-l">ההשוואה מחושבת מחדש בכל שינוי של כפתורי הספירה למעלה ושל מצב המדידה (מרכז/גבול) בפאנל השכבות.</div>'
     +'</details>';}catch(e){}
@@ -426,26 +426,50 @@ function openHeatmap(fit=true){
         pop:p=>{const b=(p.bl1!=null?p.bl1:p.bl)||0;return b?`🔝 הקו החזק ביותר (בכיוון בודד): אוטובוס כל <b>~${Math.round(180/b)} דק׳</b> בבוקר (${b} יציאות 06–09)`:'<b style="color:#b91c1c">אין אף קו עם יציאות בוקר</b>'}}};
 
   // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
-  document.getElementById('hpeak').parentElement.style.visibility='hidden';   // פסק הדין קבוע — המתג לא רלוונטי
-  document.getElementById('hscopeseg').style.visibility=SYMMODE=='freq'?'visible':'hidden';
+  // display ולא visibility: אלמנט מוסתר ב-visibility שומר את מקומו, וזה
+  // יצר רווח מת בכותרת במובייל (ממצא 02.09).
+  document.getElementById('hpeak').parentElement.style.display='none';   // פסק הדין קבוע — המתג לא רלוונטי
+  document.getElementById('hscopeseg').style.display=SYMMODE=='freq'?'':'none';
   document.getElementById('hsin').classList.toggle('on',HEATSCOPE=='in');
   document.getElementById('hsall').classList.toggle('on',HEATSCOPE=='all');
-  const sc100chips=SC100.slice().reverse().map(([t,bg,,label])=>`<i style="background:${bg}" title="${label}"></i>${t}`).join(' ');
-  document.getElementById('hleg').innerHTML=
-    LAYERS[SYMMODE]
-      ? LAYERS[SYMMODE].cap+' (נמדד ממרכז האזור ✚) — ציון 0–100: '+sc100chips+' · <i style="background:#94a3b8"></i> אין נתון <span style="color:#94a3b8">· מדרגות זמניות לבחינה</span>'
-      : SYMMODE=='score'
-      ? '⭐ ציון משרד התחבורה (0–100): '+SC100.slice().reverse().map(([t,bg,,label])=>`<i style="background:${bg}" title="${label}"></i>${t}`).join(' ')+' · <i style="background:#94a3b8"></i> אין ציון'
-      : (SYMMODE=='stops'||SYMMODE=='freq')
-      ? (SYMMODE=='stops'?'🚏 תחנות בתוך האזור: ':'🕐 יציאות אוטובוס ביום חול: ')+
-        `<i style="background:#dc2626"></i> 0 · <i style="background:#fde047"></i> 1–${T[0]} · `+
-        `<i style="background:#84cc16"></i> ${T[0]+1}–${T[1]} · <i style="background:#16a34a"></i> ${T[1]+1}–${T[2]} · `+
-        `<i style="background:#065f46"></i> ${T[2]+1}+`
-      : (()=>{const c=(sz,cl)=>`<span style="display:inline-block;width:${sz}px;height:${sz}px;border-radius:50%;background:${cl};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;vertical-align:middle;flex:none"></span>`;
-        // הציון המשוקלל (הגדרת איריס 01.09) — סקאלת עשר המדרגות
-        return `🎯 <b>הציון המשוקלל של האתר (0–100)</b> — צבע וגודל העיגול לפי הציון:<br>`+
-          SC100.slice().reverse().map(([t,bg,,lab])=>`${c(Math.round(9+t/100*13),bg)} ${t}+ ${lab}`).join(' · ')+
-          `<br><span style="font-weight:600;color:#64748b">מרכיבי הציון: תדירות שימושית בשעות השיא <b>15%</b> · תדירות הקו התדיר בשיא הבוקר <b>35%</b> · הליכת העובד מהנקודה המרוחקת באזור <b>25%</b> · הליכה ממרכז האזור לתחנה הקרובה <b>25%</b> · טבעת סגולה = אזור תעסוקה, טבעת כהה = תשתית</span>`;})();
+  // המקרא תואם לסמל שעל המפה (בקשת איריס 02.09): אותה צורה, אותם צבעים,
+  // אותו מדרג גדלים — ומתחתיו רובריקת הסבר מה השכבה מודדת, כמו בעמוד האזור.
+  // קודם השכבות האלה השתמשו ב-<i> שהעיצוב שלו הוגדר ל-.legend ולא ל-.maplegend,
+  // כך שהריבועים הצבעוניים לא נראו כלל והמקרא הציג מספרים בלי צבע.
+  const swC=(sz,cl)=>`<span style="display:inline-block;width:${sz}px;height:${sz}px;border-radius:50%;background:${cl};border:2px solid #fff;box-shadow:0 0 0 1px #cbd5e1;vertical-align:middle;flex:none"></span>`;
+  const swT=(sz,cl)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20" style="vertical-align:middle;flex:none"><polygon points="10,2 19,18 1,18" fill="${cl}" stroke="#94a3b8" stroke-width="1.2"/></svg>`;
+  const swS=(sz,cl)=>`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20" style="vertical-align:middle;flex:none"><path d="M10 1.5 12.6 7.2 18.8 7.9 14.2 12.1 15.5 18.2 10 15.1 4.5 18.2 5.8 12.1 1.2 7.9 7.4 7.2 Z" fill="${cl}" stroke="#94a3b8" stroke-width="1"/></svg>`;
+  const row=items=>`<span style="display:inline-flex;flex-wrap:wrap;gap:4px 12px;align-items:center">${items.map(s=>`<span style="white-space:nowrap;display:inline-flex;align-items:center;gap:4px">${s}</span>`).join('')}</span>`;
+  const why=(title,html)=>`<details class="legwhy"><summary>❓ ${title}</summary><div>${html}</div></details>`;
+  const sc10=sw=>SC100.slice().reverse().map(([t,bg,,lab])=>`${sw(Math.round(9+t/100*13),bg)} ${t}+ ${lab}`);
+  const noData=(sw,txt)=>`${sw(9,'#94a3b8')} ${txt}`;
+  const bins5=()=>[[0,'0'],[1,`1–${T[0]}`],[T[0]+1,`${T[0]+1}–${T[1]}`],[T[1]+1,`${T[1]+1}–${T[2]}`],[T[2]+1,`${T[2]+1}+`]];
+  document.getElementById('hleg').innerHTML=(()=>{
+    if(LAYERS[SYMMODE]){
+      const exp={
+        uf:'סופרים את יציאות האוטובוס השימושיות בשעות השיא — בבוקר (06–09) רק קווים שנוסעים <b>אל</b> האזור, אחה״צ (15–19) רק קווים שנוסעים <b>ממנו</b> — ומחלקים ל-7 שעות. יוצא כל כמה דקות יש אוטובוס שימושי בממוצע. הציון: כל 5 דק׳ = 95 · כל 8 = 85 · כל 12 = 75 · כל 17 = 65 · כל 25 = 55 · כל 35 = 45 · כל 50 = 35 · כל 80 = 25 · כל 3 שעות = 15. קווי תלמידים ולילה לא נספרים.',
+        far:'מוצאים את הנקודה בתוך האזור שהכי רחוקה מכל תחנה — העובד במפעל המרוחק ביותר — ומודדים כמה דקות הוא הולך ברגל במסלול אמיתי על שבילים וכבישים (OSRM) עד התחנה הקרובה אליו. הציון: עד 5 דק׳ = 95 · עד 8 = 85 · עד 11 = 75 · עד 14 = 65 · עד 18 = 55 · עד 22 = 45 · עד 28 = 35 · עד 35 = 25 · עד 45 = 15.',
+        best:'מבין כל הקווים שמגיעים לאזור לוקחים את זה עם הכי הרבה יציאות בשיא הבוקר (06–09), בכיוון בודד, ומחשבים כל כמה דקות הוא יוצא. הציון: כל 5 דק׳ = 95 · כל 10 = 80 · כל 15 = 70 · כל 20 = 60 · כל 30 = 45 · כל 45 = 30 · כל שעה = 20.'}[SYMMODE];
+      return `${LAYERS[SYMMODE].cap} — צבע וגודל העיגול לפי ציון 0–100 (נמדד ממרכז האזור ✚):<br>`+row([...sc10(swC),noData(swC,'אין נתון')])+
+        why('מה השכבה הזאת מודדת',exp+' <span style="color:#94a3b8">המדרגות זמניות לבחינה, עד הגדרה סופית.</span>');
+    }
+    if(SYMMODE=='score'){
+      const items=SC100.slice().reverse().map(([t,bg,,lab])=>`${swS(Math.round(10+Math.pow(t/100,1.8)*14),bg)} ${t}+ ${lab}`);
+      return `⭐ <b>ציון השירות של משרד התחבורה (0–100)</b> — צבע וגודל הכוכב לפי הציון:<br>`+row([...items,noData(swS,'אין ציון')])+
+        why('מה מודד הציון הזה','זה לא ציון שלנו. משרד התחבורה מחשב אותו לכל אזור סטטיסטי בארץ (שכבת ״מדדי שירות בתחבורה ציבורית״ מפורטל תלתן, גרסת נובמבר 2025), והאזור מקבל את הציון של האזור הסטטיסטי שהוא נמצא בו. ארבעה מדדים משוקללים לציון אחד:<br><b>זמינות</b> — כמה שירות יש: תדירות הקווים ופריסת שעות הפעילות.<br><b>נגישות</b> — לאן מגיעים: היקף היעדים שאפשר להגיע אליהם בזמן נסיעה נתון.<br><b>תחרותיות</b> — כמה זה משתלם: זמן הנסיעה בתחבורה ציבורית מול אותה נסיעה ברכב פרטי.<br><b>אמינות</b> — כמה זה מדויק: עמידת הנסיעות בלוח הזמנים המתוכנן.');
+    }
+    if(SYMMODE=='stops'){
+      return `🚏 <b>תחנות אוטובוס בתוך האזור</b> — צבע וגודל המשולש לפי מספר התחנות:<br>`+row(bins5().map(([v,l])=>`${swT(Math.round(Math.max(12,hsiz(v)*1.5)*0.75),hcol(v))} ${l}`))+
+        why('מה השכבה הזאת מודדת','סופרים כמה תחנות אוטובוס פעילות נמצאות <b>פיזית בתוך גבולות האזור</b>. תחנות בשער או במרחק הליכה מחוץ לגבול לא נספרות כאן (הן כן נספרות בשכבות האחרות). תחנה נחשבת פעילה אם עוצר בה לפחות קו אחד ביום חול. זה מדד לפריסת התחנות בלבד — הוא לא אומר כמה אוטובוסים עוצרים בהן, ואזור ירוק כאן יכול לקבל ציון נמוך בשכבת התדירות. אדום = אין אף תחנה בתוך האזור.');
+    }
+    if(SYMMODE=='freq'){
+      return `🕐 <b>יציאות אוטובוס ביום חול</b> — צבע וגודל העיגול לפי מספר היציאות:<br>`+row(bins5().map(([v,l])=>`${swC(hsiz(v),hcol(v))} ${l}`))+
+        why('מה השכבה הזאת מודדת',`סופרים את כל יציאות האוטובוס ביום חול רגיל של הקווים ש${HEATSCOPE=='in'?'נכנסים לתוך האזור עצמו (המצב שנבחר: ״נכנסים פנימה בלבד״)':'נכנסים לתוך האזור או עוצרים בשערי הכניסה שלו (המצב שנבחר: ״כולל שערי כניסה״)'}, לפי לוח הזמנים הרשמי (GTFS). זה השירות בפועל: אזור עם 3 קווים שיוצאים כל רבע שעה מקבל כאן הרבה יותר מאזור עם 3 קווים שיוצאים פעמיים ביום. קווי תלמידים ולילה לא נספרים. אדום = אפס יציאות.`);
+    }
+    // הציון המשוקלל (הגדרת איריס 01.09) — סקאלת עשר המדרגות. ברירת המחדל.
+    return `🎯 <b>הציון המשוקלל של האתר (0–100)</b> — צבע וגודל העיגול לפי הציון:<br>`+row([...sc10(swC),noData(swC,'אין ציון')])+
+      `<br><span style="font-weight:600;color:#64748b">מרכיבי הציון: תדירות שימושית בשעות השיא <b>15%</b> · תדירות הקו התדיר בשיא הבוקר <b>35%</b> · הליכת העובד מהנקודה המרוחקת באזור <b>25%</b> · הליכה ממרכז האזור לתחנה הקרובה <b>25%</b> · טבעת סגולה = אזור תעסוקה, טבעת כהה = תשתית</span>`;
+  })();
   const triIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
     html:`<svg width="${sz}" height="${sz}" viewBox="0 0 20 20"><polygon points="10,2 19,18 1,18" fill="${c}" stroke="#fff" stroke-width="1.6"/></svg>`});
   const starIcon=(sz,c)=>L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
@@ -573,9 +597,9 @@ document.getElementById('modebtn').onclick=()=>{
   const h=decodeURIComponent((location.hash||'').slice(1));
   if(wrap.style.display!=='none' && h) openPark(h,false);
 };
-// סמל המפה הארצית: קווים (עיגול) / תחנות (משולש) / תדירות (עיגול) / ציון המשרד (כוכב).
-// ברירת המחדל (סיכום איריס 24.08): פסק הדין — עמידה בתקן בשלושה צבעים;
-// שאר השכבות והסמלים בבחירה ידנית, כדי לא להציף את הגולש במידע
+// סמל המפה הארצית: הציון המשוקלל (עיגול) / תחנות (משולש) / תדירות (עיגול) / ציון המשרד (כוכב).
+// ברירת המחדל (איריס 01.09): הציון המשוקלל על סקאלת עשר המדרגות — החליף את
+// פסק-הדין הישן בשלושה צבעים (24.08). שאר השכבות בבחירה ידנית, כדי לא להציף במידע.
 let SYMMODE='lines';
 for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','freq'],['symscore','score'],['symuf','uf'],['symfar','far'],['symbest','best']])
   document.getElementById(id).onclick=()=>{
@@ -696,17 +720,46 @@ function drawStops(d){
 // מסלול הקו על המפה (בקשת ההסתדרות): לחיצה על כרטיס קו מציגה את המסלול,
 // לחיצה חוזרת מסירה. הקובץ נטען רק בלחיצה — data/shp/<rid>.json, מקודד
 // באותו פורמט polyline ש-decPoly כבר מפענח לשכבת האשכולות.
+// במובייל המפה מעל הפאנל, ולחיצה על קו עמוק ברשימה ציירה מסלול שהגולש לא
+// ראה ולא היה לו לאן לחזור (איריס 02.09). עכשיו: גוללים אל המפה, מציגים
+// כפתור "חזרה לרשימת הקווים", ודוחפים מצב להיסטוריה — כך שגם "אחורה"
+// בדפדפן סוגר את המסלול וחוזר לאזור, במקום לזרוק לדף הראשי.
+const isMobile=()=>window.matchMedia('(max-width:900px)').matches;
+function clearRoute(){
+  if(window._routeLayer){window._routeLayer.remove();window._routeLayer=null;}
+  window._routeKey=null;
+  if(window._routeEl) window._routeEl.classList.remove('open');
+  const rb=document.getElementById('routeback'); if(rb) rb.remove();
+}
 function drawRouteEl(el){
   const rid=el.dataset.rid;
   if(!rid||!map) return;
   if(window._routeLayer){window._routeLayer.remove();window._routeLayer=null;}
-  if(window._routeKey===rid){window._routeKey=null;return;}
-  window._routeKey=rid;
+  if(window._routeKey===rid){                    // לחיצה חוזרת — מסירים
+    clearRoute();
+    if(history.state&&history.state.route) history.back();
+    return;
+  }
+  window._routeKey=rid; window._routeEl=el;
+  if(history.state&&history.state.route) history.replaceState({park:window._curF,route:rid},'',location.hash);
+  else history.pushState({park:window._curF,route:rid},'',location.hash);
   fetch('data/shp/'+rid+'.json'+DV).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{
     if(window._routeKey!==rid)return;
     window._routeLayer=L.polyline(decPoly(d.e),{color:el.dataset.c||'#32318e',weight:5,opacity:.85}).addTo(map);
     try{map.fitBounds(window._routeLayer.getBounds().pad(0.1));}catch(e){}
   }).catch(()=>{/* אין קובץ מסלול לקו הזה — פשוט לא מציירים */});
+  if(isMobile()){
+    const mw=document.getElementById('map').parentElement;
+    let rb=document.getElementById('routeback');
+    if(!rb){rb=document.createElement('button');rb.id='routeback';rb.className='btn';mw.appendChild(rb);}
+    rb.textContent='↩ חזרה לרשימת הקווים';
+    rb.onclick=()=>{ if(history.state&&history.state.route) history.back(); else { clearRoute(); el.scrollIntoView({behavior:'smooth',block:'center'}); } };
+    // הכותרת דביקה — scrollIntoView היה מחביא את ראש המפה מתחתיה. גוללים
+    // כך שהמפה מתחילה מיד מתחת לכותרת.
+    const hdr=(document.querySelector('.top')||{}).offsetHeight||0;
+    const mtop=document.getElementById('map').getBoundingClientRect().top+window.scrollY;
+    window.scrollTo({top:Math.max(0,mtop-hdr-6),behavior:'smooth'});
+  }
 }
 // "חזרה לרשימה" מציג את הרשימה עצמה תמיד. history.back() היה נכון רק למי
 // שהגיע מהרשימה — מי שנכנס ישירות לקישור של אזור נזרק לדף הקודם בדפדפן.
@@ -722,7 +775,15 @@ function goList(){
 backbtn.onclick=()=>{showTable();if(location.hash) history.replaceState(null,'',location.pathname+location.search);};
 // כפתור "אחורה" של הטלפון/דפדפן מחזיר לרשימה במקום לעזוב את העמוד
 window.addEventListener('popstate',e=>{
-  if(e.state&&e.state.park) openPark(e.state.park,false);
+  const st=e.state||{};
+  // חזרה ממצב "מסלול קו" לאותו אזור: סוגרים את המסלול, גוללים לכרטיס,
+  // ולא טוענים את האזור מחדש
+  if(st.park&&st.park===window._curF&&!st.route&&(window._routeKey||document.getElementById('routeback'))){
+    const el=window._routeEl; clearRoute();
+    if(el&&isMobile()) el.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  if(st.park) openPark(st.park,false);
   else if(location.hash&&location.hash.length>2) openPark(location.hash.slice(1),false);
   else if(FROM=='heat') openHeatmap(false);
   else showTable();
@@ -753,6 +814,8 @@ document.getElementById('csvbtn').onclick=()=>{
 };
 
 function openPark(f,push=true){
+  window._curF=f; window._routeEl=null;
+  const _rb=document.getElementById('routeback'); if(_rb) _rb.remove();
   if(push) history.pushState({park:f},'','#'+encodeURIComponent(f));
   fetch('data/'+f+DV).then(r=>r.json()).then(d=>{
     tblview.style.display='none'; wrap.style.display='grid';
