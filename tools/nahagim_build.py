@@ -159,19 +159,28 @@ def match_chunk(osrm, pts, radius=25, tidy=True):
     return http_json(url)
 
 
-def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70):
-    """הצורה מדוללת לריווח ~70 מ׳, נחתכת לחתיכות של עד 90 נקודות (חפיפה של 2), וכל חתיכה מותאמת בנפרד."""
+def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70, overlap=12, margin=5):
+    """הצורה מדוללת לריווח ~70 מ׳ ונחתכת לחתיכות של עד 90 נקודות, וכל חתיכה מותאמת בנפרד.
+    חפיפה של 12 נקודות (~840 מ׳) בין חתיכות, והוראות נלקחות רק מ"פנים" החתיכה — לא
+    מ-5 הנקודות (~350 מ׳) שבקצה שמשיק לחתיכה שכנה. בתפר ההתאמה מתחילה מנקודה
+    שרירותית ומולידה הוראות שאינן בכביש: "פנו שמאלה / היצמדו לשמאל / היצמדו לימין"
+    בקו 17 גן יבנה→אשדוד ישבו כולן בתוך 50 מ׳ מהתפר של החתיכה הרביעית (שלמה 02.09,
+    הבדיקה: shots/nah/seam-23.png). הפנים של חתיכות שכנות עדיין חופפים ב-2 נקודות."""
     n = int(max(2, min(len(pl.pts), round(pl.total / spacing_m))))
     pts = thin(pl.pts, n)
+    fpts = [pl.locate(la, lo)[0] for la, lo in pts]     # מיקום כל נקודה מדוללת על הקו
     chunks, i = [], 0
     while i < len(pts) - 1:
-        chunks.append(pts[i:i + chunk_pts])
-        if i + chunk_pts >= len(pts):
+        j = min(len(pts), i + chunk_pts)
+        lo_f = fpts[i + margin] if i > 0 and i + margin < j else -1.0
+        hi_f = fpts[j - 1 - margin] if j < len(pts) and j - 1 - margin > i else 2.0
+        chunks.append((pts[i:j], lo_f, hi_f))
+        if j >= len(pts):
             break
-        i += chunk_pts - 2
+        i += chunk_pts - overlap
     out, matched_m, conf, failed = [], 0.0, [], 0
     cursor = 0.0     # ההוראות מונוטוניות לאורך הקו: כל אחת נמצאת אחרי הקודמת (עד 60 מ׳ אחורה, לחפיפת החתיכות)
-    for ch in chunks:
+    for ch, lo_f, hi_f in chunks:
         if len(ch) < 2:
             continue
         j = None
@@ -196,6 +205,8 @@ def maneuvers_for(osrm, pl, chunk_pts=90, spacing_m=70):
                     lon, lat = st['maneuver']['location']
                     f, d = pl.locate(lat, lon, f_min=max(0.0, cursor - 60.0 / pl.total))
                     if d > 60:       # הוראה רחוקה מהצורה — לא שלנו
+                        continue
+                    if f < lo_f or f > hi_f:   # בקצה החתיכה, בחפיפה עם השכנה — תפר, לא כביש
                         continue
                     cursor = max(cursor, f)
                     mv['f'] = round(f, 5)
