@@ -1,0 +1,44 @@
+name: probe-variant-stop
+
+# בדיקה מול ארכיון אופן באס: האם תחנה הייתה ברצף התחנות של וריאנט בתאריכים נתונים.
+# הרצה ידנית בלבד. התוצאה: docs/probes/variant-stop-<rd>-<stop>.json
+
+on:
+  workflow_dispatch:
+    inputs:
+      rd:
+        description: 'route_desc (מק"ט-כיוון-חלופה)'
+        default: '10391-2-א'
+      stop:
+        description: 'מק"ט תחנה'
+        default: '10345'
+      dates:
+        description: 'תאריכים מופרדים בפסיק'
+        default: '2024-08-15,2025-07-01,2025-07-08,2025-07-15,2025-07-22,2025-07-29,2025-08-05,2025-08-12,2025-08-19,2025-08-26,2025-08-31,2026-07-01,2026-07-15,2026-08-15'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: שאילתה לארכיון
+        env:
+          RD: ${{ inputs.rd }}
+          STOP: ${{ inputs.stop }}
+          DATES: ${{ inputs.dates }}
+        run: python3 tools/probe_variant_stop.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/probes
+          git diff --cached --quiet && { echo unchanged; exit 0; }
+          git commit -m "probe: תחנה ברצף וריאנט לפי תאריך (ארכיון אופן באס)"
+          for i in 1 2 3; do
+            git push origin HEAD:main && break
+            git pull --rebase origin main || { git rebase --abort; break; }
+          done
