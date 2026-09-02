@@ -40,10 +40,14 @@ for fn in sorted(os.listdir(f'{OUTDIR}/lines')):
         if diff_here:
             pc = {str(s[0]) for s in prev}
             cc = {str(s[0]) for s in st}
-            add = [s[1] for s in st if str(s[0]) not in pc]
-            rem = [s[1] for s in prev if str(s[0]) not in cc]
-            if add: v['add'] = add
-            if rem: v['rem'] = rem
+            add_s = [s for s in st if str(s[0]) not in pc]
+            rem_s = [s for s in prev if str(s[0]) not in cc]
+            add = [s[1] for s in add_s]
+            rem = [s[1] for s in rem_s]
+            # גם המק"טים, מיושרים לשמות (ac/rc): בלי זה מילוי-הקודים המאוחר לפי שם
+            # השאיר None כשהשם השתנה — וזה מקור רשומות "ירדה" בלי מק"ט (שלמה 02.09, קו 391)
+            if add: v['add'] = add; v['ac'] = [str(s[0]) for s in add_s]
+            if rem: v['rem'] = rem; v['rc'] = [str(s[0]) for s in rem_s]
             if add or rem:
                 changed = True; n_ev += 1
                 if diff_here == 'gap':
