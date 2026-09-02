@@ -38,12 +38,13 @@ const H2 = (t, o = {}) => new Paragraph({ heading: HeadingLevel.HEADING_2, pageB
 const Note = t => P([run(t, { size: 19, color: MUT, italics: true })], { after: 160 });
 const Bullet = t => new Paragraph({ bidirectional: true, alignment: AlignmentType.RIGHT, numbering: { reference: 'bul', level: 0 }, spacing: { after: 60, line: 300 }, children: Array.isArray(t) ? t : [run(t)] });
 const Break = () => new Paragraph({ children: [new PageBreak()] });
-const Img = (file, w = 560) => {
+const Img = (file, w = 560, o = {}) => {
   const p = IMG(file); if (!fs.existsSync(p)) return Note(`[תרשים ${file} לא נוצר בבנייה הזו]`);
   const b = fs.readFileSync(p); let h = Math.round(w * 0.78);
   try { const { width, height } = pngSize(b); h = Math.round(w * height / width); } catch {}
-  // keepNext: התמונה נשארת עם הכיתוב שאחריה — כיתוב לא גולש לבדו לעמוד חדש
-  return new Paragraph({ alignment: AlignmentType.CENTER, keepNext: true, spacing: { after: 120 }, children: [new ImageRun({ type: 'png', data: b, transformation: { width: w, height: h } })] });
+  // keep: התמונה נשארת עם הכיתוב שאחריה — רק כשיש כיתוב. שרשרת של כמה תרשימים
+  // עם keepNext הפכה לגוש שלא נכנס לעמוד וקפץ כולו לעמוד הבא (חצי עמוד ריק).
+  return new Paragraph({ alignment: AlignmentType.CENTER, keepNext: !!o.keep, spacing: { after: 120 }, children: [new ImageRun({ type: 'png', data: b, transformation: { width: w, height: h } })] });
 };
 function pngSize(b) { return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) }; }
 
@@ -162,7 +163,7 @@ kids.push(H2('אותן עובדות, בתרשימים'));
 kids.push(Img('bar-noservice.png', 500));
 kids.push(Img('bar-far-dist.png', 500));
 kids.push(Img('bar-bl-dist.png', 500));
-kids.push(Img('bar-concentration.png', 500));
+kids.push(Img('bar-concentration.png', 500, { keep: true }));
 kids.push(Note('ריכוזיות: האזורים מסודרים לפי מספר יציאות השיא ומחולקים לעשרה עשירונים שווים; העמודה היא חלקו של כל עשירון בסך היציאות הארצי.'));
 // 7. פערים
 kids.push(H1('6. הפערים'));
@@ -302,7 +303,7 @@ for (const e of data.examples) {
     [0.12, 0.15, 0.12, 0.09, 0.18, 0.17, 0.17], { center: true, size: 17 }));
   if (e.streets && e.streets.length) kids.push(P(`תחנות בתוך האזור (לזיהוי המקום): ${e.streets.join(' · ')}`));
   else if (e.stops && e.stops.length) kids.push(P(`התחנות הקרובות: ${[...new Set(e.stops.filter(s => s.n).map(s => s.n))].slice(0, 4).join(' · ')}`));
-  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 520)); kids.push(Note(MAP_LEGEND)); }
+  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 520, { keep: true })); kids.push(Note(MAP_LEGEND)); }
   else kids.push(Note('[המפה נוצרת בבניית GitHub Actions — סביבת העבודה המקומית חוסמת את שרת האריחים]'));
 }
 
