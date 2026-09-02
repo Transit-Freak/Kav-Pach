@@ -24,6 +24,7 @@ from compact_lines import materialize, compact  # noqa: E402
 
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 APPLY = '--apply' in sys.argv
+ALL = '--all' in sys.argv      # לא רק רשומות בלי מק"ט — כל רשומה שסותרת את ההפרש בין הרשימות
 LIMIT = 15
 
 
@@ -57,7 +58,16 @@ def main():
             add, ac = v.get('add') or [], v.get('ac') or []
             legacy = (rem and (len(rc) < len(rem) or any(c is None for c in rc))) or \
                      (add and (len(ac) < len(add) or any(c is None for c in ac)))
-            if legacy and prev is not None:
+            # --all (שלמה 02.09): הכלל מחייב בכל רשומה שמצהירה על שינוי — תחנה יכולה
+            # "לרדת" רק אם הייתה במצב המתועד הקודם, ו"להתווסף" רק אם לא הייתה בו.
+            # מה שאינו נובע מההפרש בין שתי הרשימות אינו שינוי, לא משנה איזה בסיס
+            # השוואה השתמש בו כותב ישן. רשומות בלי הצהרה על שינוי לא מקבלות אחת.
+            inconsistent = False
+            if ALL and prev is not None and (rem or add):
+                a2, r2 = diff(prev['stops'], st)
+                inconsistent = ({str(c) for c in rc if c} != {str(s[0]) for s in r2}) or \
+                               ({str(c) for c in ac if c} != {str(s[0]) for s in a2})
+            if (legacy or inconsistent) and prev is not None:
                 n_ver += 1
                 a2, r2 = diff(prev['stops'], st)
                 old = {'rem': rem, 'rc': rc, 'add': add, 'ac': ac}
