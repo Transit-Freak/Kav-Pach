@@ -131,15 +131,19 @@ def classify(man, name):
         ord_ = EXIT_HE[ex] if ex and ex < len(EXIT_HE) else (f'ה־{ex}' if ex else '')
         text = (f'בכיכר — צאו ביציאה {ord_}' if ex else 'בכיכר') + (f' אל {name}' if name else '')
         return {'kind': 'roundabout', 'exit': ex, 'name': name, 'street': name, 'text': text}
-    if t in ('exit roundabout', 'exit rotary', 'arrive', 'depart'):
-        return None
+    if t in ('exit roundabout', 'exit rotary', 'arrive', 'depart', 'merge'):
+        return None          # התמזגות אינה הוראת פנייה
     if mod not in TURN_MODS:
         return None
     if mod.startswith('slight') and t in ('continue', 'new name'):
         return None
     d = 'right' if 'right' in mod else 'left'
-    lead = 'בסוף הדרך פנו ' if t == 'end of road' else 'הישארו ' if t == 'fork' else 'פנו '
-    dd = ('מימין' if d == 'right' else 'משמאל') if t == 'fork' else ('ימינה' if d == 'right' else 'שמאלה')
+    # הבחנה ששלמה דרש (02.09, מחלף עד הלום): התפצלות/רמפה היא "היצמדו לימין", לא "פנו ימינה"
+    if t in ('fork', 'off ramp', 'on ramp'):
+        side = 'לימין' if d == 'right' else 'לשמאל'
+        return {'kind': f'keep-{d}', 'exit': None, 'name': name, 'street': name, 'text': f'היצמדו {side}' + (f' אל {name}' if name else ''), 'type': t}
+    lead = 'בסוף הדרך פנו ' if t == 'end of road' else 'פנו '
+    dd = 'ימינה' if d == 'right' else 'שמאלה'
     return {'kind': d, 'exit': None, 'name': name, 'street': name, 'text': lead + dd + (f' אל {name}' if name else ''), 'type': t}
 
 
