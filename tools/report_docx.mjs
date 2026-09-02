@@ -220,7 +220,7 @@ kids.push(Break());
 // 10. חריגים
 kids.push(H1('9. אזורים חריגים'));
 for (const o of data.outliers) {
-  kids.push(H2(`${o.name} · ${o.city}`));
+  kids.push(H2(o.city && o.city !== '—' ? `${o.name} · ${o.city}` : o.name));
   kids.push(T(['הציון שלנו', 'ציון משרד התחבורה', 'שטח', 'הקו החזק בשיא', 'הנקודה הרחוקה'],
     [[[`${o.score}`, scaleColor(o.score), inkOn(scaleColor(o.score))], fmt(o.mot), `${o.area} קמ"ר`, o.bl_headway ? `כל ~${o.bl_headway} דק׳` : 'אין קו בשיא', o.far != null ? `${o.far} דק׳` : 'אין תחנות']],
     [0.16, 0.2, 0.16, 0.24, 0.24], { center: true }));
@@ -234,7 +234,7 @@ kids.push(P('ארבעה אזורים על רקע מפת רחובות (OpenStreet
 for (const e of data.examples) {
   const mapf = `map-${e.f.replace('.json', '')}.png`;
   kids.push(H2(`${e.name} · ${e.city} · ציון ${e.score}`));
-  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 560)); kids.push(Note('רקע: © OpenStreetMap contributors')); }
+  if (fs.existsSync(IMG(mapf))) { kids.push(Img(mapf, 560)); kids.push(Note('גבול כחול = האזור · ✚ = מרכז האזור · תחנות: ירוק = בתוך האזור, ירוק בהיר = עד 5 דק׳ הליכה, צהוב = 5–10, כתום = 10–20 · רקע: © OpenStreetMap contributors')); }
   else kids.push(Note('[המפה נוצרת בבניית GitHub Actions — סביבת העבודה המקומית חוסמת את שרת האריחים]'));
   kids.push(P(`שטח ${e.area} קמ"ר · ${e.lines ?? '—'} קווים · הקו החזק ${e.bl_headway ? `כל ~${e.bl_headway} דק׳` : 'אין'} · הנקודה הרחוקה ${e.ww != null ? Math.round(e.ww) + ' דק׳' : '—'} · ממרכז האזור לתחנה ${e.nearw != null ? Math.round(e.nearw) + ' דק׳' : '—'}`));
   kids.push(Break());

@@ -93,7 +93,7 @@ def render(ex, out):
         font = fb = ImageFont.load_default()
     d2.rectangle([0, canvas.height - 26, canvas.width, canvas.height], fill=(255, 255, 255))
     d2.text((8, canvas.height - 22), '© OpenStreetMap contributors', fill=(60, 60, 60), font=font)
-    d2.text((8, 8), f"{ex['name']}  score {ex['score']}", fill=(20, 20, 20), font=fb, stroke_width=3, stroke_fill=(255, 255, 255))
+    # בלי כותרת על המפה: PIL לא מסדר עברית, והחיתוך קצץ אותה — השם בכותרת שבמסמך
     # חיתוך לתיבה + שוליים
     bx1, by1 = px(la2, lo1); bx2, by2 = px(la1, lo2)
     m = 60
