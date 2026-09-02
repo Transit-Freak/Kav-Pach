@@ -266,6 +266,7 @@ def build():
                   'values': dict(collections.Counter(p['_min'] for p in M))}
     # ── אשכול חברתי-כלכלי ──────────────────────────────────────────────────
     socio = None
+    grp = {}
     try:
         S = json.load(open(DATA / 'socio.json', encoding='utf-8'))
         bc = S.get('by_city') or {}
@@ -443,6 +444,48 @@ def build():
         mot_gaps['corr'] = round(statistics.correlation([p['score'] for p in withmot], [p['sf'] for p in withmot]), 2)
     except Exception:
         pass
+    # ── פרק ציון משרד התחבורה (בקשת איריס 02.09): אותו ניתוח קבוצות, לפי המדד של המשרד ─
+    # שני ערכים לכל אזור: "ישיר" — אזור סטטיסטי שיושב בתוך האזור (מעטים); "סובב" —
+    # האזור הסטטיסטי שהאזור נמצא בו או חופף לו (כמעט לכולם). הניתוח הקבוצתי על הסובב,
+    # כי זה מה שהמשרד אומר על השירות במקום; הישיר מוצג לידו.
+    def mot_vals(p):
+        sv = (Z.get(p['f']) or {}).get('svc') or {}
+        if sv.get('mode') is None:                      # נתונים מלפני כלל ההשוואה הישירה
+            return None, (sv if sv.get('fs') is not None else None)
+        strict = sv if sv.get('mode') == 'inside' and sv.get('fs') is not None else None
+        return strict, sv.get('wide')
+    def mot_stats(G):
+        vals = [mot_vals(p) for p in G]
+        st = [s for s, _ in vals if s]
+        wd = [w for _, w in vals if w and w.get('fs') is not None]
+        return {'n': len(G), 'score_mean': mean([p['score'] for p in G]),
+                'direct_n': len(st), 'direct_mean': mean([s['fs'] for s in st]),
+                'wide_n': len(wd), 'wide_mean': mean([w['fs'] for w in wd]), 'wide_median': median([w['fs'] for w in wd]),
+                'wide_lt30': pct(sum(1 for w in wd if w['fs'] < 30), len(wd)),
+                'wide_ge60': pct(sum(1 for w in wd if w['fs'] >= 60), len(wd)),
+                **{f'sub_{k}': mean([w.get(k) for w in wd]) for k in MOTF}}
+    mot_groups = collections.OrderedDict()
+    mot_groups['מרכז מול פריפריה'] = collections.OrderedDict([('מרכז', mot_stats(C)), ('פריפריה', mot_stats(R))])
+    mot_groups['צפון, מרכז, ירושלים ויו"ש, דרום'] = collections.OrderedDict((k, mot_stats(v)) for k, v in reg4.items())
+    per = collections.OrderedDict((k, mot_stats([p for p in R if p['_reg'] == k])) for k in ('צפון', 'דרום') if any(p['_reg'] == k for p in R))
+    if len(per) >= 2:
+        mot_groups['הפריפריה בצפון מול הפריפריה בדרום'] = per
+    if M:
+        mot_groups['החברה היהודית מול החברה הערבית והבדואית'] = collections.OrderedDict(
+            [('מגזר מיעוטים (תיוג רשמי)', mot_stats(M)), ('כל שאר האזורים', mot_stats([p for p in P if not p.get('_min')]))])
+        subs2 = collections.OrderedDict()
+        for lbl, match in (('בדואים (צפון ודרום)', lambda v: 'בדואים' in v), ('דרוזים (כולל רמת הגולן)', lambda v: 'דרוזים' in v),
+                           ('מיעוטים כללי', lambda v: v == 'מיעוטים כללי'), ('רשות מעורבת', lambda v: v == 'רשות מעורבת')):
+            G = [p for p in M if match(p['_min'])]
+            if G:
+                subs2[lbl] = mot_stats(G)
+        if subs2:
+            mot_groups['בתוך המגזר המתויג'] = subs2
+    if grp:
+        mot_groups['לפי האשכול החברתי-כלכלי של הרשות'] = collections.OrderedDict((k, mot_stats(v)) for k, v in grp.items() if v)
+    mot_chapter = {'groups': mot_groups, 'fields': MOTF,
+                   'n_direct': sum(1 for p in P if mot_vals(p)[0]), 'n_wide': sum(1 for p in P if (mot_vals(p)[1] or {}).get('fs') is not None),
+                   'national_wide_mean': mean([mot_vals(p)[1]['fs'] for p in P if (mot_vals(p)[1] or {}).get('fs') is not None])}
     # ── מקורות ותאריכים (סעיף 2) ───────────────────────────────────────────
     gen = next((Z[p['f']].get('gen') for p in P if Z.get(p['f'], {}).get('gen')), today)
     svc = json.load(open(ROOT / 'parks/checks/service-indices.json', encoding='utf-8'))
@@ -469,7 +512,7 @@ def build():
         'top10': top10, 'bottom10': bottom10, 'min_area_for_top': 0.3,
         'gaps_within_city': gaps[:10], 'outliers': outliers, 'examples': examples, 'sources': sources,
         'no_stop_zones': no_stop_zones, 'no_peak_zones': no_peak_zones, 'excluded': excluded,
-        'decomposition': decomposition, 'dist': dist, 'mot_gaps': mot_gaps,
+        'decomposition': decomposition, 'dist': dist, 'mot_gaps': mot_gaps, 'mot_chapter': mot_chapter,
     }
     charts(data)
     json.dump(data, open(OUT / 'data.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
@@ -571,6 +614,37 @@ def charts(data):
             ax.spines[s].set_visible(False)
         ax.tick_params(axis='x', labelsize=9, colors='#64748b'); ax.grid(axis='x', color='#e2e8f0', zorder=0)
         plt.tight_layout(); fig.savefig(IMG / fn, facecolor='white'); plt.close(fig)
+
+    # פרק ציון משרד התחבורה: הציון הסובב לפי קבוצה, וארבעת המדדים בעמודות מקובצות
+    def grouped(groups, keys, labels, title, fn):
+        names = [g for g in groups if groups[g].get('wide_n')]
+        if not names:
+            return
+        fig, ax = plt.subplots(figsize=(6.4, 0.32 * len(names) * len(keys) + 1.6), dpi=180)
+        pal = ['#32318e', '#5b21b6', '#0369a1', '#b45309']
+        h = 0.8 / len(keys)
+        for j, (k, lab) in enumerate(zip(keys, labels)):
+            ys = [i + j * h for i in range(len(names))]
+            vals = [groups[g].get(k) or 0 for g in names]
+            ax.barh(ys, vals, height=h * 0.92, color=pal[j % len(pal)], zorder=3, label=he(lab))
+            for y, v in zip(ys, vals):
+                ax.text(v + 1, y, he(f'{v:.0f}'), va='center', ha='left', fontsize=8.5, color='#0f172a')
+        ax.set_yticks([i + 0.4 - h / 2 for i in range(len(names))]); ax.set_yticklabels([he(f"{g} ({groups[g]['wide_n']})") for g in names], fontsize=10)
+        ax.invert_yaxis(); ax.set_xlim(0, 100)
+        ax.set_title(he(title), fontsize=12, fontweight='bold', color='#043e7e', loc='right')
+        ax.legend(fontsize=8.5, loc='lower right', frameon=False)
+        for s in ('top', 'right', 'left'):
+            ax.spines[s].set_visible(False)
+        ax.tick_params(axis='x', labelsize=9, colors='#64748b'); ax.grid(axis='x', color='#e2e8f0', zorder=0)
+        plt.tight_layout(); fig.savefig(IMG / fn, facecolor='white'); plt.close(fig)
+
+    MC = data.get('mot_chapter') or {}
+    for i, (sect, groups) in enumerate((MC.get('groups') or {}).items()):
+        gg = {g: {**s, 'n': s.get('wide_n') or 0} for g, s in groups.items() if s.get('wide_n')}
+        if gg:
+            bars(gg, 'wide_mean', f'ציון משרד התחבורה (האזור הסטטיסטי הסובב) — {sect}', '', f'bar-mot-{i}.png')
+            grouped(groups, ['sub_av', 'sub_ac', 'sub_co', 'sub_re'], ['זמינות', 'נגישות', 'תחרותיות', 'אמינות'],
+                    f'ארבעת מדדי המשרד — {sect}', f'bar-motsub-{i}.png')
 
     D = data.get('dist') or {}
     n_all = data['national']['n']
