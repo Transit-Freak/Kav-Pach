@@ -294,6 +294,30 @@ for p in P:
                    f"והתחנה הקרובה במרחק {dnear} מ׳ — חשוד ככשל ניתוב")
 check('הנקודה הרחוקה סבירה ביחס לגודל האזור', 'ממצא 01.09 · שער בנימין 379 דק׳', bad)
 
+# 15. הליכה לתחנה סבירה ביחס למרחק האווירי (ממצא שלמה 02.09: ביואב תחנות
+#     65–158 מ׳ מהגבול קיבלו 14–18 דק׳ למרכז — ניתוב שמקיף כבישים פרטיים).
+#     אותו כלל כמו בצנרת: מעל פי 2.5 מהאווירי וגם 400 מ׳ מעליו = כשל ניתוב.
+#     וגם: הליכה לקצה לא ארוכה מהליכה למרכז.
+bad = []
+for p in P:
+    z = zones.get(p.get('f')) or {}
+    cen = (p.get('la'), p.get('lo'))
+    if None in cen:
+        continue
+    cl = math.cos(math.radians(cen[0]))
+    for s in z.get('stops') or []:
+        if s.get('t') == 'in':
+            continue
+        ac = math.hypot((s['la'] - cen[0]) * 110540.0, (s['lo'] - cen[1]) * 111320.0 * cl)
+        wm, wme, d = s.get('wm'), s.get('wme'), s.get('d') or 0
+        if wm is not None and wm > max(2.5 * ac, ac + 400) + 1:
+            bad.append(f"{p['name']} · {s.get('n','')}: הליכה למרכז {wm} מ׳ מול {ac:.0f} מ׳ אווירי")
+        elif wme is not None and wme > max(2.5 * max(d, 20), max(d, 20) + 400) + 1:
+            bad.append(f"{p['name']} · {s.get('n','')}: הליכה לקצה {wme} מ׳ מול {d} מ׳ אווירי")
+        elif s.get('wte') is not None and s.get('wt') is not None and s['wte'] > s['wt'] + 0.5:
+            bad.append(f"{p['name']} · {s.get('n','')}: לקצה {s['wte']} דק׳ > למרכז {s['wt']} דק׳")
+check('הליכה לתחנה סבירה ביחס למרחק האווירי', 'ממצא שלמה 02.09 · פארק תעסוקה יואב', bad)
+
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 json.dump({'generated': datetime.date.today().isoformat(),
            'pass': not fails, 'fails': fails},

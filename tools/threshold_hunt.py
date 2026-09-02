@@ -8,7 +8,7 @@ IRIS_HEADWAY = [(5, 100), (10, 90), (15, 85), (20, 80), (30, 70), (40, 60), (60,
 IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65), (20, 55)]
 IRIS_W = {'uf': .15, 'bl': .35, 'far': .25, 'near': .25}
 def _band(v, table):
-    if v is None or v <= 0:
+    if v is None or v < 0:
         return 0
     for t, sc in table:
         if v <= t:

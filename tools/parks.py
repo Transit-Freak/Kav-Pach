@@ -783,6 +783,25 @@ for sid, hits in stop_hits.items():
         _cen = parks[pi]['cen']
         _clp = math.cos(math.radians(_cen[0]))
         _air_c = math.hypot((_sla - _cen[0]) * 110540.0, (_slo - _cen[1]) * 111320.0 * _clp)
+        # שומר גאומטרי (ממצא שלמה 02.09, פארק תעסוקה יואב: תחנות 65–158 מ׳ מהגבול
+        # של אזור ברוחב 600 מ׳ קיבלו 14–18 דק׳ למרכז ו-8 דק׳ לקצה). ניתוב שארוך
+        # מפי 2.5 מהאווירי וגם 400 מ׳ מעליו אינו הליכה אמיתית אלא כשל רשת —
+        # כבישים פנימיים המסומנים פרטיים, או הצמדת המרכז לכביש רחוק. פי 2.5 מעל
+        # כל עיקוף עירוני רגיל (1.2–1.5) ואפילו מגודר (עד ~2.3), ו-400 מ׳ מרווח
+        # ל"סיבוב הבלוק" של תחנה צמודה. נופלים לאומדן אווירי ×1.3 במהירות של
+        # פרופיל ההליכה של OSRM (83 מ׳/דק׳) — ולא ל-None, כדי שהתחנה לא תירש
+        # חסימה משכנות שנכשלו באותה דרך (שתי תחנות של צומת נכשלות יחד).
+        def _implausible(walk_m, air_m):
+            return walk_m is not None and walk_m > max(2.5 * air_m, air_m + 400)
+        if _implausible(cm, _air_c):
+            cm = int(_air_c * 1.3); cs = int(cm / 83.0 * 60)
+        _air_e = max(d, 20)
+        if _implausible(em, _air_e):
+            em = int(_air_e * 1.3); es = int(em / 83.0 * 60)
+        # הקצה קרוב מהמרכז בהגדרה; דגימת גבול של 8 נקודות מפספסת לפעמים את
+        # הנקודה הקרובה לתחנה (הרחבה כרמיאל: מרכז 20 דק׳, "קצה" 46)
+        if cs is not None and es is not None and es > cs:
+            em, es = cm, cs
         if cs is not None and cs > WALK_FAR_SEC:
             if (cm is not None and cm > 10 * _air_c + 1000) or _nb_ok(pi, sid, _sla, _slo, 3):
                 cm = cs = None
@@ -900,7 +919,9 @@ IRIS_W = {'uf': .15, 'bl': .35, 'far': .25, 'near': .25}
 
 
 def _band(v, table):
-    if v is None or v <= 0:
+    # None = אין נתון → 0. ערך 0 עצמו הוא לגיטימי בהליכה (תחנה במרכז ממש)
+    # ומגיע לו המדרגה הראשונה; לתדירות 0 לא מגיע לכאן (pkd/bl1 נבדקים לפני).
+    if v is None or v < 0:
         return 0
     for t, sc in table:
         if v <= t:
