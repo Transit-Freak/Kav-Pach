@@ -315,6 +315,11 @@ def build():
                'near': 'הליכה ממרכז האזור: ' + (f"{round(hi['nearw'])} דק׳" if hi.get('nearw') is not None else '—') + ' מול ' + (f"{round(lo['nearw'])} דק׳" if lo.get('nearw') is not None else '—')}[main]
         gaps.append({'city': city, 'n': len(zs), 'hi': row(hi), 'lo': row(lo), 'gap': hi['score'] - lo['score'], 'why': why})
     gaps.sort(key=lambda g: -g['gap'])
+    # בדיקת המבנים (OSM) — משמשת לרשימות ולסינון הדוגמאות
+    try:
+        bst = {z['name']: z for z in json.load(open(ROOT / 'parks/checks/built-status.json', encoding='utf-8'))['zones']}
+    except Exception:
+        bst = {}
     # ── דוגמאות (בקשת איריס 02.09, נקודות 8–11): שתי דוגמאות מכל סוג ─────────
     # הגרועים ביותר · המצטיינים · המצטיינים מחוץ למרכזי הערים (= הפריפריה, מעל
     # 45 ק"מ מתל אביב). אתרי פסולת ומחצבות אינם דוגמה ל"אזור תעשייה בלי שירות".
@@ -336,7 +341,10 @@ def build():
         near = f"ממרכז האזור לתחנה {round(p['nearw'])} דק׳" if p.get('nearw') is not None else ''
         return f"{p.get('area')} קמ״ר, {p.get('lines') or 0} קווים. {bl}; {far}" + (f"; {near}" if near else '') + '.'
     cand = [p for p in big if not NOT_EXAMPLE.search(p['name'])]
-    worst = sorted(cand, key=lambda p: (p['score'], -(p.get('area') or 0)))[:2]
+    # "הגרועים ביותר" רק מאזורים שבדיקת המבנים מסמנת כבנויים בוודאות — כדי שלא להציג
+    # כדוגמה אזור שאולי טרם אוכלס או שמיפויו חלקי (איריס 02.09: "בניכוי אלה שלא רלוונטיים")
+    surely_built = lambda p: (bst.get(p['name']) or {}).get('st') == 'built'
+    worst = sorted([p for p in cand if surely_built(p)], key=lambda p: (p['score'], -(p.get('area') or 0)))[:2]
     best = sorted(cand, key=lambda p: (-p['score'], -(p.get('pkd') or 0)))[:2]
     # "מחוץ למרכזי הערים": יותר מ-15 ק"מ מכל אחד מארבעת מרכזי המטרופולין
     # (15 ולא 12: הקריות של חיפה נמצאות 12–13 ק"מ ממרכז חיפה והן לב המטרופולין)
@@ -350,10 +358,6 @@ def build():
                [enrich(p, 'המצטיינים מחוץ למרכזי הערים', describe(p)) for p in best_out]
     outliers = []   # הוחלף בדוגמאות (איריס 02.09); נשאר כמפתח ריק לתאימות
     # ── רשימות מלאות (איריס 02.09, נקודה 2): בלי תחנה בטווח / בלי יציאה בשיא / הוצאו ─
-    try:
-        bst = {z['name']: z for z in json.load(open(ROOT / 'parks/checks/built-status.json', encoding='utf-8'))['zones']}
-    except Exception:
-        bst = {}
     def lst(p):
         b = bst.get(p['name']) or {}
         return {'name': p['name'], 'city': p.get('city') or '—', 'area': p.get('area'), 'region': p.get('_reg'), 'score': p['score'],
