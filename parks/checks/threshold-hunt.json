@@ -1,0 +1,224 @@
+{
+ "n": 421,
+ "recompute_mismatch": 0,
+ "fragile_ge5": 54,
+ "fragile_ge10": 50,
+ "edges": {
+  "uf": 24,
+  "bl": 123,
+  "far": 54,
+  "near": 102
+ },
+ "top": [
+  {
+   "name": "אורים",
+   "city": "אורים",
+   "score": 64,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשיה ברוש מערב",
+   "city": "בית שמש",
+   "score": 68,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "מבקיעים",
+   "city": "חוף אשקלון",
+   "score": 72,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "הזורע",
+   "city": "יקנעם",
+   "score": 68,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "פארק תעשיות בר-לב",
+   "city": "מטה אשר",
+   "score": 64,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשייה מצפה רמון",
+   "city": "מצפה רמון",
+   "score": 44,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "אזור התעשייה קרית ארבע",
+   "city": "קרית ארבע",
+   "score": 60,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "כפר עזה",
+   "city": "שדות נגב",
+   "score": 48,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשייה שלומי",
+   "city": "שלומי",
+   "score": 80,
+   "delta": 20,
+   "component": "bl"
+  },
+  {
+   "name": "קריית ענבים",
+   "city": "אבו גוש",
+   "score": 67,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשיה שחרות",
+   "city": "אילת",
+   "score": 71,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "אלון שבות",
+   "city": "אלון שבות",
+   "score": 55,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "ארז",
+   "city": "ארז",
+   "score": 66,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "מגן",
+   "city": "אשכול",
+   "score": 73,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "מפעלי שאן",
+   "city": "בית שאן",
+   "score": 61,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשיה בני יהודה",
+   "city": "גולן",
+   "score": 71,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "גן יבנה",
+   "city": "גן יבנה",
+   "score": 73,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "יזרעאל",
+   "city": "הגלבוע",
+   "score": 75,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "מחלף אשדוד",
+   "city": "חבל יבנה",
+   "score": 69,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשייה תפן",
+   "city": "יאנוח ג'ת",
+   "score": 66,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "יבנאל",
+   "city": "יבנאל",
+   "score": 72,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "לקיה",
+   "city": "לקיה",
+   "score": 55,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "אזור תעשיה ברקן",
+   "city": "מפעלי ברקן",
+   "score": 66,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "פארק תעשיות קדמת גליל",
+   "city": "פארק תעשיות קדמת גליל",
+   "score": 71,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "פורייה - נווה עובד",
+   "city": "פוריה עילית",
+   "score": 77,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "פארק תעשיות קריית מלאכי",
+   "city": "קרית מלאכי",
+   "score": 64,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "טללים",
+   "city": "רמת הנגב",
+   "score": 70,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "פארק תעשיות נ.ע.מ",
+   "city": "שדות נגב",
+   "score": 67,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "מפלסים",
+   "city": "שער הנגב",
+   "score": 76,
+   "delta": 19,
+   "component": "bl"
+  },
+  {
+   "name": "מי עמי",
+   "city": "אום אל פחם",
+   "score": 69,
+   "delta": 14,
+   "component": "far"
+  }
+ ]
+}
