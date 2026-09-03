@@ -56,6 +56,9 @@ def main():
                 c['note'] = v['note']
             if v.get('sd'):
                 c['sd'] = v['sd']      # דיוק התאריך — הממשק מציג לפיו חודש בלבד
+            for f in ('ps', 'pc'):     # תוכנן ולא נכנס לתוקף: מתי היה אמור להיכנס, מתי בוטל
+                if v.get(f):
+                    c[f] = v[f]
             for f in ('add', 'rem'):
                 if v.get(f):
                     c[f] = v[f][:15]
