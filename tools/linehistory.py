@@ -19,7 +19,7 @@ import csv, json, math, os, re, sys, datetime
 from collections import defaultdict
 import sys, os as _os
 sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
-from compact_lines import materialize
+from compact_lines import materialize, compact
 
 STOPS=os.environ.get('STOPS','stops.txt')
 STOP_TIMES=os.environ.get('STOP_TIMES','stop_times.txt')
@@ -778,6 +778,14 @@ print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count
 # הריצה הראשונה (בלי קובץ מצב) רושמת את המתוכננים בשקט, בלי אירועים.
 pl_first=not os.path.exists(PLANNED)   # PLANNED הוגדר לפני קריאת stop_times
 pstate=jload(PLANNED,{})
+if not isinstance(pstate,dict): pstate={}
+# ריצת הבסיס (03.09.2026) רשמה לכל תוכנית first=אותו יום — זה יום תחילת המעקב,
+# לא יום הפרסום. תאריך כזה אינו "פורסם לראשונה" ולכן נמחק (הביקורת 03.09).
+PL_BASELINE_DATE='2026-09-03'
+for _v in pstate.values():
+    if isinstance(_v,dict) and _v.get('first')==PL_BASELINE_DATE: _v['first']=None
+# תאריכי פרסום ראשון מהמילוי לאחור (backfill_planned.py כותב, כאן רק קוראים)
+_pfirst=(jload(f'{OUTDIR}/planned-first.json',{}) or {}).get('plans') or {}
 planned_now={}
 for rid,(t,sh) in frep.items():
     info=routes[rid]; rdesc=info['rd']
@@ -826,17 +834,26 @@ if not first_run and not REBASE and not pl_first:
             lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='planned-dropped')]
             note=f"שינוי שתוכנן ל-{_fmtd(old.get('start',''))} לא נכנס לתוקף: {'הווריאנט' if old.get('kind')=='new' else 'המסלול החדש'} בוטל ב-{_fmtd(TODAY)}, ירד מהרישום לפני שהתחיל"
             if old.get('first'): note+=f" · פורסם לראשונה ב-{_fmtd(old['first'])}"
-            ev={'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY,'shp':old.get('shp',''),'stops':old.get('stopinfo') or [],'note':note}
+            # pstops ולא stops: גרסה עם stops נחשבת בכל האתר והכלים למסלול שהקו נסע
+            # בו, וזה מסלול שמעולם לא נסע (הביקורת 03.09)
+            ev={'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY,'pstops':old.get('stopinfo') or [],'note':note}
             if old.get('last'): ev['sd']=old['last']
             if old.get('first'): ev['pf']=old['first']
             lf['versions'].append(ev)
             json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-            chm['changes'].append({'d':TODAY,'rd':rdesc,'line':old.get('line',''),'op':old.get('op',''),'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY})
+            _row={'d':TODAY,'rd':rdesc,'line':old.get('line',''),'op':old.get('op',''),'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY}
+            if old.get('last'): _row['sd']=old['last']
+            chm['changes'].append(_row)
             n_pl_drop+=1
 newstate={}
 for rdesc,P in planned_now.items():
     old=pstate.get(rdesc) or {}
-    newstate[rdesc]={**P,'first':(old.get('first') if old.get('codes')==P['codes'] and old.get('first') else TODAY),'last':TODAY}
+    # first: נשמר מהמצב הקודם כשהרצף זהה; בריצת הבסיס אין תאריך (לא ידוע מתי פורסם);
+    # קובץ המילוי לאחור נותן תאריך אמיתי כשהרצף זהה
+    _first=old.get('first') if (old.get('codes')==P['codes'] and old.get('first')) else (None if (pl_first or old.get('codes')==P['codes']) else TODAY)
+    _pf=_pfirst.get(rdesc)
+    if _pf and _pf.get('codes')==P['codes'] and _pf.get('first') and (not _first or _pf['first']<_first): _first=_pf['first']
+    newstate[rdesc]={**P,'first':_first,'last':TODAY}
 json.dump(newstate,open(PLANNED,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 print(f'שינויים מתוכננים: {len(planned_now)} ברישום | חדשים {n_pl_new} | נכנסו לתוקף {n_pl_start} | לא נכנסו לתוקף {n_pl_drop}'+(' (ריצת בסיס)' if pl_first else ''))
 
@@ -918,7 +935,10 @@ def idx_entry(rdesc, line, dest, op, ty, tt=None):
             elif r: ks.add('stops-del')
     ks = sorted(ks)
     if ks: e['ks'] = ks
-    if vs: e['lk'] = vs[-1]['k']; e['ld'] = vs[-1]['d']
+    # הסטטוס נגזר מהרשומה האחרונה שאינה "תוכנן ולא נכנס לתוקף" — תוכנית שלא
+    # התממשה אינה משנה אם הקו פעיל או מבוטל (הביקורת 03.09)
+    _real=[v for v in vs if v.get('k')!='planned-dropped'] or vs
+    if _real: e['lk'] = _real[-1]['k']; e['ld'] = _real[-1]['d']
     return e
 
 idx=[]

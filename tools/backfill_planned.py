@@ -13,22 +13,28 @@
   · התוכנית נעקבת מצילום לצילום לפי הווריאנט ורצף התחנות. ביום שבו היא
     נעלמת מהרישום: אם הווריאנט פעיל עם הרצף המתוכנן (או, ב-'new', פעיל
     בכלל) — נכנסה לתוקף, בלי אירוע. אחרת — "תוכנן ולא נכנס לתוקף":
-      d  = היום שבו נמצא שהתוכנית ירדה ("בוטל ב-")
+      d  = היום שבו נמצא שהתוכנית ירדה ("בוטל ב-"), וגם pc
       ps = התאריך שבו הייתה אמורה להיכנס לתוקף
       sd = הצילום האחרון שבו עוד נראתה
       pf = הצילום הראשון שבו פורסמה (חסר אם כבר הייתה בצילום הבסיס)
+      pstops = רצף התחנות שתוכנן. בכוונה לא 'stops': גרסה עם 'stops' נחשבת
+      בכל האתר והכלים למסלול שהקו נסע בו, וזה מסלול שמעולם לא נסע.
   · אמינות (שלמה 03.09): כשבין הצילום האחרון שבו נראתה התוכנית לצילום שבו
     נעלמה יש יותר מ-MAX_GAP ימים, אי אפשר לדעת אם השינוי לא נכנס או נכנס
     ובוטל בינתיים — לא נרשם אירוע, רק רישום ביומן המצב ('unverified').
 
+סדר וכשלים (הביקורת 03.09): הימים מעובדים בסדר עולה בלבד, ולעולם לא יום
+שקודם ליום האחרון שעובד. יום שקריאתו נכשלה (רשת, zip פגום, צילום מדולדל)
+נרשם ב-'failed' ונחשב מעובד — הוא פשוט מרחיב את הפער לצילום הבא, וכלל
+השבוע מטפל בזה. כך גם השרשור נגמר תמיד.
+
 לכל יום נקראים מהצילום calendar, agency, routes, stops, trips, ומ-stop_times
-(בזרימה) רק רצפי הנסיעות הנחוצות: נציג פעיל ונציג עתידי לוריאנט עם
-תוכנית, וכל התבניות הפעילות לוריאנט שתוכניתו פתוחה. הצילום הראשון בריצה
-הראשונה הוא בסיס שקט. האירועים והמצב נכתבים אחרי כל יום, כך שריצה שנקטעה
-לא מאבדת דבר; ריצה חוזרת מדלגת על ימים שעובדו. RESET=1 מוחק כל תוצר קודם
-של הכלי (גרסאות planned-dropped עם src=ob) ואת המצב. בסיום כל ריצה, תאריכי
-"פורסם לראשונה" של תוכניות שעדיין פתוחות מוזגים לתוך planned-state.json של
-הסורק היומי (כשרצף התחנות זהה), כדי שהאירוע שהסורק ירשום יישא תאריך אמיתי.
+(בזרימה) רק רצפי הנסיעות הנחוצות. הצילום הראשון בריצה הראשונה הוא בסיס
+שקט. האירועים והמצב נכתבים אחרי כל יום. RESET=1 מוחק כל תוצר קודם של הכלי
+(גרסאות planned-dropped עם src=ob) ואת המצב. כשהארכיון נגמר (remaining=0)
+נכתב planned-first.json: תאריך הפרסום הראשון של התוכניות שעדיין פתוחות
+ביום האחרון, והסורק היומי קורא אותו (ולא להפך — שני הכלים לא כותבים לאותו
+קובץ מצב).
 
 FROM/TO (YYYY-MM-DD) · MAX_DAYS · MAX_MIN · MAX_GAP (ימים, ברירת מחדל 7) ·
 DRY=1 ניתוח בלי כתיבה · RESET=1 איפוס
@@ -51,7 +57,7 @@ from compact_lines import compact, materialize  # noqa: E402
 S3 = 'https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 STATE = f'{OUTDIR}/backfill-planned-state.json'
-PLANNED = f'{OUTDIR}/planned-state.json'      # המצב של הסורק היומי
+FIRSTS = f'{OUTDIR}/planned-first.json'       # נקרא ע"י הסורק היומי
 FROM = os.environ.get('FROM', '2023-01-01')
 TO = os.environ.get('TO', '2026-09-02')        # יום לפני בסיס הסורק היומי (03.09.2026)
 MAX_DAYS = int(os.environ.get('MAX_DAYS', '0') or 0)
@@ -62,13 +68,14 @@ RESET = os.environ.get('RESET') == '1'
 PAUSE = 0.03
 SRC = 'ob'
 KIND = 'planned-dropped'
+DEGENERATE = 0.5     # צילום עם פחות ממחצית הווריאנטים הפעילים של הצילום הקודם — פגום, לא נמדד
 # route_type: כמו בסורק היומי — כל טווח ה-70x הוא אוטובוס, 715 לפי דרישה
 BUSX = {'700', '701', '702', '703', '704', '705', '706', '707', '708', '709',
         '710', '711', '712', '713', '714', '716'}
 TT = {'2': 'rail', '8': 'taxi', '0': 'lightrail', '5': 'cable', '715': 'demand'}
 
 
-# ---- גישה לארכיון (הועתק מ-backfill_freq_daily.py — שם המודול רץ בטעינה ואין לייבא ממנו) ----
+# ---- גישה לארכיון (על בסיס backfill_freq_daily.py — שם המודול רץ בטעינה ואין לייבא ממנו) ----
 def http(url, rng=None, tries=4):
     for attempt in range(tries):
         try:
@@ -86,6 +93,11 @@ def http(url, rng=None, tries=4):
 
 
 def central_dir(url):
+    """{שם קובץ: (היסט הכותרת המקומית, גודל דחוס, שיטה)} מתוך ספריית ה-zip.
+
+    Zip64 (הביקורת 03.09): בארכיון הזה כל הגדלים בכותרת הם 0xFFFFFFFF והערכים
+    האמיתיים יושבים בשדה ההרחבה 0x0001. בלי לקרוא אותו, כל קובץ קטן הוריד
+    את ה-zip כולו (פי שישה תעבורה ליום)."""
     tail, h = http(url, 'bytes=-66000')
     total = int((h.get('Content-Range') or '/0').rsplit('/', 1)[-1])
     i = tail.rfind(b'PK\x05\x06')
@@ -103,28 +115,45 @@ def central_dir(url):
         if cd[p:p + 4] != b'PK\x01\x02':
             break
         method, = struct.unpack('<H', cd[p + 10:p + 12])
-        csize, = struct.unpack('<I', cd[p + 20:p + 24])
+        csize, usize = struct.unpack('<II', cd[p + 20:p + 28])
         nlen, xlen, clen = struct.unpack('<HHH', cd[p + 28:p + 34])
         lho, = struct.unpack('<I', cd[p + 42:p + 46])
+        extra = cd[p + 46 + nlen:p + 46 + nlen + xlen]
+        q = 0
+        while q + 4 <= len(extra):
+            hid, hsz = struct.unpack('<HH', extra[q:q + 4])
+            body = extra[q + 4:q + 4 + hsz]
+            if hid == 1:
+                r = 0
+                if usize == 0xFFFFFFFF and r + 8 <= len(body):
+                    usize, = struct.unpack('<Q', body[r:r + 8]); r += 8
+                if csize == 0xFFFFFFFF and r + 8 <= len(body):
+                    csize, = struct.unpack('<Q', body[r:r + 8]); r += 8
+                if lho == 0xFFFFFFFF and r + 8 <= len(body):
+                    lho, = struct.unpack('<Q', body[r:r + 8]); r += 8
+                break
+            q += 4 + hsz
         members[cd[p + 46:p + 46 + nlen].decode()] = (lho, csize, method)
         p += 46 + nlen + xlen + clen
     return members
 
 
-def member_bytes(url, members, name):
-    lho, csize, method = members[name]
+def _data_offset(url, lho):
     lh, _ = http(url, f'bytes={lho}-{lho + 29}')
     n2, x2 = struct.unpack('<HH', lh[26:30])
-    off = lho + 30 + n2 + x2
+    return lho + 30 + n2 + x2
+
+
+def member_bytes(url, members, name):
+    lho, csize, method = members[name]
+    off = _data_offset(url, lho)
     raw, _ = http(url, f'bytes={off}-{off + csize - 1}')
     return zlib.decompressobj(-15).decompress(raw) if method == 8 else raw
 
 
 def stream_member(url, members, name, cb):
     lho, csize, method = members[name]
-    lh, _ = http(url, f'bytes={lho}-{lho + 29}')
-    n2, x2 = struct.unpack('<HH', lh[26:30])
-    off = lho + 30 + n2 + x2
+    off = _data_offset(url, lho)
     req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan/line-history (planned scan; polite)',
                                               'Range': f'bytes={off}-{off + csize - 1}'})
     d = zlib.decompressobj(-15)
@@ -241,7 +270,7 @@ def day_snapshot(ds, watch):
                                           'ag': row[c['agency_id']] if 'agency_id' in c else '', 'tt': TT.get(rt)}
         except IndexError:
             continue
-    # נסיעות: תבניות פעילות ותבניות עתידיות, לכל וריאנט
+    # נסיעות: תבניות פעילות ותבניות עתידיות, לכל route_id
     c, rows = csvdict(url, members, 'trips.txt')
     acnt, afirst, fcnt, ffirst, fstart = {}, {}, {}, {}, {}
     for row in rows:
@@ -269,16 +298,26 @@ def day_snapshot(ds, watch):
             fs = future[svc]
             if rid not in fstart or fs < fstart[rid]:
                 fstart[rid] = fs
-    # הנציג: התבנית שרוב הנסיעות רצות בה, ובתוכה מזהה הנסיעה הקטן ביותר (כמו בסורק היומי)
+    # הנציג: התבנית שרוב הנסיעות רצות בה, ובתוכה מזהה הנסיעה הקטן ביותר (כמו בסורק היומי).
+    # וריאנט יכול להופיע בכמה route_id (רישוי מחודש): הרצף הפעיל של הווריאנט הוא של
+    # ה-route_id שרוב הנסיעות הפעילות שלו (הביקורת 03.09, סעיף 4).
     rep = {rid: min(shs, key=lambda x: (-shs[x], x)) for rid, shs in acnt.items()}
     frep = {rid: min(shs, key=lambda x: (-shs[x], x)) for rid, shs in fcnt.items()}
+    main_rid = {}
+    for rid, shs in acnt.items():
+        rd = routes[rid]['rd']
+        tot = sum(shs.values())
+        if rd not in main_rid or tot > main_rid[rd][0]:
+            main_rid[rd] = (tot, rid)
+    rds_f = {routes[rid]['rd'] for rid in fcnt}
     want = set()
     for rid in fcnt:
         want.add(ffirst[(rid, frep[rid])])
-        if rid in rep:
-            want.add(afirst[(rid, rep[rid])])
     for rid, shs in acnt.items():
-        if routes[rid]['rd'] in watch:
+        rd = routes[rid]['rd']
+        if rd in rds_f:
+            want.add(afirst[(rid, rep[rid])])
+        if rd in watch:
             for sh in shs:
                 want.add(afirst[(rid, sh)])
     c, rows = csvdict(url, members, 'stops.txt')
@@ -316,6 +355,10 @@ def day_snapshot(ds, watch):
 
     if wantb:
         stream_member(url, members, 'stop_times.txt', on_chunk)
+        if buf[0].strip():
+            on_chunk(b'\n')          # שורה אחרונה בלי סיום שורה
+        if not seqs:
+            raise ValueError('stop_times ריק — צילום פגום')
 
     def stopinfo_of(t):
         return [stops[s] for _, s in sorted(seqs.get(t.encode(), [])) if s in stops]
@@ -332,9 +375,9 @@ def day_snapshot(ds, watch):
             if len(cl) < 2:
                 continue
             a['alts'].add(cl)
-            if sh == rep.get(rid):
+            if sh == rep.get(rid) and main_rid[rd][1] == rid:
                 a['codes'] = list(cl)
-    for rid in fcnt:
+    for rid in sorted(fcnt, key=lambda r: sum(fcnt[r].values())):   # הגדול אחרון = קובע
         info = routes[rid]
         rd = info['rd']
         si = stopinfo_of(ffirst[(rid, frep[rid])])
@@ -355,7 +398,8 @@ def day_snapshot(ds, watch):
 
 # ---- כתיבה ----
 def write_events(events):
-    """events: [(ds, rd, plan)] — גרסה בקובץ הקו ושורה בפיד החודשי. אידמפוטנטי."""
+    """events: [(ds, rd, plan)] — גרסה בקובץ הקו ושורה בפיד החודשי. אידמפוטנטי.
+    מפתח הכפילות (d, k) כמו בסורק היומי: תוכנית אחת לווריאנט ליום."""
     by_month = {}
     for ds, rd, old in events:
         p = f'{OUTDIR}/lines/{fsafe(rd)}.json'
@@ -364,9 +408,9 @@ def write_events(events):
             lf = {'rd': rd, 'line': old.get('line', ''), 'dest': old.get('long', ''), 'op': old.get('op', ''), 'ty': '', 'versions': []}
             if old.get('tt'):
                 lf['tt'] = old['tt']
-        vs = [v for v in (lf.get('versions') or []) if not (v.get('k') == KIND and v.get('d') == ds and v.get('ps') == old.get('start', ''))]
-        v = {'d': ds, 'k': KIND, 'src': SRC, 'ps': old.get('start', ''), 'pc': ds, 'shp': '',
-             'stops': old.get('stopinfo') or [], 'note': note_for(old, ds)}
+        vs = [v for v in (lf.get('versions') or []) if not (v.get('k') == KIND and v.get('d') == ds)]
+        v = {'d': ds, 'k': KIND, 'src': SRC, 'ps': old.get('start', ''), 'pc': ds,
+             'pstops': old.get('stopinfo') or [], 'note': note_for(old, ds)}
         if old.get('last'):
             v['sd'] = old['last']
         if old.get('first'):
@@ -375,8 +419,11 @@ def write_events(events):
         vs.sort(key=lambda x: x['d'])
         lf['versions'] = vs
         jdump(compact(lf), p)
-        by_month.setdefault(ds[:7], []).append({'d': ds, 'rd': rd, 'line': old.get('line', ''), 'op': old.get('op', ''),
-                                                'k': KIND, 'src': SRC, 'ps': old.get('start', ''), 'pc': ds})
+        row = {'d': ds, 'rd': rd, 'line': old.get('line', ''), 'op': old.get('op', ''),
+               'k': KIND, 'src': SRC, 'ps': old.get('start', ''), 'pc': ds}
+        if old.get('last'):
+            row['sd'] = old['last']
+        by_month.setdefault(ds[:7], []).append(row)
     for month, chs in by_month.items():
         p = f'{OUTDIR}/changes/{month}.json'
         m = jload(p, {'month': month, 'changes': []})
@@ -387,7 +434,7 @@ def write_events(events):
 
 
 def reset_previous():
-    """מחיקת כל תוצר קודם של הכלי: גרסאות planned-dropped עם src=ob בקווים ובפיד החודשי, והמצב."""
+    """מחיקת כל תוצר קודם של הכלי: גרסאות planned-dropped עם src=ob בקווים ובפיד החודשי, המצב, וקובץ התאריכים."""
     n_l = n_f = 0
     ld = f'{OUTDIR}/lines'
     for f in os.listdir(ld):
@@ -419,60 +466,80 @@ def reset_previous():
         if len(m['changes']) != before:
             n_m += before - len(m['changes'])
             jdump(m, p)
-    if os.path.exists(STATE):
-        os.remove(STATE)
+    for p in (STATE, FIRSTS):
+        if os.path.exists(p):
+            os.remove(p)
     print(f'איפוס: נמחקו {n_l} גרסאות קו ({n_f} קבצים שנותרו ריקים), {n_m} שורות חודשיות', file=sys.stderr)
 
 
-def merge_daily(plans):
-    """תוכניות שעדיין פתוחות בסוף הארכיון קיימות גם במצב הסורק היומי (שנפתח
-    ב-03.09.2026 בלי לדעת מתי פורסמו). כשרצף התחנות זהה, תאריך הפרסום
-    הראשון מהארכיון נכנס לשם — כדי שהאירוע שהסורק ירשום יישא תאריך אמיתי."""
-    ps = jload(PLANNED, None)
-    if not ps:
-        return 0
-    n = 0
-    for rd, P in plans.items():
-        q = ps.get(rd)
-        if q and q.get('codes') == P.get('codes') and P.get('first') and (not q.get('first') or P['first'] < q['first']):
-            q['first'] = P['first']
-            n += 1
-    if n:
-        jdump(ps, PLANNED)
-    return n
+def write_firsts(plans, final_day):
+    """התוכניות שעדיין פתוחות ביום האחרון של הארכיון קיימות גם במצב הסורק היומי
+    (שנפתח ב-03.09.2026 בלי לדעת מתי פורסמו). כאן נכתב קובץ צד עם תאריך הפרסום
+    הראשון שלהן; הסורק קורא אותו ומאמץ את התאריך כשרצף התחנות זהה. רק בסוף
+    הארכיון — תוכנית שפתוחה באמצע 2023 אינה בהכרח אותה תוכנית של 2026."""
+    out = {rd: {'codes': P.get('codes'), 'first': P.get('first')} for rd, P in plans.items()
+           if P.get('first') and P.get('last') == final_day}
+    jdump({'archive_end': final_day, 'plans': out}, FIRSTS)
+    return len(out)
 
 
 def main():
     if RESET and not DRY:
         reset_previous()
-    st = jload(STATE, {'done': [], 'plans': {}, 'unverified': [], 'n_started': 0, 'n_dropped': 0, 'n_unverified': 0})
+    st = jload(STATE, {'done': [], 'failed': [], 'plans': {}, 'unverified': [], 'n_started': 0, 'n_dropped': 0, 'n_unverified': 0})
     done = set(st['done'])
     plans = st.get('plans') or {}
     dates = list_dates(FROM, TO)
-    remaining = [d for d in dates if d not in done]
-    todo = remaining[:MAX_DAYS] if MAX_DAYS else remaining
-    print(f'צילומים בטווח: {len(dates)} · כבר עובדו: {len(done)} · בריצה זו: {len(todo)}', file=sys.stderr)
+    last_ds = max(done) if done else None
+    # לעולם לא אחורה: יום שלא עובד ונמצא לפני היום האחרון שעובד — נחשב כמעובד (אבוד)
+    late = [d for d in dates if d not in done and (last_ds is None or d > last_ds)]
+    stale = [d for d in dates if d not in done and last_ds is not None and d <= last_ds]
+    for d in stale:
+        st.setdefault('failed', []).append({'d': d, 'err': 'קודם ליום האחרון שעובד — לא מעובד'})
+        done.add(d)
+    todo = late[:MAX_DAYS] if MAX_DAYS else late
+    print(f'צילומים בטווח: {len(dates)} · כבר עובדו: {len(done)} · בריצה זו: {len(todo)}'
+          + (f' · דולגו כי קודמים ליום האחרון: {len(stale)}' if stale else ''), file=sys.stderr)
+
+    def save():
+        st['done'] = sorted(done)
+        st['plans'] = plans
+        st['remaining'] = len([d for d in dates if d not in done])
+        st['updated'] = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
+        jdump(st, STATE)
+
     if not todo:
-        st['remaining'] = 0
         if not DRY:
-            jdump(st, STATE)
+            save()
+            if st['remaining'] == 0 and dates and plans:
+                print(f'תאריכי פרסום ראשון לסורק היומי: {write_firsts(plans, max(done))}', file=sys.stderr)
         print('הכל עובד — אין צילומים שנותרו', file=sys.stderr)
         return
     baseline = not plans and not done
     deadline = time.monotonic() + MAX_MIN * 60 if MAX_MIN else None
-    last_ds = max(done) if done else None
     n_ev = 0
     for ds in todo:
         if deadline and time.monotonic() > deadline:
             print('תקציב הזמן נגמר — נעצר בין צילומים', file=sys.stderr)
             break
         t0 = time.monotonic()
+        err = None
         try:
             active, planned = day_snapshot(ds, set(plans))
+            prev_n = st.get('prev_active') or 0
+            if prev_n and len(active) < DEGENERATE * prev_n:
+                err = f'צילום מדולדל: {len(active)} וריאנטים פעילים מול {prev_n} בצילום הקודם'
         except KeyboardInterrupt:
             raise
         except BaseException as e:
-            print(f'  {ds}: דילוג — {type(e).__name__}: {str(e)[:70]}', file=sys.stderr)
+            err = f'{type(e).__name__}: {str(e)[:80]}'
+        if err:
+            # יום אבוד: נרשם, נחשב מעובד, והפער לצילום הבא גדל — כלל השבוע מטפל בזה
+            print(f'  {ds}: דילוג — {err}', file=sys.stderr)
+            st.setdefault('failed', []).append({'d': ds, 'err': err})
+            done.add(ds)
+            if not DRY:
+                save()
             continue
         events = []
         n_started = n_unv = 0
@@ -502,6 +569,7 @@ def main():
                 plans[rd] = {**P, 'first': (old.get('first') if same else ds), 'last': ds}
         done.add(ds)
         last_ds = ds
+        st['prev_active'] = len(active)
         n_ev += len(events)
         st['n_started'] = st.get('n_started', 0) + n_started
         st['n_dropped'] = st.get('n_dropped', 0) + len(events)
@@ -514,14 +582,11 @@ def main():
             continue
         if events:
             write_events(events)
-        st['done'] = sorted(done)
-        st['plans'] = plans
-        st['remaining'] = len([d for d in dates if d not in done])
-        st['updated'] = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
-        jdump(st, STATE)
+        save()
     if not DRY:
-        n_m = merge_daily(plans)
-        print(f'תאריכי פרסום ראשון שמוזגו למצב הסורק היומי: {n_m}', file=sys.stderr)
+        save()
+        if st['remaining'] == 0 and plans:
+            print(f'הארכיון נגמר — תאריכי פרסום ראשון לסורק היומי: {write_firsts(plans, max(done))}', file=sys.stderr)
     print(f'סיכום הריצה: {n_ev} אירועים "תוכנן ולא נכנס לתוקף" · נותרו {len([d for d in dates if d not in done])} צילומים'
           + (' (DRY)' if DRY else ''), file=sys.stderr)
 

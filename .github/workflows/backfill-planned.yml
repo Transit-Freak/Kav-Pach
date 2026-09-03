@@ -74,17 +74,22 @@ jobs:
           git add -A line-history/data
           git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
           git commit -m "data: line-history — שינויים שתוכננו ולא נכנסו לתוקף, מהארכיון (2023 ואילך)"
+          ok=
           for i in 1 2 3 4; do
-            git pull --rebase -X theirs origin main && git push origin HEAD:main && break
+            if git pull --rebase -X theirs origin main && git push origin HEAD:main; then ok=1; break; fi
+            git rebase --abort 2>/dev/null || true
             echo "push rejected — retry $i"; sleep 10
           done
+          # דחיפה שנכשלה ארבע פעמים היא תקלה, לא הצלחה: בלי זה השרשרת הייתה
+          # ממשיכה מ-main שחסרים בו התוצרים של הריצה הזו
+          [ -n "$ok" ] || { echo "הדחיפה נכשלה"; exit 1; }
 
       - name: המשך אוטומטי
         if: ${{ inputs.chain == 'true' && inputs.dry != '1' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          REMAINING=$(python3 -c "import json; print(json.load(open('line-history/data/backfill-planned-state.json')).get('remaining', 0))")
+          REMAINING=$(python3 -c "import json,os; p='line-history/data/backfill-planned-state.json'; print(json.load(open(p)).get('remaining', 0) if os.path.exists(p) else 0)")
           echo "נותרו: $REMAINING ימים"
           if [ "$REMAINING" != "0" ]; then
             gh workflow run backfill-planned.yml --ref main -f from='${{ inputs.from }}' -f to='${{ inputs.to }}' \

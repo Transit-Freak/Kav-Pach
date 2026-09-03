@@ -1623,14 +1623,20 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           <AltCompare rd={rd} altRd={altRd} onClose={() => setAltRd(null)}
             label={(sibs.find((x) => x.rd === altRd) || {}).dest || altRd} />
         )}
-        {vs.length > 0 && vs[vs.length - 1].k === "removed" && (
-          <div className="facts" style={{ color: lineGone ? (KINDS[dispKind(vs[vs.length - 1], vs.length - 1, vs)] || {}).color : "#c2410c", fontWeight: 700 }}>
+        {/* הסטטוס נגזר מהרשומה האחרונה שאינה "תוכנן ולא נכנס לתוקף": תוכנית
+            להחזיר קו מבוטל שלא התממשה אינה מבטלת את הביטול */}
+        {vs.length > 0 && (() => {
+          let li = vs.length - 1;
+          while (li > 0 && vs[li].k === "planned-dropped") li--;
+          const lv = vs[li];
+          return lv.k === "removed" && (
+          <div className="facts" style={{ color: lineGone ? (KINDS[dispKind(lv, li, vs)] || {}).color : "#c2410c", fontWeight: 700 }}>
             {lineGone
-              ? <>❌ הקו בוטל — אין חלופות פעילות — מאז {fmtD(vs[vs.length - 1].d)}</>
-              : <>⚠️ החלופה הזו מבוטלת מאז {fmtD(vs[vs.length - 1].d)} (לקו יש חלופות פעילות)</>}
-            {dispKind(vs[vs.length - 1], vs.length - 1, vs) === "removed-year" ? " — מעל שנה ולא חזרה" : ""}
-          </div>
-        )}
+              ? <>❌ הקו בוטל — אין חלופות פעילות — מאז {fmtD(lv.d)}</>
+              : <>⚠️ החלופה הזו מבוטלת מאז {fmtD(lv.d)} (לקו יש חלופות פעילות)</>}
+            {dispKind(lv, li, vs) === "removed-year" ? " — מעל שנה ולא חזרה" : ""}
+          </div>);
+        })()}
         {cmpOn && (
           <div className="cmpbar">
             <b>השוואה</b> · {String(vs[pi].d).split("-").reverse().join(".")} ← {String(v.d).split("-").reverse().join(".")}
@@ -1732,6 +1738,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b> · בוטל ב-<b>{fmtD(x.pc || x.d)}</b>
                   {x.sd && gapDays(x.sd, x.pc || x.d) > 1 ? <> (נראה לאחרונה ב-{fmtD(x.sd)})</> : null}
                   {x.pf ? <> · פורסם לראשונה ב-{fmtD(x.pf)}</> : null}
+                  {(x.pstops || []).length > 1 && (
+                    <div>המסלול שתוכנן ({x.pstops.length} תחנות): {x.pstops.slice(0, 14).map((s) => s[1]).join(" › ")}{x.pstops.length > 14 ? " › …" : ""}</div>
+                  )}
                 </div>
               )}
               {(x.add || x.rem) && (() => {

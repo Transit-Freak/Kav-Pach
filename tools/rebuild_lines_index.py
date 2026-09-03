@@ -99,10 +99,19 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
         e['ks'] = ks
     else:
         e.pop('ks', None)
-    if vs:
-        e['lk'] = vs[-1]['k']
-        e['ld'] = vs[-1]['d']
+    # הסטטוס נגזר מהרשומה האחרונה שאינה "תוכנן ולא נכנס לתוקף" — תוכנית שלא
+    # התממשה אינה משנה אם הקו פעיל או מבוטל
+    real = [v for v in vs if v.get('k') != 'planned-dropped'] or vs
+    if real:
+        e['lk'] = real[-1]['k']
+        e['ld'] = real[-1]['d']
 
+# שורה שאין לה קובץ (למשל אחרי איפוס של מילוי לאחור שמחק קבצים שנוצרו רק
+# בשבילו) נמחקת — אחרת האתר מציג וריאנט שפתיחתו נכשלת
+have = {fn[:-5] for fn in os.listdir(f'{OUTDIR}/lines') if fn.endswith('.json')}
+before = len(idx['lines'])
+idx['lines'] = [e for e in idx['lines'] if e['rd'].replace('#', 'H').replace('/', '_') in have]
+n_gone = before - len(idx['lines'])
 idx['lines'].sort(key=lambda x: (x.get('line', ''), x['rd']))
 json.dump(idx, open(idxp, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-print(f'אינדקס נבנה מחדש: {len(idx["lines"])} שורות ({n_new} חדשות) · עוגני 2012 שהוטמעו/עודכנו: {n_anc}')
+print(f'אינדקס נבנה מחדש: {len(idx["lines"])} שורות ({n_new} חדשות, {n_gone} בלי קובץ נמחקו) · עוגני 2012 שהוטמעו/עודכנו: {n_anc}')
