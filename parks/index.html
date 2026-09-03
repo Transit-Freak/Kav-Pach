@@ -613,7 +613,9 @@ function zLegend(){
   if(SHOWSTOPS) parts.push(
     `<span title="תחנות שנמצאות בתוך גבולות האזור עצמו"><i style="background:#16a34a"></i> בתוך האזור</span>`,
     `<span title="תחנות עד 5 דקות הליכה אמיתית מהאזור — מרחק נוח יומיומית"><i style="background:#84cc16"></i> קרוב · עד ~5 דק׳ הליכה</span>`,
-    `<span title="תחנות במרחק 5–14 דקות הליכה — נספרות, והמרחק מגביל את מדרגת הקו החזק"><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>`);
+    `<span title="תחנות במרחק 5–10 דקות הליכה — נספרות, והמרחק מגביל את מדרגת הקו החזק"><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>`,
+    `<span title="תחנות במרחק 10–14 דקות הליכה — נספרות, והמרחק מגביל את מדרגת הקו החזק"><i style="background:#f97316"></i> רחוק · 10–14 דק׳</span>`,
+    `<span title="תחנות במרחק 15 דקות הליכה ומעלה — אינן נספרות בשום רכיב"><i style="background:#94a3b8"></i> חסום · 15 ומעלה</span>`);
   if(SHOWROUTES) parts.push(
     `<span style="font-weight:800">🚌 צבע מסלול = תדירות הקו:</span>`,
     `<span title="אוטובוס כל 20 דקות או פחות ביום חול — עומד בתקן"><i style="background:#16a34a"></i> עד 20 דק׳</span>`,
@@ -666,7 +668,9 @@ function drawStops(d){
     const mins=t=='in'?0:(sWt(s)==null?99:sWt(s));
     if(mins>lim) continue;
     const dir=`https://www.google.com/maps/dir/?api=1&origin=${s.la},${s.lo}&destination=${cen[0]},${cen[1]}&travelmode=walking`;
-    L.circleMarker([s.la,s.lo],{radius:7,color:'#fff',weight:2,fillColor:COL[t]||'#94a3b8',fillOpacity:1})
+    // סמן גדול יותר עם טבעת לבנה עבה וקו-מתאר כהה: נקודה ירוקה על רקע ירוק של
+    // המפה נעלמה בטלפון (איריס 03.09, מיתרים — "אני לא רואה שום תחנה")
+    L.circleMarker([s.la,s.lo],{radius:t==='in'?10:8,color:'#fff',weight:3,fillColor:COL[t]||'#94a3b8',fillOpacity:1,className:'stopmk'})
       .bindPopup(`<b>${esc(s.n)}</b><br>${TIER[t]||t}<br>${walkTxt(s)}<br><a href="${dir}" target="_blank" rel="noopener">מסלול הליכה ›</a>`).addTo(sl);
   }
 }
@@ -795,13 +799,14 @@ function openPark(f,push=true){
     {
       const ni=d.stops.filter(s=>sTier(s)=='in').length,
             ng=d.stops.filter(s=>sTier(s)=='gate').length,
-            nn2=d.stops.filter(s=>sTier(s)=='near').length;
+            nn2=d.stops.filter(s=>sTier(s)=='near').length,
+            nf2=d.stops.filter(s=>sTier(s)=='far').length;   // 10–14 דק׳ — נספרות (03.09)
       // בפינה התחתונה — למעלה היא מסתירה את כפתורי השכבות והמקרא
       const ctl=L.control({position:'bottomright'});
       ctl.onAdd=()=>{
         const el=L.DomUtil.create('div');
         el.style.cssText='background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.18);padding:7px 11px;font:700 12px Assistant,Heebo,sans-serif;color:#0f172a;direction:rtl';
-        el.innerHTML=`🚏 תחנות: <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f">${ng}</b> <span title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב (עד 5 דק׳)</span> · <b style="color:#a16207">${nn2}</b> <span title="תחנות במרחק 5–10 דקות הליכה">רחוק (5–10 דק׳)</span>`;
+        el.innerHTML=`🚏 תחנות: <b>${ni}</b> בתוך האזור · <b style="color:#4d7c0f">${ng}</b> <span title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב (עד 5 דק׳)</span> · <b style="color:#a16207">${nn2}</b> <span title="תחנות במרחק 5–10 דקות הליכה">רחוק (5–10 דק׳)</span> · <b style="color:#c2410c">${nf2}</b> <span title="תחנות במרחק 10–14 דקות הליכה — נספרות">רחוק (10–14 דק׳)</span>`;
         return el;
       };
       ctl.addTo(map);
