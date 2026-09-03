@@ -33,7 +33,6 @@ const KINDS = {
   access:      { label: "שינוי נגישות", color: "#0f766e" },
   board:       { label: "שינוי עלייה/ירידה", color: "#854d0e" },
   platform:    { label: "שינוי רציף", color: "#0e7490" },
-  planned:     { label: "שינוי מתוכנן", color: "#0369a1" },
   "planned-dropped": { label: "תוכנן ולא נכנס לתוקף", color: "#9f1239" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
@@ -75,7 +74,7 @@ const CAT_GROUPS = [
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode", "platform"] },
-  { title: "שינויים מתוכננים", items: ["planned", "planned-dropped"] },
+  { title: "שינויים שלא נכנסו לתוקף", items: ["planned-dropped"] },
   { title: "שינויים טכניים", items: ["redraw"] },
 ];
 const CAT_LABELS = {
@@ -94,8 +93,7 @@ const CAT_LABELS = {
   renum: "שינוי מספר קו",
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
   platform: "שינוי רציף — הקו עוצר ברציף אחר",
-  planned: "שינוי מתוכנן — פורסם ברישום עם תאריך התחלה עתידי",
-  "planned-dropped": "תוכנן ולא נכנס לתוקף — ירד מהרישום לפני תאריך ההתחלה",
+  "planned-dropped": "תוכנן ולא נכנס לתוקף — פורסם ברישום עם תאריך התחלה, וירד לפני שהתחיל",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };

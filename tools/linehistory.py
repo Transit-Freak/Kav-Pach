@@ -794,30 +794,20 @@ def _pfile(rdesc,P):
     return p,lf
 STOPK_PL=('new','route','stops','stops-add','stops-del','extend','shorten','terminal')
 n_pl_new=n_pl_drop=n_pl_start=0
+# שלמה 03.09: "שינוי מתוכנן" (הודעה מראש על שינוי עתידי) לא נרשם ולא מוצג —
+# זה הרעיון של "קו נב" ולא גונבים אותו. המתוכננים נשמרים במצב בלבד, כדי
+# לזהות את המקרה היחיד שנרשם: שינוי שתוכנן ולא נכנס לתוקף.
 if not first_run and not REBASE and not pl_first:
     for rdesc,P in planned_now.items():
-        old=pstate.get(rdesc)
-        if old and old.get('codes')==P['codes']: continue       # כבר רשום
-        p,lf=_pfile(rdesc,P)
-        lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='planned')]
-        note=f"שינוי מתוכנן: {'וריאנט חדש' if P['kind']=='new' else 'מסלול חדש'} שאמור להיכנס לתוקף ב-{_fmtd(P['start'])} (פורסם ברישום ב-{_fmtd(TODAY)})"
-        lf['versions'].append({'d':TODAY,'k':'planned','ps':P['start'],'shp':P['shp'],'stops':P['stopinfo'],'note':note})
-        json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-        chm['changes'].append({'d':TODAY,'rd':rdesc,'line':P['line'],'op':P['op'],'k':'planned','ps':P['start']})
-        n_pl_new+=1
+        if not (pstate.get(rdesc) and pstate[rdesc].get('codes')==P['codes']): n_pl_new+=1   # ספירה בלבד
     for rdesc,old in list(pstate.items()):
         if rdesc in planned_now: continue
         c=cur.get(rdesc)
         took=(c is not None and (old.get('kind')=='new' or c['codes']==old.get('codes')))
-        p,lf=_pfile(rdesc,old)
         if took:
-            for v in reversed(lf['versions']):
-                if v.get('d')==TODAY and v.get('k') in STOPK_PL:
-                    v['note']=((v.get('note') or '')+' · ' if v.get('note') else '')+f"השינוי היה מתוכנן: פורסם ב-{_fmtd(old.get('first',''))} לתאריך {_fmtd(old.get('start',''))}"
-                    json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-                    break
-            n_pl_start+=1
+            n_pl_start+=1          # נכנס לתוקף — האירוע הרגיל של היום מספיק, בלי הערה
         else:
+            p,lf=_pfile(rdesc,old)
             lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='planned-dropped')]
             note=f"שינוי שתוכנן ל-{_fmtd(old.get('start',''))} לא נכנס לתוקף: {'הווריאנט' if old.get('kind')=='new' else 'המסלול החדש'} ירד מהרישום ב-{_fmtd(TODAY)}, לפני שהתחיל (פורסם לראשונה ב-{_fmtd(old.get('first',''))})"
             lf['versions'].append({'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'shp':old.get('shp',''),'stops':old.get('stopinfo') or [],'note':note})
