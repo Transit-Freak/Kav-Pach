@@ -27,6 +27,12 @@ import time
 import urllib.request
 import zlib
 
+# הכלי רץ בטעינה (אין main): ייבוא שלו כדי להשתמש בפונקציות העזר מתחיל בשקט
+# סריקה מלאה שכותבת לקובצי הקווים. קרה ב-03.09 מבדיקה מקומית, ורק אחרי
+# שעה וחצי התגלה ב-git status. לכן ייבוא נחסם; העזרים הועתקו ל-backfill_planned.py.
+if __name__ != '__main__':
+    raise ImportError('backfill_freq_daily.py רץ בטעינה — אין לייבא אותו; העזרים נמצאים ב-backfill_planned.py')
+
 S3 = 'https://openbus-stride-public.s3.eu-west-1.amazonaws.com'
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 FROM = os.environ.get('FROM', '2022-01-16')
