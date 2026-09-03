@@ -40,6 +40,13 @@ MAX_LINES_LIST=12  # כמה קווים לשמור ברשומת תחנה שבוט
 def city(d):
     m=re.search(r'עיר:\s*(.*?)\s*רציף:', d or ''); return m.group(1).strip() if m else ''
 
+def plat(d):
+    """מספר הרציף מתיאור התחנה ("עיר: חיפה רציף: 3"). '' = לא מוגדר (ריק או 0) —
+    בקשת שלמה 03.09: מעבר בין "לא מוגדר" ל-0 אינו שינוי ואינו מדווח."""
+    m=re.search(r'רציף:\s*([^\s]+)', d or '')
+    p=(m.group(1).strip() if m else '')
+    return '' if p in ('','0','-','—') else p
+
 def route_cities(long):
     """ערי המוצא והיעד משם המסלול "תחנה-עיר<->תחנה-עיר-מק"."""
     out=[]
@@ -195,10 +202,11 @@ for r in rows[1:]:
     # השמיט תחנות קצה מרצפי הקווים. הם רק מוחרגים מהרישום הארצי (בהמשך).
     lt='0'
     if LT is not None and len(r)>LT and r[LT] not in ('','0'): lt=r[LT]
-    try: stops[r[SI]]={'c':r[SC],'n':' '.join(r[SN].split()),'t':city(r[SD]),
+    try: stops[r[SI]]={'c':r[SC],'n':' '.join(r[SN].split()),'t':city(r[SD]),'p':plat(r[SD]),
                        'la':round(float(r[LA]),5),'lo':round(float(r[LO]),5),'lt':lt}
     except: pass
 print('תחנות:',len(stops))
+stop_by_code={s['c']:s for s in stops.values()}   # לזיהוי שינוי רציף במסלול הקו
 
 # ---- stop_times: רצף תחנות לנציגים + אילו קווים עוצרים בכל תחנה ----
 seqs=defaultdict(list)      # trip_id -> [(seq, stop_id)]
@@ -292,6 +300,10 @@ def prev_pd_of(rdesc):
     return {x[0]:x[4] for x in (v or {}).get('stops',[]) if len(x)>4}
 prev_stops=jload(f'{OUTDIR}/stops-state.json',{})
 first_run=not prev
+# רציפים: בריצה הראשונה עם השדה החדש אין רציף במצב הקודם — הרציפים נרשמים
+# בשקט כבסיס, בלי אירועי "עוצר מעכשיו ברציף" על כל מסוף בארץ. מהריצה הבאה
+# והלאה כל שינוי נרשם.
+plat_known=any(len(v)>5 for v in prev_stops.values())
 
 def dist_m(a_la,a_lo,b_la,b_lo):
     cl=math.cos(math.radians((a_la+b_la)/2))
@@ -444,8 +456,19 @@ for rdesc,c in cur.items():
     # בתחנות ובשרטוט; נבדקים רק כששני הצדדים קיימים (שדה חדש במצב ישן)
     hs_changed=bool(pv.get('hs')) and bool(c.get('hs')) and pv['hs']!=c['hs']
     ct_changed=bool(pv.get('ct')) and bool(c.get('ct')) and pv['ct']!=c['ct']
+    # שינוי רציף (בקשת שלמה 03.09): תחנה במסלול שהרציף שלה השתנה היום, רק
+    # כשהרציף החדש מוגדר. ריק/0 = לא מוגדר: מעבר אליו אינו אירוע, ומעבר ממנו
+    # מנוסח "עוצר מעכשיו ברציף N" ולא "מ-0 ל-N".
+    plat_changes=[]
+    for _code in (c['codes'] if plat_known else []):
+        _cs=stop_by_code.get(_code)
+        if not _cs: continue
+        _ps=prev_stops.get(_code)
+        _old=(_ps[5] if _ps and len(_ps)>5 else '') or ''
+        _new=_cs.get('p') or ''
+        if _new and _new!=_old: plat_changes.append([_code,_cs['n'],_old,_new])
     if not geo and not stp and not op_changed and not tt_changed \
-       and not wa_changed and not pd_changed and not ty_changed:
+       and not wa_changed and not pd_changed and not ty_changed and not plat_changes:
         # תיקון עבר: קבצים שהסיווג בהם התיישן לפני שנוסף המעקב — מרעננים
         # בשקט את המטא-נתונים בלי להמציא אירוע על שינוי שקרה מזמן
         p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -528,6 +551,8 @@ for rdesc,c in cur.items():
         kind='access'
     elif pd_changed and not geo and not stp and not op_changed:
         kind='board'
+    elif plat_changes and not geo and not stp and not op_changed:
+        kind='platform'
     elif not geo and not stp:
         kind='operator'
     else:
@@ -589,12 +614,23 @@ for rdesc,c in cur.items():
     if ct_changed:
         t=f"שינוי עיר: {pv['ct']} ← {c['ct']}"
         note=(note+' · '+t) if note else t
+    if plat_changes:
+        # ניסוח (שלמה 03.09): מ"לא מוגדר" — "עוצר מעכשיו ברציף N בתחנה X";
+        # בין שני רציפים מוגדרים — "בתחנה X עבר מרציף A לרציף B"
+        parts=[(f"עוצר מעכשיו ברציף {_new} בתחנה {_nm}" if not _old else f"בתחנה {_nm} עבר מרציף {_old} לרציף {_new}")
+               for _code,_nm,_old,_new in plat_changes[:8]]
+        t='שינוי רציף: '+' · '.join(parts)
+        note=(note+' · '+t) if note else t
     ch={'d':TODAY,'rd':rdesc,'line':c['line'],'op':c['op'],'k':kind}
+    if plat_changes: ch['pl']=plat_changes[:15]
     if add: ch['add']=[name.get(x,x) for x in add][:15]
     if rem: ch['rem']=[oldname(x) for x in rem][:15]
     chm['changes'].append(ch)
     extra={'add':ch.get('add'),'rem':ch.get('rem')} if (add or rem) else None
-    if extra:
+    if plat_changes:
+        extra=extra or {}
+        extra['pl']=plat_changes[:15]   # [מק"ט, שם, רציף קודם ('' = לא מוגדר), רציף חדש]
+    if extra and (add or rem):
         # הזיהוי הוא לפי מספר תחנה והשם רק תצוגה (בקשת שלמה): המק"טים
         # נשמרים מיושרים אחד-לאחד עם רשימות השמות — האתר לא מנחש כלום
         if add: extra['ac']=add[:15]
@@ -680,7 +716,7 @@ print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count
 cur_stops={}
 for s in stops.values():
     lns=sorted(stop_lines.get(s['c'],()))[:MAX_LINES_LIST]
-    cur_stops[s['c']]=[s['n'],s['la'],s['lo'],s['t'],lns]
+    cur_stops[s['c']]=[s['n'],s['la'],s['lo'],s['t'],lns,s.get('p','')]   # [5] = רציף (שלמה 03.09)
 spath=f'{OUTDIR}/changes/stops-{month}.json'
 stm=jload(spath,{'month':month,'changes':[]})
 if not REBASE:   # ביישור מצב-התחנות כבר עדכני — מחיקה הייתה מאבדת את אירועי היום
@@ -691,7 +727,7 @@ def sev(code,ev):
     shist.setdefault(code,[])
     shist[code]=[e for e in shist[code] if not (e['d']==TODAY and e['k']==ev['k'])]
     shist[code].append({'d':TODAY,**ev})
-ns=nd=nr=nm=ncty=npd_t=0
+ns=nd=nr=nm=ncty=npd_t=npl=0
 # ביישור: מצב-התחנות רק מתרענן בשקט (למשל קליטת המסופים שסוננו בעבר) —
 # בלי לרשום אירועי "חדשה", כי אלה לא תחנות שבאמת נוספו היום.
 if not first_run and not REBASE:
@@ -719,13 +755,18 @@ if not first_run and not REBASE:
         # עיר הרישום של התחנה השתנתה (בקשת שלמה) — אירוע תחנה, לא קו
         if len(pv)>3 and pv[3] and v[3] and pv[3]!=v[3]:
             sev(c0,{'k':'city','n':v[0],'oc':pv[3],'nc':v[3],'la':v[1],'lo':v[2]}); ncty+=1
+        # רציף (בקשת שלמה 03.09): נרשם רק כשהרציף החדש מוגדר; ריק/0 = לא מוגדר,
+        # ומעבר אליו אינו אירוע. op ריק = "עוצר מעכשיו ברציף N" (לא "מ-0 ל-N")
+        _op_=(pv[5] if len(pv)>5 else '') or ''; _np_=(v[5] if len(v)>5 else '') or ''
+        if plat_known and _np_ and _np_!=_op_:
+            sev(c0,{'k':'platform','n':v[0],'t':v[3],'op':_op_,'np':_np_,'lines':v[4],'la':v[1],'lo':v[2]}); npl+=1
         d=dist_m(pv[1],pv[2],v[1],v[2])
         if d>MOVE_M:
             sev(c0,{'k':'moved','n':v[0],'t':v[3],'dist':round(d),'ola':pv[1],'olo':pv[2],'la':v[1],'lo':v[2]}); nm+=1
     for c0,pv in prev_stops.items():
         if c0 not in cur_stops:
             sev(c0,{'k':'del','n':pv[0],'t':pv[3],'la':pv[1],'lo':pv[2],'lines':pv[4]}); nd+=1
-print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {nm} | שינוי עיר {ncty} | יעד-לפרסום {npd_t}')
+print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {nm} | שינוי עיר {ncty} | רציף {npl} | יעד-לפרסום {npd_t}')
 
 # ---- אינדקס + מצב ----
 # האינדקס כולל את כל הווריאנטים שיש להם קובץ — גם כאלה שכבר לא ברישום

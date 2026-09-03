@@ -32,6 +32,7 @@ const KINDS = {
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
   access:      { label: "שינוי נגישות", color: "#0f766e" },
   board:       { label: "שינוי עלייה/ירידה", color: "#854d0e" },
+  platform:    { label: "שינוי רציף", color: "#0e7490" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
@@ -71,7 +72,7 @@ const CAT_GROUPS = [
   { title: "שינויי מסלול", items: ["route", "endpoint"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
-  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode"] },
+  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode", "platform"] },
   { title: "שינויים טכניים", items: ["redraw"] },
 ];
 const CAT_LABELS = {
@@ -89,6 +90,7 @@ const CAT_LABELS = {
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
+  platform: "שינוי רציף — הקו עוצר ברציף אחר במסוף",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
@@ -113,6 +115,7 @@ const SKINDS = {
   moved:   { label: "הזזת מיקום", color: "#2563eb" },
   city:    { label: "שינוי עיר", color: "#b91c1c" },
   pubdest: { label: "תחנת יעד לפרסום", color: "#7e22ce" },
+  platform: { label: "שינוי רציף", color: "#0e7490" },
 };
 
 // פענוח polyline (precision 5)
@@ -2596,6 +2599,10 @@ function StopsTab({ sel, selN }) {
                     {/* dir=ltr על זוג הקואורדינטות: בטקסט עברי הפסיק והרווח
                         מקבלים כיוון RTL וסדר lat/lon התהפך ויזואלית */}
                     {c.k === "city" && <> · <s>{c.oc}</s> ← <b>{c.nc}</b></>}
+                    {/* רציף (שלמה 03.09): מ"לא מוגדר" — "עוצר מעכשיו ברציף N"; אחרת מרציף ← לרציף */}
+                    {c.k === "platform" && (c.op
+                      ? <> · <s>רציף {c.op}</s> ← <b>רציף {c.np}</b></>
+                      : <> · הקווים עוצרים מעכשיו ב<b>רציף {c.np}</b></>)}
     {/* ניסוח פשוט (בקשת שלמה): "השם הישן היה… השם החדש הוא…". אירועי
                         "הפכה/חדלה להיות תחנת יעד" הוסרו כליל — רק שינויי שם */}
                     {c.k === "pubdest" && c.st === "ren" &&
