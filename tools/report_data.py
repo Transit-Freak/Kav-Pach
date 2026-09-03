@@ -29,7 +29,7 @@ IMG.mkdir(parents=True, exist_ok=True)
 
 # ── הנוסחה (זהה ל-tools/parks.py; מועתקת כי ייבוא מריץ את כל הצינור) ──────
 IRIS_HEADWAY = [(5, 100), (10, 90), (15, 80), (21, 70), (30, 65), (40, 55), (60, 40), (90, 15)]
-IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65), (20, 55)]
+IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65)]   # איריס 03.09: מעל 15 = 0
 IRIS_W = {'bl': .40, 'far': .30, 'uf': .20, 'near': .10}
 # סרגל הצבעים של איריס (02.09 10:16): ירוק רק מ-90, 70 צהוב, 50–60 כתום, מטה — אדום עד שחור
 SCALE = [(100, '#14b03d'), (90, '#8cc63f'), (80, '#cfd41f'), (70, '#f8d420'), (60, '#f5a11a'),
@@ -151,7 +151,7 @@ def group_stats(G):
         'pct_lt50': pct(sum(1 for s in sc if s < 50), len(G)),
         # (א) נגישות כלל האזור: הליכה מהנקודה הרחוקה לתחנה — דקות, ממוצע וחציון
         'far_mean': mean([p.get('ww') for p in G]), 'far_median': median([p.get('ww') for p in G]),
-        'pct_far_over20': pct(sum(1 for p in G if p.get('ww') is None or p['ww'] > 20), len(G)),
+        'pct_far_over15': pct(sum(1 for p in G if p.get('ww') is None or p['ww'] > 15), len(G)),
         # (ב) תדירות שיא ממוצעת לכיוון — מרווח בדקות (420 דק׳ שיא / יציאות)
         'uf_headway_median': median([hw(p.get('pkd'), 420) for p in G if p.get('pkd')]),
         'pct_no_peak': pct(sum(1 for p in G if not p.get('pkd')), len(G)),
@@ -337,7 +337,7 @@ def build():
                 'streets': inside[:4], 'region': p.get('_reg'), 'periphery': d_tlv(p) > CENTER_KM}
     def describe(p):
         bl = f"הקו החזק כל ~{round(180 / p['bl1'])} דק׳" if p.get('bl1') else 'אין אף קו בשיא הבוקר'
-        far = f"העובד המרוחק הולך {round(p['ww'])} דק׳" if p.get('ww') is not None else 'אין תחנה בטווח 20 דקות הליכה'
+        far = f"העובד המרוחק הולך {round(p['ww'])} דק׳" if p.get('ww') is not None else 'אין תחנה בטווח 15 דקות הליכה'
         near = f"ממרכז האזור לתחנה {round(p['nearw'])} דק׳" if p.get('nearw') is not None else ''
         return f"{p.get('area')} קמ״ר, {p.get('lines') or 0} קווים. {bl}; {far}" + (f"; {near}" if near else '') + '.'
     cand = [p for p in big if not NOT_EXAMPLE.search(p['name'])]
@@ -419,7 +419,7 @@ def build():
     dist = {
         'far': band_count([p.get('ww') for p in P],
                           [('עד 5 דק׳', lambda v: v <= 5), ('5–10 דק׳', lambda v: v <= 10), ('10–15 דק׳', lambda v: v <= 15),
-                           ('15–20 דק׳', lambda v: v <= 20), ('מעל 20 דק׳', lambda v: True)], 'אין תחנה בטווח'),
+                           ('מעל 15 דק׳', lambda v: True)], 'אין תחנה בטווח'),
         'bl': band_count([hw(p.get('bl1'), 180) if p.get('bl1') else None for p in P],
                          [('עד 10 דק׳', lambda v: v <= 10), ('10–15', lambda v: v <= 15), ('15–21', lambda v: v <= 21), ('21–30', lambda v: v <= 30),
                           ('30–60', lambda v: v <= 60), ('60–90', lambda v: v <= 90), ('מעל 90', lambda v: True)], 'אין קו בשיא'),
@@ -514,7 +514,7 @@ def build():
     ]
     data = {
         'generated': datetime.datetime.now(zoneinfo.ZoneInfo('Asia/Jerusalem')).strftime('%d.%m.%Y %H:%M'), 'gtfs_date': gen,  # שעון ישראל
-        'formula': {'headway_bands': IRIS_HEADWAY, 'walk_bands': IRIS_WALK, 'weights': IRIS_W, 'version': '02.09.2026',
+        'formula': {'headway_bands': IRIS_HEADWAY, 'walk_bands': IRIS_WALK, 'weights': IRIS_W, 'version': '03.09.2026',
                     'scale': SCALE, 'peak_am': '06:00–09:00 אל האזור', 'peak_pm': '15:00–19:00 מהאזור'},
         'national': national, 'regions': regions, 'sector': sector, 'socio': socio,
         'top10': top10, 'bottom10': bottom10, 'min_area_for_top': 0.3,
@@ -664,8 +664,8 @@ def charts(data):
         hbar([c['label'] for c in D['concentration']], [c['pct'] for c in D['concentration']],
              'ריכוזיות השירות: חלקו של כל עשירון אזורים ביציאות השיא', 'bar-concentration.png', '%')
     Nn = data['national']
-    hbar(['בלי אף קו בטווח 20 דק׳ הליכה', 'בלי אף יציאה שימושית בשיא', 'הנקודה הרחוקה מעל 20 דק׳ או בלי תחנה'],
-         [Nn['no_line_n'], Nn['no_peak_n'], round(Nn['stats']['pct_far_over20'] * n_all / 100)],
+    hbar(['בלי אף קו בטווח 15 דק׳ הליכה', 'בלי אף יציאה שימושית בשיא', 'הנקודה הרחוקה מעל 15 דק׳ או בלי תחנה'],
+         [Nn['no_line_n'], Nn['no_peak_n'], round(Nn['stats']['pct_far_over15'] * n_all / 100)],
          f'אזורים בלי שירות — מתוך {n_all}', 'bar-noservice.png', ' אזורים', ['#c00d18', '#e63c14', '#ee7a16'])
 
 

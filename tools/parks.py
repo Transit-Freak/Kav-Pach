@@ -25,7 +25,7 @@ CAL = os.environ.get('CAL', 'calendar.txt')
 OUTDIR = os.environ.get('OUTDIR', 'parks-out')
 
 GATE_M = 150      # עד כאן מגבול הפארק — "כניסה"
-NEAR_M = 1500     # החלטת איריס 01.09: נכללות תחנות עד 20 דק׳ הליכה
+NEAR_M = 1500     # סינון גאומטרי בלבד; הרף האמיתי הוא זמן ההליכה (WALK_MAX_SEC = 15 דק׳, איריס 03.09)
                   # (75 מ׳/דק׳ × 20). הסיווג הסופי לפי הליכה אמיתית.
 COVER_M = 400     # רדיוס הליכה סבירה לחישוב כיסוי שטח
 MIN_AREA_KM2 = 0.04
@@ -673,7 +673,7 @@ for (sid, rid, gk), mins in deps.items():
 # best-effort ומוגבל-זמן — כשל/מגבלת-קצב נופלים חזרה לגאומטרי, לא שוברים בנייה.
 OSRM_URL = os.environ.get('OSRM_URL', '')
 WALK_OK_SEC, WALK_FAR_SEC = 300, 600   # 5 / 10 דקות הליכה
-WALK_MAX_SEC = 1200                    # 20 דק׳ — מעבר לכך התחנה אינה נספרת.
+WALK_MAX_SEC = 900                     # 15 דק׳ — מעבר לכך התחנה אינה נספרת (איריס 03.09; היה 20).
 # תיקון הקליף (החלטת איריס 01.09): תחנה של 11 דק׳ אינה נמחקת עוד —
 # היא מסווגת 'far', הקווים שלה נספרים, והמרחק נענש בציון ההליכה.
 OSRM_BUDGET = int(os.environ.get('OSRM_BUDGET', '900'))   # תקציב-זמן שניות לכל הניתוב
@@ -829,7 +829,7 @@ def _walk_tier(geo_tier, sec):
     if sec <= WALK_FAR_SEC:
         return 'near'
     if sec <= WALK_MAX_SEC:
-        return 'far'       # 10–20 דק׳: נספרת, המרחק נענש בציון ההליכה
+        return 'far'       # 10–15 דק׳: נספרת, המרחק מגביל את מדרגת הקו החזק (איריס 03.09)
     return 'blocked'
 
 # סיווג-מחדש: כל hit -> (pi, d, tc, te, cm, cmin, em, emin)
@@ -1036,7 +1036,9 @@ def build_lines(stops_here, tk):
 # מעל 90 = 0. שתי המדרגות העליונות (עד 5 = 100, עד 10 = 90) לא הוזכרו ונשארו.
 # הגבול שייך למדרגה הטובה (בדיוק 10 דק׳ = 90, בדיוק 15 = 80).
 IRIS_HEADWAY = [(5, 100), (10, 90), (15, 80), (21, 70), (30, 65), (40, 55), (60, 40), (90, 15)]
-IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65), (20, 55)]
+# איריס 03.09: מעל 15 דק׳ הליכה = 0 (המדרגה 15–20 = 55 בוטלה, יחד עם ספירת
+# תחנות מעבר ל-15 דק׳). מזיז בעיקר את המרחב הכפרי — תחנה על הכביש הראשי.
+IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65)]
 # משקלים — איריס 02.09: הקו החזק 40 (היה 35) · תדירות ממוצעת 20 (היה 15) ·
 # הנקודה הרחוקה 30 (היה 25) · הליכה ממרכז הפוליגון 10 (היה 25).
 IRIS_W = {'uf': .20, 'bl': .40, 'far': .30, 'near': .10}
@@ -1076,13 +1078,15 @@ def headway_equiv(times):
     return cnt, cnt
 
 
-def iris_score(pkd, bl1, ww, near_walk):
-    """pkd/bl1 = יציאות שיא · ww = הנקודה הרחוקה · near_walk = מהמרכז לתחנה."""
+def iris_score(pkd, bl1, ww, near_walk, bl_band=None):
+    """pkd/bl1 = יציאות שיא · ww = הנקודה הרחוקה · near_walk = מהמרכז לתחנה.
+    bl_band = מדרגת הקו החזק אחרי הגבלת ההליכה של התחנה שלו (איריס 03.09)."""
     c = {
         # תדירות שימושית: ממוצע על שני חלונות השיא (7 שעות = 420 דק׳)
         'uf': _band(420.0 / pkd if pkd else None, IRIS_HEADWAY),
-        # הקו התדיר: הכיוון הבודד החזק בשיא הבוקר (3 שעות = 180 דק׳)
-        'bl': _band(180.0 / bl1 if bl1 else None, IRIS_HEADWAY),
+        # הקו התדיר: הכיוון הבודד החזק בשיא הבוקר (3 שעות = 180 דק׳),
+        # מוגבל למדרגת ההליכה של התחנה שבה הוא עוצר (כשנמסרה)
+        'bl': bl_band if bl_band is not None else _band(180.0 / bl1 if bl1 else None, IRIS_HEADWAY),
         'far': _band(ww, IRIS_WALK),
         'near': _band(near_walk, IRIS_WALK),
     }
@@ -1475,19 +1479,42 @@ if used_rids and os.path.exists(SHAPES):
         # bl1 (ממצא איריס, צמח 01.09): הכיוון הבודד החזק ביותר — בלי סכימת
         # שני כיווני אותו מקט, שניפחה 40 אזורים מעל סף ה-9
         _b1t = {}
+        _b1w = {}   # לכל כיוון: (דקות ההליכה הקצרות ביותר מתחנה שבה הוא עוצר, שם התחנה, מספר הקו)
         for _L in _d.get('lines') or []:
             if _L.get('dr') == 'out':
                 continue
             _k1 = (_L.get('mk') or _L.get('num'), _L.get('dest'))
             _b1t.setdefault(_k1, []).extend(_L.get('wd') or [])
+            _s = _sbc.get(_L['code']) or {}
+            _w = 0.0 if _s.get('t') in ('in', 'gate') else _s.get('wt')
+            if _w is None:   # תחנה בלי ניתוב — אומדן אווירי כמו ב-nearw
+                _w = (_s.get('d') or 0) * 1.3 / 83.0
+            if _k1 not in _b1w or _w < _b1w[_k1][0]:
+                _b1w[_k1] = (_w, _s.get('n'), _L.get('num'))
         # חלופות של אותו כיוון (218+218א לאותו יעד) הן שירות אחד לנוסע.
         # ממצא איריס 02.09 (מישור אדומים, קו 169): קו שעתי שמגיע ב-07:10, 08:10,
         # 09:10 נספר קודם כ-2 יציאות ב-06:00–09:00 → "כל 90 דק׳". עכשיו:
         # יציאות שקולות = max(ספירה, 180/מרווח חציוני) — המרווח נמדד על יציאות
         # 06:00–09:30 כשיש לפחות 3 שפרושות על שעתיים. bl1c = הספירה הגולמית.
         _eq = {k: headway_equiv(v) for k, v in _b1t.items()}
-        _e['bl1'] = max((q for q, _ in _eq.values()), default=0)
-        _e['bl1c'] = max((c for _, c in _eq.values()), default=0)
+        # הכלל של איריס (03.09): הקו החזק שווה לכל היותר את מדרגת ההליכה של
+        # התחנה שלו — מטרונית במרחק 17 דק׳ אינה "קו כל 5 דק׳" לעובד. נבחר
+        # הכיוון שמדרגתו אחרי ההגבלה היא הגבוהה ביותר (ובשוויון: התדיר יותר);
+        # bl1/bl1c הם של הכיוון שנבחר, כדי שהכרטיס והציון יספרו אותו סיפור.
+        _best = None
+        for _k, (_q, _c) in _eq.items():
+            _hb = _band(180.0 / _q if _q else None, IRIS_HEADWAY)
+            _wb = _band(_b1w[_k][0], IRIS_WALK) if _k in _b1w else 0
+            _cand = (min(_hb, _wb), _hb, _q, _c, _k)
+            if _best is None or _cand[:3] > _best[:3]:
+                _best = _cand
+        if _best:
+            _e['bl1'], _e['bl1c'], _e['blb'] = _best[2], _best[3], _best[0]
+            _e['bln'], _e['blst'] = _b1w[_best[4]][2], _b1w[_best[4]][1]
+            _e['blwt'] = round(_b1w[_best[4]][0], 1)
+        else:
+            _e['bl1'] = _e['bl1c'] = _e['blb'] = 0
+            _e['bln'] = _e['blst'] = _e['blwt'] = None
         # ── הציון המשוקלל של איריס (01.09) — מחושב פעם אחת, משמש בכל התוצרים.
         # "תחנות" = דקות ההליכה ממרכז האזור אל התחנה הקרובה ביותר.
         # תחנות שבתוך האזור אינן מנותבות ואין להן wt — הן מקבלות אומדן אווירי
@@ -1505,7 +1532,7 @@ if used_rids and os.path.exists(SHAPES):
                 _wts.append(math.hypot((_s['la'] - _cen[0]) * 110540.0,
                                        (_s['lo'] - _cen[1]) * 111320.0 * _cl) * 1.3 / 83.0)
         _near = min(_wts) if _wts else None
-        _sc, _parts = iris_score(_pkd, _e['bl1'], _e.get('ww'), _near)
+        _sc, _parts = iris_score(_pkd, _e['bl1'], _e.get('ww'), _near, bl_band=_e.get('blb'))
         _e['score'] = _sc
         _e['sparts'] = _parts
         _e['nearw'] = round(_near, 1) if _near is not None else None

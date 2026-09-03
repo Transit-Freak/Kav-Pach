@@ -82,11 +82,18 @@ for p in P:
     if not z or 'bl1' not in p:
         continue
     b1t = {}
+    b1w = {}   # דקות ההליכה הקצרות ביותר מתחנה של הכיוון — כמו ב-tools/parks.py
+    sbc = {s['c']: s for s in z.get('stops') or []}
     for l in z.get('lines') or []:
         if l.get('dr') == 'out':
             continue
         k1 = (l.get('mk') or l.get('num'), l.get('dest'))
         b1t.setdefault(k1, []).extend(l.get('wd') or [])
+        s = sbc.get(l['code']) or {}
+        w = 0.0 if s.get('t') in ('in', 'gate') else s.get('wt')
+        if w is None:
+            w = (s.get('d') or 0) * 1.3 / 83.0
+        b1w[k1] = min(b1w.get(k1, w), w)
     # אותו כלל כמו tools/parks.py (headway_equiv): קו שעתי = שעתי גם כשהיציאה
     # השלישית נופלת ב-09:10 (ממצא איריס 02.09, מישור אדומים קו 169)
     def equiv(times):
@@ -101,16 +108,34 @@ for p in P:
                 avg_gap = span / (len(mins) - 1)
                 return min(cnt + 1, max(cnt, round(180.0 / avg_gap, 2))), cnt
         return cnt, cnt
-    eq = [equiv(v) for v in b1t.values()]
-    calc = max((q for q, _ in eq), default=0)
-    calc_c = max((c for _, c in eq), default=0)
+    # הכלל של איריס (03.09): הקו החזק מוגבל למדרגת ההליכה של התחנה שלו —
+    # נבחר הכיוון שמדרגתו אחרי ההגבלה היא הגבוהה ביותר; אותן טבלאות כמו ב-parks.py
+    HEADWAY = [(5, 100), (10, 90), (15, 80), (21, 70), (30, 65), (40, 55), (60, 40), (90, 15)]
+    WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65)]
+    def band(v, table):
+        if v is None or v < 0:
+            return 0
+        for t, sc in table:
+            if v <= t:
+                return sc
+        return 0
+    best = None
+    for k, v in b1t.items():
+        q, c = equiv(v)
+        hb = band(180.0 / q if q else None, HEADWAY)
+        cand = (min(hb, band(b1w.get(k), WALK)), hb, q, c)
+        if best is None or cand[:3] > best[:3]:
+            best = cand
+    calc_b, _, calc, calc_c = best if best else (0, 0, 0, 0)
     if abs(calc - (p.get('bl1') or 0)) > 0.01:
         bad.append(f"{p['name']}: bl1={p.get('bl1')} מול חישוב {calc}")
     if 'bl1c' in p and calc_c != (p.get('bl1c') or 0):
         bad.append(f"{p['name']}: bl1c={p.get('bl1c')} מול ספירה {calc_c}")
+    if 'blb' in p and calc_b != (p.get('blb') or 0):
+        bad.append(f"{p['name']}: מדרגת הקו החזק blb={p.get('blb')} מול חישוב {calc_b}")
     if (p.get('bl1c', p.get('bl1')) or 0) > (p.get('bl') or 0):
         bad.append(f"{p['name']}: ספירת הכיוון הבודד ({p.get('bl1c', p.get('bl1'))}) גדולה מ-bl ({p.get('bl')}) — בלתי אפשרי")
-check('bl1 = כיוון בודד חזק ביותר (מרווח חציוני לקו שעתי), והספירה ≤ bl', 'ממצא איריס · צמח מפעלים · מישור אדומים', bad)
+check('bl1 = הכיוון הבודד שנבחר לציון (מוגבל למדרגת ההליכה של תחנתו), והספירה ≤ bl', 'ממצא איריס · צמח מפעלים · מישור אדומים · איריס 03.09', bad)
 
 # 4. כיסוי בטווח 0–100, והנקודה הרחוקה קיימת כשיש תחנות (מקור: שקף הכללים · מבחן 2)
 bad = []
