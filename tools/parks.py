@@ -1295,7 +1295,16 @@ for pi, pk in enumerate(parks):
             # לביתר עילית לקבל 31.7 דק׳ עם תחנה במרחק 0 מ׳.
             _top = sorted(_air, key=lambda x: -x[0])[:12]
             _cand = [q for _, q in _top]
-            _dest = [(s['la'], s['lo']) for s in outstops][:60]
+            # ממצא הסיירת 03.09: 60 היעדים הראשונים נלקחו לפי סדר מזהה התחנה, לא
+            # לפי קרבה — ב-61 אזורים עם יותר מ-60 תחנות התחנה הקרובה לנקודה הרחוקה
+            # לא הייתה ברשימה וההליכה נופחה. עכשיו: לכל מועמדת חמש התחנות הקרובות
+            # אליה (אווירית), איחוד, עד 60 יעדים.
+            _dset = {}
+            for _q in _cand:
+                for _s in sorted(outstops, key=lambda s: math.hypot((_q[0] - s['la']) * 110540.0,
+                                                                     (_q[1] - s['lo']) * 111320.0 * _cl2))[:5]:
+                    _dset[(_s['la'], _s['lo'])] = True
+            _dest = list(_dset)[:60]
             try:
                 _rows = _osrm_walk(_cand, _dest, (pk['cen'][0], pk['cen'][1]))
                 # שומר-שפיות: ניתוב שמקיף גדר/כביש מהיר מחזיר מסלול ענק
@@ -1498,7 +1507,9 @@ if used_rids and os.path.exists(SHAPES):
             if _L.get('dr') == 'out':
                 continue
             _k1 = (_L.get('mk') or _L.get('num'), _L.get('dest'))
-            _b1t.setdefault(_k1, []).extend(_L.get('wd') or [])
+            # איחוד חלופות באותו כיוון בלי כפילויות: אותה דקה מאותה תחנה בשתי
+            # חלופות היא אוטובוס אחד (ממצא הסיירת 03.09: אנווה נאמן, קו 1)
+            _b1t.setdefault(_k1, set()).update((_L['code'], t) for t in (_L.get('wd') or []))
             _s = _sbc.get(_L['code']) or {}
             _w = 0.0 if _s.get('t') in ('in', 'gate') else _s.get('wt')
             if _w is None:   # תחנה בלי ניתוב — אומדן אווירי כמו ב-nearw
@@ -1510,7 +1521,7 @@ if used_rids and os.path.exists(SHAPES):
         # 09:10 נספר קודם כ-2 יציאות ב-06:00–09:00 → "כל 90 דק׳". עכשיו:
         # יציאות שקולות = max(ספירה, 180/מרווח חציוני) — המרווח נמדד על יציאות
         # 06:00–09:30 כשיש לפחות 3 שפרושות על שעתיים. bl1c = הספירה הגולמית.
-        _eq = {k: headway_equiv(v) for k, v in _b1t.items()}
+        _eq = {k: headway_equiv(sorted(t for _, t in v)) for k, v in _b1t.items()}
         # הכלל של איריס (03.09): הקו החזק שווה לכל היותר את מדרגת ההליכה של
         # התחנה שלו — מטרונית במרחק 17 דק׳ אינה "קו כל 5 דק׳" לעובד. נבחר
         # הכיוון שמדרגתו אחרי ההגבלה היא הגבוהה ביותר (ובשוויון: התדיר יותר);

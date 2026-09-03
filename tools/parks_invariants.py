@@ -88,7 +88,8 @@ for p in P:
         if l.get('dr') == 'out':
             continue
         k1 = (l.get('mk') or l.get('num'), l.get('dest'))
-        b1t.setdefault(k1, []).extend(l.get('wd') or [])
+        # כמו ב-parks.py (הסיירת 03.09): אותה דקה מאותה תחנה בשתי חלופות = אוטובוס אחד
+        b1t.setdefault(k1, set()).update((l['code'], t) for t in (l.get('wd') or []))
         s = sbc.get(l['code']) or {}
         w = 0.0 if s.get('t') in ('in', 'gate') else s.get('wt')
         if w is None:
@@ -124,7 +125,7 @@ for p in P:
         return 0 if (v is not None and v >= 15) else band(v, WALK)
     best = None
     for k, v in b1t.items():
-        q, c = equiv(v)
+        q, c = equiv(sorted(t for _, t in v))
         hb = band(180.0 / q if q else None, HEADWAY)
         cand = (min(hb, wband(b1w.get(k))), hb, q, c)
         if best is None or cand[:3] > best[:3]:
