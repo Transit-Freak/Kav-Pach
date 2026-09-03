@@ -119,11 +119,14 @@ for p in P:
             if v <= t:
                 return sc
         return 0
+    # איריס 03.09: מ-15 דק׳ ומעלה מדרגת ההליכה היא 0 (הגבול שייך לאפס) — כמו _wband ב-parks.py
+    def wband(v):
+        return 0 if (v is not None and v >= 15) else band(v, WALK)
     best = None
     for k, v in b1t.items():
         q, c = equiv(v)
         hb = band(180.0 / q if q else None, HEADWAY)
-        cand = (min(hb, band(b1w.get(k), WALK)), hb, q, c)
+        cand = (min(hb, wband(b1w.get(k))), hb, q, c)
         if best is None or cand[:3] > best[:3]:
             best = cand
     calc_b, _, calc, calc_c = best if best else (0, 0, 0, 0)

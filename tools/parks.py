@@ -828,8 +828,8 @@ def _walk_tier(geo_tier, sec):
         return 'gate'
     if sec <= WALK_FAR_SEC:
         return 'near'
-    if sec <= WALK_MAX_SEC:
-        return 'far'       # 10–15 דק׳: נספרת, המרחק מגביל את מדרגת הקו החזק (איריס 03.09)
+    if sec < WALK_MAX_SEC:
+        return 'far'       # 10–15 דק׳: נספרת, המרחק מגביל את מדרגת הקו החזק (איריס 03.09); 15 עצמו כבר לא
     return 'blocked'
 
 # סיווג-מחדש: כל hit -> (pi, d, tc, te, cm, cmin, em, emin)
@@ -1039,6 +1039,16 @@ IRIS_HEADWAY = [(5, 100), (10, 90), (15, 80), (21, 70), (30, 65), (40, 55), (60,
 # איריס 03.09: מעל 15 דק׳ הליכה = 0 (המדרגה 15–20 = 55 בוטלה, יחד עם ספירת
 # תחנות מעבר ל-15 דק׳). מזיז בעיקר את המרחב הכפרי — תחנה על הכביש הראשי.
 IRIS_WALK = [(2, 100), (7, 90), (10, 80), (12, 75), (15, 65)]
+# איריס 03.09 (שנית): "כבר מ-15 דקות הליכה ומעלה מדד התחנה יקבל אפס" — גם ממרכז
+# הפוליגון וגם מהנקודה הרחוקה. הגבול 15 עצמו שייך לאפס, לא למדרגה 65.
+IRIS_WALK_ZERO = 15
+
+
+def _wband(v):
+    """מדרגת הליכה: 0 מ-15 דק׳ ומעלה, אחרת לפי IRIS_WALK."""
+    if v is not None and v >= IRIS_WALK_ZERO:
+        return 0
+    return _band(v, IRIS_WALK)
 # משקלים — איריס 02.09: הקו החזק 40 (היה 35) · תדירות ממוצעת 20 (היה 15) ·
 # הנקודה הרחוקה 30 (היה 25) · הליכה ממרכז הפוליגון 10 (היה 25).
 IRIS_W = {'uf': .20, 'bl': .40, 'far': .30, 'near': .10}
@@ -1087,8 +1097,8 @@ def iris_score(pkd, bl1, ww, near_walk, bl_band=None):
         # הקו התדיר: הכיוון הבודד החזק בשיא הבוקר (3 שעות = 180 דק׳),
         # מוגבל למדרגת ההליכה של התחנה שבה הוא עוצר (כשנמסרה)
         'bl': bl_band if bl_band is not None else _band(180.0 / bl1 if bl1 else None, IRIS_HEADWAY),
-        'far': _band(ww, IRIS_WALK),
-        'near': _band(near_walk, IRIS_WALK),
+        'far': _wband(ww),
+        'near': _wband(near_walk),
     }
     return round(sum(c[k] * IRIS_W[k] for k in IRIS_W)), c
 
@@ -1504,7 +1514,7 @@ if used_rids and os.path.exists(SHAPES):
         _best = None
         for _k, (_q, _c) in _eq.items():
             _hb = _band(180.0 / _q if _q else None, IRIS_HEADWAY)
-            _wb = _band(_b1w[_k][0], IRIS_WALK) if _k in _b1w else 0
+            _wb = _wband(_b1w[_k][0]) if _k in _b1w else 0
             _cand = (min(_hb, _wb), _hb, _q, _c, _k)
             if _best is None or _cand[:3] > _best[:3]:
                 _best = _cand

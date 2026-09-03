@@ -514,7 +514,7 @@ def build():
     ]
     data = {
         'generated': datetime.datetime.now(zoneinfo.ZoneInfo('Asia/Jerusalem')).strftime('%d.%m.%Y %H:%M'), 'gtfs_date': gen,  # שעון ישראל
-        'formula': {'headway_bands': IRIS_HEADWAY, 'walk_bands': IRIS_WALK, 'weights': IRIS_W, 'version': '03.09.2026',
+        'formula': {'headway_bands': IRIS_HEADWAY, 'walk_bands': IRIS_WALK, 'walk_zero_from': 15, 'weights': IRIS_W, 'version': '03.09.2026',
                     'scale': SCALE, 'peak_am': '06:00–09:00 אל האזור', 'peak_pm': '15:00–19:00 מהאזור'},
         'national': national, 'regions': regions, 'sector': sector, 'socio': socio,
         'top10': top10, 'bottom10': bottom10, 'min_area_for_top': 0.3,
