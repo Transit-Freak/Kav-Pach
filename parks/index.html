@@ -346,27 +346,9 @@ function openHeatmap(fit=true){
   }
   tblview.style.display='none';wrap.style.display='none';heatview.style.display='flex';heatbtn.classList.add('on');backbtn.classList.remove('on');
   setTimeout(()=>heatmap.invalidateSize(),50);
-  // תיבת ההשוואה מתבססת על הציון המשוקלל של האתר (איריס 03.09: "על סמך הציון
-  // שלנו, אחרי כל התיקונים, במקום של משרד התחבורה"). קודם (02.09) הוצג כאן
-  // ציון המשרד; ספירת הקווים ירדה עוד קודם — "בלי אף קו" לצד מפה ירוקה הטעה.
-  try{const g=gapStats();
-    const has=g.cSc!=null&&g.pSc!=null, smx=Math.max(g.cSc||0,g.pSc||0)||1;
-    const ratio=has&&g.pSc>0?g.cSc/g.pSc:0;
-    const card=(cls,ico,ttl,n,sc,nsc)=>'<div class="gapcard '+cls+'"><div class="gc-t">'+ico+' '+ttl+' — '+n+' אזורי תעשייה</div>'
-      +(sc==null?'<div class="gc-n">— <small>אין ציון</small></div>'
-        :'<div class="gc-n">🎯 '+sc.toFixed(0)+' <small>הציון המשוקלל של האתר, בממוצע (0–100)</small></div><div class="gc-bar"><i style="width:'+Math.round(100*sc/smx)+'%"></i></div>')
-      +'<div class="gc-no">'+nsc+' מתוך '+n+' אזורים מדורגים</div></div>';
-    const gb=document.getElementById('gapbox');
-    gb.innerHTML=
-    '<div class="gapsum">📊 <b>פער מרכז–פריפריה לפי הציון המשוקלל של האתר:</b> '+(!has?'אין די אזורים מדורגים להשוואה':ratio>1.05
-      ?'הציון הממוצע של אזור תעשייה במרכז הארץ גבוה <b>פי '+ratio.toFixed(1)+'</b> מזה של אזור בפריפריה ('+g.cSc.toFixed(0)+' מול '+g.pSc.toFixed(0)+')'
-      :'הציון הממוצע דומה במרכז ובפריפריה ('+g.cSc.toFixed(0)+' מול '+g.pSc.toFixed(0)+')')+'</div>'
-    +'<div class="gapcards">'+card('gc-c','🏙️','מרכז',g.cN,g.cSc,g.cScN)+card('gc-p','🌄','פריפריה',g.pN,g.pSc,g.pScN)+'</div>'
-    +'<details class="gapwhy"><summary>❓ איך ההשוואה מחושבת</summary>'
-    +'<div class="gw-l"><b>① מחלקים את הארץ לשתיים:</b> כל אזורי התעשייה הפעילים ('+(g.cN+g.pN)+') מחולקים לפי המרחק מתל אביב — עד 45 ק״מ נחשב ״מרכז״ ('+g.cN+' אזורים), רחוק יותר נחשב ״פריפריה״ ('+g.pN+' אזורים).</div>'
-    +'<div class="gw-l"><b>② לוקחים את הציון המשוקלל של האתר:</b> לכל אזור ציון 0–100 מארבעה רכיבים — הקו החזק בשיא הבוקר (40%), הנקודה הרחוקה (30%), התדירות הממוצעת בשיא (20%) והליכה ממרכז האזור (10%); תחנה מעל 15 דקות הליכה אינה נספרת. הפירוט בכרטיס של כל אזור.</div>'
-    +'<div class="gw-l"><b>③ משווים ממוצעים:</b> ממוצע הציון בכל קבוצה, ומחלקים את המרכז בפריפריה'+(has?': '+g.cSc.toFixed(0)+' חלקי '+g.pSc.toFixed(0)+' = <b>פי '+ratio.toFixed(1)+'</b>':'')+'. פסי הצבע בשני הכרטיסים מציירים את אותו יחס. אזורים שהוצאו מהדירוג לא נכנסים לממוצע.</div>'
-    +'</details>';}catch(e){}
+  // תיבת "פער מרכז–פריפריה" הוסרה (איריס 03.09, לאור הנתונים העדכניים). התיבה
+  // #gapbox נשארת ריקה כמקום של הפוטר בעמוד הראשי. הניתוח נשאר בדו"ח.
+  document.getElementById('gapbox').innerHTML='';
   footHome(true);
   if(heatLayer) heatLayer.clearLayers();
   const f=(q.value||'').trim();   // אותו חיפוש כמו בטבלה — מסנן גם את מפת החום
@@ -592,28 +574,6 @@ for(const [id,mode] of [['symlines','lines'],['symstops','stops'],['symfreq','fr
       document.getElementById(id2).classList.toggle('on',m2===mode);
     if(heatview.style.display==='none')openHeatmap(true); else openHeatmap(false);
   };
-// פער מרכז–פריפריה: מחושב מכל האזורים הפעילים; "מרכז" = עד 45 ק"מ מתל אביב
-function gapStats(){
-  const dKm=p=>{const dy=(p.la-32.08)*110.5,dx=(p.lo-34.78)*93.0;return Math.hypot(dx,dy)};
-  const f2=(q.value||'').trim();
-  const act=IDX.filter(p=>ZTYPES[ztOf(p)]&&!isPlan(p)&&(!f2||qMatch(p.name+' '+(p.city||''),f2)));
-  const C=act.filter(p=>dKm(p)<=45),P=act.filter(p=>dKm(p)>45);
-  const svc=p=>HEATSCOPE=='in'?cnt(p,'li'):cnt(p,'li')+cnt(p,'lg');   // מכבד את מצב הספירה שנבחר
-  const avg=a=>a.length?(a.reduce((s,p)=>s+svc(p),0)/a.length):0;
-  const no=a=>a.length?Math.round(100*a.filter(p=>svc(p)===0).length/a.length):0;
-  // פער הלו"ז: סך יציאות אוטובוס ביום חול לאזור (אם המדד כבר חושב בנתונים)
-  const hasDep='dwi' in (IDX[0]||{});
-  const dep=p=>{const e=WALKMODE=='e';const i=e?(p.dwie||0):(p.dwi||0),g=e?(p.dwge||0):(p.dwg||0);return HEATSCOPE=='in'?i:i+g;};
-  const davg=a=>a.length?(a.reduce((s,p)=>s+dep(p),0)/a.length):0;
-  // ציון השירות הרשמי (משרד התחבורה, 0–100) — ממוצע על האזורים שיש להם ציון
-  const sfv=a=>{const v=a.filter(p=>p.sf!=null);return v.length?(v.reduce((s,p)=>s+p.sf,0)/v.length):null;};
-  // הציון המשוקלל של האתר (הגדרת איריס, אחרי תיקוני 03.09) — ממוצע על האזורים המדורגים
-  const scv=a=>{const v=a.filter(p=>p.score!=null);return v.length?(v.reduce((s,p)=>s+p.score,0)/v.length):null;};
-  return {cN:C.length,pN:P.length,cAvg:avg(C),pAvg:avg(P),cNo:no(C),pNo:no(P),
-          hasDep,cDep:davg(C),pDep:davg(P),cSf:sfv(C),pSf:sfv(P),
-          cSfN:C.filter(p=>p.sf!=null).length,pSfN:P.filter(p=>p.sf!=null).length,
-          cSc:scv(C),pSc:scv(P),cScN:C.filter(p=>p.score!=null).length,pScN:P.filter(p=>p.score!=null).length};
-}
 document.getElementById('hpeak').onclick=()=>{HEATMODE='peak';openHeatmap(false);};
 document.getElementById('hday').onclick=()=>{HEATMODE='day';openHeatmap(false);};
 // שתי האופציות גלויות זו לצד זו, כמו שעות שיא/כל היום (בקשת איריס)
