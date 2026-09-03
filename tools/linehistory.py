@@ -141,13 +141,17 @@ print('וריאנטים (route_desc):',len({v['rd'] for v in routes.values()}))
 # מסננים לפי חלון התוקף בלבד (בלי דגלי ימי-השבוע — קו של שישי/שבת נשאר
 # קיים גם כשבודקים ביום ראשון).
 active=None
+future={}   # service_id -> תאריך התחלה (ISO) לשירותים שטרם נכנסו לתוקף — שינוי מתוכנן (שלמה 03.09)
 if os.path.exists(CALENDAR):
     ymd=TODAY.replace('-','')
     active=set()
     for r in csv.DictReader(open(CALENDAR,encoding='utf-8-sig')):
-        if (r.get('start_date') or '00000000')<=ymd<=(r.get('end_date') or '99999999'):
+        sd=(r.get('start_date') or '00000000'); ed=(r.get('end_date') or '99999999')
+        if sd<=ymd<=ed:
             active.add(r['service_id'])
-    print('שירותים בתוקף היום:',len(active))
+        elif sd>ymd:
+            future[r['service_id']]=f'{sd[:4]}-{sd[4:6]}-{sd[6:]}'
+    print('שירותים בתוקף היום:',len(active),'| עתידיים:',len(future))
 else:
     print('אזהרה: אין calendar.txt — בלי סינון תבניות עתידיות',file=sys.stderr)
 
@@ -166,9 +170,18 @@ _cnt={}         # route_id -> {shape_id: כמה נסיעות}
 _first={}       # (route_id, shape_id) -> מזהה הנסיעה הקטן ביותר
 _ntr={}         # rd -> מספר הנסיעות שבתוקף היום
 registered=set()   # וריאנטים שקיימים ברישום (יש להם נסיעות בקובץ, גם אם לא בתוקף היום)
+_fcnt={}; _ffirst={}; _fstart={}   # תבניות עתידיות: route_id -> {shape: נסיעות}, נציג, תאריך התחלה מוקדם ביותר
 for r in csv.DictReader(open(TRIPS,encoding='utf-8-sig')):
     rid=r['route_id']
     if rid in routes: registered.add(routes[rid]['rd'])
+    # שינוי מתוכנן (שלמה 03.09): נסיעה ששירותה מתחיל בעתיד — התבנית שלה נשמרת
+    # בנפרד, כדי לדעת מראש מה מתוכנן ולזהות אחר כך אם נכנס לתוקף או ירד
+    if active is not None and rid in routes and r.get('shape_id') and r.get('service_id') in future:
+        _fsh=r['shape_id']; _ft=r['trip_id']
+        _fd=_fcnt.setdefault(rid,{}); _fd[_fsh]=_fd.get(_fsh,0)+1
+        if (rid,_fsh) not in _ffirst or _ft<_ffirst[(rid,_fsh)]: _ffirst[(rid,_fsh)]=_ft
+        _fs=future[r['service_id']]
+        if rid not in _fstart or _fs<_fstart[rid]: _fstart[rid]=_fs
     if active is not None and r.get('service_id') not in active: continue
     # כמה נסיעות בפועל יש לוריאנט. הפיד מפרסם קווים הרבה לפני הפתיחה, ואז
     # "קיים בפיד" אינו "פועל": הקו הירוק בירושלים (93003) נכנס עם נסיעה
@@ -192,7 +205,12 @@ for rid,shapes in _cnt.items():
     sh=min(shapes,key=lambda x:(-shapes[x],x))
     rep[rid]=(_first[(rid,sh)],sh)
 rep_trips={t:(rid,sh) for rid,(t,sh) in rep.items()}
-print('נסיעות נציג:',len(rep),'| וריאנטים רשומים:',len(registered))
+# נציג לכל תבנית עתידית — אותו כלל בחירה (התבנית שרוב הנסיעות רצות בה)
+frep={}
+for rid,shapes_f in _fcnt.items():
+    sh=min(shapes_f,key=lambda x:(-shapes_f[x],x)); frep[rid]=(_ffirst[(rid,sh)],sh)
+frep_trips={t:(rid,sh) for rid,(t,sh) in frep.items()}
+print('נסיעות נציג:',len(rep),'| וריאנטים רשומים:',len(registered),'| תבניות עתידיות:',len(frep))
 
 # ---- stops ----
 stops={}
@@ -222,7 +240,7 @@ with open(STOP_TIMES,encoding='utf-8-sig') as f:
     PU,DO=hi.get('pickup_type'),hi.get('drop_off_type')
     for r in rd_:
         t=r[TI]
-        if t in rep_trips:
+        if t in rep_trips or t in frep_trips:
             # 1 = העלאה בלבד, 2 = הורדה בלבד, 3 = לא עוצר לנוסעים.
             # אחת מכל תשע עצירות בפיד מוגבלת כך, וזה לא מופיע בשום מקום.
             pd=0
@@ -244,7 +262,7 @@ with open(STOP_TIMES,encoding='utf-8-sig') as f:
 print('רצפים שנקראו:',len(seqs))
 
 # ---- shapes: רק של הנציגים, בדיוק מלא ----
-need={sh for _,sh in rep.values()}
+need={sh for _,sh in rep.values()}|{sh for _,sh in frep.values()}   # גם התבניות העתידיות
 shp_pts=defaultdict(list)
 with open(SHAPES,encoding='utf-8-sig') as f:
     rd_=csv.reader(f); hdr=next(rd_); hi={h:i for i,h in enumerate(hdr)}
@@ -743,6 +761,75 @@ for rdesc in registered:
         carry[rdesc]={'sh_h':h12(json.dumps(dec_shape(base['shp']))),'st_h':h12('|'.join(codes)),
                       'codes':codes,'line':lf.get('line',''),'op':lf.get('op','')}
 print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count} | הוסרו {n_gone} | חזרו מהפסקה {n_resumed} | רשומים בהמתנה {n_carry} | רופאו {n_heal} | סיווג רוענן {n_tyfix}')
+
+# ---- שינויים מתוכננים (שלמה 03.09) ----
+# הפיד מפרסם מראש נסיעות עם תאריך התחלה עתידי: וריאנט חדש שטרם התחיל, או
+# תבנית מסלול חדשה לוריאנט פעיל. כל אחד כזה נרשם כ"שינוי מתוכנן ל-DD.MM".
+# כשהוא נכנס לתוקף — האירוע הרגיל של אותו יום (new/route) מקבל הערה שהיה
+# מתוכנן; כשהוא נעלם מהפיד לפני שהתחיל — "שינוי שתוכנן ולא נכנס לתוקף".
+# הריצה הראשונה (בלי קובץ מצב) רושמת את המתוכננים בשקט, בלי אירועים.
+PLANNED=f'{OUTDIR}/planned-state.json'
+pl_first=not os.path.exists(PLANNED)
+pstate=jload(PLANNED,{})
+planned_now={}
+for rid,(t,sh) in frep.items():
+    info=routes[rid]; rdesc=info['rd']
+    pts=shapes.get(sh) or []
+    _rows=sorted(seqs.get(t,[])); sq=[x[1] for x in _rows]
+    codes=[stops[s]['c'] for s in sq if s in stops]
+    if len(codes)<2: continue
+    kind='new' if rdesc not in cur else ('route' if codes!=cur[rdesc]['codes'] else None)
+    if kind is None: continue          # תבנית עתידית זהה לפעילה — אינה שינוי
+    planned_now[rdesc]={'kind':kind,'start':_fstart.get(rid,''),'codes':codes,
+                        'stopinfo':[[stops[s]['c'],stops[s]['n'],stops[s]['la'],stops[s]['lo']] for s in sq if s in stops],
+                        'shp':encode_shape(pts) if len(pts)>1 else '','line':info['line'],'long':info['long'],
+                        'op':agencies.get(info['ag'],''),'ty':linetype.get(rdesc.split('-')[0].lstrip('0'),''),'tt':info.get('tt')}
+def _fmtd(d): return f'{d[8:10]}.{d[5:7]}.{d[:4]}' if d and len(d)==10 else (d or '')
+def _pfile(rdesc,P):
+    p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
+    lf=materialize(jload(p,None))
+    if lf is None:
+        lf={'rd':rdesc,'line':P.get('line',''),'dest':P.get('long',''),'op':P.get('op',''),'ty':P.get('ty',''),'versions':[]}
+        if P.get('tt'): lf['tt']=P['tt']
+    return p,lf
+STOPK_PL=('new','route','stops','stops-add','stops-del','extend','shorten','terminal')
+n_pl_new=n_pl_drop=n_pl_start=0
+if not first_run and not REBASE and not pl_first:
+    for rdesc,P in planned_now.items():
+        old=pstate.get(rdesc)
+        if old and old.get('codes')==P['codes']: continue       # כבר רשום
+        p,lf=_pfile(rdesc,P)
+        lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='planned')]
+        note=f"שינוי מתוכנן: {'וריאנט חדש' if P['kind']=='new' else 'מסלול חדש'} שאמור להיכנס לתוקף ב-{_fmtd(P['start'])} (פורסם ברישום ב-{_fmtd(TODAY)})"
+        lf['versions'].append({'d':TODAY,'k':'planned','ps':P['start'],'shp':P['shp'],'stops':P['stopinfo'],'note':note})
+        json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+        chm['changes'].append({'d':TODAY,'rd':rdesc,'line':P['line'],'op':P['op'],'k':'planned','ps':P['start']})
+        n_pl_new+=1
+    for rdesc,old in list(pstate.items()):
+        if rdesc in planned_now: continue
+        c=cur.get(rdesc)
+        took=(c is not None and (old.get('kind')=='new' or c['codes']==old.get('codes')))
+        p,lf=_pfile(rdesc,old)
+        if took:
+            for v in reversed(lf['versions']):
+                if v.get('d')==TODAY and v.get('k') in STOPK_PL:
+                    v['note']=((v.get('note') or '')+' · ' if v.get('note') else '')+f"השינוי היה מתוכנן: פורסם ב-{_fmtd(old.get('first',''))} לתאריך {_fmtd(old.get('start',''))}"
+                    json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+                    break
+            n_pl_start+=1
+        else:
+            lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='planned-dropped')]
+            note=f"שינוי שתוכנן ל-{_fmtd(old.get('start',''))} לא נכנס לתוקף: {'הווריאנט' if old.get('kind')=='new' else 'המסלול החדש'} ירד מהרישום ב-{_fmtd(TODAY)}, לפני שהתחיל (פורסם לראשונה ב-{_fmtd(old.get('first',''))})"
+            lf['versions'].append({'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'shp':old.get('shp',''),'stops':old.get('stopinfo') or [],'note':note})
+            json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+            chm['changes'].append({'d':TODAY,'rd':rdesc,'line':old.get('line',''),'op':old.get('op',''),'k':'planned-dropped','ps':old.get('start','')})
+            n_pl_drop+=1
+newstate={}
+for rdesc,P in planned_now.items():
+    old=pstate.get(rdesc) or {}
+    newstate[rdesc]={**P,'first':(old.get('first') if old.get('codes')==P['codes'] and old.get('first') else TODAY)}
+json.dump(newstate,open(PLANNED,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+print(f'שינויים מתוכננים: {len(planned_now)} ברישום | חדשים {n_pl_new} | נכנסו לתוקף {n_pl_start} | לא נכנסו לתוקף {n_pl_drop}'+(' (ריצת בסיס)' if pl_first else ''))
 
 # ---- שינויי תחנות (רישום ארצי) ----
 # כולל גם תחנות שמסומנות location_type!=0 — אלה תחנות אמיתיות עם קוד
