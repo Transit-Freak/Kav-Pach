@@ -170,7 +170,7 @@
     </div>
     <a class="homelink" href="../" target="_blank" rel="noopener">→ הקו הבוחן</a>
   </div>
-  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 17 · הדף מתעדכן מעצמו</span></div>
+  <div class="sub">כל האוטובוסים שנצפו בשידורי האיכון של משרד התחבורה — לאיזו חברה כל רכב שייך, מאיזו שנה, מתי נצפה לראשונה ולאחרונה, ואילו ירדו מהשירות. לחיצה על רכב פותחת את כל פרטיו מהמאגר הממשלתי. מקורות: דאטאבוס (הסדנא לידע ציבורי) + מאגר הרישוי הממשלתי + מאגר "ציי רכב אוטובוסים" של משרד התחבורה (מיגון, מד ק"מ ומפרט). <span style="color:var(--dim);font-size:11px">גרסת עמוד 18 · הדף מתעדכן מעצמו</span></div>
   <div id="view"><div class="msg">⏳ טוען נתונים…</div></div>
 </div>
 
@@ -213,6 +213,10 @@ const fixT=t=>{if(!t)return t;const c=t.replace(/["״]/g,'').replace(/\s+/g,' ')
 const gY=v=>v[3+OFF],gM=v=>v[4+OFF],gD=v=>v[5+OFF],gT=v=>fixT(v[6+OFF]),gR=v=>OFF?v[3]:null;
 const fmt=n=>n.toLocaleString('he-IL');
 const fd=s=>s?s.split('-').reverse().join('.'):'—';
+// הפעימה הבאה של הסריקה החודשית (fleet-scan): ה-1 בחודש, 00:30 UTC —
+// מחושב כאן כדי שהשעה בשעון ישראל תהיה נכונה גם במעבר שעון קיץ/חורף
+const nextScan=()=>{const n=new Date();let d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),1,0,30));if(d<=n)d=new Date(Date.UTC(n.getUTCFullYear(),n.getUTCMonth()+1,1,0,30));return d;};
+const fdt=d=>d.toLocaleString('he-IL',{timeZone:'Asia/Jerusalem',weekday:'long',day:'numeric',month:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
 const days=(a,b)=>Math.round((new Date(a)-new Date(b))/864e5);
 const isActive=v=>days(DATA.updated,v[2])<=DATA.retire_days;
 const opColor=(ref,i)=>COLORS[ref]||PALETTE[i%PALETTE.length];
@@ -237,7 +241,7 @@ function kpis(){
         :`<div class="kpi bad"><b>${fmt(tot-act)}</b><span>ירדו מהשירות</span></div>`}
     <div class="kpi"><b>${DATA.operators.length}</b><span>מפעילים</span></div>
     ${kab?`<div class="kpi" title="אוטובוסים ומיניבוסים הרשומים כרכבי הסעות — בדרך כלל רכבי קבלני הסעות שמופעלים על קווי החברות. המספר הגדול: הפעילים כרגע; מתחתיו: כמה מאלה שנצפו אי-פעם כבר ירדו מהשירות"><b>${fmt(kabA)}</b><span>רכבי קבלן פעילים (רכבי הסעות)</span><span style="display:block;color:var(--bad)">${fmt(kab-kabA)} ירדו מהשירות</span></div>`:''}
-    <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מהצפייה הראשונה ועד הצפייה האחרונה שנקלטה"><b style="font-size:15px">${fd(first)} – ${fd(last)}</b><span>טווח נתוני הנסיעה</span><span style="display:block;color:var(--mut)">הימים שמאז — טרם נקלטו (הארכיון מתעדכן בפיגור)</span></div>
+    <div class="kpi" title="נתוני הנסיעה מכסים את התקופה הזו — מהצפייה הראשונה ועד הצפייה האחרונה שנקלטה. הסריקה רצה פעם בחודש, ב-1 בחודש לפנות בוקר (בקשת שלמה: לא להעמיס על דאטאבוס)"><b style="font-size:15px">${fd(first)} – ${fd(last)}</b><span>טווח נתוני הנסיעה</span><span style="display:block;color:var(--mut)">הימים שמאז — טרם נקלטו (הארכיון מתעדכן בפיגור)</span><span style="display:block;color:var(--mut)">העדכון הבא: ${fdt(nextScan())} (שעון ישראל)</span></div>
     ${DATA.gov_updated?`<div class="kpi" title="קובץ כלי הרכב הציבוריים ממאגר הרישוי הממשלתי — מועלה ידנית לריפו"><b>${fd(DATA.gov_updated)}</b><span>עדכון פרטי הרכב (קובץ ידני)</span></div>`:''}
     ${(()=>{const u=(ARM&&(ARM.gov_updated||ARM.updated))||(OFC&&(OFC.gov_updated||OFC.updated));return u?`<div class="kpi" title="מאגר ״ציי רכב אוטובוסים״ של משרד התחבורה — מיגון ירי/אבנים, מד הקילומטרים הרשמי, מושבים, ארץ ייצור והנעה. נמשך אוטומטית מ-data.gov.il"><b>${fd(u)}</b><span>עדכון מאגר ציי הרכב (מיגון ומד ק"מ)</span></div>`:'';})()}
   </div>`;
