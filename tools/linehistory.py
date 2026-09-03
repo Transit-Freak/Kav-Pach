@@ -231,6 +231,14 @@ for r in rows[1:]:
 print('תחנות:',len(stops))
 stop_by_code={s['c']:s for s in stops.values()}   # לזיהוי שינוי רציף במסלול הקו
 
+# תוכניות פתוחות מהריצה הקודמת (שינוי שתוכנן): לוריאנטים האלה נקראים רצפי
+# כל התבניות הפעילות, כדי לדעת אם התוכנית נכנסה לתוקף גם כשאינה התבנית
+# הרווחת (בלי זה תבנית שנכנסה כמיעוט הייתה נרשמת "לא נכנסה לתוקף").
+PLANNED=f'{OUTDIR}/planned-state.json'
+try: _pl_rds=set(json.load(open(PLANNED,encoding='utf-8')).keys())
+except Exception: _pl_rds=set()
+alt_trips={t for (rid,sh),t in _first.items() if rid in routes and routes[rid]['rd'] in _pl_rds}
+
 # ---- stop_times: רצף תחנות לנציגים + אילו קווים עוצרים בכל תחנה ----
 seqs=defaultdict(list)      # trip_id -> [(seq, stop_id)]
 stop_lines=defaultdict(set) # stop_code -> קווים
@@ -240,7 +248,7 @@ with open(STOP_TIMES,encoding='utf-8-sig') as f:
     PU,DO=hi.get('pickup_type'),hi.get('drop_off_type')
     for r in rd_:
         t=r[TI]
-        if t in rep_trips or t in frep_trips:
+        if t in rep_trips or t in frep_trips or t in alt_trips:
             # 1 = העלאה בלבד, 2 = הורדה בלבד, 3 = לא עוצר לנוסעים.
             # אחת מכל תשע עצירות בפיד מוגבלת כך, וזה לא מופיע בשום מקום.
             pd=0
@@ -768,8 +776,7 @@ print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count
 # כשהוא נכנס לתוקף — האירוע הרגיל של אותו יום (new/route) מקבל הערה שהיה
 # מתוכנן; כשהוא נעלם מהפיד לפני שהתחיל — "שינוי שתוכנן ולא נכנס לתוקף".
 # הריצה הראשונה (בלי קובץ מצב) רושמת את המתוכננים בשקט, בלי אירועים.
-PLANNED=f'{OUTDIR}/planned-state.json'
-pl_first=not os.path.exists(PLANNED)
+pl_first=not os.path.exists(PLANNED)   # PLANNED הוגדר לפני קריאת stop_times
 pstate=jload(PLANNED,{})
 planned_now={}
 for rid,(t,sh) in frep.items():
@@ -794,6 +801,11 @@ def _pfile(rdesc,P):
     return p,lf
 STOPK_PL=('new','route','stops','stops-add','stops-del','extend','shorten','terminal')
 n_pl_new=n_pl_drop=n_pl_start=0
+alt_codes={}   # rd -> רצפי כל התבניות הפעילות היום (רק לוריאנטים עם תוכנית פתוחה)
+for (rid,sh),t in _first.items():
+    if t in alt_trips and rid in routes:
+        _cl=tuple(stops[s]['c'] for s in [x[1] for x in sorted(seqs.get(t,[]))] if s in stops)
+        if len(_cl)>=2: alt_codes.setdefault(routes[rid]['rd'],set()).add(_cl)
 # שלמה 03.09: "שינוי מתוכנן" (הודעה מראש על שינוי עתידי) לא נרשם ולא מוצג —
 # זה הרעיון של "קו נב" ולא גונבים אותו. המתוכננים נשמרים במצב בלבד, כדי
 # לזהות את המקרה היחיד שנרשם: שינוי שתוכנן ולא נכנס לתוקף.
@@ -803,21 +815,28 @@ if not first_run and not REBASE and not pl_first:
     for rdesc,old in list(pstate.items()):
         if rdesc in planned_now: continue
         c=cur.get(rdesc)
-        took=(c is not None and (old.get('kind')=='new' or c['codes']==old.get('codes')))
+        took=(c is not None and (old.get('kind')=='new' or c['codes']==old.get('codes')
+                                 or tuple(old.get('codes') or ()) in alt_codes.get(rdesc,())))
         if took:
             n_pl_start+=1          # נכנס לתוקף — האירוע הרגיל של היום מספיק, בלי הערה
         else:
+            # שלמה 03.09: נרשם מתי בוטל (pc = היום) ומתי היה אמור להיכנס לתוקף (ps);
+            # sd = הסריקה האחרונה שבה התוכנית עוד נראתה, pf = הפרסום הראשון
             p,lf=_pfile(rdesc,old)
             lf['versions']=[v for v in lf['versions'] if not (v.get('d')==TODAY and v.get('k')=='planned-dropped')]
-            note=f"שינוי שתוכנן ל-{_fmtd(old.get('start',''))} לא נכנס לתוקף: {'הווריאנט' if old.get('kind')=='new' else 'המסלול החדש'} ירד מהרישום ב-{_fmtd(TODAY)}, לפני שהתחיל (פורסם לראשונה ב-{_fmtd(old.get('first',''))})"
-            lf['versions'].append({'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'shp':old.get('shp',''),'stops':old.get('stopinfo') or [],'note':note})
+            note=f"שינוי שתוכנן ל-{_fmtd(old.get('start',''))} לא נכנס לתוקף: {'הווריאנט' if old.get('kind')=='new' else 'המסלול החדש'} בוטל ב-{_fmtd(TODAY)}, ירד מהרישום לפני שהתחיל"
+            if old.get('first'): note+=f" · פורסם לראשונה ב-{_fmtd(old['first'])}"
+            ev={'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY,'shp':old.get('shp',''),'stops':old.get('stopinfo') or [],'note':note}
+            if old.get('last'): ev['sd']=old['last']
+            if old.get('first'): ev['pf']=old['first']
+            lf['versions'].append(ev)
             json.dump(compact(lf),open(p,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
-            chm['changes'].append({'d':TODAY,'rd':rdesc,'line':old.get('line',''),'op':old.get('op',''),'k':'planned-dropped','ps':old.get('start','')})
+            chm['changes'].append({'d':TODAY,'rd':rdesc,'line':old.get('line',''),'op':old.get('op',''),'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY})
             n_pl_drop+=1
 newstate={}
 for rdesc,P in planned_now.items():
     old=pstate.get(rdesc) or {}
-    newstate[rdesc]={**P,'first':(old.get('first') if old.get('codes')==P['codes'] and old.get('first') else TODAY)}
+    newstate[rdesc]={**P,'first':(old.get('first') if old.get('codes')==P['codes'] and old.get('first') else TODAY),'last':TODAY}
 json.dump(newstate,open(PLANNED,'w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 print(f'שינויים מתוכננים: {len(planned_now)} ברישום | חדשים {n_pl_new} | נכנסו לתוקף {n_pl_start} | לא נכנסו לתוקף {n_pl_drop}'+(' (ריצת בסיס)' if pl_first else ''))
 

@@ -1,0 +1,94 @@
+name: backfill-planned
+
+# "הקו בזמן" — מילוי לאחור של "שינוי שתוכנן ולא נכנס לתוקף" מארכיון אופן באס
+# (2023 ואילך), בקשת שלמה 03.09. כל ריצה מעבדת פרק של ימים ושומרת מצב אחרי
+# כל יום; chain=true מזניק את הפרק הבא עד שנגמרים הימים. בטוח להרצה חוזרת.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_days:
+        description: 'ימים לריצה (0 = בלי מגבלה)'
+        required: false
+        default: '45'
+      max_min:
+        description: 'תקציב דקות לריצה'
+        required: false
+        default: '150'
+      from:
+        description: 'FROM (YYYY-MM-DD)'
+        required: false
+        default: '2023-01-01'
+      to:
+        description: 'TO (YYYY-MM-DD) — יום לפני בסיס הסורק היומי'
+        required: false
+        default: '2026-09-02'
+      dry:
+        description: 'ניתוח בלבד בלי כתיבה (1)'
+        required: false
+        default: ''
+      chain:
+        description: 'שרשור — בסיום, הזנקת הפרק הבא (true)'
+        required: false
+        default: 'false'
+      reset:
+        description: 'איפוס — מחיקת כל תוצר קודם של הכלי ומצבו, והתחלה מההתחלה (1)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: backfill-planned
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: שינויים שתוכננו ולא נכנסו לתוקף — מהארכיון
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data FROM='${{ inputs.from }}' TO='${{ inputs.to }}' \
+            MAX_DAYS='${{ inputs.max_days }}' MAX_MIN='${{ inputs.max_min }}' DRY='${{ inputs.dry }}' RESET='${{ inputs.reset }}' \
+            python3 tools/backfill_planned.py
+
+      - name: תוצרים נגזרים (אינדקס, פיד הארכיון)
+        if: ${{ inputs.dry != '1' }}
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data python3 tools/build_archive_months.py
+          OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+
+      - name: commit
+        if: ${{ inputs.dry != '1' }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A line-history/data
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: line-history — שינויים שתוכננו ולא נכנסו לתוקף, מהארכיון (2023 ואילך)"
+          for i in 1 2 3 4; do
+            git pull --rebase -X theirs origin main && git push origin HEAD:main && break
+            echo "push rejected — retry $i"; sleep 10
+          done
+
+      - name: המשך אוטומטי
+        if: ${{ inputs.chain == 'true' && inputs.dry != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REMAINING=$(python3 -c "import json; print(json.load(open('line-history/data/backfill-planned-state.json')).get('remaining', 0))")
+          echo "נותרו: $REMAINING ימים"
+          if [ "$REMAINING" != "0" ]; then
+            gh workflow run backfill-planned.yml --ref main -f from='${{ inputs.from }}' -f to='${{ inputs.to }}' \
+              -f max_days='${{ inputs.max_days }}' -f max_min='${{ inputs.max_min }}' -f chain=true
+          else
+            echo 'המילוי הושלם'
+          fi

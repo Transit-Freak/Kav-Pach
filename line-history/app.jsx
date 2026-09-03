@@ -1725,6 +1725,15 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
                   בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
               <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
+              {/* שינוי שתוכנן ולא נכנס לתוקף: שני התאריכים במפורש (בקשת שלמה 03.09) —
+                  מתי היה אמור להיכנס, ומתי בוטל (ירד מהרישום) */}
+              {x.k === "planned-dropped" && (x.ps || x.pc) && (
+                <div className="sub">
+                  📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b> · בוטל ב-<b>{fmtD(x.pc || x.d)}</b>
+                  {x.sd && gapDays(x.sd, x.pc || x.d) > 1 ? <> (נראה לאחרונה ב-{fmtD(x.sd)})</> : null}
+                  {x.pf ? <> · פורסם לראשונה ב-{fmtD(x.pf)}</> : null}
+                </div>
+              )}
               {(x.add || x.rem) && (() => {
                 // הזיהוי לפי מספר תחנה (x.ac/x.rc, מיושרים לשמות) — השם תצוגה
                 const addE = (x.add || []).map((n, j) => ({ n, c: x.ac && x.ac[j] != null ? String(x.ac[j]) : null }));
@@ -2166,6 +2175,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
                     <span className="ldest">{m.dest || c.rd}</span>
                     <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
                     {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
+                    {c.k === "planned-dropped" && c.ps ? <span className="lnote">📅 תוכנן ל-{fmtD(c.ps)} · בוטל ב-{fmtD(c.pc || c.d)}</span> : null}
                     {c.note ? <span className="lnote">{noteFix(c.note)}</span> : null}
                   </a>
                 );
@@ -2284,6 +2294,7 @@ function RecentChanges({ idx, openLine, onAll }) {
                 <span className="ldest">{m.dest || c.rd}</span>
                 <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
                 {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
+                    {c.k === "planned-dropped" && c.ps ? <span className="lnote">📅 תוכנן ל-{fmtD(c.ps)} · בוטל ב-{fmtD(c.pc || c.d)}</span> : null}
                     {c.note ? <span className="lnote">{noteFix(c.note)}</span> : null}
               </a>
             );
@@ -2730,7 +2741,7 @@ const SOURCES = [
   { t: "קובץ הרישוי היומי Gtfs_10_days", d: "מ-08.2026 והלאה",
     b: "הפורמט החדש של משרד התחבורה, היחיד שמייצג שני אוטובוסים או שלושה שיוצאים באותה דקה על אותה נסיעה. ממנו נרשמים שינויי תגבור. הארכיונים לא שמרו אותו, ולכן אין לו היסטוריה." },
   { t: "ארכיון אופן באס — הסדנא לידע ציבורי", d: "16.01.2022 – 24.07.2026",
-    b: "צילומים יומיים של הפיד הארצי. מהם נבנתה היסטוריית הקווים והתחנות לתקופה הזו." },
+    b: "צילומים יומיים של הפיד הארצי. מהם נבנתה היסטוריית הקווים והתחנות לתקופה הזו, וממנו גם השינויים שתוכננו ולא נכנסו לתוקף מינואר 2023 ואילך." },
   { t: "ארכיון TransitFeeds / OpenMobilityData", d: "16.03.2017 – 14.01.2022",
     b: "799 צילומים של הפיד הארצי. 16.03.2017 הוא הצילום הישן ביותר שקיים שם. משם מגיעה כל ההיסטוריה שלפני 2022, בקווים ובתחנות כאחד." },
   { t: "רשת 2012 מאתר מגיעים", d: "צילום יחיד מ-2012",
