@@ -1,6 +1,6 @@
 {
- "generated": "02.09.2026 14:42",
- "gtfs_date": "2026-09-02",
+ "generated": "03.09.2026 12:52",
+ "gtfs_date": "2026-09-03",
  "formula": {
   "headway_bands": [
    [
@@ -56,19 +56,16 @@
    [
     15,
     65
-   ],
-   [
-    20,
-    55
    ]
   ],
+  "walk_zero_from": 15,
   "weights": {
    "bl": 0.4,
    "far": 0.3,
    "uf": 0.2,
    "near": 0.1
   },
-  "version": "02.09.2026",
+  "version": "03.09.2026",
   "scale": [
    [
     100,
@@ -119,237 +116,237 @@
   "peak_pm": "15:00–19:00 מהאזור"
  },
  "national": {
-  "n": 414,
-  "mean": 66.2,
-  "median": 74.0,
+  "n": 415,
+  "mean": 60.1,
+  "median": 67,
   "bands": {
    "100": 0,
-   "90": 13,
-   "80": 115,
-   "70": 119,
-   "60": 40,
-   "50": 53,
-   "40": 19,
-   "30": 26,
-   "20": 13,
-   "10": 5,
-   "0": 11
+   "90": 7,
+   "80": 109,
+   "70": 88,
+   "60": 34,
+   "50": 56,
+   "40": 35,
+   "30": 28,
+   "20": 17,
+   "10": 11,
+   "0": 30
   },
   "traffic": [
    {
     "label": "ירוק (90 ומעלה)",
-    "n": 13,
+    "n": 7,
     "color": "#14b03d",
-    "pct": 3
+    "pct": 2
    },
    {
     "label": "צהוב (70–89)",
-    "n": 234,
+    "n": 197,
     "color": "#f8d420",
-    "pct": 57
+    "pct": 47
    },
    {
     "label": "כתום (50–69)",
-    "n": 93,
+    "n": 90,
     "color": "#ee7a16",
     "pct": 22
    },
    {
     "label": "אדום (מתחת ל-50)",
-    "n": 74,
+    "n": 121,
     "color": "#c00d18",
-    "pct": 18
+    "pct": 29
    }
   ],
-  "no_line_n": 9,
-  "no_line_pct": 2,
-  "no_peak_n": 9,
-  "top10_share": 53,
-  "top5_share": 37,
-  "median_peak_departures": 73.5,
+  "no_line_n": 25,
+  "no_line_pct": 6,
+  "no_peak_n": 26,
+  "top10_share": 55,
+  "top5_share": 38,
+  "median_peak_departures": 53,
   "stats": {
-   "n": 414,
-   "score_mean": 66.2,
-   "score_median": 74.0,
-   "pct_green": 3,
-   "pct_ge70": 60,
-   "pct_lt50": 18,
-   "far_mean": 12.6,
-   "far_median": 10.7,
-   "pct_far_over20": 13,
-   "uf_headway_median": 5.4,
-   "pct_no_peak": 2,
+   "n": 415,
+   "score_mean": 60.1,
+   "score_median": 67,
+   "pct_green": 2,
+   "pct_ge70": 49,
+   "pct_lt50": 29,
+   "far_mean": 12.4,
+   "far_median": 10.1,
+   "pct_far_over15": 25,
+   "uf_headway_median": 6.6,
+   "pct_no_peak": 6,
    "bl_headway_median": 25.7,
-   "pct_bl_le15": 23,
-   "pct_bl_ge60": 26,
-   "mot_mean": 42.4,
-   "mot_n": 53,
-   "walk_near_median": 3.8
+   "pct_bl_le15": 20,
+   "pct_bl_ge60": 33,
+   "mot_mean": 43.2,
+   "mot_n": 52,
+   "walk_near_median": 3.5
   }
  },
  "regions": {
   "center_periphery": {
    "מרכז": {
     "n": 147,
-    "score_mean": 71.8,
-    "score_median": 78,
-    "pct_green": 4,
-    "pct_ge70": 71,
-    "pct_lt50": 7,
+    "score_mean": 65.4,
+    "score_median": 75,
+    "pct_green": 3,
+    "pct_ge70": 56,
+    "pct_lt50": 18,
     "far_mean": 12.0,
-    "far_median": 10.2,
-    "pct_far_over20": 12,
-    "uf_headway_median": 3.2,
-    "pct_no_peak": 1,
-    "bl_headway_median": 20.0,
-    "pct_bl_le15": 30,
-    "pct_bl_ge60": 14,
+    "far_median": 9.7,
+    "pct_far_over15": 24,
+    "uf_headway_median": 3.6,
+    "pct_no_peak": 4,
+    "bl_headway_median": 22.5,
+    "pct_bl_le15": 25,
+    "pct_bl_ge60": 22,
     "mot_mean": 46.6,
     "mot_n": 35,
-    "walk_near_median": 3.2
+    "walk_near_median": 3.1
    },
    "פריפריה": {
-    "n": 267,
-    "score_mean": 63.1,
-    "score_median": 72,
-    "pct_green": 3,
-    "pct_ge70": 54,
-    "pct_lt50": 24,
-    "far_mean": 12.9,
-    "far_median": 10.9,
-    "pct_far_over20": 14,
-    "uf_headway_median": 7.4,
-    "pct_no_peak": 3,
+    "n": 268,
+    "score_mean": 57.1,
+    "score_median": 63.0,
+    "pct_green": 1,
+    "pct_ge70": 46,
+    "pct_lt50": 35,
+    "far_mean": 12.7,
+    "far_median": 10.2,
+    "pct_far_over15": 26,
+    "uf_headway_median": 9.2,
+    "pct_no_peak": 7,
     "bl_headway_median": 30.0,
-    "pct_bl_le15": 20,
-    "pct_bl_ge60": 33,
-    "mot_mean": 34.3,
-    "mot_n": 18,
-    "walk_near_median": 4.0
+    "pct_bl_le15": 17,
+    "pct_bl_ge60": 38,
+    "mot_mean": 36.1,
+    "mot_n": 17,
+    "walk_near_median": 3.7
    }
   },
   "north_center_south": {
    "צפון": {
     "n": 173,
-    "score_mean": 68.5,
-    "score_median": 75,
-    "pct_green": 3,
-    "pct_ge70": 64,
-    "pct_lt50": 16,
-    "far_mean": 11.6,
+    "score_mean": 62.2,
+    "score_median": 73,
+    "pct_green": 1,
+    "pct_ge70": 54,
+    "pct_lt50": 26,
+    "far_mean": 11.4,
     "far_median": 9.9,
-    "pct_far_over20": 9,
-    "uf_headway_median": 5.5,
-    "pct_no_peak": 1,
-    "bl_headway_median": 25.7,
-    "pct_bl_le15": 24,
-    "pct_bl_ge60": 21,
+    "pct_far_over15": 21,
+    "uf_headway_median": 7.0,
+    "pct_no_peak": 5,
+    "bl_headway_median": 30.0,
+    "pct_bl_le15": 20,
+    "pct_bl_ge60": 28,
     "mot_mean": 37.4,
     "mot_n": 11,
-    "walk_near_median": 3.6
+    "walk_near_median": 3.3
    },
    "מרכז": {
     "n": 108,
-    "score_mean": 74.9,
-    "score_median": 79.0,
-    "pct_green": 6,
-    "pct_ge70": 76,
-    "pct_lt50": 5,
-    "far_mean": 11.6,
-    "far_median": 9.7,
-    "pct_far_over20": 10,
-    "uf_headway_median": 3.0,
-    "pct_no_peak": 0,
-    "bl_headway_median": 19.0,
-    "pct_bl_le15": 34,
-    "pct_bl_ge60": 9,
+    "score_mean": 68.6,
+    "score_median": 78.0,
+    "pct_green": 5,
+    "pct_ge70": 65,
+    "pct_lt50": 15,
+    "far_mean": 11.0,
+    "far_median": 9.2,
+    "pct_far_over15": 19,
+    "uf_headway_median": 3.5,
+    "pct_no_peak": 4,
+    "bl_headway_median": 22.5,
+    "pct_bl_le15": 31,
+    "pct_bl_ge60": 19,
     "mot_mean": 48.2,
     "mot_n": 31,
-    "walk_near_median": 3.0
+    "walk_near_median": 3
    },
    "ירושלים ויו\"ש": {
     "n": 34,
-    "score_mean": 55.8,
-    "score_median": 59.0,
-    "pct_green": 0,
-    "pct_ge70": 41,
-    "pct_lt50": 29,
-    "far_mean": 15.2,
-    "far_median": 11.2,
-    "pct_far_over20": 18,
-    "uf_headway_median": 17.8,
-    "pct_no_peak": 6,
-    "bl_headway_median": 58.3,
+    "score_mean": 49.3,
+    "score_median": 50.5,
+    "pct_green": 3,
+    "pct_ge70": 35,
+    "pct_lt50": 47,
+    "far_mean": 16.0,
+    "far_median": 10.7,
+    "pct_far_over15": 38,
+    "uf_headway_median": 24.7,
+    "pct_no_peak": 12,
+    "bl_headway_median": 54.2,
     "pct_bl_le15": 21,
     "pct_bl_ge60": 53,
     "mot_mean": 56.4,
     "mot_n": 1,
-    "walk_near_median": 3.9
+    "walk_near_median": 3.4
    },
    "דרום": {
-    "n": 99,
-    "score_mean": 56.2,
-    "score_median": 60,
-    "pct_green": 1,
-    "pct_ge70": 40,
-    "pct_lt50": 32,
-    "far_mean": 14.7,
-    "far_median": 12.1,
-    "pct_far_over20": 21,
-    "uf_headway_median": 9.8,
-    "pct_no_peak": 5,
+    "n": 100,
+    "score_mean": 50.9,
+    "score_median": 53.0,
+    "pct_green": 0,
+    "pct_ge70": 29,
+    "pct_lt50": 44,
+    "far_mean": 14.8,
+    "far_median": 11.8,
+    "pct_far_over15": 36,
+    "uf_headway_median": 10.1,
+    "pct_no_peak": 10,
     "bl_headway_median": 30.0,
-    "pct_bl_le15": 11,
-    "pct_bl_ge60": 43,
-    "mot_mean": 28.6,
-    "mot_n": 10,
+    "pct_bl_le15": 9,
+    "pct_bl_ge60": 48,
+    "mot_mean": 31.3,
+    "mot_n": 9,
     "walk_near_median": 4.0
    }
   },
   "periphery_by_region": {
    "צפון": {
     "n": 163,
-    "score_mean": 68.2,
-    "score_median": 75,
-    "pct_green": 4,
-    "pct_ge70": 63,
-    "pct_lt50": 16,
-    "far_mean": 11.6,
-    "far_median": 9.8,
-    "pct_far_over20": 9,
-    "uf_headway_median": 5.9,
-    "pct_no_peak": 1,
-    "bl_headway_median": 25.7,
-    "pct_bl_le15": 25,
-    "pct_bl_ge60": 22,
+    "score_mean": 61.7,
+    "score_median": 73,
+    "pct_green": 1,
+    "pct_ge70": 53,
+    "pct_lt50": 27,
+    "far_mean": 11.5,
+    "far_median": 9.9,
+    "pct_far_over15": 21,
+    "uf_headway_median": 7.4,
+    "pct_no_peak": 5,
+    "bl_headway_median": 30.0,
+    "pct_bl_le15": 21,
+    "pct_bl_ge60": 29,
     "mot_mean": 37.4,
     "mot_n": 11,
-    "walk_near_median": 3.6
+    "walk_near_median": 3.3
    },
    "דרום": {
-    "n": 87,
-    "score_mean": 54.7,
-    "score_median": 58,
-    "pct_green": 1,
-    "pct_ge70": 36,
-    "pct_lt50": 36,
-    "far_mean": 14.7,
-    "far_median": 12.0,
-    "pct_far_over20": 21,
-    "uf_headway_median": 12.4,
-    "pct_no_peak": 5,
+    "n": 88,
+    "score_mean": 50.0,
+    "score_median": 50.5,
+    "pct_green": 0,
+    "pct_ge70": 30,
+    "pct_lt50": 48,
+    "far_mean": 14.0,
+    "far_median": 11.6,
+    "pct_far_over15": 32,
+    "uf_headway_median": 13.1,
+    "pct_no_peak": 10,
     "bl_headway_median": 36.0,
-    "pct_bl_le15": 9,
-    "pct_bl_ge60": 48,
-    "mot_mean": 24.9,
-    "mot_n": 6,
-    "walk_near_median": 4
+    "pct_bl_le15": 8,
+    "pct_bl_ge60": 53,
+    "mot_mean": 29.2,
+    "mot_n": 5,
+    "walk_near_median": 4.0
    }
   },
   "defs": {
    "center_km": 45,
    "district_source": "שכבת \"תחום אזורי תעשיה תעסוקה\" של משרד התחבורה — שדה המחוז",
-   "district_matched": 410,
+   "district_matched": 411,
    "fallback_lat": {
     "north": 32.4,
     "south": 31.85
@@ -360,144 +357,144 @@
  "sector": {
   "source_field": "MINORITY — שכבת \"תחום אזורי תעשיה תעסוקה\", משרד התחבורה",
   "minority": {
-   "n": 61,
-   "score_mean": 69.9,
-   "score_median": 75,
+   "n": 62,
+   "score_mean": 64.9,
+   "score_median": 75.0,
    "pct_green": 0,
-   "pct_ge70": 74,
-   "pct_lt50": 10,
-   "far_mean": 10.7,
+   "pct_ge70": 69,
+   "pct_lt50": 19,
+   "far_mean": 10.4,
    "far_median": 9.6,
-   "pct_far_over20": 7,
-   "uf_headway_median": 5.9,
-   "pct_no_peak": 0,
+   "pct_far_over15": 16,
+   "uf_headway_median": 6.1,
+   "pct_no_peak": 6,
    "bl_headway_median": 25.7,
    "pct_bl_le15": 5,
-   "pct_bl_ge60": 18,
+   "pct_bl_ge60": 23,
    "mot_mean": 49.5,
    "mot_n": 2,
-   "walk_near_median": 4
+   "walk_near_median": 3.5
   },
   "other": {
    "n": 353,
-   "score_mean": 65.5,
-   "score_median": 74,
-   "pct_green": 4,
-   "pct_ge70": 57,
-   "pct_lt50": 19,
-   "far_mean": 12.9,
-   "far_median": 11.0,
-   "pct_far_over20": 14,
-   "uf_headway_median": 4.9,
-   "pct_no_peak": 3,
-   "bl_headway_median": 22.5,
-   "pct_bl_le15": 27,
-   "pct_bl_ge60": 27,
-   "mot_mean": 42.2,
-   "mot_n": 51,
-   "walk_near_median": 3.7
+   "score_mean": 59.2,
+   "score_median": 63,
+   "pct_green": 2,
+   "pct_ge70": 46,
+   "pct_lt50": 31,
+   "far_mean": 12.8,
+   "far_median": 10.2,
+   "pct_far_over15": 27,
+   "uf_headway_median": 7.0,
+   "pct_no_peak": 6,
+   "bl_headway_median": 30.0,
+   "pct_bl_le15": 23,
+   "pct_bl_ge60": 34,
+   "mot_mean": 42.9,
+   "mot_n": 50,
+   "walk_near_median": 3.5
   },
   "subgroups": {
    "בדואים (צפון ודרום)": {
-    "n": 16,
-    "score_mean": 62.2,
-    "score_median": 71.0,
+    "n": 17,
+    "score_mean": 53.6,
+    "score_median": 60,
     "pct_green": 0,
-    "pct_ge70": 56,
-    "pct_lt50": 25,
-    "far_mean": 13.2,
-    "far_median": 11.2,
-    "pct_far_over20": 12,
+    "pct_ge70": 47,
+    "pct_lt50": 35,
+    "far_mean": 11.2,
+    "far_median": 9.2,
+    "pct_far_over15": 29,
     "uf_headway_median": 9.8,
-    "pct_no_peak": 0,
+    "pct_no_peak": 18,
     "bl_headway_median": 25.7,
     "pct_bl_le15": 6,
-    "pct_bl_ge60": 31,
+    "pct_bl_ge60": 41,
     "mot_mean": null,
     "mot_n": 0,
-    "walk_near_median": 5.0
+    "walk_near_median": 4.0
    },
    "דרוזים (כולל רמת הגולן)": {
     "n": 9,
-    "score_mean": 66.4,
+    "score_mean": 63.9,
     "score_median": 76,
     "pct_green": 0,
     "pct_ge70": 56,
-    "pct_lt50": 11,
+    "pct_lt50": 22,
     "far_mean": 8.9,
     "far_median": 8.3,
-    "pct_far_over20": 0,
-    "uf_headway_median": 5.5,
+    "pct_far_over15": 0,
+    "uf_headway_median": 5.6,
     "pct_no_peak": 0,
     "bl_headway_median": 25.7,
     "pct_bl_le15": 0,
     "pct_bl_ge60": 44,
     "mot_mean": null,
     "mot_n": 0,
-    "walk_near_median": 4
+    "walk_near_median": 3
    },
    "מיעוטים כללי": {
     "n": 31,
-    "score_mean": 73.2,
+    "score_mean": 70.5,
     "score_median": 76,
     "pct_green": 0,
     "pct_ge70": 84,
-    "pct_lt50": 3,
-    "far_mean": 10.2,
-    "far_median": 9.6,
-    "pct_far_over20": 6,
+    "pct_lt50": 10,
+    "far_mean": 10.4,
+    "far_median": 9.3,
+    "pct_far_over15": 13,
     "uf_headway_median": 5.4,
-    "pct_no_peak": 0,
-    "bl_headway_median": 25.7,
+    "pct_no_peak": 3,
+    "bl_headway_median": 27.9,
     "pct_bl_le15": 3,
-    "pct_bl_ge60": 6,
+    "pct_bl_ge60": 10,
     "mot_mean": null,
     "mot_n": 0,
-    "walk_near_median": 4
+    "walk_near_median": 3.5
    },
    "רשות מעורבת": {
     "n": 4,
-    "score_mean": 81.5,
-    "score_median": 84.5,
+    "score_mean": 80.0,
+    "score_median": 81.5,
     "pct_green": 0,
     "pct_ge70": 100,
     "pct_lt50": 0,
-    "far_mean": 8.4,
-    "far_median": 7.9,
-    "pct_far_over20": 0,
-    "uf_headway_median": 3.7,
+    "far_mean": 9.7,
+    "far_median": 10.4,
+    "pct_far_over15": 0,
+    "uf_headway_median": 4.1,
     "pct_no_peak": 0,
-    "bl_headway_median": 18.2,
+    "bl_headway_median": 22.9,
     "pct_bl_le15": 25,
     "pct_bl_ge60": 0,
     "mot_mean": 49.5,
     "mot_n": 2,
-    "walk_near_median": 2.0
+    "walk_near_median": 2.2
    },
    "צ'רקסים": {
     "n": 1,
-    "score_mean": 76.0,
-    "score_median": 76,
+    "score_mean": 28.0,
+    "score_median": 28,
     "pct_green": 0,
-    "pct_ge70": 100,
-    "pct_lt50": 0,
-    "far_mean": 13.5,
-    "far_median": 13.5,
-    "pct_far_over20": 0,
-    "uf_headway_median": 4.0,
+    "pct_ge70": 0,
+    "pct_lt50": 100,
+    "far_mean": 18.3,
+    "far_median": 18.3,
+    "pct_far_over15": 100,
+    "uf_headway_median": 70.0,
     "pct_no_peak": 0,
-    "bl_headway_median": 30.0,
+    "bl_headway_median": 50.0,
     "pct_bl_le15": 0,
     "pct_bl_ge60": 0,
     "mot_mean": null,
     "mot_n": 0,
-    "walk_near_median": 1.9
+    "walk_near_median": 3.2
    }
   },
   "values": {
    "מיעוטים כללי": 31,
    "דרוזים": 8,
-   "בדואים דרום": 13,
+   "בדואים דרום": 14,
    "בדואים צפון": 3,
    "רשות מעורבת": 4,
    "צ'רקסים": 1,
@@ -509,75 +506,75 @@
   "source": "אשכול כלכלי חברתי של מועצות מקומיות ויישובים לשנת 2019 + למ\"ס — המדד החברתי-כלכלי 2021 (24_24_230t1.xlsx)",
   "groups": {
    "אשכולות 1–3 (חלש)": {
-    "n": 60,
-    "score_mean": 69.9,
-    "score_median": 75.5,
-    "pct_green": 3,
-    "pct_ge70": 70,
-    "pct_lt50": 10,
-    "far_mean": 12.8,
-    "far_median": 10.9,
-    "pct_far_over20": 12,
-    "uf_headway_median": 4.0,
-    "pct_no_peak": 2,
-    "bl_headway_median": 20.0,
-    "pct_bl_le15": 22,
-    "pct_bl_ge60": 18,
+    "n": 62,
+    "score_mean": 64.2,
+    "score_median": 73.5,
+    "pct_green": 5,
+    "pct_ge70": 61,
+    "pct_lt50": 24,
+    "far_mean": 12.6,
+    "far_median": 10.1,
+    "pct_far_over15": 26,
+    "uf_headway_median": 5.4,
+    "pct_no_peak": 6,
+    "bl_headway_median": 21.2,
+    "pct_bl_le15": 23,
+    "pct_bl_ge60": 23,
     "mot_mean": 49.8,
     "mot_n": 4,
-    "walk_near_median": 3
+    "walk_near_median": 3.0
    },
    "אשכולות 4–7 (בינוני)": {
     "n": 231,
-    "score_mean": 65.8,
-    "score_median": 74,
-    "pct_green": 3,
-    "pct_ge70": 57,
-    "pct_lt50": 20,
-    "far_mean": 12.5,
-    "far_median": 10.8,
-    "pct_far_over20": 14,
-    "uf_headway_median": 5.4,
-    "pct_no_peak": 2,
-    "bl_headway_median": 25.7,
-    "pct_bl_le15": 26,
-    "pct_bl_ge60": 28,
+    "score_mean": 60.0,
+    "score_median": 65,
+    "pct_green": 1,
+    "pct_ge70": 47,
+    "pct_lt50": 29,
+    "far_mean": 12.9,
+    "far_median": 10.3,
+    "pct_far_over15": 24,
+    "uf_headway_median": 7.0,
+    "pct_no_peak": 6,
+    "bl_headway_median": 30.0,
+    "pct_bl_le15": 23,
+    "pct_bl_ge60": 35,
     "mot_mean": 44.7,
     "mot_n": 28,
-    "walk_near_median": 3.7
+    "walk_near_median": 3.6
    },
    "אשכולות 8–10 (חזק)": {
     "n": 48,
-    "score_mean": 63.8,
-    "score_median": 74.5,
+    "score_mean": 59.4,
+    "score_median": 68.0,
     "pct_green": 0,
-    "pct_ge70": 56,
-    "pct_lt50": 21,
-    "far_mean": 13.7,
-    "far_median": 10.7,
-    "pct_far_over20": 15,
-    "uf_headway_median": 6.6,
-    "pct_no_peak": 2,
-    "bl_headway_median": 25.7,
-    "pct_bl_le15": 19,
-    "pct_bl_ge60": 31,
+    "pct_ge70": 50,
+    "pct_lt50": 29,
+    "far_mean": 11.5,
+    "far_median": 9.6,
+    "pct_far_over15": 25,
+    "uf_headway_median": 7.4,
+    "pct_no_peak": 4,
+    "bl_headway_median": 30.0,
+    "pct_bl_le15": 17,
+    "pct_bl_ge60": 38,
     "mot_mean": 43.0,
     "mot_n": 6,
-    "walk_near_median": 5
+    "walk_near_median": 4.5
    }
   },
-  "unmatched": 75
+  "unmatched": 74
  },
  "top10": [
   {
-   "name": "פתח תקווה - תעשיה זעירה",
-   "city": "פתח תקווה",
+   "name": "הרצליה",
+   "city": "הרצליה",
    "score": 93,
-   "mot": 67,
-   "motw": 68,
-   "bl_headway": 8,
-   "far": 5,
-   "area": 0.35,
+   "mot": 54,
+   "motw": 53,
+   "bl_headway": 10,
+   "far": 6,
+   "area": 0.81,
    "sparts": {
     "uf": 100,
     "bl": 90,
@@ -586,25 +583,73 @@
    }
   },
   {
-   "name": "חיפה - א\"ת על צומת הקריות",
-   "city": "חיפה",
-   "score": 92,
-   "mot": null,
-   "motw": 39,
-   "bl_headway": 1,
-   "far": 12,
+   "name": "אזור התעשיה פולג",
+   "city": "נתניה",
+   "score": 90,
+   "mot": 59,
+   "motw": 59,
+   "bl_headway": 10,
+   "far": 8,
+   "area": 1.48,
+   "sparts": {
+    "uf": 100,
+    "bl": 90,
+    "far": 80,
+    "near": 100
+   }
+  },
+  {
+   "name": "אזור תעשייה הר חוצבים",
+   "city": "ירושלים",
+   "score": 89,
+   "mot": 56,
+   "motw": 55,
+   "bl_headway": 8,
+   "far": 4,
    "area": 0.45,
    "sparts": {
     "uf": 100,
-    "bl": 100,
+    "bl": 80,
+    "far": 90,
+    "near": 100
+   }
+  },
+  {
+   "name": "פתח תקווה - תעשיה זעירה",
+   "city": "פתח תקווה",
+   "score": 89,
+   "mot": 67,
+   "motw": 64,
+   "bl_headway": 8,
+   "far": 4,
+   "area": 0.35,
+   "sparts": {
+    "uf": 100,
+    "bl": 80,
+    "far": 90,
+    "near": 100
+   }
+  },
+  {
+   "name": "אזור תעשיה גבעת שאול",
+   "city": "ירושלים",
+   "score": 89,
+   "mot": null,
+   "motw": 52,
+   "bl_headway": 10,
+   "far": 11,
+   "area": 0.55,
+   "sparts": {
+    "uf": 100,
+    "bl": 90,
     "far": 75,
-    "near": 90
+    "near": 100
    }
   },
   {
    "name": "בת ים",
    "city": "בת ים",
-   "score": 92,
+   "score": 89,
    "mot": 76,
    "motw": 76,
    "bl_headway": 7,
@@ -612,125 +657,109 @@
    "area": 0.8,
    "sparts": {
     "uf": 100,
-    "bl": 90,
+    "bl": 80,
     "far": 90,
-    "near": 90
+    "near": 100
    }
   },
   {
-   "name": "גב ים - קרקעות תעשיה \" ג \" עמ",
+   "name": "אדמות ק.ק.ל וחברת גב - ים - אז",
    "city": "חיפה",
-   "score": 92,
-   "mot": null,
-   "motw": 36,
-   "bl_headway": 7,
-   "far": 7,
-   "area": 0.35,
+   "score": 89,
+   "mot": 48,
+   "motw": 37,
+   "bl_headway": 6,
+   "far": 10,
+   "area": 0.59,
    "sparts": {
     "uf": 100,
     "bl": 90,
-    "far": 90,
+    "far": 80,
     "near": 90
    }
   },
   {
-   "name": "פארק טכנולוגי ליד מת\"מ",
-   "city": "חיפה",
-   "score": 92,
-   "mot": null,
-   "motw": 43,
-   "bl_headway": 7,
+   "name": "אזור תעשייה חדש",
+   "city": "ראשון לציון",
+   "score": 89,
+   "mot": 54,
+   "motw": 48,
+   "bl_headway": 11,
    "far": 7,
-   "area": 0.46,
+   "area": 2.39,
+   "sparts": {
+    "uf": 100,
+    "bl": 80,
+    "far": 90,
+    "near": 100
+   }
+  },
+  {
+   "name": "חוף שמן",
+   "city": "חיפה",
+   "score": 89,
+   "mot": null,
+   "motw": 32,
+   "bl_headway": 7,
+   "far": 11,
+   "area": 0.68,
    "sparts": {
     "uf": 100,
     "bl": 90,
-    "far": 90,
-    "near": 90
+    "far": 75,
+    "near": 100
    }
   },
   {
-   "name": "אזור תעשייה צור שלום",
-   "city": "קרית ביאליק",
-   "score": 92,
-   "mot": 40,
-   "motw": 38,
-   "bl_headway": 5,
-   "far": 5,
+   "name": "אזור תעשייה ישן",
+   "city": "ראשון לציון",
+   "score": 89,
+   "mot": 53,
+   "motw": 52,
+   "bl_headway": 15,
+   "far": 7,
    "area": 0.67,
    "sparts": {
     "uf": 100,
-    "bl": 90,
+    "bl": 80,
     "far": 90,
-    "near": 90
-   }
-  },
-  {
-   "name": "מע״ר באר שבע",
-   "city": "באר שבע",
-   "score": 90,
-   "mot": null,
-   "motw": 57,
-   "bl_headway": 9,
-   "far": 10,
-   "area": 0.54,
-   "sparts": {
-    "uf": 100,
-    "bl": 90,
-    "far": 80,
     "near": 100
-   }
-  },
-  {
-   "name": "הרצליה",
-   "city": "הרצליה",
-   "score": 90,
-   "mot": 54,
-   "motw": 53,
-   "bl_headway": 9,
-   "far": 8,
-   "area": 0.81,
-   "sparts": {
-    "uf": 100,
-    "bl": 90,
-    "far": 80,
-    "near": 100
-   }
-  },
-  {
-   "name": "אזור התעשייה קריית אריה",
-   "city": "פתח תקווה",
-   "score": 89,
-   "mot": 68,
-   "motw": 64,
-   "bl_headway": 7,
-   "far": 9,
-   "area": 2.43,
-   "sparts": {
-    "uf": 100,
-    "bl": 90,
-    "far": 80,
-    "near": 90
-   }
-  },
-  {
-   "name": "אזור התעשייה רמת סיב",
-   "city": "פתח תקווה",
-   "score": 89,
-   "mot": 72,
-   "motw": 64,
-   "bl_headway": 7,
-   "far": 7,
-   "area": 0.75,
-   "sparts": {
-    "uf": 100,
-    "bl": 90,
-    "far": 80,
-    "near": 90
    }
   }
  ],
  "bottom10": [
+  {
+   "name": "תע\"ש רמת השרון",
+   "city": "הרצליה",
+   "score": 0,
+   "mot": 8,
+   "motw": 40,
+   "bl_headway": null,
+   "far": null,
+   "area": 5.53,
+   "sparts": {
+    "uf": 0,
+    "bl": 0,
+    "far": 0,
+    "near": 0
+   }
+  },
+  {
+   "name": "בתי זיקוק קישון",
+   "city": "חיפה",
+   "score": 0,
+   "mot": 15,
+   "motw": 22,
+   "bl_headway": null,
+   "far": null,
+   "area": 2.54,
+   "sparts": {
+    "uf": 0,
+    "bl": 0,
+    "far": 0,
+    "near": 0
+   }
+  },
   {
    "name": "אתר לסילוק פסולת דודאים",
    "city": "—",
@@ -754,7 +783,7 @@
    "mot": null,
    "motw": 0,
    "bl_headway": null,
-   "far": 23,
+   "far": null,
    "area": 1.41,
    "sparts": {
     "uf": 0,
@@ -802,7 +831,7 @@
    "mot": null,
    "motw": 12,
    "bl_headway": null,
-   "far": 57,
+   "far": null,
    "area": 0.99,
    "sparts": {
     "uf": 0,
@@ -828,89 +857,133 @@
    }
   },
   {
-   "name": "רמת נגב",
-   "city": "רמת הנגב",
-   "score": 6,
-   "mot": 4,
-   "motw": 26,
+   "name": "עכו מזרח - ותמל",
+   "city": "עכו",
+   "score": 0,
+   "mot": null,
+   "motw": 9,
    "bl_headway": null,
-   "far": 20,
-   "area": 1.32,
+   "far": null,
+   "area": 0.53,
    "sparts": {
     "uf": 0,
     "bl": 0,
     "far": 0,
-    "near": 55
+    "near": 0
    }
   },
   {
-   "name": "מעגן מיכאל",
-   "city": "מעגן מיכאל",
-   "score": 9,
+   "name": "שחק-שקד",
+   "city": "שקד",
+   "score": 0,
    "mot": null,
-   "motw": 21,
-   "bl_headway": 180,
-   "far": 32,
-   "area": 0.94,
+   "motw": null,
+   "bl_headway": null,
+   "far": null,
+   "area": 0.48,
    "sparts": {
     "uf": 0,
     "bl": 0,
     "far": 0,
-    "near": 90
-   }
-  },
-  {
-   "name": "אזור תעשייה נאות חובב",
-   "city": "נאות חובב",
-   "score": 15,
-   "mot": null,
-   "motw": null,
-   "bl_headway": 90,
-   "far": 20,
-   "area": 3.28,
-   "sparts": {
-    "uf": 0,
-    "bl": 15,
-    "far": 0,
-    "near": 90
-   }
-  },
-  {
-   "name": "אזור תעשייה חבר",
-   "city": "הגלבוע",
-   "score": 15,
-   "mot": null,
-   "motw": null,
-   "bl_headway": 90,
-   "far": 24,
-   "area": 0.57,
-   "sparts": {
-    "uf": 0,
-    "bl": 15,
-    "far": 0,
-    "near": 90
+    "near": 0
    }
   }
  ],
  "min_area_for_top": 0.3,
  "gaps_within_city": [
   {
-   "city": "ירושלים",
-   "n": 5,
+   "city": "הרצליה",
+   "n": 2,
    "hi": {
-    "name": "י-ם פסגת-זאב",
-    "city": "ירושלים",
-    "score": 89,
+    "name": "הרצליה",
+    "city": "הרצליה",
+    "score": 93,
+    "mot": 54,
+    "motw": 53,
+    "bl_headway": 10,
+    "far": 6,
+    "area": 0.81,
+    "sparts": {
+     "uf": 100,
+     "bl": 90,
+     "far": 90,
+     "near": 100
+    }
+   },
+   "lo": {
+    "name": "תע\"ש רמת השרון",
+    "city": "הרצליה",
+    "score": 0,
+    "mot": 8,
+    "motw": 40,
+    "bl_headway": null,
+    "far": null,
+    "area": 5.53,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    }
+   },
+   "gap": 93,
+   "why": "הקו החזק: כל ~10 דק׳ מול אין קו בשיא"
+  },
+  {
+   "city": "חיפה",
+   "n": 15,
+   "hi": {
+    "name": "אזור תעשיה ומלאכה ע\"י גשר - פ",
+    "city": "חיפה",
+    "score": 93,
     "mot": null,
-    "motw": 49,
-    "bl_headway": 9,
-    "far": 8,
+    "motw": 57,
+    "bl_headway": 7,
+    "far": 5,
     "area": 0.11,
     "sparts": {
      "uf": 100,
      "bl": 90,
-     "far": 80,
-     "near": 90
+     "far": 90,
+     "near": 100
+    }
+   },
+   "lo": {
+    "name": "בתי זיקוק קישון",
+    "city": "חיפה",
+    "score": 0,
+    "mot": 15,
+    "motw": 22,
+    "bl_headway": null,
+    "far": null,
+    "area": 2.54,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    }
+   },
+   "gap": 93,
+   "why": "הקו החזק: כל ~7 דק׳ מול אין קו בשיא"
+  },
+  {
+   "city": "ירושלים",
+   "n": 5,
+   "hi": {
+    "name": "אזור תעשיה גבעת שאול",
+    "city": "ירושלים",
+    "score": 89,
+    "mot": null,
+    "motw": 52,
+    "bl_headway": 10,
+    "far": 11,
+    "area": 0.55,
+    "sparts": {
+     "uf": 100,
+     "bl": 90,
+     "far": 75,
+     "near": 100
     }
    },
    "lo": {
@@ -920,7 +993,7 @@
     "mot": null,
     "motw": 0,
     "bl_headway": null,
-    "far": 23,
+    "far": null,
     "area": 1.41,
     "sparts": {
      "uf": 0,
@@ -930,7 +1003,121 @@
     }
    },
    "gap": 89,
-   "why": "הקו החזק: כל ~9 דק׳ מול אין קו בשיא"
+   "why": "הקו החזק: כל ~10 דק׳ מול אין קו בשיא"
+  },
+  {
+   "city": "עכו",
+   "n": 4,
+   "hi": {
+    "name": "אזור תעשייה",
+    "city": "עכו",
+    "score": 89,
+    "mot": null,
+    "motw": 23,
+    "bl_headway": 13,
+    "far": 5,
+    "area": 0.12,
+    "sparts": {
+     "uf": 100,
+     "bl": 80,
+     "far": 90,
+     "near": 100
+    }
+   },
+   "lo": {
+    "name": "עכו מזרח - ותמל",
+    "city": "עכו",
+    "score": 0,
+    "mot": null,
+    "motw": 9,
+    "bl_headway": null,
+    "far": null,
+    "area": 0.53,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    }
+   },
+   "gap": 89,
+   "why": "הקו החזק: כל ~13 דק׳ מול אין קו בשיא"
+  },
+  {
+   "city": "כפר סבא",
+   "n": 4,
+   "hi": {
+    "name": "כפר סבא - אזור תעשיה ישן",
+    "city": "כפר סבא",
+    "score": 88,
+    "mot": null,
+    "motw": 44,
+    "bl_headway": 15,
+    "far": 6,
+    "area": 0.63,
+    "sparts": {
+     "uf": 100,
+     "bl": 80,
+     "far": 90,
+     "near": 90
+    }
+   },
+   "lo": {
+    "name": "נווה ימין",
+    "city": "כפר סבא",
+    "score": 0,
+    "mot": null,
+    "motw": null,
+    "bl_headway": null,
+    "far": null,
+    "area": 0.33,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    }
+   },
+   "gap": 88,
+   "why": "הקו החזק: כל ~15 דק׳ מול אין קו בשיא"
+  },
+  {
+   "city": "זבולון",
+   "n": 3,
+   "hi": {
+    "name": "יגור 1",
+    "city": "זבולון",
+    "score": 84,
+    "mot": null,
+    "motw": 33,
+    "bl_headway": 10,
+    "far": 8,
+    "area": 0.23,
+    "sparts": {
+     "uf": 100,
+     "bl": 80,
+     "far": 80,
+     "near": 80
+    }
+   },
+   "lo": {
+    "name": "יגור 2",
+    "city": "זבולון",
+    "score": 0,
+    "mot": null,
+    "motw": 33,
+    "bl_headway": null,
+    "far": null,
+    "area": 0.17,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    }
+   },
+   "gap": 84,
+   "why": "הקו החזק: כל ~10 דק׳ מול אין קו בשיא"
   },
   {
    "city": "זכרון יעקב",
@@ -938,14 +1125,14 @@
    "hi": {
     "name": "זכרון יעקב מזרח",
     "city": "זכרון יעקב",
-    "score": 76,
+    "score": 75,
     "mot": null,
     "motw": 36,
     "bl_headway": 20,
     "far": 14,
     "area": 0.2,
     "sparts": {
-     "uf": 100,
+     "uf": 90,
      "bl": 70,
      "far": 65,
      "near": 90
@@ -958,7 +1145,7 @@
     "mot": null,
     "motw": 12,
     "bl_headway": null,
-    "far": 57,
+    "far": null,
     "area": 0.99,
     "sparts": {
      "uf": 0,
@@ -967,198 +1154,8 @@
      "near": 0
     }
    },
-   "gap": 76,
+   "gap": 75,
    "why": "הקו החזק: כל ~20 דק׳ מול אין קו בשיא"
-  },
-  {
-   "city": "אפרת",
-   "n": 2,
-   "hi": {
-    "name": "אפרת",
-    "city": "אפרת",
-    "score": 73,
-    "mot": null,
-    "motw": 44,
-    "bl_headway": 38,
-    "far": 9,
-    "area": 0.03,
-    "sparts": {
-     "uf": 90,
-     "bl": 55,
-     "far": 80,
-     "near": 90
-    }
-   },
-   "lo": {
-    "name": "אזור תעשייה גוש עציון",
-    "city": "אפרת",
-    "score": 16,
-    "mot": null,
-    "motw": null,
-    "bl_headway": 180,
-    "far": 36,
-    "area": 0.18,
-    "sparts": {
-     "uf": 40,
-     "bl": 0,
-     "far": 0,
-     "near": 80
-    }
-   },
-   "gap": 57,
-   "why": "הליכת העובד המרוחק: 9 דק׳ מול 36 דק׳"
-  },
-  {
-   "city": "בני שמעון",
-   "n": 5,
-   "hi": {
-    "name": "מרחבים",
-    "city": "בני שמעון",
-    "score": 76,
-    "mot": null,
-    "motw": null,
-    "bl_headway": 36,
-    "far": 3,
-    "area": 0.01,
-    "sparts": {
-     "uf": 90,
-     "bl": 55,
-     "far": 90,
-     "near": 90
-    }
-   },
-   "lo": {
-    "name": "דביר",
-    "city": "בני שמעון",
-    "score": 24,
-    "mot": null,
-    "motw": 11,
-    "bl_headway": null,
-    "far": 17,
-    "area": 0.36,
-    "sparts": {
-     "uf": 0,
-     "bl": 0,
-     "far": 55,
-     "near": 80
-    }
-   },
-   "gap": 52,
-   "why": "הקו החזק: כל ~36 דק׳ מול אין קו בשיא"
-  },
-  {
-   "city": "רמת הנגב",
-   "n": 2,
-   "hi": {
-    "name": "טללים",
-    "city": "רמת הנגב",
-    "score": 58,
-    "mot": null,
-    "motw": 31,
-    "bl_headway": 55,
-    "far": 14,
-    "area": 0.22,
-    "sparts": {
-     "uf": 70,
-     "bl": 40,
-     "far": 65,
-     "near": 90
-    }
-   },
-   "lo": {
-    "name": "רמת נגב",
-    "city": "רמת הנגב",
-    "score": 6,
-    "mot": 4,
-    "motw": 26,
-    "bl_headway": null,
-    "far": 20,
-    "area": 1.32,
-    "sparts": {
-     "uf": 0,
-     "bl": 0,
-     "far": 0,
-     "near": 55
-    }
-   },
-   "gap": 52,
-   "why": "הליכת העובד המרוחק: 14 דק׳ מול 20 דק׳"
-  },
-  {
-   "city": "הגלבוע",
-   "n": 5,
-   "hi": {
-    "name": "מפעלי חמוצים בית השיטה",
-    "city": "הגלבוע",
-    "score": 66,
-    "mot": null,
-    "motw": 15,
-    "bl_headway": 36,
-    "far": 14,
-    "area": 0.18,
-    "sparts": {
-     "uf": 80,
-     "bl": 55,
-     "far": 65,
-     "near": 90
-    }
-   },
-   "lo": {
-    "name": "אזור תעשייה חבר",
-    "city": "הגלבוע",
-    "score": 15,
-    "mot": null,
-    "motw": null,
-    "bl_headway": 90,
-    "far": 24,
-    "area": 0.57,
-    "sparts": {
-     "uf": 0,
-     "bl": 15,
-     "far": 0,
-     "near": 90
-    }
-   },
-   "gap": 51,
-   "why": "הליכת העובד המרוחק: 14 דק׳ מול 24 דק׳"
-  },
-  {
-   "city": "זבולון",
-   "n": 3,
-   "hi": {
-    "name": "יגור 1",
-    "city": "זבולון",
-    "score": 89,
-    "mot": null,
-    "motw": 33,
-    "bl_headway": 10,
-    "far": 8,
-    "area": 0.23,
-    "sparts": {
-     "uf": 100,
-     "bl": 90,
-     "far": 80,
-     "near": 90
-    }
-   },
-   "lo": {
-    "name": "כפר המכבי",
-    "city": "זבולון",
-    "score": 40,
-    "mot": null,
-    "motw": 15,
-    "bl_headway": 90,
-    "far": 11,
-    "area": 0.21,
-    "sparts": {
-     "uf": 15,
-     "bl": 15,
-     "far": 75,
-     "near": 90
-    }
-   },
-   "gap": 49,
-   "why": "הקו החזק: כל ~10 דק׳ מול כל ~90 דק׳"
   },
   {
    "city": "מבואות החרמון",
@@ -1180,99 +1177,99 @@
     }
    },
    "lo": {
-    "name": "יפתח",
+    "name": "אדמות החולה - מבואות חרמון",
     "city": "מבואות החרמון",
-    "score": 26,
+    "score": 0,
     "mot": null,
-    "motw": 35,
-    "bl_headway": 180,
-    "far": 16,
-    "area": 0.12,
+    "motw": null,
+    "bl_headway": null,
+    "far": null,
+    "area": 0.26,
     "sparts": {
      "uf": 0,
      "bl": 0,
-     "far": 55,
-     "near": 90
+     "far": 0,
+     "near": 0
     }
    },
-   "gap": 48,
-   "why": "הקו החזק: כל ~36 דק׳ מול כל ~180 דק׳"
+   "gap": 74,
+   "why": "הליכת העובד המרוחק: 10 דק׳ מול אין תחנות בטווח"
   },
   {
-   "city": "חריש",
-   "n": 3,
+   "city": "באר יעקב",
+   "n": 4,
    "hi": {
-    "name": "מצר",
-    "city": "חריש",
-    "score": 81,
+    "name": "באר יעקב",
+    "city": "באר יעקב",
+    "score": 82,
     "mot": null,
-    "motw": 45,
-    "bl_headway": 26,
-    "far": 6,
-    "area": 0.16,
-    "sparts": {
-     "uf": 90,
-     "bl": 65,
-     "far": 90,
-     "near": 100
-    }
-   },
-   "lo": {
-    "name": "מענית",
-    "city": "חריש",
-    "score": 34,
-    "mot": null,
-    "motw": 24,
-    "bl_headway": 180,
-    "far": 10,
-    "area": 0.17,
-    "sparts": {
-     "uf": 0,
-     "bl": 0,
-     "far": 80,
-     "near": 100
-    }
-   },
-   "gap": 47,
-   "why": "הקו החזק: כל ~26 דק׳ מול כל ~180 דק׳"
-  },
-  {
-   "city": "קרית אתא",
-   "n": 3,
-   "hi": {
-    "name": "אושה",
-    "city": "קרית אתא",
-    "score": 85,
-    "mot": null,
-    "motw": 9,
-    "bl_headway": 13,
-    "far": 8,
-    "area": 0.14,
+    "motw": 38,
+    "bl_headway": 30,
+    "far": 4,
+    "area": 0.05,
     "sparts": {
      "uf": 100,
-     "bl": 80,
-     "far": 80,
+     "bl": 65,
+     "far": 90,
      "near": 90
     }
    },
    "lo": {
-    "name": "קרית אתא - מתאר כ/150",
-    "city": "קרית אתא",
-    "score": 40,
+    "name": "נצר סרני דרום",
+    "city": "באר יעקב",
+    "score": 9,
     "mot": null,
-    "motw": 32,
-    "bl_headway": 36,
-    "far": 40,
-    "area": 0.74,
+    "motw": 27,
+    "bl_headway": null,
+    "far": 23,
+    "area": 0.15,
     "sparts": {
-     "uf": 55,
-     "bl": 55,
+     "uf": 0,
+     "bl": 0,
      "far": 0,
-     "near": 65
+     "near": 90
     }
    },
-   "gap": 45,
-   "why": "הליכת העובד המרוחק: 8 דק׳ מול 40 דק׳"
+   "gap": 73,
+   "why": "הליכת העובד המרוחק: 4 דק׳ מול 23 דק׳"
+  },
+  {
+   "city": "בנימינה גבעת עדה",
+   "n": 3,
+   "hi": {
+    "name": "אזור תעשייה בנימינה",
+    "city": "בנימינה גבעת עדה",
+    "score": 84,
+    "mot": null,
+    "motw": 45,
+    "bl_headway": 16,
+    "far": 5,
+    "area": 0.08,
+    "sparts": {
+     "uf": 100,
+     "bl": 70,
+     "far": 90,
+     "near": 90
+    }
+   },
+   "lo": {
+    "name": "כפר גליקסון",
+    "city": "בנימינה גבעת עדה",
+    "score": 18,
+    "mot": null,
+    "motw": 28,
+    "bl_headway": 90,
+    "far": 15,
+    "area": 0.14,
+    "sparts": {
+     "uf": 15,
+     "bl": 15,
+     "far": 0,
+     "near": 90
+    }
+   },
+   "gap": 66,
+   "why": "הליכת העובד המרוחק: 5 דק׳ מול 15 דק׳"
   }
  ],
  "outliers": [],
@@ -1292,11 +1289,11 @@
     "far": 0,
     "near": 0
    },
-   "f": "p38.json",
-   "la": 31.7703,
-   "lo": 34.7536,
+   "f": "p37.json",
+   "la": 31.7719,
+   "lo": 34.754,
    "kind": "הגרועים ביותר",
-   "text": "1.14 קמ״ר, 0 קווים. אין אף קו בשיא הבוקר; אין תחנה בטווח 20 דקות הליכה.",
+   "text": "1.14 קמ״ר, 0 קווים. אין אף קו בשיא הבוקר; אין תחנה בטווח 15 דקות הליכה.",
    "polys": [
     [
      [
@@ -1792,11 +1789,11 @@
     "far": 0,
     "near": 0
    },
-   "f": "p90.json",
-   "la": 32.5417,
-   "lo": 35.5049,
+   "f": "p88.json",
+   "la": 32.5423,
+   "lo": 35.5053,
    "kind": "הגרועים ביותר",
-   "text": "0.63 קמ״ר, 0 קווים. אין אף קו בשיא הבוקר; אין תחנה בטווח 20 דקות הליכה.",
+   "text": "0.63 קמ״ר, 0 קווים. אין אף קו בשיא הבוקר; אין תחנה בטווח 15 דקות הליכה.",
    "polys": [
     [
      [
@@ -1890,3597 +1887,899 @@
    "periphery": true
   },
   {
-   "name": "פתח תקווה - תעשיה זעירה",
-   "city": "פתח תקווה",
+   "name": "הרצליה",
+   "city": "הרצליה",
    "score": 93,
-   "mot": 67,
-   "motw": 68,
-   "bl_headway": 8,
-   "far": 5,
-   "area": 0.35,
+   "mot": 54,
+   "motw": 53,
+   "bl_headway": 10,
+   "far": 6,
+   "area": 0.81,
    "sparts": {
     "uf": 100,
     "bl": 90,
     "far": 90,
     "near": 100
    },
-   "f": "p162.json",
-   "la": 32.1008,
-   "lo": 34.8806,
+   "f": "p63.json",
+   "la": 32.1619,
+   "lo": 34.8089,
    "kind": "המצטיינים",
-   "text": "0.35 קמ״ר, 193 קווים. הקו החזק כל ~8 דק׳; העובד המרוחק הולך 5 דק׳; ממרכז האזור לתחנה 2 דק׳.",
+   "text": "0.81 קמ״ר, 121 קווים. הקו החזק כל ~10 דק׳; העובד המרוחק הולך 6 דק׳; ממרכז האזור לתחנה 0 דק׳.",
    "polys": [
     [
      [
-      32.09624,
-      34.8862
+      32.16781,
+      34.81389
      ],
      [
-      32.09668,
-      34.88586
+      32.16767,
+      34.81388
      ],
      [
-      32.09697,
-      34.8857
+      32.16736,
+      34.81386
      ],
      [
-      32.09696,
-      34.88569
+      32.16723,
+      34.81385
      ],
      [
-      32.09696,
-      34.88569
+      32.16717,
+      34.81421
      ],
      [
-      32.09695,
-      34.88569
+      32.16652,
+      34.81413
      ],
      [
-      32.09695,
-      34.88569
+      32.1662,
+      34.8141
      ],
      [
-      32.09694,
-      34.88569
+      32.16602,
+      34.81407
      ],
      [
-      32.09694,
-      34.88568
+      32.16602,
+      34.81396
      ],
      [
-      32.09694,
-      34.88568
+      32.16599,
+      34.81396
      ],
      [
-      32.09693,
-      34.88568
+      32.16569,
+      34.81394
      ],
      [
-      32.09693,
-      34.88567
+      32.16541,
+      34.81393
      ],
      [
-      32.09693,
-      34.88567
+      32.16517,
+      34.81391
      ],
      [
-      32.09692,
-      34.88567
+      32.1651,
+      34.81389
      ],
      [
-      32.09692,
-      34.88566
+      32.16492,
+      34.81382
      ],
      [
-      32.09692,
-      34.88566
+      32.16451,
+      34.81368
      ],
      [
-      32.09691,
-      34.88565
+      32.16427,
+      34.81357
      ],
      [
-      32.09691,
-      34.88564
+      32.16391,
+      34.81337
      ],
      [
-      32.09691,
-      34.88564
+      32.1637,
+      34.81324
      ],
      [
-      32.09691,
-      34.88563
+      32.16272,
+      34.8128
      ],
      [
-      32.09691,
-      34.88563
+      32.16216,
+      34.81254
      ],
      [
-      32.09691,
-      34.88562
+      32.1581,
+      34.81012
      ],
      [
-      32.09691,
-      34.88562
+      32.15732,
+      34.80962
      ],
      [
-      32.09691,
-      34.88531
+      32.15728,
+      34.80967
      ],
      [
-      32.09607,
-      34.885
+      32.15723,
+      34.80962
      ],
      [
-      32.09605,
-      34.8844
+      32.15707,
+      34.80948
      ],
      [
-      32.09675,
-      34.88191
+      32.15686,
+      34.8093
      ],
      [
-      32.09692,
-      34.88184
+      32.15681,
+      34.80925
      ],
      [
-      32.09692,
-      34.88184
+      32.15711,
+      34.80847
      ],
      [
-      32.09743,
-      34.88166
+      32.15711,
+      34.80847
      ],
      [
-      32.09782,
-      34.88153
+      32.15708,
+      34.80843
      ],
      [
-      32.09783,
-      34.88152
+      32.15674,
+      34.80806
      ],
      [
-      32.09783,
-      34.88152
+      32.15651,
+      34.80786
      ],
      [
-      32.09784,
-      34.88152
+      32.15638,
+      34.80775
      ],
      [
-      32.09784,
-      34.88152
+      32.15606,
+      34.80755
      ],
      [
-      32.09785,
-      34.88152
+      32.15601,
+      34.80752
      ],
      [
-      32.09785,
-      34.88152
+      32.15591,
+      34.80747
      ],
      [
-      32.09786,
-      34.88152
+      32.15557,
+      34.80729
      ],
      [
-      32.09786,
-      34.88152
+      32.15555,
+      34.80728
      ],
      [
-      32.09786,
-      34.88153
+      32.15546,
+      34.80723
      ],
      [
-      32.09787,
-      34.88153
+      32.15494,
+      34.80697
      ],
      [
-      32.09787,
-      34.88153
+      32.15656,
+      34.80284
      ],
      [
-      32.09788,
-      34.88153
+      32.15669,
+      34.80292
      ],
      [
-      32.09788,
-      34.88154
+      32.15707,
+      34.80313
      ],
      [
-      32.09788,
-      34.88154
+      32.15749,
+      34.80337
      ],
      [
-      32.09789,
-      34.88154
+      32.15766,
+      34.80346
      ],
      [
-      32.09789,
-      34.88155
+      32.15781,
+      34.80355
      ],
      [
-      32.0979,
-      34.88155
+      32.15809,
+      34.80371
      ],
      [
-      32.0979,
-      34.88156
+      32.1585,
+      34.80394
      ],
      [
-      32.0979,
-      34.88156
+      32.15845,
+      34.80409
      ],
      [
-      32.0979,
-      34.88157
+      32.15844,
+      34.80412
      ],
      [
-      32.09791,
-      34.88157
+      32.15844,
+      34.80413
      ],
      [
-      32.09791,
-      34.88158
+      32.15847,
+      34.80415
      ],
      [
-      32.09791,
-      34.88158
+      32.15849,
+      34.80411
      ],
      [
-      32.09791,
-      34.88159
+      32.15857,
+      34.80392
      ],
      [
-      32.09791,
-      34.88159
+      32.1596,
+      34.80453
      ],
      [
-      32.09791,
-      34.8816
+      32.16014,
+      34.80485
      ],
      [
-      32.09807,
-      34.8803
+      32.16045,
+      34.80504
      ],
      [
-      32.09902,
-      34.87978
+      32.16055,
+      34.80509
      ],
      [
-      32.10035,
-      34.87923
+      32.16073,
+      34.80517
      ],
      [
-      32.10129,
-      34.87982
+      32.16082,
+      34.80521
      ],
      [
-      32.10161,
-      34.87917
+      32.16092,
+      34.80525
      ],
      [
-      32.10168,
-      34.87902
+      32.1611,
+      34.80532
      ],
      [
-      32.10169,
-      34.87901
+      32.16129,
+      34.80539
      ],
      [
-      32.1017,
-      34.87901
+      32.16137,
+      34.80541
      ],
      [
-      32.10171,
-      34.879
+      32.16141,
+      34.80542
      ],
      [
-      32.10172,
-      34.87899
+      32.16142,
+      34.80542
      ],
      [
-      32.10173,
-      34.87899
+      32.16145,
+      34.80543
      ],
      [
-      32.10174,
-      34.87898
+      32.16166,
+      34.80549
      ],
      [
-      32.10175,
-      34.87897
+      32.16172,
+      34.80551
      ],
      [
-      32.10176,
-      34.87897
+      32.16186,
+      34.80553
      ],
      [
-      32.10177,
-      34.87896
+      32.16208,
+      34.80555
      ],
      [
-      32.10178,
-      34.87896
+      32.1623,
+      34.80556
      ],
      [
-      32.10179,
-      34.87895
+      32.1624,
+      34.80556
      ],
      [
-      32.1018,
-      34.87894
+      32.16314,
+      34.80594
      ],
      [
-      32.10181,
-      34.87894
+      32.16307,
+      34.80593
      ],
      [
-      32.10183,
-      34.87893
+      32.16307,
+      34.80593
      ],
      [
-      32.10184,
-      34.87893
+      32.16334,
+      34.80607
      ],
      [
-      32.10185,
-      34.87892
+      32.16374,
+      34.8063
      ],
      [
-      32.10186,
-      34.87891
+      32.1639,
+      34.80639
      ],
      [
-      32.10187,
-      34.87891
+      32.16391,
+      34.80639
      ],
      [
-      32.10188,
-      34.8789
+      32.16458,
+      34.80676
      ],
      [
-      32.10189,
-      34.8789
+      32.16486,
+      34.8069
      ],
      [
-      32.1019,
-      34.87889
+      32.16578,
+      34.80782
      ],
      [
-      32.10191,
-      34.87889
+      32.16578,
+      34.80782
      ],
      [
-      32.10192,
-      34.87888
+      32.16578,
+      34.80783
      ],
      [
-      32.10193,
-      34.87888
+      32.16617,
+      34.80808
      ],
      [
-      32.10195,
-      34.87887
+      32.16631,
+      34.80817
      ],
      [
-      32.10196,
-      34.87887
+      32.16633,
+      34.80818
      ],
      [
-      32.10197,
-      34.87887
+      32.16641,
+      34.80822
      ],
      [
-      32.10198,
-      34.87886
+      32.16645,
+      34.80824
      ],
      [
-      32.10199,
-      34.87886
+      32.16647,
+      34.80825
      ],
      [
-      32.102,
-      34.87885
+      32.16647,
+      34.80825
      ],
      [
-      32.10201,
-      34.87885
+      32.16651,
+      34.80827
      ],
      [
-      32.10202,
-      34.87884
+      32.16658,
+      34.8083
      ],
      [
-      32.10204,
-      34.87884
+      32.16668,
+      34.80835
      ],
      [
-      32.10205,
-      34.87883
+      32.16682,
+      34.80842
      ],
      [
-      32.10206,
-      34.87883
+      32.16682,
+      34.80842
      ],
      [
-      32.10207,
-      34.87883
+      32.16684,
+      34.80843
      ],
      [
-      32.10208,
-      34.87882
+      32.16688,
+      34.80845
      ],
      [
-      32.10209,
-      34.87882
+      32.16704,
+      34.8086
      ],
      [
-      32.1021,
-      34.87882
+      32.16714,
+      34.80871
      ],
      [
-      32.10211,
-      34.87881
+      32.16723,
+      34.80882
      ],
      [
-      32.10212,
-      34.87881
+      32.16746,
+      34.80909
      ],
      [
-      32.10214,
-      34.87881
+      32.16761,
+      34.80926
      ],
      [
-      32.10215,
-      34.8788
+      32.16785,
+      34.80954
      ],
      [
-      32.10216,
-      34.8788
+      32.16789,
+      34.80959
      ],
      [
-      32.10217,
-      34.8788
+      32.16793,
+      34.80964
      ],
      [
-      32.10219,
-      34.87879
+      32.16799,
+      34.8097
      ],
      [
-      32.1022,
-      34.87879
+      32.16816,
+      34.80991
      ],
      [
-      32.10221,
-      34.87879
+      32.16835,
+      34.81012
      ],
      [
-      32.10222,
-      34.87879
+      32.16835,
+      34.81012
      ],
      [
-      32.10223,
-      34.87878
+      32.16826,
+      34.81057
      ],
      [
-      32.10224,
-      34.87878
+      32.16822,
+      34.81121
      ],
      [
-      32.10226,
-      34.87878
+      32.1682,
+      34.81169
      ],
      [
-      32.10227,
-      34.87878
+      32.16808,
+      34.81379
      ],
      [
-      32.10228,
-      34.87877
+      32.16807,
+      34.81391
      ],
      [
-      32.10229,
-      34.87877
+      32.16788,
+      34.8139
      ],
      [
-      32.1023,
-      34.87877
-     ],
-     [
-      32.10231,
-      34.87877
-     ],
-     [
-      32.10232,
-      34.87877
-     ],
-     [
-      32.10234,
-      34.87877
-     ],
-     [
-      32.10235,
-      34.87876
-     ],
-     [
-      32.10236,
-      34.87876
-     ],
-     [
-      32.10237,
-      34.87876
-     ],
-     [
-      32.10238,
-      34.87876
-     ],
-     [
-      32.1024,
-      34.87876
-     ],
-     [
-      32.10241,
-      34.87876
-     ],
-     [
-      32.10242,
-      34.87876
-     ],
-     [
-      32.10243,
-      34.87876
-     ],
-     [
-      32.10244,
-      34.87876
-     ],
-     [
-      32.10245,
-      34.87876
-     ],
-     [
-      32.10246,
-      34.87876
-     ],
-     [
-      32.10248,
-      34.87875
-     ],
-     [
-      32.10249,
-      34.87875
-     ],
-     [
-      32.1025,
-      34.87875
-     ],
-     [
-      32.10251,
-      34.87875
-     ],
-     [
-      32.10252,
-      34.87875
-     ],
-     [
-      32.10254,
-      34.87875
-     ],
-     [
-      32.10255,
-      34.87875
-     ],
-     [
-      32.10256,
-      34.87875
-     ],
-     [
-      32.10257,
-      34.87875
-     ],
-     [
-      32.10258,
-      34.87876
-     ],
-     [
-      32.1026,
-      34.87876
-     ],
-     [
-      32.10261,
-      34.87876
-     ],
-     [
-      32.10262,
-      34.87876
-     ],
-     [
-      32.10263,
-      34.87876
-     ],
-     [
-      32.10264,
-      34.87876
-     ],
-     [
-      32.10265,
-      34.87876
-     ],
-     [
-      32.10266,
-      34.87876
-     ],
-     [
-      32.10268,
-      34.87876
-     ],
-     [
-      32.10269,
-      34.87876
-     ],
-     [
-      32.1027,
-      34.87877
-     ],
-     [
-      32.10271,
-      34.87877
-     ],
-     [
-      32.10272,
-      34.87877
-     ],
-     [
-      32.10274,
-      34.87877
-     ],
-     [
-      32.10275,
-      34.87877
-     ],
-     [
-      32.10276,
-      34.87877
-     ],
-     [
-      32.10277,
-      34.87878
-     ],
-     [
-      32.10278,
-      34.87878
-     ],
-     [
-      32.10279,
-      34.87878
-     ],
-     [
-      32.1028,
-      34.87878
-     ],
-     [
-      32.10282,
-      34.87878
-     ],
-     [
-      32.10283,
-      34.87879
-     ],
-     [
-      32.10284,
-      34.87879
-     ],
-     [
-      32.10285,
-      34.87879
-     ],
-     [
-      32.10286,
-      34.8788
-     ],
-     [
-      32.10287,
-      34.8788
-     ],
-     [
-      32.10289,
-      34.8788
-     ],
-     [
-      32.1029,
-      34.8788
-     ],
-     [
-      32.10291,
-      34.87881
-     ],
-     [
-      32.10292,
-      34.87881
-     ],
-     [
-      32.10293,
-      34.87881
-     ],
-     [
-      32.10294,
-      34.87882
-     ],
-     [
-      32.10296,
-      34.87882
-     ],
-     [
-      32.10297,
-      34.87883
-     ],
-     [
-      32.10298,
-      34.87883
-     ],
-     [
-      32.10299,
-      34.87883
-     ],
-     [
-      32.103,
-      34.87884
-     ],
-     [
-      32.10301,
-      34.87884
-     ],
-     [
-      32.104,
-      34.87984
-     ],
-     [
-      32.10386,
-      34.88005
-     ],
-     [
-      32.10371,
-      34.88022
-     ],
-     [
-      32.10369,
-      34.88024
-     ],
-     [
-      32.10369,
-      34.88024
-     ],
-     [
-      32.10369,
-      34.88024
-     ],
-     [
-      32.10369,
-      34.88024
-     ],
-     [
-      32.10341,
-      34.88055
-     ],
-     [
-      32.1031,
-      34.8809
-     ],
-     [
-      32.10308,
-      34.88092
-     ],
-     [
-      32.10256,
-      34.88339
-     ],
-     [
-      32.10167,
-      34.88369
-     ],
-     [
-      32.10116,
-      34.88362
-     ],
-     [
-      32.10004,
-      34.88462
-     ],
-     [
-      32.09969,
-      34.88493
-     ],
-     [
-      32.09892,
-      34.88565
-     ],
-     [
-      32.09864,
-      34.88586
-     ],
-     [
-      32.0977,
-      34.88663
-     ],
-     [
-      32.09732,
-      34.88706
-     ],
-     [
-      32.09699,
-      34.887
-     ],
-     [
-      32.09624,
-      34.8862
+      32.16781,
+      34.81389
      ]
     ]
    ],
    "stops": [
     {
-     "la": 32.09797,
-     "lo": 34.88065,
+     "la": 32.16315,
+     "lo": 34.79729,
+     "t": "blocked",
+     "n": "קניון ארנה"
+    },
+    {
+     "la": 32.14807,
+     "lo": 34.80386,
+     "t": "blocked",
+     "n": "סינמה סיטי/כביש 2"
+    },
+    {
+     "la": 32.1611,
+     "lo": 34.81038,
+     "t": "in",
+     "n": "שדרות אבא אבן/אריה שנקר"
+    },
+    {
+     "la": 32.16415,
+     "lo": 34.80019,
+     "t": "far",
+     "n": "מרינה/השונית"
+    },
+    {
+     "la": 32.16898,
+     "lo": 34.8003,
+     "t": "near",
+     "n": "מלון אכדיה"
+    },
+    {
+     "la": 32.16832,
+     "lo": 34.80286,
+     "t": "far",
+     "n": "וינגייט/מדינת היהודים"
+    },
+    {
+     "la": 32.16818,
+     "lo": 34.80448,
+     "t": "far",
+     "n": "מדינת היהודים/מתתיהו"
+    },
+    {
+     "la": 32.16764,
+     "lo": 34.80673,
+     "t": "far",
+     "n": "מדינת היהודים/יהדות הדממה"
+    },
+    {
+     "la": 32.17198,
+     "lo": 34.80137,
+     "t": "blocked",
+     "n": "רמת ים/הגבורה"
+    },
+    {
+     "la": 32.17399,
+     "lo": 34.80185,
+     "t": "blocked",
+     "n": "חוף זבולון"
+    },
+    {
+     "la": 32.16196,
+     "lo": 34.80855,
+     "t": "in",
+     "n": "אבא אבן/ משכית"
+    },
+    {
+     "la": 32.16447,
+     "lo": 34.80896,
+     "t": "in",
+     "n": "גלגלי הפלדה/יוחנן הסנדלר"
+    },
+    {
+     "la": 32.16593,
+     "lo": 34.81124,
+     "t": "in",
+     "n": "מדינת היהודים/משכית"
+    },
+    {
+     "la": 32.14763,
+     "lo": 34.80335,
+     "t": "blocked",
+     "n": "סינמה סיטי/כביש 2"
+    },
+    {
+     "la": 32.16304,
+     "lo": 34.81835,
+     "t": "far",
+     "n": "ת. רכבת הרצליה"
+    },
+    {
+     "la": 32.16405,
+     "lo": 34.82214,
+     "t": "blocked",
+     "n": "בן ציון מיכאלי/יוסף נבו"
+    },
+    {
+     "la": 32.16367,
+     "lo": 34.80461,
+     "t": "near",
+     "n": "יהושע בן נון/שד. אבא אבן"
+    },
+    {
+     "la": 32.17189,
+     "lo": 34.80115,
+     "t": "blocked",
+     "n": "רמת ים/הגבורה"
+    },
+    {
+     "la": 32.1685,
+     "lo": 34.80003,
+     "t": "near",
+     "n": "רמת ים/מדינת היהודים"
+    },
+    {
+     "la": 32.16326,
+     "lo": 34.81571,
+     "t": "far",
+     "n": "ד. משה דיין/משטרה"
+    },
+    {
+     "la": 32.16138,
+     "lo": 34.8147,
+     "t": "near",
+     "n": "דרך משה דיין/שדרות שבעת הכוכבים"
+    },
+    {
+     "la": 32.16015,
+     "lo": 34.81215,
      "t": "gate",
-     "n": "אבשלום גיסין/ איתי יהודה"
+     "n": "מחלף הסירה למזרח"
     },
     {
-     "la": 32.09889,
-     "lo": 34.87909,
-     "t": "gate",
-     "n": "משה סנה/גיסין"
-    },
-    {
-     "la": 32.09481,
-     "lo": 34.88647,
-     "t": "far",
-     "n": "ת.רק''ל/תחנה מרכזית למערב"
-    },
-    {
-     "la": 32.09352,
-     "lo": 34.88307,
-     "t": "far",
-     "n": "ת.רק''ל פינסקר"
-    },
-    {
-     "la": 32.08993,
-     "lo": 34.88276,
-     "t": "far",
-     "n": "שוק עירוני/ברון הירש"
-    },
-    {
-     "la": 32.08763,
-     "lo": 34.88215,
-     "t": "blocked",
-     "n": "חובבי ציון/מונטיפיורי"
-    },
-    {
-     "la": 32.08604,
-     "lo": 34.88538,
-     "t": "blocked",
-     "n": "ההסתדרות/איכילוב"
-    },
-    {
-     "la": 32.08524,
-     "lo": 34.88221,
-     "t": "blocked",
-     "n": "רוטשילד / פרנקפורטר"
-    },
-    {
-     "la": 32.08836,
-     "lo": 34.88699,
-     "t": "blocked",
-     "n": "עיריית פתח תקווה/חיים עוזר"
-    },
-    {
-     "la": 32.09075,
-     "lo": 34.88447,
-     "t": "far",
-     "n": "פינסקר / הברון הירש"
-    },
-    {
-     "la": 32.08693,
-     "lo": 34.88163,
-     "t": "blocked",
-     "n": "רוטשילד/ביל''ו"
-    },
-    {
-     "la": 32.08607,
-     "lo": 34.88672,
-     "t": "blocked",
-     "n": "הסתדרות/חיים עוזר"
-    },
-    {
-     "la": 32.08516,
-     "lo": 34.88234,
-     "t": "blocked",
-     "n": "רוטשילד/הרצל"
-    },
-    {
-     "la": 32.08913,
-     "lo": 34.89668,
-     "t": "blocked",
-     "n": "א.ד.גורדון/חזון אי''ש"
-    },
-    {
-     "la": 32.09773,
-     "lo": 34.86444,
-     "t": "blocked",
-     "n": "אבשלום גיסין/בזל"
-    },
-    {
-     "la": 32.08435,
-     "lo": 34.88852,
-     "t": "blocked",
-     "n": "אחד העם/הרב קטרוני"
-    },
-    {
-     "la": 32.0981,
-     "lo": 34.88497,
+     "la": 32.16629,
+     "lo": 34.80961,
      "t": "in",
-     "n": "מסוף משה ארנס/אבשלום גיסין"
+     "n": "מדינת היהודים/גלגלי הפלדה"
     },
     {
-     "la": 32.09781,
-     "lo": 34.87926,
-     "t": "near",
-     "n": "אבשלום גיסין/משה סנה"
-    },
-    {
-     "la": 32.09787,
-     "lo": 34.86551,
-     "t": "blocked",
-     "n": "אבשלום גיסין/בזל"
-    },
-    {
-     "la": 32.0863,
-     "lo": 34.8884,
-     "t": "blocked",
-     "n": "וולפסון/עירייה"
-    },
-    {
-     "la": 32.08702,
-     "lo": 34.89064,
-     "t": "blocked",
-     "n": "דוד וולפסון/רמב''ם"
-    },
-    {
-     "la": 32.08789,
-     "lo": 34.89307,
-     "t": "blocked",
-     "n": "וולפסון /עין גנים"
-    },
-    {
-     "la": 32.08561,
-     "lo": 34.88144,
-     "t": "blocked",
-     "n": "דוד פרנקפורטר/רוטשילד"
-    },
-    {
-     "la": 32.09028,
-     "lo": 34.87698,
-     "t": "far",
-     "n": "ז'בוטינסקי/יצחק שדה"
-    },
-    {
-     "la": 32.09056,
-     "lo": 34.87684,
-     "t": "far",
-     "n": "ז'בוטינסקי/ אורלוב"
-    },
-    {
-     "la": 32.09075,
-     "lo": 34.87215,
-     "t": "blocked",
-     "n": "ת.רק''ל דנקנר/דרך ז'בוטינסקי"
-    },
-    {
-     "la": 32.09004,
-     "lo": 34.87941,
-     "t": "far",
-     "n": "ז'בוטינסקי/המורים"
-    },
-    {
-     "la": 32.0911,
-     "lo": 34.87249,
-     "t": "blocked",
-     "n": "ת.רק''ל דנקנר/דרך ז'בוטינסקי"
-    },
-    {
-     "la": 32.09656,
-     "lo": 34.88757,
-     "t": "far",
-     "n": "מד''א/המכבים"
-    },
-    {
-     "la": 32.09678,
-     "lo": 34.89802,
-     "t": "blocked",
-     "n": "הגר''א/לינדוי"
-    },
-    {
-     "la": 32.0839,
-     "lo": 34.88916,
-     "t": "blocked",
-     "n": "אחד העם/הרב קטרוני"
-    },
-    {
-     "la": 32.08724,
-     "lo": 34.89155,
-     "t": "blocked",
-     "n": "דוד וולפסון/ליפה ויניצקי"
-    },
-    {
-     "la": 32.08808,
-     "lo": 34.89327,
-     "t": "blocked",
-     "n": "וולפסון / עין גנים"
-    },
-    {
-     "la": 32.08637,
-     "lo": 34.88829,
-     "t": "blocked",
-     "n": "עירייה/דוד וולפסון"
-    },
-    {
-     "la": 32.09457,
-     "lo": 34.88523,
-     "t": "far",
-     "n": "זאב אורלוב/בר כוכבא"
-    },
-    {
-     "la": 32.10216,
-     "lo": 34.8754,
-     "t": "near",
-     "n": "בית ספר נעמי שמר/זכרון יעקב"
-    },
-    {
-     "la": 32.10117,
-     "lo": 34.87265,
-     "t": "near",
-     "n": "תיכון אחד העם/זכרון יעקב"
-    },
-    {
-     "la": 32.0905,
-     "lo": 34.89512,
-     "t": "blocked",
-     "n": "חזון אי''ש/בי''ס שמעוני"
-    },
-    {
-     "la": 32.09105,
-     "lo": 34.89455,
-     "t": "blocked",
-     "n": "חזון אי''ש/בי''ס שמעוני"
-    },
-    {
-     "la": 32.08809,
-     "lo": 34.88683,
-     "t": "blocked",
-     "n": "חיים עוזר/שפיגל זוסיה"
-    },
-    {
-     "la": 32.08596,
-     "lo": 34.88766,
-     "t": "blocked",
-     "n": "חיים עוזר/וולפסון"
-    },
-    {
-     "la": 32.08652,
-     "lo": 34.87834,
-     "t": "blocked",
-     "n": "טרומפלדור/פיק''א"
-    },
-    {
-     "la": 32.09634,
-     "lo": 34.89452,
-     "t": "blocked",
-     "n": "יהושע שטמפפר / יהושע חנקין"
-    },
-    {
-     "la": 32.09643,
-     "lo": 34.89497,
-     "t": "blocked",
-     "n": "יהושע שטמפפר/יהושע חנקין"
-    },
-    {
-     "la": 32.09048,
-     "lo": 34.88655,
-     "t": "far",
-     "n": "כיכר המייסדים/שטמפפר"
-    },
-    {
-     "la": 32.09253,
-     "lo": 34.88913,
-     "t": "blocked",
-     "n": "יהושע שטמפפר/רמב''ם"
-    },
-    {
-     "la": 32.09166,
-     "lo": 34.88792,
-     "t": "blocked",
-     "n": "שטמפפר/משטרה"
-    },
-    {
-     "la": 32.09411,
-     "lo": 34.89133,
-     "t": "far",
-     "n": "שטמפפר/אברבנל"
-    },
-    {
-     "la": 32.09482,
-     "lo": 34.89209,
-     "t": "far",
-     "n": "שטמפפר/המכבים"
-    },
-    {
-     "la": 32.09529,
-     "lo": 34.89315,
-     "t": "blocked",
-     "n": "מרכז קהילתי דני/שטמפפר"
-    },
-    {
-     "la": 32.09901,
-     "lo": 34.89611,
-     "t": "blocked",
-     "n": "יוסף ספיר/הירקונים"
-    },
-    {
-     "la": 32.09914,
-     "lo": 34.8959,
-     "t": "blocked",
-     "n": "יוסף ספיר/הירקונים"
-    },
-    {
-     "la": 32.08922,
-     "lo": 34.88161,
-     "t": "far",
-     "n": "מונטיפיורי/ברון הירש"
-    },
-    {
-     "la": 32.10262,
-     "lo": 34.88054,
+     "la": 32.16678,
+     "lo": 34.80851,
      "t": "in",
-     "n": "משה סנה/איסר הראל"
+     "n": "מדינת היהודים/נעמי שמר"
     },
     {
-     "la": 32.09985,
-     "lo": 34.87907,
-     "t": "gate",
-     "n": "משה סנה/אבשלום גיסין"
+     "la": 32.16806,
+     "lo": 34.80395,
+     "t": "far",
+     "n": "מדינת היהודים/מתתיהו"
     },
     {
-     "la": 32.10266,
-     "lo": 34.88026,
+     "la": 32.17028,
+     "lo": 34.80675,
+     "t": "far",
+     "n": "הנשיא/קדושי השואה"
+    },
+    {
+     "la": 32.16786,
+     "lo": 34.8018,
+     "t": "far",
+     "n": "זבולון/מודיעין"
+    },
+    {
+     "la": 32.16758,
+     "lo": 34.81544,
+     "t": "far",
+     "n": "המנהרה/נורדאו"
+    },
+    {
+     "la": 32.16769,
+     "lo": 34.8154,
+     "t": "far",
+     "n": "המנהרה/נורדאו"
+    },
+    {
+     "la": 32.16996,
+     "lo": 34.81563,
+     "t": "blocked",
+     "n": "בית ספר ברנדייס/נורדאו"
+    },
+    {
+     "la": 32.17064,
+     "lo": 34.8157,
+     "t": "blocked",
+     "n": "בי''ס ברנדיס"
+    },
+    {
+     "la": 32.17177,
+     "lo": 34.81639,
+     "t": "blocked",
+     "n": "נורדאו/פישמן"
+    },
+    {
+     "la": 32.17362,
+     "lo": 34.80161,
+     "t": "blocked",
+     "n": "חוף זבולון"
+    },
+    {
+     "la": 32.17401,
+     "lo": 34.80842,
+     "t": "blocked",
+     "n": "הנשיא/ניל''י"
+    },
+    {
+     "la": 32.15987,
+     "lo": 34.81044,
      "t": "in",
-     "n": "משה סנה/ איסר הראל"
+     "n": "מחלף הסירה לדרום"
     },
     {
-     "la": 32.10118,
-     "lo": 34.8983,
-     "t": "blocked",
-     "n": "צומת סגולה למזרח/כביש 40"
-    },
-    {
-     "la": 32.10253,
-     "lo": 34.8972,
-     "t": "blocked",
-     "n": "בן ציון גליס/גזית"
-    },
-    {
-     "la": 32.08345,
-     "lo": 34.88838,
-     "t": "blocked",
-     "n": "שמואל סלנט / אחד העם"
-    },
-    {
-     "la": 32.0833,
-     "lo": 34.88824,
-     "t": "blocked",
-     "n": "שמואל סלנט / אחד העם"
-    },
-    {
-     "la": 32.08781,
-     "lo": 34.89433,
-     "t": "blocked",
-     "n": "בי''ס עין גנים"
-    },
-    {
-     "la": 32.08535,
-     "lo": 34.87915,
-     "t": "blocked",
-     "n": "פרנקפורטר/טרומפלדור"
-    },
-    {
-     "la": 32.0857,
-     "lo": 34.88138,
-     "t": "blocked",
-     "n": "פרנקפורטר/רוטשילד"
-    },
-    {
-     "la": 32.10267,
-     "lo": 34.8733,
-     "t": "near",
-     "n": "נס ציונה/ראש פינה"
-    },
-    {
-     "la": 32.099,
-     "lo": 34.87633,
-     "t": "near",
-     "n": "קניון אם מושבות"
-    },
-    {
-     "la": 32.10152,
-     "lo": 34.87181,
-     "t": "far",
-     "n": "מטולה/חדרה"
-    },
-    {
-     "la": 32.0916,
-     "lo": 34.87792,
-     "t": "far",
-     "n": "ת.רק''ל קרול"
-    },
-    {
-     "la": 32.09205,
-     "lo": 34.88537,
-     "t": "far",
-     "n": "בר כוכבא/ליברכט"
-    },
-    {
-     "la": 32.0907,
-     "lo": 34.88685,
-     "t": "far",
-     "n": "שטמפפר/בר כוכבא"
-    },
-    {
-     "la": 32.08955,
-     "lo": 34.88094,
-     "t": "far",
-     "n": "ברון הירש / מונטיפיורי"
-    },
-    {
-     "la": 32.09518,
-     "lo": 34.8886,
-     "t": "far",
-     "n": "היכל התרבות/אורלוב "
-    },
-    {
-     "la": 32.09205,
-     "lo": 34.87752,
-     "t": "far",
-     "n": "ת.רק''ל קרול/אורלוב"
-    },
-    {
-     "la": 32.10137,
-     "lo": 34.87496,
-     "t": "near",
-     "n": "מזכרת בתיה/זכרון יעקב"
-    },
-    {
-     "la": 32.10365,
-     "lo": 34.87661,
-     "t": "near",
-     "n": "ראשון לציון/רחובות"
-    },
-    {
-     "la": 32.09594,
-     "lo": 34.87674,
-     "t": "near",
-     "n": "לודיוב/גרינשפן"
-    },
-    {
-     "la": 32.09714,
-     "lo": 34.87586,
-     "t": "near",
-     "n": "חנן לויתן/ברוריה בת תרדיון"
-    },
-    {
-     "la": 32.09428,
-     "lo": 34.87792,
-     "t": "far",
-     "n": "לודיוב/דוד טבצ'ניק"
-    },
-    {
-     "la": 32.09071,
-     "lo": 34.88671,
-     "t": "far",
-     "n": "שטמפפר/בר כוכבא"
-    },
-    {
-     "la": 32.09698,
-     "lo": 34.89721,
-     "t": "blocked",
-     "n": "הרב הרצוג/שמואל חיים לנדוי"
-    },
-    {
-     "la": 32.08663,
-     "lo": 34.87814,
-     "t": "blocked",
-     "n": "טרומפלדור/פיק''א"
-    },
-    {
-     "la": 32.09006,
-     "lo": 34.87987,
-     "t": "far",
-     "n": "ז'בוטינסקי/רוטשילד"
-    },
-    {
-     "la": 32.1004,
-     "lo": 34.87084,
-     "t": "far",
-     "n": "דרך זבולון המר/אבשלום גיסין"
-    },
-    {
-     "la": 32.09873,
-     "lo": 34.87545,
-     "t": "near",
-     "n": "אבשלום גיסין/גשר אל''מ אסף חממי"
-    },
-    {
-     "la": 32.10055,
-     "lo": 34.87644,
-     "t": "near",
-     "n": "קניון אם מושבות/ראשון לציון"
-    },
-    {
-     "la": 32.10502,
-     "lo": 34.87873,
-     "t": "near",
-     "n": "אליהו בן חור/אלוף רחבעם זאבי"
-    },
-    {
-     "la": 32.08749,
-     "lo": 34.88701,
-     "t": "blocked",
-     "n": "עירייה/חיים עוזר"
-    },
-    {
-     "la": 32.0899,
-     "lo": 34.88298,
-     "t": "far",
-     "n": "שוק עירוני/ברון הירש"
-    },
-    {
-     "la": 32.09144,
-     "lo": 34.87705,
-     "t": "far",
-     "n": "ת.רק''ל קרול/אורלוב"
-    },
-    {
-     "la": 32.09818,
-     "lo": 34.89647,
-     "t": "blocked",
-     "n": "הירקונים/יונה"
-    },
-    {
-     "la": 32.09469,
-     "lo": 34.88741,
-     "t": "far",
-     "n": "ת.רק''ל/תחנה מרכזית למזרח"
-    },
-    {
-     "la": 32.09119,
-     "lo": 34.88562,
-     "t": "far",
-     "n": "בר כוכבא/ליברכט"
-    },
-    {
-     "la": 32.09882,
-     "lo": 34.87079,
-     "t": "far",
-     "n": "הרב משה מלכה/אבשלום גיסין"
-    },
-    {
-     "la": 32.08919,
-     "lo": 34.88077,
-     "t": "far",
-     "n": "רוטשילד/הרב אילוביצקי"
-    },
-    {
-     "la": 32.10266,
-     "lo": 34.89834,
-     "t": "blocked",
-     "n": "צומת סגולה לצפון/כביש 40"
-    },
-    {
-     "la": 32.08887,
-     "lo": 34.89524,
-     "t": "blocked",
-     "n": "דוד וולפסון/א.ד.גורדון"
-    },
-    {
-     "la": 32.09296,
-     "lo": 34.89211,
-     "t": "far",
-     "n": "אברבנאל / אצ''ל"
-    },
-    {
-     "la": 32.10484,
-     "lo": 34.87919,
-     "t": "near",
-     "n": "אליהו בן חור/אלוף רחבעם זאבי"
-    },
-    {
-     "la": 32.09731,
-     "lo": 34.86735,
-     "t": "far",
-     "n": "בזל/אבשלום גיסין"
-    },
-    {
-     "la": 32.10391,
-     "lo": 34.89417,
-     "t": "blocked",
-     "n": "בן ציון גליס/הרכב"
-    },
-    {
-     "la": 32.10409,
-     "lo": 34.8943,
-     "t": "blocked",
-     "n": "בן ציון גליס/הרכב"
-    },
-    {
-     "la": 32.10647,
-     "lo": 34.88917,
-     "t": "far",
-     "n": "בן ציון גליס/צבי ברגמן"
-    },
-    {
-     "la": 32.10321,
-     "lo": 34.89543,
-     "t": "blocked",
-     "n": "גליס/הרב פינטו מסעוד אשר"
-    },
-    {
-     "la": 32.10599,
-     "lo": 34.89079,
-     "t": "blocked",
-     "n": "בן ציון גליס/הבורסקאי"
-    },
-    {
-     "la": 32.10601,
-     "lo": 34.89025,
-     "t": "far",
-     "n": "בן ציון גליס/דרך החיים"
-    },
-    {
-     "la": 32.10469,
-     "lo": 34.8927,
-     "t": "blocked",
-     "n": "בן ציון גליס/רבניצקי"
-    },
-    {
-     "la": 32.09246,
-     "lo": 34.8936,
-     "t": "blocked",
-     "n": "אברבנאל/זרח ברנט"
-    },
-    {
-     "la": 32.09462,
-     "lo": 34.89007,
-     "t": "far",
-     "n": "המכבים/שלונסקי"
-    },
-    {
-     "la": 32.0996,
-     "lo": 34.89973,
-     "t": "blocked",
-     "n": "כביש 40/שמואל הנגיד"
-    },
-    {
-     "la": 32.08561,
-     "lo": 34.88763,
-     "t": "blocked",
-     "n": "חיים עוזר / וולפסון"
-    },
-    {
-     "la": 32.10166,
-     "lo": 34.89764,
-     "t": "blocked",
-     "n": "צומת סגולה/הירקונים"
-    },
-    {
-     "la": 32.09764,
-     "lo": 34.87607,
-     "t": "near",
-     "n": "חנן לויתן/ברוריה בת תרדיון"
-    },
-    {
-     "la": 32.10402,
-     "lo": 34.87529,
-     "t": "near",
-     "n": "רחובות / גדרה"
-    },
-    {
-     "la": 32.1033,
-     "lo": 34.86902,
-     "t": "far",
-     "n": "דרך זבולון המר/דרך שלמה שמלצר"
-    },
-    {
-     "la": 32.09926,
-     "lo": 34.87185,
-     "t": "far",
-     "n": "אבשלום גיסין/דרך הרב משה מלכה"
-    },
-    {
-     "la": 32.09582,
-     "lo": 34.87363,
-     "t": "far",
-     "n": "גרינשפן/אסירי ציון"
-    },
-    {
-     "la": 32.0958,
-     "lo": 34.87248,
-     "t": "far",
-     "n": "ספורטן/גרינשפן"
-    },
-    {
-     "la": 32.09602,
-     "lo": 34.8756,
-     "t": "near",
-     "n": "מתנ''ס נווה גן/גרינשפן"
-    },
-    {
-     "la": 32.09617,
-     "lo": 34.87147,
-     "t": "far",
-     "n": "ספורטן/גרינשפן"
-    },
-    {
-     "la": 32.10121,
-     "lo": 34.883,
+     "la": 32.16586,
+     "lo": 34.81391,
      "t": "in",
-     "n": "קונסרבטוריון/מבצע יפתח"
+     "n": "צומת הרצליה"
     },
     {
-     "la": 32.09868,
-     "lo": 34.88257,
+     "la": 32.17127,
+     "lo": 34.81433,
+     "t": "blocked",
+     "n": "דרך תל אביב/מונטיפיורי"
+    },
+    {
+     "la": 32.17279,
+     "lo": 34.81522,
+     "t": "blocked",
+     "n": "דרך תל אביב/פישמן"
+    },
+    {
+     "la": 32.16449,
+     "lo": 34.81312,
      "t": "in",
-     "n": "מבצע חורב/מבצע יפתח"
+     "n": "צומת הרצליה"
     },
     {
-     "la": 32.09933,
-     "lo": 34.88879,
-     "t": "far",
-     "n": "מרדכי בן דרור/דורני שלום"
-    },
-    {
-     "la": 32.10153,
-     "lo": 34.89166,
-     "t": "far",
-     "n": "רבניצקי/חיים סוטין"
-    },
-    {
-     "la": 32.10072,
-     "lo": 34.89129,
-     "t": "far",
-     "n": "מרדכי בן דרור / רבניצקי"
-    },
-    {
-     "la": 32.09597,
-     "lo": 34.87589,
+     "la": 32.16122,
+     "lo": 34.81228,
      "t": "near",
-     "n": "מתנ''ס נווה גן/גרינשפן"
+     "n": "מחלף הסירה לצפון"
     },
     {
-     "la": 32.09687,
-     "lo": 34.88753,
+     "la": 32.16435,
+     "lo": 34.81674,
      "t": "far",
-     "n": "מד''א/המכבים"
+     "n": "ד. משה דיין/משטרה"
     },
     {
-     "la": 32.09829,
-     "lo": 34.88501,
+     "la": 32.16169,
+     "lo": 34.79706,
+     "t": "near",
+     "n": "השונית/יורדי ים"
+    },
+    {
+     "la": 32.16384,
+     "lo": 34.81081,
      "t": "in",
-     "n": "גיסין/המכבים"
+     "n": "משכית/יוחנן הסנדלר"
     },
     {
-     "la": 32.09817,
-     "lo": 34.88314,
+     "la": 32.16698,
+     "lo": 34.80847,
+     "t": "near",
+     "n": "מדינת היהודים/דוד המלך"
+    },
+    {
+     "la": 32.1716,
+     "lo": 34.8161,
+     "t": "blocked",
+     "n": "נורדאו/פישמן"
+    },
+    {
+     "la": 32.16424,
+     "lo": 34.81878,
+     "t": "near",
+     "n": "ת. רכבת הרצליה"
+    },
+    {
+     "la": 32.16436,
+     "lo": 34.81982,
+     "t": "near",
+     "n": "בן ציון מיכאלי/הרכבת"
+    },
+    {
+     "la": 32.16204,
+     "lo": 34.80689,
      "t": "in",
-     "n": "אבשלום גיסין/ברוך איסקוב"
+     "n": "הסדנאות/שדרות אבא אבן"
     },
     {
-     "la": 32.10035,
-     "lo": 34.87887,
-     "t": "gate",
-     "n": "משה פלד/משה סנה"
-    },
-    {
-     "la": 32.10025,
-     "lo": 34.87881,
-     "t": "gate",
-     "n": "משה פלד/משה סנה"
-    },
-    {
-     "la": 32.10139,
-     "lo": 34.87686,
-     "t": "near",
-     "n": "ראשון לציון/זכרון יעקב"
-    },
-    {
-     "la": 32.10628,
-     "lo": 34.87593,
-     "t": "near",
-     "n": "ראשון לציון/שרגא רפאלי"
-    },
-    {
-     "la": 32.1042,
-     "lo": 34.86937,
-     "t": "far",
-     "n": "דרך אם המושבות/דרך זבולון המר"
-    },
-    {
-     "la": 32.0979,
-     "lo": 34.88854,
-     "t": "far",
-     "n": "בי''ס נאות מרגלית לבנים"
-    },
-    {
-     "la": 32.09177,
-     "lo": 34.87805,
-     "t": "far",
-     "n": "ת.רק''ל קרול"
-    },
-    {
-     "la": 32.09861,
-     "lo": 34.89085,
-     "t": "far",
-     "n": "הרב פינטו מסעוד אשר/עזריאל"
-    },
-    {
-     "la": 32.09812,
-     "lo": 34.87826,
-     "t": "near",
-     "n": "אבשלום גיסין/משה סנה"
-    },
-    {
-     "la": 32.09681,
-     "lo": 34.87061,
-     "t": "far",
-     "n": "ספורטן/הרב משה מלכה"
-    },
-    {
-     "la": 32.09586,
-     "lo": 34.87653,
-     "t": "near",
-     "n": "לודיוב/גרינשפן"
-    },
-    {
-     "la": 32.09792,
-     "lo": 34.8851,
+     "la": 32.15909,
+     "lo": 34.80558,
      "t": "in",
-     "n": "מסוף משה ארנס/רציפים"
+     "n": "החושלים/הסדנאות"
     },
     {
-     "la": 32.09507,
-     "lo": 34.88578,
-     "t": "far",
-     "n": "בר כוכבא/ת.מרכזית פתח תקווה"
+     "la": 32.15952,
+     "lo": 34.8185,
+     "t": "blocked",
+     "n": "הרב עובדיה יוסף/עמוס עוז"
     },
     {
-     "la": 32.09737,
-     "lo": 34.88544,
+     "la": 32.15692,
+     "lo": 34.81668,
+     "t": "blocked",
+     "n": "מוטה גור/צבי דינשטיין"
+    },
+    {
+     "la": 32.15688,
+     "lo": 34.80642,
      "t": "in",
-     "n": "מסוף משה ארנס/הורדה"
+     "n": "אלן טיורינג/אריה שנקר"
     },
     {
-     "la": 32.1037,
-     "lo": 34.86804,
-     "t": "far",
-     "n": "דרך שלמה שמלצר/דרך זבולון המר"
-    },
-    {
-     "la": 32.10479,
-     "lo": 34.86859,
-     "t": "far",
-     "n": "דרך זבולון המר/דרך אם המושבות"
-    },
-    {
-     "la": 32.10433,
-     "lo": 34.87725,
-     "t": "near",
-     "n": "אלוף רחבעם זאבי/ראשון לציון"
-    },
-    {
-     "la": 32.09503,
-     "lo": 34.88934,
-     "t": "far",
-     "n": "היכל התרבות/המכבים"
-    },
-    {
-     "la": 32.09733,
-     "lo": 34.8817,
+     "la": 32.15613,
+     "lo": 34.80425,
      "t": "in",
-     "n": "יהודה לייב פינסקר/אבשלום גיסין"
+     "n": "עדה לאבלייס/ישעיהו ליבוביץ"
     },
     {
-     "la": 32.09793,
-     "lo": 34.88196,
+     "la": 32.15998,
+     "lo": 34.80498,
      "t": "in",
-     "n": "אבשלום גיסין/יהודה לייב פינסקר"
+     "n": "ישעיהו ליבוביץ/אלן טיורינג"
     },
     {
-     "la": 32.10719,
-     "lo": 34.88005,
+     "la": 32.16043,
+     "lo": 34.81372,
      "t": "near",
-     "n": "בית ספר רמון/שרגא רפאלי"
+     "n": "שדרות שבעת הכוכבים/משה דיין"
     },
     {
-     "la": 32.1064,
-     "lo": 34.88115,
-     "t": "near",
-     "n": "בית ספר רמון/שרגא רפאלי"
-    },
-    {
-     "la": 32.08575,
-     "lo": 34.88269,
-     "t": "blocked",
-     "n": "ההסתדרות/רוטשילד"
-    },
-    {
-     "la": 32.0899,
-     "lo": 34.88593,
-     "t": "far",
-     "n": "חיים עוזר/כיכר המייסדים"
-    },
-    {
-     "la": 32.09829,
-     "lo": 34.8766,
-     "t": "near",
-     "n": "אבשלום גיסין/חנן לויתן"
-    },
-    {
-     "la": 32.09834,
-     "lo": 34.89634,
-     "t": "blocked",
-     "n": "הירקונים/יונה גרין"
-    },
-    {
-     "la": 32.10263,
-     "lo": 34.86492,
-     "t": "blocked",
-     "n": "דרך שלמה שמלצר/גרניט"
-    },
-    {
-     "la": 32.09191,
-     "lo": 34.87751,
-     "t": "far",
-     "n": "קרול"
-    },
-    {
-     "la": 32.09095,
-     "lo": 34.87217,
-     "t": "blocked",
-     "n": "דנקנר"
-    },
-    {
-     "la": 32.09373,
-     "lo": 34.8822,
-     "t": "far",
-     "n": "פינסקר"
-    },
-    {
-     "la": 32.09469,
-     "lo": 34.88654,
-     "t": "far",
-     "n": "תחנה מרכזית פתח תקווה"
-    },
-    {
-     "la": 32.1048,
-     "lo": 34.89199,
-     "t": "blocked",
-     "n": "רבניצקי/בן ציון גליס"
-    },
-    {
-     "la": 32.09413,
-     "lo": 34.88271,
-     "t": "far",
-     "n": "ת.רק''ל פינסקר/מתנ''ס קרול"
-    },
-    {
-     "la": 32.10629,
-     "lo": 34.87694,
-     "t": "near",
-     "n": "שרגא רפאלי/אליהו בן חור"
-    },
-    {
-     "la": 32.10653,
-     "lo": 34.87781,
-     "t": "near",
-     "n": "שרגא רפאלי/אליהו בן חור"
-    },
-    {
-     "la": 32.09676,
-     "lo": 34.88258,
+     "la": 32.15917,
+     "lo": 34.8043,
      "t": "in",
-     "n": "מבצע קדש/יהודה לייב פינסקר"
+     "n": "ישעיהו ליבוביץ/החושלים"
     },
     {
-     "la": 32.09737,
-     "lo": 34.88157,
-     "t": "near",
-     "n": "יהודה לייב פינסקר/אבשלום גיסין"
-    },
-    {
-     "la": 32.09457,
-     "lo": 34.88265,
+     "la": 32.16665,
+     "lo": 34.8031,
      "t": "far",
-     "n": "ת.רק''ל פינסקר/מתנ''ס קרול"
+     "n": "מרכז תאו/וינגייט"
     },
     {
-     "la": 32.09903,
-     "lo": 34.8877,
+     "la": 32.17366,
+     "lo": 34.80815,
+     "t": "blocked",
+     "n": "הנשיא יצחק בן צבי/ניל''י"
+    },
+    {
+     "la": 32.1691,
+     "lo": 34.80624,
      "t": "far",
-     "n": "מרדכי בן דרור/דורני שלום"
+     "n": "הנשיא יצחק בן צבי/קדושי השואה"
     },
     {
-     "la": 32.09474,
-     "lo": 34.89623,
-     "t": "blocked",
-     "n": "רמח''ל/הרב ריינס"
-    },
-    {
-     "la": 32.09502,
-     "lo": 34.89585,
-     "t": "blocked",
-     "n": "רמח''ל/הרב ריינס "
-    },
-    {
-     "la": 32.09047,
-     "lo": 34.89793,
-     "t": "blocked",
-     "n": "מועדון גיל הזהב/יוסף פפר"
-    },
-    {
-     "la": 32.09426,
-     "lo": 34.89317,
-     "t": "blocked",
-     "n": "יחיאל צ'לנוב/נחלת צבי"
-    },
-    {
-     "la": 32.09921,
-     "lo": 34.89974,
-     "t": "blocked",
-     "n": "כביש 40/שמואל הנגיד"
-    },
-    {
-     "la": 32.10508,
-     "lo": 34.87624,
-     "t": "near",
-     "n": "ראשון לציון/שרגא רפאלי"
-    },
-    {
-     "la": 32.09951,
-     "lo": 34.89358,
-     "t": "blocked",
-     "n": "הרב יאיר חפוטא/הרב פינטו מסעוד אשר "
-    },
-    {
-     "la": 32.09874,
-     "lo": 34.89439,
-     "t": "blocked",
-     "n": "הרב יאיר חפוטא/יוסף ספיר "
+     "la": 32.16609,
+     "lo": 34.80291,
+     "t": "far",
+     "n": "מרכז תאו/וינגייט"
     }
    ],
-   "nearw": 2,
-   "ww": 4.6,
-   "lines": 193,
+   "nearw": 0.5,
+   "ww": 5.8,
+   "lines": 121,
    "streets": [
-    "מסוף משה ארנס/אבשלום גיסין",
-    "משה סנה/איסר הראל",
-    "משה סנה/ איסר הראל",
-    "קונסרבטוריון/מבצע יפתח"
+    "שדרות אבא אבן/אריה שנקר",
+    "אבא אבן/ משכית",
+    "גלגלי הפלדה/יוחנן הסנדלר",
+    "מדינת היהודים/משכית"
    ],
    "region": "מרכז",
    "periphery": false
   },
   {
-   "name": "חיפה - א\"ת על צומת הקריות",
-   "city": "חיפה",
-   "score": 92,
-   "mot": null,
-   "motw": 39,
-   "bl_headway": 1,
-   "far": 12,
-   "area": 0.45,
-   "sparts": {
-    "uf": 100,
-    "bl": 100,
-    "far": 75,
-    "near": 90
-   },
-   "f": "p124.json",
-   "la": 32.7907,
-   "lo": 35.0314,
-   "kind": "המצטיינים",
-   "text": "0.45 קמ״ר, 279 קווים. הקו החזק כל ~1 דק׳; העובד המרוחק הולך 12 דק׳; ממרכז האזור לתחנה 3 דק׳.",
-   "polys": [
-    [
-     [
-      32.79685,
-      35.02211
-     ],
-     [
-      32.79582,
-      35.02544
-     ],
-     [
-      32.79388,
-      35.03057
-     ],
-     [
-      32.793,
-      35.03261
-     ],
-     [
-      32.7921,
-      35.03402
-     ],
-     [
-      32.79138,
-      35.03271
-     ],
-     [
-      32.7908,
-      35.03143
-     ],
-     [
-      32.7908,
-      35.03143
-     ],
-     [
-      32.7908,
-      35.03143
-     ],
-     [
-      32.7908,
-      35.03143
-     ],
-     [
-      32.7908,
-      35.03143
-     ],
-     [
-      32.7908,
-      35.03142
-     ],
-     [
-      32.7908,
-      35.03142
-     ],
-     [
-      32.7908,
-      35.03142
-     ],
-     [
-      32.7908,
-      35.03142
-     ],
-     [
-      32.79079,
-      35.03142
-     ],
-     [
-      32.79079,
-      35.03142
-     ],
-     [
-      32.79079,
-      35.03142
-     ],
-     [
-      32.79079,
-      35.03142
-     ],
-     [
-      32.79079,
-      35.03141
-     ],
-     [
-      32.79079,
-      35.03141
-     ],
-     [
-      32.79079,
-      35.03141
-     ],
-     [
-      32.79079,
-      35.03141
-     ],
-     [
-      32.79079,
-      35.03141
-     ],
-     [
-      32.79079,
-      35.03141
-     ],
-     [
-      32.79078,
-      35.03141
-     ],
-     [
-      32.79078,
-      35.03141
-     ],
-     [
-      32.79078,
-      35.03141
-     ],
-     [
-      32.79078,
-      35.0314
-     ],
-     [
-      32.79078,
-      35.0314
-     ],
-     [
-      32.79078,
-      35.0314
-     ],
-     [
-      32.79078,
-      35.0314
-     ],
-     [
-      32.79078,
-      35.0314
-     ],
-     [
-      32.79078,
-      35.0314
-     ],
-     [
-      32.79077,
-      35.0314
-     ],
-     [
-      32.79077,
-      35.0314
-     ],
-     [
-      32.79077,
-      35.0314
-     ],
-     [
-      32.79077,
-      35.0314
-     ],
-     [
-      32.79077,
-      35.03139
-     ],
-     [
-      32.79077,
-      35.03139
-     ],
-     [
-      32.79077,
-      35.03139
-     ],
-     [
-      32.79077,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79076,
-      35.03139
-     ],
-     [
-      32.79075,
-      35.03139
-     ],
-     [
-      32.79075,
-      35.03139
-     ],
-     [
-      32.79075,
-      35.03138
-     ],
-     [
-      32.79075,
-      35.03138
-     ],
-     [
-      32.79075,
-      35.03138
-     ],
-     [
-      32.79075,
-      35.03138
-     ],
-     [
-      32.79075,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79074,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79073,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79072,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.79071,
-      35.03138
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.7907,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79069,
-      35.03139
-     ],
-     [
-      32.79068,
-      35.03139
-     ],
-     [
-      32.79068,
-      35.03139
-     ],
-     [
-      32.79068,
-      35.0314
-     ],
-     [
-      32.79068,
-      35.0314
-     ],
-     [
-      32.79068,
-      35.0314
-     ],
-     [
-      32.79068,
-      35.0314
-     ],
-     [
-      32.79068,
-      35.0314
-     ],
-     [
-      32.79068,
-      35.0314
-     ],
-     [
-      32.79067,
-      35.0314
-     ],
-     [
-      32.79067,
-      35.0314
-     ],
-     [
-      32.79067,
-      35.0314
-     ],
-     [
-      32.79067,
-      35.0314
-     ],
-     [
-      32.79067,
-      35.0314
-     ],
-     [
-      32.79067,
-      35.03141
-     ],
-     [
-      32.79067,
-      35.03141
-     ],
-     [
-      32.79067,
-      35.03141
-     ],
-     [
-      32.79067,
-      35.03141
-     ],
-     [
-      32.79066,
-      35.03141
-     ],
-     [
-      32.79066,
-      35.03141
-     ],
-     [
-      32.79066,
-      35.03141
-     ],
-     [
-      32.79066,
-      35.03141
-     ],
-     [
-      32.79044,
-      35.03179
-     ],
-     [
-      32.79034,
-      35.03194
-     ],
-     [
-      32.79034,
-      35.03194
-     ],
-     [
-      32.79034,
-      35.03195
-     ],
-     [
-      32.79034,
-      35.03195
-     ],
-     [
-      32.79033,
-      35.03195
-     ],
-     [
-      32.79033,
-      35.03196
-     ],
-     [
-      32.79033,
-      35.03196
-     ],
-     [
-      32.79033,
-      35.03197
-     ],
-     [
-      32.79032,
-      35.03197
-     ],
-     [
-      32.79032,
-      35.03198
-     ],
-     [
-      32.79032,
-      35.03198
-     ],
-     [
-      32.79032,
-      35.03199
-     ],
-     [
-      32.79031,
-      35.03199
-     ],
-     [
-      32.79031,
-      35.032
-     ],
-     [
-      32.79031,
-      35.032
-     ],
-     [
-      32.79031,
-      35.03201
-     ],
-     [
-      32.79031,
-      35.03201
-     ],
-     [
-      32.7903,
-      35.03202
-     ],
-     [
-      32.7903,
-      35.03202
-     ],
-     [
-      32.7903,
-      35.03203
-     ],
-     [
-      32.7903,
-      35.03204
-     ],
-     [
-      32.7903,
-      35.03204
-     ],
-     [
-      32.7903,
-      35.03205
-     ],
-     [
-      32.79029,
-      35.03205
-     ],
-     [
-      32.79029,
-      35.03206
-     ],
-     [
-      32.79029,
-      35.03206
-     ],
-     [
-      32.79029,
-      35.03207
-     ],
-     [
-      32.79029,
-      35.03207
-     ],
-     [
-      32.79029,
-      35.03208
-     ],
-     [
-      32.79029,
-      35.03208
-     ],
-     [
-      32.79029,
-      35.03209
-     ],
-     [
-      32.79028,
-      35.03209
-     ],
-     [
-      32.79028,
-      35.0321
-     ],
-     [
-      32.79028,
-      35.03211
-     ],
-     [
-      32.79028,
-      35.03211
-     ],
-     [
-      32.79028,
-      35.03212
-     ],
-     [
-      32.79028,
-      35.03212
-     ],
-     [
-      32.79028,
-      35.03213
-     ],
-     [
-      32.79028,
-      35.03213
-     ],
-     [
-      32.79028,
-      35.03214
-     ],
-     [
-      32.79028,
-      35.03215
-     ],
-     [
-      32.79028,
-      35.03215
-     ],
-     [
-      32.79028,
-      35.03216
-     ],
-     [
-      32.79028,
-      35.03216
-     ],
-     [
-      32.79028,
-      35.03217
-     ],
-     [
-      32.79028,
-      35.03217
-     ],
-     [
-      32.79028,
-      35.03218
-     ],
-     [
-      32.79028,
-      35.03218
-     ],
-     [
-      32.79028,
-      35.03219
-     ],
-     [
-      32.79028,
-      35.0322
-     ],
-     [
-      32.79028,
-      35.0322
-     ],
-     [
-      32.79028,
-      35.03221
-     ],
-     [
-      32.79028,
-      35.03221
-     ],
-     [
-      32.79028,
-      35.03222
-     ],
-     [
-      32.79028,
-      35.03222
-     ],
-     [
-      32.79028,
-      35.03223
-     ],
-     [
-      32.79028,
-      35.03223
-     ],
-     [
-      32.79028,
-      35.03224
-     ],
-     [
-      32.79028,
-      35.03225
-     ],
-     [
-      32.79028,
-      35.03225
-     ],
-     [
-      32.79028,
-      35.03226
-     ],
-     [
-      32.79028,
-      35.03226
-     ],
-     [
-      32.79028,
-      35.03227
-     ],
-     [
-      32.79028,
-      35.03227
-     ],
-     [
-      32.79028,
-      35.03228
-     ],
-     [
-      32.79028,
-      35.03228
-     ],
-     [
-      32.79029,
-      35.03229
-     ],
-     [
-      32.79029,
-      35.0323
-     ],
-     [
-      32.79029,
-      35.0323
-     ],
-     [
-      32.79029,
-      35.03231
-     ],
-     [
-      32.79029,
-      35.03231
-     ],
-     [
-      32.79029,
-      35.03232
-     ],
-     [
-      32.78938,
-      35.03068
-     ],
-     [
-      32.78906,
-      35.02935
-     ],
-     [
-      32.78878,
-      35.02816
-     ],
-     [
-      32.78893,
-      35.02707
-     ],
-     [
-      32.79244,
-      35.02522
-     ],
-     [
-      32.79721,
-      35.02077
-     ],
-     [
-      32.79685,
-      35.02211
-     ]
-    ]
-   ],
-   "stops": [
-    {
-     "la": 32.79869,
-     "lo": 35.01775,
-     "t": "blocked",
-     "n": "בר יהודה/גשר פז"
-    },
-    {
-     "la": 32.79543,
-     "lo": 35.02179,
-     "t": "far",
-     "n": "בר יהודה/גשר גדוד 21"
-    },
-    {
-     "la": 32.78337,
-     "lo": 35.01977,
-     "t": "blocked",
-     "n": "מרכז ספורט/דורי"
-    },
-    {
-     "la": 32.78602,
-     "lo": 35.01758,
-     "t": "blocked",
-     "n": "חניתה/טרומפלדור"
-    },
-    {
-     "la": 32.78353,
-     "lo": 35.01992,
-     "t": "blocked",
-     "n": "מרכז ספורט/דורי"
-    },
-    {
-     "la": 32.78397,
-     "lo": 35.02164,
-     "t": "far",
-     "n": "גדליהו/דורי"
-    },
-    {
-     "la": 32.78297,
-     "lo": 35.02365,
-     "t": "far",
-     "n": "מרכז מסחרי/גדליהו"
-    },
-    {
-     "la": 32.78311,
-     "lo": 35.02361,
-     "t": "far",
-     "n": "מרכז מסחרי/גדליהו"
-    },
-    {
-     "la": 32.78383,
-     "lo": 35.02234,
-     "t": "far",
-     "n": "גדליהו/דורי"
-    },
-    {
-     "la": 32.78366,
-     "lo": 35.02423,
-     "t": "far",
-     "n": "הרב מימון/לייב שמעוני"
-    },
-    {
-     "la": 32.78373,
-     "lo": 35.024,
-     "t": "far",
-     "n": "הרב מימון/לייב שימעוני"
-    },
-    {
-     "la": 32.78425,
-     "lo": 35.0243,
-     "t": "far",
-     "n": "לייב שמעוני/נחמיאס יוסף"
-    },
-    {
-     "la": 32.78632,
-     "lo": 35.02242,
-     "t": "far",
-     "n": "הגליל"
-    },
-    {
-     "la": 32.79622,
-     "lo": 35.01627,
-     "t": "blocked",
-     "n": "יד לבנים/דב גרונר"
-    },
-    {
-     "la": 32.79822,
-     "lo": 35.01427,
-     "t": "blocked",
-     "n": "יד לבנים/רזיאל"
-    },
-    {
-     "la": 32.79538,
-     "lo": 35.01144,
-     "t": "blocked",
-     "n": "הגליל/נתיב חן"
-    },
-    {
-     "la": 32.79257,
-     "lo": 35.01372,
-     "t": "blocked",
-     "n": "התיכון/אשר"
-    },
-    {
-     "la": 32.79005,
-     "lo": 35.0162,
-     "t": "blocked",
-     "n": "התיכון/ציון"
-    },
-    {
-     "la": 32.78848,
-     "lo": 35.01759,
-     "t": "blocked",
-     "n": "התיכון/הברכה"
-    },
-    {
-     "la": 32.78645,
-     "lo": 35.01918,
-     "t": "far",
-     "n": "התיכון/טרומפלדור"
-    },
-    {
-     "la": 32.7956,
-     "lo": 35.01091,
-     "t": "blocked",
-     "n": "הגליל/נתיב חן"
-    },
-    {
-     "la": 32.79406,
-     "lo": 35.01277,
-     "t": "blocked",
-     "n": "הבנים/הגליל"
-    },
-    {
-     "la": 32.78548,
-     "lo": 35.02089,
-     "t": "far",
-     "n": "הרב מימון/גילבוע"
-    },
-    {
-     "la": 32.78749,
-     "lo": 35.02047,
-     "t": "far",
-     "n": "הגליל/מצפה"
-    },
-    {
-     "la": 32.79014,
-     "lo": 35.01831,
-     "t": "far",
-     "n": "הגליל/הבריכה"
-    },
-    {
-     "la": 32.79187,
-     "lo": 35.01654,
-     "t": "blocked",
-     "n": "הגליל/ציון"
-    },
-    {
-     "la": 32.79389,
-     "lo": 35.01393,
-     "t": "blocked",
-     "n": "הגליל/הבנים"
-    },
-    {
-     "la": 32.7981,
-     "lo": 35.00934,
-     "t": "blocked",
-     "n": "'יד לבנים א"
-    },
-    {
-     "la": 32.79705,
-     "lo": 35.01257,
-     "t": "blocked",
-     "n": "'יד לבנים ב"
-    },
-    {
-     "la": 32.79472,
-     "lo": 35.01672,
-     "t": "blocked",
-     "n": "יד לבנים/ערד"
-    },
-    {
-     "la": 32.79549,
-     "lo": 35.02202,
-     "t": "far",
-     "n": "בר יהודה/גשר גדוד 21"
-    },
-    {
-     "la": 32.7944,
-     "lo": 35.01837,
-     "t": "blocked",
-     "n": "יד לבנים/נווה יוסף"
-    },
-    {
-     "la": 32.7955,
-     "lo": 35.0155,
-     "t": "blocked",
-     "n": "יד לבנים/מעלות דב גרונר"
-    },
-    {
-     "la": 32.79734,
-     "lo": 35.01232,
-     "t": "blocked",
-     "n": "יד לבנים א"
-    },
-    {
-     "la": 32.79841,
-     "lo": 35.00896,
-     "t": "blocked",
-     "n": "יד לבנים ב"
-    },
-    {
-     "la": 32.80022,
-     "lo": 35.00995,
-     "t": "blocked",
-     "n": "רזיאל/פאר"
-    },
-    {
-     "la": 32.79562,
-     "lo": 35.01676,
-     "t": "blocked",
-     "n": "יד לבנים/פאר"
-    },
-    {
-     "la": 32.79832,
-     "lo": 35.01345,
-     "t": "blocked",
-     "n": "רזיאל/יד לבנים"
-    },
-    {
-     "la": 32.80028,
-     "lo": 35.01184,
-     "t": "blocked",
-     "n": "יד לבנים/הגיבורים"
-    },
-    {
-     "la": 32.7986,
-     "lo": 35.01131,
-     "t": "blocked",
-     "n": "פאר/וינר"
-    },
-    {
-     "la": 32.79737,
-     "lo": 35.01355,
-     "t": "blocked",
-     "n": "פאר/דב גרונר"
-    },
-    {
-     "la": 32.7959,
-     "lo": 35.01578,
-     "t": "blocked",
-     "n": "פאר/יד לבנים"
-    },
-    {
-     "la": 32.79762,
-     "lo": 35.01777,
-     "t": "blocked",
-     "n": "החשמל/חטיבת כרמלי"
-    },
-    {
-     "la": 32.80106,
-     "lo": 35.01097,
-     "t": "blocked",
-     "n": "יד לבנים/הגיבורים"
-    },
-    {
-     "la": 32.79932,
-     "lo": 35.01268,
-     "t": "blocked",
-     "n": "יד לבנים/הירדן"
-    },
-    {
-     "la": 32.80136,
-     "lo": 35.011,
-     "t": "blocked",
-     "n": "הגיבורים/ככר הגבורה"
-    },
-    {
-     "la": 32.79321,
-     "lo": 35.03892,
-     "t": "near",
-     "n": "קניון לב המפרץ/ההסתדרות"
-    },
-    {
-     "la": 32.78823,
-     "lo": 35.02837,
-     "t": "near",
-     "n": "צ'ק פוסט"
-    },
-    {
-     "la": 32.78939,
-     "lo": 35.0303,
-     "t": "in",
-     "n": "ההסתדרות/צומת הקריות"
-    },
-    {
-     "la": 32.80159,
-     "lo": 35.02032,
-     "t": "blocked",
-     "n": "גאזל/סלמן"
-    },
-    {
-     "la": 32.8001,
-     "lo": 35.02171,
-     "t": "blocked",
-     "n": "מכבי אש/חלץ"
-    },
-    {
-     "la": 32.80203,
-     "lo": 35.02002,
-     "t": "blocked",
-     "n": "גאזל/סלמן"
-    },
-    {
-     "la": 32.78307,
-     "lo": 35.01761,
-     "t": "blocked",
-     "n": "פינסקר/שלום עליכם"
-    },
-    {
-     "la": 32.79669,
-     "lo": 35.01901,
-     "t": "blocked",
-     "n": "החשמל"
-    },
-    {
-     "la": 32.79406,
-     "lo": 35.01354,
-     "t": "blocked",
-     "n": "הגליל/הבנים"
-    },
-    {
-     "la": 32.79228,
-     "lo": 35.01594,
-     "t": "blocked",
-     "n": "הגליל/ציון"
-    },
-    {
-     "la": 32.79421,
-     "lo": 35.01809,
-     "t": "blocked",
-     "n": "יד לבנים/ערד"
-    },
-    {
-     "la": 32.79042,
-     "lo": 35.0222,
-     "t": "far",
-     "n": "ערד/סובה"
-    },
-    {
-     "la": 32.79251,
-     "lo": 35.02067,
-     "t": "blocked",
-     "n": "ערד/תענך"
-    },
-    {
-     "la": 32.79419,
-     "lo": 35.02066,
-     "t": "blocked",
-     "n": "חטיבת כרמלי א"
-    },
-    {
-     "la": 32.78593,
-     "lo": 35.01906,
-     "t": "far",
-     "n": "טרומפלדור/מימון"
-    },
-    {
-     "la": 32.79343,
-     "lo": 35.03872,
-     "t": "near",
-     "n": "קניון לב המפרץ"
-    },
-    {
-     "la": 32.78268,
-     "lo": 35.02522,
-     "t": "far",
-     "n": "בית אבות ספרדי/גדליהו"
-    },
-    {
-     "la": 32.78276,
-     "lo": 35.0251,
-     "t": "far",
-     "n": "בית אבות ספרדי/גדליהו"
-    },
-    {
-     "la": 32.79919,
-     "lo": 35.01457,
-     "t": "blocked",
-     "n": "החשמל/הגיבורים"
-    },
-    {
-     "la": 32.79939,
-     "lo": 35.00927,
-     "t": "blocked",
-     "n": "וינר/פאר"
-    },
-    {
-     "la": 32.79394,
-     "lo": 35.02211,
-     "t": "far",
-     "n": "יעקב דורי/גשר גדוד 21"
-    },
-    {
-     "la": 32.78582,
-     "lo": 35.02442,
-     "t": "far",
-     "n": "חזן ג"
-    },
-    {
-     "la": 32.78395,
-     "lo": 35.02588,
-     "t": "far",
-     "n": "חזן/סולומון"
-    },
-    {
-     "la": 32.79535,
-     "lo": 35.01318,
-     "t": "blocked",
-     "n": "נתיב חן ב"
-    },
-    {
-     "la": 32.79395,
-     "lo": 35.01509,
-     "t": "blocked",
-     "n": "נתיב חן ג"
-    },
-    {
-     "la": 32.79164,
-     "lo": 35.01953,
-     "t": "far",
-     "n": "ברלב/חזן"
-    },
-    {
-     "la": 32.79771,
-     "lo": 35.01469,
-     "t": "blocked",
-     "n": "יד לבנים/רזיאל"
-    },
-    {
-     "la": 32.80345,
-     "lo": 35.01027,
-     "t": "blocked",
-     "n": "יד לבנים/בר יהודה"
-    },
-    {
-     "la": 32.79839,
-     "lo": 35.02109,
-     "t": "blocked",
-     "n": "מכבי אש/חלץ"
-    },
-    {
-     "la": 32.79481,
-     "lo": 35.01989,
-     "t": "blocked",
-     "n": "חטיבת כרמלי ב"
-    },
-    {
-     "la": 32.79156,
-     "lo": 35.01908,
-     "t": "far",
-     "n": "חזן/ברלב"
-    },
-    {
-     "la": 32.79599,
-     "lo": 35.01438,
-     "t": "blocked",
-     "n": "יד לבנים ג"
-    },
-    {
-     "la": 32.80429,
-     "lo": 35.01165,
-     "t": "blocked",
-     "n": "מטה המשטרה"
-    },
-    {
-     "la": 32.80414,
-     "lo": 35.01112,
-     "t": "blocked",
-     "n": "משטרה/יהודה ארזי"
-    },
-    {
-     "la": 32.78493,
-     "lo": 35.02224,
-     "t": "far",
-     "n": "הרב מימון/פינסקר"
-    },
-    {
-     "la": 32.79205,
-     "lo": 35.01796,
-     "t": "blocked",
-     "n": "חזן/דולצין"
-    },
-    {
-     "la": 32.78556,
-     "lo": 35.02373,
-     "t": "far",
-     "n": "הגליל/לייב שמעוני"
-    },
-    {
-     "la": 32.7869,
-     "lo": 35.02112,
-     "t": "far",
-     "n": "הגליל/מאירוביץ"
-    },
-    {
-     "la": 32.80519,
-     "lo": 35.01056,
-     "t": "blocked",
-     "n": "מטה משטרת חוף/צייזל"
-    },
-    {
-     "la": 32.79792,
-     "lo": 35.01694,
-     "t": "blocked",
-     "n": "החשמל/חטיבת כרמלי"
-    },
-    {
-     "la": 32.79037,
-     "lo": 35.02012,
-     "t": "far",
-     "n": "חזן א"
-    },
-    {
-     "la": 32.78657,
-     "lo": 35.01977,
-     "t": "far",
-     "n": "טרומפלדור/התיכון"
-    },
-    {
-     "la": 32.78939,
-     "lo": 35.01883,
-     "t": "far",
-     "n": "הגליל/הבריכה"
-    },
-    {
-     "la": 32.7885,
-     "lo": 35.02787,
-     "t": "near",
-     "n": "צ'ק פוסט"
-    },
-    {
-     "la": 32.78019,
-     "lo": 35.02467,
-     "t": "blocked",
-     "n": "טכניון/הנדסה חקלאית"
-    },
-    {
-     "la": 32.79079,
-     "lo": 35.03574,
-     "t": "near",
-     "n": "צומת קישון"
-    },
-    {
-     "la": 32.80303,
-     "lo": 35.00879,
-     "t": "blocked",
-     "n": "חליסה"
-    },
-    {
-     "la": 32.79848,
-     "lo": 35.0157,
-     "t": "blocked",
-     "n": "החשמל/דב גרונר"
-    },
-    {
-     "la": 32.79051,
-     "lo": 35.01373,
-     "t": "blocked",
-     "n": "חניתה/ציון"
-    },
-    {
-     "la": 32.79276,
-     "lo": 35.01184,
-     "t": "blocked",
-     "n": "חניתה/אשר"
-    },
-    {
-     "la": 32.79191,
-     "lo": 35.013,
-     "t": "blocked",
-     "n": "חניתה/אשר"
-    },
-    {
-     "la": 32.79655,
-     "lo": 35.01782,
-     "t": "blocked",
-     "n": "חטיבת כרמלי ד"
-    },
-    {
-     "la": 32.79295,
-     "lo": 35.02204,
-     "t": "blocked",
-     "n": "נווה גנים/חטיבת כרמלי"
-    },
-    {
-     "la": 32.79041,
-     "lo": 35.02465,
-     "t": "near",
-     "n": "יעקב דורי/משאש"
-    },
-    {
-     "la": 32.79895,
-     "lo": 35.01509,
-     "t": "blocked",
-     "n": "החשמל/מעלות דב גרונר"
-    },
-    {
-     "la": 32.79567,
-     "lo": 35.01882,
-     "t": "blocked",
-     "n": "חטיבת כרמלי ג"
-    },
-    {
-     "la": 32.80275,
-     "lo": 35.00892,
-     "t": "blocked",
-     "n": "חליסה"
-    },
-    {
-     "la": 32.79193,
-     "lo": 35.0229,
-     "t": "far",
-     "n": "נווה גנים"
-    },
-    {
-     "la": 32.79646,
-     "lo": 35.01128,
-     "t": "blocked",
-     "n": "נתיב חן א"
-    },
-    {
-     "la": 32.79062,
-     "lo": 35.02065,
-     "t": "far",
-     "n": "ברלב"
-    },
-    {
-     "la": 32.78969,
-     "lo": 35.02056,
-     "t": "far",
-     "n": "חזן ב"
-    },
-    {
-     "la": 32.79351,
-     "lo": 35.01926,
-     "t": "blocked",
-     "n": "ערד/יד לבנים"
-    },
-    {
-     "la": 32.8057,
-     "lo": 35.00886,
-     "t": "blocked",
-     "n": "חטיבת גולני/אל מיערי"
-    },
-    {
-     "la": 32.79907,
-     "lo": 35.01201,
-     "t": "blocked",
-     "n": "רזיאל/המוכתר צבי"
-    },
-    {
-     "la": 32.78145,
-     "lo": 35.02808,
-     "t": "far",
-     "n": "חניון נווה שאנן"
-    },
-    {
-     "la": 32.78949,
-     "lo": 35.02886,
-     "t": "in",
-     "n": "שדרות ההסתדרות/צומת הקריות"
-    },
-    {
-     "la": 32.79998,
-     "lo": 35.01367,
-     "t": "blocked",
-     "n": "החשמל/הגיבורים"
-    },
-    {
-     "la": 32.79028,
-     "lo": 35.02409,
-     "t": "far",
-     "n": "הרב יוסף משאש/נוה גנים"
-    },
-    {
-     "la": 32.79335,
-     "lo": 35.03902,
-     "t": "near",
-     "n": "לב המפרץ"
-    },
-    {
-     "la": 32.79337,
-     "lo": 35.03883,
-     "t": "near",
-     "n": "לב המפרץ"
-    },
-    {
-     "la": 32.79876,
-     "lo": 35.01814,
-     "t": "blocked",
-     "n": "גשר פז"
-    },
-    {
-     "la": 32.79865,
-     "lo": 35.01816,
-     "t": "blocked",
-     "n": "גשר פז"
-    },
-    {
-     "la": 32.80237,
-     "lo": 35.01371,
-     "t": "blocked",
-     "n": "צייזל"
-    },
-    {
-     "la": 32.80083,
-     "lo": 35.01392,
-     "t": "blocked",
-     "n": "בר יהודה"
-    },
-    {
-     "la": 32.80335,
-     "lo": 35.01085,
-     "t": "blocked",
-     "n": "מטה המשטרה"
-    },
-    {
-     "la": 32.80071,
-     "lo": 35.01263,
-     "t": "blocked",
-     "n": "הגיבורים"
-    },
-    {
-     "la": 32.80004,
-     "lo": 35.01377,
-     "t": "blocked",
-     "n": "הגיבורים"
-    },
-    {
-     "la": 32.80313,
-     "lo": 35.01096,
-     "t": "blocked",
-     "n": "מטה המשטרה"
-    },
-    {
-     "la": 32.79525,
-     "lo": 35.02097,
-     "t": "far",
-     "n": "החשמל/גדוד 21"
-    },
-    {
-     "la": 32.79675,
-     "lo": 35.01921,
-     "t": "blocked",
-     "n": "החשמל/גשר פז"
-    },
-    {
-     "la": 32.79177,
-     "lo": 35.03429,
-     "t": "gate",
-     "n": "מרכזית המפרץ/שדרות ההסתדרות"
-    },
-    {
-     "la": 32.79298,
-     "lo": 35.01984,
-     "t": "blocked",
-     "n": "ערד/תענך"
-    },
-    {
-     "la": 32.8043,
-     "lo": 35.00914,
-     "t": "blocked",
-     "n": "נחל גיבורים/חטיבת גולני"
-    },
-    {
-     "la": 32.79329,
-     "lo": 35.03299,
-     "t": "near",
-     "n": "מרכזית המפרץ"
-    },
-    {
-     "la": 32.79268,
-     "lo": 35.03478,
-     "t": "near",
-     "n": "ת. מרכזית המפרץ/רציפים עירוני"
-    },
-    {
-     "la": 32.79297,
-     "lo": 35.03424,
-     "t": "near",
-     "n": "ת. מרכזית המפרץ/מטרונית לחיפה"
-    },
-    {
-     "la": 32.79333,
-     "lo": 35.03519,
-     "t": "near",
-     "n": "ת. מרכזית המפרץ/מטרונית לקריות"
-    },
-    {
-     "la": 32.79324,
-     "lo": 35.03418,
-     "t": "near",
-     "n": "ת. מרכזית המפרץ/רציפים בינעירוני"
-    },
-    {
-     "la": 32.78688,
-     "lo": 35.02941,
-     "t": "near",
-     "n": "ביג שער העיר"
-    },
-    {
-     "la": 32.78691,
-     "lo": 35.02925,
-     "t": "near",
-     "n": "ביג שער העיר"
-    },
-    {
-     "la": 32.7811,
-     "lo": 35.03469,
-     "t": "far",
-     "n": "פורטק"
-    },
-    {
-     "la": 32.78176,
-     "lo": 35.03371,
-     "t": "far",
-     "n": "פורטק"
-    },
-    {
-     "la": 32.79521,
-     "lo": 35.03507,
-     "t": "near",
-     "n": "דרך יגאל ידין"
-    },
-    {
-     "la": 32.79523,
-     "lo": 35.03634,
-     "t": "near",
-     "n": "דרך יגאל ידין"
-    },
-    {
-     "la": 32.79221,
-     "lo": 35.03479,
-     "t": "near",
-     "n": "ת. מרכזית המפרץ/הורדה"
-    }
-   ],
-   "nearw": 2.8,
-   "ww": 11.7,
-   "lines": 279,
-   "streets": [
-    "ההסתדרות/צומת הקריות",
-    "שדרות ההסתדרות/צומת הקריות"
-   ],
-   "region": "צפון",
-   "periphery": true
-  },
-  {
    "name": "אזור התעשיה פולג",
    "city": "נתניה",
-   "score": 89,
+   "score": 90,
    "mot": 59,
    "motw": 59,
    "bl_headway": 10,
-   "far": 9,
+   "far": 8,
    "area": 1.48,
    "sparts": {
     "uf": 100,
     "bl": 90,
     "far": 80,
-    "near": 90
+    "near": 100
    },
    "f": "p26.json",
-   "la": 32.2846,
-   "lo": 34.8616,
-   "kind": "המצטיינים מחוץ למרכזי הערים",
-   "text": "1.48 קמ״ר, 106 קווים. הקו החזק כל ~10 דק׳; העובד המרוחק הולך 9 דק׳; ממרכז האזור לתחנה 2 דק׳.",
+   "la": 32.2824,
+   "lo": 34.8621,
+   "kind": "המצטיינים",
+   "text": "1.48 קמ״ר, 93 קווים. הקו החזק כל ~10 דק׳; העובד המרוחק הולך 8 דק׳; ממרכז האזור לתחנה 1 דק׳.",
    "polys": [
     [
      [
@@ -5639,18 +2938,6 @@
    ],
    "stops": [
     {
-     "la": 32.27656,
-     "lo": 34.8464,
-     "t": "blocked",
-     "n": "זלמן שז''ר/בני ברמן"
-    },
-    {
-     "la": 32.27684,
-     "lo": 34.84751,
-     "t": "blocked",
-     "n": "קניון עיר ימים/זלמן שז''ר"
-    },
-    {
      "la": 32.27659,
      "lo": 34.85165,
      "t": "blocked",
@@ -5659,14 +2946,8 @@
     {
      "la": 32.2727,
      "lo": 34.85693,
-     "t": "far",
-     "n": "צומת אביר/כביש 553"
-    },
-    {
-     "la": 32.26445,
-     "lo": 34.86263,
      "t": "blocked",
-     "n": "יהלום/שני"
+     "n": "צומת אביר/כביש 553"
     },
     {
      "la": 32.27458,
@@ -5679,36 +2960,6 @@
      "lo": 34.84895,
      "t": "blocked",
      "n": "קניון עיר ימים/זלמן שז''ר"
-    },
-    {
-     "la": 32.28473,
-     "lo": 34.8468,
-     "t": "blocked",
-     "n": "חבצלת החוף/אירוס הארגמן"
-    },
-    {
-     "la": 32.28363,
-     "lo": 34.84925,
-     "t": "blocked",
-     "n": "שניאור/בן גוריון"
-    },
-    {
-     "la": 32.28281,
-     "lo": 34.84756,
-     "t": "blocked",
-     "n": "זלמן שניאור/אריה לייב יפה"
-    },
-    {
-     "la": 32.28298,
-     "lo": 34.84922,
-     "t": "blocked",
-     "n": "ש''י עגנון/קרן היסוד"
-    },
-    {
-     "la": 32.28705,
-     "lo": 34.84612,
-     "t": "blocked",
-     "n": "גבעת האירוסים/אירוס הארגמן"
     },
     {
      "la": 32.28626,
@@ -5753,33 +3004,21 @@
      "n": "שדרות פנחס לבון/פנחס רוטנברג"
     },
     {
-     "la": 32.28158,
-     "lo": 34.85037,
-     "t": "blocked",
-     "n": "ש''י עגנון/יצחק אפשטיין"
-    },
-    {
-     "la": 32.28389,
-     "lo": 34.84936,
-     "t": "blocked",
-     "n": "זלמן שניאור/ש''י עגנון"
-    },
-    {
      "la": 32.28213,
      "lo": 34.85336,
-     "t": "far",
+     "t": "blocked",
      "n": "שדרות פנחס לבון/תיאודור וייסלברגר"
     },
     {
      "la": 32.28463,
      "lo": 34.85202,
-     "t": "far",
+     "t": "blocked",
      "n": "יצחק קצנלסון/ד''ר וייסלברגר"
     },
     {
      "la": 32.27979,
      "lo": 34.85434,
-     "t": "blocked",
+     "t": "far",
      "n": "רוטנברג\\נורדאו"
     },
     {
@@ -5803,25 +3042,25 @@
     {
      "la": 32.28557,
      "lo": 34.85359,
-     "t": "far",
+     "t": "blocked",
      "n": "יצחק קצנלסון/שדרות פנחס לבון"
     },
     {
      "la": 32.28545,
      "lo": 34.85455,
-     "t": "far",
+     "t": "blocked",
      "n": "שדרות פנחס לבון/יצחק קצנלסון"
     },
     {
      "la": 32.28675,
      "lo": 34.85483,
-     "t": "far",
+     "t": "blocked",
      "n": "שדרות פנחס לבון/שלום עליכם"
     },
     {
      "la": 32.28656,
      "lo": 34.85505,
-     "t": "far",
+     "t": "blocked",
      "n": "לבון/שלום עליכם"
     },
     {
@@ -5915,48 +3154,6 @@
      "n": "עירייה"
     },
     {
-     "la": 32.295,
-     "lo": 34.84967,
-     "t": "blocked",
-     "n": "יצחק גרינבוים/אפרים אלנקווה"
-    },
-    {
-     "la": 32.29471,
-     "lo": 34.85179,
-     "t": "blocked",
-     "n": "יצחק גרינבוים/ד''ר שמורק"
-    },
-    {
-     "la": 32.29449,
-     "lo": 34.85198,
-     "t": "blocked",
-     "n": "גרינבוים/בן צבי"
-    },
-    {
-     "la": 32.2939,
-     "lo": 34.85249,
-     "t": "blocked",
-     "n": "בן צבי/גרנבוים"
-    },
-    {
-     "la": 32.29492,
-     "lo": 34.85293,
-     "t": "blocked",
-     "n": "משטרה/בן צבי"
-    },
-    {
-     "la": 32.29569,
-     "lo": 34.85177,
-     "t": "blocked",
-     "n": "הנרייטה סולד/סטופ"
-    },
-    {
-     "la": 32.29686,
-     "lo": 34.8531,
-     "t": "blocked",
-     "n": "הנביאים/שד. בן צבי"
-    },
-    {
      "la": 32.29695,
      "lo": 34.85804,
      "t": "blocked",
@@ -5993,24 +3190,6 @@
      "n": "שדרות לנטוס/יוסף"
     },
     {
-     "la": 32.29584,
-     "lo": 34.87323,
-     "t": "blocked",
-     "n": "דרך דגניה/בני וו.רייך"
-    },
-    {
-     "la": 32.29992,
-     "lo": 34.87339,
-     "t": "blocked",
-     "n": "דרך דגניה/ליבר זאב"
-    },
-    {
-     "la": 32.28417,
-     "lo": 34.84565,
-     "t": "blocked",
-     "n": "חבצלת החוף/אירוס הארגמן"
-    },
-    {
      "la": 32.28678,
      "lo": 34.86536,
      "t": "in",
@@ -6035,12 +3214,6 @@
      "n": "איקאה/שדרות גיבורי ישראל"
     },
     {
-     "la": 32.29831,
-     "lo": 34.87358,
-     "t": "blocked",
-     "n": "דרך דגניה/הרב שלום איפרגן"
-    },
-    {
      "la": 32.29509,
      "lo": 34.87183,
      "t": "blocked",
@@ -6059,22 +3232,10 @@
      "n": "מכללת הרמלין/המחקר"
     },
     {
-     "la": 32.2629,
-     "lo": 34.86014,
-     "t": "blocked",
-     "n": "ת. רכבת בית יהושע"
-    },
-    {
      "la": 32.29627,
      "lo": 34.86915,
      "t": "blocked",
      "n": "טום לנטוס/תשרי"
-    },
-    {
-     "la": 32.2987,
-     "lo": 34.86924,
-     "t": "blocked",
-     "n": "שדרות לנטוס/יוסף"
     },
     {
      "la": 32.28663,
@@ -6095,46 +3256,10 @@
      "n": "פנחס לבון/גולדה מאיר"
     },
     {
-     "la": 32.28488,
-     "lo": 34.87254,
-     "t": "far",
-     "n": "פארק תעשיות"
-    },
-    {
-     "la": 32.28571,
-     "lo": 34.87252,
-     "t": "far",
-     "n": "פארק תעשיות"
-    },
-    {
-     "la": 32.27858,
-     "lo": 34.84966,
-     "t": "blocked",
-     "n": "בן גוריון/לבון"
-    },
-    {
-     "la": 32.26454,
-     "lo": 34.85873,
-     "t": "blocked",
-     "n": "ת. רכבת בית יהושע/553"
-    },
-    {
-     "la": 32.2636,
-     "lo": 34.85763,
-     "t": "blocked",
-     "n": "ת. רכבת בית יהושע/553"
-    },
-    {
      "la": 32.27218,
      "lo": 34.85786,
      "t": "blocked",
      "n": "צומת אביר"
-    },
-    {
-     "la": 32.2621,
-     "lo": 34.85992,
-     "t": "blocked",
-     "n": "ת. רכבת בית יהושע"
     },
     {
      "la": 32.2718,
@@ -6151,61 +3276,49 @@
     {
      "la": 32.29113,
      "lo": 34.85366,
-     "t": "far",
+     "t": "blocked",
      "n": "שדרות בן צבי/שדרות אגם כנרת"
     },
     {
      "la": 32.28961,
      "lo": 34.85469,
-     "t": "far",
+     "t": "blocked",
      "n": "שדרות בן צבי/שדרות אגם כנרת"
     },
     {
      "la": 32.29039,
      "lo": 34.85206,
-     "t": "far",
-     "n": "אגם כנרת/שמורת נחל ערוגות"
-    },
-    {
-     "la": 32.29068,
-     "lo": 34.85038,
      "t": "blocked",
-     "n": "אגם כנרת/שמורת נחל דולב"
+     "n": "אגם כנרת/שמורת נחל ערוגות"
     },
     {
      "la": 32.28952,
      "lo": 34.84969,
-     "t": "far",
-     "n": "שדרות האגמים/שמורת נחל שניר"
-    },
-    {
-     "la": 32.28892,
-     "lo": 34.84921,
      "t": "blocked",
      "n": "שדרות האגמים/שמורת נחל שניר"
     },
     {
      "la": 32.28755,
      "lo": 34.84957,
-     "t": "far",
+     "t": "blocked",
      "n": "שלום עליכם/חבצלת החוף"
     },
     {
      "la": 32.28781,
      "lo": 34.85115,
-     "t": "far",
+     "t": "blocked",
      "n": "שלום עליכם/שמורת נחל ערוגות"
     },
     {
      "la": 32.28785,
      "lo": 34.85444,
-     "t": "far",
+     "t": "blocked",
      "n": "שלום עליכם/שדרות בן צבי"
     },
     {
      "la": 32.28759,
      "lo": 34.85572,
-     "t": "far",
+     "t": "blocked",
      "n": "שלום עליכם/שדרות פנחס לבון"
     },
     {
@@ -6283,7 +3396,7 @@
     {
      "la": 32.29289,
      "lo": 34.86344,
-     "t": "far",
+     "t": "blocked",
      "n": "אצטדיון נתניה"
     },
     {
@@ -6303,17 +3416,11 @@
      "lo": 34.86329,
      "t": "in",
      "n": "סינמה סיטי/המחקר"
-    },
-    {
-     "la": 32.29559,
-     "lo": 34.87349,
-     "t": "blocked",
-     "n": "דרך דגניה/בני וו.רייך "
     }
    ],
-   "nearw": 2.1,
-   "ww": 9.1,
-   "lines": 106,
+   "nearw": 0.9,
+   "ww": 8.5,
+   "lines": 93,
    "streets": [
     "איקאה/שדרות גיבורי ישראל",
     "מרכז ביג/שדרות גיבורי ישראל",
@@ -6324,25 +3431,951 @@
    "periphery": false
   },
   {
-   "name": "אזור תעשייה עפולה",
-   "city": "עפולה",
+   "name": "אור-עקיבא",
+   "city": "אור עקיבא",
    "score": 89,
    "mot": null,
-   "motw": 56,
+   "motw": 40,
    "bl_headway": 15,
-   "far": 5,
-   "area": 0.54,
+   "far": 4,
+   "area": 0.41,
    "sparts": {
     "uf": 100,
     "bl": 80,
     "far": 90,
     "near": 100
    },
-   "f": "p104.json",
-   "la": 32.6034,
-   "lo": 35.2956,
+   "f": "p138.json",
+   "la": 32.5187,
+   "lo": 34.9218,
    "kind": "המצטיינים מחוץ למרכזי הערים",
-   "text": "0.54 קמ״ר, 140 קווים. הקו החזק כל ~15 דק׳; העובד המרוחק הולך 5 דק׳; ממרכז האזור לתחנה 1 דק׳.",
+   "text": "0.41 קמ״ר, 42 קווים. הקו החזק כל ~15 דק׳; העובד המרוחק הולך 4 דק׳; ממרכז האזור לתחנה 0 דק׳.",
+   "polys": [
+    [
+     [
+      32.51576,
+      34.91958
+     ],
+     [
+      32.51611,
+      34.91949
+     ],
+     [
+      32.51982,
+      34.91855
+     ],
+     [
+      32.52006,
+      34.91988
+     ],
+     [
+      32.52271,
+      34.9192
+     ],
+     [
+      32.52325,
+      34.91907
+     ],
+     [
+      32.52348,
+      34.91901
+     ],
+     [
+      32.52381,
+      34.92091
+     ],
+     [
+      32.52384,
+      34.92109
+     ],
+     [
+      32.52401,
+      34.92111
+     ],
+     [
+      32.52398,
+      34.92222
+     ],
+     [
+      32.52397,
+      34.92259
+     ],
+     [
+      32.52383,
+      34.92255
+     ],
+     [
+      32.52325,
+      34.9224
+     ],
+     [
+      32.52324,
+      34.9224
+     ],
+     [
+      32.5232,
+      34.92238
+     ],
+     [
+      32.52315,
+      34.92237
+     ],
+     [
+      32.52313,
+      34.92236
+     ],
+     [
+      32.52309,
+      34.92232
+     ],
+     [
+      32.52308,
+      34.92231
+     ],
+     [
+      32.52306,
+      34.9223
+     ],
+     [
+      32.52303,
+      34.92229
+     ],
+     [
+      32.523,
+      34.92228
+     ],
+     [
+      32.52298,
+      34.92227
+     ],
+     [
+      32.52295,
+      34.92227
+     ],
+     [
+      32.52292,
+      34.92227
+     ],
+     [
+      32.5229,
+      34.92227
+     ],
+     [
+      32.52266,
+      34.92232
+     ],
+     [
+      32.51985,
+      34.92319
+     ],
+     [
+      32.51954,
+      34.92328
+     ],
+     [
+      32.51892,
+      34.92344
+     ],
+     [
+      32.51886,
+      34.92343
+     ],
+     [
+      32.51877,
+      34.9234
+     ],
+     [
+      32.51856,
+      34.92341
+     ],
+     [
+      32.51766,
+      34.92353
+     ],
+     [
+      32.51686,
+      34.92359
+     ],
+     [
+      32.51709,
+      34.92484
+     ],
+     [
+      32.51709,
+      34.92487
+     ],
+     [
+      32.51713,
+      34.9251
+     ],
+     [
+      32.51717,
+      34.92533
+     ],
+     [
+      32.51721,
+      34.92557
+     ],
+     [
+      32.51724,
+      34.9258
+     ],
+     [
+      32.51728,
+      34.92604
+     ],
+     [
+      32.5173,
+      34.92627
+     ],
+     [
+      32.51733,
+      34.92651
+     ],
+     [
+      32.51736,
+      34.92674
+     ],
+     [
+      32.51738,
+      34.92698
+     ],
+     [
+      32.5174,
+      34.92722
+     ],
+     [
+      32.51742,
+      34.92745
+     ],
+     [
+      32.51744,
+      34.92769
+     ],
+     [
+      32.51745,
+      34.92793
+     ],
+     [
+      32.51746,
+      34.92812
+     ],
+     [
+      32.51757,
+      34.9305
+     ],
+     [
+      32.51753,
+      34.93051
+     ],
+     [
+      32.51756,
+      34.93125
+     ],
+     [
+      32.51729,
+      34.93126
+     ],
+     [
+      32.51726,
+      34.93056
+     ],
+     [
+      32.51721,
+      34.93056
+     ],
+     [
+      32.5171,
+      34.92817
+     ],
+     [
+      32.5171,
+      34.92811
+     ],
+     [
+      32.51709,
+      34.92787
+     ],
+     [
+      32.51707,
+      34.92764
+     ],
+     [
+      32.51705,
+      34.9274
+     ],
+     [
+      32.51703,
+      34.92717
+     ],
+     [
+      32.51701,
+      34.92693
+     ],
+     [
+      32.51699,
+      34.9267
+     ],
+     [
+      32.51696,
+      34.92646
+     ],
+     [
+      32.51693,
+      34.92623
+     ],
+     [
+      32.5169,
+      34.926
+     ],
+     [
+      32.51687,
+      34.92577
+     ],
+     [
+      32.51683,
+      34.92553
+     ],
+     [
+      32.5168,
+      34.9253
+     ],
+     [
+      32.51676,
+      34.92507
+     ],
+     [
+      32.51674,
+      34.92497
+     ],
+     [
+      32.51651,
+      34.92372
+     ],
+     [
+      32.51606,
+      34.92385
+     ],
+     [
+      32.51599,
+      34.92389
+     ],
+     [
+      32.51536,
+      34.92396
+     ],
+     [
+      32.51488,
+      34.92394
+     ],
+     [
+      32.51476,
+      34.92378
+     ],
+     [
+      32.51476,
+      34.92378
+     ],
+     [
+      32.51476,
+      34.92377
+     ],
+     [
+      32.51476,
+      34.92376
+     ],
+     [
+      32.51475,
+      34.92375
+     ],
+     [
+      32.51474,
+      34.92374
+     ],
+     [
+      32.51474,
+      34.92374
+     ],
+     [
+      32.51473,
+      34.92374
+     ],
+     [
+      32.51473,
+      34.92374
+     ],
+     [
+      32.51472,
+      34.92374
+     ],
+     [
+      32.51471,
+      34.92374
+     ],
+     [
+      32.51471,
+      34.92375
+     ],
+     [
+      32.5147,
+      34.92376
+     ],
+     [
+      32.5147,
+      34.92376
+     ],
+     [
+      32.51469,
+      34.92376
+     ],
+     [
+      32.51468,
+      34.92377
+     ],
+     [
+      32.51467,
+      34.92377
+     ],
+     [
+      32.51466,
+      34.92376
+     ],
+     [
+      32.51466,
+      34.92376
+     ],
+     [
+      32.51465,
+      34.92375
+     ],
+     [
+      32.51464,
+      34.92374
+     ],
+     [
+      32.51464,
+      34.92373
+     ],
+     [
+      32.51464,
+      34.92373
+     ],
+     [
+      32.51447,
+      34.92374
+     ],
+     [
+      32.51431,
+      34.92372
+     ],
+     [
+      32.5143,
+      34.92373
+     ],
+     [
+      32.5143,
+      34.92375
+     ],
+     [
+      32.51397,
+      34.9238
+     ],
+     [
+      32.51394,
+      34.92366
+     ],
+     [
+      32.51387,
+      34.92327
+     ],
+     [
+      32.5138,
+      34.92285
+     ],
+     [
+      32.51441,
+      34.92283
+     ],
+     [
+      32.51455,
+      34.92283
+     ],
+     [
+      32.51458,
+      34.92281
+     ],
+     [
+      32.51458,
+      34.92281
+     ],
+     [
+      32.51453,
+      34.92258
+     ],
+     [
+      32.51419,
+      34.92068
+     ],
+     [
+      32.51425,
+      34.92067
+     ],
+     [
+      32.51444,
+      34.92062
+     ],
+     [
+      32.51488,
+      34.92051
+     ],
+     [
+      32.51513,
+      34.92044
+     ],
+     [
+      32.51538,
+      34.92038
+     ],
+     [
+      32.51563,
+      34.92031
+     ],
+     [
+      32.51588,
+      34.92025
+     ],
+     [
+      32.51575,
+      34.92028
+     ],
+     [
+      32.51562,
+      34.91961
+     ],
+     [
+      32.51576,
+      34.91958
+     ]
+    ]
+   ],
+   "stops": [
+    {
+     "la": 32.51172,
+     "lo": 34.91461,
+     "t": "near",
+     "n": "מנחם ציוני/עליזה יאנסן"
+    },
+    {
+     "la": 32.51038,
+     "lo": 34.91493,
+     "t": "blocked",
+     "n": "הרצל/מנחם ציוני"
+    },
+    {
+     "la": 32.51489,
+     "lo": 34.91572,
+     "t": "far",
+     "n": "אבן גבירול/חיים הזז"
+    },
+    {
+     "la": 32.51244,
+     "lo": 34.91685,
+     "t": "far",
+     "n": "בית ספר יאנסן/עליזה יאנסן"
+    },
+    {
+     "la": 32.5128,
+     "lo": 34.91826,
+     "t": "far",
+     "n": "עליזה יאנסן/שדרות הנשיא ויצמן"
+    },
+    {
+     "la": 32.51436,
+     "lo": 34.91869,
+     "t": "far",
+     "n": "שדרות ירושלים/יהודה הלוי"
+    },
+    {
+     "la": 32.51239,
+     "lo": 34.91926,
+     "t": "far",
+     "n": "שד. הנשיא וייצמן/סמטת חי טייב"
+    },
+    {
+     "la": 32.51175,
+     "lo": 34.91921,
+     "t": "far",
+     "n": "שד. הנשיא וייצמן/סמטת חי טייב"
+    },
+    {
+     "la": 32.50986,
+     "lo": 34.91984,
+     "t": "near",
+     "n": "שד. הנשיא וייצמן/הגיבורים"
+    },
+    {
+     "la": 32.50808,
+     "lo": 34.91999,
+     "t": "blocked",
+     "n": "ויצמן/הרצוג"
+    },
+    {
+     "la": 32.50825,
+     "lo": 34.92017,
+     "t": "blocked",
+     "n": "שד. הנשיא וייצמן/הרצוג"
+    },
+    {
+     "la": 32.51613,
+     "lo": 34.92112,
+     "t": "in",
+     "n": "הזית/ההדס"
+    },
+    {
+     "la": 32.50502,
+     "lo": 34.92176,
+     "t": "blocked",
+     "n": "שד. שידלובסקי/ניל''י"
+    },
+    {
+     "la": 32.51631,
+     "lo": 34.92106,
+     "t": "in",
+     "n": "מרכז מבנה תעשיה/הזית"
+    },
+    {
+     "la": 32.51675,
+     "lo": 34.92314,
+     "t": "in",
+     "n": "הזית/הערבה"
+    },
+    {
+     "la": 32.51666,
+     "lo": 34.92394,
+     "t": "in",
+     "n": "הזית/הערבה"
+    },
+    {
+     "la": 32.52313,
+     "lo": 34.9294,
+     "t": "blocked",
+     "n": "בית חנניה"
+    },
+    {
+     "la": 32.51814,
+     "lo": 34.93006,
+     "t": "far",
+     "n": "צומת בנימינה"
+    },
+    {
+     "la": 32.51748,
+     "lo": 34.93084,
+     "t": "in",
+     "n": "צומת בנימינה"
+    },
+    {
+     "la": 32.52383,
+     "lo": 34.93488,
+     "t": "blocked",
+     "n": "דרך העצמאות/הנדיב"
+    },
+    {
+     "la": 32.52209,
+     "lo": 34.93818,
+     "t": "blocked",
+     "n": "דרך העצמאות/אירית"
+    },
+    {
+     "la": 32.51792,
+     "lo": 34.93477,
+     "t": "blocked",
+     "n": "כביש 653/השדה"
+    },
+    {
+     "la": 32.51683,
+     "lo": 34.92989,
+     "t": "far",
+     "n": "צומת בנימינה"
+    },
+    {
+     "la": 32.51683,
+     "lo": 34.91655,
+     "t": "near",
+     "n": "שד. ירושלים/שלום עליכם"
+    },
+    {
+     "la": 32.51751,
+     "lo": 34.91716,
+     "t": "near",
+     "n": "החרמון/הכרמל"
+    },
+    {
+     "la": 32.51358,
+     "lo": 34.9156,
+     "t": "far",
+     "n": "דוד אלעזר/חיים הזז"
+    },
+    {
+     "la": 32.51248,
+     "lo": 34.91653,
+     "t": "far",
+     "n": "עליזה יאנסן/חיים הזז"
+    },
+    {
+     "la": 32.51624,
+     "lo": 34.91812,
+     "t": "near",
+     "n": "ספינת אגוז/הכרמל"
+    },
+    {
+     "la": 32.51926,
+     "lo": 34.92077,
+     "t": "in",
+     "n": "האילן/ההדס"
+    },
+    {
+     "la": 32.51833,
+     "lo": 34.92192,
+     "t": "in",
+     "n": "האילן/הזית"
+    },
+    {
+     "la": 32.51742,
+     "lo": 34.92792,
+     "t": "in",
+     "n": "צומת בנימינה"
+    },
+    {
+     "la": 32.51845,
+     "lo": 34.92178,
+     "t": "in",
+     "n": "האילן/הזית"
+    },
+    {
+     "la": 32.51654,
+     "lo": 34.91718,
+     "t": "near",
+     "n": "שד. ירושלים/אבן גבירול"
+    },
+    {
+     "la": 32.51904,
+     "lo": 34.91532,
+     "t": "near",
+     "n": "תיכון דתי/שדרות ירושלים"
+    },
+    {
+     "la": 32.51911,
+     "lo": 34.92046,
+     "t": "in",
+     "n": "האילן/ההדס"
+    },
+    {
+     "la": 32.51804,
+     "lo": 34.93989,
+     "t": "blocked",
+     "n": "העלייה/דרך העצמאות"
+    },
+    {
+     "la": 32.51667,
+     "lo": 34.92051,
+     "t": "in",
+     "n": "ההדס/ספינת אגוז"
+    },
+    {
+     "la": 32.51666,
+     "lo": 34.92062,
+     "t": "in",
+     "n": "ההדס/ספינת אגוז"
+    },
+    {
+     "la": 32.51374,
+     "lo": 34.91564,
+     "t": "far",
+     "n": "חיים הזז/יהודה הלוי"
+    },
+    {
+     "la": 32.50549,
+     "lo": 34.92,
+     "t": "blocked",
+     "n": "וייצמן/שידלובסקי"
+    },
+    {
+     "la": 32.52376,
+     "lo": 34.93482,
+     "t": "blocked",
+     "n": "דרך העצמאות/הנדיב"
+    },
+    {
+     "la": 32.52108,
+     "lo": 34.91616,
+     "t": "far",
+     "n": "הר סיני/הרי מנשה"
+    },
+    {
+     "la": 32.51957,
+     "lo": 34.91701,
+     "t": "near",
+     "n": "הכרמל/התבור"
+    },
+    {
+     "la": 32.51794,
+     "lo": 34.93596,
+     "t": "blocked",
+     "n": "כביש 653/השחף"
+    },
+    {
+     "la": 32.52158,
+     "lo": 34.91852,
+     "t": "far",
+     "n": "הכרמל/הר המוריה"
+    },
+    {
+     "la": 32.50629,
+     "lo": 34.91981,
+     "t": "blocked",
+     "n": "שדרות הנשיא וייצמן/רוטשילד"
+    },
+    {
+     "la": 32.50685,
+     "lo": 34.92317,
+     "t": "near",
+     "n": "הרב קוק/הלל"
+    },
+    {
+     "la": 32.51229,
+     "lo": 34.92238,
+     "t": "near",
+     "n": "העצמאות/חי טייב"
+    },
+    {
+     "la": 32.51299,
+     "lo": 34.92222,
+     "t": "near",
+     "n": "העצמאות/מאיר סטנלי"
+    },
+    {
+     "la": 32.51295,
+     "lo": 34.91962,
+     "t": "far",
+     "n": "מאיר סטנלי/שדרות הנשיא וייצמן"
+    },
+    {
+     "la": 32.51731,
+     "lo": 34.91722,
+     "t": "near",
+     "n": "הכרמל/החרמון"
+    },
+    {
+     "la": 32.51897,
+     "lo": 34.91666,
+     "t": "near",
+     "n": "הכרמל/הר הצופים"
+    },
+    {
+     "la": 32.52162,
+     "lo": 34.91669,
+     "t": "far",
+     "n": "הר סיני/הר נבו"
+    },
+    {
+     "la": 32.52114,
+     "lo": 34.91806,
+     "t": "far",
+     "n": "הכרמל/הארבל"
+    },
+    {
+     "la": 32.52047,
+     "lo": 34.92127,
+     "t": "in",
+     "n": "האילן/החרוב"
+    },
+    {
+     "la": 32.52112,
+     "lo": 34.92122,
+     "t": "in",
+     "n": "האילן/החרוב"
+    },
+    {
+     "la": 32.52279,
+     "lo": 34.92071,
+     "t": "in",
+     "n": "האילן/התדהר"
+    },
+    {
+     "la": 32.50675,
+     "lo": 34.92252,
+     "t": "blocked",
+     "n": "הרב קוק/הלל"
+    },
+    {
+     "la": 32.52265,
+     "lo": 34.92085,
+     "t": "in",
+     "n": "האילן/התדהר"
+    },
+    {
+     "la": 32.50903,
+     "lo": 34.92363,
+     "t": "far",
+     "n": "העצמאות/סייג חוואטו"
+    },
+    {
+     "la": 32.50944,
+     "lo": 34.92359,
+     "t": "far",
+     "n": "העצמאות/סייג חוואטו"
+    },
+    {
+     "la": 32.51785,
+     "lo": 34.91589,
+     "t": "near",
+     "n": "שדרות ירושלים/שלום עליכם"
+    },
+    {
+     "la": 32.50914,
+     "lo": 34.93072,
+     "t": "blocked",
+     "n": "צומת בנימינה מזרח בורג' לצפון"
+    },
+    {
+     "la": 32.50788,
+     "lo": 34.93052,
+     "t": "blocked",
+     "n": "צומת בנימינה מזרח בורג' לדרום"
+    }
+   ],
+   "nearw": 0.4,
+   "ww": 4.0,
+   "lines": 42,
+   "streets": [
+    "הזית/ההדס",
+    "מרכז מבנה תעשיה/הזית",
+    "הזית/הערבה",
+    "צומת בנימינה"
+   ],
+   "region": "צפון",
+   "periphery": true
+  },
+  {
+   "name": "אזור תעשייה עפולה",
+   "city": "עפולה",
+   "score": 88,
+   "mot": null,
+   "motw": 56,
+   "bl_headway": 15,
+   "far": 4,
+   "area": 0.54,
+   "sparts": {
+    "uf": 100,
+    "bl": 80,
+    "far": 90,
+    "near": 90
+   },
+   "f": "p102.json",
+   "la": 32.6042,
+   "lo": 35.2966,
+   "kind": "המצטיינים מחוץ למרכזי הערים",
+   "text": "0.54 קמ״ר, 134 קווים. הקו החזק כל ~15 דק׳; העובד המרוחק הולך 4 דק׳; ממרכז האזור לתחנה 2 דק׳.",
    "polys": [
     [
      [
@@ -6573,19 +4606,19 @@
     {
      "la": 32.61359,
      "lo": 35.29688,
-     "t": "far",
+     "t": "blocked",
      "n": "הספרייה העירונית/יצחק רבין"
     },
     {
      "la": 32.61504,
      "lo": 35.29935,
-     "t": "far",
+     "t": "blocked",
      "n": "קאנטרי קלאב/שדרות יצחק רבין"
     },
     {
      "la": 32.60431,
      "lo": 35.28333,
-     "t": "far",
+     "t": "blocked",
      "n": "הבנים/וולפסון"
     },
     {
@@ -6597,13 +4630,13 @@
     {
      "la": 32.61222,
      "lo": 35.28809,
-     "t": "far",
+     "t": "near",
      "n": "היכל התרבות/חטיבה תשע"
     },
     {
      "la": 32.61223,
      "lo": 35.28788,
-     "t": "far",
+     "t": "near",
      "n": "היכל התרבות/חטיבה תשע"
     },
     {
@@ -6621,14 +4654,8 @@
     {
      "la": 32.61012,
      "lo": 35.29407,
-     "t": "near",
+     "t": "far",
      "n": "כורש/שפרינצק"
-    },
-    {
-     "la": 32.61519,
-     "lo": 35.28879,
-     "t": "blocked",
-     "n": "מכבי אש/חטיבה תשע"
     },
     {
      "la": 32.6039,
@@ -6657,13 +4684,13 @@
     {
      "la": 32.60879,
      "lo": 35.29745,
-     "t": "gate",
+     "t": "near",
      "n": "כורש/שיבולים"
     },
     {
      "la": 32.61042,
      "lo": 35.28842,
-     "t": "far",
+     "t": "blocked",
      "n": "כיכר העצמאות"
     },
     {
@@ -6681,7 +4708,7 @@
     {
      "la": 32.61017,
      "lo": 35.2944,
-     "t": "near",
+     "t": "far",
      "n": "כורש/שפרינצק"
     },
     {
@@ -6693,7 +4720,7 @@
     {
      "la": 32.60583,
      "lo": 35.30289,
-     "t": "blocked",
+     "t": "near",
      "n": "צומת מרחביה"
     },
     {
@@ -6723,20 +4750,14 @@
     {
      "la": 32.61318,
      "lo": 35.29659,
-     "t": "far",
+     "t": "blocked",
      "n": "הספרייה העירונית/יצחק רבין"
     },
     {
      "la": 32.61382,
      "lo": 35.29369,
-     "t": "far",
+     "t": "blocked",
      "n": "ההסתדרות/מורנו"
-    },
-    {
-     "la": 32.60393,
-     "lo": 35.28185,
-     "t": "far",
-     "n": "הבנים/הקונגרס הציוני"
     },
     {
      "la": 32.61442,
@@ -6775,33 +4796,21 @@
      "n": "קיבוץ מרחביה"
     },
     {
-     "la": 32.59868,
-     "lo": 35.28269,
-     "t": "blocked",
-     "n": "בית עלמין עפולה"
-    },
-    {
      "la": 32.60199,
      "lo": 35.28542,
-     "t": "far",
+     "t": "near",
      "n": "שדרות מנחם בגין/קרן היסוד"
     },
     {
      "la": 32.60548,
      "lo": 35.28178,
-     "t": "far",
-     "n": "הקונגרס הציוני/משה שרת"
-    },
-    {
-     "la": 32.6148,
-     "lo": 35.28454,
      "t": "blocked",
-     "n": "לוטם/אגוז"
+     "n": "הקונגרס הציוני/משה שרת"
     },
     {
      "la": 32.61018,
      "lo": 35.28137,
-     "t": "far",
+     "t": "blocked",
      "n": "יהושע חנקין/נורדאו"
     },
     {
@@ -6825,19 +4834,19 @@
     {
      "la": 32.6069,
      "lo": 35.28423,
-     "t": "far",
+     "t": "blocked",
      "n": "משה שרת/יהושע חנקין"
     },
     {
      "la": 32.60713,
      "lo": 35.28439,
-     "t": "far",
+     "t": "near",
      "n": "משה שרת/יהושע חנקין"
     },
     {
      "la": 32.60476,
      "lo": 35.28386,
-     "t": "far",
+     "t": "blocked",
      "n": "הבנים/וולפסון"
     },
     {
@@ -6849,43 +4858,43 @@
     {
      "la": 32.60404,
      "lo": 35.28532,
-     "t": "far",
+     "t": "near",
      "n": "מרכז בריאות הילד/וולפסון"
     },
     {
      "la": 32.60782,
      "lo": 35.28427,
-     "t": "far",
+     "t": "blocked",
      "n": "יהושע חנקין/ש''י עגנון"
     },
     {
      "la": 32.61057,
      "lo": 35.28563,
-     "t": "far",
+     "t": "blocked",
      "n": "הרב קירשטיין/מנחם אוסישקין"
     },
     {
      "la": 32.61082,
      "lo": 35.28558,
-     "t": "far",
+     "t": "blocked",
      "n": "הרב קירשטיין/משמר הירדן"
     },
     {
      "la": 32.61083,
      "lo": 35.28318,
-     "t": "far",
+     "t": "blocked",
      "n": "אורנים/מנחם אוסישקין"
     },
     {
      "la": 32.61048,
      "lo": 35.28309,
-     "t": "far",
+     "t": "blocked",
      "n": "אורנים/מנחם אוסישקין"
     },
     {
      "la": 32.608,
      "lo": 35.28418,
-     "t": "far",
+     "t": "blocked",
      "n": "יהושע חנקין/ש''י עגנון"
     },
     {
@@ -6897,26 +4906,8 @@
     {
      "la": 32.61473,
      "lo": 35.30056,
-     "t": "far",
+     "t": "near",
      "n": "צומת הקאנטרי קלאב/שדרות בן גוריון"
-    },
-    {
-     "la": 32.61386,
-     "lo": 35.30596,
-     "t": "blocked",
-     "n": "בי''ס יהלום/רובע יזרעאל"
-    },
-    {
-     "la": 32.61392,
-     "lo": 35.30537,
-     "t": "blocked",
-     "n": "בי''ס יהלום/רובע יזרעאל"
-    },
-    {
-     "la": 32.61452,
-     "lo": 35.30915,
-     "t": "blocked",
-     "n": "רובע יזרעאל/ספיר"
     },
     {
      "la": 32.60676,
@@ -6937,24 +4928,6 @@
      "n": "צומת מכבי אש/הדרים"
     },
     {
-     "la": 32.61657,
-     "lo": 35.28657,
-     "t": "blocked",
-     "n": "תאשור/תדהר"
-    },
-    {
-     "la": 32.6165,
-     "lo": 35.28649,
-     "t": "blocked",
-     "n": "תאשור/תדהר"
-    },
-    {
-     "la": 32.6148,
-     "lo": 35.28433,
-     "t": "blocked",
-     "n": "לוטם/אגוז"
-    },
-    {
      "la": 32.61201,
      "lo": 35.28433,
      "t": "blocked",
@@ -6969,7 +4942,7 @@
     {
      "la": 32.60524,
      "lo": 35.28171,
-     "t": "far",
+     "t": "blocked",
      "n": "הקונגרס הציוני/משה שרת"
     },
     {
@@ -7045,12 +5018,6 @@
      "n": "חרוד/כורש"
     },
     {
-     "la": 32.61449,
-     "lo": 35.30815,
-     "t": "blocked",
-     "n": "רובע יזרעאל/ספיר"
-    },
-    {
      "la": 32.60329,
      "lo": 35.29442,
      "t": "in",
@@ -7065,7 +5032,7 @@
     {
      "la": 32.60758,
      "lo": 35.30123,
-     "t": "gate",
+     "t": "near",
      "n": "שדרות בן גוריון/כורש"
     },
     {
@@ -7077,26 +5044,20 @@
     {
      "la": 32.60924,
      "lo": 35.29255,
-     "t": "near",
+     "t": "far",
      "n": "ת.מרכזית עפולה/הורדה"
     },
     {
      "la": 32.60909,
      "lo": 35.29217,
-     "t": "near",
+     "t": "far",
      "n": "ת.מרכזית עפולה/שפרינצק"
     },
     {
      "la": 32.61066,
      "lo": 35.29905,
-     "t": "near",
+     "t": "far",
      "n": "שיבולים/בציר"
-    },
-    {
-     "la": 32.61046,
-     "lo": 35.28012,
-     "t": "blocked",
-     "n": "הקונגרס הציוני/יהושע חנקין"
     },
     {
      "la": 32.61218,
@@ -7105,52 +5066,10 @@
      "n": "שיבולים/יצחק נבון"
     },
     {
-     "la": 32.61836,
-     "lo": 35.29028,
-     "t": "blocked",
-     "n": "אשל/דובדבן"
-    },
-    {
-     "la": 32.61821,
-     "lo": 35.29673,
-     "t": "blocked",
-     "n": "עמנואל מורנו/יסמין"
-    },
-    {
-     "la": 32.61763,
-     "lo": 35.29479,
-     "t": "blocked",
-     "n": "החורש/אדר"
-    },
-    {
-     "la": 32.61793,
-     "lo": 35.29343,
-     "t": "blocked",
-     "n": "החורש/אדר"
-    },
-    {
-     "la": 32.6175,
-     "lo": 35.29628,
-     "t": "blocked",
-     "n": "עמנואל מורנו/החורש"
-    },
-    {
      "la": 32.60871,
      "lo": 35.29811,
      "t": "near",
      "n": "שיבולים/כורש"
-    },
-    {
-     "la": 32.61808,
-     "lo": 35.28897,
-     "t": "blocked",
-     "n": "אורט אלון/חטיבה תשע"
-    },
-    {
-     "la": 32.61841,
-     "lo": 35.28972,
-     "t": "blocked",
-     "n": "אורט אלון/אשל"
     },
     {
      "la": 32.61269,
@@ -7167,19 +5086,19 @@
     {
      "la": 32.60189,
      "lo": 35.28518,
-     "t": "far",
+     "t": "near",
      "n": "שדרות מנחם בגין/קרן היסוד"
     },
     {
      "la": 32.60825,
      "lo": 35.29139,
-     "t": "near",
+     "t": "far",
      "n": "ת.מרכזית עפולה/שפרינצק"
     }
    ],
-   "nearw": 1.4,
-   "ww": 5.3,
-   "lines": 140,
+   "nearw": 2.2,
+   "ww": 4.4,
+   "lines": 134,
    "streets": [
     "המלאכה/יהושע חנקין",
     "משרד הפנים/שדרות מנחם בגין",
@@ -7194,26 +5113,26 @@
   {
    "what": "מסלולי הקווים, התחנות ולוחות הזמנים",
    "src": "קובץ ה-GTFS הרשמי של משרד התחבורה והבטיחות בדרכים (gtfs.mot.gov.il)",
-   "date": "2026-09-02",
+   "date": "2026-09-03",
    "note": "יום חול רגיל; קווי תלמידים ולילה מוחרגים"
   },
   {
    "what": "גבולות אזורי התעשייה — הרשימה הרשמית",
    "src": "שכבת \"תחום אזורי תעשיה תעסוקה\", משרד התחבורה, data.gov.il",
-   "date": "2026-09-02",
+   "date": "2026-09-03",
    "note": "נמשך מחדש בכל בנייה שבועית"
   },
   {
    "what": "מפעלים, שטחים ומחוז",
    "src": "\"רשימת איזורי תעשייה\", משרד הכלכלה והתעשייה, data.gov.il",
-   "date": "2026-09-02",
+   "date": "2026-09-03",
    "note": "29 אזורים מוצמדים"
   },
   {
    "what": "ציון השירות של משרד התחבורה",
    "src": "מדדי שירות בתחבורה ציבורית — משרד התחבורה והבטיחות בדרכים",
    "date": "2025-11",
-   "note": "3684 אזורים סטטיסטיים; להשוואה נלקח רק אזור סטטיסטי שלפחות מחציתו בתוך אזור התעשייה — 53 אזורים"
+   "note": "3684 אזורים סטטיסטיים; להשוואה נלקח רק אזור סטטיסטי שלפחות מחציתו בתוך אזור התעשייה — 52 אזורים"
   },
   {
    "what": "אימות קיום, מבנים וחלק מהגבולות",
@@ -7224,7 +5143,7 @@
   {
    "what": "זמני הליכה אמיתיים",
    "src": "OSRM על רשת OpenStreetMap, פרופיל הליכה מותאם (כבישים פרטיים ורמפות מותרים), 5 קמ״ש",
-   "date": "2026-09-02",
+   "date": "2026-09-03",
    "note": "שומר גאומטרי לכשלי ניתוב"
   },
   {
@@ -7242,73 +5161,27 @@
  ],
  "no_stop_zones": [
   {
-   "name": "אתר לסילוק פסולת דודאים",
-   "city": "—",
-   "area": 2.07,
-   "region": "דרום",
+   "name": "תע\"ש רמת השרון",
+   "city": "הרצליה",
+   "area": 5.53,
+   "region": "מרכז",
    "score": 0,
    "lines": 0,
    "far": null,
-   "buildings": 0,
-   "stops_near": 0
+   "buildings": 29,
+   "stops_near": 105
   },
   {
-   "name": "בראון",
-   "city": "קדומים",
-   "area": 1.4,
-   "region": "ירושלים ויו\"ש",
-   "score": 0,
-   "lines": 0,
-   "far": null,
-   "buildings": 24,
-   "stops_near": 0
-  },
-  {
-   "name": "פארק תעשיות ראם",
-   "city": "בני עי''ש",
-   "area": 1.14,
-   "region": "דרום",
-   "score": 0,
-   "lines": 0,
-   "far": null,
-   "buildings": 90,
-   "stops_near": 0
-  },
-  {
-   "name": "פארק תעשיות צבאים",
-   "city": "—",
-   "area": 0.63,
+   "name": "בתי זיקוק קישון",
+   "city": "חיפה",
+   "area": 2.54,
    "region": "צפון",
    "score": 0,
    "lines": 0,
    "far": null,
-   "buildings": 31,
-   "stops_near": 0
+   "buildings": 2,
+   "stops_near": 23
   },
-  {
-   "name": "עידן",
-   "city": "עידן",
-   "area": 0.09,
-   "region": "דרום",
-   "score": 0,
-   "lines": 0,
-   "far": null,
-   "buildings": 1,
-   "stops_near": 0
-  },
-  {
-   "name": "חצבה",
-   "city": "חצבה",
-   "area": 0.05,
-   "region": "דרום",
-   "score": 0,
-   "lines": 0,
-   "far": null,
-   "buildings": 0,
-   "stops_near": 0
-  }
- ],
- "no_peak_zones": [
   {
    "name": "אתר לסילוק פסולת דודאים",
    "city": "—",
@@ -7327,9 +5200,9 @@
    "region": "ירושלים ויו\"ש",
    "score": 0,
    "lines": 0,
-   "far": 23,
+   "far": null,
    "buildings": 18,
-   "stops_near": 23
+   "stops_near": 15
   },
   {
    "name": "בראון",
@@ -7360,9 +5233,9 @@
    "region": "צפון",
    "score": 0,
    "lines": 0,
-   "far": 57,
+   "far": null,
    "buildings": 0,
-   "stops_near": 5
+   "stops_near": 3
   },
   {
    "name": "פארק תעשיות צבאים",
@@ -7376,15 +5249,158 @@
    "stops_near": 0
   },
   {
+   "name": "עכו מזרח - ותמל",
+   "city": "עכו",
+   "area": 0.53,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 19
+  },
+  {
+   "name": "שחק-שקד",
+   "city": "שקד",
+   "area": 0.48,
+   "region": "ירושלים ויו\"ש",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 31,
+   "stops_near": 4
+  },
+  {
+   "name": "מי עמי",
+   "city": "אום אל פחם",
+   "area": 0.43,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 42,
+   "stops_near": 16
+  },
+  {
+   "name": "אום בטין",
+   "city": "תל שבע",
+   "area": 0.4,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 22,
+   "stops_near": 3
+  },
+  {
+   "name": "תל שבע",
+   "city": "תל שבע",
+   "area": 0.39,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 5
+  },
+  {
+   "name": "כפר עזה",
+   "city": "שדות נגב",
+   "area": 0.36,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 32,
+   "stops_near": 4
+  },
+  {
+   "name": "נווה ימין",
+   "city": "כפר סבא",
+   "area": 0.33,
+   "region": "מרכז",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 4
+  },
+  {
+   "name": "אדמות החולה - מבואות חרמון",
+   "city": "מבואות החרמון",
+   "area": 0.26,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 10,
+   "stops_near": 2
+  },
+  {
    "name": "פארק תעשיות רותם",
    "city": "תמר",
    "area": 0.24,
    "region": "דרום",
    "score": 0,
    "lines": 0,
-   "far": 24,
+   "far": null,
    "buildings": 0,
+   "stops_near": 1
+  },
+  {
+   "name": "אום אל פחם",
+   "city": "אום אל פחם",
+   "area": 0.2,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 23
+  },
+  {
+   "name": "פארק מחזור חירייה",
+   "city": "אזור",
+   "area": 0.19,
+   "region": "מרכז",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 22,
+   "stops_near": 9
+  },
+  {
+   "name": "יגור 2",
+   "city": "זבולון",
+   "area": 0.17,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 32,
    "stops_near": 2
+  },
+  {
+   "name": "מרכז אזורי חבל אילות",
+   "city": "חבל אילות",
+   "area": 0.17,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 7,
+   "stops_near": 3
+  },
+  {
+   "name": "לקיה",
+   "city": "לקיה",
+   "area": 0.17,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 5
   },
   {
    "name": "עידן",
@@ -7396,6 +5412,305 @@
    "far": null,
    "buildings": 1,
    "stops_near": 0
+  },
+  {
+   "name": "אזור התעשייה קרית ארבע",
+   "city": "קרית ארבע",
+   "area": 0.07,
+   "region": "ירושלים ויו\"ש",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 12,
+   "stops_near": 8
+  },
+  {
+   "name": "חצבה",
+   "city": "חצבה",
+   "area": 0.05,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 0
+  }
+ ],
+ "no_peak_zones": [
+  {
+   "name": "תע\"ש רמת השרון",
+   "city": "הרצליה",
+   "area": 5.53,
+   "region": "מרכז",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 29,
+   "stops_near": 105
+  },
+  {
+   "name": "בתי זיקוק קישון",
+   "city": "חיפה",
+   "area": 2.54,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 2,
+   "stops_near": 23
+  },
+  {
+   "name": "אתר לסילוק פסולת דודאים",
+   "city": "—",
+   "area": 2.07,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 0
+  },
+  {
+   "name": "מעלה-ירושלים",
+   "city": "ירושלים",
+   "area": 1.41,
+   "region": "ירושלים ויו\"ש",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 18,
+   "stops_near": 15
+  },
+  {
+   "name": "בראון",
+   "city": "קדומים",
+   "area": 1.4,
+   "region": "ירושלים ויו\"ש",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 24,
+   "stops_near": 0
+  },
+  {
+   "name": "פארק תעשיות ראם",
+   "city": "בני עי''ש",
+   "area": 1.14,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 90,
+   "stops_near": 0
+  },
+  {
+   "name": "חח\"ן",
+   "city": "זכרון יעקב",
+   "area": 0.99,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 3
+  },
+  {
+   "name": "פארק תעשיות צבאים",
+   "city": "—",
+   "area": 0.63,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 31,
+   "stops_near": 0
+  },
+  {
+   "name": "עכו מזרח - ותמל",
+   "city": "עכו",
+   "area": 0.53,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 19
+  },
+  {
+   "name": "שחק-שקד",
+   "city": "שקד",
+   "area": 0.48,
+   "region": "ירושלים ויו\"ש",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 31,
+   "stops_near": 4
+  },
+  {
+   "name": "מי עמי",
+   "city": "אום אל פחם",
+   "area": 0.43,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 42,
+   "stops_near": 16
+  },
+  {
+   "name": "אום בטין",
+   "city": "תל שבע",
+   "area": 0.4,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 22,
+   "stops_near": 3
+  },
+  {
+   "name": "תל שבע",
+   "city": "תל שבע",
+   "area": 0.39,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 5
+  },
+  {
+   "name": "כפר עזה",
+   "city": "שדות נגב",
+   "area": 0.36,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 32,
+   "stops_near": 4
+  },
+  {
+   "name": "נווה ימין",
+   "city": "כפר סבא",
+   "area": 0.33,
+   "region": "מרכז",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 4
+  },
+  {
+   "name": "אדמות החולה - מבואות חרמון",
+   "city": "מבואות החרמון",
+   "area": 0.26,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 10,
+   "stops_near": 2
+  },
+  {
+   "name": "פארק תעשיות רותם",
+   "city": "תמר",
+   "area": 0.24,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 1
+  },
+  {
+   "name": "אום אל פחם",
+   "city": "אום אל פחם",
+   "area": 0.2,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 23
+  },
+  {
+   "name": "פארק מחזור חירייה",
+   "city": "אזור",
+   "area": 0.19,
+   "region": "מרכז",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 22,
+   "stops_near": 9
+  },
+  {
+   "name": "יגור 2",
+   "city": "זבולון",
+   "area": 0.17,
+   "region": "צפון",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 32,
+   "stops_near": 2
+  },
+  {
+   "name": "מרכז אזורי חבל אילות",
+   "city": "חבל אילות",
+   "area": 0.17,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 7,
+   "stops_near": 3
+  },
+  {
+   "name": "לקיה",
+   "city": "לקיה",
+   "area": 0.17,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 0,
+   "stops_near": 5
+  },
+  {
+   "name": "נצר סרני דרום",
+   "city": "באר יעקב",
+   "area": 0.15,
+   "region": "מרכז",
+   "score": 9,
+   "lines": 3,
+   "far": 23,
+   "buildings": 33,
+   "stops_near": 4
+  },
+  {
+   "name": "עידן",
+   "city": "עידן",
+   "area": 0.09,
+   "region": "דרום",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 1,
+   "stops_near": 0
+  },
+  {
+   "name": "אזור התעשייה קרית ארבע",
+   "city": "קרית ארבע",
+   "area": 0.07,
+   "region": "ירושלים ויו\"ש",
+   "score": 0,
+   "lines": 0,
+   "far": null,
+   "buildings": 12,
+   "stops_near": 8
   },
   {
    "name": "חצבה",
@@ -7548,217 +5863,216 @@
  "decomposition": {
   "מרכז (עד 45 ק\"מ)": {
    "n": 147,
-   "score_mean": 71.8,
+   "score_mean": 65.4,
    "comp": {
-    "bl": 63.3,
-    "far": 67.1,
-    "uf": 86.6,
-    "near": 90.1
+    "bl": 56.6,
+    "far": 59.6,
+    "uf": 79.7,
+    "near": 88.3
    },
    "weighted": {
-    "bl": 25.3,
-    "far": 20.1,
-    "uf": 17.3,
-    "near": 9.0
+    "bl": 22.6,
+    "far": 17.9,
+    "uf": 15.9,
+    "near": 8.8
    },
    "area_median": 0.3,
    "pct_small": 50,
-   "bl_headway_median": 20.0,
-   "far_median": 10.2,
-   "pct_no_bl": 1
+   "bl_headway_median": 22.5,
+   "far_median": 9.7,
+   "pct_no_bl": 5
   },
   "פריפריה": {
-   "n": 267,
-   "score_mean": 63.1,
+   "n": 268,
+   "score_mean": 57.1,
    "comp": {
-    "bl": 50.9,
-    "far": 65.2,
-    "uf": 72.3,
-    "near": 87.1
+    "bl": 45.1,
+    "far": 58.7,
+    "uf": 64.9,
+    "near": 83.1
    },
    "weighted": {
-    "bl": 20.4,
-    "far": 19.6,
-    "uf": 14.5,
-    "near": 8.7
+    "bl": 18.0,
+    "far": 17.6,
+    "uf": 13.0,
+    "near": 8.3
    },
    "area_median": 0.2,
    "pct_small": 60,
    "bl_headway_median": 30.0,
-   "far_median": 10.9,
-   "pct_no_bl": 4
+   "far_median": 10.2,
+   "pct_no_bl": 9
   },
   "מחוז: צפון": {
    "n": 173,
-   "score_mean": 68.5,
+   "score_mean": 62.2,
    "comp": {
-    "bl": 57.3,
-    "far": 69.9,
-    "uf": 78.0,
-    "near": 89.8
+    "bl": 51.0,
+    "far": 63.2,
+    "uf": 70.0,
+    "near": 86.4
    },
    "weighted": {
-    "bl": 22.9,
-    "far": 21.0,
-    "uf": 15.6,
-    "near": 9.0
+    "bl": 20.4,
+    "far": 19.0,
+    "uf": 14.0,
+    "near": 8.6
    },
    "area_median": 0.2,
    "pct_small": 62,
-   "bl_headway_median": 25.7,
+   "bl_headway_median": 30.0,
    "far_median": 9.9,
-   "pct_no_bl": 1
+   "pct_no_bl": 5
   },
   "מחוז: מרכז": {
    "n": 108,
-   "score_mean": 74.9,
+   "score_mean": 68.6,
    "comp": {
-    "bl": 66.9,
-    "far": 69.4,
-    "uf": 90.9,
-    "near": 91.1
+    "bl": 58.9,
+    "far": 65.0,
+    "uf": 82.3,
+    "near": 89.1
    },
    "weighted": {
-    "bl": 26.8,
-    "far": 20.8,
-    "uf": 18.2,
-    "near": 9.1
+    "bl": 23.6,
+    "far": 19.5,
+    "uf": 16.5,
+    "near": 8.9
    },
    "area_median": 0.3,
    "pct_small": 52,
-   "bl_headway_median": 19.0,
-   "far_median": 9.7,
-   "pct_no_bl": 0
+   "bl_headway_median": 22.5,
+   "far_median": 9.2,
+   "pct_no_bl": 5
   },
   "מחוז: ירושלים ויו\"ש": {
    "n": 34,
-   "score_mean": 55.8,
+   "score_mean": 49.3,
    "comp": {
-    "bl": 40.9,
-    "far": 60.9,
-    "uf": 64.1,
-    "near": 83.5
+    "bl": 37.2,
+    "far": 49.4,
+    "uf": 57.4,
+    "near": 80.0
    },
    "weighted": {
-    "bl": 16.4,
-    "far": 18.3,
-    "uf": 12.8,
-    "near": 8.3
+    "bl": 14.9,
+    "far": 14.8,
+    "uf": 11.5,
+    "near": 8.0
    },
    "area_median": 0.2,
    "pct_small": 62,
-   "bl_headway_median": 58.3,
-   "far_median": 11.2,
-   "pct_no_bl": 6
+   "bl_headway_median": 54.2,
+   "far_median": 10.7,
+   "pct_no_bl": 12
   },
   "מחוז: דרום": {
-   "n": 99,
-   "score_mean": 56.2,
+   "n": 100,
+   "score_mean": 50.9,
    "comp": {
-    "bl": 44.1,
-    "far": 56.8,
-    "uf": 66.2,
-    "near": 83.7
+    "bl": 39.6,
+    "far": 48.7,
+    "uf": 61.5,
+    "near": 79.5
    },
    "weighted": {
-    "bl": 17.6,
-    "far": 17.0,
-    "uf": 13.2,
-    "near": 8.4
+    "bl": 15.8,
+    "far": 14.6,
+    "uf": 12.3,
+    "near": 8.0
    },
    "area_median": 0.3,
-   "pct_small": 48,
+   "pct_small": 50,
    "bl_headway_median": 30.0,
-   "far_median": 12.1,
-   "pct_no_bl": 9
+   "far_median": 11.8,
+   "pct_no_bl": 14
   },
   "ללא תיוג מגזרי": {
    "n": 353,
-   "score_mean": 65.5,
+   "score_mean": 59.2,
    "comp": {
-    "bl": 55.1,
-    "far": 64.7,
-    "uf": 76.4,
-    "near": 88.0
+    "bl": 48.6,
+    "far": 57.7,
+    "uf": 69.0,
+    "near": 84.9
    },
    "weighted": {
-    "bl": 22.0,
-    "far": 19.4,
-    "uf": 15.3,
-    "near": 8.8
+    "bl": 19.4,
+    "far": 17.3,
+    "uf": 13.8,
+    "near": 8.5
    },
    "area_median": 0.3,
    "pct_small": 54,
-   "bl_headway_median": 22.5,
-   "far_median": 11.0,
-   "pct_no_bl": 3
+   "bl_headway_median": 30.0,
+   "far_median": 10.2,
+   "pct_no_bl": 7
   },
   "בדואים": {
-   "n": 16,
-   "score_mean": 62.2,
+   "n": 17,
+   "score_mean": 53.6,
    "comp": {
-    "bl": 50.3,
-    "far": 64.1,
-    "uf": 71.9,
-    "near": 84.7
+    "bl": 44.1,
+    "far": 55.9,
+    "uf": 59.4,
+    "near": 72.4
    },
    "weighted": {
-    "bl": 20.1,
-    "far": 19.2,
-    "uf": 14.4,
-    "near": 8.5
+    "bl": 17.6,
+    "far": 16.8,
+    "uf": 11.9,
+    "near": 7.2
    },
    "area_median": 0.2,
-   "pct_small": 75,
+   "pct_small": 71,
    "bl_headway_median": 25.7,
-   "far_median": 11.2,
-   "pct_no_bl": 6
+   "far_median": 9.2,
+   "pct_no_bl": 24
   },
   "מיעוטים כללי": {
    "n": 31,
-   "score_mean": 73.2,
+   "score_mean": 70.5,
    "comp": {
-    "bl": 61.1,
-    "far": 73.5,
-    "uf": 87.9,
-    "near": 90.5
+    "bl": 58.7,
+    "far": 70.3,
+    "uf": 84.4,
+    "near": 89.2
    },
    "weighted": {
-    "bl": 24.4,
-    "far": 22.1,
-    "uf": 17.6,
-    "near": 9.1
+    "bl": 23.5,
+    "far": 21.1,
+    "uf": 16.9,
+    "near": 8.9
    },
    "area_median": 0.1,
    "pct_small": 74,
-   "bl_headway_median": 25.7,
-   "far_median": 9.6,
-   "pct_no_bl": 0
+   "bl_headway_median": 27.9,
+   "far_median": 9.3,
+   "pct_no_bl": 3
   }
  },
  "dist": {
   "far": {
-   "עד 5 דק׳": 29,
-   "5–10 דק׳": 155,
-   "10–15 דק׳": 131,
-   "15–20 דק׳": 45,
-   "מעל 20 דק׳": 48,
-   "אין תחנה בטווח": 6
+   "עד 5 דק׳": 35,
+   "5–10 דק׳": 156,
+   "10–15 דק׳": 119,
+   "מעל 15 דק׳": 80,
+   "אין תחנה בטווח": 25
   },
   "bl": {
-   "עד 10 דק׳": 37,
-   "10–15": 60,
-   "15–21": 77,
-   "21–30": 84,
-   "30–60": 68,
-   "60–90": 46,
-   "מעל 90": 29,
-   "אין קו בשיא": 13
+   "עד 10 דק׳": 26,
+   "10–15": 57,
+   "15–21": 61,
+   "21–30": 87,
+   "30–60": 70,
+   "60–90": 49,
+   "מעל 90": 34,
+   "אין קו בשיא": 31
   },
   "concentration": [
    {
     "label": "עשירון 1",
-    "pct": 53
+    "pct": 55
    },
    {
     "label": "עשירון 2",
@@ -7766,7 +6080,7 @@
    },
    {
     "label": "עשירון 3",
-    "pct": 10
+    "pct": 11
    },
    {
     "label": "עשירון 4",
@@ -7782,7 +6096,7 @@
    },
    {
     "label": "עשירון 7",
-    "pct": 2
+    "pct": 1
    },
    {
     "label": "עשירון 8",
@@ -7790,7 +6104,7 @@
    },
    {
     "label": "עשירון 9",
-    "pct": 1
+    "pct": 0
    },
    {
     "label": "עשירון 10",
@@ -7808,114 +6122,13 @@
   "rule": "אזור סטטיסטי שלפחות 50% משטחו בתוך אזור התעשייה",
   "ours_high": [
    {
-    "name": "מי עמי",
-    "city": "אום אל פחם",
-    "score": 70,
-    "mot": 0,
-    "motw": 0,
-    "bl_headway": 16,
-    "far": 19,
-    "area": 0.43,
-    "sparts": {
-     "uf": 90,
-     "bl": 70,
-     "far": 55,
-     "near": 75
-    },
-    "f": "p129.json",
-    "gap": 70,
-    "sub": {
-     "זמינות": 0.0,
-     "נגישות": 0.0,
-     "תחרותיות": 0.0,
-     "אמינות": 0.0
-    },
-    "strong": [
-     "uf"
-    ],
-    "weak_mot": [
-     "זמינות",
-     "נגישות",
-     "תחרותיות",
-     "אמינות"
-    ]
-   },
-   {
-    "name": "תע\"ש רמת השרון",
-    "city": "הרצליה",
-    "score": 61,
-    "mot": 8,
-    "motw": 40,
-    "bl_headway": 12,
-    "far": 63,
-    "area": 5.53,
-    "sparts": {
-     "uf": 100,
-     "bl": 80,
-     "far": 0,
-     "near": 90
-    },
-    "f": "p1.json",
-    "gap": 53,
-    "sub": {
-     "זמינות": 1.2,
-     "נגישות": 13.8,
-     "תחרותיות": 16.6,
-     "אמינות": 0.0
-    },
-    "strong": [
-     "bl",
-     "uf",
-     "near"
-    ],
-    "weak_mot": [
-     "זמינות",
-     "נגישות",
-     "תחרותיות",
-     "אמינות"
-    ]
-   },
-   {
-    "name": "אזור תעשייה צור שלום",
-    "city": "קרית ביאליק",
-    "score": 92,
-    "mot": 40,
-    "motw": 38,
-    "bl_headway": 5,
-    "far": 5,
-    "area": 0.67,
-    "sparts": {
-     "uf": 100,
-     "bl": 90,
-     "far": 90,
-     "near": 90
-    },
-    "f": "p82.json",
-    "gap": 52,
-    "sub": {
-     "זמינות": 25.0,
-     "נגישות": 64.0,
-     "תחרותיות": 43.0,
-     "אמינות": 42.2
-    },
-    "strong": [
-     "bl",
-     "uf",
-     "far",
-     "near"
-    ],
-    "weak_mot": [
-     "זמינות"
-    ]
-   },
-   {
     "name": "אזור תעשייה רמת אליהו",
     "city": "ראשון לציון",
-    "score": 80,
+    "score": 81,
     "mot": 30,
-    "motw": 46,
-    "bl_headway": 11,
-    "far": 13,
+    "motw": 42,
+    "bl_headway": 12,
+    "far": 14,
     "area": 0.31,
     "sparts": {
      "uf": 100,
@@ -7923,7 +6136,7 @@
      "far": 65,
      "near": 90
     },
-    "f": "p176.json",
+    "f": "p175.json",
     "gap": 50,
     "sub": {
      "זמינות": 2.0,
@@ -7942,92 +6155,27 @@
     ]
    },
    {
-    "name": "כפר סבא - אבו סנינא",
-    "city": "כפר סבא",
-    "score": 80,
-    "mot": 31,
-    "motw": 39,
-    "bl_headway": 18,
-    "far": 11,
-    "area": 0.43,
-    "sparts": {
-     "uf": 100,
-     "bl": 70,
-     "far": 75,
-     "near": 90
-    },
-    "f": "p132.json",
-    "gap": 49,
-    "sub": {
-     "זמינות": 2.0,
-     "נגישות": 55.0,
-     "תחרותיות": 64.5,
-     "אמינות": 0.0
-    },
-    "strong": [
-     "uf",
-     "near"
-    ],
-    "weak_mot": [
-     "זמינות",
-     "אמינות"
-    ]
-   },
-   {
-    "name": "בתי זיקוק קישון",
-    "city": "חיפה",
-    "score": 64,
-    "mot": 15,
-    "motw": 22,
-    "bl_headway": 6,
-    "far": 46,
-    "area": 2.54,
-    "sparts": {
-     "uf": 100,
-     "bl": 90,
-     "far": 0,
-     "near": 75
-    },
-    "f": "p11.json",
-    "gap": 49,
-    "sub": {
-     "זמינות": 15.0,
-     "נגישות": 0.0,
-     "תחרותיות": 0.0,
-     "אמינות": 46.8
-    },
-    "strong": [
-     "bl",
-     "uf"
-    ],
-    "weak_mot": [
-     "זמינות",
-     "נגישות",
-     "תחרותיות"
-    ]
-   },
-   {
-    "name": "עקרון 2000",
-    "city": "קרית עקרון",
-    "score": 89,
-    "mot": 41,
-    "motw": 43,
-    "bl_headway": 15,
-    "far": 7,
-    "area": 0.51,
+    "name": "אזור תעשייה צור שלום",
+    "city": "קרית ביאליק",
+    "score": 88,
+    "mot": 40,
+    "motw": 38,
+    "bl_headway": 14,
+    "far": 5,
+    "area": 0.67,
     "sparts": {
      "uf": 100,
      "bl": 80,
      "far": 90,
-     "near": 100
+     "near": 90
     },
-    "f": "p108.json",
+    "f": "p80.json",
     "gap": 48,
     "sub": {
      "זמינות": 25.0,
-     "נגישות": 51.0,
-     "תחרותיות": 55.0,
-     "אמינות": 49.5
+     "נגישות": 64.0,
+     "תחרותיות": 43.0,
+     "אמינות": 42.2
     },
     "strong": [
      "bl",
@@ -8046,7 +6194,7 @@
     "mot": 33,
     "motw": 39,
     "bl_headway": 16,
-    "far": 10,
+    "far": 9,
     "area": 0.17,
     "sparts": {
      "uf": 100,
@@ -8071,16 +6219,272 @@
      "זמינות",
      "אמינות"
     ]
+   },
+   {
+    "name": "כפר סבא - אבו סנינא",
+    "city": "כפר סבא",
+    "score": 78,
+    "mot": 31,
+    "motw": 39,
+    "bl_headway": 18,
+    "far": 11,
+    "area": 0.43,
+    "sparts": {
+     "uf": 90,
+     "bl": 70,
+     "far": 75,
+     "near": 90
+    },
+    "f": "p130.json",
+    "gap": 47,
+    "sub": {
+     "זמינות": 2.0,
+     "נגישות": 55.0,
+     "תחרותיות": 64.5,
+     "אמינות": 0.0
+    },
+    "strong": [
+     "uf",
+     "near"
+    ],
+    "weak_mot": [
+     "זמינות",
+     "אמינות"
+    ]
+   },
+   {
+    "name": "בני ברק - אזור תעסוקה",
+    "city": "בני ברק",
+    "score": 86,
+    "mot": 42,
+    "motw": 42,
+    "bl_headway": 6,
+    "far": 8,
+    "area": 0.79,
+    "sparts": {
+     "uf": 100,
+     "bl": 80,
+     "far": 80,
+     "near": 100
+    },
+    "f": "p66.json",
+    "gap": 44,
+    "sub": {
+     "זמינות": 31.0,
+     "נגישות": 49.0,
+     "תחרותיות": 44.5,
+     "אמינות": 54.2
+    },
+    "strong": [
+     "bl",
+     "uf",
+     "far",
+     "near"
+    ],
+    "weak_mot": [
+     "זמינות"
+    ]
+   },
+   {
+    "name": "עקרון 2000",
+    "city": "קרית עקרון",
+    "score": 85,
+    "mot": 41,
+    "motw": 43,
+    "bl_headway": 18,
+    "far": 7,
+    "area": 0.51,
+    "sparts": {
+     "uf": 100,
+     "bl": 70,
+     "far": 90,
+     "near": 100
+    },
+    "f": "p106.json",
+    "gap": 44,
+    "sub": {
+     "זמינות": 25.0,
+     "נגישות": 51.0,
+     "תחרותיות": 55.0,
+     "אמינות": 49.5
+    },
+    "strong": [
+     "uf",
+     "far",
+     "near"
+    ],
+    "weak_mot": [
+     "זמינות"
+    ]
+   },
+   {
+    "name": "אזור התעשייה קרית מלאכי",
+    "city": "קרית מלאכי",
+    "score": 80,
+    "mot": 36,
+    "motw": 36,
+    "bl_headway": 22,
+    "far": 7,
+    "area": 0.46,
+    "sparts": {
+     "uf": 100,
+     "bl": 65,
+     "far": 80,
+     "near": 100
+    },
+    "f": "p120.json",
+    "gap": 44,
+    "sub": {
+     "זמינות": 14.0,
+     "נגישות": 36.5,
+     "תחרותיות": 53.0,
+     "אמינות": 63.8
+    },
+    "strong": [
+     "uf",
+     "far",
+     "near"
+    ],
+    "weak_mot": [
+     "זמינות",
+     "נגישות"
+    ]
+   },
+   {
+    "name": "ספיר",
+    "city": "אור יהודה",
+    "score": 88,
+    "mot": 46,
+    "motw": 43,
+    "bl_headway": 15,
+    "far": 7,
+    "area": 0.12,
+    "sparts": {
+     "uf": 100,
+     "bl": 80,
+     "far": 90,
+     "near": 90
+    },
+    "f": "p304.json",
+    "gap": 42,
+    "sub": {
+     "זמינות": 24.0,
+     "נגישות": 71.3,
+     "תחרותיות": 75.0,
+     "אמינות": 36.8
+    },
+    "strong": [
+     "bl",
+     "uf",
+     "far",
+     "near"
+    ],
+    "weak_mot": [
+     "זמינות",
+     "אמינות"
+    ]
    }
   ],
   "mot_high": [
+   {
+    "name": "בתי זיקוק קישון",
+    "city": "חיפה",
+    "score": 0,
+    "mot": 15,
+    "motw": 22,
+    "bl_headway": null,
+    "far": null,
+    "area": 2.54,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    },
+    "f": "p11.json",
+    "gap": -15,
+    "sub": {
+     "זמינות": 15.0,
+     "נגישות": 0.0,
+     "תחרותיות": 0.0,
+     "אמינות": 46.8
+    },
+    "strong": [],
+    "weak_mot": [
+     "זמינות",
+     "נגישות",
+     "תחרותיות"
+    ]
+   },
+   {
+    "name": "תע\"ש רמת השרון",
+    "city": "הרצליה",
+    "score": 0,
+    "mot": 8,
+    "motw": 40,
+    "bl_headway": null,
+    "far": null,
+    "area": 5.53,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    },
+    "f": "p1.json",
+    "gap": -8,
+    "sub": {
+     "זמינות": 1.2,
+     "נגישות": 13.8,
+     "תחרותיות": 16.6,
+     "אמינות": 0.0
+    },
+    "strong": [],
+    "weak_mot": [
+     "זמינות",
+     "נגישות",
+     "תחרותיות",
+     "אמינות"
+    ]
+   },
+   {
+    "name": "מי עמי",
+    "city": "אום אל פחם",
+    "score": 0,
+    "mot": 0,
+    "motw": 0,
+    "bl_headway": null,
+    "far": null,
+    "area": 0.43,
+    "sparts": {
+     "uf": 0,
+     "bl": 0,
+     "far": 0,
+     "near": 0
+    },
+    "f": "p127.json",
+    "gap": 0,
+    "sub": {
+     "זמינות": 0.0,
+     "נגישות": 0.0,
+     "תחרותיות": 0.0,
+     "אמינות": 0.0
+    },
+    "strong": [],
+    "weak_mot": [
+     "זמינות",
+     "נגישות",
+     "תחרותיות",
+     "אמינות"
+    ]
+   },
    {
     "name": "אבשלום",
     "city": "אשכול",
     "score": 28,
     "mot": 28,
     "motw": 28,
-    "bl_headway": 180,
+    "bl_headway": null,
     "far": 13,
     "area": 0.34,
     "sparts": {
@@ -8089,7 +6493,7 @@
      "far": 65,
      "near": 80
     },
-    "f": "p166.json",
+    "f": "p165.json",
     "gap": 0,
     "sub": {
      "זמינות": 7.0,
@@ -8107,53 +6511,87 @@
     ]
    },
    {
-    "name": "רמת נגב",
-    "city": "רמת הנגב",
-    "score": 6,
-    "mot": 4,
-    "motw": 26,
-    "bl_headway": null,
-    "far": 20,
-    "area": 1.32,
+    "name": "מתחם מ-7 - אשקלון",
+    "city": "אשקלון",
+    "score": 26,
+    "mot": 21,
+    "motw": 21,
+    "bl_headway": 15,
+    "far": 31,
+    "area": 1.19,
     "sparts": {
-     "uf": 0,
+     "uf": 90,
      "bl": 0,
      "far": 0,
-     "near": 55
+     "near": 80
     },
-    "f": "p32.json",
-    "gap": 2,
+    "f": "p35.json",
+    "gap": 5,
     "sub": {
      "זמינות": 0.0,
-     "נגישות": 1.8,
-     "תחרותיות": 13.8,
+     "נגישות": 52.0,
+     "תחרותיות": 30.5,
      "אמינות": 0.0
     },
-    "strong": [],
+    "strong": [
+     "uf",
+     "near"
+    ],
     "weak_mot": [
      "זמינות",
-     "נגישות",
      "תחרותיות",
      "אמינות"
     ]
    },
    {
+    "name": "אזור התעשייה סגולה",
+    "city": "פתח תקווה",
+    "score": 61,
+    "mot": 50,
+    "motw": 51,
+    "bl_headway": 13,
+    "far": 16,
+    "area": 1.3,
+    "sparts": {
+     "uf": 100,
+     "bl": 80,
+     "far": 0,
+     "near": 90
+    },
+    "f": "p32.json",
+    "gap": 11,
+    "sub": {
+     "זמינות": 18.0,
+     "נגישות": 76.2,
+     "תחרותיות": 93.0,
+     "אמינות": 45.7
+    },
+    "strong": [
+     "bl",
+     "uf",
+     "near"
+    ],
+    "weak_mot": [
+     "זמינות"
+    ]
+   },
+   {
     "name": "חולון",
     "city": "חולון",
-    "score": 66,
+    "score": 65,
     "mot": 53,
     "motw": 52,
     "bl_headway": 9,
-    "far": 32,
+    "far": 27,
     "area": 3.45,
     "sparts": {
      "uf": 100,
      "bl": 90,
      "far": 0,
-     "near": 100
+     "near": 90
     },
     "f": "p5.json",
-    "gap": 13,
+    "gap": 12,
     "sub": {
      "זמינות": 34.4,
      "נגישות": 68.5,
@@ -8170,41 +6608,9 @@
     ]
    },
    {
-    "name": "מודיעים",
-    "city": "שוהם",
-    "score": 55,
-    "mot": 39,
-    "motw": 39,
-    "bl_headway": 30,
-    "far": 21,
-    "area": 2.97,
-    "sparts": {
-     "uf": 100,
-     "bl": 65,
-     "far": 0,
-     "near": 90
-    },
-    "f": "p9.json",
-    "gap": 16,
-    "sub": {
-     "זמינות": 9.0,
-     "נגישות": 38.2,
-     "תחרותיות": 55.0,
-     "אמינות": 82.7
-    },
-    "strong": [
-     "uf",
-     "near"
-    ],
-    "weak_mot": [
-     "זמינות",
-     "נגישות"
-    ]
-   },
-   {
     "name": "בת ים",
     "city": "בת ים",
-    "score": 92,
+    "score": 89,
     "mot": 76,
     "motw": 76,
     "bl_headway": 7,
@@ -8212,12 +6618,12 @@
     "area": 0.8,
     "sparts": {
      "uf": 100,
-     "bl": 90,
+     "bl": 80,
      "far": 90,
-     "near": 90
+     "near": 100
     },
-    "f": "p66.json",
-    "gap": 16,
+    "f": "p64.json",
+    "gap": 14,
     "sub": {
      "זמינות": 71.0,
      "נגישות": 73.4,
@@ -8231,119 +6637,25 @@
      "near"
     ],
     "weak_mot": []
-   },
-   {
-    "name": "אזור התעשייה רמת סיב",
-    "city": "פתח תקווה",
-    "score": 89,
-    "mot": 72,
-    "motw": 64,
-    "bl_headway": 7,
-    "far": 7,
-    "area": 0.75,
-    "sparts": {
-     "uf": 100,
-     "bl": 90,
-     "far": 80,
-     "near": 90
-    },
-    "f": "p71.json",
-    "gap": 17,
-    "sub": {
-     "זמינות": 63.0,
-     "נגישות": 94.5,
-     "תחרותיות": 68.5,
-     "אמינות": 72.4
-    },
-    "strong": [
-     "bl",
-     "uf",
-     "far",
-     "near"
-    ],
-    "weak_mot": []
-   },
-   {
-    "name": "קרית המלאכה",
-    "city": "תל אביב יפו",
-    "score": 93,
-    "mot": 74,
-    "motw": 76,
-    "bl_headway": 6,
-    "far": 2,
-    "area": 0.06,
-    "sparts": {
-     "uf": 100,
-     "bl": 90,
-     "far": 90,
-     "near": 100
-    },
-    "f": "p386.json",
-    "gap": 19,
-    "sub": {
-     "זמינות": 69.0,
-     "נגישות": 100.0,
-     "תחרותיות": 83.5,
-     "אמינות": 46.6
-    },
-    "strong": [
-     "bl",
-     "uf",
-     "far",
-     "near"
-    ],
-    "weak_mot": []
-   },
-   {
-    "name": "באר שבע צפון",
-    "city": "באר שבע",
-    "score": 65,
-    "mot": 44,
-    "motw": 42,
-    "bl_headway": 9,
-    "far": 39,
-    "area": 4.4,
-    "sparts": {
-     "uf": 100,
-     "bl": 90,
-     "far": 0,
-     "near": 90
-    },
-    "f": "p3.json",
-    "gap": 20,
-    "sub": {
-     "זמינות": 22.9,
-     "נגישות": 82.2,
-     "תחרותיות": 45.6,
-     "אמינות": 48.9
-    },
-    "strong": [
-     "bl",
-     "uf",
-     "near"
-    ],
-    "weak_mot": [
-     "זמינות"
-    ]
    }
   ],
   "named": [
    {
     "name": "גב ים - קרקעות תעשיה \" ג \" עמ",
     "city": "חיפה",
-    "score": 92,
+    "score": 88,
     "mot": null,
     "motw": 36,
-    "bl_headway": 7,
-    "far": 7,
+    "bl_headway": 15,
+    "far": 6,
     "area": 0.35,
     "sparts": {
      "uf": 100,
-     "bl": 90,
+     "bl": 80,
      "far": 90,
      "near": 90
     },
-    "f": "p163.json",
+    "f": "p162.json",
     "gap": null,
     "sub": {},
     "strong": [],
@@ -8353,19 +6665,19 @@
    {
     "name": "חיפה - א\"ת על צומת הקריות",
     "city": "חיפה",
-    "score": 92,
+    "score": 84,
     "mot": null,
     "motw": 39,
     "bl_headway": 1,
-    "far": 12,
+    "far": 10,
     "area": 0.45,
     "sparts": {
      "uf": 100,
-     "bl": 100,
+     "bl": 80,
      "far": 75,
      "near": 90
     },
-    "f": "p124.json",
+    "f": "p122.json",
     "gap": null,
     "sub": {},
     "strong": [],
@@ -8375,20 +6687,20 @@
    {
     "name": "אזור תעשייה צור שלום",
     "city": "קרית ביאליק",
-    "score": 92,
+    "score": 88,
     "mot": 40,
     "motw": 38,
-    "bl_headway": 5,
+    "bl_headway": 14,
     "far": 5,
     "area": 0.67,
     "sparts": {
      "uf": 100,
-     "bl": 90,
+     "bl": 80,
      "far": 90,
      "near": 90
     },
-    "f": "p82.json",
-    "gap": 52,
+    "f": "p80.json",
+    "gap": 48,
     "sub": {
      "זמינות": 25.0,
      "נגישות": 64.0,
@@ -8407,48 +6719,48 @@
     "direct": true
    }
   ],
-  "n": 53,
-  "n_wide_only": 303,
-  "corr": 0.7
+  "n": 52,
+  "n_wide_only": 305,
+  "corr": 0.79
  },
  "mot_chapter": {
   "groups": {
    "מרכז מול פריפריה": {
     "מרכז": {
      "n": 147,
-     "score_mean": 71.8,
+     "score_mean": 65.4,
      "direct_n": 35,
      "direct_mean": 46.6,
      "wide_n": 127,
-     "wide_mean": 38.6,
+     "wide_mean": 38.5,
      "wide_median": 38.8,
      "wide_lt30": 24,
      "wide_ge60": 6,
-     "sub_av": 17.4,
+     "sub_av": 17.3,
      "sub_ac": 51.1,
-     "sub_co": 51.7,
+     "sub_co": 51.6,
      "sub_re": 52.3
     },
     "פריפריה": {
-     "n": 267,
-     "score_mean": 63.1,
-     "direct_n": 18,
-     "direct_mean": 34.3,
-     "wide_n": 229,
-     "wide_mean": 32.5,
-     "wide_median": 34.3,
+     "n": 268,
+     "score_mean": 57.1,
+     "direct_n": 17,
+     "direct_mean": 36.1,
+     "wide_n": 230,
+     "wide_mean": 32.6,
+     "wide_median": 34.5,
      "wide_lt30": 37,
      "wide_ge60": 0,
      "sub_av": 11.3,
-     "sub_ac": 39.3,
+     "sub_ac": 39.5,
      "sub_co": 42.7,
-     "sub_re": 55.5
+     "sub_re": 55.6
     }
    },
    "צפון, מרכז, ירושלים ויו\"ש, דרום": {
     "צפון": {
      "n": 173,
-     "score_mean": 68.5,
+     "score_mean": 62.2,
      "direct_n": 11,
      "direct_mean": 37.4,
      "wide_n": 155,
@@ -8457,28 +6769,28 @@
      "wide_lt30": 31,
      "wide_ge60": 0,
      "sub_av": 10.8,
-     "sub_ac": 44.0,
+     "sub_ac": 44.1,
      "sub_co": 45.1,
      "sub_re": 57.3
     },
     "מרכז": {
      "n": 108,
-     "score_mean": 74.9,
+     "score_mean": 68.6,
      "direct_n": 31,
      "direct_mean": 48.2,
      "wide_n": 100,
-     "wide_mean": 40.2,
+     "wide_mean": 40.1,
      "wide_median": 40.1,
      "wide_lt30": 21,
      "wide_ge60": 7,
-     "sub_av": 18.6,
-     "sub_ac": 55.6,
-     "sub_co": 55.3,
+     "sub_av": 18.4,
+     "sub_ac": 55.4,
+     "sub_co": 55.1,
      "sub_re": 49.5
     },
     "ירושלים ויו\"ש": {
      "n": 34,
-     "score_mean": 55.8,
+     "score_mean": 49.3,
      "direct_n": 1,
      "direct_mean": 56.4,
      "wide_n": 19,
@@ -8492,25 +6804,25 @@
      "sub_re": 54.2
     },
     "דרום": {
-     "n": 99,
-     "score_mean": 56.2,
-     "direct_n": 10,
-     "direct_mean": 28.6,
-     "wide_n": 82,
-     "wide_mean": 28.7,
-     "wide_median": 29.7,
-     "wide_lt30": 51,
+     "n": 100,
+     "score_mean": 50.9,
+     "direct_n": 9,
+     "direct_mean": 31.3,
+     "wide_n": 83,
+     "wide_mean": 28.9,
+     "wide_median": 30.3,
+     "wide_lt30": 49,
      "wide_ge60": 0,
-     "sub_av": 10.6,
-     "sub_ac": 30.6,
-     "sub_co": 34.9,
-     "sub_re": 54.7
+     "sub_av": 10.8,
+     "sub_ac": 31.3,
+     "sub_co": 34.7,
+     "sub_re": 55.1
     }
    },
    "הפריפריה בצפון מול הפריפריה בדרום": {
     "צפון": {
      "n": 163,
-     "score_mean": 68.2,
+     "score_mean": 61.7,
      "direct_n": 11,
      "direct_mean": 37.4,
      "wide_n": 145,
@@ -8521,45 +6833,45 @@
      "sub_av": 10.8,
      "sub_ac": 43.9,
      "sub_co": 45.3,
-     "sub_re": 56.5
+     "sub_re": 56.6
     },
     "דרום": {
-     "n": 87,
-     "score_mean": 54.7,
-     "direct_n": 6,
-     "direct_mean": 24.9,
-     "wide_n": 75,
-     "wide_mean": 28.5,
-     "wide_median": 29.5,
-     "wide_lt30": 52,
+     "n": 88,
+     "score_mean": 50.0,
+     "direct_n": 5,
+     "direct_mean": 29.2,
+     "wide_n": 76,
+     "wide_mean": 28.8,
+     "wide_median": 30.1,
+     "wide_lt30": 50,
      "wide_ge60": 0,
-     "sub_av": 10.4,
-     "sub_ac": 30.3,
-     "sub_co": 35.3,
-     "sub_re": 54.1
+     "sub_av": 10.5,
+     "sub_ac": 31.0,
+     "sub_co": 35.2,
+     "sub_re": 54.5
     }
    },
    "החברה היהודית מול החברה הערבית והבדואית": {
     "מגזר מיעוטים (תיוג רשמי)": {
-     "n": 61,
-     "score_mean": 69.9,
+     "n": 62,
+     "score_mean": 64.9,
      "direct_n": 2,
      "direct_mean": 49.5,
-     "wide_n": 58,
-     "wide_mean": 36.8,
-     "wide_median": 39.3,
+     "wide_n": 59,
+     "wide_mean": 37.0,
+     "wide_median": 39.4,
      "wide_lt30": 19,
      "wide_ge60": 0,
-     "sub_av": 9.2,
-     "sub_ac": 45.3,
-     "sub_co": 54.8,
+     "sub_av": 9.1,
+     "sub_ac": 46.1,
+     "sub_co": 55.0,
      "sub_re": 64.7
     },
     "כל שאר האזורים": {
      "n": 353,
-     "score_mean": 65.5,
-     "direct_n": 51,
-     "direct_mean": 42.2,
+     "score_mean": 59.2,
+     "direct_n": 50,
+     "direct_mean": 42.9,
      "wide_n": 298,
      "wide_mean": 34.2,
      "wide_median": 35.0,
@@ -8567,29 +6879,29 @@
      "wide_ge60": 3,
      "sub_av": 14.3,
      "sub_ac": 43.2,
-     "sub_co": 44.2,
-     "sub_re": 52.3
+     "sub_co": 44.0,
+     "sub_re": 52.4
     }
    },
    "בתוך המגזר המתויג": {
     "בדואים (צפון ודרום)": {
-     "n": 16,
-     "score_mean": 62.2,
+     "n": 17,
+     "score_mean": 53.6,
      "direct_n": 0,
      "direct_mean": null,
-     "wide_n": 16,
-     "wide_mean": 30.0,
-     "wide_median": 31.4,
-     "wide_lt30": 44,
+     "wide_n": 17,
+     "wide_mean": 30.9,
+     "wide_median": 31.6,
+     "wide_lt30": 41,
      "wide_ge60": 0,
-     "sub_av": 6.3,
-     "sub_ac": 32.3,
-     "sub_co": 42.7,
-     "sub_re": 59.8
+     "sub_av": 6.2,
+     "sub_ac": 35.3,
+     "sub_co": 43.8,
+     "sub_re": 60.3
     },
     "דרוזים (כולל רמת הגולן)": {
      "n": 9,
-     "score_mean": 66.4,
+     "score_mean": 63.9,
      "direct_n": 0,
      "direct_mean": null,
      "wide_n": 9,
@@ -8604,22 +6916,22 @@
     },
     "מיעוטים כללי": {
      "n": 31,
-     "score_mean": 73.2,
+     "score_mean": 70.5,
      "direct_n": 0,
      "direct_mean": null,
      "wide_n": 29,
-     "wide_mean": 38.4,
+     "wide_mean": 38.5,
      "wide_median": 39.5,
      "wide_lt30": 14,
      "wide_ge60": 0,
      "sub_av": 9.9,
-     "sub_ac": 49.5,
-     "sub_co": 58.6,
+     "sub_ac": 49.6,
+     "sub_co": 58.7,
      "sub_re": 64.3
     },
     "רשות מעורבת": {
      "n": 4,
-     "score_mean": 81.5,
+     "score_mean": 80.0,
      "direct_n": 2,
      "direct_mean": 49.5,
      "wide_n": 3,
@@ -8635,49 +6947,49 @@
    },
    "לפי האשכול החברתי-כלכלי של הרשות": {
     "אשכולות 1–3 (חלש)": {
-     "n": 60,
-     "score_mean": 69.9,
+     "n": 62,
+     "score_mean": 64.2,
      "direct_n": 4,
      "direct_mean": 49.8,
-     "wide_n": 56,
-     "wide_mean": 39.0,
+     "wide_n": 58,
+     "wide_mean": 38.9,
      "wide_median": 39.5,
      "wide_lt30": 16,
      "wide_ge60": 5,
-     "sub_av": 16.7,
+     "sub_av": 16.6,
      "sub_ac": 47.0,
-     "sub_co": 51.9,
-     "sub_re": 61.6
+     "sub_co": 51.5,
+     "sub_re": 61.9
     },
     "אשכולות 4–7 (בינוני)": {
      "n": 231,
-     "score_mean": 65.8,
+     "score_mean": 60.0,
      "direct_n": 28,
      "direct_mean": 44.7,
      "wide_n": 197,
-     "wide_mean": 33.6,
-     "wide_median": 34.4,
+     "wide_mean": 33.5,
+     "wide_median": 34.1,
      "wide_lt30": 38,
      "wide_ge60": 2,
-     "sub_av": 13.4,
+     "sub_av": 13.3,
      "sub_ac": 42.5,
-     "sub_co": 43.7,
+     "sub_co": 43.6,
      "sub_re": 52.1
     },
     "אשכולות 8–10 (חזק)": {
      "n": 48,
-     "score_mean": 63.8,
+     "score_mean": 59.4,
      "direct_n": 6,
      "direct_mean": 43.0,
      "wide_n": 41,
-     "wide_mean": 35.1,
+     "wide_mean": 35.2,
      "wide_median": 37.8,
      "wide_lt30": 27,
      "wide_ge60": 0,
-     "sub_av": 11.8,
+     "sub_av": 11.9,
      "sub_ac": 46.7,
-     "sub_co": 49.6,
-     "sub_re": 52.1
+     "sub_co": 49.8,
+     "sub_re": 52.2
     }
    }
   },
@@ -8687,8 +6999,8 @@
    "co": "תחרותיות",
    "re": "אמינות"
   },
-  "n_direct": 53,
-  "n_wide": 356,
+  "n_direct": 52,
+  "n_wide": 357,
   "national_wide_mean": 34.7
  }
 }
