@@ -29,8 +29,8 @@ for ext in ('pdf', 'docx'):
         shutil.copyfile(f'{D}/{SRC}.{ext}', f'{D}/report.{ext}')
 html = f'''<!DOCTYPE html>
 <html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow"><title>נגישות אזורי תעשייה — הדו"ח</title>
-<style>body{{font-family:Assistant,Heebo,Arial,sans-serif;max-width:640px;margin:40px auto;padding:0 18px;color:#0f172a;line-height:1.6}}
+<meta name="robots" content="noindex, nofollow"><meta name="color-scheme" content="light only"><title>נגישות אזורי תעשייה — הדו"ח</title>
+<style>html,body{{background:#fff}} body{{font-family:Assistant,Heebo,Arial,sans-serif;max-width:640px;margin:40px auto;padding:0 18px;color:#0f172a;line-height:1.6}}
 h1{{font-size:24px;margin:0 0 6px}} .m{{color:#475569;margin:0 0 22px}} a.b{{display:block;padding:14px 18px;margin:10px 0;border-radius:12px;background:#312e81;color:#fff;text-decoration:none;font-weight:700;font-size:18px}}
 a.b.w{{background:#0d6bb4}} .s{{font-size:13px;color:#64748b;margin-top:26px}}</style></head><body>
 <h1>נגישות אזורי תעשייה — הדו"ח</h1>
