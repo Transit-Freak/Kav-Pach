@@ -1,5 +1,5 @@
 {
- "generated": "03.09.2026 13:14",
+ "generated": "03.09.2026 13:29",
  "gtfs_date": "2026-09-03",
  "formula": {
   "headway_bands": [
@@ -116,9 +116,9 @@
   "peak_pm": "15:00–19:00 מהאזור"
  },
  "national": {
-  "n": 415,
-  "mean": 61.0,
-  "median": 72,
+  "n": 414,
+  "mean": 61.2,
+  "median": 72.0,
   "bands": {
    "100": 0,
    "90": 7,
@@ -130,7 +130,7 @@
    "30": 25,
    "20": 15,
    "10": 11,
-   "0": 30
+   "0": 29
   },
   "traffic": [
    {
@@ -153,21 +153,21 @@
    },
    {
     "label": "אדום (מתחת ל-50)",
-    "n": 115,
+    "n": 114,
     "color": "#c00d18",
     "pct": 28
    }
   ],
-  "no_line_n": 25,
+  "no_line_n": 24,
   "no_line_pct": 6,
-  "no_peak_n": 26,
-  "top10_share": 55,
+  "no_peak_n": 25,
+  "top10_share": 54,
   "top5_share": 38,
-  "median_peak_departures": 53,
+  "median_peak_departures": 53.5,
   "stats": {
-   "n": 415,
-   "score_mean": 61.0,
-   "score_median": 72,
+   "n": 414,
+   "score_mean": 61.2,
+   "score_median": 72.0,
    "pct_green": 2,
    "pct_ge70": 51,
    "pct_lt50": 28,
@@ -178,7 +178,7 @@
    "pct_no_peak": 6,
    "bl_headway_median": 25.7,
    "pct_bl_le15": 20,
-   "pct_bl_ge60": 33,
+   "pct_bl_ge60": 32,
    "mot_mean": 43.2,
    "mot_n": 52,
    "walk_near_median": 3.8
@@ -206,15 +206,15 @@
     "walk_near_median": 3.2
    },
    "פריפריה": {
-    "n": 268,
-    "score_mean": 57.7,
-    "score_median": 65.0,
+    "n": 267,
+    "score_mean": 57.9,
+    "score_median": 65,
     "pct_green": 1,
     "pct_ge70": 46,
-    "pct_lt50": 34,
+    "pct_lt50": 33,
     "far_mean": 13.1,
     "far_median": 10.2,
-    "pct_far_over15": 24,
+    "pct_far_over15": 23,
     "uf_headway_median": 9.2,
     "pct_no_peak": 7,
     "bl_headway_median": 30.0,
@@ -284,20 +284,20 @@
     "walk_near_median": 3.6
    },
    "דרום": {
-    "n": 100,
-    "score_mean": 51.3,
-    "score_median": 53.5,
+    "n": 99,
+    "score_mean": 51.9,
+    "score_median": 54,
     "pct_green": 0,
     "pct_ge70": 30,
-    "pct_lt50": 43,
+    "pct_lt50": 42,
     "far_mean": 14.9,
     "far_median": 11.9,
-    "pct_far_over15": 34,
+    "pct_far_over15": 33,
     "uf_headway_median": 10.1,
-    "pct_no_peak": 10,
+    "pct_no_peak": 9,
     "bl_headway_median": 30.0,
     "pct_bl_le15": 9,
-    "pct_bl_ge60": 48,
+    "pct_bl_ge60": 47,
     "mot_mean": 31.3,
     "mot_n": 9,
     "walk_near_median": 4.0
@@ -324,17 +324,17 @@
     "walk_near_median": 3.8
    },
    "דרום": {
-    "n": 88,
-    "score_mean": 50.0,
-    "score_median": 51.5,
+    "n": 87,
+    "score_mean": 50.6,
+    "score_median": 52,
     "pct_green": 0,
-    "pct_ge70": 28,
-    "pct_lt50": 47,
+    "pct_ge70": 29,
+    "pct_lt50": 46,
     "far_mean": 14.7,
     "far_median": 11.7,
-    "pct_far_over15": 32,
+    "pct_far_over15": 31,
     "uf_headway_median": 13.1,
-    "pct_no_peak": 10,
+    "pct_no_peak": 9,
     "bl_headway_median": 36.0,
     "pct_bl_le15": 8,
     "pct_bl_ge60": 53,
@@ -346,7 +346,7 @@
   "defs": {
    "center_km": 45,
    "district_source": "שכבת \"תחום אזורי תעשיה תעסוקה\" של משרד התחבורה — שדה המחוז",
-   "district_matched": 411,
+   "district_matched": 410,
    "fallback_lat": {
     "north": 32.4,
     "south": 31.85
@@ -376,9 +376,9 @@
    "walk_near_median": 4.0
   },
   "other": {
-   "n": 353,
-   "score_mean": 60.2,
-   "score_median": 66,
+   "n": 352,
+   "score_mean": 60.4,
+   "score_median": 66.0,
    "pct_green": 2,
    "pct_ge70": 48,
    "pct_lt50": 29,
@@ -563,7 +563,7 @@
     "walk_near_median": 4.8
    }
   },
-  "unmatched": 74
+  "unmatched": 73
  },
  "top10": [
   {
@@ -761,22 +761,6 @@
    }
   },
   {
-   "name": "אתר לסילוק פסולת דודאים",
-   "city": "—",
-   "score": 0,
-   "mot": null,
-   "motw": null,
-   "bl_headway": null,
-   "far": null,
-   "area": 2.07,
-   "sparts": {
-    "uf": 0,
-    "bl": 0,
-    "far": 0,
-    "near": 0
-   }
-  },
-  {
    "name": "מעלה-ירושלים",
    "city": "ירושלים",
    "score": 0,
@@ -881,6 +865,22 @@
    "bl_headway": null,
    "far": 59,
    "area": 0.48,
+   "sparts": {
+    "uf": 0,
+    "bl": 0,
+    "far": 0,
+    "near": 0
+   }
+  },
+  {
+   "name": "מי עמי",
+   "city": "אום אל פחם",
+   "score": 0,
+   "mot": 0,
+   "motw": 0,
+   "bl_headway": null,
+   "far": 19,
+   "area": 0.43,
    "sparts": {
     "uf": 0,
     "bl": 0,
@@ -1289,7 +1289,7 @@
     "far": 0,
     "near": 0
    },
-   "f": "p37.json",
+   "f": "p36.json",
    "la": 31.7719,
    "lo": 34.754,
    "kind": "הגרועים ביותר",
@@ -1789,7 +1789,7 @@
     "far": 0,
     "near": 0
    },
-   "f": "p88.json",
+   "f": "p87.json",
    "la": 32.5423,
    "lo": 35.5053,
    "kind": "הגרועים ביותר",
@@ -1901,7 +1901,7 @@
     "far": 90,
     "near": 100
    },
-   "f": "p63.json",
+   "f": "p62.json",
    "la": 32.1619,
    "lo": 34.8089,
    "kind": "המצטיינים",
@@ -2775,7 +2775,7 @@
     "far": 80,
     "near": 100
    },
-   "f": "p26.json",
+   "f": "p25.json",
    "la": 32.2824,
    "lo": 34.8621,
    "kind": "המצטיינים",
@@ -3445,7 +3445,7 @@
     "far": 90,
     "near": 100
    },
-   "f": "p138.json",
+   "f": "p137.json",
    "la": 32.5187,
    "lo": 34.9218,
    "kind": "המצטיינים מחוץ למרכזי הערים",
@@ -4371,7 +4371,7 @@
     "far": 90,
     "near": 90
    },
-   "f": "p102.json",
+   "f": "p101.json",
    "la": 32.6042,
    "lo": 35.2966,
    "kind": "המצטיינים מחוץ למרכזי הערים",
@@ -5161,17 +5161,6 @@
  ],
  "no_stop_zones": [
   {
-   "name": "אתר לסילוק פסולת דודאים",
-   "city": "—",
-   "area": 2.07,
-   "region": "דרום",
-   "score": 0,
-   "lines": 0,
-   "far": null,
-   "buildings": 0,
-   "stops_near": 0
-  },
-  {
    "name": "בראון",
    "city": "קדומים",
    "area": 1.4,
@@ -5249,17 +5238,6 @@
    "far": 50,
    "buildings": 2,
    "stops_near": 23
-  },
-  {
-   "name": "אתר לסילוק פסולת דודאים",
-   "city": "—",
-   "area": 2.07,
-   "region": "דרום",
-   "score": 0,
-   "lines": 0,
-   "far": null,
-   "buildings": 0,
-   "stops_near": 0
   },
   {
    "name": "מעלה-ירושלים",
@@ -5541,6 +5519,11 @@
     "name": "ממ״ג שורק",
     "reason": "מתקן סגור (המרכז למחקר גרעיני) — הסעות מאורגנות, לא אזור תעשייה ציבורי",
     "source": "מהות המתקן"
+   },
+   {
+    "name": "אתר לסילוק פסולת דודאים",
+    "reason": "אתר פסולת, לא אזור תעשייה — עובדים ספורים, אין קהל עובדים שמגיע בתחבורה ציבורית",
+    "source": "איריס 02.09 (\"דודאים עדיין בדו\"ח\")"
    }
   ],
   "auto_n": 7,
@@ -5674,16 +5657,16 @@
    "pct_no_bl": 5
   },
   "פריפריה": {
-   "n": 268,
-   "score_mean": 57.7,
+   "n": 267,
+   "score_mean": 57.9,
    "comp": {
-    "bl": 45.1,
-    "far": 60.6,
-    "uf": 64.9,
-    "near": 83.1
+    "bl": 45.3,
+    "far": 60.8,
+    "uf": 65.1,
+    "near": 83.4
    },
    "weighted": {
-    "bl": 18.0,
+    "bl": 18.1,
     "far": 18.2,
     "uf": 13.0,
     "near": 8.3
@@ -5758,43 +5741,43 @@
    "pct_no_bl": 12
   },
   "מחוז: דרום": {
-   "n": 100,
-   "score_mean": 51.3,
+   "n": 99,
+   "score_mean": 51.9,
    "comp": {
-    "bl": 39.6,
-    "far": 50.2,
-    "uf": 61.5,
-    "near": 79.5
+    "bl": 40.0,
+    "far": 50.7,
+    "uf": 62.1,
+    "near": 80.3
    },
    "weighted": {
-    "bl": 15.8,
-    "far": 15.1,
-    "uf": 12.3,
+    "bl": 16.0,
+    "far": 15.2,
+    "uf": 12.4,
     "near": 8.0
    },
    "area_median": 0.3,
-   "pct_small": 50,
+   "pct_small": 51,
    "bl_headway_median": 30.0,
    "far_median": 11.9,
-   "pct_no_bl": 14
+   "pct_no_bl": 13
   },
   "ללא תיוג מגזרי": {
-   "n": 353,
-   "score_mean": 60.2,
+   "n": 352,
+   "score_mean": 60.4,
    "comp": {
-    "bl": 48.6,
-    "far": 61.1,
-    "uf": 69.0,
-    "near": 84.9
+    "bl": 48.8,
+    "far": 61.2,
+    "uf": 69.2,
+    "near": 85.1
    },
    "weighted": {
-    "bl": 19.4,
-    "far": 18.3,
+    "bl": 19.5,
+    "far": 18.4,
     "uf": 13.8,
     "near": 8.5
    },
    "area_median": 0.3,
-   "pct_small": 54,
+   "pct_small": 55,
    "bl_headway_median": 30.0,
    "far_median": 10.1,
    "pct_no_bl": 7
@@ -5848,7 +5831,7 @@
    "5–10 דק׳": 168,
    "10–15 דק׳": 123,
    "מעל 15 דק׳": 81,
-   "אין תחנה בטווח": 6
+   "אין תחנה בטווח": 5
   },
   "bl": {
    "עד 10 דק׳": 26,
@@ -5858,12 +5841,12 @@
    "30–60": 70,
    "60–90": 49,
    "מעל 90": 34,
-   "אין קו בשיא": 31
+   "אין קו בשיא": 30
   },
   "concentration": [
    {
     "label": "עשירון 1",
-    "pct": 55
+    "pct": 54
    },
    {
     "label": "עשירון 2",
@@ -5887,7 +5870,7 @@
    },
    {
     "label": "עשירון 7",
-    "pct": 1
+    "pct": 2
    },
    {
     "label": "עשירון 8",
@@ -5927,7 +5910,7 @@
      "far": 65,
      "near": 90
     },
-    "f": "p175.json",
+    "f": "p174.json",
     "gap": 50,
     "sub": {
      "זמינות": 2.0,
@@ -5960,7 +5943,7 @@
      "far": 90,
      "near": 90
     },
-    "f": "p80.json",
+    "f": "p79.json",
     "gap": 48,
     "sub": {
      "זמינות": 25.0,
@@ -5993,7 +5976,7 @@
      "far": 80,
      "near": 90
     },
-    "f": "p259.json",
+    "f": "p258.json",
     "gap": 48,
     "sub": {
      "זמינות": 1.0,
@@ -6026,7 +6009,7 @@
      "far": 75,
      "near": 90
     },
-    "f": "p130.json",
+    "f": "p129.json",
     "gap": 47,
     "sub": {
      "זמינות": 2.0,
@@ -6058,7 +6041,7 @@
      "far": 90,
      "near": 100
     },
-    "f": "p66.json",
+    "f": "p65.json",
     "gap": 47,
     "sub": {
      "זמינות": 31.0,
@@ -6091,7 +6074,7 @@
      "far": 75,
      "near": 100
     },
-    "f": "p23.json",
+    "f": "p22.json",
     "gap": 46,
     "sub": {
      "זמינות": 23.0,
@@ -6124,7 +6107,7 @@
      "far": 90,
      "near": 100
     },
-    "f": "p106.json",
+    "f": "p105.json",
     "gap": 44,
     "sub": {
      "זמינות": 25.0,
@@ -6156,7 +6139,7 @@
      "far": 80,
      "near": 100
     },
-    "f": "p120.json",
+    "f": "p119.json",
     "gap": 44,
     "sub": {
      "זמינות": 14.0,
@@ -6252,7 +6235,7 @@
      "far": 0,
      "near": 0
     },
-    "f": "p127.json",
+    "f": "p126.json",
     "gap": 0,
     "sub": {
      "זמינות": 0.0,
@@ -6283,7 +6266,7 @@
      "far": 65,
      "near": 80
     },
-    "f": "p165.json",
+    "f": "p164.json",
     "gap": 0,
     "sub": {
      "זמינות": 7.0,
@@ -6315,7 +6298,7 @@
      "far": 0,
      "near": 80
     },
-    "f": "p35.json",
+    "f": "p34.json",
     "gap": 5,
     "sub": {
      "זמינות": 0.0,
@@ -6380,7 +6363,7 @@
      "far": 90,
      "near": 100
     },
-    "f": "p64.json",
+    "f": "p63.json",
     "gap": 14,
     "sub": {
      "זמינות": 71.0,
@@ -6411,7 +6394,7 @@
      "far": 90,
      "near": 90
     },
-    "f": "p69.json",
+    "f": "p68.json",
     "gap": 16,
     "sub": {
      "זמינות": 63.0,
@@ -6444,7 +6427,7 @@
      "far": 90,
      "near": 90
     },
-    "f": "p162.json",
+    "f": "p161.json",
     "gap": null,
     "sub": {},
     "strong": [],
@@ -6466,7 +6449,7 @@
      "far": 80,
      "near": 90
     },
-    "f": "p122.json",
+    "f": "p121.json",
     "gap": null,
     "sub": {},
     "strong": [],
@@ -6488,7 +6471,7 @@
      "far": 90,
      "near": 90
     },
-    "f": "p80.json",
+    "f": "p79.json",
     "gap": 48,
     "sub": {
      "זמינות": 25.0,
@@ -6531,8 +6514,8 @@
      "sub_re": 52.3
     },
     "פריפריה": {
-     "n": 268,
-     "score_mean": 57.7,
+     "n": 267,
+     "score_mean": 57.9,
      "direct_n": 17,
      "direct_mean": 36.1,
      "wide_n": 230,
@@ -6593,8 +6576,8 @@
      "sub_re": 54.2
     },
     "דרום": {
-     "n": 100,
-     "score_mean": 51.3,
+     "n": 99,
+     "score_mean": 51.9,
      "direct_n": 9,
      "direct_mean": 31.3,
      "wide_n": 83,
@@ -6625,8 +6608,8 @@
      "sub_re": 56.6
     },
     "דרום": {
-     "n": 88,
-     "score_mean": 50.0,
+     "n": 87,
+     "score_mean": 50.6,
      "direct_n": 5,
      "direct_mean": 29.2,
      "wide_n": 76,
@@ -6657,8 +6640,8 @@
      "sub_re": 64.7
     },
     "כל שאר האזורים": {
-     "n": 353,
-     "score_mean": 60.2,
+     "n": 352,
+     "score_mean": 60.4,
      "direct_n": 50,
      "direct_mean": 42.9,
      "wide_n": 298,
