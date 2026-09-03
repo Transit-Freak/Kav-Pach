@@ -1,0 +1,98 @@
+name: backfill-platforms
+
+# "הקו בזמן" — מילוי לאחור של שינויי רציף מארכיון TransitFeeds (2017–2022),
+# בקשת שלמה 03.09. כל ריצה מעבדת פרק של צילומים ושומרת מצב; chain=true
+# מזניק את הפרק הבא עד שנגמרים הצילומים. בטוח להרצה חוזרת.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_days:
+        description: 'צילומים לריצה (0 = בלי מגבלה)'
+        required: false
+        default: '150'
+      max_min:
+        description: 'תקציב דקות לריצה'
+        required: false
+        default: '150'
+      from:
+        description: 'FROM (YYYYMMDD)'
+        required: false
+        default: '20170101'
+      to:
+        description: 'TO (YYYYMMDD)'
+        required: false
+        default: '20221231'
+      dry:
+        description: 'ניתוח בלבד בלי כתיבה (1)'
+        required: false
+        default: ''
+      chain:
+        description: 'שרשור — בסיום, הזנקת הפרק הבא (true)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: backfill-platforms
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: שינויי רציף מהארכיון
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data FROM='${{ inputs.from }}' TO='${{ inputs.to }}' \
+            MAX_DAYS='${{ inputs.max_days }}' MAX_MIN='${{ inputs.max_min }}' DRY='${{ inputs.dry }}' \
+            python3 tools/backfill_platforms.py
+
+      - name: תוצרים נגזרים (אינדקס, פיד הארכיון, שברי תחנות)
+        if: ${{ inputs.dry != '1' }}
+        run: |
+          set -euo pipefail
+          OUTDIR=line-history/data python3 tools/build_archive_months.py
+          OUTDIR=line-history/data python3 tools/build_stop_shards.py
+          OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
+
+      - name: commit
+        if: ${{ inputs.dry != '1' }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A line-history/data
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: line-history — שינויי רציף מהארכיון (2017–2022)"
+          for i in 1 2 3 4; do
+            git pull --rebase -X theirs origin main && git push origin HEAD:main && break
+            echo "push rejected — retry $i"; sleep 10
+          done
+
+      - name: המשך אוטומטי
+        if: ${{ inputs.chain == 'true' && inputs.dry != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - > /tmp/next.env <<'EOF'
+          import json, os
+          st = json.load(open('line-history/data/backfill-platforms-state.json'))
+          days = [l.strip() for l in open('line-history/data/tf-days.txt') if l.strip()]
+          frm, to = '${{ inputs.from }}', '${{ inputs.to }}'
+          todo = [d for d in days if frm <= d <= to and d not in set(st['done'])]
+          print('DONE=1' if not todo else 'DONE=')
+          EOF
+          . /tmp/next.env
+          if [ -z "$DONE" ]; then
+            gh workflow run backfill-platforms.yml --ref main -f from='${{ inputs.from }}' -f to='${{ inputs.to }}' \
+              -f max_days='${{ inputs.max_days }}' -f max_min='${{ inputs.max_min }}' -f chain=true
+          else
+            echo 'המילוי הושלם'
+          fi

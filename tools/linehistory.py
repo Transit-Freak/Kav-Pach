@@ -40,12 +40,17 @@ MAX_LINES_LIST=12  # כמה קווים לשמור ברשומת תחנה שבוט
 def city(d):
     m=re.search(r'עיר:\s*(.*?)\s*רציף:', d or ''); return m.group(1).strip() if m else ''
 
+def plat_norm(p):
+    """'' = לא מוגדר: ריק, 0, או ערך שאינו רציף (למשל 'קומה:' שנתפס כשהרציף ריק)."""
+    p=(p or '').strip()
+    return '' if (p in ('','0','-','—') or ':' in p or len(p)>6) else p
+
 def plat(d):
-    """מספר הרציף מתיאור התחנה ("עיר: חיפה רציף: 3"). '' = לא מוגדר (ריק או 0) —
+    """מספר הרציף מתיאור התחנה ("רחוב: X עיר: חיפה רציף: 3 קומה: 1"). התיאור
+    ממשיך אחרי הרציף ("קומה:"), ולכן נתפס רק מה שבין 'רציף:' ל'קומה:' או לסוף.
     בקשת שלמה 03.09: מעבר בין "לא מוגדר" ל-0 אינו שינוי ואינו מדווח."""
-    m=re.search(r'רציף:\s*([^\s]+)', d or '')
-    p=(m.group(1).strip() if m else '')
-    return '' if p in ('','0','-','—') else p
+    m=re.search(r'רציף:\s*(.*?)\s*(?:קומה:|$)', d or '')
+    return plat_norm(m.group(1) if m else '')
 
 def route_cities(long):
     """ערי המוצא והיעד משם המסלול "תחנה-עיר<->תחנה-עיר-מק"."""
@@ -303,7 +308,7 @@ first_run=not prev
 # רציפים: בריצה הראשונה עם השדה החדש אין רציף במצב הקודם — הרציפים נרשמים
 # בשקט כבסיס, בלי אירועי "עוצר מעכשיו ברציף" על כל מסוף בארץ. מהריצה הבאה
 # והלאה כל שינוי נרשם.
-plat_known=any(len(v)>5 for v in prev_stops.values())
+plat_known=any(len(v)>5 and plat_norm(v[5]) for v in prev_stops.values())
 
 def dist_m(a_la,a_lo,b_la,b_lo):
     cl=math.cos(math.radians((a_la+b_la)/2))
@@ -464,7 +469,7 @@ for rdesc,c in cur.items():
         _cs=stop_by_code.get(_code)
         if not _cs: continue
         _ps=prev_stops.get(_code)
-        _old=(_ps[5] if _ps and len(_ps)>5 else '') or ''
+        _old=plat_norm(_ps[5] if _ps and len(_ps)>5 else '')
         _new=_cs.get('p') or ''
         if _new and _new!=_old: plat_changes.append([_code,_cs['n'],_old,_new])
     if not geo and not stp and not op_changed and not tt_changed \
@@ -507,12 +512,20 @@ for rdesc,c in cur.items():
                 if y in ren: continue
                 sy=sinfo.get(y)
                 if sy and sy[1]==ent[0] and abs(sy[2]-ent[1])<0.005 and abs(sy[3]-ent[2])<0.005:
-                    ren[y]=x; rem.remove(x); break
+                    ren[y]=x; rem.remove(x)
+                    # אותו שם, מק"ט אחר, רציף אחר = הקו עבר רציף (שלמה 03.09): "פעם עצר
+                    # ברציף 1 ופעם ברציף 2". בלי זה ההחלפה נבלעה בשקט כהחלפת רישום.
+                    if plat_known:
+                        _cy=stop_by_code.get(y); _px=prev_stops.get(x)
+                        _oldp=plat_norm(_px[5] if _px and len(_px)>5 else ''); _newp=(_cy or {}).get('p') or ''
+                        if _newp and _newp!=_oldp and not any(e[0]==y for e in plat_changes):
+                            plat_changes.append([y,(_cy or {}).get('n') or ent[0],_oldp,_newp])
+                    break
         add=[y for y in add if y not in ren]
         if ren:
             codes_eff=[ren.get(y,y) for y in c['codes']]
             if codes_eff==old_codes and not geo and not (op_changed or tt_changed
-               or ty_changed or wa_changed or pd_changed):
+               or ty_changed or wa_changed or pd_changed or plat_changes):
                 # רק מספרי תחנות הוחלפו — מרעננים בשקט את הרשימה בגרסה
                 # האחרונה, בלי להמציא אירוע-קו על החלפת רישום
                 p=f'{OUTDIR}/lines/{fsafe(rdesc)}.json'
@@ -757,7 +770,7 @@ if not first_run and not REBASE:
             sev(c0,{'k':'city','n':v[0],'oc':pv[3],'nc':v[3],'la':v[1],'lo':v[2]}); ncty+=1
         # רציף (בקשת שלמה 03.09): נרשם רק כשהרציף החדש מוגדר; ריק/0 = לא מוגדר,
         # ומעבר אליו אינו אירוע. op ריק = "עוצר מעכשיו ברציף N" (לא "מ-0 ל-N")
-        _op_=(pv[5] if len(pv)>5 else '') or ''; _np_=(v[5] if len(v)>5 else '') or ''
+        _op_=plat_norm(pv[5] if len(pv)>5 else ''); _np_=(v[5] if len(v)>5 else '') or ''
         if plat_known and _np_ and _np_!=_op_:
             sev(c0,{'k':'platform','n':v[0],'t':v[3],'op':_op_,'np':_np_,'lines':v[4],'la':v[1],'lo':v[2]}); npl+=1
         d=dist_m(pv[1],pv[2],v[1],v[2])

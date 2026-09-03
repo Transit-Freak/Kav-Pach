@@ -90,7 +90,7 @@ const CAT_LABELS = {
   dest: "שינוי יעד",
   renum: "שינוי מספר קו",
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
-  platform: "שינוי רציף — הקו עוצר ברציף אחר במסוף",
+  platform: "שינוי רציף — הקו עוצר ברציף אחר",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
@@ -1517,10 +1517,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
         {/* תקופות שבהן הקו לא היה ברישום — סיכום בולט (בקשת שלמה: הביטול
             נבלע בין עשרות כרטיסי גרסאות ולא נראה) */}
         {(() => {
+          // התקופה נגמרת בגרסה הבאה מכל סוג, לא רק ב"וריאנט חדש": סריקת הארכיון
+          // רשמה חזרה כ"שינוי מסלול" בלי אירוע new, והדף אמר "ועדיין לא חזר" על
+          // קו עם 37 גרסאות אחרי הביטול (דיווח שלמה 03.09, קו 6 רהט)
           const per = []; let start = null;
           for (const v of vs) {
             if (v.k === "removed") { if (!start) start = v.d; }
-            else if (v.k === "new" && start) { per.push([start, v.d]); start = null; }
+            else if (start) { per.push([start, v.d]); start = null; }
           }
           if (start) per.push([start, null]);
           const span = (a, b) => {
