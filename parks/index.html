@@ -921,7 +921,7 @@ function openPark(f,push=true){
       const cell=(lbl,x,t)=>`<span class="stat" title="${t}">${lbl} <b style="color:${inside?col(x):'#64748b'}">${sc(x)}${(!inside&&x!=null)?'*':''}</b></span>`;
       svcbox+=`<div class="offbox" style="background:${inside?'#f5f3ff':'#f8fafc'};border-color:${inside?'#ddd6fe':'#e2e8f0'}">
         <div class="offh" style="color:${inside?'#5b21b6':'#475569'}">📈 מדדי השירות הרשמיים · משרד התחבורה${d.svcmeta&&d.svcmeta.updated?` · עדכון ${esc(d.svcmeta.updated)}`:''}${inside?'':' · להקשר בלבד'}</div>
-        <div class="motmain" title="${inside?'הציון הכולל של המשרד לאזור הסטטיסטי שבתוך אזור התעשייה, 0–100':'ציון האזור הסטטיסטי הסובב — אין אזור סטטיסטי בתוך האזור, אין השוואה ישירה'}"><span class="motlbl">${inside?'ציון משוקלל של המשרד':'ציון המשרד לסביבה*'}</span><span class="motbig" style="background:${inside?col(v.fs):'#94a3b8'};color:#fff">${sc(v.fs)}${(!inside&&v.fs!=null)?'*':''}</span></div>
+        <div class="motmain" title="${inside?'הציון הכולל של המשרד לאזור הסטטיסטי שבתוך אזור התעשייה, 0–100':'ציון האזור הסטטיסטי הסובב — אין אזור סטטיסטי בתוך האזור, אין השוואה ישירה'}"><span class="motlbl">${inside?'ציון משוקלל של משרד התחבורה':'ציון משרד התחבורה לאזור הסובב*'}</span><span class="motbig" style="background:${inside?col(v.fs):'#94a3b8'};color:#fff">${sc(v.fs)}${(!inside&&v.fs!=null)?'*':''}</span></div>
         <div class="stats" style="margin:4px 0 0">
           ${cell('זמינות',v.av,'תדירות ופריסת שעות השירות')}
           ${cell('נגישות',v.ac,'לאן אפשר להגיע בזמן נסיעה נתון')}
