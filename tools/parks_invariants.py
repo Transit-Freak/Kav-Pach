@@ -91,9 +91,12 @@ for p in P:
         # כמו ב-parks.py (הסיירת 03.09): אותה דקה מאותה תחנה בשתי חלופות = אוטובוס אחד
         b1t.setdefault(k1, set()).update((l['code'], t) for t in (l.get('wd') or []))
         s = sbc.get(l['code']) or {}
-        w = 0.0 if s.get('t') in ('in', 'gate') else s.get('wt')
+        # כמו ב-parks.py (03.09): wt של התחנה; בלי ניתוב — אומדן אווירי מהמרכז
+        w = s.get('wt')
         if w is None:
-            w = (s.get('d') or 0) * 1.3 / 83.0
+            import math as _m
+            cl = _m.cos(_m.radians(p['la']))
+            w = _m.hypot((s.get('la', p['la']) - p['la']) * 110540.0, (s.get('lo', p['lo']) - p['lo']) * 111320.0 * cl) * 1.3 / 83.0
         b1w[k1] = min(b1w.get(k1, w), w)
     # אותו כלל כמו tools/parks.py (headway_equiv): קו שעתי = שעתי גם כשהיציאה
     # השלישית נופלת ב-09:10 (ממצא איריס 02.09, מישור אדומים קו 169)

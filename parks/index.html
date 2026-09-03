@@ -79,7 +79,7 @@
           <th data-k="area" class="num" title="שטח האזור בקילומטרים רבועים · לחיצה ממיינת">שטח קמ"ר <span class="arr"></span></th>
           <th data-k="li" class="num" title="כמה קווי אוטובוס עוצרים בתוך שטח האזור עצמו — כולל קווים שאינם פעילים בשעות השיא (ראו עמודת שעות שיא) · לחיצה ממיינת">קווים בפנים <span class="arr"></span></th>
           <th data-k="lg" class="num" title="קווים שהתחנה שלהם עד 5 דקות הליכה אמיתית מהאזור · לחיצה ממיינת">קרוב 🚶 <span class="arr"></span></th>
-          <th data-k="ln" class="num" title="קווים שהתחנה שלהם במרחק 5–10 דקות הליכה — אפשרי אך לא נוח יומיומית · לחיצה ממיינת">רחוק 🚶 <span class="arr"></span></th>
+          <th data-k="ln" class="num" title="קווים שהתחנה שלהם במרחק 5–14 דקות הליכה — אפשרי אך לא נוח יומיומית · לחיצה ממיינת">רחוק 🚶 <span class="arr"></span></th>
           <th data-k="pk" class="num" style="display:none" title="קווים שעוצרים בשעות השיא (06–09, 15–19) — בפנים או סמוך לגבול האזור">שעות שיא ⏰ <span class="arr"></span></th>
           <th data-k="sf" class="num" style="display:none" title="הציון המשוקלל של משרד התחבורה לאזור הסטטיסטי (זמינות, נגישות, תחרותיות, אמינות)">ציון משרד התחבורה 📈 <span class="arr"></span></th>
           <th data-k="in" class="num" title="מספר תחנות האוטובוס שבתוך גבולות האזור · לחיצה ממיינת">תחנות בפנים <span class="arr"></span></th>
@@ -171,8 +171,10 @@ let WALKMODE='c';   // 'c'=מדידה עד מרכז האזור (ברירת-מח�
 let HEATMODE='peak';   // מפת חום: 'peak'=שעות שיא של יום עבודה (ברירת-מחדל) · 'day'=כל היום
 let HEATSCOPE='in';   // 'in'=נכנסים פנימה בלבד (ברירת-מחדל) · 'all'=בפנים+שערי כניסה
 let curPark=null;      // האזור הפתוח — לרענון תחנות עם מחוון ההליכה
-const TIER={in:'בתוך האזור',gate:'קרוב · עד ~5 דק׳ הליכה מהאזור',near:'רחוק · 5–10 דק׳ הליכה',blocked:'חסום · מעל 10 דק׳ הליכה אמיתית'};
-const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',blocked:'#94a3b8'};
+// ארבע מדרגות + חסום (איריס 03.09): 'far' = 10–14 דק׳ מוצגות, נספרת; 15 ומעלה חסומה.
+// הסיירת 03.09: המדרגה 'far' לא הייתה במפה — 3,314 קווים הוצגו 'undefined' ו-2,121 תחנות נצבעו כחסומות
+const TIER={in:'בתוך האזור',gate:'קרוב · עד ~5 דק׳ הליכה מהאזור',near:'רחוק · 5–10 דק׳ הליכה',far:'רחוק · 10–14 דק׳ הליכה',blocked:'חסום · 15 דק׳ הליכה ומעלה — לא נספרת'};
+const COL={in:'#16a34a',gate:'#84cc16',near:'#eab308',far:'#f97316',blocked:'#94a3b8'};
 // לפי המצב: tier, זמן ומרחק הליכה, וספירת-קווים לאזור
 function sTier(s){return (WALKMODE=='c'?s.t:s.te)||s.t}
 function sWt(s){return WALKMODE=='c'?s.wt:s.wte}
@@ -392,7 +394,7 @@ function openHeatmap(fit=true){
     best:{cap:'🔝 תדירות הקו החזק ביותר בשיא הבוקר',
         // הציון מהאינדקס (sparts.bl) — כולל הגבלת הקו החזק למדרגת ההליכה של תחנתו (איריס 03.09)
         score:p=>{if(p.sparts&&p.sparts.bl!=null)return p.sparts.bl;const b=(p.bl1!=null?p.bl1:p.bl)||0;if(!b)return 0;return bandScore(180/b,[[5,100],[10,90],[15,80],[21,70],[30,65],[40,55],[60,40],[90,15]],0)},
-        pop:p=>{const b=(p.bl1!=null?p.bl1:p.bl)||0;return b?`🔝 הקו החזק ביותר (בכיוון בודד): אוטובוס כל <b>~${Math.round(180/b)} דק׳</b> בבוקר (${b} יציאות 06–09)${p.bln?` · קו ${p.bln}${p.blst?`, ${p.blst}`:''}${p.blwt!=null?`, ${p.blwt<1?'בתוך האזור':Math.round(p.blwt)+' דק׳ הליכה'}`:''}`:''}`:'<b style="color:#b91c1c">אין אף קו עם יציאות בוקר</b>'}}};
+        pop:p=>{const b=(p.bl1!=null?p.bl1:p.bl)||0;return b?`🔝 הקו החזק ביותר (בכיוון בודד): אוטובוס כל <b>~${Math.round(180/b)} דק׳</b> בבוקר (${b} יציאות 06–09)${p.bln?` · קו ${p.bln}${p.blst?`, ${p.blst}`:''}${p.blt==='in'?', בתוך האזור':(p.blwt!=null?`, ${Math.round(p.blwt)} דק׳ הליכה`:'')}`:''}`:'<b style="color:#b91c1c">אין אף קו עם יציאות בוקר</b>'}}};
 
   // שעות שיא/כל היום רלוונטי רק לספירת קווים; טווח הספירה גם לתדירות
   // display ולא visibility: אלמנט מוסתר ב-visibility שומר את מקומו, וזה
@@ -611,7 +613,7 @@ function zLegend(){
   if(SHOWSTOPS) parts.push(
     `<span title="תחנות שנמצאות בתוך גבולות האזור עצמו"><i style="background:#16a34a"></i> בתוך האזור</span>`,
     `<span title="תחנות עד 5 דקות הליכה אמיתית מהאזור — מרחק נוח יומיומית"><i style="background:#84cc16"></i> קרוב · עד ~5 דק׳ הליכה</span>`,
-    `<span title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית"><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>`);
+    `<span title="תחנות במרחק 5–14 דקות הליכה — נספרות, והמרחק מגביל את מדרגת הקו החזק"><i style="background:#eab308"></i> רחוק · 5–10 דק׳ הליכה</span>`);
   if(SHOWROUTES) parts.push(
     `<span style="font-weight:800">🚌 צבע מסלול = תדירות הקו:</span>`,
     `<span title="אוטובוס כל 20 דקות או פחות ביום חול — עומד בתקן"><i style="background:#16a34a"></i> עד 20 דק׳</span>`,
@@ -756,7 +758,7 @@ wrap.addEventListener('touchend',e=>{
 document.getElementById('csvbtn').onclick=()=>{
   const pk=hasPk();
   const ly=hasLy();
-  const head=['אזור תעשייה','יישוב',...(ly?['סוג']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים קרוב (עד 5 דק׳ הליכה)','קווים רחוק (5–10 דק׳ הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים'];
+  const head=['אזור תעשייה','יישוב',...(ly?['סוג']:[]),...(hasPlan()?['סטטוס']:[]),'שטח קמ"ר','קווים בפנים','קווים קרוב (עד 5 דק׳ הליכה)','קווים רחוק (5–14 דק׳ הליכה)',...(pk?['קווים בשעות שיא (06–09, 15–19)']:[]),...(hasSv()?['ציון משרד התחבורה','זמינות','אמינות']:[]),'תחנות בפנים'];
   const rows=IDX.map(p=>[p.name,p.city||'',...(ly?[ZTLBL[ztOf(p)]]:[]),...(hasPlan()?[p.st=='planned'?'טרם נבנה':(p.st=='partial'?'בנוי חלקית':'פעיל')]:[]),p.area,cnt(p,'li'),cnt(p,'lg'),cnt(p,'ln'),...(pk?[pkc(p)]:[]),...(hasSv()?[p.sf??'',p.sa??'',p.sr??'']:[]),p.in??0]);
   const csv='﻿'+[head,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a=document.createElement('a');
@@ -823,7 +825,7 @@ function openPark(f,push=true){
       return `<div class="scorehero">
         <div class="sch-main"><div class="sch-lbl">🎯 הציון המשוקלל של האתר</div><div class="sch-big" style="background:${k.bg};color:${k.fg}">${sc==null?'—':sc}</div><div class="sch-sub">0–100</div></div>
         <div class="sch-comps">
-          ${comp('הקו החזק בשיא הבוקר',40,sp.bl,_pi?(hw(_pi.bl1,180)+(_pi.bln?`<br>קו ${esc(String(_pi.bln))}${_pi.blst?` · ${esc(_pi.blst)}`:''}${_pi.blwt!=null?` · ${_pi.blwt<1?'בתוך האזור':Math.round(_pi.blwt)+' דק׳ הליכה'}`:''}`:'')):'—','הקו עם הכי הרבה יציאות 06–09 בכיוון האזור, מוגבל למדרגת ההליכה של התחנה שבה הוא עוצר (איריס 03.09). תחנה מעל 15 דק׳ אינה נספרת')}
+          ${comp('הקו החזק בשיא הבוקר',40,sp.bl,_pi?(hw(_pi.bl1,180)+(_pi.bln?`<br>קו ${esc(String(_pi.bln))}${_pi.blst?` · ${esc(_pi.blst)}`:''}${_pi.blt==='in'?' · בתוך האזור':(_pi.blwt!=null?` · ${_pi.blt==='gate'?'בשער האזור, ':''}${Math.round(_pi.blwt)} דק׳ הליכה`:'')}`:'')):'—','הקו עם הכי הרבה יציאות 06–09 בכיוון האזור, מוגבל למדרגת ההליכה של התחנה שבה הוא עוצר (איריס 03.09). תחנה מעל 15 דק׳ אינה נספרת')}
           ${comp('הנקודה הרחוקה',30,sp.far,_pi&&_pi.ww!=null?`${Math.round(_pi.ww)} דק׳ הליכה`:'—','הליכה מהמפעל המרוחק ביותר לתחנה הקרובה אליו')}
           ${comp('תדירות ממוצעת בשיא',20,sp.uf,_pi?hw(_pi.pkd,420):'—','כל היציאות השימושיות ב-7 שעות השיא, לכיוון')}
           ${comp('הליכה ממרכז האזור',10,sp.near,_pi&&_pi.nearw!=null?`${Math.round(_pi.nearw)} דק׳`:'—','ממרכז הפוליגון לתחנה הקרובה')}
@@ -833,7 +835,7 @@ function openPark(f,push=true){
       <span class="stat sm" title="שטח האזור בקילומטרים רבועים">שטח <b>${d.area}</b> קמ"ר</span>
       <span class="stat sm" title="תחנות אוטובוס שנמצאות בתוך גבולות האזור עצמו">תחנות בפנים <b>${nin}</b></span>
       <span class="stat sm" title="תחנות עד 5 דקות הליכה אמיתית מהאזור">קרוב 🚶 <b>${ngate}</b></span>
-      <span class="stat sm" title="תחנות במרחק 5–10 דקות הליכה — אפשרי, אבל לא נוח יומיומית">רחוק 🚶 <b>${nnear}</b></span>
+      <span class="stat sm" title="תחנות במרחק 5–14 דקות הליכה — נספרות, והמרחק מגביל את מדרגת הקו החזק">רחוק 🚶 <b>${nnear}</b></span>
     </div>`;
     let boxes='', svcbox='';
     if(!d.strict&&!(d.stops||[]).length&&(d.lines||[]).length===0){
@@ -927,18 +929,15 @@ function openPark(f,push=true){
       const mkIn=new Set(lines.filter(L=>L.t==='in').map(mkOf));
       const isPkH=t=>('06:00'<=t&&t<'09:00')||('15:00'<=t&&t<'19:00');
       const mkPk=new Set(lines.filter(L=>(L.wd||[]).some(isPkH)).map(mkOf));
-      // יציאות שיא בכיוון הנסיעה: בפנים/בשער — הכול; בהליכה — בוקר לכיוון האזור, אחה"צ ממנו
-      const pkdZ=((d.lines)||[]).reduce((s,L)=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length,pm=wd.filter(t=>'15:00'<=t&&t<'19:00').length;
-        return s+(L.t==='in'||L.t==='gate'?am+pm:(L.dr==='in'?am:(L.dr==='out'?pm:am+pm)))},0);   // תמיד מדידת מרכז — כהגדרת התקן
+      // יציאות השיא והקו החזק — מהאינדקס, בדיוק כמו בכרטיס הציון (הסיירת 03.09:
+      // החישוב המקומי כאן ספר בפנים/בשער את שני החלונות בלי כיוון, וסתר את
+      // הכרטיס ב-297 אזורים; ו"הקו החזק" נבחר לפי ספירה גולמית בלי איחוד כיוון,
+      // בלי הגבלת ההליכה ובלי הכלל של קו שעתי — ב-43 אזורים קו אחר מזה שבכרטיס)
+      const pkdZ=_pi&&_pi.pkd!=null?_pi.pkd:null;
       const inTxt=mkIn.size===mkAll.size?'כולם עוצרים בתוך האזור':mkIn.size===0?'אף אחד לא עוצר בפנים':`${mkIn.size} עוצרים בתוך האזור`;
       h+=`<h2>קווים (${mkAll.size} — ${inTxt}${mkPk.size<mkAll.size?` · ${mkPk.size} פעילים בשעות השיא`:''}) · לחצו לשעות המלאות</h2>`;
-      // הקו החזק ביותר — התנאי השלישי (איריס): בוקר לכיוון האזור, לפי מקט
-      const blPer={};
-      ((d.lines)||[]).forEach(L=>{const wd=L.wd||[];const am=wd.filter(t=>'06:00'<=t&&t<'09:00').length;const mk2=L.mk||L.num;if(L.dr!=='out'&&am>(blPer[mk2]||0))blPer[mk2]=am;});
-      const blZ=Object.keys(blPer).length?Math.max(...Object.values(blPer)):0;
-      const blMk=Object.keys(blPer).find(k=>blPer[k]===blZ);
-      const blNum=(lines.find(L=>String(L.mk||L.num)===String(blMk))||{}).num||blMk;
-      h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ}</b>${blZ?` · הקו החזק ביותר (קו ${esc(String(blNum))}, בכיוון בודד): <b>${blZ}</b> יציאות בוקר — ${blZ>=9?'עומד לבדו בתקן (כל ≤20 דק׳) ✓':'מתחת לתקן הקו הבודד (9 = כל 20 דק׳) ✗'}`:''}</div>`;
+      const blZ=_pi?(_pi.bl1c!=null?_pi.bl1c:_pi.bl1):0;
+      h+=`<div class="note" style="margin:2px 0 6px">🚌 יציאות בשעות השיא <b>בכיוון הנסיעה</b> — בבוקר אל האזור, אחה״צ ממנו, כל הקווים יחד: <b>${pkdZ!=null?pkdZ:'—'}</b>${_pi&&_pi.bln?` · הקו החזק ביותר (קו ${esc(String(_pi.bln))}, בכיוון בודד${_pi.blst?`, ${esc(_pi.blst)}`:''}): <b>${blZ}</b> יציאות בוקר — כל ~${_pi.bl1?Math.round(180/_pi.bl1):'—'} דק׳${_pi.blb!=null?` · מדרגה ${_pi.blb}${_pi.blwt!=null&&_pi.blt!=='in'?` (${Math.round(_pi.blwt)} דק׳ הליכה מהתחנה)`:''}`:''}`:''}</div>`;
     }
     // קווים לא-סדירים: קו בלי אף יציאה בשעות השיא מוצג בקבוצה מקופלת.
     // קווי תלמידים ולילה כלל אינם בנתונים — מוחרגים במקור לפי הקטלוג הרשמי.
@@ -962,7 +961,7 @@ function openPark(f,push=true){
         <div class="lhead"><span class="lnum" style="background:${pc};color:${_lc.fg}" title="${wd.length?`${_lc.label} · ${pa} הגעות בשיא הבוקר (06–09)${_hw?` = כל ~${_hw} דק׳`:''}${mh!=null?` · תדירות אופיינית ביום: כל ~${mh} דק׳`:''}`:'אין נסיעות ביום חול'}">${esc(L2.num)}</span>
           <span class="ldest">${esc(L2.dest)}</span>
           <span class="pkhw" title="תדירות בשעת שיא הבוקר (06:00–09:00) — המדד שהציון מבוסס עליו">${pa>=2?`בשיא: כל ~${_hw} דק׳`:(pa===1?'בשיא: יציאה אחת':'בשיא: אין יציאות')}</span>
-          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה'})[L2.t]||''}">${TIER[L2.t]}</span></div>
+          <span class="tier ${L2.t}" title="${({in:'הקו עוצר בתוך שטח האזור עצמו',gate:'התחנה עד 5 דק׳ הליכה מהאזור',near:'התחנה במרחק 5–10 דק׳ הליכה',far:'התחנה במרחק 10–14 דק׳ הליכה — נספרת, והמרחק מגביל את מדרגת הקו החזק'})[L2.t]||''}">${TIER[L2.t]||L2.t}</span></div>
         <div class="lsub">תחנה: ${esc(L2.stop)} · יום חול: ${wd.length? wd.length+' הגעות · ראשונה '+wd[0]+' · אחרונה '+wd[wd.length-1] : 'אין שירות'}</div>
         ${L2.gaps&&L2.gaps.length? `<div class="gaps">${L2.gaps.map(g=>`<span class="gap" title="בין ${g[0]} ל-${g[1]} אין אף הגעה של הקו — המתנה של ${fmtGap(g).split('(')[1].replace(')','')} בלי אוטובוס (נחשב חור: 90 דק׳ ומעלה ביום חול 05:30–20:00)">⛔ חור בשירות ${fmtGap(g)}</span>`).join('')}</div>`:''}
         <div class="times">

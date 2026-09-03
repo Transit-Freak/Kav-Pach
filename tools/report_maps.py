@@ -22,7 +22,7 @@ IMG = REP / 'img'
 TILE = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 UA = 'kav-bochan-report/1.0 (+https://transit-freak.github.io/kav-bochan/; industrial-zone accessibility report)'
 COL = {'in': '#16a34a', 'gate': '#84cc16', 'near': '#eab308', 'far': '#f97316', 'blocked': '#94a3b8'}
-TIER_HE = {'in': 'בתוך האזור', 'gate': 'עד 5 דק׳', 'near': '5–10 דק׳', 'far': '10–20 דק׳', 'blocked': 'מעל 20'}
+TIER_HE = {'in': 'בתוך האזור', 'gate': 'עד 5 דק׳', 'near': '5–10 דק׳', 'far': '10–14 דק׳', 'blocked': '15 ומעלה — לא נספרת'}
 
 
 def deg2tile(lat, lon, z):

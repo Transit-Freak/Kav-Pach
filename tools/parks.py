@@ -101,7 +101,41 @@ def dist_to_poly_m(la, lo, pts, cl):
 # מהיישוב — "הכול ולא רק חלק": אזור תעשייה ממופה בלי שם עדיין מוצג.
 parks = []   # {'name', 'noname', 'polys':[pts,...], 'cen':(la,lo), 'cl', 'area'}
 def _cen(pts):
-    return (sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts))
+    """מרכז הפוליגון: מרכז השטח (שוליים), לא ממוצע הקודקודים — הממוצע מוטה
+    לצד שבו הקודקודים צפופים, וב-34 אזורים נפל מחוץ לפוליגון (הסיירת 03.09:
+    דביר 786 מ׳ בחוץ). כשמרכז השטח עצמו מחוץ לפוליגון (קעור), נבחרת נקודת
+    הרשת הפנימית הקרובה אליו ביותר, כדי ש"ממרכז האזור" יהיה תמיד בתוך האזור."""
+    n = len(pts)
+    if n < 3:
+        return (sum(p[0] for p in pts) / n, sum(p[1] for p in pts) / n)
+    a = cx = cy = 0.0
+    for i in range(n):
+        x1, y1 = pts[i][1], pts[i][0]
+        x2, y2 = pts[(i + 1) % n][1], pts[(i + 1) % n][0]
+        f = x1 * y2 - x2 * y1
+        a += f; cx += (x1 + x2) * f; cy += (y1 + y2) * f
+    if abs(a) < 1e-12:
+        return (sum(p[0] for p in pts) / n, sum(p[1] for p in pts) / n)
+    c = (cy / (3 * a), cx / (3 * a))
+    if in_poly(c[0], c[1], pts):
+        return c
+    # קעור: הנקודה הפנימית הקרובה למרכז השטח — דגימה ברשת של ~40 מ׳
+    la1, la2 = min(p[0] for p in pts), max(p[0] for p in pts)
+    lo1, lo2 = min(p[1] for p in pts), max(p[1] for p in pts)
+    cl0 = math.cos(math.radians(c[0]))
+    sla, slo = 40 / 110540.0, 40 / (111320.0 * cl0)
+    best = None
+    ga = la1
+    while ga <= la2:
+        go = lo1
+        while go <= lo2:
+            if in_poly(ga, go, pts):
+                dd = math.hypot((ga - c[0]) * 110540.0, (go - c[1]) * 111320.0 * cl0)
+                if best is None or dd < best[0]:
+                    best = (dd, (ga, go))
+            go += slo
+        ga += sla
+    return best[1] if best else c
 named = [(nm, pts) for nm, pts in polys if nm]
 unnamed = [pts for nm, pts in polys if not nm]
 for nm, pts in named:
@@ -543,10 +577,17 @@ if os.environ.get('EMIT_REGIONS'):
 CELL = 0.02   # ~2 ק"מ
 # ממצא הסיירת: המרכז נקבע מהפוליגון הראשון ולא עודכן במיזוגים — סטייה
 # עד ~930 מ' שמזהמת את ההליכה-למרכז, הסיווגים וכיוון הנסיעה
+# אזור מכמה פוליגונים: המרכז הוא מרכז השטח של הפוליגון הגדול ביותר — ממוצע
+# כל הקודקודים נפל בין הכתמים, מחוץ לכולם (הסיירת 03.09: דביר 786 מ׳ בחוץ)
+def _ring_area(pts):
+    a = 0.0
+    for i in range(len(pts)):
+        x1, y1 = pts[i][1], pts[i][0]; x2, y2 = pts[(i + 1) % len(pts)][1], pts[(i + 1) % len(pts)][0]
+        a += x1 * y2 - x2 * y1
+    return abs(a) / 2
 for pk in parks:
     if len(pk['polys']) > 1:
-        _av = [q for _pp in pk['polys'] for q in _pp]
-        pk['cen'] = (sum(a for a, b in _av) / len(_av), sum(b for a, b in _av) / len(_av))
+        pk['cen'] = _cen(max(pk['polys'], key=_ring_area))
         pk['cl'] = math.cos(math.radians(pk['cen'][0]))
 grid = defaultdict(list)
 for i, pk in enumerate(parks):
@@ -858,7 +899,9 @@ for _pi0, _sl in _zone_walks.items():
     for _ix0 in (1, 3):
         _vals = [walk[(_pi0, s0)][_ix0] for (s0, _, _) in _sl
                  if walk.get((_pi0, s0)) and len(walk[(_pi0, s0)]) == 4 and walk[(_pi0, s0)][_ix0] is not None]
-        if _vals and min(_vals) > WALK_FAR_SEC:
+        # "ארוכה" = חסומה, מ-15 דק׳ ומעלה (הסיירת 03.09: הסף כאן נשאר 10 דק׳
+        # אחרי שהרף עלה ל-15, ומדידות תקפות של 10–14 דק׳ נזרקו ב-146 אזורים)
+        if _vals and min(_vals) >= WALK_MAX_SEC:
             _zone_long[(_pi0, _ix0)] = min(_vals)
 
 def _nb_long(pi, sid, sla, slo, ix):
@@ -871,7 +914,7 @@ def _nb_long(pi, sid, sla, slo, ix):
         if math.hypot((sla - la2) * 110540.0, (slo - lo2) * 111320.0 * _clp) > 250:
             continue
         v2 = walk.get((pi, sid2))
-        if v2 and len(v2) == 4 and v2[ix] is not None and v2[ix] > WALK_FAR_SEC:
+        if v2 and len(v2) == 4 and v2[ix] is not None and v2[ix] >= WALK_MAX_SEC:
             return v2[ix]
     return None
 
@@ -884,7 +927,7 @@ def _nb_ok(pi, sid, sla, slo, ix):
         if math.hypot((sla - la2) * 110540.0, (slo - lo2) * 111320.0 * _clp) > 250:
             continue
         v2 = walk.get((pi, sid2))
-        if v2 and len(v2) == 4 and v2[ix] is not None and v2[ix] <= WALK_FAR_SEC:
+        if v2 and len(v2) == 4 and v2[ix] is not None and v2[ix] < WALK_MAX_SEC:
             return True
     return False
 
@@ -918,14 +961,22 @@ for sid, hits in stop_hits.items():
         _air_e = max(d, 20)
         if _implausible(em, _air_e):
             em = int(_air_e * 1.3); es = int(em / 83.0 * 60); _guard_fired[1] += 1
+        # רצפה פיזית (הסיירת 03.09): ניתוב שקצר מהקו האווירי (43 תחנות) הוא
+        # הצמדה של התחנה או המרכז לכביש קרוב — לא הליכה. הרצפה היא הקו הישר.
+        if cm is not None and cm < _air_c:
+            cm = int(_air_c); cs = max(cs or 0, int(cm / 83.0 * 60))
+        if em is not None and em < _air_e:
+            em = int(_air_e); es = max(es or 0, int(em / 83.0 * 60))
         # הקצה קרוב מהמרכז בהגדרה; דגימת גבול של 8 נקודות מפספסת לפעמים את
         # הנקודה הקרובה לתחנה (הרחבה כרמיאל: מרכז 20 דק׳, "קצה" 46)
         if cs is not None and es is not None and es > cs:
             em, es = cm, cs
-        if cs is not None and cs > WALK_FAR_SEC:
+        # מדידה "ארוכה" שנזרקת לטובת הגאומטרי: רק מ-15 דק׳ ומעלה (הרף של איריס
+        # 03.09) — 10–14 דק׳ היא מדרגה לגיטימית ('far'), לא חשד לכשל ניתוב
+        if cs is not None and cs >= WALK_MAX_SEC:
             if (cm is not None and cm > 10 * _air_c + 1000) or _nb_ok(pi, sid, _sla, _slo, 3):
                 cm = cs = None
-        if es is not None and es > WALK_FAR_SEC:
+        if es is not None and es >= WALK_MAX_SEC:
             if (em is not None and em > 10 * max(d, 50) + 1000) or _nb_ok(pi, sid, _sla, _slo, 1):
                 em = es = None
         if cs is None and tier != 'in' and not _nb_ok(pi, sid, _sla, _slo, 3):
@@ -1018,8 +1069,8 @@ def build_lines(stops_here, tk):
         if any(is_peak(t) for t in (L.get('wd') or [])):
             if k0 not in peak_best or r0 < peak_best[k0]:
                 peak_best[k0] = r0
-    # 'far' (10–20 דק׳) מצטרף לספירת "רחוק" — הקווים נספרים, והמרחק נענש
-    # בציון ההליכה (תיקון הקליף, החלטת איריס 01.09)
+    # 'far' (10–14 דק׳ מוצגות) מצטרף לספירת "רחוק" — הקווים נספרים, והמרחק
+    # מגביל את מדרגת הקו החזק (איריס 01.09, 03.09)
     counts = (sum(1 for v in best_line.values() if v == TIER_RANK['in']),
               sum(1 for v in best_line.values() if v == TIER_RANK['gate']),
               sum(1 for v in best_line.values() if v in (TIER_RANK['near'], TIER_RANK['far'])))
@@ -1032,9 +1083,10 @@ def build_lines(stops_here, tk):
 
 
 
-# ==== הציון המשוקלל (הגדרת איריס דור-און, 01.09.2026) ====================
-# ארבעה רכיבים, כל אחד 0–100, במשקלים 15/35/25/25. הגבול שייך למדרגה
-# הטובה ("בדיוק 10 דק'" = 80). הציון הסופי 0–100 על סקאלת עשר המדרגות.
+# ==== הציון המשוקלל (הגדרת איריס דור-און, 01.09.2026; עודכן 02.09, 03.09) ====
+# ארבעה רכיבים, כל אחד 0–100, במשקלים 20/40/30/10 (IRIS_W). בתדירות הגבול
+# שייך למדרגה הטובה ("בדיוק 10 דק'" = 90); בהליכה 15 דק׳ ומעלה = 0 (03.09).
+# הציון הסופי 0–100 על סקאלת עשר המדרגות.
 # טבלת התדירות — גרסת איריס 02.09 ("בוא נשנה קצת"): המדרגות מ-10 דק׳ ומעלה
 # הוגדרו מחדש, והצוק רוכך — 41–60 דק׳ = 40 (היה 55), 61–90 = 15 (היה 0),
 # מעל 90 = 0. שתי המדרגות העליונות (עד 5 = 100, עד 10 = 90) לא הוזכרו ונשארו.
@@ -1104,7 +1156,9 @@ def iris_score(pkd, bl1, ww, near_walk, bl_band=None):
         'far': _wband(ww),
         'near': _wband(near_walk),
     }
-    return round(sum(c[k] * IRIS_W[k] for k in IRIS_W)), c
+    # עיגול חצי-למעלה (72.5 → 73), לא "לזוגי" של פייתון (72.5 → 72): 74 אזורים
+    # קיבלו נקודה פחות בגלל זה (הסיירת 03.09)
+    return int(sum(c[k] * IRIS_W[k] for k in IRIS_W) + 0.5), c
 
 index = []
 out_i = 0
@@ -1277,18 +1331,24 @@ for pi, pk in enumerate(parks):
                             _pts_grid.append((_ga, _go))
                     _go += _slo
                 _ga += _sla
+        # הנקודה הרחוקה נמדדת רק אל תחנות שנספרות (עד 15 דק׳ מהמרכז). תחנה
+        # חסומה נשארת ב-outstops בשביל מתג "הקצה" באתר, אבל הציון לא סופר
+        # אותה — ולכן גם ההליכה אליה לא נספרת (הסיירת 03.09: 21 אזורים קיבלו
+        # מדרגת נקודה רחוקה בזכות תחנה שהציון עצמו מסרב לספור; הרחבה כרמיאל,
+        # לוד צפון). בלי אף תחנה נספרת אין נקודה רחוקה, והרכיב 0.
+        _fst = [s for s in outstops if s.get('t') != 'blocked']
         _air = []   # (דקות אוויריות, נקודה) לכל נקודת דגימה
-        for _p in _pts:
+        for _p in (_pts if _fst else []):
             _best = min(math.hypot((_p[0] - round(_s['la'], 5)) * 110540.0,
                                    (_p[1] - round(_s['lo'], 5)) * 111320.0 * _cl2)
-                        for _s in outstops)
-            _air.append((_best * 1.3 / 75.0, _p))
+                        for _s in _fst)
+            _air.append((_best * 1.3 / 83.0, _p))   # 83 מ׳/דק׳ כמו בכל אומדן אווירי אחר (הסיירת 03.09)
         _worst = max((t for t, _ in _air), default=0.0)
         _worst_src = 'air'
         # החלטת איריס 01.09: הנקודה הרחוקה היא הליכה אמיתית של עובד —
         # לא מרחק אווירי. מנתבים ב-OSRM את 12 המועמדות הרחוקות ביותר
         # (המקסימום האמיתי נמצא ביניהן כמעט תמיד) ולוקחים את הגדולה.
-        if OSRM_URL and outstops and _air:
+        if OSRM_URL and _fst and _air:
             # האומדן האווירי נוסע יחד עם המועמד. קודם הוא נשלף מ-_air לפי
             # זהות אובייקט, ואם החיפוש לא מצא התאמה הוחזר None — ואז תנאי
             # השומר היה נכשל בשקט ומעביר את הערך השגוי הלאה. זה מה שאיפשר
@@ -1301,8 +1361,8 @@ for pi, pk in enumerate(parks):
             # אליה (אווירית), איחוד, עד 60 יעדים.
             _dset = {}
             for _q in _cand:
-                for _s in sorted(outstops, key=lambda s: math.hypot((_q[0] - s['la']) * 110540.0,
-                                                                     (_q[1] - s['lo']) * 111320.0 * _cl2))[:5]:
+                for _s in sorted(_fst, key=lambda s: math.hypot((_q[0] - s['la']) * 110540.0,
+                                                                 (_q[1] - s['lo']) * 111320.0 * _cl2))[:5]:
                     _dset[(_s['la'], _s['lo'])] = True
             _dest = list(_dset)[:60]
             try:
@@ -1331,7 +1391,8 @@ for pi, pk in enumerate(parks):
         _grid_t = [t for t, q in _air if (round(q[0], 6), round(q[1], 6)) in _gset]
         _cov = sum(1 for t in _grid_t if t <= 10)
         _covp = _cov * 100.0 / max(1, len(_grid_t))
-        strict_m = {'worst': round(_worst, 1), 'wsrc': _worst_src,
+        # בלי אף תחנה נספרת אין נקודה רחוקה (None → הרכיב 0), לא "0 דקות"
+        strict_m = {'worst': (round(_worst, 1) if _fst else None), 'wsrc': _worst_src,
                     'cov10': (min(99, int(_covp)) if _worst > 10 else round(_covp))}
     else:
         strict_m = None
@@ -1511,11 +1572,15 @@ if used_rids and os.path.exists(SHAPES):
             # חלופות היא אוטובוס אחד (ממצא הסיירת 03.09: אנווה נאמן, קו 1)
             _b1t.setdefault(_k1, set()).update((_L['code'], t) for t in (_L.get('wd') or []))
             _s = _sbc.get(_L['code']) or {}
-            _w = 0.0 if _s.get('t') in ('in', 'gate') else _s.get('wt')
-            if _w is None:   # תחנה בלי ניתוב — אומדן אווירי כמו ב-nearw
-                _w = (_s.get('d') or 0) * 1.3 / 83.0
+            # דקות ההליכה של התחנה לפי טבלת איריס: תחנה בשער נמדדת בהליכה שלה
+            # באמת (הסיירת 03.09: 'gate' קיבלה 0 והכרטיס כתב 'בתוך האזור'); תחנה
+            # בתוך האזור — אומדן אווירי מהמרכז, כמו ב-nearw
+            _w = _s.get('wt')
+            if _w is None:
+                _w = math.hypot((_s.get('la', _cen[0]) - _cen[0]) * 110540.0,
+                                (_s.get('lo', _cen[1]) - _cen[1]) * 111320.0 * _cl) * 1.3 / 83.0
             if _k1 not in _b1w or _w < _b1w[_k1][0]:
-                _b1w[_k1] = (_w, _s.get('n'), _L.get('num'))
+                _b1w[_k1] = (_w, _s.get('n'), _L.get('num'), _s.get('t'))
         # חלופות של אותו כיוון (218+218א לאותו יעד) הן שירות אחד לנוסע.
         # ממצא איריס 02.09 (מישור אדומים, קו 169): קו שעתי שמגיע ב-07:10, 08:10,
         # 09:10 נספר קודם כ-2 יציאות ב-06:00–09:00 → "כל 90 דק׳". עכשיו:
@@ -1537,9 +1602,10 @@ if used_rids and os.path.exists(SHAPES):
             _e['bl1'], _e['bl1c'], _e['blb'] = _best[2], _best[3], _best[0]
             _e['bln'], _e['blst'] = _b1w[_best[4]][2], _b1w[_best[4]][1]
             _e['blwt'] = round(_b1w[_best[4]][0], 1)
+            _e['blt'] = _b1w[_best[4]][3]      # סוג התחנה (in/gate/near/far) — לכרטיס
         else:
             _e['bl1'] = _e['bl1c'] = _e['blb'] = 0
-            _e['bln'] = _e['blst'] = _e['blwt'] = None
+            _e['bln'] = _e['blst'] = _e['blwt'] = _e['blt'] = None
         # ── הציון המשוקלל של איריס (01.09) — מחושב פעם אחת, משמש בכל התוצרים.
         # "תחנות" = דקות ההליכה ממרכז האזור אל התחנה הקרובה ביותר.
         # תחנות שבתוך האזור אינן מנותבות ואין להן wt — הן מקבלות אומדן אווירי
