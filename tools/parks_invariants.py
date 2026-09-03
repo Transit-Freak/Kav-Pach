@@ -286,8 +286,8 @@ samp = random.sample([p for p in P if 'cv' in p and zones.get(p['f'])], k=min(20
 bad = []
 for p in samp:
     z = zones[p['f']]
-    # רק תחנות נספרות (03.09): הכיסוי, כמו הנקודה הרחוקה, נמדד אל תחנות עד 14 דק׳ מהמרכז
-    st = [s for s in z.get('stops') or [] if s.get('t') != 'blocked']
+    # כל תחנה (איריס 03.09): הכיסוי, כמו הנקודה הרחוקה, נמדד אל התחנה הקרובה — כל תחנה
+    st = list(z.get('stops') or [])
     if not st or not z.get('polys'):
         continue
     cl = math.cos(math.radians(p['la']))
