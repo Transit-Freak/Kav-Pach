@@ -468,7 +468,7 @@ const dedupCount = (arr) => {
   (arr || []).forEach((x) => { const k = typeof x === "string" ? x : x[0] + "|" + x[1]; const e = m.get(k); if (e) e.n += 1; else m.set(k, { x, n: 1 }); });
   return [...m.values()];
 };
-function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins, sg }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins, sg, planned }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // קטעי-שינוי ששולפו מהארכיון (v.sg) — הגאומטריה האמיתית של מה שירד
@@ -521,14 +521,19 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     // לאורך כל המסלול נקרא בטעות כ"שינוי לא מסומן" בקטעים שבהם שני
     // השרטוטים זהים והוא מציץ מתחת לירוק (דיווח שלמה)
     if (prev && prev.length > 1) {
-      L.polyline(prev, { color: "#dc2626", weight: focused ? 2 : 4, opacity: focused ? 0.12 : 0.75, dashArray: "8 7" }).addTo(map);
+      // תוכנית שלא יצאה לפועל: המסלול בפועל הוא רקע אפור, לא "מסלול קודם" אדום
+      L.polyline(prev, planned
+        ? { color: "#475569", weight: 4, opacity: 0.6 }
+        : { color: "#dc2626", weight: focused ? 2 : 4, opacity: focused ? 0.12 : 0.75, dashArray: "8 7" }).addTo(map);
     }
     if (cur.length > 1) {
-      L.polyline(cur, approx
+      L.polyline(cur, planned
+        ? { color: "#9f1239", weight: 5, opacity: 0.9, dashArray: "10 8" }   // המסלול שתוכנן ולא נסע — קו מקווקו בין התחנות
+        : approx
         ? { color: "#7c3aed", weight: 4, opacity: 0.8, dashArray: "7 9" }   // קו מקורב בין תחנות
         : { color: prev ? "#16a34a" : "#4c1d95", weight: focused ? 3 : 5, opacity: focused ? 0.25 : 0.9 }).addTo(map);
     }
-    if (focused && diff) {
+    if (focused && diff && !planned) {
       diff.prevSegs.forEach((s2) => L.polyline(s2, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
       diff.curSegs.forEach((s2) => L.polyline(s2, { color: "#16a34a", weight: 7, opacity: 0.95 }).addTo(map));
     }
@@ -606,19 +611,19 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
           צמוד (כיכר חדשה בקו 26 — הקו הישן משיק לה) אין בכלל מה לסמן
           באדום, ואומרים את זה במקום להמציא קטע (דרישת שלמה) */}
       {diff && diff.derived === "prev" && diff.prevSegs.length > 0 && (
-        <div className="mut">🛈 הקטע האדום מסמן את התוואי הישן במקום שבו השרטוט תוקן — חתוך מהשרטוט הישן עצמו, בדיוק בין נקודות ההתפצלות מהתוואי החדש; הירוק הוא התיקון.</div>
+        <div className="mut">ℹ️ הקטע האדום מסמן את התוואי הישן במקום שבו השרטוט תוקן — חתוך מהשרטוט הישן עצמו, בדיוק בין נקודות ההתפצלות מהתוואי החדש; הירוק הוא התיקון.</div>
       )}
       {diff && diff.derived === "prev" && diff.prevSegs.length === 0 && (
-        <div className="mut">🛈 כאן נוסף תוואי חדש (הירוק) — התוואי הישן במקום שבו השרטוט תוקן עבר צמוד לחדש, בלי סטייה משלו, ולכן אין קטע אדום.</div>
+        <div className="mut">ℹ️ כאן נוסף תוואי חדש (הירוק) — התוואי הישן במקום שבו השרטוט תוקן עבר צמוד לחדש, בלי סטייה משלו, ולכן אין קטע אדום.</div>
       )}
       {diff && diff.derived === "cur" && diff.curSegs.length > 0 && (
-        <div className="mut">🛈 הקטע הירוק מסמן את התוואי החדש במקום שבו השרטוט תוקן — חתוך מהשרטוט החדש עצמו, בדיוק בין נקודות ההתפצלות מהתוואי הישן; האדום הוא מה שירד.</div>
+        <div className="mut">ℹ️ הקטע הירוק מסמן את התוואי החדש במקום שבו השרטוט תוקן — חתוך מהשרטוט החדש עצמו, בדיוק בין נקודות ההתפצלות מהתוואי הישן; האדום הוא מה שירד.</div>
       )}
       {diff && diff.derived === "cur" && diff.curSegs.length === 0 && (
-        <div className="mut">🛈 כאן ירד תוואי (האדום) — התוואי החדש במקום שבו השרטוט תוקן עובר צמוד לישן, בלי סטייה משלו, ולכן אין קטע ירוק.</div>
+        <div className="mut">ℹ️ כאן ירד תוואי (האדום) — התוואי החדש במקום שבו השרטוט תוקן עובר צמוד לישן, בלי סטייה משלו, ולכן אין קטע ירוק.</div>
       )}
       {diff && !diff.prevSegs.length && !diff.curSegs.length && (
-        <div className="mut">🛈 שני השרטוטים כמעט חופפים (ההבדל קטן מעשרות מטרים) — לכן אין קטע אדום או ירוק מודגש; הקו האדום המקווקו מסתתר מתחת לירוק.</div>
+        <div className="mut">ℹ️ שני השרטוטים כמעט חופפים (ההבדל קטן מעשרות מטרים) — לכן אין קטע אדום או ירוק מודגש; הקו האדום המקווקו מסתתר מתחת לירוק.</div>
       )}
     </div>
   );
@@ -648,7 +653,7 @@ function TipTag({ cls, tip, children }) {
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); }}
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setOpen(!open); } }}>
         {children}</span>
-      {open && <span className="tipnote" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>🛈 {tip}</span>}
+      {open && <span className="tipnote" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>ℹ️ {tip}</span>}
     </>
   );
 }
@@ -1412,8 +1417,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     return null;
   };
   const ownGeo = !!(v.shp || (v.stops || []).length > 1);
-  const gv = cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v));
-  const borrowed = !cmpOn && !ownGeo && gv !== v;
+  // שינוי שתוכנן ולא יצא לפועל (שלמה 03.09: "כל שינוי שלא נכנס אמור להיות
+  // מפה"): המפה מציגה את המסלול שתוכנן (pstops) במקווקו, ואת המסלול בפועל
+  // של הווריאנט, אם היה כזה, כרקע אפור — בלי סימוני נוספו/ירדו, כי זה לא
+  // שינוי שקרה אלא תוכנית שירדה.
+  const plannedV = !cmpOn && v.k === "planned-dropped" && (v.pstops || []).length > 1;
+  const actualV = plannedV ? geoNear(vi) : null;
+  const gv = plannedV ? { d: v.d, stops: v.pstops, shp: "" } : (cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v)));
+  const borrowed = !cmpOn && !ownGeo && !plannedV && gv !== v;
   // "מקורב" נמדד על הגרסה שמצוירת בפועל — כשהמפה שאולה מגרסה אחרת,
   // הדיוק שלה הוא של אותה גרסה ולא של האירוע שנבחר
   const approx = !gv.shp && (gv.stops || []).length > 1;
@@ -1430,14 +1441,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     && !(v.add || []).length && !(v.rem || []).length;
   // השוואה מפורשת ("השווה") עובדת תמיד — חסימת הצילומים חלה רק על
   // ההשוואה האוטומטית של הכרטיס (התיקון הקודם שבר את ההשוואה, שלמה)
-  const comparable = cmpOn || (!!pv && !snapOnly &&
-    (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp)));
+  const comparable = !plannedV && (cmpOn || (!!pv && !snapOnly &&
+    (!!(v.add || v.rem) || ROUTE_KINDS.has(v.k) || !!(v.shp && pv.shp))));
   // הגרסה הסמוכה עשויה להיות אירוע-רישום בלי רצף תחנות — ואז "המסלול
   // הקודם" והתחנות שירדו לא צוירו כלל (הבאג שצילם שלמה בקו 35 אשדוד).
   // שואלים את התיעוד הגיאומטרי האחרון שלפני האירוע, כמו במצב השוואה.
-  const pgv = cmpOn ? (geoAt(pi) || pv)
-    : (pv && !(pv.stops || []).length && !pv.shp ? (geoAt(pi) || pv) : pv);
-  const prev = comparable ? toPts(pgv) : null;
+  const pgv = plannedV ? actualV : (cmpOn ? (geoAt(pi) || pv)
+    : (pv && !(pv.stops || []).length && !pv.shp ? (geoAt(pi) || pv) : pv));
+  const prev = plannedV ? (actualV ? toPts(actualV) : null) : (comparable ? toPts(pgv) : null);
   const prevApprox = !!(pgv && prev && !pgv.shp);
   // קובץ 2012 מקבץ את כל הווריאנטים הארציים של המספר — מציגים רק את
   // הרלוונטיים לקו הפתוח (חפיפת מילים עם התחנות/היעד), עם אפשרות לחשוף הכל
@@ -1726,7 +1737,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   <TipTag cls="rvflag" tip="השינוי הקודם התבטל כאן — רצף התחנות חזר למה שהיה לפניו">
                     ↩ החזרת המצב הקודם</TipTag>
                 ) : null}
-                {x.note && <span className="evnote"> {noteFix(x.note)}</span>}
+                {x.note && x.k !== "planned-dropped" && <span className="evnote"> {noteFix(x.note)}</span>}
               </div>
               {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
                   בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
@@ -1735,12 +1746,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   מתי היה אמור להיכנס, ומתי בוטל (ירד מהרישום) */}
               {x.k === "planned-dropped" && (x.ps || x.pc) && (
                 <div className="sub">
-                  📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b> · בוטל ב-<b>{fmtD(x.pc || x.d)}</b>
+                  📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b>
+                  {x.pc && x.ps && x.pc >= x.ps ? <> · לא יצא לפועל, ירד מהרישום ב-<b>{fmtD(x.pc)}</b></> : <> · בוטל ב-<b>{fmtD(x.pc || x.d)}</b>, לפני המועד</>}
                   {x.sd && gapDays(x.sd, x.pc || x.d) > 1 ? <> (נראה לאחרונה ב-{fmtD(x.sd)})</> : null}
                   {x.pf ? <> · פורסם לראשונה ב-{fmtD(x.pf)}</> : null}
-                  {(x.pstops || []).length > 1 && (
-                    <div>המסלול שתוכנן ({x.pstops.length} תחנות): {x.pstops.slice(0, 14).map((s) => s[1]).join(" › ")}{x.pstops.length > 14 ? " › …" : ""}</div>
-                  )}
+                  {(x.pstops || []).length > 1 ? <> · {x.pstops.length} תחנות במסלול שתוכנן 🗺️</> : null}
                 </div>
               )}
               {(x.add || x.rem) && (() => {
@@ -1766,16 +1776,24 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
       </div>
       <div className="card main">
         <div className="vhead">
-          {cmpOn ? <>השוואה שביקשת: <b>{evDate(v).txt}</b> מול <b>{evDate(pv).txt}</b></>
+          {plannedV ? <>שינוי שתוכנן ל-<b>{fmtD(v.ps)}</b> ולא יצא לפועל</>
+            : cmpOn ? <>השוואה שביקשת: <b>{evDate(v).txt}</b> מול <b>{evDate(pv).txt}</b></>
             : <>גרסת <b>{evDate(v).txt}</b>{prev ? <> מול הגרסה שלפניה (<b>{evDate(pv).txt}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}</>}
         </div>
+        {plannedV && (
+          <div className="mut">
+            {v.pc && v.ps && v.pc >= v.ps ? <>לא יצא לפועל במועד: ירד מהרישום ב-<b>{fmtD(v.pc)}</b></> : <>בוטל ב-<b>{fmtD(v.pc || v.d)}</b>, לפני המועד</>}
+            {v.pf ? <> · פורסם לראשונה ב-{fmtD(v.pf)}</> : null}
+            {" · "}המסלול שתוכנן ({v.pstops.length} תחנות) במקווקו{actualV ? <>; המסלול בפועל של הווריאנט, מ-{fmtD(actualV.d)}, באפור</> : <>; הווריאנט לא נסע מעולם</>}.
+          </div>
+        )}
         {/* אי-הוודאות אינה בפער שבין שתי הגרסאות: המנוע עובר על כל צילומי
             הארכיון, ולכן פער ארוך בין גרסאות פירושו שהמסלול באמת לא השתנה
             לאורכו. אי-הוודאות היחידה היא המרווח בין שני צילומים סמוכים,
             וזה בדיוק מה ש-'sd' מודד. */}
         {!cmpOn && !evDate(v).exact && (
           <div className="gapwarn">
-            🛈 היום המדויק אינו ידוע: {evDate(v).tip}.
+            ℹ️ היום המדויק אינו ידוע: {evDate(v).tip}.
           </div>
         )}
         {v.k === "times" && v.tb ? (
@@ -1783,7 +1801,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
              שבוטל בלי שום אירוע לו"ז מקבל, שנה אחרי הביטול, את שעות-היציאה
              שלו מיום-הארכיון האחרון שבו פעל */
           <div className="tsnap-wrap">
-            <div className="mut">🛈 {noteFix(v.note)} — נכון ל-{fmtD(v.d)}, היום האחרון שבו הקו מופיע בארכיון.</div>
+            <div className="mut">ℹ️ {noteFix(v.note)} — נכון ל-{fmtD(v.d)}, היום האחרון שבו הקו מופיע בארכיון.</div>
             <table className="tsnap"><tbody>
               {v.tb.map(([label, ts]) => (
                 <tr key={label}>
@@ -1795,14 +1813,14 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           </div>
         ) : !gv.shp && !((gv.stops || []).length > 1) ? (
           <div className="nogeo">
-            🛈 {noteFix(v.note) || "אין פירוט לגרסה זו"}<br />
+            ℹ️ {noteFix(v.note) || "אין פירוט לגרסה זו"}<br />
             <span className="mut">רשומת-עבר מארכיון אופן באס (הסדנא לידע ציבורי) — המסלול המדויק לא זמין לתקופה זו. רצף התחנות יושלם במילוי הלילי משלב ב׳.</span>
           </div>
         ) : (<>
         {/* ההשוואה עונה על "מה השתנה", אבל לא על "איך הקו נראה עכשיו" —
             שתי השכבות יחד מקשות לקרוא את המסלול עצמו. הכפתור מסיר את
             שכבת העבר ומשאיר את המסלול המלא כפי שהוא אחרי השינוי. */}
-        {prev && (
+        {prev && !plannedV && (
           <div className="onlycur">
             <button className={"kchip" + (onlyCur ? "" : " on")}
               style={onlyCur ? {} : { borderColor: "#7c3aed", color: "#5b21b6" }}
@@ -1813,17 +1831,17 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           </div>
         )}
         {borrowed && (
-          <div className="mut">🛈 האירוע עצמו אינו נושא מסלול — המפה מציגה את המסלול המתועד
+          <div className="mut">ℹ️ האירוע עצמו אינו נושא מסלול — המפה מציגה את המסלול המתועד
             {gv.d < v.d ? " האחרון לפני האירוע" : " הראשון אחרי האירוע"}, מ-{fmtD(gv.d)}.</div>
         )}
-        {!cmpOn && !onlyCur && prev && pgv !== pv && (
-          <div className="mut">🛈 לגרסה הקודמת הסמוכה אין רצף תחנות מתועד — "המסלול הקודם" והתחנות שירדו מוצגים מהתיעוד האחרון שלפני האירוע, מ-{fmtD(pgv.d)}.</div>
+        {!cmpOn && !onlyCur && !plannedV && prev && pgv !== pv && (
+          <div className="mut">ℹ️ לגרסה הקודמת הסמוכה אין רצף תחנות מתועד — "המסלול הקודם" והתחנות שירדו מוצגים מהתיעוד האחרון שלפני האירוע, מ-{fmtD(pgv.d)}.</div>
         )}
         {/* addedCodes: codeOf מצפה לאינדקס גרסה (vi) — האינדקס בתוך רשימת
             ➕ גרם לסריקה מהגרסאות הישנות ביותר, ותחנה עם שם זהה ומק"ט אחר
             מהעבר קיבלה את הסימון הירוק במקום התחנה שבאמת נוספה */}
         <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
-          cur={cur} prev={onlyCur ? null : prev}
+          cur={cur} prev={onlyCur ? null : prev} planned={plannedV}
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
           prevStops={!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
@@ -1836,23 +1854,30 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           const un = remPinsOf(v, vi, gv).unplaced
             .filter((n) => !(((pgv && pgv.stops) || []).some((s) => s && s[1] === n)));
           return un.length ? (
-            <div className="mut">🛈 תחנות שירדו שאין להן מיקום באף תיעוד, ולכן אינן מסומנות במפה: {un.join(", ")}</div>
+            <div className="mut">ℹ️ תחנות שירדו שאין להן מיקום באף תיעוד, ולכן אינן מסומנות במפה: {un.join(", ")}</div>
           ) : null;
         })()}
         <div className="legend">
+          {plannedV ? <>
+            <span><i style={{ borderColor: "#9f1239", borderStyle: "dashed" }} /> המסלול שתוכנן ולא יצא לפועל</span>
+            {prev && <span><i style={{ borderColor: "#475569" }} /> המסלול בפועל של הווריאנט</span>}
+          </> : <>
           {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev && !onlyCur ? "#16a34a" : "#4c1d95" }} /> {prev && !onlyCur ? "המסלול החדש" : "המסלול"}</span>
           <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
+          </>}
           {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>}
         </div>
         {!cmpOn && !onlyCur && v.sg && ((v.sg.n || []).length + (v.sg.o || []).length > 0) && (
           <div className="mut">🔍 הקטע ששונה שורטט במדויק מצילומי הארכיון — אדום מקווקו = הקטע הישן, ירוק = החדש. שאר המסלול עשוי להיות מקורב.</div>
         )}
         {v.shpref
-          ? <div className="mut">🛈 רצף התחנות בצילום זהה לגרסה הסמוכה — מוצג המסלול המלא שלה במקום קו מקורב. {(v.stops || []).length} תחנות בגרסה זו.</div>
+          ? <div className="mut">ℹ️ רצף התחנות בצילום זהה לגרסה הסמוכה — מוצג המסלול המלא שלה במקום קו מקורב. {(v.stops || []).length} תחנות בגרסה זו.</div>
+          : plannedV
+          ? <div className="mut">ℹ️ המסלול שתוכנן מצויר כקו ישר בין התחנות — לתוכנית שלא יצאה לפועל אין שרטוט. {(gv.stops || []).length} תחנות בתוכנית.</div>
           : approx
-          ? <div className="mut">🛈 מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>
+          ? <div className="mut">ℹ️ מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>
           : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>}
         </>)}
         {(v.tl || v.tn) && <TimesDiff tl={v.tl} tn={v.tn} />}
@@ -1969,7 +1994,7 @@ function Line2012Page({ k12, anchorRd, openLine, onBack }) {
           </li>
         ))}
       </ol>
-      <div className="katnote">🛈 המיקום על המפה הוא של התחנה כפי שהיא רשומה היום, כי בצילום
+      <div className="katnote">ℹ️ המיקום על המפה הוא של התחנה כפי שהיא רשומה היום, כי בצילום
         2012 לא נשמרו קואורדינטות. תחנה שלא הוצלבה למק"ט אינה מופיעה על המפה, ולכן הקו מקווקו.</div>
     </div>
   );
@@ -2146,7 +2171,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
                 ⌄ הצג עוד — מוצגים {Math.min(lim, list12.length).toLocaleString()} מתוך {list12.length.toLocaleString()}
               </button>
             )}
-            <div className="katnote">🛈 "לא קיים היום" — לא נמצא לקו הזה קו תואם ברשת הנוכחית: בוטל,
+            <div className="katnote">ℹ️ "לא קיים היום" — לא נמצא לקו הזה קו תואם ברשת הנוכחית: בוטל,
               או ששונה עד ללא היכר. לחיצה על השורה פותחת את רצף התחנות שלו מ-2012.</div>
           </div>
         );
@@ -2316,7 +2341,7 @@ function RecentChanges({ idx, openLine, onAll }) {
         </React.Fragment>
       ))}
       <div className="katnote">
-        🛈 הקלידו מספר קו כדי לראות את ההיסטוריה שלו, או פתחו את "קטגוריות לבחירה"
+        ℹ️ הקלידו מספר קו כדי לראות את ההיסטוריה שלו, או פתחו את "קטגוריות לבחירה"
         וסמנו אילו סוגי שינויים להציג. התיעוד מתחיל ב-16.03.2017.
       </div>
     </div>
@@ -3104,7 +3129,7 @@ function App() {
                   </React.Fragment>
                 ))}
                 <div className="katnote">
-                  🛈 כל סוגי השינויים מחושבים מהשוואת צילומי הפיד — ממרץ 2017 ועד היום.
+                  ℹ️ כל סוגי השינויים מחושבים מהשוואת צילומי הפיד — ממרץ 2017 ועד היום.
                   היוצא מן הכלל הוא שינוי מספר הרכבים באותה יציאה, שנרשם רק מ-08.2026:
                   הוא נשען על קובץ רישוי שהארכיונים לא שמרו.
                 </div>
