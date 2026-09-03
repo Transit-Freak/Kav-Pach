@@ -65,6 +65,11 @@ def main():
                     redrawn.append((lf.get('rd'), v['d']))
                     keep.append(v)
                     changed = True
+                    if codes:
+                        prev_codes = codes
+                    if v.get('shp'):
+                        prev_shp = v['shp']
+                    continue   # בלי זה הגרסה נוספה פעמיים, והדחיסה עיבדה את אותו אובייקט פעמיים (159 קבצים נפגמו)
                 else:
                     deleted.append((lf.get('rd'), v['d'], k, v.get('src') or 'daily'))
                     if len(samples) < 12:
