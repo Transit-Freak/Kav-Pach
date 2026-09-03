@@ -76,8 +76,19 @@ jobs:
           git commit -m "data: line-history — שינויים שתוכננו ולא נכנסו לתוקף, מהארכיון (2023 ואילך)"
           ok=
           for i in 1 2 3 4; do
-            if git pull --rebase -X theirs origin main && git push origin HEAD:main; then ok=1; break; fi
-            git rebase --abort 2>/dev/null || true
+            if git pull --rebase -X theirs origin main; then
+              git push origin HEAD:main && { ok=1; break; }
+            else
+              # התנגשות מחיקה/שינוי: האיפוס מחק קובץ קו שהסורק היומי עדכן בינתיים
+              # ב-main. שומרים את הקובץ של main — האירועים מהארכיון יחזרו אליו
+              # כשהמילוי יגיע שוב לתאריכם (מפתח הכפילות הוא היום).
+              for f in $(git diff --name-only --diff-filter=U); do
+                if git cat-file -e "HEAD:$f" 2>/dev/null; then git checkout HEAD -- "$f" && git add "$f"
+                else git rm -q --cached "$f" 2>/dev/null || true; rm -f "$f"; fi
+              done
+              if GIT_EDITOR=true git rebase --continue && git push origin HEAD:main; then ok=1; break; fi
+              git rebase --abort 2>/dev/null || true
+            fi
             echo "push rejected — retry $i"; sleep 10
           done
           # דחיפה שנכשלה ארבע פעמים היא תקלה, לא הצלחה: בלי זה השרשרת הייתה
