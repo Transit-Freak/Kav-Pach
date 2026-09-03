@@ -54,6 +54,9 @@ jobs:
                   if i < 40: pg.get_pixmap(dpi=60).save(out / f'p{i+1:02d}.png')
           PY
 
+      - name: עמוד הדו"ח + קבצים בשם קבוע (קישור במקום חילוץ — שלמה 03.09)
+        run: /usr/bin/python3 tools/report_page.py || python3 tools/report_page.py
+
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
