@@ -727,6 +727,28 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
+          {/* נגישות אזורי תעשייה — אפליקציה עצמאית בתיקיית parks/, בשיתוף
+              מחלקת קידום תחבורה ציבורית בהסתדרות (שלמה 03.09: סמלי ההסתדרות בכרטיס) */}
+          <a
+            href="parks/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#0c1e4a 0%,#1e3a8a 52%,#2563eb 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full opacity-25" style={{ background: '#93c5fd' }} />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6 h-28 gap-3">
+                <span className="text-[72px] leading-none drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1">🏭</span>
+                <div className="flex items-center gap-2">
+                  <img src="parks/histadrut-logo.png" alt="תחום קידום תחבורה ציבורית — ההסתדרות" loading="lazy" className="h-14 bg-white rounded-xl px-2.5 py-1.5 shadow" />
+                  <img src="parks/rahokim-logo.png" alt="רחוקים אבל שווים" loading="lazy" className="h-14 bg-white rounded-xl px-2 py-1 shadow" />
+                </div>
+              </div>
+              <h2 className="text-3xl font-[900] text-blue-100">נגישות אזורי תעשייה</h2>
+              <p className="text-blue-100/80 font-bold mt-2 text-sm leading-relaxed">ציון נגישות לתחבורה ציבורית ל-414 אזורי תעשייה ותעסוקה: תדירות בשעות השיא והליכה מהמפעל הרחוק לתחנה, מפה, דירוג ודו"ח · בשיתוף מחלקת קידום תחבורה ציבורית בהסתדרות</p>
+              <span className="inline-flex items-center gap-2 mt-5 bg-blue-200 text-blue-950 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all">כניסה <span>←</span></span>
+            </div>
+          </a>
+
         </div>
 
         <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן · <a href="mailto:shlomihartman@gmail.com" className="hover:underline" dir="ltr">shlomihartman@gmail.com</a></p>
