@@ -837,6 +837,7 @@ if not first_run and not REBASE and not pl_first:
             # pstops ולא stops: גרסה עם stops נחשבת בכל האתר והכלים למסלול שהקו נסע
             # בו, וזה מסלול שמעולם לא נסע (הביקורת 03.09)
             ev={'d':TODAY,'k':'planned-dropped','ps':old.get('start',''),'pc':TODAY,'pstops':old.get('stopinfo') or [],'note':note}
+            if old.get('shp'): ev['pshp']=old['shp']   # השרטוט המלא של המסלול שתוכנן (שלמה 03.09)
             if old.get('last'): ev['sd']=old['last']
             if old.get('first'): ev['pf']=old['first']
             lf['versions'].append(ev)

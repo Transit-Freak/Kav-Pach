@@ -1423,7 +1423,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   // שינוי שקרה אלא תוכנית שירדה.
   const plannedV = !cmpOn && v.k === "planned-dropped" && (v.pstops || []).length > 1;
   const actualV = plannedV ? geoNear(vi) : null;
-  const gv = plannedV ? { d: v.d, stops: v.pstops, shp: "" } : (cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v)));
+  const gv = plannedV ? { d: v.d, stops: v.pstops, shp: v.pshp || "" } : (cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v)));
   const borrowed = !cmpOn && !ownGeo && !plannedV && gv !== v;
   // "מקורב" נמדד על הגרסה שמצוירת בפועל — כשהמפה שאולה מגרסה אחרת,
   // הדיוק שלה הוא של אותה גרסה ולא של האירוע שנבחר
@@ -1705,7 +1705,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                 {(() => { const ed = evDate(x); return ed.tip
                   ? <TipTag cls={ed.exact ? "" : "approxd"} tip={ed.tip}>{ed.txt}{ed.exact ? "" : " ≈"}</TipTag>
                   : <span>{ed.txt}</span>; })()}
-                {(x.shp || (x.stops || []).length > 1) ? " · 🗺️" : ""}
+                {(x.shp || (x.stops || []).length > 1 || (x.pstops || []).length > 1) ? " · 🗺️" : ""}
                 {(x.shp || (x.stops || []).length > 1) && (
                 <button className={"cmpbtn" + (cmpI === i ? " on" : "")}
                   title={cmpI === i ? "זו גרסת הבסיס להשוואה — לחיצה מבטלת" : "קביעת הגרסה הזו כבסיס, ואז לחיצה על אירוע אחר תשווה מולה"}
@@ -1875,7 +1875,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
         {v.shpref
           ? <div className="mut">ℹ️ רצף התחנות בצילום זהה לגרסה הסמוכה — מוצג המסלול המלא שלה במקום קו מקורב. {(v.stops || []).length} תחנות בגרסה זו.</div>
           : plannedV
-          ? <div className="mut">ℹ️ המסלול שתוכנן מצויר כקו ישר בין התחנות — לתוכנית שלא יצאה לפועל אין שרטוט. {(gv.stops || []).length} תחנות בתוכנית.</div>
+          ? <div className="mut">ℹ️ {gv.shp ? "השרטוט המלא של המסלול שתוכנן, כפי שפורסם בפיד" : "המסלול שתוכנן מצויר כקו ישר בין התחנות — לתוכנית הזו לא נשמר שרטוט"}. {(gv.stops || []).length} תחנות בתוכנית.</div>
           : approx
           ? <div className="mut">ℹ️ מסלול מקורב — קו ישר בין התחנות לפי רצף מארכיון אופן באס; הגאומטריה המלאה לא זמינה לתקופה זו. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>
           : <div className="mut">🔍 הגאומטריה נשמרת במלואה, בלי דילול — גם תיקון שרטוט של כמה מטרים ייראה כאן. {(gv.stops || []).length} תחנות{borrowed ? " בגרסה המוצגת" : " בגרסה זו"}.</div>}

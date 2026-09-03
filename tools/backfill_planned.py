@@ -209,6 +209,27 @@ def _fmtd(d):
     return f'{d[8:10]}.{d[5:7]}.{d[:4]}' if d and len(d) == 10 else (d or '')
 
 
+# ---- polyline (precision 5) — אותו קידוד כמו בסורק היומי, כדי שהאתר יצייר אותו ----
+def enc_num(v, out):
+    v = int(round(v))
+    v = ~(v << 1) if v < 0 else v << 1
+    while v >= 0x20:
+        out.append(chr((0x20 | (v & 0x1f)) + 63))
+        v >>= 5
+    out.append(chr(v + 63))
+
+
+def encode_shape(pts):
+    out = []
+    pla = plo = 0
+    for la, lo in pts:
+        ila, ilo = int(round(la * 1e5)), int(round(lo * 1e5))
+        enc_num(ila - pla, out)
+        enc_num(ilo - plo, out)
+        pla, plo = ila, ilo
+    return ''.join(out)
+
+
 def note_for(old, ds):
     what = 'הווריאנט' if old.get('kind') == 'new' else 'המסלול החדש'
     s = f"שינוי שתוכנן ל-{_fmtd(old.get('start'))} לא נכנס לתוקף: {what} בוטל ב-{_fmtd(ds)}, ירד מהרישום לפני שהתחיל"
@@ -220,13 +241,14 @@ def note_for(old, ds):
 
 
 # ---- קריאת צילום אחד ----
-def day_snapshot(ds, watch):
+def day_snapshot(ds, watch, known=None):
     """מחזיר (active, planned) ליום אחד.
 
     active:  rd -> {'codes': רצף הנציג הפעיל (None אם לא נקרא), 'alts': קבוצת רצפי כל התבניות הפעילות שנקראו}
              וריאנט פעיל שאינו מתוכנן ואינו במעקב מופיע בקיום בלבד.
-    planned: rd -> תוכנית {'kind','start','codes','stopinfo','line','long','op','tt'}
+    planned: rd -> תוכנית {'kind','start','codes','stopinfo','line','long','op','tt', 'shp' לתוכנית חדשה}
     watch:   הווריאנטים שתוכניתם פתוחה — עבורם נקראות כל התבניות הפעילות (לבדיקת "נכנס לתוקף").
+    known:   rd -> רצף התוכנית הפתוחה מהיום הקודם; לתוכנית חדשה או שרצפה השתנה נקרא גם השרטוט.
     """
     url = f"{S3}/gtfs_archive/{ds[:4]}/{ds[5:7]}/{ds[8:10]}/israel-public-transportation.zip"
     members = central_dir(url)
@@ -393,6 +415,48 @@ def day_snapshot(ds, watch):
             kind = 'route'
         planned[rd] = {'kind': kind, 'start': fstart.get(rid, ''), 'codes': cl, 'stopinfo': si,
                        'line': info['line'], 'long': info['long'], 'op': ag.get(info['ag'], ''), 'tt': info['tt']}
+    # השרטוט המלא של המסלול שתוכנן (שלמה 03.09: "מסלול מפורט, לא רק תחנות"):
+    # התבנית העתידית נושאת shape_id, וקוראים אותו מ-shapes.txt בזרימה — רק
+    # לתוכניות חדשות או שרצפן השתנה; תוכנית שנמשכת שומרת את השרטוט מהמצב.
+    need = {}
+    for rid in sorted(fcnt, key=lambda r: sum(fcnt[r].values())):
+        rd = routes[rid]['rd']
+        if rd in planned and (known or {}).get(rd) != planned[rd]['codes']:
+            need[frep[rid]] = rd
+    if need:
+        wsh = {k.encode() for k in need}
+        spts = {}
+        buf2 = [b'']
+        hdr2 = {}
+
+        def on_chunk2(data):
+            buf2[0] += data
+            *lines, buf2[0] = buf2[0].split(b'\n')
+            for ln in lines:
+                if not hdr2:
+                    for i, h in enumerate(ln.decode('utf-8-sig').strip().split(',')):
+                        hdr2[h.strip()] = i
+                    hdr2['_i'], hdr2['_la'], hdr2['_lo'], hdr2['_q'] = hdr2['shape_id'], hdr2['shape_pt_lat'], hdr2['shape_pt_lon'], hdr2['shape_pt_sequence']
+                    continue
+                f = ln.split(b',')
+                try:
+                    sid = f[hdr2['_i']].strip()
+                    if sid not in wsh:
+                        continue
+                    spts.setdefault(sid, []).append((int(f[hdr2['_q']]), float(f[hdr2['_la']]), float(f[hdr2['_lo']])))
+                except (IndexError, ValueError):
+                    continue
+
+        try:
+            stream_member(url, members, 'shapes.txt', on_chunk2)
+            if buf2[0].strip():
+                on_chunk2(b'\n')
+        except KeyError:
+            spts = {}
+        for sid, rd in need.items():
+            p = sorted(spts.get(sid.encode(), []))
+            if len(p) > 1:
+                planned[rd]['shp'] = encode_shape([(round(la, 5), round(lo, 5)) for _, la, lo in p])
     return active, planned
 
 
@@ -411,6 +475,8 @@ def write_events(events):
         vs = [v for v in (lf.get('versions') or []) if not (v.get('k') == KIND and v.get('d') == ds)]
         v = {'d': ds, 'k': KIND, 'src': SRC, 'ps': old.get('start', ''), 'pc': ds,
              'pstops': old.get('stopinfo') or [], 'note': note_for(old, ds)}
+        if old.get('shp'):
+            v['pshp'] = old['shp']      # השרטוט המלא של המסלול שתוכנן
         if old.get('last'):
             v['sd'] = old['last']
         if old.get('first'):
@@ -525,7 +591,7 @@ def main():
         t0 = time.monotonic()
         err = None
         try:
-            active, planned = day_snapshot(ds, set(plans))
+            active, planned = day_snapshot(ds, set(plans), {rd: P.get('codes') for rd, P in plans.items()})
             prev_n = st.get('prev_active') or 0
             if prev_n and len(active) < DEGENERATE * prev_n:
                 err = f'צילום מדולדל: {len(active)} וריאנטים פעילים מול {prev_n} בצילום הקודם'
@@ -566,7 +632,8 @@ def main():
             for rd, P in planned.items():
                 old = plans.get(rd)
                 same = old is not None and old.get('codes') == P['codes']
-                plans[rd] = {**P, 'first': (old.get('first') if same else ds), 'last': ds}
+                plans[rd] = {**P, 'shp': P.get('shp') or (old.get('shp') if same else ''),
+                             'first': (old.get('first') if same else ds), 'last': ds}
         done.add(ds)
         last_ds = ds
         st['prev_active'] = len(active)
