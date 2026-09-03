@@ -479,7 +479,14 @@ function table(vs,opsArr){
     return `<tr class="v ${on||mv?'':'off'}" tabindex="0" onclick="showV('${esc(v[0])}')">
     ${opsArr?`<td>${esc(opsArr[i].name)}</td>`:''}
     <td dir="ltr" style="text-align:right">${esc(v[0])}${v._ar?` <span title="${arLbl(v._ar)} — לפי מאגר ציי רכב אוטובוסים" class="tg" style="cursor:help;font-size:10px">מיגון</span>`:''}</td>
-    ${enr?`<td>${gT(v)?`<span class="tg">${esc(gT(v))}</span>`:'—'}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
+    ${enr?`<td>${(()=>{
+        // סוג הרכב משני המקורות זה לצד זה: הרישוי ("אוטובוס עירוני") והמאגר
+        // הרשמי של ציי הרכב ("מידיבוס", "מפרקי 3 דלתות", מיגון) — כדי שבחירת
+        // "מידיבוס" למעלה לא תיראה סותרת את "אוטובוס עירוני" בטבלה (שלמה 03.09)
+        const nz=s=>String(s||'').replace(/[\s\-]/g,'');
+        const tags=[gT(v)&&`<span class="tg">${esc(gT(v))}</span>`, v._bt&&!nz(gT(v)).includes(nz(v._bt))&&`<span class="tg" style="opacity:.8">${esc(v._bt)}</span>`,
+          v._bs&&v._bs!==v._bt&&`<span class="tg" style="opacity:.8">${esc(v._bs)}</span>`, v._ar&&`<span class="tg" style="background:#fef3c7;color:#92400e">${arLbl(v._ar)}</span>`].filter(Boolean);
+        return tags.length?tags.join(' '):'—';})()}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}${OFCOK?`<td>${v._ok!=null?fmt(v._ok):'—'}</td>`:''}
     <td>${fd(v[1])}</td><td>${fd(v[2])}</td>
@@ -539,8 +546,10 @@ function opView(ref){
     const card=(val,c,cur,setter)=>`<button class="type ${cur===val?'on':''}" onclick="${setter}=${setter==='BTF'?'BTF':'BSF'}===${JSON.stringify(val).replace(/"/g,'&quot;')}?null:${JSON.stringify(val).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(val)}</span></button>`;
     const btc=Object.entries(bt).sort((a,b)=>b[1]-a[1]).map(([t,c])=>card(t,c,BTF,'BTF')).join('');
     const bsc=Object.entries(bs).sort((a,b)=>b[1]-a[1]).map(([t,c])=>card(t,c,BSF,'BSF')).join('');
-    if(btc||bsc) ofCards=`<p class="ptitle" style="margin-top:14px">סוג וגודל — לפי מאגר ציי הרכב הרשמי</p><div class="types">${btc}${bsc}</div>`;
+    // המיגון מגיע מאותו מאגר רשמי, ולכן יושב באותה שורה עם הסוג והגודל (שלמה 03.09)
+    if(btc||bsc||armCards) ofCards=`<p class="ptitle" style="margin-top:14px">סוג, גודל ומיגון — לפי מאגר ציי הרכב הרשמי</p><div class="types">${btc}${bsc}${armCards}</div>`;
   }
+  const armInTypes=OFCOK&&ofCards?'':armCards;   // בלי המאגר הרשמי — המיגון נשאר בשורת הסוגים
   return `<button class="back" onclick="history.back()">→ חזרה לכל החברות</button>
   <div class="ophead" style="background:${color}">
     <div><h2>${esc(o.name)}</h2><div class="sub2">${fmt(o.vehicles.length)} רכבים${avgAge?` · גיל ממוצע ${avgAge}`:''} · עדכון ${fd(DATA.updated)}</div></div>
@@ -548,7 +557,7 @@ function opView(ref){
   </div>
   ${Object.keys(types).length?`<div class="panel"><p class="ptitle">פילוח לפי סוג רכב — לחיצה מסננת את הטבלה</p>
     <div class="types">${Object.entries(types).sort((a,b)=>b[1]-a[1]).map(([t,c])=>
-      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armCards}${elCards}</div>${ofCards}</div>`:''}
+      `<button class="type ${TYPEF===t?'on':''}" onclick="TYPEF=TYPEF===${JSON.stringify(t).replace(/"/g,'&quot;')}?null:${JSON.stringify(t).replace(/"/g,'&quot;')};LIMIT=200;render()"><b>${fmt(c)}</b><span>${esc(t)}</span></button>`).join('')}${armInTypes}${elCards}</div>${ofCards}</div>`:''}
   ${yk.length?`<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון — וכמה מהם ${YEARF?`היו בשימוש בשנת ${YEARF}`:'פעילים בפועל'}</p>
       ${calYears.length>1?`<div class="filters">
         <button class="fchip ${YEARF===null?'on':''}" onclick="YEARF=null;render()">היום</button>
@@ -560,12 +569,15 @@ function opView(ref){
     </div>`:'<div class="panel"><p class="ptitle">כמה רכבים מכל שנתון</p><div class="empty">שנות הייצור יתווספו בהעשרה הקרובה מהמאגר הממשלתי</div></div>'}
   <div class="panel"><p class="ptitle">הרכבים${TYPEF?' · מסונן: '+esc(TYPEF):''}${ARF?' · '+(ARF==='y'?'ממוגני ירי':ARF==='s'?'ממוגני אבנים':'ממוגנים'):''}${BTF?' · '+esc(BTF):''}${BSF?' · '+esc(BSF):''}${ELF!==null?' · '+(ELF?'חשמליים':'לא חשמליים'):''}</p>
     <div class="filters">
-      <button class="fchip ${STATF===null?'on':''}" onclick="STATF=null;LIMIT=200;render()">הכול</button>
-      <button class="fchip ${STATF===1?'on':''}" onclick="STATF=1;LIMIT=200;render()">פעילים</button>
-      <button class="fchip ${STATF===0?'on':''}" onclick="STATF=0;LIMIT=200;render()">ירדו מהשירות</button>
+      ${(()=>{
+        // "הכול" = בלי שום סינון (שלמה 03.09: כשבוחרים משהו אחר, "הכול" לא
+        // יכול להישאר מסומן). לחיצה עליו מנקה גם את הסינון מכרטיסי הסוג/המיגון.
+        const none=STATF===null&&KABF===null&&!ARF&&!TYPEF&&!BTF&&!BSF&&ELF===null;
+        return `<button class="fchip ${none?'on':''}" onclick="STATF=null;KABF=null;ARF=null;TYPEF=null;BTF=null;BSF=null;ELF=null;LIMIT=200;render()">הכול</button>`;})()}
+      <button class="fchip ${STATF===1?'on':''}" onclick="STATF=STATF===1?null:1;LIMIT=200;render()">פעילים</button>
+      <button class="fchip ${STATF===0?'on':''}" onclick="STATF=STATF===0?null:0;LIMIT=200;render()">ירדו מהשירות</button>
       ${enr&&kab?`<button class="fchip ${KABF==='l'?'on':''}" onclick="KABF=KABF==='l'?null:'l';LIMIT=200;render()">רכבי קו</button>
       <button class="fchip ${KABF==='k'?'on':''}" onclick="KABF=KABF==='k'?null:'k';LIMIT=200;render()">רכבי קבלן</button>`:''}
-      ${ARMOK?`<button class="fchip ${ARF?'on':''}" onclick="ARF=ARF?null:1;LIMIT=200;render()">ממוגנים</button>`:''}
     </div>
     ${table(vs,null)}
     <p class="note">לחיצה על כותרת ממיינת · לחיצה על רכב פותחת את כל פרטיו.</p>
