@@ -676,6 +676,24 @@ const getMonths = () => MONTHS_P || (MONTHS_P = dfetch("data/months.json")
   .then((r) => r.json())
   .catch((e) => { MONTHS_P = null; throw e; }));
 
+/* הרציף הנוכחי של כל תחנה (platforms.json, נכתב בכל ריצה יומית) — נטען פעם
+   אחת; ליד שם תחנה מוצג "רציף N" כשיש כזה (בקשת שלמה 03.09: המספר בעדכון חי).
+   כשל = בלי רציפים, בלי לשבור את הדף. */
+let PLAT_P = null;
+const getPlatforms = () => PLAT_P || (PLAT_P = dfetch("data/platforms.json")
+  .then((r) => (r.ok ? r.json() : { p: {} }))
+  .then((d) => d.p || {})
+  .catch(() => ({})));
+function usePlatforms() {
+  const [p, setP] = useState({});
+  useEffect(() => { let on = true; getPlatforms().then((d) => { if (on) setP(d); }); return () => { on = false; }; }, []);
+  return p;
+}
+const PlatBadge = ({ code, plats }) => {
+  const n = plats && code != null ? plats[String(code)] : null;
+  return n ? <span className="plat" title="הרציף הנוכחי לפי רישום התחנות, מתעדכן מדי יום">רציף {n}</span> : null;
+};
+
 const getAnchors2012 = () =>
   ANC2012 || (ANC2012 = dfetch("data/anchor-2012.json")
     .then((r) => (r.ok ? r.json() : { anchors: {} }))
@@ -1057,6 +1075,8 @@ function DigestPage({ city, days, onBack, openLine }) {
 }
 
 function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
+  const plats = usePlatforms();   // "רציף N" ליד תחנה במסוף — מתעדכן מדי יום (שלמה 03.09)
+  const withPlat = (str, c) => (c != null && plats[String(c)]) ? `${str} · רציף ${plats[String(c)]}` : str;
   const [lf, setLf] = useState(null);
   const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);   // אינדקס גרסה נבחרת
@@ -1239,19 +1259,19 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     const strs = (entries || []).map((e) => {
       const name = e.n;
       if (e.c) {
-        if (/^\d{3,}$/.test(name)) { const h = stopByCode(e.c, i); return h ? `${h[1]} (${e.c})` : name; }
-        return `${name} (${e.c})`;
+        if (/^\d{3,}$/.test(name)) { const h = stopByCode(e.c, i); return h ? withPlat(`${h[1]} (${e.c})`, e.c) : name; }
+        return withPlat(`${name} (${e.c})`, e.c);
       }
       if (!isAdd && /^\d{3,}$/.test(name)) {
         const h = stopByCode(name, i);
-        return h ? `${h[1]} (${name})` : name;
+        return h ? withPlat(`${h[1]} (${name})`, name) : name;
       }
       const k = (cnt[name] = (cnt[name] || 0) + 1) - 1;
       const nv = vs[Math.min(i, vs.length - 1)];
       const cs = codesFor(name, i, isAdd);
       const c = cs[k] != null ? cs[k] : (k === 0 ? ncOf(nv, name) : null);
-      if (c) return `${name} (${c})`;
-      if (!isAdd) { const f = remFix(i)[name]; if (f) return `${name} (${f[0]})`; }
+      if (c) return withPlat(`${name} (${c})`, c);
+      if (!isAdd) { const f = remFix(i)[name]; if (f) return withPlat(`${name} (${f[0]})`, f[0]); }
       return name;
     });
     return dedupCount(strs).map(({ x, n: c }) => x + (c > 1 ? ` ×${c}` : "")).join(", ");
@@ -2185,10 +2205,14 @@ function StopCode({ code }) {
     try { document.execCommand("copy"); done(); } catch (err) { /* אין לוח — הקישור עדיין ב-href */ }
     document.body.removeChild(ta);
   };
+  const plats = usePlatforms();
   return (
-    <a className={"code slink" + (ok ? " copied" : "")} href={stopHref(code)} onClick={copy}
-      title="לחיצה מעתיקה את הקישור לתחנה הזו — כל השינויים שלה, מכל השנים">
-      {" "}({code}) {ok ? "✓ הועתק" : "🔗"}</a>
+    <>
+      <a className={"code slink" + (ok ? " copied" : "")} href={stopHref(code)} onClick={copy}
+        title="לחיצה מעתיקה את הקישור לתחנה הזו — כל השינויים שלה, מכל השנים">
+        {" "}({code}) {ok ? "✓ הועתק" : "🔗"}</a>
+      <PlatBadge code={code} plats={plats} />
+    </>
   );
 }
 
@@ -2278,6 +2302,7 @@ function RecentChanges({ idx, openLine, onAll }) {
 // (בקשת המשתמש). הנתונים: data/stopev/XX.json — נגזרים יומית מקובצי
 // הקווים, כך ששינוי אצל קו נרשם אוטומטית גם אצל כל תחנה שהושפעה.
 function LinesAtStop({ code, onClose }) {
+  const plats = usePlatforms();   // הרציף הנוכחי של התחנה, מתעדכן מדי יום
   const [d, setD] = useState(null);
   const [err, setErr] = useState(false);
   const [all, setAll] = useState(false);
@@ -2316,6 +2341,7 @@ function LinesAtStop({ code, onClose }) {
   return (
     <div className="lat">
       <div className="lathead">🚌 הקווים בתחנה הזו לאורך זמן
+        <PlatBadge code={code} plats={plats} />
         {onClose && <button className="latx" title="סגירת ציר הקווים" onClick={onClose}>✕</button>}
       </div>
       {now.length > 0 && (

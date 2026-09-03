@@ -866,6 +866,10 @@ state_out.update(carry)   # רשומים ללא נסיעות פעילות — נ
 json.dump(state_out,
           open(f'{OUTDIR}/state-routes.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 json.dump(cur_stops,open(f'{OUTDIR}/stops-state.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
+# הרציף הנוכחי של כל תחנה שיש לה רציף מוגדר — קובץ קטן אחד שהאתר טוען, כך
+# שהמספר ליד שם התחנה מתעדכן בכל ריצה יומית (בקשת שלמה 03.09: "בעדכון חי")
+json.dump({'updated':TODAY,'p':{c:v[5] for c,v in cur_stops.items() if len(v)>5 and v[5]}},
+          open(f'{OUTDIR}/platforms.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 # מספר הנסיעות משתנה מיום ליום, ולכן הוא יושב בקובץ צדדי אחד ולא בתוך
 # 13,000 קובצי הקווים — אחרת כל ריצה יומית הייתה משנה את כולם.
 json.dump({k:v for k,v in sorted(_ntr.items()) if k.count('-')>=2},
