@@ -309,6 +309,29 @@ first_run=not prev
 # בשקט כבסיס, בלי אירועי "עוצר מעכשיו ברציף" על כל מסוף בארץ. מהריצה הבאה
 # והלאה כל שינוי נרשם.
 plat_known=any(len(v)>5 and plat_norm(v[5]) for v in prev_stops.values())
+# יציבות (03.09): תיאורי התחנות בפיד מרצדים לפעמים יום-יום (בארכיון, ספטמבר
+# 2021: מרכזית אשדוד 10→8→2→8→2). רציף חדש "מאושר" רק אחרי שהחזיק PLAT_STABLE_DAYS
+# ימים; עד אז הוא מועמד ([6] במצב התחנות), ורציף שחזר לקודמו אינו אירוע.
+# האירוע נרשם ביום האישור, עם sd = היום שבו הרציף החדש נראה לראשונה.
+PLAT_STABLE_DAYS=7
+plat_state={}       # מק"ט -> [רציף מאושר, מועמד או None]
+plat_confirmed={}   # מק"ט -> (רציף קודם, רציף חדש, מאז)
+for _s in stops.values():
+    _c=_s['c']; _cur=_s.get('p') or ''
+    _pv=prev_stops.get(_c)
+    _stable=plat_norm(_pv[5]) if _pv and len(_pv)>5 else ''
+    _pend=(_pv[6] if _pv and len(_pv)>6 else None) or None
+    if not plat_known:
+        plat_state[_c]=[_cur,None]                      # ריצת בסיס — בשקט
+    elif _cur==_stable or not _cur:
+        plat_state[_c]=[_stable,None]                   # ללא שינוי, או "לא מוגדר" — לא אירוע
+    elif _pend and _pend[0]==_cur:
+        if (datetime.date.fromisoformat(TODAY)-datetime.date.fromisoformat(_pend[1])).days>=PLAT_STABLE_DAYS:
+            plat_state[_c]=[_cur,None]; plat_confirmed[_c]=(_stable,_cur,_pend[1])
+        else:
+            plat_state[_c]=[_stable,_pend]
+    else:
+        plat_state[_c]=[_stable,[_cur,TODAY]]            # מועמד חדש
 
 def dist_m(a_la,a_lo,b_la,b_lo):
     cl=math.cos(math.radians((a_la+b_la)/2))
@@ -466,12 +489,10 @@ for rdesc,c in cur.items():
     # מנוסח "עוצר מעכשיו ברציף N" ולא "מ-0 ל-N".
     plat_changes=[]
     for _code in (c['codes'] if plat_known else []):
-        _cs=stop_by_code.get(_code)
-        if not _cs: continue
-        _ps=prev_stops.get(_code)
-        _old=plat_norm(_ps[5] if _ps and len(_ps)>5 else '')
-        _new=_cs.get('p') or ''
-        if _new and _new!=_old: plat_changes.append([_code,_cs['n'],_old,_new])
+        _pc=plat_confirmed.get(_code)
+        if not _pc: continue
+        _cs=stop_by_code.get(_code) or {}
+        plat_changes.append([_code,_cs.get('n') or _code,_pc[0],_pc[1]])
     if not geo and not stp and not op_changed and not tt_changed \
        and not wa_changed and not pd_changed and not ty_changed and not plat_changes:
         # תיקון עבר: קבצים שהסיווג בהם התיישן לפני שנוסף המעקב — מרעננים
@@ -729,7 +750,8 @@ print(f'קווים: חדשים {n_new} | שינויים {n_changed} {kinds_count
 cur_stops={}
 for s in stops.values():
     lns=sorted(stop_lines.get(s['c'],()))[:MAX_LINES_LIST]
-    cur_stops[s['c']]=[s['n'],s['la'],s['lo'],s['t'],lns,s.get('p','')]   # [5] = רציף (שלמה 03.09)
+    _pst=plat_state.get(s['c']) or [s.get('p') or '',None]
+    cur_stops[s['c']]=[s['n'],s['la'],s['lo'],s['t'],lns,_pst[0],_pst[1]]   # [5] רציף מאושר, [6] מועמד (שלמה 03.09)
 spath=f'{OUTDIR}/changes/stops-{month}.json'
 stm=jload(spath,{'month':month,'changes':[]})
 if not REBASE:   # ביישור מצב-התחנות כבר עדכני — מחיקה הייתה מאבדת את אירועי היום
@@ -770,9 +792,9 @@ if not first_run and not REBASE:
             sev(c0,{'k':'city','n':v[0],'oc':pv[3],'nc':v[3],'la':v[1],'lo':v[2]}); ncty+=1
         # רציף (בקשת שלמה 03.09): נרשם רק כשהרציף החדש מוגדר; ריק/0 = לא מוגדר,
         # ומעבר אליו אינו אירוע. op ריק = "עוצר מעכשיו ברציף N" (לא "מ-0 ל-N")
-        _op_=plat_norm(pv[5] if len(pv)>5 else ''); _np_=(v[5] if len(v)>5 else '') or ''
-        if plat_known and _np_ and _np_!=_op_:
-            sev(c0,{'k':'platform','n':v[0],'t':v[3],'op':_op_,'np':_np_,'lines':v[4],'la':v[1],'lo':v[2]}); npl+=1
+        _pc=plat_confirmed.get(c0)
+        if _pc:
+            sev(c0,{'k':'platform','n':v[0],'t':v[3],'op':_pc[0],'np':_pc[1],'sd':_pc[2],'lines':v[4],'la':v[1],'lo':v[2]}); npl+=1
         d=dist_m(pv[1],pv[2],v[1],v[2])
         if d>MOVE_M:
             sev(c0,{'k':'moved','n':v[0],'t':v[3],'dist':round(d),'ola':pv[1],'olo':pv[2],'la':v[1],'lo':v[2]}); nm+=1
@@ -881,7 +903,7 @@ json.dump(state_out,
 json.dump(cur_stops,open(f'{OUTDIR}/stops-state.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 # הרציף הנוכחי של כל תחנה שיש לה רציף מוגדר — קובץ קטן אחד שהאתר טוען, כך
 # שהמספר ליד שם התחנה מתעדכן בכל ריצה יומית (בקשת שלמה 03.09: "בעדכון חי")
-json.dump({'updated':TODAY,'p':{c:v[5] for c,v in cur_stops.items() if len(v)>5 and v[5]}},
+json.dump({'updated':TODAY,'p':{s['c']:s['p'] for s in stops.values() if s.get('p')}},   # הערך של היום, לא המאושר
           open(f'{OUTDIR}/platforms.json','w',encoding='utf-8'),ensure_ascii=False,separators=(',',':'))
 # מספר הנסיעות משתנה מיום ליום, ולכן הוא יושב בקובץ צדדי אחד ולא בתוך
 # 13,000 קובצי הקווים — אחרת כל ריצה יומית הייתה משנה את כולם.

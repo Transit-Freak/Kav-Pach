@@ -31,6 +31,10 @@ on:
         description: 'שרשור — בסיום, הזנקת הפרק הבא (true)'
         required: false
         default: 'false'
+      reset:
+        description: 'איפוס — מחיקת כל תוצר קודם של הכלי ומצבו, והתחלה מההתחלה (1)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -51,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           OUTDIR=line-history/data FROM='${{ inputs.from }}' TO='${{ inputs.to }}' \
-            MAX_DAYS='${{ inputs.max_days }}' MAX_MIN='${{ inputs.max_min }}' DRY='${{ inputs.dry }}' \
+            MAX_DAYS='${{ inputs.max_days }}' MAX_MIN='${{ inputs.max_min }}' DRY='${{ inputs.dry }}' RESET='${{ inputs.reset }}' \
             python3 tools/backfill_platforms.py
 
       - name: תוצרים נגזרים (אינדקס, פיד הארכיון, שברי תחנות)

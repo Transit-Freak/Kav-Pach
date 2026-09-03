@@ -9,6 +9,12 @@
 אירוע; מעבר ממנו מנוסח "עוצר מעכשיו ברציף N"; בין שני רציפים — "עבר
 מרציף A לרציף B".
 
+יציבות (03.09, אחרי הריצה הראשונה): בספטמבר–אוקטובר 2021 תיאורי התחנות
+בפיד ריצדו יום-יום (מרכזית אשדוד: 10→8→2→8→2→10), ו-1,862 "שינויים" נרשמו
+בחודשיים. לכן רציף חדש נרשם רק אחרי שהחזיק לפחות STABLE_DAYS ימים ולפחות
+STABLE_SNAPS צילומים ברצף; ערך שחזר לקודמו בינתיים אינו אירוע כלל. תאריך
+האירוע = היום שבו הרציף החדש נראה לראשונה; sd = הצילום שלפניו.
+
 לכל שינוי נרשמים:
   · אירוע תחנה — stops-hist.json ו-changes/stops-YYYY-MM.json (k=platform)
   · אירוע קו — לכל וריאנט שרצף התחנות המתועד שלו באותו תאריך כולל את
@@ -17,11 +23,11 @@
 
 הצילום הראשון בריצה הראשונה הוא בסיס שקט (בלי אירועים), כמו בסורק היומי.
 המצב נשמר ב-backfill-platforms-state.json: אפשר לעצור ולהמשיך; ריצה
-חוזרת מדלגת על צילומים שעובדו. הארכיון של 2022 ואילך (אופן באס) אינו
-מכיל את תיאור התחנה, ולכן משם ואילך מכסה הסורק היומי בלבד.
+חוזרת מדלגת על צילומים שעובדו. RESET=1 מוחק קודם כל תוצר קודם של הכלי
+(אירועי platform עם src=tf) ואת המצב, ומתחיל מההתחלה.
 
 FROM/TO   טווח תאריכים (YYYYMMDD) · MAX_DAYS צילומים לריצה · MAX_MIN תקציב
-דקות · DRY=1 ניתוח בלי כתיבה
+דקות · DRY=1 ניתוח בלי כתיבה · RESET=1 איפוס
 """
 import datetime
 import json
@@ -43,7 +49,10 @@ TO = os.environ.get('TO', '20221231')
 MAX_DAYS = int(os.environ.get('MAX_DAYS', '0') or 0)
 MAX_MIN = float(os.environ.get('MAX_MIN', '0') or 0)
 DRY = os.environ.get('DRY') == '1'
+RESET = os.environ.get('RESET') == '1'
 SRC = 'tf'
+STABLE_DAYS = 7      # רציף חדש נרשם רק אחרי שהחזיק שבוע
+STABLE_SNAPS = 2     # ולפחות שני צילומים ברצף
 
 
 def iso(ds):
@@ -63,6 +72,10 @@ def jload(p, dflt):
 
 def jdump(obj, p):
     json.dump(obj, open(p, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+
+
+def days_between(a, b):
+    return (datetime.date.fromisoformat(b) - datetime.date.fromisoformat(a)).days
 
 
 def city(d):
@@ -108,9 +121,51 @@ def note_for(pl):
     return 'שינוי רציף: ' + ' · '.join(parts) + ' (אותר בהשוואת צילומי הארכיון של הפיד הארצי)'
 
 
+def reset_previous():
+    """מחיקת כל תוצר קודם של הכלי: אירועי platform עם src=tf בתחנות, בחודשים ובקווים."""
+    shist = jload(f'{OUTDIR}/stops-hist.json', {})
+    n_s = 0
+    for c in list(shist):
+        before = len(shist[c])
+        shist[c] = [e for e in shist[c] if not (e.get('k') == 'platform' and e.get('src') == SRC)]
+        n_s += before - len(shist[c])
+        if not shist[c]:
+            shist.pop(c)
+    jdump(shist, f'{OUTDIR}/stops-hist.json')
+    n_m = 0
+    for f in os.listdir(f'{OUTDIR}/changes'):
+        p = f'{OUTDIR}/changes/{f}'
+        m = jload(p, None)
+        if not m or 'changes' not in m:
+            continue
+        before = len(m['changes'])
+        m['changes'] = [x for x in m['changes'] if not (x.get('k') == 'platform' and (x.get('src') == SRC or ('rd' in x and x.get('d', '') < '2023')))]
+        if len(m['changes']) != before:
+            n_m += before - len(m['changes'])
+            jdump(m, p)
+    n_l = 0
+    ld = f'{OUTDIR}/lines'
+    for f in os.listdir(ld):
+        if not f.endswith('.json'):
+            continue
+        p = f'{ld}/{f}'
+        lf = materialize(jload(p, None))
+        if not lf:
+            continue
+        vs = lf.get('versions') or []
+        keep = [v for v in vs if not (v.get('k') == 'platform' and v.get('src') == SRC)]
+        if len(keep) != len(vs):
+            n_l += len(vs) - len(keep)
+            lf['versions'] = keep
+            jdump(compact(lf), p)
+    if os.path.exists(STATE):
+        os.remove(STATE)
+    print(f'איפוס: נמחקו {n_s} אירועי תחנה, {n_m} שורות חודשיות, {n_l} גרסאות קו', file=sys.stderr)
+
+
 def build_stop_index():
-    """מק"ט → [(rd, מתאריך, עד-תאריך, אינדקס הגרסה)] מכל קובצי הקווים — לפי
-    רצף התחנות המתועד; גרסה בתוקף מיום פרסומה ועד הגרסה הבאה עם תחנות."""
+    """מק"ט → [(rd, מתאריך, עד-תאריך)] מכל קובצי הקווים — לפי רצף התחנות
+    המתועד; גרסה בתוקף מיום פרסומה ועד הגרסה הבאה עם תחנות."""
     idx = {}
     ld = f'{OUTDIR}/lines'
     files = [f for f in os.listdir(ld) if f.endswith('.json')]
@@ -135,9 +190,11 @@ def build_stop_index():
 
 
 def main():
+    if RESET and not DRY:
+        reset_previous()
     src = os.environ.get('DAYS') or f'{OUTDIR}/tf-days.txt'
     days = [l.strip() for l in open(src) if l.strip() and FROM <= l.strip() <= TO]
-    st = jload(STATE, {'done': [], 'prev': {}})
+    st = jload(STATE, {'done': [], 'stable': {}, 'pending': {}})
     done = set(st['done'])
     todo = [d for d in days if d not in done]
     if MAX_DAYS:
@@ -146,8 +203,11 @@ def main():
     if not todo:
         print('הכל עובד — אין צילומים שנותרו', file=sys.stderr)
         return
-    prev = st.get('prev') or {}
-    baseline = not prev and not done
+    # stable: מק"ט → [רציף, שם, עיר, lat, lon] — הרציף המאושר האחרון
+    # pending: מק"ט → [רציף, שם, עיר, lat, lon, מאז (ISO), צילומים ברצף, הצילום שלפני]
+    stable = st.get('stable') or {}
+    pending = st.get('pending') or {}
+    baseline = not stable and not done
     deadline = time.monotonic() + MAX_MIN * 60 if MAX_MIN else None
     events = []          # (d, sd, code, name, city, la, lo, old, new)
     last_ds = max(done) if done else None
@@ -162,18 +222,33 @@ def main():
             continue
         n = 0
         if baseline:
+            stable = dict(cur)
             baseline = False
         else:
             for code, v in cur.items():
-                old = (prev.get(code) or [''])[0]
-                if v[0] != old:
-                    events.append((iso(ds), iso(last_ds) if last_ds else None, code, v[1], v[2], v[3], v[4], old, v[0]))
-                    n += 1
-        prev = cur
+                stab = (stable.get(code) or [''])[0]
+                if v[0] == stab:
+                    pending.pop(code, None)
+                    continue
+                pd = pending.get(code)
+                if pd and pd[0] == v[0]:
+                    pd[6] += 1
+                    if pd[6] >= STABLE_SNAPS and days_between(pd[5], iso(ds)) >= STABLE_DAYS:
+                        # החזיק: האירוע נרשם מהיום שבו נראה לראשונה
+                        events.append((pd[5], pd[7], code, v[1], v[2], v[3], v[4], stab, v[0]))
+                        stable[code] = list(v)
+                        pending.pop(code, None)
+                        n += 1
+                else:
+                    pending[code] = list(v) + [iso(ds), 1, iso(last_ds) if last_ds else None]
+            # רציף שנעלם מהצילום (לא מוגדר עוד): לא אירוע; המועמדות שלו נמחקת
+            for code in list(pending):
+                if code not in cur:
+                    pending.pop(code)
         done.add(ds)
         last_ds = ds
-        print(f'  {iso(ds)}: {len(cur)} תחנות עם רציף · {n} שינויים', file=sys.stderr)
-    print(f'סה"כ אירועי רציף: {len(events)}', file=sys.stderr)
+        print(f'  {iso(ds)}: {len(cur)} תחנות עם רציף · {n} שינויים מאושרים · {len(pending)} ממתינים', file=sys.stderr)
+    print(f'סה"כ אירועי רציף מאושרים: {len(events)}', file=sys.stderr)
     if DRY:
         for e in events[:30]:
             print('   ', e, file=sys.stderr)
@@ -198,38 +273,39 @@ def main():
         m['changes'].sort(key=lambda x: x.get('d', ''))
         jdump(m, p)
     # ---- אירועי קו ----
-    idx = build_stop_index()
-    per_rd = {}     # rd → {d: [pl entries]}
-    for d, sd, code, name, cty, la, lo, old, new in events:
-        for rd, s, e in idx.get(code, ()):
-            if s <= d < e:
-                per_rd.setdefault(rd, {}).setdefault(d, []).append([code, name, old, new])
     n_lines = 0
     ch_by_month = {}
-    for rd, byd in per_rd.items():
-        p = f'{OUTDIR}/lines/{fsafe(rd)}.json'
-        lf = materialize(jload(p, None))
-        if not lf:
-            continue
-        vs = lf.get('versions') or []
-        for d, pl in sorted(byd.items()):
-            base = next((v for v in reversed(vs) if v.get('stops') and v['d'] <= d), None)
-            if base is None:
+    if events:
+        idx = build_stop_index()
+        per_rd = {}     # rd → {d: [pl entries]}
+        for d, sd, code, name, cty, la, lo, old, new in events:
+            for rd, s, e in idx.get(code, ()):
+                if s <= d < e:
+                    per_rd.setdefault(rd, {}).setdefault(d, []).append([code, name, old, new])
+        for rd, byd in per_rd.items():
+            p = f'{OUTDIR}/lines/{fsafe(rd)}.json'
+            lf = materialize(jload(p, None))
+            if not lf:
                 continue
-            ex = next((v for v in vs if v['d'] == d and v.get('k') == 'platform'), None)
-            if ex is not None:
-                have = {tuple(x[:2]) for x in ex.get('pl') or []}
-                ex['pl'] = (ex.get('pl') or []) + [x for x in pl if tuple(x[:2]) not in have]
-                ex['note'] = note_for(ex['pl'])
-                continue
-            v = {'d': d, 'k': 'platform', 'src': SRC, 'stops': base['stops'], 'shp': base.get('shp', ''),
-                 'pl': pl, 'note': note_for(pl)}
-            vs.append(v)
-            n_lines += 1
-            ch_by_month.setdefault(d[:7], []).append({'d': d, 'rd': rd, 'line': lf.get('line', ''), 'op': lf.get('op', ''), 'k': 'platform', 'pl': pl[:15]})
-        vs.sort(key=lambda x: x['d'])
-        lf['versions'] = vs
-        jdump(compact(lf), p)
+            vs = lf.get('versions') or []
+            for d, pl in sorted(byd.items()):
+                base = next((v for v in reversed(vs) if v.get('stops') and v['d'] <= d), None)
+                if base is None:
+                    continue
+                ex = next((v for v in vs if v['d'] == d and v.get('k') == 'platform'), None)
+                if ex is not None:
+                    have = {tuple(x[:2]) for x in ex.get('pl') or []}
+                    ex['pl'] = (ex.get('pl') or []) + [x for x in pl if tuple(x[:2]) not in have]
+                    ex['note'] = note_for(ex['pl'])
+                    continue
+                v = {'d': d, 'k': 'platform', 'src': SRC, 'stops': base['stops'], 'shp': base.get('shp', ''),
+                     'pl': pl, 'note': note_for(pl)}
+                vs.append(v)
+                n_lines += 1
+                ch_by_month.setdefault(d[:7], []).append({'d': d, 'rd': rd, 'line': lf.get('line', ''), 'op': lf.get('op', ''), 'k': 'platform', 'src': SRC, 'pl': pl[:15]})
+            vs.sort(key=lambda x: x['d'])
+            lf['versions'] = vs
+            jdump(compact(lf), p)
     for month, chs in ch_by_month.items():
         p = f'{OUTDIR}/changes/{month}.json'
         m = jload(p, {'month': month, 'changes': []})
@@ -239,10 +315,12 @@ def main():
         jdump(m, p)
     jdump(shist, f'{OUTDIR}/stops-hist.json')
     st['done'] = sorted(done)
-    st['prev'] = prev
+    st['stable'] = stable
+    st['pending'] = pending
+    st.pop('prev', None)
     st['updated'] = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
     jdump(st, STATE)
-    print(f'נכתבו: {len(events)} אירועי תחנה · {n_lines} גרסאות קו ב-{len(per_rd)} וריאנטים', file=sys.stderr)
+    print(f'נכתבו: {len(events)} אירועי תחנה · {n_lines} גרסאות קו', file=sys.stderr)
 
 
 if __name__ == '__main__':

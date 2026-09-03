@@ -286,7 +286,8 @@ samp = random.sample([p for p in P if 'cv' in p and zones.get(p['f'])], k=min(20
 bad = []
 for p in samp:
     z = zones[p['f']]
-    st = [s for s in z.get('stops') or [] if not (s.get('t') == 'blocked' and s.get('te') == 'blocked')]
+    # רק תחנות נספרות (03.09): הכיסוי, כמו הנקודה הרחוקה, נמדד אל תחנות עד 14 דק׳ מהמרכז
+    st = [s for s in z.get('stops') or [] if s.get('t') != 'blocked']
     if not st or not z.get('polys'):
         continue
     cl = math.cos(math.radians(p['la']))
@@ -302,7 +303,7 @@ for p in samp:
                 if in_poly(ga, go, ring):
                     tot += 1
                     d = min(math.hypot((ga - s['la']) * 110540.0, (go - s['lo']) * 111320.0 * cl) for s in st)
-                    if d * 1.3 / 75.0 <= 10:
+                    if d * 1.3 / 83.0 <= 10:   # 83 מ׳/דק׳ כמו בצנרת (03.09)
                         hit += 1
                 go += slo
             ga += sla
