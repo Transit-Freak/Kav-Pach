@@ -296,9 +296,62 @@ def day_minutes(t, start):
     return None if t is None else int(round((t - start.timestamp()) / 60))
 
 
+def diagnose(by_ride, fixes):
+    """אבחון (DIAG=1): איפה נופלים השידורים ביחס לתחנות — לכיול כללי ההצמדה."""
+    def q(vals, p):
+        if not vals:
+            return None
+        vals = sorted(vals)
+        return round(vals[min(len(vals) - 1, int(len(vals) * p))], 1)
+
+    pos_stats = {'first': [], 'mid': [], 'last': []}
+    last_gap_t, last_gap_d, first_gap_t, spans, nfix = [], [], [], [], []
+    for rid, v in by_ride.items():
+        fx = fixes.get(rid, [])
+        if not fx:
+            continue
+        nfix.append(len(fx))
+        pa0, paN = ts(v[0].get('departure_time')), ts(v[-1].get('arrival_time'))
+        if pa0 and paN:
+            first_gap_t.append((fx[0][0] - pa0) / 60)
+            last_gap_t.append((fx[-1][0] - paN) / 60)
+            spans.append((fx[-1][0] - fx[0][0]) / 60)
+            last_gap_d.append(hav(v[-1]['gtfs_stop__lat'], v[-1]['gtfs_stop__lon'], fx[-1][1], fx[-1][2]))
+        for i, s in enumerate(v):
+            pt = ts(s.get('arrival_time'))
+            near = min((hav(s['gtfs_stop__lat'], s['gtfs_stop__lon'], la, lo)
+                        for t, la, lo in fx if abs(t - pt) <= TIME_WIN), default=None)
+            key = 'first' if i == 0 else 'last' if i == len(v) - 1 else 'mid'
+            pos_stats[key].append(near if near is not None else 1e9)
+    log(f'  אבחון: שידורים לנסיעה חציון {q(nfix, .5)} · משך שידור חציון {q(spans, .5)} דק׳')
+    log(f'  שידור ראשון מול יציאה מתוכננת (דק׳): 10%={q(first_gap_t, .1)} 50%={q(first_gap_t, .5)} 90%={q(first_gap_t, .9)}')
+    log(f'  שידור אחרון מול הגעה מתוכננת ליעד (דק׳): 10%={q(last_gap_t, .1)} 50%={q(last_gap_t, .5)} 90%={q(last_gap_t, .9)}')
+    log(f'  מרחק השידור האחרון מתחנת היעד (מ׳): 10%={q(last_gap_d, .1)} 50%={q(last_gap_d, .5)} 90%={q(last_gap_d, .9)}')
+    for key, vals in pos_stats.items():
+        n = len(vals)
+        if not n:
+            continue
+        log(f'  תחנה {key}: n={n} · מרחק מזערי בחלון ±45: ≤300מ׳ {sum(1 for x in vals if x <= 300) / n:.0%} · '
+            f'≤1000 {sum(1 for x in vals if x <= 1000) / n:.0%} · ≤2000 {sum(1 for x in vals if x <= 2000) / n:.0%} · '
+            f'אין שידור בחלון {sum(1 for x in vals if x >= 1e9) / n:.0%} · חציון {q([x for x in vals if x < 1e9], .5)}')
+    # שלוש נסיעות לדוגמה — התחנות והשידורים הקרובים
+    for rid, v in list(by_ride.items())[:3]:
+        fx = fixes.get(rid, [])
+        log(f'  דוגמה {rid} {v[0].get("gtfs_route__route_long_name")} · {len(fx)} שידורים · '
+            f'{datetime.datetime.fromtimestamp(fx[0][0], IL).strftime("%H:%M") if fx else "-"}–'
+            f'{datetime.datetime.fromtimestamp(fx[-1][0], IL).strftime("%H:%M") if fx else "-"}')
+        for s in v:
+            pt = ts(s.get('arrival_time'))
+            tm = station_timing(s, fx) if fx else None
+            log(f'     {s.get("gtfs_stop__name")[:22]:<22} מתוכנן {datetime.datetime.fromtimestamp(pt, IL).strftime("%H:%M")} · '
+                + (f'הגעה {datetime.datetime.fromtimestamp(tm[0], IL).strftime("%H:%M")} יציאה {datetime.datetime.fromtimestamp(tm[1], IL).strftime("%H:%M")} מרחק {int(tm[2])}מ׳' if tm else 'אין שידור ≤2000מ׳ בחלון'))
+
+
 def process_day(d, stations):
     start, stops, locs = fetch_day(d)
     by_ride, fixes, vehs = build_rides(stops, locs)
+    if os.environ.get('DIAG') == '1':
+        diagnose(by_ride, fixes)
     rides = []
     ob_final = []
     for rid, v in sorted(by_ride.items(), key=lambda kv: ts(kv[1][0].get('arrival_time')) or 0):

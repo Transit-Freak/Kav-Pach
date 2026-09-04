@@ -32,6 +32,10 @@ on:
         description: 'שרשור — בסיום, הזנקת הפרק הבא (true)'
         required: false
         default: 'false'
+      diag:
+        description: 'אבחון בלוג — התפלגות השידורים מול התחנות (1)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -55,6 +59,7 @@ jobs:
           MAX_MIN: ${{ github.event.inputs.max_min || '240' }}
           DRY: ${{ github.event.inputs.dry }}
           REDO: ${{ github.event.inputs.redo }}
+          DIAG: ${{ github.event.inputs.diag }}
         run: python3 tools/rail_reliability.py
 
       - name: מסלולי הרכבת מה-GTFS (best-effort)
