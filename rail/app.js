@@ -225,7 +225,7 @@ function render() {
   app.innerHTML = html;
   if (period !== 'day') {
     lineChart($('#c-on'), days.map(d => ({x: shortDate(d.d), y: d.n ? Math.round(d.b[0] / d.n * 1000) / 10 : null, tip: `<b>${heDate(d.d)}</b><br>בזמן: ${d.n ? pct(d.b[0], d.n) : '—'} מתוך ${num(d.n)} רכבות שנמדדו<br>ממוצע ${fmt1(d.avg)} דק׳ · ללא שידור ${pct(d.rides - d.fix, d.rides)}`})), {min: 0, max: 100, unit: '%', color: C.ok});
-    lineChart($('#c-avg'), days.map(d => ({x: shortDate(d.d), y: d.n ? d.avg : null, tip: `<b>${heDate(d.d)}</b><br>איחור ממוצע ${fmt1(d.avg)} דק׳ · חציון ${fmt1(d.med)}<br>90% מהרכבות עד ${fmt1(d.p90)} דק׳`})), {min: 0, color: C.line, fmtY: v => Math.round(v)});
+    lineChart($('#c-avg'), days.map(d => ({x: shortDate(d.d), y: d.n ? d.avg : null, tip: `<b>${heDate(d.d)}</b><br>איחור ממוצע ${fmt1(d.avg)} דק׳ · חציון ${fmt1(d.med)}<br>90% מהרכבות עד ${fmt1(d.p90)} דק׳`})), {min: 0, color: C.line, fmtY: v => v.toFixed(1)});
   }
   barChart($('#c-hours'), Array.from({length: 24}, (_, h) => { const s = A.hours[String(h)]; const y = s && s.n ? Math.round(s.ok / s.n * 100) : null; return {x: String(h), y, color: y == null ? GRID : y >= 90 ? C.ok : y >= 75 ? C.warn : C.bad, tip: s ? `<b>יציאה בשעה ${h}:00–${h}:59</b><br>בזמן ${y == null ? '—' : y + '%'} מתוך ${num(s.n)} שנמדדו (${num(s.rides)} בלו״ז)<br>איחור ממוצע ${fmt1(s.avg)} דק׳` : `<b>${h}:00</b><br>אין נסיעות`}; }), {max: 100, unit: '%', color: C.ok});
   app.querySelectorAll('#tl th').forEach(h => h.onclick = () => { const k = h.dataset.k; sortL = {k, dir: sortL.k === k ? -sortL.dir : (k === 'nm' ? 1 : -1)}; render(); });
