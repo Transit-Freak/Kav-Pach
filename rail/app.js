@@ -62,11 +62,15 @@ function aggregate(days) {
   }
   return {acc, lines, hours, stations, days};
 }
-function selectedDays() {
+// יום שבו דאטאבוס קלט שידורים מפחות ממחצית הרכבות (16.08: 17 מתוך 660) —
+// המדד שלו אינו מייצג: מוחרג מצבירות התקופה, מסומן בגרף כפער, ומוצג בנפרד
+const partial = d => d.rides > 0 && d.fix < d.rides * 0.5;
+function windowDays() {
   if (period === 'day') return DAYS.filter(d => d.d === dayD);
   if (period === 'all') return DAYS;
   return DAYS.slice(-Number(period));
 }
+function selectedDays() { return period === 'day' ? windowDays() : windowDays().filter(d => !partial(d)); }
 
 // ---------------------------------------------------------------- תרשימים
 function lineChart(el, pts, o) {
@@ -210,7 +214,11 @@ function render() {
   const app = $('#app');
   const last = DAYS[DAYS.length - 1];
   $('#sub').innerHTML = `כל רכבת שבלו״ז של רכבת ישראל מול המיקום ששידרה בפועל, מנתוני <b>דאטאבוס</b>. רכבת נחשבת בזמן כשהגיעה באיחור של עד 5 דקות לתחנה האחרונה שנמדדה בה. ${DAYS.length > 1 ? `נתונים מ-${heDate(DAYS[0].d)} עד ${heDate(last.d)}` : `נתונים ל${heDate(last.d)}`} · מתעדכן כל לילה.`;
-  let html = heroHtml(A.acc, days);
+  const skipped = period === 'day' ? [] : windowDays().filter(partial);
+  let html = '';
+  if (period === 'day' && days[0] && partial(days[0])) html += `<div class="warn">ביום זה דאטאבוס קלט שידורי מיקום רק מ-${num(days[0].fix)} מתוך ${num(days[0].rides)} רכבות שבלו״ז. המספרים של היום הזה אינם מייצגים, והוא אינו נכלל בממוצעי התקופה.</div>`;
+  html += heroHtml(A.acc, days);
+  if (skipped.length) html += `<div class="warn">לא נכללו ${skipped.length} ימים שבהם דאטאבוס קלט שידורים מפחות ממחצית הרכבות: ${skipped.map(d => `${shortDate(d.d)} (${num(d.fix)} מתוך ${num(d.rides)})`).join(', ')}.</div>`;
   html += `<div class="panel"><p class="ptitle">התפלגות האיחור <small>${num(A.acc.n)} רכבות שנמדדו · בתחנה האחרונה שנמדדה בכל נסיעה</small></p>${distHtml(A.acc) || '<div class="empty">אין רכבות שנמדדו</div>'}</div>`;
   if (period !== 'day') {
     html += `<div class="cols2">
@@ -224,8 +232,9 @@ function render() {
   html += `<div class="panel"><p class="ptitle">לפי תחנה <small>איחור ההגעה לתחנה, בנסיעות שנמדדו בה</small></p>${stationsTable(A.stations)}</div>`;
   app.innerHTML = html;
   if (period !== 'day') {
-    lineChart($('#c-on'), days.map(d => ({x: shortDate(d.d), y: d.n ? Math.round(d.b[0] / d.n * 1000) / 10 : null, tip: `<b>${heDate(d.d)}</b><br>בזמן: ${d.n ? pct(d.b[0], d.n) : '—'} מתוך ${num(d.n)} רכבות שנמדדו<br>ממוצע ${fmt1(d.avg)} דק׳ · ללא שידור ${pct(d.rides - d.fix, d.rides)}`})), {min: 0, max: 100, unit: '%', color: C.ok});
-    lineChart($('#c-avg'), days.map(d => ({x: shortDate(d.d), y: d.n ? d.avg : null, tip: `<b>${heDate(d.d)}</b><br>איחור ממוצע ${fmt1(d.avg)} דק׳ · חציון ${fmt1(d.med)}<br>90% מהרכבות עד ${fmt1(d.p90)} דק׳`})), {min: 0, color: C.line, fmtY: v => v.toFixed(1)});
+    const wd = windowDays();
+    lineChart($('#c-on'), wd.map(d => ({x: shortDate(d.d), y: partial(d) ? null : d.n ? Math.round(d.b[0] / d.n * 1000) / 10 : null, tip: partial(d) ? `<b>${heDate(d.d)}</b><br>שידור חלקי: ${num(d.fix)} מתוך ${num(d.rides)} רכבות — לא נכלל` : `<b>${heDate(d.d)}</b><br>בזמן: ${d.n ? pct(d.b[0], d.n) : '—'} מתוך ${num(d.n)} רכבות שנמדדו<br>ממוצע ${fmt1(d.avg)} דק׳ · ללא שידור ${pct(d.rides - d.fix, d.rides)}`})), {min: 0, max: 100, unit: '%', color: C.ok});
+    lineChart($('#c-avg'), wd.map(d => ({x: shortDate(d.d), y: partial(d) ? null : d.n ? d.avg : null, tip: partial(d) ? `<b>${heDate(d.d)}</b><br>שידור חלקי: ${num(d.fix)} מתוך ${num(d.rides)} רכבות — לא נכלל` : `<b>${heDate(d.d)}</b><br>איחור ממוצע ${fmt1(d.avg)} דק׳ · חציון ${fmt1(d.med)}<br>90% מהרכבות עד ${fmt1(d.p90)} דק׳`})), {min: 0, color: C.line, fmtY: v => v.toFixed(1)});
   }
   barChart($('#c-hours'), Array.from({length: 24}, (_, h) => { const s = A.hours[String(h)]; const y = s && s.n ? Math.round(s.ok / s.n * 100) : null; return {x: String(h), y, color: y == null ? GRID : y >= 90 ? C.ok : y >= 75 ? C.warn : C.bad, tip: s ? `<b>יציאה בשעה ${h}:00–${h}:59</b><br>בזמן ${y == null ? '—' : y + '%'} מתוך ${num(s.n)} שנמדדו (${num(s.rides)} בלו״ז)<br>איחור ממוצע ${fmt1(s.avg)} דק׳` : `<b>${h}:00</b><br>אין נסיעות`}; }), {max: 100, unit: '%', color: C.ok});
   app.querySelectorAll('#tl th').forEach(h => h.onclick = () => { const k = h.dataset.k; sortL = {k, dir: sortL.k === k ? -sortL.dir : (k === 'nm' ? 1 : -1)}; render(); });
