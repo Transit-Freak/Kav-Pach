@@ -197,7 +197,7 @@ def main():
         if n is None:
             print(f'  תחנה {code} {st[0]} — אין מסילה עד {SNAP_M} מ׳')
         snapped[code] = n
-    failed = dict(cur.get('failed', {}))
+    failed = {k: v for k, v in cur.get('failed', {}).items() if k not in segs}
     n_ok = 0
     for key in missing:
         a, b = key.split('-', 1)
@@ -215,6 +215,7 @@ def main():
             failed[key] = f'ארוך מדי ({length / 1000:.1f} ק״מ מול {air / 1000:.1f} אווירי)'
             continue
         segs[key] = enc_polyline(path)
+        failed.pop(key, None)   # כישלון ישן שנפתר
         n_ok += 1
     os.makedirs(OUTDIR, exist_ok=True)
     json.dump({'updated': datetime.date.today().isoformat(), 'source': 'OpenStreetMap railway=rail',
