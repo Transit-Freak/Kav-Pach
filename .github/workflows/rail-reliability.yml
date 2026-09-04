@@ -57,6 +57,11 @@ jobs:
           REDO: ${{ github.event.inputs.redo }}
         run: python3 tools/rail_reliability.py
 
+      - name: מסלולי הרכבת מה-GTFS (best-effort)
+        if: ${{ github.event.inputs.dry != '1' }}
+        continue-on-error: true
+        run: python3 tools/rail_shapes.py
+
       - name: commit
         if: ${{ github.event.inputs.dry != '1' }}
         run: |

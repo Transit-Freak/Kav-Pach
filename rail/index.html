@@ -142,7 +142,20 @@ const DATA = 'data/';
 const BUCKETS = ['בזמן (עד 5 דק׳)', 'איחור 5–10 דק׳', 'איחור 10–20 דק׳', 'איחור מעל 20 דק׳'];
 const BCOL = ['var(--c-ok)', 'var(--c-warn)', 'var(--c-late)', 'var(--c-bad)'];
 const DAYNAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-let IDX = null, ST = {}, DAYS = [], period = '30', dayD = null, dayData = null, dayCache = {};
+let IDX = null, ST = {}, SHAPES = {}, DAYS = [], period = '30', dayD = null, dayData = null, dayCache = {};
+function decodeShape(str) {
+  const pts = []; let i = 0, la = 0, lo = 0;
+  while (i < str.length) {
+    for (const which of [0, 1]) {
+      let b, shift = 0, result = 0;
+      do { b = str.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      const d = (result & 1) ? ~(result >> 1) : (result >> 1);
+      if (which === 0) la += d; else lo += d;
+    }
+    pts.push([la / 1e5, lo / 1e5]);
+  }
+  return pts;
+}
 let sortL = {k: 'rides', dir: -1}, sortS = {k: 'rides', dir: -1}, rq = '', rfilter = 'all', showAll = false;
 const $ = (s, el) => (el || document).querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -276,7 +289,7 @@ function kpiHtml(a, days) {
 }
 function distHtml(a) {
   if (!a.n) return '';
-  return `<div class="dist">${a.b.map((v, i) => `<i class="s${i}" style="flex:${v}" title="${BUCKETS[i]}: ${num(v)}"></i>`).join('')}</div>
+  return `<div class="dist">${a.b.map((v, i) => v ? `<i class="s${i}" style="flex:${v}" title="${BUCKETS[i]}: ${num(v)}"></i>` : '').join('')}</div>
     <div class="legend">${a.b.map((v, i) => `<span><i style="background:${BCOL[i]}"></i>${BUCKETS[i]} · ${pct(v, a.n)} (${num(v)})</span>`).join('')}</div>`;
 }
 function sortRows(rows, s) {
@@ -382,7 +395,10 @@ function openRide(r) {
     if (window.L && pts.length) {
       MAP = L.map('map', {scrollWheelZoom: false, attributionControl: true});
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {attribution: '© OpenStreetMap, © CARTO', maxZoom: 18}).addTo(MAP);
-      L.polyline(pts.map(s => [s[1], s[2]]), {color: '#64748B', weight: 3, dashArray: '6 6', opacity: .8}).addTo(MAP);
+      // המסילה עצמה מצורת ה-GTFS של המסלול; בלעדיה — קו מקווקו בין התחנות
+      const shp = SHAPES[String(r.ln)];
+      if (shp) L.polyline(decodeShape(shp), {color: '#1E3A8A', weight: 3.5, opacity: .85}).addTo(MAP);
+      else L.polyline(pts.map(s => [s[1], s[2]]), {color: '#64748B', weight: 3, dashArray: '6 6', opacity: .8}).addTo(MAP);
       r.s.forEach((x, i) => { const s = ST[x[0]]; if (!s || s[1] == null) return; const dl = i === 0 ? x[4] : x[3]; const bb = bucketOf(dl);
         L.circleMarker([s[1], s[2]], {radius: 7, color: '#fff', weight: 2, fillColor: bb < 0 ? '#94A3B8' : ['#16A34A', '#F59E0B', '#EA580C', '#B91C1C'][bb], fillOpacity: 1}).addTo(MAP).bindTooltip(`${esc(s[0])}: ${dl == null ? 'לא נמדד' : delayTxt(dl) + ' דק׳'}`, {direction: 'top'}); });
       MAP.fitBounds(pts.map(s => [s[1], s[2]]), {padding: [18, 18]});
@@ -390,8 +406,8 @@ function openRide(r) {
   } catch (e) { const m = $('#map'); if (m) m.remove(); }
 }
 
-Promise.all([load(DATA + 'index.json'), load(DATA + 'stations.json').catch(() => ({}))]).then(([idx, st]) => {
-  IDX = idx; ST = st || {}; DAYS = (idx.days || []).filter(d => d.rides).sort((a, b) => a.d < b.d ? -1 : 1);
+Promise.all([load(DATA + 'index.json'), load(DATA + 'stations.json').catch(() => ({})), load(DATA + 'shapes.json').catch(() => ({}))]).then(([idx, st, shp]) => {
+  IDX = idx; ST = st || {}; SHAPES = (shp && shp.shapes) || {}; DAYS = (idx.days || []).filter(d => d.rides).sort((a, b) => a.d < b.d ? -1 : 1);
   if (!DAYS.length) { $('#app').innerHTML = '<div class="msg">עדיין אין נתונים — הריצה הראשונה מתבצעת הלילה</div>'; $('#sub').textContent = ''; return; }
   const h = location.hash.replace('#', '');
   if (/^\d{4}-\d{2}-\d{2}$/.test(h) && DAYS.some(d => d.d === h)) { period = 'day'; dayD = h; }
