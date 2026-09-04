@@ -21,6 +21,7 @@ FROM/TO (YYYY-MM-DD; ברירת מחדל: אתמול, שעון ישראל) · MA
 נקייה אחרי X דקות (0 = בלי מגבלה) · DRY=1 — ניתוח והדפסה בלי כתיבה ·
 REDO=1 — חישוב מחדש גם לימים שכבר קיימים.
 """
+import concurrent.futures
 import datetime
 import json
 import math
@@ -148,26 +149,42 @@ def hav(lat1, lon1, lat2, lon2):
 def fetch_day(d):
     start = datetime.datetime.combine(d, datetime.time(0), tzinfo=IL)
     end = start + datetime.timedelta(days=1)
-    # השרת דורש חלון זמני הגעה; הוא נפתח עד 03:00 למחרת כדי שנסיעה שיצאה
-    # לפני חצות תישמר על כל תחנותיה (סינון הנסיעות עצמן — לפי שעת היציאה)
-    stops = fetch_all('/gtfs_ride_stops/list',
-                      gtfs_route__operator_refs=OP,
-                      gtfs_route__date_from=d.isoformat(), gtfs_route__date_to=d.isoformat(),
-                      gtfs_ride__start_time_from=iso(start), gtfs_ride__start_time_to=iso(end),
-                      arrival_time_from=iso(start), arrival_time_to=iso(end + datetime.timedelta(hours=3)))
+    # שאילתה על כל המפעיל בבת אחת נופלת על statement timeout בדאטאבוס; הדרך
+    # שעובדת (כמו בעמוד הרכבת של אופן באס) היא לפי מזהי קו: קודם מסלולי
+    # היום של רכבת ישראל, ואז התחנות והשידורים לפי המזהים האלה.
+    routes = fetch_all('/gtfs_routes/list', operator_refs=OP,
+                       date_from=d.isoformat(), date_to=d.isoformat())
+    line_refs = sorted({r['line_ref'] for r in routes if r.get('line_ref') is not None})
+    log(f'  מסלולי רכבת בלו"ז: {len(routes)} ({len(line_refs)} מזהי קו)')
+    if not line_refs:
+        raise ValueError('אין מסלולי רכבת ביום הזה')
+    # חלון ההגעה נפתח עד 03:00 למחרת כדי שנסיעה שיצאה לפני חצות תישמר על כל
+    # תחנותיה; הנסיעות עצמן מסוננות לפי שעת היציאה (בצד שלנו)
+    stops = []
+    for i in range(0, len(line_refs), 20):
+        batch = line_refs[i:i + 20]
+        stops.extend(fetch_all('/gtfs_ride_stops/list',
+                               gtfs_route__line_refs=','.join(map(str, batch)),
+                               gtfs_route__operator_refs=OP,
+                               gtfs_route__date_from=d.isoformat(), gtfs_route__date_to=d.isoformat(),
+                               arrival_time_from=iso(start),
+                               arrival_time_to=iso(end + datetime.timedelta(hours=3))))
+    s0, s1 = start.timestamp(), end.timestamp()
+    stops = [s for s in stops if (ts(s.get('gtfs_ride__start_time')) or 0) >= s0 - 1
+             and (ts(s.get('gtfs_ride__start_time')) or 0) < s1]
     log(f'  לו"ז: {len(stops)} תחנות-נסיעה ({elapsed_min():.1f} דק׳)')
-    # השידורים נשלפים בפרוסות של שעה — רשימה של יום שלם כבדה מדי לשרת.
-    # נסיעות שהתחילו לפני חצות ממשיכות לשדר אחרי חצות, לכן 27 שעות.
-    locs = []
-    for h in range(27):
-        a = start + datetime.timedelta(hours=h)
-        b = a + datetime.timedelta(hours=1)
-        rows = fetch_all('/siri_vehicle_locations/list',
-                         siri_routes__operator_ref=OP,
+
+    def locs_of(lr):
+        return fetch_all('/siri_vehicle_locations/list',
+                         siri_routes__line_ref=str(lr), siri_routes__operator_ref=OP,
                          siri_rides__scheduled_start_time_from=iso(start),
-                         siri_rides__scheduled_start_time_to=iso(end),
-                         recorded_at_time_from=iso(a), recorded_at_time_to=iso(b))
-        locs.extend(rows)
+                         siri_rides__scheduled_start_time_to=iso(end))
+
+    locs = []
+    # שלושה חוטים — מהיר פי שלושה, ועדיין עדין כלפי דאטאבוס
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        for rows in ex.map(locs_of, line_refs):
+            locs.extend(rows)
     log(f'  שידורים: {len(locs)} ({elapsed_min():.1f} דק׳)')
     return start, stops, locs
 
