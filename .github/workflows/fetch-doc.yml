@@ -38,6 +38,9 @@ jobs:
           file /tmp/doc.bin
           if file /tmp/doc.bin | grep -qi pdf; then
             pdftotext -layout /tmp/doc.bin /tmp/doc.txt
+          elif [ "$(head -c1 /tmp/doc.bin)" = "{" ] || [ "$(head -c1 /tmp/doc.bin)" = "[" ] || file /tmp/doc.bin | grep -qi json; then
+            # JSON נשמר כמו שהוא — ההמרה לטקסט מחקה כל מה שבין '<' ל-'>'
+            cp /tmp/doc.bin /tmp/doc.txt
           else
             python3 -c "
           import sys,re,html
