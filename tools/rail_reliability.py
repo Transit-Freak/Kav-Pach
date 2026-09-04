@@ -148,10 +148,13 @@ def hav(lat1, lon1, lat2, lon2):
 def fetch_day(d):
     start = datetime.datetime.combine(d, datetime.time(0), tzinfo=IL)
     end = start + datetime.timedelta(days=1)
+    # השרת דורש חלון זמני הגעה; הוא נפתח עד 03:00 למחרת כדי שנסיעה שיצאה
+    # לפני חצות תישמר על כל תחנותיה (סינון הנסיעות עצמן — לפי שעת היציאה)
     stops = fetch_all('/gtfs_ride_stops/list',
                       gtfs_route__operator_refs=OP,
                       gtfs_route__date_from=d.isoformat(), gtfs_route__date_to=d.isoformat(),
-                      gtfs_ride__start_time_from=iso(start), gtfs_ride__start_time_to=iso(end))
+                      gtfs_ride__start_time_from=iso(start), gtfs_ride__start_time_to=iso(end),
+                      arrival_time_from=iso(start), arrival_time_to=iso(end + datetime.timedelta(hours=3)))
     log(f'  לו"ז: {len(stops)} תחנות-נסיעה ({elapsed_min():.1f} דק׳)')
     # השידורים נשלפים בפרוסות של שעה — רשימה של יום שלם כבדה מדי לשרת.
     # נסיעות שהתחילו לפני חצות ממשיכות לשדר אחרי חצות, לכן 27 שעות.
