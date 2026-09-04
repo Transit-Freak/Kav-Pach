@@ -483,9 +483,12 @@ function table(vs,opsArr){
         // סוג הרכב משני המקורות זה לצד זה: הרישוי ("אוטובוס עירוני") והמאגר
         // הרשמי של ציי הרכב ("מידיבוס", "מפרקי 3 דלתות", מיגון) — כדי שבחירת
         // "מידיבוס" למעלה לא תיראה סותרת את "אוטובוס עירוני" בטבלה (שלמה 03.09)
-        const nz=s=>String(s||'').replace(/[\s\-]/g,'');
-        const tags=[gT(v)&&`<span class="tg">${esc(gT(v))}</span>`, v._bt&&!nz(gT(v)).includes(nz(v._bt))&&`<span class="tg" style="opacity:.8">${esc(v._bt)}</span>`,
-          v._bs&&v._bs!==v._bt&&`<span class="tg" style="opacity:.8">${esc(v._bs)}</span>`, v._ar&&`<span class="tg" style="background:#fef3c7;color:#92400e">${arLbl(v._ar)}</span>`].filter(Boolean);
+        // השוואה בלי רווחים, מקפים ואותיות סופיות: "אוטובוס בין-עירוני" (רישוי) מכיל את
+        // "בינעירוני" (המאגר הרשמי) — בלי זה הופיעו שניהם זה ליד זה (שלמה 04.09)
+        const nz=s=>String(s||'').replace(/[\s\-]/g,'').replace(/ך/g,'כ').replace(/ם/g,'מ').replace(/ן/g,'נ').replace(/ף/g,'פ').replace(/ץ/g,'צ');
+        const gN=nz(gT(v));
+        const tags=[gT(v)&&`<span class="tg">${esc(gT(v))}</span>`, v._bt&&!gN.includes(nz(v._bt))&&`<span class="tg" style="opacity:.8">${esc(v._bt)}</span>`,
+          v._bs&&v._bs!==v._bt&&!gN.includes(nz(v._bs))&&`<span class="tg" style="opacity:.8">${esc(v._bs)}</span>`, v._ar&&`<span class="tg" style="background:#fef3c7;color:#92400e">${arLbl(v._ar)}</span>`].filter(Boolean);
         return tags.length?tags.join(' '):'—';})()}</td><td>${gY(v)||'—'}</td><td>${esc(gM(v)||'—')}</td>`:''}
     ${OFF?`<td>${gR(v)!=null?gR(v):'—'}</td>`:''}
     ${KMOK?`<td>${v._kd!=null?fmt(v._kd):'—'}</td><td>${v._kt!=null?fmt(v._kt):'—'}</td>`:''}${OFCOK?`<td>${v._ok!=null?fmt(v._ok):'—'}</td>`:''}
