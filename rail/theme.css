@@ -1,0 +1,50 @@
+/* מדד אמינות הרכבת — העיצוב של העמוד הראשי (כיוון 4 "מפת קווים", בחירת שלמה 04.09).
+   נטען עם חותמת זמן, כמו base.css ו-app.js, כדי שכל שינוי יגיע לגולש ברענון הבא. */
+  /* העמוד הראשי — כיוון 4 "מפת קווים" (בחירת שלמה 04.09): לבן, פסי צבע עבים כמו בתרשים קווי רכבת, מד טבעת, צל קשה כפוסטר */
+  :root{
+    --bg:#FFFFFF; --panel:#FFFFFF; --panel2:#F3F4F6; --line:#E5E7EB; --line2:#CBD5E1;
+    --ink:#101418; --mut:#4B5563; --dim:#8A94A3; --accent:#1E5BC6; --accent2:#173F8C;
+    --ok:#00A65A; --warn:#F4B400; --late:#F26B1D; --bad:#D7263D; --none:#C4CBD6;
+    --mono:'Heebo',sans-serif; --disp:'Secular One','Heebo',sans-serif; --body:'Heebo',sans-serif;
+    --radius:12px; --radius-sm:8px; --tag-ink:#fff; --scheme:light; --tip-bg:#101418; --tip-ink:#fff; --ovl:rgba(16,20,24,.55);
+  }
+  .top{padding-bottom:10px}
+  h1{font-size:32px}
+  .band{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--ok) 0 25%,var(--warn) 25% 50%,var(--late) 50% 75%,var(--bad) 75%);margin-bottom:14px}
+  .glyph{width:46px;height:46px;border-radius:50%;background:var(--accent);border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tag{background:var(--bad);border-radius:999px}
+  .homelink{border:1.5px solid var(--ink);color:var(--ink);border-radius:999px}
+  .seg,.daynav{border:1.5px solid var(--ink);border-radius:999px}
+  .pchip{border-inline-end:1.5px solid var(--ink)}
+  .pchip.on{background:var(--ink);color:#fff}
+  .daynav input{color:var(--ink);font-weight:700;border-inline:1.5px solid var(--ink)}
+  .panel{border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+  .ptitle::before{width:12px;height:12px;border-radius:50%;background:var(--accent);border:3px solid var(--ink);box-sizing:content-box}
+  .ptitle{font-size:17px}
+  .ringwrap{display:grid;grid-template-columns:230px 1fr;gap:26px;align-items:center;border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:12px;padding:22px;margin-bottom:18px;background:#fff}
+  .ring{position:relative;width:210px;height:210px}
+  .ring svg{width:100%;height:100%}
+  .rv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .rv b{font-family:var(--disp);font-size:48px;font-weight:400;line-height:1}
+  .rv span{font-size:12px;font-weight:800;color:var(--mut)}
+  .rtext h2{font-family:var(--disp);font-weight:400;font-size:28px;margin:0 0 4px}
+  .rtext p{color:var(--mut);margin:0 0 14px;font-size:12.5px}
+  .rstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .rstats div{border-top:6px solid var(--accent);padding-top:8px;min-width:0}
+  .rstats div:nth-child(1){border-color:var(--ok)}.rstats div:nth-child(2){border-color:var(--bad)}.rstats div:nth-child(3){border-color:var(--accent)}.rstats div:nth-child(4){border-color:var(--warn)}
+  .rstats b{font-size:26px;display:block;font-family:var(--disp);font-weight:400;line-height:1.1}
+  .rstats b i{font-style:normal;font-family:var(--body);font-size:12px;color:var(--mut);margin-inline-start:4px;font-weight:700}
+  .rstats span{font-size:11.5px;font-weight:800;color:var(--mut)}
+  .rstats small{display:block;color:var(--dim);font-size:11px;margin-top:2px}
+  .st{border-width:1.5px;border-radius:999px}
+  .bar{height:8px;border-radius:4px}
+  .mono{font-weight:700}
+  .mono.t{color:var(--ink)}
+  .modal{border:1.5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+  .route::before{width:6px;right:7px;background:var(--ink);border-radius:3px}
+  .rs .dot{border-width:3px;width:14px;height:14px;margin-right:2px}
+  @media(max-width:760px){
+    .ringwrap{grid-template-columns:1fr;justify-items:center}
+    .rstats{grid-template-columns:1fr 1fr;width:100%}
+    .rtext{width:100%}
+  }
