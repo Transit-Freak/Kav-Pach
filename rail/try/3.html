@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#E7F0FA">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>מדד אמינות הרכבת — כיוון 3: כרטיס רכבת</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="../base.css">
+<style>
+  /* כיוון 3 — כרטיסי רכבת: רקע תכלת, כרטיסים לבנים עם שוליים כחולים וניקוב, מעוגל וידידותי */
+  :root{
+    --bg:#E7F0FA; --panel:#FFFFFF; --panel2:#F1F6FC; --line:#D6E2F0; --line2:#B9CBE2;
+    --ink:#0F2440; --mut:#4A6079; --dim:#7A8FA8; --accent:#1F5FBF; --accent2:#174A98;
+    --ok:#1FA971; --warn:#E0A100; --late:#EE7A2F; --bad:#D93025; --none:#B7C4D6;
+    --mono:'Assistant',sans-serif; --disp:'Assistant',sans-serif; --disp-w:800; --body:'Assistant',sans-serif;
+    --radius:18px; --radius-sm:12px; --tag-ink:#fff; --scheme:light; --shadow:0 6px 20px rgba(15,36,64,.08); --tip-bg:#0F2440; --tip-ink:#fff; --ovl:rgba(15,36,64,.5);
+  }
+  body{font-size:14.5px}
+  .glyph{width:48px;height:48px;border-radius:14px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)}
+  h1{font-size:30px}
+  .tag{background:var(--bad);border-radius:999px}
+  .homelink{background:var(--panel);border:none;box-shadow:var(--shadow);border-radius:999px}
+  .seg,.daynav{border:none;box-shadow:var(--shadow);border-radius:999px}
+  .pchip.on{background:var(--accent);color:#fff}
+  .daynav input{color:var(--ink);font-weight:700}
+  .tickets{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+  .ticket{--stub:14px;display:flex;background:var(--panel);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;position:relative;min-width:0}
+  .ticket .stub{width:var(--stub);background:var(--accent);flex-shrink:0;border-inline-end:2px dashed rgba(255,255,255,.7)}
+  .ticket.main{--stub:46px}
+  .ticket.main .stub{display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;color:#fff;font-weight:800;font-size:14px;letter-spacing:2px;background:var(--bad)}
+  .ticket::before,.ticket::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:var(--bg);right:calc(var(--stub) - 8px)}
+  .ticket::before{top:-8px}.ticket::after{bottom:-8px}
+  .tk{padding:14px 16px;min-width:0}
+  .tk b{font-size:30px;display:block;color:var(--ink);line-height:1.05;font-weight:800}
+  .tk b i{font-style:normal;font-size:13px;color:var(--mut);margin-inline-start:4px;font-weight:700}
+  .ticket.main .tk b{font-size:66px;color:var(--accent)}
+  .tk span{font-size:12.5px;font-weight:800;color:var(--mut)}
+  .tk small{display:block;color:var(--dim);font-size:11.5px;margin-top:6px;line-height:1.4}
+  .panel{border:none}
+  .ptitle::before{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  .st{border-radius:999px;border:none;background:var(--panel2)}
+  .st.s0{background:#DFF6EA}.st.s1{background:#FFF1CC}.st.s2{background:#FFE4D1}.st.s3{background:#FBDDDA}
+  .fchip{border-radius:999px}
+  .mono{font-size:14.5px;font-weight:700}
+  .mono.t{color:var(--accent)}
+  .modal{border:none}
+  @media(max-width:760px){
+    .tickets{grid-template-columns:1fr 1fr}
+    .ticket.main{grid-column:1/-1}
+    .ticket.main .tk b{font-size:56px}
+    .tk b{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="glyph" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="40" rx="8" fill="#fff"/><rect x="20" y="15" width="24" height="13" rx="3" fill="#1F5FBF"/><circle cx="24" cy="38" r="3.5" fill="#1F5FBF"/><circle cx="40" cy="38" r="3.5" fill="#1F5FBF"/><path d="M22 48l-6 9M42 48l6 9" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></div>
+    <h1>מדד אמינות הרכבת</h1>
+    <span class="tag">ניסוי</span>
+    <a class="homelink" href="../../">← הקו הבוחן</a>
+  </div>
+  <div class="trynav">כיוונים: <a href="../index.html">1 לוח</a><a href="2.html">2 עיתון</a><a class="on" href="3.html">3 כרטיס</a><a href="4.html">4 מפת קווים</a><a href="5.html">5 שילוט</a></div>
+  <p class="sub" id="sub">טוען נתונים…</p>
+  <div class="periods" id="periods"></div>
+  <div id="app"><div class="msg">טוען…</div></div>
+  <div class="panel method" id="method"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>window.RAIL_THEME = {hero: 'tickets', tiles: 'light', data: '../data/', c: {ok: '#1FA971', warn: '#E0A100', late: '#EE7A2F', bad: '#D93025', grid: '#E3ECF6', axis: '#7A8FA8', bg: '#FFFFFF', line: '#1F5FBF', accent: '#1F5FBF', none: '#B7C4D6', seg: '#1F5FBF', dash: '#7A8FA8'}};</script>
+<script src="../app.js"></script>
+</body>
+</html>
