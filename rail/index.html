@@ -3,63 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0C131D">
+<meta name="theme-color" content="#FFFFFF">
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>מדד אמינות הרכבת — הקו הבוחן</title>
-<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="%230C131D"/><rect x="14" y="10" width="36" height="38" rx="8" fill="%23F6B93B"/><rect x="20" y="17" width="24" height="12" rx="3" fill="%230C131D"/><circle cx="24" cy="38" r="3.5" fill="%230C131D"/><circle cx="40" cy="38" r="3.5" fill="%230C131D"/><path d="M22 48l-6 8M42 48l6 8" stroke="%23F6B93B" stroke-width="4" stroke-linecap="round"/></svg>'>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="%231E5BC6" stroke="%23101418" stroke-width="3"/><rect x="18" y="14" width="28" height="30" rx="6" fill="%23fff"/><rect x="23" y="19" width="18" height="10" rx="2" fill="%231E5BC6"/><circle cx="26" cy="37" r="2.8" fill="%231E5BC6"/><circle cx="38" cy="37" r="2.8" fill="%231E5BC6"/><path d="M24 44l-4 7M40 44l4 7" stroke="%23fff" stroke-width="3" stroke-linecap="round"/></svg>'>
 <meta property="og:title" content="מדד אמינות הרכבת — הקו הבוחן">
 <meta property="og:description" content="כל רכבת בלו״ז מול המיקום ששידרה בפועל: איחורים לפי קו, תחנה ושעה, יום אחרי יום">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&family=Share+Tech+Mono&display=swap">
+<title>מדד אמינות הרכבת — הקו הבוחן</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=Secular+One&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="base.css">
 <style>
-  /* כיוון 1 — לוח יציאות של תחנת רכבת: רקע כהה, ספרות "לד" בענבר, קווי הפרדה דקים */
+  /* העמוד הראשי — כיוון 4 "מפת קווים" (בחירת שלמה 04.09): לבן, פסי צבע עבים כמו בתרשים קווי רכבת, מד טבעת, צל קשה כפוסטר */
   :root{
-    --bg:#0C131D; --panel:#121B28; --panel2:#182436; --line:#24324A; --line2:#2E3F5A;
-    --ink:#EAF0F7; --mut:#9AAAC0; --dim:#6B7D96; --accent:#F6B93B; --accent2:#FFD37A;
-    --ok:#3DD68C; --warn:#F6B93B; --late:#FB8A4B; --bad:#F26D6D; --none:#3B4B63;
-    --mono:'Share Tech Mono','Courier New',monospace; --disp:'Secular One','Heebo',sans-serif; --body:'Heebo',system-ui,sans-serif;
-    --radius:12px; --radius-sm:8px; --tip-bg:#0A1119; --tip-ink:#EAF0F7; --scheme:dark;
+    --bg:#FFFFFF; --panel:#FFFFFF; --panel2:#F3F4F6; --line:#E5E7EB; --line2:#CBD5E1;
+    --ink:#101418; --mut:#4B5563; --dim:#8A94A3; --accent:#1E5BC6; --accent2:#173F8C;
+    --ok:#00A65A; --warn:#F4B400; --late:#F26B1D; --bad:#D7263D; --none:#C4CBD6;
+    --mono:'Heebo',sans-serif; --disp:'Secular One','Heebo',sans-serif; --body:'Heebo',sans-serif;
+    --radius:12px; --radius-sm:8px; --tag-ink:#fff; --scheme:light; --tip-bg:#101418; --tip-ink:#fff; --ovl:rgba(16,20,24,.55);
   }
-  .glyph{width:46px;height:46px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .rule{height:3px;margin:14px 0 12px;background:linear-gradient(90deg,var(--accent) 0,var(--accent) 38%,var(--line) 38%,var(--line) 100%);border-radius:2px}
-  .board{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
-  .cell{background:var(--panel);padding:16px 18px;position:relative;min-width:0}
-  .cell.hero{background:linear-gradient(180deg,#151F2E,#0F1826);background-image:repeating-linear-gradient(180deg,transparent 0 21px,rgba(255,255,255,.028) 21px 22px)}
-  .cell .lbl{font-size:12px;color:var(--mut);font-weight:700;letter-spacing:.3px;margin-bottom:6px;display:block}
-  .cell .num{font-family:var(--mono);font-size:34px;line-height:1;color:var(--ink);letter-spacing:.5px;display:block;font-variant-numeric:tabular-nums}
-  .cell .num i{font-style:normal;font-family:var(--body);font-size:13px;color:var(--mut);margin-inline-start:4px;font-weight:700}
-  .cell.hero .num{font-size:78px;color:var(--accent);text-shadow:0 0 18px rgba(246,185,59,.35)}
-  .cell.hero .lbl{font-size:14px;color:var(--accent2)}
-  .cell .cap{display:block;font-size:11.5px;color:var(--dim);font-weight:500;margin-top:8px;line-height:1.5}
-  .cell.hero .cap{color:var(--mut);font-size:12.5px}
+  .top{padding-bottom:10px}
+  h1{font-size:32px}
+  .band{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--ok) 0 25%,var(--warn) 25% 50%,var(--late) 50% 75%,var(--bad) 75%);margin-bottom:14px}
+  .glyph{width:46px;height:46px;border-radius:50%;background:var(--accent);border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .tag{background:var(--bad);border-radius:999px}
+  .homelink{border:1.5px solid var(--ink);color:var(--ink);border-radius:999px}
+  .seg,.daynav{border:1.5px solid var(--ink);border-radius:999px}
+  .pchip{border-inline-end:1.5px solid var(--ink)}
+  .pchip.on{background:var(--ink);color:#fff}
+  .daynav input{color:var(--ink);font-weight:700;border-inline:1.5px solid var(--ink)}
+  .panel{border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+  .ptitle::before{width:12px;height:12px;border-radius:50%;background:var(--accent);border:3px solid var(--ink);box-sizing:content-box}
+  .ptitle{font-size:17px}
+  .ringwrap{display:grid;grid-template-columns:230px 1fr;gap:26px;align-items:center;border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink);border-radius:12px;padding:22px;margin-bottom:18px;background:#fff}
+  .ring{position:relative;width:210px;height:210px}
+  .ring svg{width:100%;height:100%}
+  .rv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .rv b{font-family:var(--disp);font-size:48px;font-weight:400;line-height:1}
+  .rv span{font-size:12px;font-weight:800;color:var(--mut)}
+  .rtext h2{font-family:var(--disp);font-weight:400;font-size:28px;margin:0 0 4px}
+  .rtext p{color:var(--mut);margin:0 0 14px;font-size:12.5px}
+  .rstats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .rstats div{border-top:6px solid var(--accent);padding-top:8px;min-width:0}
+  .rstats div:nth-child(1){border-color:var(--ok)}.rstats div:nth-child(2){border-color:var(--bad)}.rstats div:nth-child(3){border-color:var(--accent)}.rstats div:nth-child(4){border-color:var(--warn)}
+  .rstats b{font-size:26px;display:block;font-family:var(--disp);font-weight:400;line-height:1.1}
+  .rstats b i{font-style:normal;font-family:var(--body);font-size:12px;color:var(--mut);margin-inline-start:4px;font-weight:700}
+  .rstats span{font-size:11.5px;font-weight:800;color:var(--mut)}
+  .rstats small{display:block;color:var(--dim);font-size:11px;margin-top:2px}
+  .st{border-width:1.5px;border-radius:999px}
+  .bar{height:8px;border-radius:4px}
+  .mono{font-weight:700}
+  .mono.t{color:var(--ink)}
+  .modal{border:1.5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+  .route::before{width:6px;right:7px;background:var(--ink);border-radius:3px}
+  .rs .dot{border-width:3px;width:14px;height:14px;margin-right:2px}
   @media(max-width:760px){
-    .board{grid-template-columns:1fr 1fr}
-    .cell.hero{grid-column:1/-1}
-    .cell.hero .num{font-size:64px}
-    .cell .num{font-size:26px}
+    .ringwrap{grid-template-columns:1fr;justify-items:center}
+    .rstats{grid-template-columns:1fr 1fr;width:100%}
+    .rtext{width:100%}
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="top">
-    <div class="glyph" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="40" rx="8" fill="#0C131D"/><rect x="20" y="15" width="24" height="13" rx="3" fill="#F6B93B"/><circle cx="24" cy="38" r="3.5" fill="#F6B93B"/><circle cx="40" cy="38" r="3.5" fill="#F6B93B"/><path d="M22 48l-6 9M42 48l6 9" stroke="#0C131D" stroke-width="4" stroke-linecap="round"/></svg></div>
+    <div class="glyph" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 64 64"><rect x="14" y="8" width="36" height="40" rx="8" fill="#fff"/><rect x="20" y="15" width="24" height="13" rx="3" fill="#1E5BC6"/><circle cx="24" cy="38" r="3.5" fill="#1E5BC6"/><circle cx="40" cy="38" r="3.5" fill="#1E5BC6"/><path d="M22 48l-6 9M42 48l6 9" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></div>
     <h1>מדד אמינות הרכבת</h1>
     <span class="tag">ניסוי</span>
     <a class="homelink" href="../">← הקו הבוחן</a>
   </div>
-  <div class="rule"></div>
+  <div class="band"></div>
   <p class="sub" id="sub">טוען נתונים…</p>
   <div class="periods" id="periods"></div>
   <div id="app"><div class="msg">טוען…</div></div>
   <div class="panel method" id="method"></div>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script>window.RAIL_THEME = {hero: 'board', tiles: 'dark', data: 'data/'};</script>
+<script>window.RAIL_THEME = {hero: 'ring', tiles: 'light', data: 'data/', c: {ok: '#00A65A', warn: '#F4B400', late: '#F26B1D', bad: '#D7263D', grid: '#E5E7EB', axis: '#8A94A3', bg: '#FFFFFF', line: '#1E5BC6', accent: '#101418', none: '#C4CBD6', seg: '#101418', dash: '#8A94A3'}};</script>
 <script src="app.js"></script>
 </body>
 </html>
