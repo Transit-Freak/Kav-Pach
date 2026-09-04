@@ -45,6 +45,10 @@ STATIONS = f'{OUTDIR}/stations.json'
 STATE = f'{OUTDIR}/state.json'
 OP = '2'            # רכבת ישראל
 PAGE = 10000
+# בלמים כלפי דאטאבוס (שלמה 04.09): בקשה אחת בכל פעם, המתנה קצרה בין בקשות,
+# ועצירה מיידית על שגיאת עומס (503/429) במקום ניסיונות חוזרים
+WORKERS = int(os.environ.get('RAIL_WORKERS', '1'))
+PAUSE = float(os.environ.get('RAIL_PAUSE', '0.5'))
 MAX_MIN = float(os.environ.get('MAX_MIN', '0'))
 DRY = os.environ.get('DRY') == '1'
 REDO = os.environ.get('REDO') == '1'
@@ -99,13 +103,18 @@ def get(path, **params):
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-rail/1.0'})
             with urllib.request.urlopen(req, timeout=300) as r:
-                return json.load(r)
+                data = json.load(r)
+            time.sleep(PAUSE)
+            return data
         except urllib.error.HTTPError as e:
             body = ''
             try:
                 body = e.read().decode('utf-8', 'ignore')[:400]
             except Exception:  # noqa: BLE001
                 pass
+            # עומס בשרת (503/429) — לא ממשיכים להציק: הריצה נכשלת והלילה הבא ינסה שוב
+            if e.code in (429, 503):
+                raise RuntimeError(f'השרת מאותת על עומס (HTTP {e.code}) — עצירה') from None
             # שגיאת לקוח (4xx) לא תשתפר בניסיון חוזר — נכשלים מיד עם הסבר השרת
             if 400 <= e.code < 500 or attempt == 5:
                 raise RuntimeError(f'HTTP {e.code} {url[:200]} … {body}') from None
@@ -192,7 +201,7 @@ def fetch_day(d):
         if not ids:
             raise ValueError('אין נסיעות SIRI')
         batches = [ids[i:i + 25] for i in range(0, len(ids), 25)]
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=WORKERS) as ex:
             for rows in ex.map(lambda b: fetch_all('/siri_vehicle_locations/list',
                                                    siri_rides__ids=','.join(map(str, b))), batches):
                 locs.extend(rows)
@@ -207,7 +216,7 @@ def fetch_day(d):
                              siri_rides__scheduled_start_time_from=iso(start),
                              siri_rides__scheduled_start_time_to=iso(end))
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=WORKERS) as ex:
             for rows in ex.map(locs_of, line_refs):
                 locs.extend(rows)
         log(f'  שידורים: {len(locs)} ({elapsed_min():.1f} דק׳)')
