@@ -1,0 +1,46 @@
+name: rail-segments
+
+# קטעי מסילה בין תחנות עוקבות (מרשת המסילות של OSM) למפת הנסיעה במדד
+# אמינות הרכבת. רץ גם בסוף כל ריצת המדד; כאן — הפעלה ידנית מיידית.
+
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'חישוב מחדש של כל הקטעים (1)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rail-segments
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: קטעי מסילה מ-OSM
+        env:
+          FORCE: ${{ github.event.inputs.force }}
+        run: python3 tools/rail_segments.py
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A rail/data/segments.json
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: rail — קטעי מסילה בין תחנות מ-OSM"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "push rejected — retry $i"; sleep 15
+          done
+          echo "הדחיפה נכשלה"; exit 1
