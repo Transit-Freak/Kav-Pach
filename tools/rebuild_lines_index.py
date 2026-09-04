@@ -5,6 +5,10 @@
 # (אותה גזירה כמו בזנב האינדקס של backfill_routes_exact.py).
 import json
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from compact_lines import materialize  # noqa: E402
 
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 
@@ -93,6 +97,21 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
                 ks.add('stops-add')
             elif rr:
                 ks.add('stops-del')
+    # תוכנית שלא יצאה לפועל — מה קרה אחר כך: נדחתה (גרסה מאוחרת עם אותו רצף
+    # תחנות), יצאה לפועל אחרת, או בוטלה. הקטגוריות באתר נגזרות מכאן.
+    if 'planned-dropped' in ks:
+        mvs = materialize(json.loads(json.dumps(lf))).get('versions', [])
+        for i, v in enumerate(mvs):
+            if v.get('k') != 'planned-dropped':
+                continue
+            codes = [str(s[0]) for s in (v.get('pstops') or [])]
+            later = [w for w in mvs[i + 1:] if w.get('stops')]
+            if any([str(s[0]) for s in w['stops']] == codes for w in later):
+                ks.add('planned-postponed')
+            elif later:
+                ks.add('planned-changed')
+            else:
+                ks.add('planned-cancelled')
     ks = sorted(ks)
     e['v'] = len(vs)
     if ks:

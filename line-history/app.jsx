@@ -34,6 +34,9 @@ const KINDS = {
   board:       { label: "שינוי עלייה/ירידה", color: "#854d0e" },
   platform:    { label: "שינוי רציף", color: "#0e7490" },
   "planned-dropped": { label: "תוכנן ולא נכנס לתוקף", color: "#9f1239" },
+  "planned-postponed": { label: "תוכנן ונדחה", color: "#b45309" },
+  "planned-changed": { label: "תוכנן ויצא לפועל אחרת", color: "#9f1239" },
+  "planned-cancelled": { label: "תוכנן ובוטל", color: "#7f1d1d" },
   removed:     { label: "בוטל", color: "#dc2626" },
   "removed-year": { label: "בוטל — מעל שנה לא חזר", color: "#7f1d1d" },
   freq:        { label: "שינוי מספר הרכבים באותה נסיעה", color: "#b45309" },
@@ -47,9 +50,25 @@ function evKind(v) {
   return v.k;
 }
 
+// תוכנית שלא יצאה לפועל — מה קרה אחר כך (שלמה 03.09: "יש את זה בכל מיני
+// קווים"): שני שלישים מהתוכניות שירדו נכנסו לתוקף מאוחר יותר באותו רצף
+// תחנות בדיוק — זו דחייה, לא ביטול. נגזר מהגרסאות המאוחרות של אותו וריאנט.
+function plOutcome(x, i, vs) {
+  const codes = (x.pstops || []).map((s) => String(s[0])).join("|");
+  let first = null;
+  for (let j = i + 1; j < vs.length; j++) {
+    const w = vs[j];
+    if (!(w.stops || []).length) continue;
+    if (!first) first = w;
+    if (w.stops.map((s) => String(s[0])).join("|") === codes) return { t: "postponed", d: w.d };
+  }
+  return first ? { t: "changed", d: first.d } : { t: "cancelled" };
+}
+function plKindOf(x) { return x.pk || (/הווריאנט/.test(x.note || "") ? "new" : "route"); }
 // ביטול שנשאר בתוקף מעל שנה (הגרסה האחרונה היא removed וישנה משנה) מקבל קטגוריה משלו
 function dispKind(x, i, vs) {
   if (x.k === "removed" && i === vs.length - 1 && (Date.now() - new Date(x.d)) / 864e5 >= 365) return "removed-year";
+  if (x.k === "planned-dropped" && vs) { const o = plOutcome(x, i, vs); return o.t === "postponed" ? "planned-postponed" : o.t === "changed" ? "planned-changed" : "planned-cancelled"; }
   return evKind(x);
 }
 // אותו כלל ברמת האינדקס (lk/ld = הרשומה האחרונה של הווריאנט)
@@ -74,7 +93,7 @@ const CAT_GROUPS = [
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
   { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode", "platform"] },
-  { title: "שינויים שלא נכנסו לתוקף", items: ["planned-dropped"] },
+  { title: "שינויים שלא נכנסו לתוקף במועד", items: ["planned-cancelled", "planned-changed", "planned-postponed"] },
   { title: "שינויים טכניים", items: ["redraw"] },
 ];
 const CAT_LABELS = {
@@ -94,6 +113,9 @@ const CAT_LABELS = {
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
   platform: "שינוי רציף — הקו עוצר ברציף אחר",
   "planned-dropped": "תוכנן ולא נכנס לתוקף — פורסם ברישום עם תאריך התחלה וירד לפני שהתחיל; נרשם מתי היה אמור להיכנס ומתי בוטל, והמסלול שתוכנן מסומן במפה במקווקו לצד המסלול בפועל",
+  "planned-cancelled": "תוכנן ובוטל — פורסם ברישום עם תאריך התחלה, ירד לפני שהתחיל, ולא נכנס לתוקף עד היום",
+  "planned-changed": "תוכנן ויצא לפועל אחרת — התוכנית ירדה, ומה שנכנס לתוקף אחר כך היה מסלול שונה ממנה",
+  "planned-postponed": "תוכנן ונדחה — התוכנית ירדה במועד שפורסם, ונכנסה לתוקף מאוחר יותר באותו רצף תחנות בדיוק",
   freq: "שינוי מספר הרכבים באותה נסיעה (תגבור)",
   sched: "שינוי שעות היציאה (לו\"ז)",
 };
@@ -1433,6 +1455,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     return { add: v.pstops.filter((s) => !ac.has(String(s[0]))), rem: actualV.stops.filter((s) => !pc.has(String(s[0]))) };
   })() : null;
   const plSame = !!plDiff && !plDiff.add.length && !plDiff.rem.length;
+  const plOut = plannedV ? plOutcome(v, vi, vs) : null;
   const gv = plannedV ? { d: v.d, stops: v.pstops, shp: v.pshp || "" } : (cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v)));
   const borrowed = !cmpOn && !ownGeo && !plannedV && gv !== v;
   // "מקורב" נמדד על הגרסה שמצוירת בפועל — כשהמפה שאולה מגרסה אחרת,
@@ -1756,7 +1779,11 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   מתי היה אמור להיכנס, ומתי בוטל (ירד מהרישום) */}
               {x.k === "planned-dropped" && (x.ps || x.pc) && (
                 <div className="sub">
-                  {(x.pk || (/הווריאנט/.test(x.note || "") ? "new" : "route")) === "new" ? "וריאנט שלם שלא התחיל" : "שינוי מסלול שלא יצא לפועל"} · 📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b>
+                  {(() => { const o = plOutcome(x, i, vs), k = plKindOf(x);
+                    const what = k === "new" ? "וריאנט שלם" : "שינוי מסלול";
+                    return o.t === "postponed" ? <>{what} שנדחה: נכנס לתוקף ב-<b>{fmtD(o.d)}</b></>
+                      : o.t === "changed" ? <>{what} שלא יצא לפועל; מה שנכנס אחר כך (מ-{fmtD(o.d)}) היה שונה</>
+                      : <>{what} שבוטל, לא נכנס לתוקף עד היום</>; })()} · 📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b>
                   {x.pc && x.ps && x.pc >= x.ps ? <> · לא יצא לפועל, ירד מהרישום ב-<b>{fmtD(x.pc)}</b></> : <> · בוטל ב-<b>{fmtD(x.pc || x.d)}</b>, לפני המועד</>}
                   {x.sd && gapDays(x.sd, x.pc || x.d) > 1 ? <> (נראה לאחרונה ב-{fmtD(x.sd)})</> : null}
                   {x.pf ? <> · פורסם לראשונה ב-{fmtD(x.pf)}</> : null}
@@ -1786,7 +1813,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
       </div>
       <div className="card main">
         <div className="vhead">
-          {plannedV ? (plKind === "new" ? <>וריאנט שתוכנן להתחיל ב-<b>{fmtD(v.ps)}</b> ולא התחיל</> : <>שינוי מסלול שתוכנן ל-<b>{fmtD(v.ps)}</b> ולא יצא לפועל</>)
+          {plannedV ? (plOut.t === "postponed"
+              ? <>{plKind === "new" ? "וריאנט" : "שינוי מסלול"} שתוכנן ל-<b>{fmtD(v.ps)}</b> ונדחה: נכנס לתוקף ב-<b>{fmtD(plOut.d)}</b></>
+              : plKind === "new" ? <>וריאנט שתוכנן להתחיל ב-<b>{fmtD(v.ps)}</b> ולא התחיל</> : <>שינוי מסלול שתוכנן ל-<b>{fmtD(v.ps)}</b> ולא יצא לפועל</>)
             : cmpOn ? <>השוואה שביקשת: <b>{evDate(v).txt}</b> מול <b>{evDate(pv).txt}</b></>
             : <>גרסת <b>{evDate(v).txt}</b>{prev ? <> מול הגרסה שלפניה (<b>{evDate(pv).txt}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}</>}
         </div>
@@ -1801,11 +1830,13 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           <div className="mut" style={{ fontWeight: 700 }}>
             {plKind === "new"
               ? (!actualV ? <>מה לא יצא לפועל: הווריאנט כולו. פורסם ברישום עם תאריך התחלה, ירד לפני שהתחיל, ועד היום לא נסע.</>
-                : plSame ? <>מה לא יצא לפועל: מועד ההתחלה. הווריאנט כולו פורסם עם תאריך התחלה ולא התחיל בו; בפועל התחיל לנסוע מ-{fmtD(actualV.d)} באותו מסלול בדיוק, ולכן שתי השכבות במפה חופפות.</>
+                : plSame ? <>מה לא יצא לפועל: מועד ההתחלה בלבד. הווריאנט כולו פורסם עם תאריך התחלה ולא התחיל בו; בפועל התחיל לנסוע מ-{fmtD(actualV.d)} באותו מסלול בדיוק, ולכן שתי השכבות במפה חופפות.</>
                 : <>מה לא יצא לפועל: הווריאנט במסלול הזה. בפועל התחיל לנסוע מ-{fmtD(actualV.d)} במסלול שונה.</>)
-              : (!plDiff ? <>מה לא יצא לפועל: שינוי במסלול הקיים.</>
+              : (plOut.t === "postponed" ? <>מה לא יצא לפועל במועד: השינוי שמפורט כאן. הוא נדחה ונכנס לתוקף ב-{fmtD(plOut.d)}, באותו רצף תחנות.</>
+                : !plDiff ? <>מה לא יצא לפועל: שינוי במסלול הקיים.</>
                 : plSame ? <>מה לא יצא לפועל: שינוי בשרטוט המסלול בלבד, רצף התחנות זהה למסלול בפועל.</>
-                : <>מה לא יצא לפועל: שינוי במסלול הקיים.</>)}
+                : plOut.t === "changed" ? <>מה לא יצא לפועל: השינוי שמפורט כאן. מה שנכנס לתוקף אחר כך, מ-{fmtD(plOut.d)}, היה שונה ממנו.</>
+                : <>מה לא יצא לפועל: השינוי שמפורט כאן, ועד היום לא נכנס.</>)}
             {plDiff && !plSame && (
               <div className="sub" style={{ fontWeight: 400 }}>
                 {plDiff.add.length > 0 && <div>➕ תחנות שהיו בתוכנית ואינן במסלול בפועל ({plDiff.add.length}): {plDiff.add.slice(0, 20).map((s) => s[1]).join(", ")}{plDiff.add.length > 20 ? "…" : ""}</div>}

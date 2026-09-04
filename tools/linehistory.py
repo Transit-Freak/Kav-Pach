@@ -934,6 +934,15 @@ def idx_entry(rdesc, line, dest, op, ty, tt=None):
             if a and r: ks.add('stops')
             elif a: ks.add('stops-add')
             elif r: ks.add('stops-del')
+    # תוכנית שלא יצאה לפועל — מה קרה אחר כך (נדחתה / יצאה לפועל אחרת / בוטלה)
+    if 'planned-dropped' in ks:
+        for i, v in enumerate(vs):
+            if v.get('k') != 'planned-dropped': continue
+            _codes = [str(s[0]) for s in (v.get('pstops') or [])]
+            _later = [w for w in vs[i + 1:] if w.get('stops')]
+            if any([str(s[0]) for s in w['stops']] == _codes for w in _later): ks.add('planned-postponed')
+            elif _later: ks.add('planned-changed')
+            else: ks.add('planned-cancelled')
     ks = sorted(ks)
     if ks: e['ks'] = ks
     # הסטטוס נגזר מהרשומה האחרונה שאינה "תוכנן ולא נכנס לתוקף" — תוכנית שלא
