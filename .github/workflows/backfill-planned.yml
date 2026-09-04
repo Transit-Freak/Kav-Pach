@@ -62,6 +62,7 @@ jobs:
         if: ${{ inputs.dry != '1' }}
         run: |
           set -euo pipefail
+          OUTDIR=line-history/data python3 tools/repair_planned_entered.py
           OUTDIR=line-history/data python3 tools/build_archive_months.py
           OUTDIR=line-history/data python3 tools/rebuild_lines_index.py
 
