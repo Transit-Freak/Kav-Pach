@@ -7,8 +7,10 @@
 כל נסיעה מוצמדים לנסיעת הלו"ז שלה (לפי המזהה שדאטאבוס קבע, ובהיעדרו לפי
 קו + שעת יציאה), ולכל תחנה נאמד זמן ההגעה בפועל: השידור הראשון בנקודת
 ההתקרבות הקרובה ביותר לתחנה (עד 150 מ' מהמרחק המזערי, בחלון של ±45 דקות
-סביב הזמן המתוכנן). האיחור = ההגעה שנאמדה פחות המתוכנן. רכבת נחשבת "בזמן"
-כשהגיעה ליעדה הסופי באיחור של עד 5 דקות (ההגדרה המקובלת של דיוק הרכבת).
+סביב הזמן המתוכנן, ורק אם ההתקרבות עד 500 מ'). האיחור = ההגעה שנאמדה פחות
+המתוכנן. שידורי הרכבות מקוטעים (המיקום נתקע, קטעים בלי שידור, והשידור
+נפסק לרוב לפני היעד), לכן "איחור הנסיעה" הוא האיחור בתחנה האחרונה שנמדדה,
+והקובץ מציין עד איזו תחנה נמדדה. רכבת נחשבת "בזמן" באיחור של עד 5 דקות.
 
 תוצרים (rail/data):
   days/YYYY-MM-DD.json — פירוט הנסיעות והתחנות של היום (לעמוד היום/הנסיעה)
@@ -54,7 +56,10 @@ TO = datetime.date.fromisoformat(os.environ.get('TO') or YESTERDAY.isoformat())
 # כללי ההצמדה
 MAX_DIST = 2000       # מ' — שידור רחוק מזה אינו "ליד התחנה"
 NEAR_BUFFER = 150     # מ' — כל השידורים עד כאן מעל המרחק המזערי הם "בתחנה"
-SOLID_DIST = 1000     # מ' — התקרבות רחוקה מזה אינה נספרת (אובדן GPS במנהרות)
+# התקרבות רחוקה מזה אינה נספרת. האבחון (03.09) הראה שהמיקום "נתקע" לעיתים
+# בתחנה לחצי שעה בזמן שהרכבת כבר נוסעת, ונקודה תקועה כזו נמדדה גם בתחנה
+# השכנה (1.6 ק"מ). 500 מ' מבטיח שהשידור באמת מהתחנה עצמה.
+SOLID_DIST = 500
 TIME_WIN = 45 * 60    # שניות — חלון סביב הזמן המתוכנן
 ONTIME_MAX = 5.0      # דקות — "בזמן": איחור ביעד הסופי עד 5 דקות
 BUCKETS = ((-1e9, 5), (5, 10), (10, 20), (20, 1e9))   # דקות; הראשון = בזמן
@@ -272,21 +277,22 @@ def station_timing(stop, fx):
 
 
 def analyse_ride(v, fx):
-    """שורות התחנות של נסיעה: [קוד, הגעה מתוכננת, יציאה מתוכננת, איחור הגעה,
-    איחור יציאה, מרחק מזערי] — הזמנים בדקות מתחילת היום, האיחורים בדקות."""
+    """שורות התחנות של נסיעה: [קוד, זמן מתוכנן, איחור הגעה, מרחק מזערי] —
+    הזמן בשניות epoch (מומר אחר כך לדקות מתחילת היום), האיחור בדקות.
+    נמדדת רק ההגעה (השידור הראשון בנקודת ההתקרבות): זמן היציאה אינו אמין,
+    כי המיקום נתקע לעיתים בתחנה גם אחרי שהרכבת יצאה. בתחנת המוצא אין מדידה."""
     rows = []
     obs = []
     for i, s in enumerate(v):
-        pa, pd = ts(s.get('arrival_time')), ts(s.get('departure_time'))
-        code = s.get('gtfs_stop__code')
-        row = [code, pa, pd if pd is not None and pd != pa else None, None, None, None]
-        tm = station_timing(s, fx) if fx else None
+        pa = ts(s.get('arrival_time'))
+        if i == 0:
+            pa = ts(s.get('departure_time')) or pa
+        row = [s.get('gtfs_stop__code'), pa, None, None]
+        tm = station_timing(s, fx) if (fx and i > 0) else None
         if tm and tm[2] <= SOLID_DIST:
             arr, dep, near, ob = tm
-            row[3] = round((arr - pa) / 60, 1)
-            if pd is not None:
-                row[4] = round((dep - pd) / 60, 1)
-            row[5] = int(near)
+            row[2] = round((arr - pa) / 60, 1)
+            row[3] = int(near)
             obs.append(((ob - pa) / 60, i == len(v) - 1))
         rows.append(row)
     return rows, obs
@@ -364,13 +370,17 @@ def process_day(d, stations):
         fx = fixes.get(rid, [])
         rows, obs = analyse_ride(v, fx)
         ob_final.extend(x for x, last in obs if last)
-        srows = [[r[0], day_minutes(r[1], start), day_minutes(r[2], start) if r[2] is not None else None,
-                  r[3], r[4], r[5]] for r in rows]
+        srows = [[r[0], day_minutes(r[1], start), r[2], r[3]] for r in rows]
         ride = {'id': rid, 'ln': first.get('gtfs_route__line_ref'),
                 'nm': (first.get('gtfs_route__route_long_name') or '').strip(),
                 'sn': (first.get('gtfs_route__route_short_name') or '').strip(),
                 'dir': first.get('gtfs_route__route_direction'),
                 'tn': vehs.get(rid) or '', 'fx': len(fx), 's': srows}
+        # התחנה האחרונה שנמדדה — האיחור בה הוא "איחור הנסיעה" (היעד עצמו
+        # נמדד רק במיעוט הנסיעות: השידור נפסק לרוב לפני ההגעה אליו)
+        measured = [i for i, r in enumerate(srows) if r[2] is not None]
+        if measured:
+            ride['fi'] = measured[-1]
         rides.append(ride)
     day = {'d': d.isoformat(), 'rides': rides,
            'n_fix': len(locs), 'built': iso(datetime.datetime.now(IL))}
@@ -397,32 +407,34 @@ def _agg(vals):
 
 def summarize(day, stations):
     rides = day['rides']
-    finals = []          # איחור ביעד הסופי
+    finals = []          # איחור בתחנה האחרונה שנמדדה
     by_line = {}
     by_hour = {}
     by_station = {}
     n_fix = 0
     n_final = 0
+    n_term = 0           # נסיעות שנמדדו ביעד עצמו
     for r in rides:
         s = r['s']
         if r['fx']:
             n_fix += 1
-        fd = s[-1][3] if s else None
+        fi = r.get('fi')
+        fd = s[fi][2] if fi is not None else None
         h = (s[0][1] // 60) % 24 if s and s[0][1] is not None else None
         if fd is not None:
             finals.append(fd)
             n_final += 1
+            if fi == len(s) - 1:
+                n_term += 1
         by_line.setdefault(r['nm'], []).append(fd)
         if h is not None:
             by_hour.setdefault(h, []).append(fd)
         for i, row in enumerate(s):
             code = row[0]
-            if code is None:
+            if code is None or i == 0:
                 continue
-            # בתחנת המוצא נמדדת היציאה, בשאר — ההגעה
-            val = row[4] if i == 0 else row[3]
-            by_station.setdefault(code, []).append(val)
-    out = {'d': day['d'], 'rides': len(rides), 'fix': n_fix, 'meas': n_final}
+            by_station.setdefault(code, []).append(row[2])
+    out = {'d': day['d'], 'rides': len(rides), 'fix': n_fix, 'meas': n_final, 'term': n_term}
     a = _agg(finals)
     if a:
         out.update(a)
@@ -458,7 +470,7 @@ def main():
         except Exception as e:  # noqa: BLE001 — יום שנכשל לא עוצר את השאר
             log(f'  נכשל: {e!r}')
             continue
-        log(f'  נסיעות {summ["rides"]} · עם שידור {summ["fix"]} · נמדדו ביעד {summ["meas"]} · '
+        log(f'  נסיעות {summ["rides"]} · עם שידור {summ["fix"]} · נמדדו {summ["meas"]} (ביעד עצמו {summ["term"]}) · '
             f'בזמן {summ.get("on", 0):.0%} · ממוצע {summ.get("avg", 0)} דק׳ · חציון {summ.get("med", 0)}')
         done += 1
         if DRY:

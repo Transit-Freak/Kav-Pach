@@ -129,8 +129,9 @@
   <div class="panel method">
     <p class="ptitle">איך המדד מחושב</p>
     <p>המקור הוא <a href="https://open-bus-map-search.hasadna.org.il/train" target="_blank" rel="noopener">דאטאבוס</a> של הסדנא לידע ציבורי: לוח הזמנים המתוכנן של רכבת ישראל (GTFS) ושידורי המיקום של הרכבות בזמן אמת (SIRI), כפי שמשרד התחבורה מפרסם. כל לילה נשלפות כל נסיעות הרכבת של היום שחלף, ולכל נסיעה מוצמדים השידורים שלה.</p>
-    <p>בכל תחנה נאמד זמן ההגעה בפועל: השידור הראשון בנקודה שבה הרכבת הייתה הכי קרובה לתחנה (בחלון של ±45 דקות סביב הזמן המתוכנן). ההפרש בינו לבין הזמן שבלו״ז הוא האיחור. בתחנת המוצא נמדדת היציאה, ביתר התחנות — ההגעה. תחנה שהרכבת לא שידרה בקרבתה (למשל תחנות תת-קרקעיות שבהן אין קליטה, או רכבת שלא שידרה כלל) אינה נמדדת, והמדד מציג כמה מהנסיעות נמדדו.</p>
-    <p><b>רכבת "בזמן"</b> היא רכבת שהגיעה ליעדה הסופי באיחור של עד 5 דקות — ההגדרה המקובלת לדיוק רכבות. ההתפלגות מוצגת גם ב-5–10, 10–20 ומעל 20 דקות. השידורים מגיעים אחת לכדקה, ולכן דיוק המדידה הוא כדקה.</p>
+    <p>בכל תחנה נאמד זמן ההגעה בפועל: השידור הראשון בנקודה שבה הרכבת הייתה הכי קרובה לתחנה (בחלון של ±45 דקות סביב הזמן המתוכנן, ורק אם השידור היה עד 500 מ׳ מהתחנה). ההפרש בינו לבין הזמן שבלו״ז הוא האיחור. השידורים מגיעים אחת לכדקה, ולכן דיוק המדידה הוא כדקה.</p>
+    <p>שידורי הרכבות מקוטעים: המיקום "נתקע" לעיתים בתחנה גם אחרי שהרכבת יצאה ממנה, יש קטעים שלמים בלי שידור, והשידור נפסק ברוב הנסיעות לפני ההגעה ליעד. לכן <b>איחור הנסיעה</b> הוא האיחור בתחנה האחרונה שנמדדה בה, והעמוד מציין עד איזו תחנה הגיעה המדידה וכמה מהנסיעות נמדדו עד היעד עצמו. זמן היציאה מתחנת המוצא אינו נמדד — הוא מוטה מאותם שידורים תקועים.</p>
+    <p><b>רכבת "בזמן"</b> היא רכבת שהגיעה באיחור של עד 5 דקות — ההגדרה המקובלת לדיוק רכבות. ההתפלגות מוצגת גם ב-5–10, 10–20 ומעל 20 דקות.</p>
     <p>רכבת שבלו״ז אך בלי שום שידור אינה נספרת כאיחור ואינה נספרת כביטול — אי אפשר להבחין בין רכבת שבוטלה לתקלת שידור. שיעור הנסיעות ללא שידור מוצג בנפרד.</p>
   </div>
 </div>
@@ -171,9 +172,9 @@ const delayTxt = v => v == null ? '—' : v > 0.05 ? `+${fmt1(v)}` : v < -0.05 ?
 function load(url) { return fetch(url + '?v=' + Date.now()).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }); }
 
 // ---------------------------------------------------------------- צבירה
-function emptyAgg() { return {rides: 0, fix: 0, meas: 0, n: 0, sum: 0, b: [0, 0, 0, 0], med: null, p90: null}; }
+function emptyAgg() { return {rides: 0, fix: 0, meas: 0, term: 0, n: 0, sum: 0, b: [0, 0, 0, 0], med: null, p90: null}; }
 function addAgg(t, s) {
-  t.rides += s.rides || 0; t.fix += s.fix || 0; t.meas += s.meas || 0;
+  t.rides += s.rides || 0; t.fix += s.fix || 0; t.meas += s.meas || 0; t.term += s.term || 0;
   if (s.n) { t.n += s.n; t.sum += (s.avg || 0) * s.n; (s.b || []).forEach((v, i) => t.b[i] += v); }
 }
 function finish(t) { t.avg = t.n ? t.sum / t.n : null; t.ok = t.b[0]; t.on = t.n ? t.ok / t.n : null; return t; }
@@ -280,10 +281,10 @@ function kpiHtml(a, days) {
   const noFix = a.rides - a.fix;
   const title = period === 'day' ? heDate(days[0].d) : days.length ? `${shortDate(days[0].d)} – ${shortDate(days[days.length - 1].d)}.${days[days.length - 1].d.slice(0, 4)} · ${days.length} ימים` : '';
   return `<div class="kpis">
-    <div class="kpi hero"><span>רכבות שהגיעו בזמן ליעדן</span><b>${a.n ? pct(a.ok, a.n) : '—'}</b><small>${title}</small></div>
-    <div class="kpi"><span>איחור ממוצע ביעד</span><b>${a.avg == null ? '—' : fmt1(a.avg)} <span style="display:inline;font-size:12px">דק׳</span></b>${a.med != null ? `<small>חציון ${fmt1(a.med)} · 90% מהרכבות עד ${fmt1(a.p90)} דק׳</small>` : `<small>ממוצע על ${num(a.n)} רכבות שנמדדו</small>`}</div>
+    <div class="kpi hero"><span>רכבות שהגיעו בזמן</span><b>${a.n ? pct(a.ok, a.n) : '—'}</b><small>${title} · בתחנה האחרונה שנמדדה בכל נסיעה</small></div>
+    <div class="kpi"><span>איחור ממוצע</span><b>${a.avg == null ? '—' : fmt1(a.avg)} <span style="display:inline;font-size:12px">דק׳</span></b>${a.med != null ? `<small>חציון ${fmt1(a.med)} · 90% מהרכבות עד ${fmt1(a.p90)} דק׳</small>` : `<small>ממוצע על ${num(a.n)} רכבות שנמדדו</small>`}</div>
     <div class="kpi"><span>איחור מעל 20 דקות</span><b>${a.n ? pct(a.b[3], a.n) : '—'}</b><small>${num(a.b[3])} רכבות · מעל 10 דק׳: ${a.n ? pct(a.b[2] + a.b[3], a.n) : '—'}</small></div>
-    <div class="kpi"><span>נסיעות בלו״ז</span><b>${num(a.rides)}</b><small>נמדדו ביעד: ${num(a.n)} (${pct(a.n, a.rides)})</small></div>
+    <div class="kpi"><span>נסיעות בלו״ז</span><b>${num(a.rides)}</b><small>נמדדו: ${num(a.n)} (${pct(a.n, a.rides)}) · מהן עד היעד עצמו: ${pct(a.term, a.n)}</small></div>
     <div class="kpi"><span>ללא שידור מיקום</span><b>${pct(noFix, a.rides)}</b><small>${num(noFix)} נסיעות — ביטול או תקלת שידור</small></div>
   </div>`;
 }
@@ -318,17 +319,17 @@ function render() {
   const last = DAYS[DAYS.length - 1];
   $('#sub').innerHTML = `כל רכבת שבלו״ז של רכבת ישראל מול המיקום ששידרה בפועל, מנתוני <b>דאטאבוס</b>. רכבת נחשבת בזמן כשהגיעה ליעדה הסופי באיחור של עד 5 דקות. נתונים מ-${heDate(DAYS[0].d)} עד ${heDate(last.d)} · מתעדכן כל לילה.`;
   let html = kpiHtml(A.acc, days);
-  html += `<div class="panel"><p class="ptitle">התפלגות האיחור ביעד הסופי <small>${num(A.acc.n)} רכבות שנמדדו</small></p>${distHtml(A.acc) || '<div class="empty">אין רכבות שנמדדו</div>'}</div>`;
+  html += `<div class="panel"><p class="ptitle">התפלגות האיחור <small>${num(A.acc.n)} רכבות שנמדדו · בתחנה האחרונה שנמדדה בכל נסיעה</small></p>${distHtml(A.acc) || '<div class="empty">אין רכבות שנמדדו</div>'}</div>`;
   if (period !== 'day') {
     html += `<div class="cols2">
       <div class="panel"><p class="ptitle">שיעור הרכבות בזמן, יום אחרי יום</p><div class="chart" id="c-on"></div></div>
-      <div class="panel"><p class="ptitle">איחור ממוצע ביעד, יום אחרי יום <small>דקות</small></p><div class="chart" id="c-avg"></div></div>
+      <div class="panel"><p class="ptitle">איחור ממוצע, יום אחרי יום <small>דקות</small></p><div class="chart" id="c-avg"></div></div>
     </div>`;
   }
-  html += `<div class="panel"><p class="ptitle">בזמן לפי שעת היציאה <small>אחוז הרכבות שהגיעו ליעדן עד 5 דק׳ איחור</small></p><div class="chart" id="c-hours"></div></div>`;
+  html += `<div class="panel"><p class="ptitle">בזמן לפי שעת היציאה <small>אחוז הרכבות שנמדדו באיחור של עד 5 דק׳</small></p><div class="chart" id="c-hours"></div></div>`;
   if (period === 'day') html += `<div class="panel" id="rides-panel"><p class="ptitle">הנסיעות של היום <small id="rides-n"></small></p><div class="filters"><input id="rq" placeholder="חיפוש: קו, תחנה, מספר רכבת" value="${esc(rq)}">${[['all', 'הכול'], ['late', 'איחור מעל 5 דק׳'], ['bad', 'מעל 20 דק׳'], ['none', 'ללא שידור']].map(([k, t]) => `<button class="fchip${rfilter === k ? ' on' : ''}" data-f="${k}">${t}</button>`).join('')}</div><div id="rides"><div class="empty">טוען…</div></div></div>`;
   html += `<div class="panel"><p class="ptitle">לפי קו <small>${Object.keys(A.lines).length} קווים</small></p>${linesTable(A.lines)}</div>`;
-  html += `<div class="panel"><p class="ptitle">לפי תחנה <small>איחור ההגעה לתחנה; בתחנת המוצא — איחור היציאה</small></p>${stationsTable(A.stations)}</div>`;
+  html += `<div class="panel"><p class="ptitle">לפי תחנה <small>איחור ההגעה לתחנה, בנסיעות שנמדדו בה</small></p>${stationsTable(A.stations)}</div>`;
   app.innerHTML = html;
   if (period !== 'day') {
     lineChart($('#c-on'), days.map(d => ({x: shortDate(d.d), y: d.n ? Math.round(d.b[0] / d.n * 1000) / 10 : null, tip: `<b>${heDate(d.d)}</b><br>בזמן: ${d.n ? pct(d.b[0], d.n) : '—'} מתוך ${num(d.n)} רכבות שנמדדו<br>ממוצע ${fmt1(d.avg)} דק׳ · ללא שידור ${pct(d.rides - d.fix, d.rides)}`})), {min: 0, max: 100, unit: '%', color: '#16A34A'});
@@ -348,8 +349,11 @@ function loadDay(d) {
   if (dayCache[d]) { dayData = dayCache[d]; return Promise.resolve(dayData); }
   return load(`${DATA}days/${d}.json`).then(j => { dayCache[d] = j; dayData = j; return j; }).catch(() => { dayData = null; });
 }
-function rideFinal(r) { const s = r.s; return s.length ? s[s.length - 1][3] : null; }
-function rideMeasured(r) { return r.s.filter(x => x[3] != null || x[4] != null).length; }
+// שורת תחנה בקובץ היום: [קוד, זמן מתוכנן (דקות מתחילת היום), איחור הגעה, מרחק השידור הקרוב]
+// r.fi = התחנה האחרונה שנמדדה; האיחור בה הוא איחור הנסיעה
+function rideFinal(r) { return r.fi == null ? null : r.s[r.fi][2]; }
+function rideMeasured(r) { return r.s.filter((x, i) => i > 0 && x[2] != null).length; }
+function rideReach(r) { return r.fi == null ? '' : r.fi === r.s.length - 1 ? '' : `עד ${(ST[r.s[r.fi][0]] || [])[0] || ''}`; }
 function renderRides() {
   const box = $('#rides'); if (!box) return;
   if (!dayData || dayData.d !== dayD) { box.innerHTML = '<div class="empty">אין פירוט נסיעות ליום הזה</div>'; return; }
@@ -365,9 +369,9 @@ function renderRides() {
   });
   $('#rides-n').textContent = `${num(rides.length)} מתוך ${num(dayData.rides.length)}`;
   const shown = showAll ? rides : rides.slice(0, 120);
-  box.innerHTML = `<div class="tblbox"><table><thead><tr><th>יציאה</th><th>קו</th><th>רכבת</th><th>תחנות שנמדדו</th><th>איחור ביעד</th><th></th></tr></thead><tbody>` +
-    shown.map(r => { const fd = rideFinal(r), b = bucketOf(fd); const idx = dayData.rides.indexOf(r);
-      return `<tr class="v" data-i="${idx}" tabindex="0"><td>${hhmm(r.s[0] ? (r.s[0][2] != null ? r.s[0][2] : r.s[0][1]) : null)}</td><td class="nm">${esc(r.nm)}</td><td>${esc(r.tn) || '—'}</td><td>${rideMeasured(r)}/${r.s.length}</td><td>${fd == null ? '—' : delayTxt(fd) + ' דק׳'}</td><td>${r.fx ? (fd == null ? '<span class="st sn">היעד לא נמדד</span>' : `<span class="st s${b}">${['בזמן', 'איחור קל', 'איחור', 'איחור חמור'][b]}</span>`) : '<span class="st sn">ללא שידור</span>'}</td></tr>`; }).join('') +
+  box.innerHTML = `<div class="tblbox"><table><thead><tr><th>יציאה</th><th>קו</th><th>רכבת</th><th>תחנות שנמדדו</th><th>איחור</th><th></th></tr></thead><tbody>` +
+    shown.map(r => { const fd = rideFinal(r), b = bucketOf(fd); const idx = dayData.rides.indexOf(r); const reach = rideReach(r);
+      return `<tr class="v" data-i="${idx}" tabindex="0"><td>${hhmm(r.s[0] ? r.s[0][1] : null)}</td><td class="nm">${esc(r.nm)}</td><td>${esc(r.tn) || '—'}</td><td>${rideMeasured(r)}/${Math.max(0, r.s.length - 1)}</td><td>${fd == null ? '—' : delayTxt(fd) + ' דק׳'}${reach ? ` <small style="color:var(--dim)">${esc(reach)}</small>` : ''}</td><td>${r.fx ? (fd == null ? '<span class="st sn">לא נמדד</span>' : `<span class="st s${b}">${['בזמן', 'איחור קל', 'איחור', 'איחור חמור'][b]}</span>`) : '<span class="st sn">ללא שידור</span>'}</td></tr>`; }).join('') +
     '</tbody></table></div>' + (rides.length > shown.length ? `<button class="more" id="more">הצגת כל ${num(rides.length)} הנסיעות</button>` : '');
   box.querySelectorAll('tr.v').forEach(tr => { const open = () => openRide(dayData.rides[+tr.dataset.i]); tr.onclick = open; tr.onkeydown = e => { if (e.key === 'Enter') open(); }; });
   const more = $('#more'); if (more) more.onclick = () => { showAll = true; renderRides(); };
@@ -378,13 +382,14 @@ function openRide(r) {
   const fd = rideFinal(r), b = bucketOf(fd);
   const ovl = document.createElement('div'); ovl.className = 'ovl';
   const dbLink = `https://open-bus-map-search.hasadna.org.il/train?date=${dayData.d}&route=${encodeURIComponent(r.nm)}`;
-  ovl.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mhead"><h2>${esc(r.nm)}</h2>${r.tn ? `<span class="st sn">רכבת ${esc(r.tn)}</span>` : ''}${r.fx ? (fd == null ? '<span class="st sn">היעד לא נמדד</span>' : `<span class="st s${b}">${delayTxt(fd)} דק׳ ביעד</span>`) : '<span class="st sn">ללא שידור</span>'}<button class="x" aria-label="סגירה">✕</button></div>
-    <div class="msub">${heDate(dayData.d)} · יציאה ${hhmm(r.s[0] ? (r.s[0][2] != null ? r.s[0][2] : r.s[0][1]) : null)} · ${num(r.fx)} שידורי מיקום · <a href="${dbLink}" target="_blank" rel="noopener">המסלול והשידורים בדאטאבוס ↗</a></div>
+  const reach = rideReach(r);
+  ovl.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mhead"><h2>${esc(r.nm)}</h2>${r.tn ? `<span class="st sn">רכבת ${esc(r.tn)}</span>` : ''}${r.fx ? (fd == null ? '<span class="st sn">לא נמדד</span>' : `<span class="st s${b}">${delayTxt(fd)} דק׳ ${reach ? esc(reach) : 'ביעד'}</span>`) : '<span class="st sn">ללא שידור</span>'}<button class="x" aria-label="סגירה">✕</button></div>
+    <div class="msub">${heDate(dayData.d)} · יציאה ${hhmm(r.s[0] ? r.s[0][1] : null)} · ${num(r.fx)} שידורי מיקום · <a href="${dbLink}" target="_blank" rel="noopener">המסלול והשידורים בדאטאבוס ↗</a></div>
     <div id="map"></div>
-    <div class="tblbox"><table class="tl"><thead><tr><th>תחנה</th><th>מתוכנן</th><th>בפועל</th><th>איחור</th></tr></thead><tbody>` +
-    r.s.map((x, i) => { const first = i === 0; const planned = first ? (x[2] != null ? x[2] : x[1]) : x[1]; const dl = first ? x[4] : x[3]; const act = dl == null ? null : planned + dl;
-      return `<tr><td class="nm">${esc((ST[x[0]] || [])[0] || x[0])}${first ? ' <small style="color:var(--dim)">(יציאה)</small>' : ''}</td><td>${hhmm(planned)}</td><td>${act == null ? '<span style="color:var(--dim)">לא נמדד</span>' : hhmm(Math.round(act))}</td><td class="${dl == null ? '' : dl > 5 ? 'late' : dl < -1 ? 'early' : ''}">${dl == null ? '—' : delayTxt(dl) + ' דק׳'}</td></tr>`; }).join('') +
-    `</tbody></table></div><div class="note">הזמן "בפועל" הוא אומדן מהשידור הראשון בנקודת ההתקרבות הקרובה ביותר לתחנה (דיוק של כדקה). תחנה "לא נמדדה" כשלא היה שידור בקרבתה — למשל בתחנות תת-קרקעיות.</div></div>`;
+    <div class="tblbox"><table class="tl"><thead><tr><th>תחנה</th><th>מתוכנן</th><th>הגעה בפועל</th><th>איחור</th></tr></thead><tbody>` +
+    r.s.map((x, i) => { const first = i === 0; const dl = first ? null : x[2]; const act = dl == null ? null : x[1] + dl;
+      return `<tr><td class="nm">${esc((ST[x[0]] || [])[0] || x[0])}${first ? ' <small style="color:var(--dim)">(מוצא)</small>' : ''}</td><td>${hhmm(x[1])}</td><td>${first ? '—' : act == null ? '<span style="color:var(--dim)">לא נמדד</span>' : hhmm(Math.round(act))}</td><td class="${dl == null ? '' : dl > 5 ? 'late' : dl < -1 ? 'early' : ''}">${dl == null ? '—' : delayTxt(dl) + ' דק׳'}</td></tr>`; }).join('') +
+    `</tbody></table></div><div class="note">ההגעה "בפועל" היא אומדן מהשידור הראשון בנקודת ההתקרבות הקרובה ביותר לתחנה (דיוק של כדקה). תחנה "לא נמדדה" כשלא היה שידור עד 500 מ׳ ממנה — שידורי הרכבות מקוטעים, ובמיוחד לקראת היעד. בתחנת המוצא נמדדת רק היציאה המתוכננת.</div></div>`;
   document.body.appendChild(ovl);
   const close = () => { if (MAP) { MAP.remove(); MAP = null; } ovl.remove(); document.removeEventListener('keydown', onKey); };
   const onKey = e => { if (e.key === 'Escape') close(); };
@@ -399,7 +404,7 @@ function openRide(r) {
       const shp = SHAPES[String(r.ln)];
       if (shp) L.polyline(decodeShape(shp), {color: '#1E3A8A', weight: 3.5, opacity: .85}).addTo(MAP);
       else L.polyline(pts.map(s => [s[1], s[2]]), {color: '#64748B', weight: 3, dashArray: '6 6', opacity: .8}).addTo(MAP);
-      r.s.forEach((x, i) => { const s = ST[x[0]]; if (!s || s[1] == null) return; const dl = i === 0 ? x[4] : x[3]; const bb = bucketOf(dl);
+      r.s.forEach((x, i) => { const s = ST[x[0]]; if (!s || s[1] == null) return; const dl = i === 0 ? null : x[2]; const bb = bucketOf(dl);
         L.circleMarker([s[1], s[2]], {radius: 7, color: '#fff', weight: 2, fillColor: bb < 0 ? '#94A3B8' : ['#16A34A', '#F59E0B', '#EA580C', '#B91C1C'][bb], fillOpacity: 1}).addTo(MAP).bindTooltip(`${esc(s[0])}: ${dl == null ? 'לא נמדד' : delayTxt(dl) + ' דק׳'}`, {direction: 'top'}); });
       MAP.fitBounds(pts.map(s => [s[1], s[2]]), {padding: [18, 18]});
     } else $('#map').remove();
