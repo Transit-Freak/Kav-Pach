@@ -1423,6 +1423,16 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   // שינוי שקרה אלא תוכנית שירדה.
   const plannedV = !cmpOn && v.k === "planned-dropped" && (v.pstops || []).length > 1;
   const actualV = plannedV ? geoNear(vi) : null;
+  // מה בדיוק לא יצא לפועל (שלמה 03.09: "חוץ מתחנות אני לא מבין מה היה שונה"):
+  // 'new' = הווריאנט כולו פורסם עם תאריך התחלה ולא התחיל בו (המסלול עצמו
+  // יכול להיות זהה למה שנסע אחר כך — אז מה שנפל הוא המועד); 'route' = תוכנית
+  // לשנות מסלול קיים. ההבדל מול המסלול בפועל נמדד ברצף התחנות.
+  const plKind = plannedV ? (v.pk || (/הווריאנט/.test(v.note || "") ? "new" : "route")) : null;
+  const plDiff = plannedV && actualV && (actualV.stops || []).length ? (() => {
+    const pc = new Set(v.pstops.map((s) => String(s[0]))), ac = new Set(actualV.stops.map((s) => String(s[0])));
+    return { add: v.pstops.filter((s) => !ac.has(String(s[0]))), rem: actualV.stops.filter((s) => !pc.has(String(s[0]))) };
+  })() : null;
+  const plSame = !!plDiff && !plDiff.add.length && !plDiff.rem.length;
   const gv = plannedV ? { d: v.d, stops: v.pstops, shp: v.pshp || "" } : (cmpOn ? (geoAt(vi) || v) : (ownGeo ? v : (geoNear(vi) || v)));
   const borrowed = !cmpOn && !ownGeo && !plannedV && gv !== v;
   // "מקורב" נמדד על הגרסה שמצוירת בפועל — כשהמפה שאולה מגרסה אחרת,
@@ -1746,7 +1756,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
                   מתי היה אמור להיכנס, ומתי בוטל (ירד מהרישום) */}
               {x.k === "planned-dropped" && (x.ps || x.pc) && (
                 <div className="sub">
-                  📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b>
+                  {(x.pk || (/הווריאנט/.test(x.note || "") ? "new" : "route")) === "new" ? "וריאנט שלם שלא התחיל" : "שינוי מסלול שלא יצא לפועל"} · 📅 היה אמור להיכנס לתוקף ב-<b>{fmtD(x.ps)}</b>
                   {x.pc && x.ps && x.pc >= x.ps ? <> · לא יצא לפועל, ירד מהרישום ב-<b>{fmtD(x.pc)}</b></> : <> · בוטל ב-<b>{fmtD(x.pc || x.d)}</b>, לפני המועד</>}
                   {x.sd && gapDays(x.sd, x.pc || x.d) > 1 ? <> (נראה לאחרונה ב-{fmtD(x.sd)})</> : null}
                   {x.pf ? <> · פורסם לראשונה ב-{fmtD(x.pf)}</> : null}
@@ -1776,7 +1786,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
       </div>
       <div className="card main">
         <div className="vhead">
-          {plannedV ? <>שינוי שתוכנן ל-<b>{fmtD(v.ps)}</b> ולא יצא לפועל</>
+          {plannedV ? (plKind === "new" ? <>וריאנט שתוכנן להתחיל ב-<b>{fmtD(v.ps)}</b> ולא התחיל</> : <>שינוי מסלול שתוכנן ל-<b>{fmtD(v.ps)}</b> ולא יצא לפועל</>)
             : cmpOn ? <>השוואה שביקשת: <b>{evDate(v).txt}</b> מול <b>{evDate(pv).txt}</b></>
             : <>גרסת <b>{evDate(v).txt}</b>{prev ? <> מול הגרסה שלפניה (<b>{evDate(pv).txt}</b>)</> : pv ? "" : " — הגרסה המתועדת הראשונה"}</>}
         </div>
@@ -1785,6 +1795,23 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             {v.pc && v.ps && v.pc >= v.ps ? <>לא יצא לפועל במועד: ירד מהרישום ב-<b>{fmtD(v.pc)}</b></> : <>בוטל ב-<b>{fmtD(v.pc || v.d)}</b>, לפני המועד</>}
             {v.pf ? <> · פורסם לראשונה ב-{fmtD(v.pf)}</> : null}
             {" · "}המסלול שתוכנן ({v.pstops.length} תחנות) במקווקו{actualV ? <>; המסלול בפועל של הווריאנט, מ-{fmtD(actualV.d)}, באפור</> : <>; הווריאנט לא נסע מעולם</>}.
+          </div>
+        )}
+        {plannedV && (
+          <div className="mut" style={{ fontWeight: 700 }}>
+            {plKind === "new"
+              ? (!actualV ? <>מה לא יצא לפועל: הווריאנט כולו. פורסם ברישום עם תאריך התחלה, ירד לפני שהתחיל, ועד היום לא נסע.</>
+                : plSame ? <>מה לא יצא לפועל: מועד ההתחלה. הווריאנט כולו פורסם עם תאריך התחלה ולא התחיל בו; בפועל התחיל לנסוע מ-{fmtD(actualV.d)} באותו מסלול בדיוק, ולכן שתי השכבות במפה חופפות.</>
+                : <>מה לא יצא לפועל: הווריאנט במסלול הזה. בפועל התחיל לנסוע מ-{fmtD(actualV.d)} במסלול שונה.</>)
+              : (!plDiff ? <>מה לא יצא לפועל: שינוי במסלול הקיים.</>
+                : plSame ? <>מה לא יצא לפועל: שינוי בשרטוט המסלול בלבד, רצף התחנות זהה למסלול בפועל.</>
+                : <>מה לא יצא לפועל: שינוי במסלול הקיים.</>)}
+            {plDiff && !plSame && (
+              <div className="sub" style={{ fontWeight: 400 }}>
+                {plDiff.add.length > 0 && <div>➕ תחנות שהיו בתוכנית ואינן במסלול בפועל ({plDiff.add.length}): {plDiff.add.slice(0, 20).map((s) => s[1]).join(", ")}{plDiff.add.length > 20 ? "…" : ""}</div>}
+                {plDiff.rem.length > 0 && <div>➖ תחנות במסלול בפועל שלא היו בתוכנית ({plDiff.rem.length}): {plDiff.rem.slice(0, 20).map((s) => s[1]).join(", ")}{plDiff.rem.length > 20 ? "…" : ""}</div>}
+              </div>
+            )}
           </div>
         )}
         {/* אי-הוודאות אינה בפער שבין שתי הגרסאות: המנוע עובר על כל צילומי
@@ -1843,7 +1870,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
         <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
           cur={cur} prev={onlyCur ? null : prev} planned={plannedV}
           approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
-          prevStops={!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null}
+          prevStops={plannedV ? (plDiff && !plSame ? actualV.stops : null) : (!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null)}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n, j) => (v.ac && v.ac[j] != null ? String(v.ac[j]) : codeOf(n, vi, true))).filter(Boolean)) : null}
           stops12={onlyCur ? null : stops12}
@@ -1861,6 +1888,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           {plannedV ? <>
             <span><i style={{ borderColor: "#9f1239", borderStyle: "dashed" }} /> המסלול שתוכנן ולא יצא לפועל</span>
             {prev && <span><i style={{ borderColor: "#475569" }} /> המסלול בפועל של הווריאנט</span>}
+            {plDiff && !plSame && <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שתוכננה ואינה במסלול בפועל</span>}
+            {plDiff && !plSame && <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה במסלול בפועל שלא הייתה בתוכנית</span>}
           </> : <>
           {prev && !onlyCur && <span><i style={{ borderColor: "#dc2626", borderStyle: "dashed" }} /> המסלול הקודם{prevApprox ? " (מקורב לפי תחנות)" : ""}</span>}
           <span><i style={{ borderColor: prev && !onlyCur ? "#16a34a" : "#4c1d95" }} /> {prev && !onlyCur ? "המסלול החדש" : "המסלול"}</span>

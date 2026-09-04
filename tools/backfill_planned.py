@@ -473,7 +473,7 @@ def write_events(events):
             if old.get('tt'):
                 lf['tt'] = old['tt']
         vs = [v for v in (lf.get('versions') or []) if not (v.get('k') == KIND and v.get('d') == ds)]
-        v = {'d': ds, 'k': KIND, 'src': SRC, 'ps': old.get('start', ''), 'pc': ds,
+        v = {'d': ds, 'k': KIND, 'src': SRC, 'pk': old.get('kind', ''), 'ps': old.get('start', ''), 'pc': ds,
              'pstops': old.get('stopinfo') or [], 'note': note_for(old, ds)}
         if old.get('shp'):
             v['pshp'] = old['shp']      # השרטוט המלא של המסלול שתוכנן
