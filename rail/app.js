@@ -324,7 +324,7 @@ Promise.all([load(T.data + 'index.json'), load(T.data + 'stations.json').catch((
   if (!DAYS.length) { $('#app').innerHTML = '<div class="msg">עדיין אין נתונים — הריצה הראשונה מתבצעת הלילה</div>'; $('#sub').textContent = ''; return; }
   const h = location.hash.replace('#', '');
   if (/^\d{4}-\d{2}-\d{2}$/.test(h) && DAYS.some(d => d.d === h)) { period = 'day'; dayD = h; }
-  else if (DAYS.length < 7) period = 'all';
+  else if (DAYS.length <= 30) period = 'all';   // כל עוד אין יותר מחודש, 'כל התקופה' היא ברירת המחדל (הכפתור 30 ימים מוסתר)
   dayD = dayD || DAYS[DAYS.length - 1].d;
   render();
 }).catch(e => { $('#app').innerHTML = `<div class="msg">הנתונים לא נטענו (${esc(e.message)})</div>`; $('#sub').textContent = ''; });
