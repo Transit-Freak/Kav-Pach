@@ -1,0 +1,89 @@
+name: rail-reliability
+
+# מדד אמינות הרכבת — מנתוני דאטאבוס (Stride API). כל לילה מעובד היום
+# שחלף: נסיעות רכבת ישראל שבלו"ז מול שידורי המיקום שלהן, איחור בכל תחנה
+# ובייעד הסופי. מילוי לאחור: from/to עם chain=true — כל ריצה מעבדת עד
+# תקציב הדקות ומזניקה את הבאה עד שנגמרים הימים.
+
+on:
+  schedule:
+    - cron: '40 0 * * *'   # 00:40 UTC = ‏03:40 בישראל — אחרי שדאטאבוס סיים לקלוט את היום
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'FROM (YYYY-MM-DD) — ריק = אתמול'
+        required: false
+      to:
+        description: 'TO (YYYY-MM-DD) — ריק = אתמול'
+        required: false
+      max_min:
+        description: 'תקציב דקות לריצה (0 = בלי מגבלה)'
+        required: false
+        default: '240'
+      dry:
+        description: 'ניתוח והדפסה בלבד, בלי כתיבה (1)'
+        required: false
+        default: ''
+      redo:
+        description: 'חישוב מחדש גם לימים שכבר קיימים (1)'
+        required: false
+        default: ''
+      chain:
+        description: 'שרשור — בסיום, הזנקת הפרק הבא (true)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: rail-reliability
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: חישוב המדד
+        env:
+          FROM: ${{ github.event.inputs.from }}
+          TO: ${{ github.event.inputs.to }}
+          MAX_MIN: ${{ github.event.inputs.max_min || '240' }}
+          DRY: ${{ github.event.inputs.dry }}
+          REDO: ${{ github.event.inputs.redo }}
+        run: python3 tools/rail_reliability.py
+
+      - name: commit
+        if: ${{ github.event.inputs.dry != '1' }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A rail/data
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: rail — מדד אמינות הרכבת מדאטאבוס"
+          ok=
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && { ok=1; break; }
+            git rebase --abort 2>/dev/null || true
+            echo "push rejected — retry $i"; sleep 15
+          done
+          [ -n "$ok" ] || { echo "הדחיפה נכשלה"; exit 1; }
+
+      - name: המשך אוטומטי
+        if: ${{ github.event.inputs.chain == 'true' && github.event.inputs.dry != '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REMAINING=$(python3 -c "import json,os; p='rail/data/state.json'; print(json.load(open(p)).get('remaining', 0) if os.path.exists(p) else 0)")
+          echo "נותרו: $REMAINING ימים"
+          if [ "$REMAINING" != "0" ]; then
+            gh workflow run rail-reliability.yml --ref main -f from='${{ github.event.inputs.from }}' -f to='${{ github.event.inputs.to }}' \
+              -f max_min='${{ github.event.inputs.max_min }}' -f chain=true
+          else
+            echo 'המילוי הושלם'
+          fi
