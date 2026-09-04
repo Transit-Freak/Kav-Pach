@@ -61,7 +61,9 @@ NEAR_BUFFER = 150     # מ' — כל השידורים עד כאן מעל המר�
 # השכנה (1.6 ק"מ). 500 מ' מבטיח שהשידור באמת מהתחנה עצמה.
 SOLID_DIST = 500
 TIME_WIN = 45 * 60    # שניות — חלון סביב הזמן המתוכנן
-ONTIME_MAX = 5.0      # דקות — "בזמן": איחור ביעד הסופי עד 5 דקות
+ONTIME_MAX = 5.0      # דקות — "בזמן": איחור עד 5 דקות
+# גרסת מבנה הקובץ היומי — יום שנכתב בגרסה ישנה מחושב מחדש מעצמו
+FMT = 2
 BUCKETS = ((-1e9, 5), (5, 10), (10, 20), (20, 1e9))   # דקות; הראשון = בזמן
 T0 = time.time()
 
@@ -302,6 +304,20 @@ def day_minutes(t, start):
     return None if t is None else int(round((t - start.timestamp()) / 60))
 
 
+def pretty_name(long):
+    """'ירושלים/יצחק נבון-ירושלים<->הרצליה-הרצליה' → 'ירושלים/יצחק נבון ← הרצליה'
+    (שם התחנה בלי העיר שאחרי המקף האחרון; החץ בכיוון הנסיעה בקריאה מימין)."""
+    long = (long or '').strip()
+    if '<->' not in long:
+        return long
+    a, b = long.split('<->', 1)
+
+    def side(x):
+        x = x.strip()
+        return x.rsplit('-', 1)[0].strip() if '-' in x else x
+    return f'{side(a)} ← {side(b)}'
+
+
 def diagnose(by_ride, fixes):
     """אבחון (DIAG=1): איפה נופלים השידורים ביחס לתחנות — לכיול כללי ההצמדה."""
     def q(vals, p):
@@ -371,18 +387,18 @@ def process_day(d, stations):
         rows, obs = analyse_ride(v, fx)
         ob_final.extend(x for x, last in obs if last)
         srows = [[r[0], day_minutes(r[1], start), r[2], r[3]] for r in rows]
-        ride = {'id': rid, 'ln': first.get('gtfs_route__line_ref'),
-                'nm': (first.get('gtfs_route__route_long_name') or '').strip(),
-                'sn': (first.get('gtfs_route__route_short_name') or '').strip(),
-                'dir': first.get('gtfs_route__route_direction'),
+        raw = (first.get('gtfs_route__route_long_name') or '').strip()
+        ride = {'id': rid, 'ln': first.get('gtfs_route__line_ref'), 'nm': pretty_name(raw),
                 'tn': vehs.get(rid) or '', 'fx': len(fx), 's': srows}
+        if raw != ride['nm']:
+            ride['rn'] = raw     # השם המקורי — לקישור לעמוד הרכבת בדאטאבוס
         # התחנה האחרונה שנמדדה — האיחור בה הוא "איחור הנסיעה" (היעד עצמו
         # נמדד רק במיעוט הנסיעות: השידור נפסק לרוב לפני ההגעה אליו)
         measured = [i for i, r in enumerate(srows) if r[2] is not None]
         if measured:
             ride['fi'] = measured[-1]
         rides.append(ride)
-    day = {'d': d.isoformat(), 'rides': rides,
+    day = {'d': d.isoformat(), 'fmt': FMT, 'rides': rides,
            'n_fix': len(locs), 'built': iso(datetime.datetime.now(IL))}
     summ = summarize(day, stations)
     if ob_final:
@@ -451,11 +467,21 @@ def main():
     os.makedirs(DAYS, exist_ok=True)
     stations = jload(STATIONS, {})
     index = jload(INDEX, {'days': []})
-    have = {x['d'] for x in index['days']}
+
+    def needs(d):
+        p = f'{DAYS}/{d.isoformat()}.json'
+        if REDO or not os.path.exists(p):
+            return True
+        try:
+            with open(p, encoding='utf-8') as f:
+                return f'"fmt":{FMT},' not in f.read(80)   # 'fmt' נכתב בראש הקובץ
+        except OSError:
+            return True
+
     todo = []
     d = FROM
     while d <= TO:
-        if REDO or d.isoformat() not in have:
+        if needs(d):
             todo.append(d)
         d += datetime.timedelta(days=1)
     log(f'ימים לעיבוד: {len(todo)} ({FROM}…{TO}) · MAX_MIN={MAX_MIN} · DRY={DRY}')

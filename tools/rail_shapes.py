@@ -72,35 +72,49 @@ def main():
     print(f'מסלולי רכבת ב-routes.txt: {len(rail)} · חסרים בקובץ: {len(missing)}')
     c, rows = member_rows(url, members, 'trips.txt')
     cnt = {}
+    n_trips = n_noshape = 0
     for r in rows:
         rid = r[c['route_id']].strip()
         if rid in rail:
-            sid = r[c['shape_id']].strip()
+            n_trips += 1
+            sid = (r[c['shape_id']] if 'shape_id' in c and c['shape_id'] < len(r) else '').strip()
             if sid:
                 cnt.setdefault(rid, {}).setdefault(sid, 0)
                 cnt[rid][sid] += 1
+            else:
+                n_noshape += 1
     shape_of = {rid: max(v.items(), key=lambda kv: kv[1])[0] for rid, v in cnt.items()}
     want = set(shape_of.values())
+    print(f'נסיעות רכבת ב-trips.txt: {n_trips} (בלי shape_id: {n_noshape}) · מסלולים עם צורה: {len(shape_of)} · צורות לשליפה: {len(want)}')
     pts = {}
     buf = [b'']
+    col = {}          # אינדקסי העמודות של shapes.txt — מהכותרת, לא מהנחה על הסדר
+    n_lines = [0]
 
     def cb(chunk):
         data = buf[0] + chunk
         lines = data.split(b'\n')
         buf[0] = lines.pop()
         for ln in lines:
-            parts = ln.decode('utf-8', 'ignore').rstrip('\r').split(',')
-            if len(parts) < 4 or parts[0] not in want:
+            parts = ln.decode('utf-8-sig', 'ignore').rstrip('\r').split(',')
+            if not col:
+                col.update({h.strip(): i for i, h in enumerate(parts)})
+                print(f'shapes.txt: עמודות {parts}')
                 continue
+            n_lines[0] += 1
             try:
-                pts.setdefault(parts[0], []).append((int(parts[3]), float(parts[1]), float(parts[2])))
-            except ValueError:
+                sid = parts[col['shape_id']]
+                if sid not in want:
+                    continue
+                pts.setdefault(sid, []).append((int(parts[col['shape_pt_sequence']]),
+                                                float(parts[col['shape_pt_lat']]), float(parts[col['shape_pt_lon']])))
+            except (ValueError, KeyError, IndexError):
                 continue
 
-    # shapes.txt: shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence
     stream_member(url, members, 'shapes.txt', cb)
     if buf[0]:
         cb(b'\n')
+    print(f'shapes.txt: {n_lines[0]} שורות · צורות שנמצאו: {len(pts)} · נקודות: {sum(len(v) for v in pts.values())}')
     n_new = 0
     for rid, sid in shape_of.items():
         p = pts.get(sid)
