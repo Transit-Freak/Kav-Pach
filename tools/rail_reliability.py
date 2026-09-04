@@ -168,8 +168,8 @@ def fetch_day(d):
     # חלון ההגעה נפתח עד 03:00 למחרת כדי שנסיעה שיצאה לפני חצות תישמר על כל
     # תחנותיה; הנסיעות עצמן מסוננות לפי שעת היציאה (בצד שלנו)
     stops = []
-    for i in range(0, len(line_refs), 20):
-        batch = line_refs[i:i + 20]
+    for i in range(0, len(line_refs), 30):
+        batch = line_refs[i:i + 30]
         stops.extend(fetch_all('/gtfs_ride_stops/list',
                                gtfs_route__line_refs=','.join(map(str, batch)),
                                gtfs_route__operator_refs=OP,
@@ -181,18 +181,36 @@ def fetch_day(d):
              and (ts(s.get('gtfs_ride__start_time')) or 0) < s1]
     log(f'  לו"ז: {len(stops)} תחנות-נסיעה ({elapsed_min():.1f} דק׳)')
 
-    def locs_of(lr):
-        return fetch_all('/siri_vehicle_locations/list',
-                         siri_routes__line_ref=str(lr), siri_routes__operator_ref=OP,
-                         siri_rides__scheduled_start_time_from=iso(start),
-                         siri_rides__scheduled_start_time_to=iso(end))
-
+    # השידורים: קודם רשימת נסיעות ה-SIRI של היום (בקשה אחת), ואז השידורים
+    # בקבוצות של 25 נסיעות — כ-30 בקשות במקום אחת לכל רכבת (שלמה 04.09:
+    # לא להעמיס על דאטאבוס). אם השרת מסרב — נפילה חזרה לשליפה לפי קו.
     locs = []
-    # שלושה חוטים — מהיר פי שלושה, ועדיין עדין כלפי דאטאבוס
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
-        for rows in ex.map(locs_of, line_refs):
-            locs.extend(rows)
-    log(f'  שידורים: {len(locs)} ({elapsed_min():.1f} דק׳)')
+    try:
+        rides = fetch_all('/siri_rides/list', siri_route__operator_refs=OP,
+                          scheduled_start_time_from=iso(start), scheduled_start_time_to=iso(end))
+        ids = sorted({r['id'] for r in rides if r.get('id') is not None})
+        if not ids:
+            raise ValueError('אין נסיעות SIRI')
+        batches = [ids[i:i + 25] for i in range(0, len(ids), 25)]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+            for rows in ex.map(lambda b: fetch_all('/siri_vehicle_locations/list',
+                                                   siri_rides__ids=','.join(map(str, b))), batches):
+                locs.extend(rows)
+        log(f'  שידורים: {len(locs)} ל-{len(ids)} נסיעות SIRI ב-{len(batches)} בקשות ({elapsed_min():.1f} דק׳)')
+    except Exception as e:  # noqa: BLE001
+        log(f'  שליפה לפי קבוצות נסיעות נכשלה ({e!r}) — חזרה לשליפה לפי קו')
+        locs = []
+
+        def locs_of(lr):
+            return fetch_all('/siri_vehicle_locations/list',
+                             siri_routes__line_ref=str(lr), siri_routes__operator_ref=OP,
+                             siri_rides__scheduled_start_time_from=iso(start),
+                             siri_rides__scheduled_start_time_to=iso(end))
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as ex:
+            for rows in ex.map(locs_of, line_refs):
+                locs.extend(rows)
+        log(f'  שידורים: {len(locs)} ({elapsed_min():.1f} דק׳)')
     return start, stops, locs
 
 
