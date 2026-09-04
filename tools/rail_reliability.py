@@ -28,6 +28,7 @@ import os
 import statistics
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from zoneinfo import ZoneInfo
@@ -91,6 +92,17 @@ def get(path, **params):
             req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-rail/1.0'})
             with urllib.request.urlopen(req, timeout=300) as r:
                 return json.load(r)
+        except urllib.error.HTTPError as e:
+            body = ''
+            try:
+                body = e.read().decode('utf-8', 'ignore')[:400]
+            except Exception:  # noqa: BLE001
+                pass
+            # שגיאת לקוח (4xx) לא תשתפר בניסיון חוזר — נכשלים מיד עם הסבר השרת
+            if 400 <= e.code < 500 or attempt == 5:
+                raise RuntimeError(f'HTTP {e.code} {url[:200]} … {body}') from None
+            log(f'  retry {attempt + 1}: HTTP {e.code} {body[:120]}')
+            time.sleep(5 * (attempt + 1))
         except Exception as e:  # noqa: BLE001 — רשת/‏5xx: ננסה שוב בהדרגה
             if attempt == 5:
                 raise

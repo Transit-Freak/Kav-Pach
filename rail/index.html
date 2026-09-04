@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F2F4F8">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>מדד אמינות הרכבת — הקו הבוחן</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="12" y="8" width="40" height="42" rx="9" fill="%231D4ED8"/><rect x="18" y="16" width="28" height="14" rx="3" fill="%23fff"/><circle cx="23" cy="40" r="4" fill="%23fff"/><circle cx="41" cy="40" r="4" fill="%23fff"/><path d="M20 50l-6 8M44 50l6 8" stroke="%231D4ED8" stroke-width="4" stroke-linecap="round"/></svg>'>
+<meta property="og:title" content="מדד אמינות הרכבת — הקו הבוחן">
+<meta property="og:description" content="כל רכבת בלו״ז מול המיקום ששידרה בפועל: איחורים לפי קו, תחנה ושעה, יום אחרי יום">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  :root{
+    --bg:#F2F4F8; --surface:#FFFFFF; --ink:#10172A; --mut:#6B7488; --dim:#8B93A7;
+    --line:#E6EAF0; --chipbg:#EEF1F6; --row:#F6F8FB; --acc:#1D4ED8;
+    --ok:#166534; --ok-bg:#DCFCE7; --warn:#92400E; --warn-bg:#FEF3C7;
+    --late:#9A3412; --late-bg:#FFEDD5; --bad:#991B1B; --bad-bg:#FEE2E2;
+    --c-ok:#16A34A; --c-warn:#F59E0B; --c-late:#EA580C; --c-bad:#B91C1C; --c-none:#CBD5E1;
+    --shadow:0 1px 3px rgba(16,23,42,.08); --shadow-lg:0 14px 40px rgba(16,23,42,.18);
+  }
+  *{box-sizing:border-box}
+  html{direction:rtl}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Rubik',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
+  .top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:13px;background:var(--acc);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  h1{font-size:21px;font-weight:800;margin:0}
+  .homelink{margin-inline-start:auto;font-size:13px;font-weight:700;color:var(--acc);text-decoration:none}
+  .sub{font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.6;margin:8px 0 14px}
+  .sub b{color:var(--ink)}
+  .periods{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .pchip{border:none;cursor:pointer;background:var(--surface);color:var(--mut);border-radius:999px;padding:9px 15px;font:700 12.5px 'Rubik',sans-serif;box-shadow:var(--shadow)}
+  .pchip.on{background:var(--ink);color:#fff}
+  .daynav{display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:999px;box-shadow:var(--shadow);padding:3px 6px}
+  .daynav button{border:none;background:transparent;cursor:pointer;font:800 15px 'Rubik',sans-serif;color:var(--mut);width:30px;height:30px;border-radius:999px}
+  .daynav button:hover{background:var(--chipbg)}
+  .daynav input{border:none;background:transparent;font:700 12.5px 'Rubik',sans-serif;color:var(--ink);width:128px;outline:none}
+  .daynav.on{box-shadow:0 0 0 2px var(--ink)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);padding:12px 16px}
+  .kpi b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+  .kpi span{font-size:12px;color:var(--mut);font-weight:700;line-height:1.4;display:block}
+  .kpi.hero{background:var(--ink);color:#fff}
+  .kpi.hero span{color:#C7D2FE}
+  .kpi.hero b{font-size:34px}
+  .kpi small{display:block;font-size:11px;color:var(--dim);font-weight:600;margin-top:2px}
+  .kpi.hero small{color:#A5B4FC}
+  .panel{background:var(--surface);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;margin-top:14px}
+  .ptitle{font-weight:800;font-size:14px;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .ptitle small{font-size:11.5px;color:var(--dim);font-weight:600}
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.cols2{grid-template-columns:1fr}}
+  .chart{position:relative;width:100%}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart .tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;padding:7px 11px;font-size:11.5px;font-weight:600;line-height:1.5;white-space:nowrap;box-shadow:var(--shadow-lg);z-index:5;display:none;transform:translate(50%,0)}
+  .chart .tip b{font-weight:800}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--mut);font-weight:700;margin-top:6px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-inline-end:5px;vertical-align:-1px}
+  .dist{display:flex;height:22px;border-radius:8px;overflow:hidden;background:var(--chipbg);gap:2px;margin:10px 0 6px}
+  .dist i{display:block;height:100%;min-width:0}
+  .dist i.s0{background:var(--c-ok)}.dist i.s1{background:var(--c-warn)}.dist i.s2{background:var(--c-late)}.dist i.s3{background:var(--c-bad)}
+  table{width:100%;border-collapse:separate;border-spacing:0 5px;font-size:12.5px}
+  th{text-align:right;font-size:11px;color:var(--dim);font-weight:700;padding:2px 10px;white-space:nowrap;cursor:pointer;user-select:none}
+  th.on{color:var(--ink)}
+  td{background:var(--row);padding:9px 10px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+  td.nm{white-space:normal;min-width:150px}
+  tr.v{cursor:pointer}
+  tr.v:hover td{background:#EDF2F8}
+  td:first-child{border-radius:0 10px 10px 0}
+  td:last-child{border-radius:10px 0 0 10px}
+  .bar{display:inline-block;width:70px;height:9px;border-radius:4px;background:var(--chipbg);overflow:hidden;vertical-align:middle;margin-inline-start:6px}
+  .bar i{display:block;height:100%;background:var(--c-ok);border-radius:4px}
+  .st{border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700;white-space:nowrap}
+  .st.s0{background:var(--ok-bg);color:var(--ok)}.st.s1{background:var(--warn-bg);color:var(--warn)}
+  .st.s2{background:var(--late-bg);color:var(--late)}.st.s3{background:var(--bad-bg);color:var(--bad)}
+  .st.sn{background:var(--chipbg);color:var(--mut)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;align-items:center}
+  .fchip{border:none;cursor:pointer;background:var(--chipbg);color:var(--mut);border-radius:999px;padding:6px 13px;font:700 11.5px 'Rubik',sans-serif}
+  .fchip.on{background:var(--ink);color:#fff}
+  #rq{height:38px;border:none;border-radius:12px;background:var(--chipbg);padding:0 14px;font:600 13px 'Rubik',sans-serif;color:var(--ink);outline:none;flex:1;min-width:180px}
+  #rq:focus{box-shadow:0 0 0 2px var(--ink)}
+  .tblbox{overflow-x:auto}
+  .more{width:100%;border:none;background:var(--chipbg);color:var(--ink);border-radius:12px;padding:10px;font:700 13px 'Rubik',sans-serif;cursor:pointer;margin-top:6px}
+  .ovl{position:fixed;inset:0;background:rgba(16,23,42,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+  .modal{background:var(--surface);border-radius:18px;box-shadow:var(--shadow-lg);max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:18px 20px}
+  .mhead{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+  .mhead h2{margin:0;font-size:17px;font-weight:800}
+  .x{margin-inline-start:auto;border:none;background:var(--chipbg);border-radius:10px;width:34px;height:34px;font-size:15px;font-weight:800;cursor:pointer;color:var(--mut)}
+  .msub{font-size:12px;color:var(--mut);font-weight:600;line-height:1.6;margin-bottom:10px}
+  .msub a{color:var(--acc);font-weight:700}
+  #map{height:280px;border-radius:14px;margin:10px 0;background:#E5E7EB}
+  .tl td{padding:7px 10px}
+  .tl td.late{color:var(--bad)}
+  .tl td.early{color:#1E40AF}
+  .note{font-size:11.5px;color:var(--dim);font-weight:600;line-height:1.7;margin-top:10px}
+  .note b{color:var(--mut)}
+  .method p{font-size:12.5px;line-height:1.75;margin:6px 0;color:var(--ink);font-weight:500}
+  .method a{color:var(--acc);font-weight:700}
+  .empty{padding:40px;text-align:center;color:var(--dim);font-weight:700}
+  .msg{padding:60px 20px;text-align:center;color:var(--mut);font-weight:800;font-size:16px}
+  button:focus-visible,input:focus-visible,tr:focus-visible{outline:2px solid #10172A;outline-offset:2px}
+  @media(max-width:640px){
+    .wrap{padding:12px 10px 50px}
+    h1{font-size:19px}
+    .kpis{grid-template-columns:1fr 1fr;gap:8px}
+    .kpi b{font-size:20px}.kpi.hero b{font-size:28px}
+    .kpi.hero{grid-column:1/-1}
+    .modal{padding:14px}
+    #map{height:230px}
+    .bar{width:44px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 64 64"><rect x="12" y="8" width="40" height="42" rx="9" fill="#fff"/><rect x="18" y="16" width="28" height="14" rx="3" fill="#1D4ED8"/><circle cx="23" cy="40" r="4" fill="#1D4ED8"/><circle cx="41" cy="40" r="4" fill="#1D4ED8"/><path d="M20 50l-6 8M44 50l6 8" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg></div>
+    <h1>מדד אמינות הרכבת</h1>
+    <a class="homelink" href="../">← הקו הבוחן</a>
+  </div>
+  <div class="sub" id="sub">טוען נתונים…</div>
+  <div class="periods" id="periods"></div>
+  <div id="app"><div class="msg">טוען…</div></div>
+  <div class="panel method">
+    <p class="ptitle">איך המדד מחושב</p>
+    <p>המקור הוא <a href="https://open-bus-map-search.hasadna.org.il/train" target="_blank" rel="noopener">דאטאבוס</a> של הסדנא לידע ציבורי: לוח הזמנים המתוכנן של רכבת ישראל (GTFS) ושידורי המיקום של הרכבות בזמן אמת (SIRI), כפי שמשרד התחבורה מפרסם. כל לילה נשלפות כל נסיעות הרכבת של היום שחלף, ולכל נסיעה מוצמדים השידורים שלה.</p>
+    <p>בכל תחנה נאמד זמן ההגעה בפועל: השידור הראשון בנקודה שבה הרכבת הייתה הכי קרובה לתחנה (בחלון של ±45 דקות סביב הזמן המתוכנן). ההפרש בינו לבין הזמן שבלו״ז הוא האיחור. בתחנת המוצא נמדדת היציאה, ביתר התחנות — ההגעה. תחנה שהרכבת לא שידרה בקרבתה (למשל תחנות תת-קרקעיות שבהן אין קליטה, או רכבת שלא שידרה כלל) אינה נמדדת, והמדד מציג כמה מהנסיעות נמדדו.</p>
+    <p><b>רכבת "בזמן"</b> היא רכבת שהגיעה ליעדה הסופי באיחור של עד 5 דקות — ההגדרה המקובלת לדיוק רכבות. ההתפלגות מוצגת גם ב-5–10, 10–20 ומעל 20 דקות. השידורים מגיעים אחת לכדקה, ולכן דיוק המדידה הוא כדקה.</p>
+    <p>רכבת שבלו״ז אך בלי שום שידור אינה נספרת כאיחור ואינה נספרת כביטול — אי אפשר להבחין בין רכבת שבוטלה לתקלת שידור. שיעור הנסיעות ללא שידור מוצג בנפרד.</p>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function(){
+'use strict';
+const DATA = 'data/';
+const BUCKETS = ['בזמן (עד 5 דק׳)', 'איחור 5–10 דק׳', 'איחור 10–20 דק׳', 'איחור מעל 20 דק׳'];
+const BCOL = ['var(--c-ok)', 'var(--c-warn)', 'var(--c-late)', 'var(--c-bad)'];
+const DAYNAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+let IDX = null, ST = {}, DAYS = [], period = '30', dayD = null, dayData = null, dayCache = {};
+let sortL = {k: 'rides', dir: -1}, sortS = {k: 'rides', dir: -1}, rq = '', rfilter = 'all', showAll = false;
+const $ = (s, el) => (el || document).querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '—';
+const fmt1 = v => v == null ? '—' : (Math.round(v * 10) / 10).toLocaleString('he-IL', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+const num = v => v == null ? '—' : Number(v).toLocaleString('he-IL');
+const heDate = d => { const [y, m, dd] = d.split('-'); return `${DAYNAMES[new Date(+y, m - 1, +dd).getDay()]}, ${+dd}.${+m}.${y}`; };
+const shortDate = d => { const [, m, dd] = d.split('-'); return `${+dd}.${+m}`; };
+const hhmm = m => m == null ? '—' : `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+const bucketOf = v => v == null ? -1 : v <= 5 ? 0 : v <= 10 ? 1 : v <= 20 ? 2 : 3;
+const delayTxt = v => v == null ? '—' : v > 0.05 ? `+${fmt1(v)}` : v < -0.05 ? `−${fmt1(-v)}` : '0.0';
+
+function load(url) { return fetch(url + '?v=' + Date.now()).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }); }
+
+// ---------------------------------------------------------------- צבירה
+function emptyAgg() { return {rides: 0, fix: 0, meas: 0, n: 0, sum: 0, b: [0, 0, 0, 0], med: null, p90: null}; }
+function addAgg(t, s) {
+  t.rides += s.rides || 0; t.fix += s.fix || 0; t.meas += s.meas || 0;
+  if (s.n) { t.n += s.n; t.sum += (s.avg || 0) * s.n; (s.b || []).forEach((v, i) => t.b[i] += v); }
+}
+function finish(t) { t.avg = t.n ? t.sum / t.n : null; t.ok = t.b[0]; t.on = t.n ? t.ok / t.n : null; return t; }
+function aggregate(days) {
+  const acc = emptyAgg(); const lines = {}, hours = {}, stations = {};
+  for (const d of days) {
+    addAgg(acc, d);
+    for (const [k, s] of Object.entries(d.lines || {})) addAgg(lines[k] || (lines[k] = emptyAgg()), s);
+    for (const [k, s] of Object.entries(d.hours || {})) addAgg(hours[k] || (hours[k] = emptyAgg()), s);
+    for (const [k, s] of Object.entries(d.stations || {})) addAgg(stations[k] || (stations[k] = emptyAgg()), s);
+  }
+  if (days.length === 1) { acc.med = days[0].med; acc.p90 = days[0].p90; }
+  finish(acc);
+  Object.values(lines).forEach(finish); Object.values(hours).forEach(finish); Object.values(stations).forEach(finish);
+  if (days.length === 1) {
+    for (const [k, s] of Object.entries(days[0].lines || {})) if (lines[k]) { lines[k].med = s.med; lines[k].p90 = s.p90; }
+    for (const [k, s] of Object.entries(days[0].stations || {})) if (stations[k]) { stations[k].med = s.med; stations[k].p90 = s.p90; }
+  }
+  return {acc, lines, hours, stations, days};
+}
+function selectedDays() {
+  if (period === 'day') return DAYS.filter(d => d.d === dayD);
+  if (period === 'all') return DAYS;
+  return DAYS.slice(-Number(period));
+}
+
+// ---------------------------------------------------------------- תרשימים
+function lineChart(el, pts, o) {
+  // pts: [{x:label, y:value|null, tip:html}] · o: {max, min, unit, color, w, h}
+  const W = o.w || 720, H = o.h || 200, L = 34, R = 8, T = 12, B = 26;
+  const vals = pts.map(p => p.y).filter(v => v != null);
+  if (!vals.length) { el.innerHTML = '<div class="empty">אין נתונים</div>'; return; }
+  let mn = o.min != null ? o.min : Math.min(...vals), mx = o.max != null ? o.max : Math.max(...vals);
+  if (mx === mn) { mx += 1; mn -= 1; }
+  const px = i => L + (W - L - R) * (pts.length > 1 ? i / (pts.length - 1) : 0.5);
+  const py = v => T + (H - T - B) * (1 - (v - mn) / (mx - mn));
+  const ticks = 4; let grid = '';
+  for (let i = 0; i <= ticks; i++) {
+    const v = mn + (mx - mn) * i / ticks, y = py(v);
+    grid += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="#E6EAF0"/><text x="${L - 6}" y="${y + 4}" font-size="10" fill="#8B93A7" text-anchor="end">${o.fmtY ? o.fmtY(v) : Math.round(v)}${o.unit || ''}</text>`;
+  }
+  let path = '', area = '', dots = '', started = false, lastX = null;
+  pts.forEach((p, i) => {
+    if (p.y == null) { started = false; return; }
+    const x = px(i), y = py(p.y);
+    path += (started ? 'L' : 'M') + x + ' ' + y;
+    if (!started) area += `M${x} ${py(mn)}L${x} ${y}`; else area += `L${x} ${y}`;
+    lastX = x; started = true;
+    if (pts.length <= 60 || i === pts.length - 1) dots += `<circle cx="${x}" cy="${y}" r="${i === pts.length - 1 ? 4 : 2.5}" fill="${o.color}" stroke="#fff" stroke-width="1.5"/>`;
+    if ((i + 1 < pts.length && pts[i + 1].y == null) || i === pts.length - 1) area += `L${x} ${py(mn)}Z`;
+  });
+  const step = Math.max(1, Math.ceil(pts.length / 8)); let xl = '';
+  pts.forEach((p, i) => { if (i % step === 0 || i === pts.length - 1) xl += `<text x="${px(i)}" y="${H - 8}" font-size="10" fill="#8B93A7" text-anchor="middle">${esc(p.x)}</text>`; });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="aspect-ratio:${W}/${H}">${grid}<path d="${area}" fill="${o.color}" opacity=".08"/><path d="${path}" fill="none" stroke="${o.color}" stroke-width="2" stroke-linejoin="round"/><line id="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="#10172A" stroke-dasharray="3 3" opacity="0" /><rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent" id="hit"/>${dots}</svg><div class="tip"></div>`;
+  const svg = $('svg', el), tip = $('.tip', el), cross = $('#cross', el);
+  const move = ev => {
+    const r = svg.getBoundingClientRect(); const fx = (ev.clientX - r.left) / r.width * W;
+    let best = 0, bd = 1e9; pts.forEach((p, i) => { const d = Math.abs(px(i) - fx); if (d < bd) { bd = d; best = i; } });
+    const p = pts[best]; cross.setAttribute('x1', px(best)); cross.setAttribute('x2', px(best)); cross.setAttribute('opacity', '1');
+    tip.innerHTML = p.tip; tip.style.display = 'block';
+    const leftPct = px(best) / W * 100; tip.style.right = `${100 - leftPct}%`; tip.style.top = `${Math.max(0, py(p.y == null ? mn : p.y) / H * r.height - 60)}px`;
+  };
+  el.onmousemove = move; el.ontouchstart = ev => move(ev.touches[0]); el.ontouchmove = ev => move(ev.touches[0]);
+  el.onmouseleave = () => { tip.style.display = 'none'; cross.setAttribute('opacity', '0'); };
+}
+function barChart(el, bars, o) {
+  // bars: [{x:label, y:value|null, tip, n}] · שיעור בזמן לפי שעה
+  const W = o.w || 720, H = o.h || 180, L = 34, R = 8, T = 12, B = 26, mx = o.max || 100;
+  const n = bars.length, bw = (W - L - R) / n, gap = Math.min(4, bw * .25);
+  const py = v => T + (H - T - B) * (1 - v / mx);
+  let grid = ''; for (let i = 0; i <= 4; i++) { const v = mx * i / 4, y = py(v); grid += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="#E6EAF0"/><text x="${L - 6}" y="${y + 4}" font-size="10" fill="#8B93A7" text-anchor="end">${Math.round(v)}${o.unit || ''}</text>`; }
+  let rects = '', xl = '';
+  bars.forEach((b, i) => {
+    const x = L + i * bw + gap / 2;
+    if (b.y != null) rects += `<rect class="hb" data-i="${i}" x="${x}" y="${py(b.y)}" width="${bw - gap}" height="${py(0) - py(b.y)}" rx="3" fill="${b.color || o.color}"/>`;
+    else rects += `<rect class="hb" data-i="${i}" x="${x}" y="${py(0) - 2}" width="${bw - gap}" height="2" rx="1" fill="#CBD5E1"/>`;
+    if (n <= 26 || i % 2 === 0) xl += `<text x="${x + (bw - gap) / 2}" y="${H - 8}" font-size="10" fill="#8B93A7" text-anchor="middle">${esc(b.x)}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="aspect-ratio:${W}/${H}">${grid}${rects}${xl}</svg><div class="tip"></div>`;
+  const tip = $('.tip', el), svg = $('svg', el);
+  el.onmousemove = ev => {
+    const r = svg.getBoundingClientRect(); const fx = (ev.clientX - r.left) / r.width * W; const i = Math.min(n - 1, Math.max(0, Math.floor((fx - L) / bw)));
+    const b = bars[i]; if (!b) return; tip.innerHTML = b.tip; tip.style.display = 'block';
+    tip.style.right = `${100 - (L + (i + .5) * bw) / W * 100}%`; tip.style.top = `${Math.max(0, py(b.y || 0) / H * r.height - 60)}px`;
+  };
+  el.onmouseleave = () => { tip.style.display = 'none'; };
+}
+
+// ---------------------------------------------------------------- תצוגה
+function renderPeriods() {
+  const el = $('#periods');
+  const chips = [['7', '7 ימים'], ['30', '30 ימים'], ['90', '90 ימים'], ['all', 'כל התקופה']].filter(([k]) => k === 'all' || DAYS.length > Number(k) || k === '7');
+  el.innerHTML = chips.map(([k, t]) => `<button class="pchip${period === k ? ' on' : ''}" data-p="${k}">${t}</button>`).join('') +
+    `<div class="daynav${period === 'day' ? ' on' : ''}"><button id="dprev" title="יום קודם">‹</button><input type="date" id="dpick" min="${DAYS[0].d}" max="${DAYS[DAYS.length - 1].d}" value="${dayD || DAYS[DAYS.length - 1].d}"><button id="dnext" title="יום הבא">›</button></div>`;
+  el.querySelectorAll('.pchip').forEach(b => b.onclick = () => { period = b.dataset.p; render(); });
+  const pick = $('#dpick');
+  const setDay = d => { if (!DAYS.some(x => x.d === d)) return; dayD = d; period = 'day'; render(); };
+  pick.onchange = () => setDay(pick.value);
+  $('#dprev').onclick = () => { const i = DAYS.findIndex(x => x.d === (dayD || DAYS[DAYS.length - 1].d)); if (period !== 'day') setDay(DAYS[DAYS.length - 1].d); else if (i > 0) setDay(DAYS[i - 1].d); };
+  $('#dnext').onclick = () => { const i = DAYS.findIndex(x => x.d === (dayD || DAYS[DAYS.length - 1].d)); if (period !== 'day') setDay(DAYS[DAYS.length - 1].d); else if (i < DAYS.length - 1) setDay(DAYS[i + 1].d); };
+}
+
+function kpiHtml(a, days) {
+  const noFix = a.rides - a.fix;
+  const title = period === 'day' ? heDate(days[0].d) : days.length ? `${shortDate(days[0].d)} – ${shortDate(days[days.length - 1].d)}.${days[days.length - 1].d.slice(0, 4)} · ${days.length} ימים` : '';
+  return `<div class="kpis">
+    <div class="kpi hero"><span>רכבות שהגיעו בזמן ליעדן</span><b>${a.n ? pct(a.ok, a.n) : '—'}</b><small>${title}</small></div>
+    <div class="kpi"><span>איחור ממוצע ביעד</span><b>${a.avg == null ? '—' : fmt1(a.avg)} <span style="display:inline;font-size:12px">דק׳</span></b>${a.med != null ? `<small>חציון ${fmt1(a.med)} · 90% מהרכבות עד ${fmt1(a.p90)} דק׳</small>` : `<small>ממוצע על ${num(a.n)} רכבות שנמדדו</small>`}</div>
+    <div class="kpi"><span>איחור מעל 20 דקות</span><b>${a.n ? pct(a.b[3], a.n) : '—'}</b><small>${num(a.b[3])} רכבות · מעל 10 דק׳: ${a.n ? pct(a.b[2] + a.b[3], a.n) : '—'}</small></div>
+    <div class="kpi"><span>נסיעות בלו״ז</span><b>${num(a.rides)}</b><small>נמדדו ביעד: ${num(a.n)} (${pct(a.n, a.rides)})</small></div>
+    <div class="kpi"><span>ללא שידור מיקום</span><b>${pct(noFix, a.rides)}</b><small>${num(noFix)} נסיעות — ביטול או תקלת שידור</small></div>
+  </div>`;
+}
+function distHtml(a) {
+  if (!a.n) return '';
+  return `<div class="dist">${a.b.map((v, i) => `<i class="s${i}" style="flex:${v}" title="${BUCKETS[i]}: ${num(v)}"></i>`).join('')}</div>
+    <div class="legend">${a.b.map((v, i) => `<span><i style="background:${BCOL[i]}"></i>${BUCKETS[i]} · ${pct(v, a.n)} (${num(v)})</span>`).join('')}</div>`;
+}
+function sortRows(rows, s) {
+  return rows.sort((x, y) => { const a = x[s.k], b = y[s.k]; if (a == null && b == null) return 0; if (a == null) return 1; if (b == null) return -1; return (a < b ? -1 : a > b ? 1 : 0) * s.dir; });
+}
+function th(label, k, s) { return `<th data-k="${k}" class="${s.k === k ? 'on' : ''}">${label}${s.k === k ? (s.dir < 0 ? ' ▼' : ' ▲') : ''}</th>`; }
+function linesTable(lines) {
+  const rows = Object.entries(lines).map(([nm, s]) => ({nm, rides: s.rides, n: s.n, on: s.on, avg: s.avg, b3: s.n ? s.b[3] / s.n : null, med: s.med}));
+  sortRows(rows, sortL);
+  const single = period === 'day';
+  return `<div class="tblbox"><table id="tl"><thead><tr>${th('קו', 'nm', sortL)}${th('נסיעות', 'rides', sortL)}${th('נמדדו', 'n', sortL)}${th('בזמן', 'on', sortL)}${th('איחור ממוצע', 'avg', sortL)}${single ? th('חציון', 'med', sortL) : ''}${th('מעל 20 דק׳', 'b3', sortL)}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="nm">${esc(r.nm) || '—'}</td><td>${num(r.rides)}</td><td>${num(r.n)}</td><td>${r.on == null ? '—' : Math.round(r.on * 100) + '%'}<span class="bar"><i style="width:${Math.round((r.on || 0) * 100)}%"></i></span></td><td>${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td>${single ? `<td>${r.med == null ? '—' : fmt1(r.med) + ' דק׳'}</td>` : ''}<td>${r.b3 == null ? '—' : Math.round(r.b3 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
+}
+function stationsTable(stations) {
+  const rows = Object.entries(stations).map(([c, s]) => ({c, nm: (ST[c] || [])[0] || c, rides: s.rides, n: s.n, on: s.on, avg: s.avg, b3: s.n ? s.b[3] / s.n : null}));
+  sortRows(rows, sortS);
+  return `<div class="tblbox"><table id="ts"><thead><tr>${th('תחנה', 'nm', sortS)}${th('נסיעות', 'rides', sortS)}${th('נמדדו', 'n', sortS)}${th('בזמן', 'on', sortS)}${th('איחור ממוצע', 'avg', sortS)}${th('מעל 20 דק׳', 'b3', sortS)}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="nm">${esc(r.nm)}</td><td>${num(r.rides)}</td><td>${num(r.n)} <small style="color:var(--dim)">(${pct(r.n, r.rides)})</small></td><td>${r.on == null ? '—' : Math.round(r.on * 100) + '%'}<span class="bar"><i style="width:${Math.round((r.on || 0) * 100)}%"></i></span></td><td>${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b3 == null ? '—' : Math.round(r.b3 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
+}
+
+function render() {
+  renderPeriods();
+  const days = selectedDays();
+  const A = aggregate(days);
+  const app = $('#app');
+  const last = DAYS[DAYS.length - 1];
+  $('#sub').innerHTML = `כל רכבת שבלו״ז של רכבת ישראל מול המיקום ששידרה בפועל, מנתוני <b>דאטאבוס</b>. רכבת נחשבת בזמן כשהגיעה ליעדה הסופי באיחור של עד 5 דקות. נתונים מ-${heDate(DAYS[0].d)} עד ${heDate(last.d)} · מתעדכן כל לילה.`;
+  let html = kpiHtml(A.acc, days);
+  html += `<div class="panel"><p class="ptitle">התפלגות האיחור ביעד הסופי <small>${num(A.acc.n)} רכבות שנמדדו</small></p>${distHtml(A.acc) || '<div class="empty">אין רכבות שנמדדו</div>'}</div>`;
+  if (period !== 'day') {
+    html += `<div class="cols2">
+      <div class="panel"><p class="ptitle">שיעור הרכבות בזמן, יום אחרי יום</p><div class="chart" id="c-on"></div></div>
+      <div class="panel"><p class="ptitle">איחור ממוצע ביעד, יום אחרי יום <small>דקות</small></p><div class="chart" id="c-avg"></div></div>
+    </div>`;
+  }
+  html += `<div class="panel"><p class="ptitle">בזמן לפי שעת היציאה <small>אחוז הרכבות שהגיעו ליעדן עד 5 דק׳ איחור</small></p><div class="chart" id="c-hours"></div></div>`;
+  if (period === 'day') html += `<div class="panel" id="rides-panel"><p class="ptitle">הנסיעות של היום <small id="rides-n"></small></p><div class="filters"><input id="rq" placeholder="חיפוש: קו, תחנה, מספר רכבת" value="${esc(rq)}">${[['all', 'הכול'], ['late', 'איחור מעל 5 דק׳'], ['bad', 'מעל 20 דק׳'], ['none', 'ללא שידור']].map(([k, t]) => `<button class="fchip${rfilter === k ? ' on' : ''}" data-f="${k}">${t}</button>`).join('')}</div><div id="rides"><div class="empty">טוען…</div></div></div>`;
+  html += `<div class="panel"><p class="ptitle">לפי קו <small>${Object.keys(A.lines).length} קווים</small></p>${linesTable(A.lines)}</div>`;
+  html += `<div class="panel"><p class="ptitle">לפי תחנה <small>איחור ההגעה לתחנה; בתחנת המוצא — איחור היציאה</small></p>${stationsTable(A.stations)}</div>`;
+  app.innerHTML = html;
+  if (period !== 'day') {
+    lineChart($('#c-on'), days.map(d => ({x: shortDate(d.d), y: d.n ? Math.round(d.b[0] / d.n * 1000) / 10 : null, tip: `<b>${heDate(d.d)}</b><br>בזמן: ${d.n ? pct(d.b[0], d.n) : '—'} מתוך ${num(d.n)} רכבות שנמדדו<br>ממוצע ${fmt1(d.avg)} דק׳ · ללא שידור ${pct(d.rides - d.fix, d.rides)}`})), {min: 0, max: 100, unit: '%', color: '#16A34A'});
+    lineChart($('#c-avg'), days.map(d => ({x: shortDate(d.d), y: d.n ? d.avg : null, tip: `<b>${heDate(d.d)}</b><br>איחור ממוצע ${fmt1(d.avg)} דק׳ · חציון ${fmt1(d.med)}<br>90% מהרכבות עד ${fmt1(d.p90)} דק׳`})), {min: 0, color: '#1D4ED8', fmtY: v => Math.round(v)});
+  }
+  barChart($('#c-hours'), Array.from({length: 24}, (_, h) => { const s = A.hours[String(h)]; const y = s && s.n ? Math.round(s.ok / s.n * 100) : null; return {x: String(h), y, color: y == null ? '#CBD5E1' : y >= 90 ? '#16A34A' : y >= 75 ? '#F59E0B' : '#B91C1C', tip: s ? `<b>יציאה בשעה ${h}:00–${h}:59</b><br>בזמן ${y == null ? '—' : y + '%'} מתוך ${num(s.n)} שנמדדו (${num(s.rides)} בלו״ז)<br>איחור ממוצע ${fmt1(s.avg)} דק׳` : `<b>${h}:00</b><br>אין נסיעות`}; }), {max: 100, unit: '%', color: '#16A34A'});
+  app.querySelectorAll('#tl th').forEach(h => h.onclick = () => { const k = h.dataset.k; sortL = {k, dir: sortL.k === k ? -sortL.dir : (k === 'nm' ? 1 : -1)}; render(); });
+  app.querySelectorAll('#ts th').forEach(h => h.onclick = () => { const k = h.dataset.k; sortS = {k, dir: sortS.k === k ? -sortS.dir : (k === 'nm' ? 1 : -1)}; render(); });
+  if (period === 'day') {
+    $('#rq').oninput = e => { rq = e.target.value; showAll = false; renderRides(); };
+    app.querySelectorAll('.fchip').forEach(b => b.onclick = () => { rfilter = b.dataset.f; showAll = false; app.querySelectorAll('.fchip').forEach(x => x.classList.toggle('on', x === b)); renderRides(); });
+    loadDay(dayD).then(renderRides);
+  }
+}
+
+function loadDay(d) {
+  if (dayCache[d]) { dayData = dayCache[d]; return Promise.resolve(dayData); }
+  return load(`${DATA}days/${d}.json`).then(j => { dayCache[d] = j; dayData = j; return j; }).catch(() => { dayData = null; });
+}
+function rideFinal(r) { const s = r.s; return s.length ? s[s.length - 1][3] : null; }
+function rideMeasured(r) { return r.s.filter(x => x[3] != null || x[4] != null).length; }
+function renderRides() {
+  const box = $('#rides'); if (!box) return;
+  if (!dayData || dayData.d !== dayD) { box.innerHTML = '<div class="empty">אין פירוט נסיעות ליום הזה</div>'; return; }
+  const q = rq.trim().toLowerCase();
+  let rides = dayData.rides.filter(r => {
+    const fd = rideFinal(r);
+    if (rfilter === 'late' && !(fd != null && fd > 5)) return false;
+    if (rfilter === 'bad' && !(fd != null && fd > 20)) return false;
+    if (rfilter === 'none' && r.fx) return false;
+    if (!q) return true;
+    const hay = (r.nm + ' ' + r.tn + ' ' + r.sn + ' ' + r.s.map(x => (ST[x[0]] || [])[0] || '').join(' ')).toLowerCase();
+    return hay.includes(q);
+  });
+  $('#rides-n').textContent = `${num(rides.length)} מתוך ${num(dayData.rides.length)}`;
+  const shown = showAll ? rides : rides.slice(0, 120);
+  box.innerHTML = `<div class="tblbox"><table><thead><tr><th>יציאה</th><th>קו</th><th>רכבת</th><th>תחנות שנמדדו</th><th>איחור ביעד</th><th></th></tr></thead><tbody>` +
+    shown.map(r => { const fd = rideFinal(r), b = bucketOf(fd); const idx = dayData.rides.indexOf(r);
+      return `<tr class="v" data-i="${idx}" tabindex="0"><td>${hhmm(r.s[0] ? (r.s[0][2] != null ? r.s[0][2] : r.s[0][1]) : null)}</td><td class="nm">${esc(r.nm)}</td><td>${esc(r.tn) || '—'}</td><td>${rideMeasured(r)}/${r.s.length}</td><td>${fd == null ? '—' : delayTxt(fd) + ' דק׳'}</td><td>${r.fx ? (fd == null ? '<span class="st sn">היעד לא נמדד</span>' : `<span class="st s${b}">${['בזמן', 'איחור קל', 'איחור', 'איחור חמור'][b]}</span>`) : '<span class="st sn">ללא שידור</span>'}</td></tr>`; }).join('') +
+    '</tbody></table></div>' + (rides.length > shown.length ? `<button class="more" id="more">הצגת כל ${num(rides.length)} הנסיעות</button>` : '');
+  box.querySelectorAll('tr.v').forEach(tr => { const open = () => openRide(dayData.rides[+tr.dataset.i]); tr.onclick = open; tr.onkeydown = e => { if (e.key === 'Enter') open(); }; });
+  const more = $('#more'); if (more) more.onclick = () => { showAll = true; renderRides(); };
+}
+
+let MAP = null;
+function openRide(r) {
+  const fd = rideFinal(r), b = bucketOf(fd);
+  const ovl = document.createElement('div'); ovl.className = 'ovl';
+  const dbLink = `https://open-bus-map-search.hasadna.org.il/train?date=${dayData.d}&route=${encodeURIComponent(r.nm)}`;
+  ovl.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mhead"><h2>${esc(r.nm)}</h2>${r.tn ? `<span class="st sn">רכבת ${esc(r.tn)}</span>` : ''}${r.fx ? (fd == null ? '<span class="st sn">היעד לא נמדד</span>' : `<span class="st s${b}">${delayTxt(fd)} דק׳ ביעד</span>`) : '<span class="st sn">ללא שידור</span>'}<button class="x" aria-label="סגירה">✕</button></div>
+    <div class="msub">${heDate(dayData.d)} · יציאה ${hhmm(r.s[0] ? (r.s[0][2] != null ? r.s[0][2] : r.s[0][1]) : null)} · ${num(r.fx)} שידורי מיקום · <a href="${dbLink}" target="_blank" rel="noopener">המסלול והשידורים בדאטאבוס ↗</a></div>
+    <div id="map"></div>
+    <div class="tblbox"><table class="tl"><thead><tr><th>תחנה</th><th>מתוכנן</th><th>בפועל</th><th>איחור</th></tr></thead><tbody>` +
+    r.s.map((x, i) => { const first = i === 0; const planned = first ? (x[2] != null ? x[2] : x[1]) : x[1]; const dl = first ? x[4] : x[3]; const act = dl == null ? null : planned + dl;
+      return `<tr><td class="nm">${esc((ST[x[0]] || [])[0] || x[0])}${first ? ' <small style="color:var(--dim)">(יציאה)</small>' : ''}</td><td>${hhmm(planned)}</td><td>${act == null ? '<span style="color:var(--dim)">לא נמדד</span>' : hhmm(Math.round(act))}</td><td class="${dl == null ? '' : dl > 5 ? 'late' : dl < -1 ? 'early' : ''}">${dl == null ? '—' : delayTxt(dl) + ' דק׳'}</td></tr>`; }).join('') +
+    `</tbody></table></div><div class="note">הזמן "בפועל" הוא אומדן מהשידור הראשון בנקודת ההתקרבות הקרובה ביותר לתחנה (דיוק של כדקה). תחנה "לא נמדדה" כשלא היה שידור בקרבתה — למשל בתחנות תת-קרקעיות.</div></div>`;
+  document.body.appendChild(ovl);
+  const close = () => { if (MAP) { MAP.remove(); MAP = null; } ovl.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  $('.x', ovl).onclick = close; ovl.onclick = e => { if (e.target === ovl) close(); };
+  try {
+    const pts = r.s.map(x => ST[x[0]]).filter(s => s && s[1] != null);
+    if (window.L && pts.length) {
+      MAP = L.map('map', {scrollWheelZoom: false, attributionControl: true});
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {attribution: '© OpenStreetMap, © CARTO', maxZoom: 18}).addTo(MAP);
+      L.polyline(pts.map(s => [s[1], s[2]]), {color: '#64748B', weight: 3, dashArray: '6 6', opacity: .8}).addTo(MAP);
+      r.s.forEach((x, i) => { const s = ST[x[0]]; if (!s || s[1] == null) return; const dl = i === 0 ? x[4] : x[3]; const bb = bucketOf(dl);
+        L.circleMarker([s[1], s[2]], {radius: 7, color: '#fff', weight: 2, fillColor: bb < 0 ? '#94A3B8' : ['#16A34A', '#F59E0B', '#EA580C', '#B91C1C'][bb], fillOpacity: 1}).addTo(MAP).bindTooltip(`${esc(s[0])}: ${dl == null ? 'לא נמדד' : delayTxt(dl) + ' דק׳'}`, {direction: 'top'}); });
+      MAP.fitBounds(pts.map(s => [s[1], s[2]]), {padding: [18, 18]});
+    } else $('#map').remove();
+  } catch (e) { const m = $('#map'); if (m) m.remove(); }
+}
+
+Promise.all([load(DATA + 'index.json'), load(DATA + 'stations.json').catch(() => ({}))]).then(([idx, st]) => {
+  IDX = idx; ST = st || {}; DAYS = (idx.days || []).filter(d => d.rides).sort((a, b) => a.d < b.d ? -1 : 1);
+  if (!DAYS.length) { $('#app').innerHTML = '<div class="msg">עדיין אין נתונים — הריצה הראשונה מתבצעת הלילה</div>'; $('#sub').textContent = ''; return; }
+  const h = location.hash.replace('#', '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(h) && DAYS.some(d => d.d === h)) { period = 'day'; dayD = h; }
+  else if (DAYS.length < 7) period = 'all';
+  dayD = dayD || DAYS[DAYS.length - 1].d;
+  render();
+}).catch(e => { $('#app').innerHTML = `<div class="msg">הנתונים לא נטענו (${esc(e.message)})</div>`; $('#sub').textContent = ''; });
+})();
+</script>
+</body>
+</html>
