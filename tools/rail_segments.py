@@ -112,12 +112,36 @@ def build_graph(ways):
     return adj, pos
 
 
-def snap(st, pos):
-    """תחנה → הצומת הקרוב ביותר (סריקה בתיבה של ~0.01 מעלה, לא כל הגרף)."""
+def main_component(adj):
+    """צמתי הרכיב הקשיר הגדול ביותר — רשת המסילות הראשית. תחנה שהוצמדה לשבר
+    מסילה מבודד (קטע שירות בתחנה) לא מוצאת מסלול לשכנותיה — קרה באשקלון."""
+    seen = set()
+    best = set()
+    for s in adj:
+        if s in seen:
+            continue
+        comp = {s}
+        stack = [s]
+        while stack:
+            u = stack.pop()
+            for v, _ in adj.get(u, ()):
+                if v not in comp:
+                    comp.add(v)
+                    stack.append(v)
+        seen |= comp
+        if len(comp) > len(best):
+            best = comp
+    return best
+
+
+def snap(st, pos, allowed=None):
+    """תחנה → הצומת הקרוב ביותר ברשת הראשית (סריקה בתיבה של ~0.01 מעלה)."""
     lat, lon = st[1], st[2]
     best, bd = None, SNAP_M
     for nid, (la, lo) in pos.items():
         if abs(la - lat) > 0.006 or abs(lo - lon) > 0.007:
+            continue
+        if allowed is not None and nid not in allowed:
             continue
         d = hav(lat, lon, la, lo)
         if d < bd:
@@ -163,12 +187,13 @@ def main():
         return
     ways = fetch_rail()
     adj, pos = build_graph(ways)
-    print(f'גרף: {len(pos)} צמתים')
+    comp = main_component(adj)
+    print(f'גרף: {len(pos)} צמתים · ברשת הראשית: {len(comp)}')
     snapped = {}
     for code, st in stations.items():
         if st[1] is None:
             continue
-        n = snap(st, pos)
+        n = snap(st, pos, comp)
         if n is None:
             print(f'  תחנה {code} {st[0]} — אין מסילה עד {SNAP_M} מ׳')
         snapped[code] = n
