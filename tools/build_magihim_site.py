@@ -86,6 +86,7 @@ def build_stop_lookup():
     by_city = collections.defaultdict(list)    # norm(עיר) -> [(norm(שם), מק"ט)]
     cities = set()
     coords = {}                                # מק"ט -> (lat, lon)
+    city_of = collections.defaultdict(set)     # מק"ט -> שמות העיר המנורמלים (כולל כינויים)
 
     def add(n, city, mk):
         nn, nc = norm(n), norm(city)
@@ -98,6 +99,7 @@ def build_stop_lookup():
                 srt[sortkey(f'{n} {c}')].add(mk)
                 cities.add(norm(c))
                 by_city[norm(c)].append((nn, mk))
+                city_of[mk].add(norm(c))
 
     try:
         state = json.load(open('line-history/data/stops-state.json', encoding='utf-8'))
@@ -127,7 +129,7 @@ def build_stop_lookup():
     for c, items in by_city.items():
         for nn, mk in set(items):
             tok_city[c].append((frozenset(nn.split()), mk))
-    return lk, srt, by_city, cities, coords, tok_city
+    return lk, srt, by_city, cities, coords, tok_city, city_of
 
 
 def main():
@@ -168,18 +170,39 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, srt, by_city, cities, coords, tok_city = build_stop_lookup()
+    lookup, srt, by_city, cities, coords, tok_city, city_of = build_stop_lookup()
     m_hit = m_tot = 0
+
+    def name_city(name):
+        """העיר שבסוף שם של 2012 ("הנביאים - ירושלים"), אם היא עיר מוכרת."""
+        parts = name.split(' - ')
+        for take in (2, 1):
+            if len(parts) > take:
+                c = norm(' '.join(parts[-take:]))
+                if c in cities:
+                    return c
+        return None
 
     def mks_of(name):
         nonlocal m_hit, m_tot
         m_tot += 1
-        mks = sorted(lookup.get(norm(name), []))
+        # העיר שבשם מכריעה: "הנביאים - ירושלים" נפל על "הנביאים/ירושלים" בקרית
+        # אתא (צומת של רחוב הנביאים ורחוב ירושלים), כי אחרי הנרמול שני השמות
+        # זהים. מק"ט שהעיר שלו ידועה ואינה העיר שבשם — נפסל (שלמה 05.09,
+        # קו 1 ירושלים: מסלול של 300 ק"מ דרך קרית אתא).
+        city = name_city(name)
+
+        def same_city(mks):
+            if not city:
+                return mks
+            return [mk for mk in mks if not city_of.get(mk) or city in city_of[mk]]
+
+        mks = same_city(sorted(lookup.get(norm(name), [])))
         if 0 < len(mks) <= CAP:
             m_hit += 1
             return mks
         # אותן מילים בסדר הפוך — "חנה סנש/שד.ירושלים" מול "שדרות ירושלים/חנה סנש"
-        mks = sorted(srt.get(sortkey(name), []))
+        mks = same_city(sorted(srt.get(sortkey(name), [])))
         if 0 < len(mks) <= CAP:
             m_hit += 1
             return mks
@@ -214,7 +237,21 @@ def main():
                     return sorted(found)
         return []
 
-    n_amb = n_res = n_out = 0
+    def weak_mks_of(name):
+        """שם זהה בעיר אחרת ברישום: "שדרות בן גוריון/יגאל הורביץ - באר טוביה"
+        ב-2012 מול אותה תחנה שרשומה היום תחת קרית מלאכי (שלמה 05.09). מועמדים
+        לפי השם בלי העיר — ומתקבלים רק אם הם יושבים ליד תחנות ידועות סמוכות
+        במסלול (route_stops), אחרת שם קצר היה נופל שוב על עיר אחרת."""
+        parts = name.split(' - ')
+        if len(parts) < 2:
+            return []
+        street = norm(' '.join(parts[:-1]))
+        if len(street) < 6:
+            return []
+        mks = sorted(lookup.get(street, []))
+        return mks if 0 < len(mks) <= CAP else []
+
+    n_amb = n_res = n_out = n_weak = 0
 
     def km(a, b):
         return math.hypot((a[0] - b[0]) * 111,
@@ -228,12 +265,26 @@ def main():
         להשאיר את התחנה בלי מק"ט מאשר לשייך אותה לעיר אחרת.
         """
         nonlocal n_out
-        for i in range(1, len(out) - 1):
-            c, a, b = out[i], out[i - 1], out[i + 1]
-            if len(c) < 7 or len(a) < 7 or len(b) < 7:
+        # השכנות הן התחנות הקרובות ביותר *שיש להן מיקום*, לא רק הסמוכות:
+        # כשהתחנה הסמוכה לא הוצלבה, הבדיקה הקודמת ויתרה — וכך נשארה תחנה
+        # בקרית אתא באמצע קו ירושלמי. "קפיצה" = רחוק משתי השכנות בעוד
+        # שהן קרובות זו לזו יחסית לקפיצה (קו בינעירוני אמיתי מתקדם, לא חוזר).
+        def near(i, step):
+            j = i + step
+            while 0 <= j < len(out):
+                if len(out[j]) >= 7:
+                    return out[j]
+                j += step
+            return None
+        for i in range(len(out)):
+            c = out[i]
+            if len(c) < 7:
+                continue
+            a, b = near(i, -1), near(i, 1)
+            if a is None or b is None:
                 continue
             da, db = km(c[5:7], a[5:7]), km(c[5:7], b[5:7])
-            if da > 25 and db > 25 and km(a[5:7], b[5:7]) < 5:
+            if da > 25 and db > 25 and km(a[5:7], b[5:7]) < max(5, min(da, db) / 3):
                 out[i] = c[:4] + [[]]
                 n_out += 1
 
@@ -244,12 +295,20 @@ def main():
         הכיוונים של אותו רחוב. השם לבדו אינו יכול להכריע, אבל המסלול כן:
         התחנה הנכונה היא זו שמתיישבת עם השכנות שלה ברצף.
         """
-        nonlocal n_amb, n_res
+        nonlocal n_amb, n_res, n_weak
         raw = [(st, mks_of(st['name'])) for st in (r.get('stops') or [])]
         anchors = [(i, coords[mk[0]]) for i, (st, mk) in enumerate(raw)
                    if len(mk) == 1 and mk[0] in coords]
         out = []
         for i, (st, mks) in enumerate(raw):
+            if not mks:
+                # שם זהה תחת עיר אחרת — מתקבל רק ליד עוגן סמוך (עד 3 ק"מ)
+                near = [c for j, c in anchors if 0 < abs(j - i) <= 3]
+                cands = [mk for mk in weak_mks_of(st['name'])
+                         if mk in coords and any(km(coords[mk], c) <= 3 for c in near)]
+                if cands:
+                    mks = [min(cands, key=lambda mk: min(km(coords[mk], c) for c in near))]
+                    n_weak += 1
             if len(mks) > 1 and all(mk in coords for mk in mks):
                 n_amb += 1
                 near = [c for j, c in anchors if 0 < abs(j - i) <= 3]
@@ -309,7 +368,7 @@ def main():
         'lines': idx,
     }, ensure_ascii=False), encoding='utf-8')
     print(f'הכרעת מועמדים לפי המסלול: {n_res} מתוך {n_amb} תחנות רב-משמעיות · '
-          f'{n_out} התאמות בוטלו כחריגות גאוגרפיות')
+          f'{n_out} התאמות בוטלו כחריגות גאוגרפיות · {n_weak} התאמות לפי שם בלי עיר, ליד עוגן')
     print(f'נבנו {len(idx)} קווים | {len(routes)} מסלולים | '
           f'{sum(1 for _ in OUT.glob("l*.json"))} קבצים | '
           f'הצלבת תחנות: {m_hit}/{m_tot} ({m_hit * 100 // max(m_tot, 1)}%)')

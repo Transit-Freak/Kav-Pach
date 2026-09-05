@@ -96,9 +96,29 @@ def encode(pts):
     return ''.join(out)
 
 
+def drop_spikes(known):
+    """תחנה שהוצלבה לעיר אחרת: רחוקה מעל 25 ק"מ משתי שכנותיה הידועות, בעוד
+    שהן קרובות זו לזו יחסית לקפיצה. ההצלבה (build_magihim_site.py) מסננת
+    את זה גם היא — כאן הגנה נוספת, כדי שמסלול של 300 ק"מ דרך קרית אתא לא
+    יגיע למפה (שלמה 05.09, קו 1 ירושלים)."""
+    out = list(known)
+    changed = True
+    while changed and len(out) > 2:
+        changed = False
+        for i in range(1, len(out) - 1):
+            a, c, b = out[i - 1], out[i], out[i + 1]
+            da, db, dab = hav(c, a), hav(c, b), hav(a, b)
+            if da > 25000 and db > 25000 and dab < max(5000, min(da, db) / 3):
+                del out[i]
+                changed = True
+                break
+    return out
+
+
 def route_shape(base, stops):
     known = [(s[5], s[6]) for s in stops if len(s) >= 7 and s[5] and s[6]]
     tot = len(stops)
+    known = drop_spikes(known)
     if tot < 2 or len(known) < 2 or len(known) / tot < MIN_KNOWN:
         return None, f'ידועות {len(known)}/{tot}'
     air = sum(hav(known[i - 1], known[i]) for i in range(1, len(known)))
