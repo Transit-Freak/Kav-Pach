@@ -116,7 +116,8 @@ function PlanStatus({ p }) {
 // שורות הפירוט — מה התוכנית הייתה משנה, ובמה מה שנכנס בפועל שונה ממנה.
 // משותף לכרטיס בציר ולכרטיס הראשי; בלי ספירת תחנות (שלמה 05.09).
 function PlanLines({ p, max }) {
-  const names = (arr) => arr.slice(0, max).map((s) => s[1]).join(", ") + (arr.length > max ? ` ועוד ${arr.length - max}` : "");
+  // שם ומק"ט, כמו בשאר כרטיסי האירועים (שלמה 05.09: "תוסיף מספר תחנה")
+  const names = (arr) => arr.slice(0, max).map((s) => `${s[1]} (${s[0]})`).join(", ") + (arr.length > max ? ` ועוד ${arr.length - max}` : "");
   const plan = p.plan || [];
   return (<>
     {p.vsBase ? (p.sameAsBase
