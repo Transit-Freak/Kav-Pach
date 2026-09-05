@@ -6,7 +6,7 @@ name: backfill-stops
 
 on:
   schedule:
-    - cron: '15 0 * * *'   # 03:15 ישראל בקיץ — שעה שקטה מול ה-API שלהם
+    - cron: '15 0 * * *'   # 03:15 ישראל בקיץ — שעה שקטה מול ה-API שלהם. שלמה 05.09: שנייה בין בקשות, עד כשעה בלילה
   push:
     branches: [main]
     paths:
@@ -50,10 +50,10 @@ jobs:
         run: |
           set -euo pipefail
           # בקנרית מגבילים גם את הרישום הארצי לטעימה קצרה
-          MAXMIN="${{ inputs.regmax || '80' }}"
-          [ -z "$MAXMIN" ] && MAXMIN=80
+          MAXMIN="${{ inputs.regmax || '10' }}"
+          [ -z "$MAXMIN" ] && MAXMIN=10
           [ -f line-history/data/.stops-canary ] && MAXMIN=3
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=$MAXMIN \
+          OUTDIR=line-history/data PAUSE=1.0 MAX_MIN=$MAXMIN \
             python3 tools/backfill_stops_registry.py
 
       - name: Fill historical stop sequences from Stride
@@ -66,14 +66,14 @@ jobs:
             MAXT=$(cat line-history/data/.stops-canary)
           fi
           echo "MAX_TARGETS=$MAXT"
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=160 MAX_TARGETS=$MAXT \
+          OUTDIR=line-history/data PAUSE=1.0 MAX_MIN=35 MAX_TARGETS=$MAXT \
             python3 tools/backfill_stops.py
           rm -f line-history/data/.stops-canary
 
       - name: עוגני ארכיון לקווים שקטים (בלי אף אירוע רישום מאז 2022)
         if: ${{ inputs.regonly != '1' }}
         run: |
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=35 \
+          OUTDIR=line-history/data PAUSE=1.0 MAX_MIN=5 \
             python3 tools/backfill_stop_anchors.py
 
       - name: הפרשי תחנות בין גרסאות שמולאו (מקומי, בלי רשת)
@@ -85,7 +85,7 @@ jobs:
       - name: איתור תאריך לשינויי תחנות — חיפוש בינארי בארכיון
         if: ${{ inputs.regonly != '1' }}
         run: |
-          OUTDIR=line-history/data PAUSE=0.35 MAX_MIN=45 \
+          OUTDIR=line-history/data PAUSE=1.0 MAX_MIN=10 \
             python3 tools/backfill_stop_dates.py
 
       - name: Commit (לענף שהריץ)

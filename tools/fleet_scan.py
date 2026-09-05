@@ -36,6 +36,8 @@ MONTHS_ONLY = os.environ.get('MONTHS_ONLY') == '1'
 MBASE = 2020 * 12   # ביט 0 במסיכת החודשים = ינואר 2020
 # עדכון-ביניים לאתר כל X ימים סרוקים (0 = רק בסוף); נקבע ב-workflow
 FLUSH_DAYS = int(os.environ.get('FLUSH_DAYS', '0'))
+# השהיה בין דפים במילוי היסטורי (שניות); fleet-months מעלה ל-1.0 — לא להעמיס על דאטאבוס
+PAUSE = float(os.environ.get('PAUSE', '0.1'))
 PAGE = 1000
 
 # שמות מפעילים מובנים (גיבוי) — הרשימה המלאה נטענת בזמן ריצה מ-agency.txt
@@ -152,7 +154,7 @@ def scan_day(day, routes, state):
             break
         offset += PAGE
         if MONTHS_ONLY:
-            time.sleep(0.1)   # מילוי היסטורי — בעדינות, לא להעמיס על דאטאבוס
+            time.sleep(PAUSE)   # מילוי היסטורי — בעדינות, לא להעמיס על דאטאבוס
     if not MONTHS_ONLY:
         for key, cnt in today.items():   # צבירה: סך נסיעות + ימי פעילות שנמדדו
             cur = state[key]

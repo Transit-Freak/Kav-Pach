@@ -69,7 +69,8 @@ jobs:
           MONTHS_ONLY: '1'
           FROM: ${{ steps.chap.outputs.from }}
           TO: ${{ steps.chap.outputs.to }}
-          MAX_MIN: ${{ github.event.inputs.max_min || '150' }}
+          MAX_MIN: ${{ github.event.inputs.max_min || '60' }}
+          PAUSE: '1.0'   # שלמה 05.09: לא להעמיס על דאטאבוס — שנייה בין דפים
         run: python3 tools/fleet_scan.py
 
       - name: שיוך ערים — כולל הספירה החודשית (best-effort)
@@ -110,7 +111,7 @@ jobs:
           . /tmp/next.env
           if [ -z "$DONE" ]; then
             echo 'מזניק את ההמשך'
-            gh workflow run fleet-months.yml --ref main -f chain=true -f max_min=320
+            gh workflow run fleet-months.yml --ref main -f chain=true -f max_min=60
           else
             echo 'מילוי החודשים הושלם — אין המשך'
           fi
