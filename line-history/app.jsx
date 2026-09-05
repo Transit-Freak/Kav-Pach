@@ -560,7 +560,7 @@ const dedupCount = (arr) => {
   (arr || []).forEach((x) => { const k = typeof x === "string" ? x : x[0] + "|" + x[1]; const e = m.get(k); if (e) e.n += 1; else m.set(k, { x, n: 1 }); });
   return [...m.values()];
 };
-function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, remPins, sg, planned }) {
+function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCodes, stops12, shape12, remPins, sg, planned }) {
   const ref = useRef(null);
   const mapRef = useRef(null);
   // קטעי-שינוי ששולפו מהארכיון (v.sg) — הגאומטריה האמיתית של מה שירד
@@ -607,7 +607,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
     const focused = canFocus && focus;
     const pts12 = (stops12 || []).map((s) => [s[1], s[2]]);
     const pinPts = (remPins || []).map((p) => [p[2], p[3]]);
-    const all = focused ? focusPts : cur.concat(prev || []).concat(pts12).concat(pinPts);
+    const all = focused ? focusPts : cur.concat(prev || []).concat(pts12).concat(shape12 || []).concat(pinPts);
     map.fitBounds(L.latLngBounds(all.length ? all : [[32.08, 34.78]]).pad(focused ? 0.35 : 0.1), { maxZoom: 16 });
     // במצב התמקדות שכבות-הרקע כמעט שקופות: המקווקו האדום העדין שמצויר
     // לאורך כל המסלול נקרא בטעות כ"שינוי לא מסומן" בקטעים שבהם שני
@@ -633,9 +633,15 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
       (sgO || []).forEach((r) => L.polyline(r, { color: "#dc2626", weight: 6, opacity: 0.95, dashArray: "9 8" }).addTo(map));
       (sgN || []).forEach((r) => L.polyline(r, { color: "#16a34a", weight: 7, opacity: 0.95 }).addTo(map));
     }
-    // מסלול 2012 — קו חום מקווקו דרך התחנות שהוצלבו למק"ט (מיקום לפי המאגר של היום)
-    if (pts12.length > 1) {
+    // מסלול 2012 — קו חום מקווקו. כשיש מסלול משוער על הכבישים (shape12,
+    // tools/shape_2012.py — בקשת שלמה 05.09) הוא מצויר; אחרת קו ישר דרך
+    // התחנות שהוצלבו למק"ט (מיקום לפי המאגר של היום)
+    if (shape12 && shape12.length > 1) {
+      L.polyline(shape12, { color: "#78350f", weight: 4, opacity: 0.8, dashArray: "8 6" }).addTo(map);
+    } else if (pts12.length > 1) {
       L.polyline(pts12, { color: "#78350f", weight: 3, opacity: 0.75, dashArray: "3 7" }).addTo(map);
+    }
+    if (pts12.length) {
       stops12.forEach((s) => {
         L.circleMarker([s[1], s[2]], { radius: 4, color: "#78350f", weight: 2, fillColor: "#fff", fillOpacity: 1 })
           .addTo(map).bindPopup(`<b>${esc(s[0])}</b><br><span class="pst">מסלול 2012</span>`, { className: "lh-pop", offset: [0, -4] });
@@ -683,7 +689,7 @@ function DiffMap({ cur, prev, approx, prevApprox, curStops, prevStops, addedCode
         .bindPopup(popHtml([p[0], p[1]], "🔴 תחנה שירדה מהקו בגרסה זו"), { className: "lh-pop", offset: [0, -4] });
     });
     return () => { mapRef.current = null; map.remove(); };
-  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12, remPins, sgO, sgN]);
+  }, [cur, prev, curStops, prevStops, addedCodes, focus, diff, chStops, focusPts, canFocus, stops12, shape12, remPins, sgO, sgN]);
   // סיכום טקסטואלי למי שלא רואה את המפה — המספרים כבר מחושבים ממילא
   const nAdd = (curStops || []).filter((s) => addedCodes && addedCodes.has(s[0])).length;
   const curC = new Set((curStops || []).map((s) => s[0]));
@@ -1188,14 +1194,22 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const [altRd, setAltRd] = useState(null);   // חלופה שנבחרה להשוואה
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
   const [r12, setR12] = useState(0);      // וריאנט 2012 נבחר
+  const [s12, setS12] = useState(null);   // מסלולים משוערים של 2012 על הכבישים (אם חושבו)
   const [rty, setRty] = useState(0);      // מונה "נסו שוב" אחרי כשל רשת
   // העוגן של 2012 מוטמע בקובץ הקו עצמו (lf.anc, מוזרק בצינור הלילי) —
   // בעבר כל פתיחת עמוד קו הורידה את קובץ העוגנים המלא (1.2MB) רק כדי
   // לשלוף שורה אחת, כולל בקווי רכבת ומוניות שאין להם עוגן בכלל.
   const anc = (lf && lf.anc) || null;
   useEffect(() => {
-    setShow12(false); setD12(null); setR12(0); setAltRd(null);
+    setShow12(false); setD12(null); setR12(0); setS12(null); setAltRd(null);
   }, [rd]);
+  // המסלול המשוער על הכבישים נשמר בקובץ נפרד לכל קו 2012 — קיים רק למה שחושב
+  useEffect(() => {
+    if (!show12 || s12 || !anc) return;
+    dfetch("../magihim-2012/data/shapes/l" + anc.k + ".json")
+      .then((r) => (r.ok ? r.json() : { routes: {} }))
+      .then(setS12).catch(() => setS12({ routes: {} }));
+  }, [show12, anc, s12]);
   useEffect(() => {
     if (!show12 || d12 || !anc) return;
     dfetch("../magihim-2012/data/l" + anc.k + ".json")
@@ -1582,6 +1596,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const stops12 = (show12 && d12 && (d12.routes || []).length)
     ? ((d12.routes[sel12] || d12.routes[0]).stops || []).filter((s) => s.length >= 7).map((s) => [s[1], s[5], s[6]])
     : null;
+  const sh12 = (stops12 && s12 && s12.routes && s12.routes[String(sel12)]) || null;
+  const shape12 = sh12 ? decodeShape(sh12.pl) : null;
   return (
     <div className="linewrap">
       <div className="card side">
@@ -1969,7 +1985,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           prevStops={plannedV ? (plDiff && !plSame ? actualV.stops : null) : (!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null)}
           addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n, j) => (v.ac && v.ac[j] != null ? String(v.ac[j]) : codeOf(n, vi, true))).filter(Boolean)) : null}
-          stops12={onlyCur ? null : stops12}
+          stops12={onlyCur ? null : stops12} shape12={onlyCur ? null : shape12}
           sg={onlyCur || cmpOn ? null : (v.sg || null)}
           remPins={onlyCur || cmpOn ? null : remPinsOf(v, vi, gv).pins} />
         {/* תחנה שירדה ואין לה מיקום באף מקור — נאמרת במפורש, לא נעלמת */}
@@ -1992,7 +2008,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שנוספה</span>
           <span><span className="dot" style={{ background: "#fff", border: "3px solid #dc2626" }} /> תחנה שירדה</span>
           </>}
-          {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>}
+          {stops12 && stops12.length > 1 && <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> {sh12
+            ? `מסלול משוער 2012 — חישוב על כבישי היום דרך ${sh12.n} מ-${sh12.tot} התחנות שמיקומן ידוע`
+            : "מסלול 2012 (קו ישר דרך התחנות שהוצלבו)"}</span>}
         </div>
         {!cmpOn && !onlyCur && v.sg && ((v.sg.n || []).length + (v.sg.o || []).length > 0) && (
           <div className="mut">🔍 הקטע ששונה שורטט במדויק מצילומי הארכיון — אדום מקווקו = הקטע הישן, ירוק = החדש. שאר המסלול עשוי להיות מקורב.</div>
@@ -2041,7 +2059,7 @@ function StopEvMap({ ev }) {
 // קו של 2012 נפתח קודם כרשימת תחנות בתוך שורה בפיד, בלי מפה ובלי כתובת
 // משלו. זה עמוד לכל דבר: מסלול על המפה דרך התחנות שהוצלבו למק"ט, רצף
 // התחנות, ומעבר לקו של היום כשיש כזה.
-function Map2012({ stops }) {
+function Map2012({ stops, shape }) {
   const ref = useRef(null);
   useEffect(() => {
     if (!ref.current) return;
@@ -2050,9 +2068,12 @@ function Map2012({ stops }) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>', maxZoom: 19,
     }).addTo(map);
     // מיקום התחנה הוא של היום, כי ב-2012 לא נשמרו קואורדינטות. תחנה שלא
-    // הוצלבה למק"ט אינה על המפה — ולכן הקו מקווקו ולא רציף.
+    // הוצלבה למק"ט אינה על המפה. כשחושב מסלול משוער על הכבישים (shape,
+    // tools/shape_2012.py) הוא מצויר; אחרת קו ישר בין התחנות, מקווקו.
     const pts = stops.filter((s) => s[5] != null && s[6] != null).map((s) => [s[5], s[6]]);
-    if (pts.length > 1) L.polyline(pts, { color: "#78350f", weight: 4, opacity: 0.85, dashArray: "6 8" }).addTo(map);
+    const road = shape && shape.length > 1 ? shape : null;
+    if (road) L.polyline(road, { color: "#78350f", weight: 5, opacity: 0.85, dashArray: "10 7" }).addTo(map);
+    else if (pts.length > 1) L.polyline(pts, { color: "#78350f", weight: 4, opacity: 0.85, dashArray: "6 8" }).addTo(map);
     stops.forEach((s, i) => {
       if (s[5] == null) return;
       const last = i === stops.length - 1;
@@ -2063,21 +2084,25 @@ function Map2012({ stops }) {
           (s[4] && s[4].length === 1 ? `<br><span class="pcode">מק״ט ${esc(String(s[4][0]))}</span>` : ""),
           { className: "lh-pop", offset: [0, -4] });
     });
-    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.15), { maxZoom: 16 });
+    const all = pts.concat(road || []);
+    if (all.length) map.fitBounds(L.latLngBounds(all).pad(0.15), { maxZoom: 16 });
     else map.setView([31.5, 34.9], 8);
     return () => map.remove();
-  }, [stops]);
+  }, [stops, shape]);
   return <div className="map" ref={ref} role="img"
     aria-label={"מפת מסלול 2012 דרך " + (stops || []).filter((x) => x[5] != null).length + " תחנות שהוצלבו למיקום של היום"} />;
 }
 
 function Line2012Page({ k12, anchorRd, openLine, onBack }) {
   const [d, setD] = useState(null);
+  const [sh, setSh] = useState(null);     // מסלולים משוערים על הכבישים, אם חושבו
   const [ri, setRi] = useState(0);
   useEffect(() => {
-    setD(null); setRi(0);
+    setD(null); setSh(null); setRi(0);
     fetch("../magihim-2012/data/l" + k12 + ".json?v=" + BUILD)
       .then((r) => (r.ok ? r.json() : null)).then(setD).catch(() => setD(false));
+    dfetch("../magihim-2012/data/shapes/l" + k12 + ".json")
+      .then((r) => (r.ok ? r.json() : { routes: {} })).then(setSh).catch(() => setSh({ routes: {} }));
   }, [k12]);
   if (d === null) return <div className="card">טוען…</div>;
   if (!d) return <div className="card"><button className="back" onClick={onBack}>→ חזרה</button>
@@ -2085,6 +2110,8 @@ function Line2012Page({ k12, anchorRd, openLine, onBack }) {
   const r = (d.routes || [])[ri] || (d.routes || [])[0] || { stops: [] };
   const stops = r.stops || [];
   const matched = stops.filter((s) => s[5] != null).length;
+  const rsh = (sh && sh.routes && sh.routes[String((d.routes || []).indexOf(r))]) || null;
+  const shape = rsh ? decodeShape(rsh.pl) : null;
   return (
     <div className="card">
       <button className="back" onClick={onBack}>→ חזרה</button>
@@ -2104,9 +2131,11 @@ function Line2012Page({ k12, anchorRd, openLine, onBack }) {
             {x.f} ← {x.l} ({x.n})</button>
         ))}</div>
       )}
-      <Map2012 stops={stops} />
+      <Map2012 stops={stops} shape={shape} />
       <div className="legend">
-        <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> מסלול 2012 (דרך התחנות שהוצלבו)</span>
+        <span><i style={{ borderColor: "#78350f", borderStyle: "dashed" }} /> {rsh
+          ? `מסלול משוער — חישוב על כבישי היום דרך ${rsh.n} מ-${rsh.tot} התחנות, כ-${(rsh.m / 1000).toFixed(1)} ק"מ`
+          : "מסלול 2012 (קו ישר דרך התחנות שהוצלבו)"}</span>
         <span><i className="dot" style={{ background: "#16a34a" }} /> ראשונה</span>
         <span><i className="dot" style={{ background: "#dc2626" }} /> אחרונה</span>
       </div>
@@ -2120,7 +2149,9 @@ function Line2012Page({ k12, anchorRd, openLine, onBack }) {
         ))}
       </ol>
       <div className="katnote">ℹ️ המיקום על המפה הוא של התחנה כפי שהיא רשומה היום, כי בצילום
-        2012 לא נשמרו קואורדינטות. תחנה שלא הוצלבה למק"ט אינה מופיעה על המפה, ולכן הקו מקווקו.</div>
+        2012 לא נשמרו קואורדינטות. תחנה שלא הוצלבה למק"ט אינה מופיעה על המפה{rsh
+          ? ", והמסלול ביניהן הוא הערכה: נסיעת אוטובוס בכבישים של היום דרך התחנות הידועות, לפי הסדר. כביש שנפתח מאז 2012 או תחנה שלא הוצלבה יכולים לעקם אותו."
+          : ", ולכן הקו מקווקו."}</div>
     </div>
   );
 }

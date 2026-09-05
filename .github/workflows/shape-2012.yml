@@ -1,0 +1,82 @@
+name: shape-2012
+
+# מסלול משוער לקווי 2012 על הכבישים (tools/shape_2012.py): מנוע הניווט שלנו
+# (OSRM, פרופיל אוטובוס, מפת ישראל) מחשב נסיעה דרך התחנות של 2012 שהוצלבו
+# למיקום. הפלט נשמר ב-magihim-2012/data/shapes/ ומוצג במפה של "הקו בזמן".
+# הפעלה ידנית: מפתחות של קווים בודדים (כמו "4-528x6 4-528x7") או all.
+
+on:
+  workflow_dispatch:
+    inputs:
+      keys:
+        description: 'מפתחות קווי 2012 מופרדים ברווח, או all לכל הקווים'
+        required: true
+        default: '4-528x6 4-528x7'
+      force:
+        description: 'חישוב מחדש גם למה שכבר קיים (1)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shape-2012
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: OSRM — פרופיל אוטובוס, מפת ישראל
+        run: |
+          set -euo pipefail
+          mkdir -p osrm && cd osrm
+          curl -fSL --connect-timeout 20 --max-time 600 --retry 15 --retry-all-errors --retry-delay 60 \
+            -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
+          IMG=osrm/osrm-backend:latest
+          docker pull "$IMG" >/dev/null
+          cp ../tools/osrm/bus-il.lua ./bus-il.lua
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-extract   -p /data/bus-il.lua /data/map.osm.pbf >/dev/null
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-partition  /data/map.osrm >/dev/null
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-customize  /data/map.osrm >/dev/null
+          docker run -d --name osrm -p 5000:5000 -v "$PWD:/data" "$IMG" \
+            osrm-routed --algorithm mld --max-viaroute-size 1000 /data/map.osrm
+          up=0
+          for i in $(seq 1 40); do
+            if curl -fsS "http://localhost:5000/nearest/v1/driving/34.78,32.08" >/dev/null 2>&1; then up=1; break; fi
+            sleep 2
+          done
+          [ "$up" = "1" ] || { echo "OSRM failed"; docker logs osrm || true; exit 1; }
+
+      - name: חישוב המסלולים
+        env:
+          KEYS: ${{ github.event.inputs.keys }}
+          FORCE: ${{ github.event.inputs.force }}
+        run: |
+          set -euo pipefail
+          F=""; [ "$FORCE" = "1" ] && F="--force"
+          if [ "$KEYS" = "all" ]; then
+            python3 tools/shape_2012.py --osrm http://localhost:5000 --all $F
+          else
+            python3 tools/shape_2012.py --osrm http://localhost:5000 $F $KEYS
+          fi
+          du -sh magihim-2012/data/shapes
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A magihim-2012/data/shapes
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: 2012 — מסלול משוער על הכבישים (OSRM) — ${{ github.event.inputs.keys }}"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "push rejected — retry $i"; sleep 15
+          done
+          echo "הדחיפה נכשלה"; exit 1
