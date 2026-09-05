@@ -133,18 +133,56 @@ function barChart(el, bars, o) {
 }
 
 // ---------------------------------------------------------------- תצוגה
+const HEMONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+let calOpen = false, calYM = null;
+// לוח שנה משלנו במקום בורר התאריכים של הדפדפן: רק ימים שיש להם נתונים ניתנים
+// לבחירה, השאר אפורים (שלמה 05.09: "לנעול תאריכים שאין לנו")
+function calHtml() {
+  const [y, m] = calYM;
+  const nDays = new Date(y, m + 1, 0).getDate();
+  const startDow = new Date(y, m, 1).getDay();
+  const byD = new Map(DAYS.map(d => [d.d, d]));
+  const cells = [];
+  for (let i = 0; i < startDow; i++) cells.push('<span></span>');
+  for (let day = 1; day <= nDays; day++) {
+    const iso = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const d = byD.get(iso);
+    if (!d) { cells.push(`<span class="cd off">${day}</span>`); continue; }
+    const cls = ['cd', partial(d) ? 'part' : '', iso === dayD && period === 'day' ? 'on' : ''].filter(Boolean).join(' ');
+    const tip = partial(d) ? `שידור חלקי: ${num(d.fix)} מתוך ${num(d.rides)} רכבות` : d.n ? `${pct(d.b[0], d.n)} בזמן · ${num(d.rides)} רכבות` : `${num(d.rides)} רכבות`;
+    cells.push(`<button class="${cls}" data-d="${iso}" title="${tip}">${day}</button>`);
+  }
+  const mm = String(m + 1).padStart(2, '0');
+  const canPrev = DAYS[0].d < `${y}-${mm}-01`, canNext = DAYS[DAYS.length - 1].d > `${y}-${mm}-${nDays}`;
+  return `<div class="calhead"><button class="cnav" data-nav="-1" title="חודש קודם" ${canPrev ? '' : 'disabled'}>‹</button><b>${HEMONTHS[m]} ${y}</b><button class="cnav" data-nav="1" title="חודש הבא" ${canNext ? '' : 'disabled'}>›</button></div>
+    <div class="calgrid">${['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'].map(w => `<i>${w}׳</i>`).join('')}${cells.join('')}</div>
+    <div class="calnote">אפור בהיר: אין נתונים · נקודה: שידור חלקי באותו יום</div>`;
+}
+function renderCal() {
+  const cal = $('#cal'); if (!cal) return;
+  cal.hidden = !calOpen;
+  if (!calOpen) return;
+  cal.innerHTML = calHtml();
+  cal.querySelectorAll('.cnav').forEach(b => b.onclick = e => { e.stopPropagation(); let [y, m] = calYM; m += Number(b.dataset.nav); if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } calYM = [y, m]; renderCal(); });
+  cal.querySelectorAll('button.cd').forEach(b => b.onclick = e => { e.stopPropagation(); calOpen = false; dayD = b.dataset.d; period = 'day'; render(); });
+}
+document.addEventListener('click', e => { if (calOpen && !e.target.closest('.dwrap')) { calOpen = false; renderCal(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && calOpen) { calOpen = false; renderCal(); } });
+
 function renderPeriods() {
   const el = $('#periods');
   const chips = [['7', '7 ימים'], ['30', '30 ימים'], ['90', '90 ימים'], ['all', 'כל התקופה']].filter(([k]) => k === 'all' || DAYS.length > Number(k) || k === '7');
+  const curD = dayD || DAYS[DAYS.length - 1].d;
+  if (!calYM) calYM = [Number(curD.slice(0, 4)), Number(curD.slice(5, 7)) - 1];
   el.innerHTML = `<div class="seg">${chips.map(([k, t]) => `<button class="pchip${period === k ? ' on' : ''}" data-p="${k}">${t}</button>`).join('')}</div>` +
-    `<div class="daynav${period === 'day' ? ' on' : ''}"><button id="dprev" title="יום קודם">‹</button><input type="date" id="dpick" min="${DAYS[0].d}" max="${DAYS[DAYS.length - 1].d}" value="${dayD || DAYS[DAYS.length - 1].d}"><button id="dnext" title="יום הבא">›</button></div>`;
+    `<div class="daynav${period === 'day' ? ' on' : ''}"><button id="dprev" title="יום קודם">‹</button><div class="dwrap"><button id="dpick" class="dbtn" title="בחירת יום">${period === 'day' ? heDate(curD) : 'בחירת יום ▾'}</button><div id="cal" class="cal" hidden></div></div><button id="dnext" title="יום הבא">›</button></div>`;
   el.querySelectorAll('.pchip').forEach(b => b.onclick = () => { period = b.dataset.p; render(); });
-  const pick = $('#dpick');
   const setDay = d => { if (!DAYS.some(x => x.d === d)) return; dayD = d; period = 'day'; render(); };
-  pick.onchange = () => setDay(pick.value);
-  const cur = () => DAYS.findIndex(x => x.d === (dayD || DAYS[DAYS.length - 1].d));
+  $('#dpick').onclick = e => { e.stopPropagation(); calOpen = !calOpen; if (calOpen) calYM = [Number(curD.slice(0, 4)), Number(curD.slice(5, 7)) - 1]; renderCal(); };
+  const cur = () => DAYS.findIndex(x => x.d === curD);
   $('#dprev').onclick = () => { const i = cur(); if (period !== 'day') setDay(DAYS[DAYS.length - 1].d); else if (i > 0) setDay(DAYS[i - 1].d); };
   $('#dnext').onclick = () => { const i = cur(); if (period !== 'day') setDay(DAYS[DAYS.length - 1].d); else if (i < DAYS.length - 1) setDay(DAYS[i + 1].d); };
+  renderCal();
 }
 
 function heroHtml(a, days) {

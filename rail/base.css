@@ -27,6 +27,23 @@ h1{font-family:var(--disp);font-weight:var(--disp-w,400);font-size:28px;margin:0
 .daynav button:hover{background:var(--panel2);color:var(--ink)}
 .daynav input{border:none;border-inline:1px solid var(--line);background:transparent;font:15px var(--mono);color:var(--accent2);width:150px;height:36px;padding:0 8px;outline:none;text-align:center;color-scheme:var(--scheme,dark)}
 .daynav.on{border-color:var(--accent)}
+.dwrap{position:relative}
+.dbtn{border:none;border-inline:1px solid var(--line);background:transparent;font:700 13px var(--body);color:var(--ink);height:36px;padding:0 14px;cursor:pointer;min-width:150px;white-space:nowrap}
+.dbtn:hover{background:var(--panel2)}
+.cal{position:absolute;top:calc(100% + 8px);right:0;z-index:40;background:var(--panel);border:1px solid var(--line2);border-radius:var(--radius-sm);box-shadow:0 14px 40px rgba(0,0,0,.28);padding:10px 12px 8px;width:286px}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:800;font-size:13.5px}
+.cnav{border:1px solid var(--line2);background:transparent;color:var(--mut);border-radius:6px;width:30px;height:30px;cursor:pointer;font:800 16px var(--body)}
+.cnav:hover:not(:disabled){color:var(--ink);border-color:var(--accent)}
+.cnav:disabled{opacity:.3;cursor:default}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.calgrid i{font-style:normal;font-size:10.5px;color:var(--dim);font-weight:700;padding:2px 0 4px}
+.cd{height:34px;border-radius:6px;font:600 13px var(--body);display:flex;align-items:center;justify-content:center;position:relative;font-variant-numeric:tabular-nums}
+.cd.off{color:var(--line2)}
+button.cd{border:none;background:var(--panel2);color:var(--ink);cursor:pointer}
+button.cd:hover{background:var(--line)}
+button.cd.on{background:var(--accent);color:var(--tag-ink,#0C131D)}
+button.cd.part::after{content:"";position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%;background:var(--warn)}
+.calnote{font-size:10.5px;color:var(--dim);margin-top:8px;font-weight:600}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-top:14px;box-shadow:var(--shadow,none)}
 .ptitle{font-family:var(--disp);font-weight:var(--disp-w,400);font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ptitle::before{content:"";width:5px;height:16px;background:var(--accent);border-radius:2px;flex-shrink:0}
