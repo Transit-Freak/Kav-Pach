@@ -1190,6 +1190,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
   const [offK, setOffK] = useState(() => new Set());   // קטגוריות שכובו בעמוד הקו
   const [cmpI, setCmpI] = useState(null);              // גרסת בסיס להשוואה חופשית
   const [onlyCur, setOnlyCur] = useState(false);       // מפה בלי שכבת העבר
+  const [only12, setOnly12] = useState(true);          // חלונית 2012 פתוחה: במפה רק מסלול 2012 (שלמה 05.09), או יחד עם היום
   const [show12, setShow12] = useState(false);
   const [altRd, setAltRd] = useState(null);   // חלופה שנבחרה להשוואה
   const [d12, setD12] = useState(null);   // קובץ הקו של 2012 (נטען בפתיחה)
@@ -1598,6 +1599,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     : null;
   const sh12 = (stops12 && s12 && s12.routes && s12.routes[String(sel12)]) || null;
   const shape12 = sh12 ? decodeShape(sh12.pl) : null;
+  // כשפותחים את 2012 המפה מציגה רק את מסלול 2012; כפתור מחזיר את שתי השכבות יחד
+  const m12only = !!(show12 && only12 && stops12 && stops12.length);
   return (
     <div className="linewrap">
       <div className="card side">
@@ -1959,7 +1962,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
         {/* ההשוואה עונה על "מה השתנה", אבל לא על "איך הקו נראה עכשיו" —
             שתי השכבות יחד מקשות לקרוא את המסלול עצמו. הכפתור מסיר את
             שכבת העבר ומשאיר את המסלול המלא כפי שהוא אחרי השינוי. */}
-        {prev && !plannedV && (
+        {!m12only && prev && !plannedV && (
           <div className="onlycur">
             <button className={"kchip" + (onlyCur ? "" : " on")}
               style={onlyCur ? {} : { borderColor: "#7c3aed", color: "#5b21b6" }}
@@ -1969,27 +1972,39 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               onClick={() => setOnlyCur(true)}>🚌 המסלול המלא אחרי השינוי</button>
           </div>
         )}
-        {borrowed && (
+        {/* חלונית 2012 פתוחה: ברירת המחדל היא מסלול 2012 לבד, כי שתי השכבות
+            יחד מקשות לקרוא איך הקו נסע אז; הכפתור השני מציג את שתיהן. */}
+        {show12 && stops12 && stops12.length > 0 && (
+          <div className="onlycur">
+            <button className={"kchip" + (only12 ? " on" : "")}
+              style={only12 ? { borderColor: "#78350f", color: "#78350f" } : {}}
+              onClick={() => setOnly12(true)}>🕰️ רק מסלול 2012</button>
+            <button className={"kchip" + (only12 ? "" : " on")}
+              style={only12 ? {} : { borderColor: "#78350f", color: "#78350f" }}
+              onClick={() => setOnly12(false)}>⇄ 2012 והיום יחד</button>
+          </div>
+        )}
+        {!m12only && borrowed && (
           <div className="mut">ℹ️ האירוע עצמו אינו נושא מסלול — המפה מציגה את המסלול המתועד
             {gv.d < v.d ? " האחרון לפני האירוע" : " הראשון אחרי האירוע"}, מ-{fmtD(gv.d)}.</div>
         )}
-        {!cmpOn && !onlyCur && !plannedV && prev && pgv !== pv && (
+        {!m12only && !cmpOn && !onlyCur && !plannedV && prev && pgv !== pv && (
           <div className="mut">ℹ️ לגרסה הקודמת הסמוכה אין רצף תחנות מתועד — "המסלול הקודם" והתחנות שירדו מוצגים מהתיעוד האחרון שלפני האירוע, מ-{fmtD(pgv.d)}.</div>
         )}
         {/* addedCodes: codeOf מצפה לאינדקס גרסה (vi) — האינדקס בתוך רשימת
             ➕ גרם לסריקה מהגרסאות הישנות ביותר, ותחנה עם שם זהה ומק"ט אחר
             מהעבר קיבלה את הסימון הירוק במקום התחנה שבאמת נוספה */}
-        <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "")}
-          cur={cur} prev={onlyCur ? null : prev} planned={plannedV}
-          approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={gv.stops}
-          prevStops={plannedV ? (plDiff && !plSame ? actualV.stops : null) : (!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null)}
-          addedCodes={!onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
+        <DiffMap key={v.d + v.k + (cmpOn ? "c" + cmpI : "") + (onlyCur ? "o" : "") + (m12only ? "12" : "")}
+          cur={m12only ? [] : cur} prev={onlyCur || m12only ? null : prev} planned={plannedV && !m12only}
+          approx={cmpOn ? !gv.shp : approx} prevApprox={prevApprox} curStops={m12only ? [] : gv.stops}
+          prevStops={m12only ? null : plannedV ? (plDiff && !plSame ? actualV.stops : null) : (!onlyCur && comparable && pgv && (pgv.stops || []).length ? pgv.stops : null)}
+          addedCodes={!m12only && !onlyCur && (!pv || !(pv.stops || []).length) && (v.add || []).length
             ? new Set((v.add || []).map((n, j) => (v.ac && v.ac[j] != null ? String(v.ac[j]) : codeOf(n, vi, true))).filter(Boolean)) : null}
           stops12={onlyCur ? null : stops12} shape12={onlyCur ? null : shape12}
-          sg={onlyCur || cmpOn ? null : (v.sg || null)}
-          remPins={onlyCur || cmpOn ? null : remPinsOf(v, vi, gv).pins} />
+          sg={onlyCur || cmpOn || m12only ? null : (v.sg || null)}
+          remPins={onlyCur || cmpOn || m12only ? null : remPinsOf(v, vi, gv).pins} />
         {/* תחנה שירדה ואין לה מיקום באף מקור — נאמרת במפורש, לא נעלמת */}
-        {!cmpOn && !onlyCur && (() => {
+        {!cmpOn && !onlyCur && !m12only && (() => {
           const un = remPinsOf(v, vi, gv).unplaced
             .filter((n) => !(((pgv && pgv.stops) || []).some((s) => s && s[1] === n)));
           return un.length ? (
@@ -1997,7 +2012,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           ) : null;
         })()}
         <div className="legend">
-          {plannedV ? <>
+          {m12only ? null : plannedV ? <>
             <span><i style={{ borderColor: "#9f1239", borderStyle: "dashed" }} /> המסלול שתוכנן ולא יצא לפועל</span>
             {prev && <span><i style={{ borderColor: "#475569" }} /> המסלול בפועל של הווריאנט</span>}
             {plDiff && !plSame && <span><span className="dot" style={{ background: "#16a34a" }} /> תחנה שתוכננה ואינה במסלול בפועל</span>}
@@ -2012,7 +2027,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             ? `מסלול משוער 2012 — חישוב על כבישי היום דרך ${sh12.n} מ-${sh12.tot} התחנות שמיקומן ידוע`
             : "מסלול 2012 (קו ישר דרך התחנות שהוצלבו)"}</span>}
         </div>
-        {!cmpOn && !onlyCur && v.sg && ((v.sg.n || []).length + (v.sg.o || []).length > 0) && (
+        {!cmpOn && !onlyCur && !m12only && v.sg && ((v.sg.n || []).length + (v.sg.o || []).length > 0) && (
           <div className="mut">🔍 הקטע ששונה שורטט במדויק מצילומי הארכיון — אדום מקווקו = הקטע הישן, ירוק = החדש. שאר המסלול עשוי להיות מקורב.</div>
         )}
         {v.shpref
