@@ -22,8 +22,11 @@ h1{font-family:var(--disp);font-weight:var(--disp-w,400);font-size:28px;margin:0
 .pchip:last-child{border-inline-end:none}
 .pchip:hover{color:var(--ink)}
 .pchip.on{background:var(--accent);color:var(--tag-ink,#0C131D)}
-.daynav{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:var(--radius-sm);background:var(--panel);overflow:hidden}
+.daynav{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:var(--radius-sm);background:var(--panel)}
 .daynav button{border:none;background:transparent;cursor:pointer;font:700 16px var(--body);color:var(--mut);width:34px;height:36px}
+/* בלי overflow:hidden (הוא חתך את לוח השנה הנפתח) — הפינות המעוגלות עוברות לכפתורי הקצה */
+.daynav > button:first-child{border-start-start-radius:inherit;border-end-start-radius:inherit}
+.daynav > button:last-child{border-start-end-radius:inherit;border-end-end-radius:inherit}
 .daynav button:hover{background:var(--panel2);color:var(--ink)}
 .daynav input{border:none;border-inline:1px solid var(--line);background:transparent;font:15px var(--mono);color:var(--accent2);width:150px;height:36px;padding:0 8px;outline:none;text-align:center;color-scheme:var(--scheme,dark)}
 .daynav.on{border-color:var(--accent)}
