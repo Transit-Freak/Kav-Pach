@@ -1,0 +1,118 @@
+name: xref-2012
+
+# הצלבות ידניות של תחנות 2012 מפאנל ההצלבות (line-history/xref-2012.html):
+# הפאנל פותח Issue עם שורות "xref: <שם 2012> => <מק"ט|none>". כאן, פעם ביום
+# (ובהפעלה ידנית): קוראים את ה-Issues הפתוחים עם שורות כאלה, ממזגים אותן
+# ל-magihim-2012/data/manual.json, בונים מחדש את נתוני 2012 (tools/
+# build_magihim_site.py, שבו ההצלבה הידנית גוברת על האוטומטית), מחשבים מחדש
+# את המסלולים המשוערים (tools/shape_2012.py), דוחפים ל-main וסוגרים את ה-Issues.
+
+on:
+  schedule:
+    - cron: '20 2 * * *'   # 05:20 ישראל בקיץ
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: xref-2012
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: ענף הסריקה של 2012
+        run: git fetch -q origin magihim-data:refs/remotes/origin/magihim-data
+
+      - name: איסוף ההצלבות מה-Issues
+        id: collect
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 200 --json number,title,body > issues.json
+          python3 - <<'EOF'
+          import json, os, re
+          issues = json.load(open('issues.json'))
+          p = 'magihim-2012/data/manual.json'
+          try:
+              manual = json.load(open(p, encoding='utf-8'))
+          except Exception:
+              manual = {}
+          used = []
+          n = 0
+          for it in sorted(issues, key=lambda i: i['number']):
+              rows = re.findall(r'^\s*xref:\s*(.+?)\s*=>\s*(none|\d+)\b', it.get('body') or '', re.M)
+              if not rows:
+                  continue
+              for name, mk in rows:
+                  manual[name.strip()] = None if mk == 'none' else mk
+                  n += 1
+              used.append(it['number'])
+          json.dump(manual, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=0, sort_keys=True)
+          open('used.txt', 'w').write('\n'.join(map(str, used)))
+          print(f'{n} הצלבות מ-{len(used)} Issues · סה"כ ידניות: {len(manual)}')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f'changed={"1" if used else "0"}\n')
+          EOF
+
+      - name: בנייה מחדש של נתוני 2012
+        if: steps.collect.outputs.changed == '1'
+        run: python3 tools/build_magihim_site.py
+
+      - name: OSRM — פרופיל אוטובוס, מפת ישראל
+        if: steps.collect.outputs.changed == '1'
+        run: |
+          set -euo pipefail
+          mkdir -p osrm && cd osrm
+          curl -fSL --connect-timeout 20 --max-time 600 --retry 15 --retry-all-errors --retry-delay 60 \
+            -o map.osm.pbf "https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf"
+          IMG=osrm/osrm-backend:latest
+          docker pull "$IMG" >/dev/null
+          cp ../tools/osrm/bus-il.lua ./bus-il.lua
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-extract   -p /data/bus-il.lua /data/map.osm.pbf >/dev/null
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-partition  /data/map.osrm >/dev/null
+          docker run --rm -v "$PWD:/data" "$IMG" osrm-customize  /data/map.osrm >/dev/null
+          docker run -d --name osrm -p 5000:5000 -v "$PWD:/data" "$IMG" \
+            osrm-routed --algorithm mld --max-viaroute-size 1000 /data/map.osrm
+          up=0
+          for i in $(seq 1 40); do
+            if curl -fsS "http://localhost:5000/nearest/v1/driving/34.78,32.08" >/dev/null 2>&1; then up=1; break; fi
+            sleep 2
+          done
+          [ "$up" = "1" ] || { echo "OSRM failed"; docker logs osrm || true; exit 1; }
+
+      - name: מסלולים משוערים מחדש
+        if: steps.collect.outputs.changed == '1'
+        run: python3 tools/shape_2012.py --osrm http://localhost:5000 --all --force
+
+      - name: commit
+        if: steps.collect.outputs.changed == '1'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A magihim-2012/data
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: 2012 — הצלבות ידניות מפאנל ההצלבות, בנייה מחדש ומסלולים משוערים"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "push rejected — retry $i"; sleep 15
+          done
+          echo "הדחיפה נכשלה"; exit 1
+
+      - name: סגירת ה-Issues
+        if: steps.collect.outputs.changed == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for n in $(cat used.txt); do
+            gh issue close "$n" --repo "$GITHUB_REPOSITORY" --comment "ההצלבות נכנסו לנתוני 2012 ולמסלולים המשוערים. תודה." || true
+          done
