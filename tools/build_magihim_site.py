@@ -172,16 +172,15 @@ def main():
 
     lookup, srt, by_city, cities, coords, tok_city, city_of = build_stop_lookup()
     m_hit = m_tot = 0
-    # הצלבות ידניות מפאנל ההצלבות (line-history/xref-2012.html → Issues →
-    # .github/workflows/xref-2012.yml): שם תצוגה של 2012 → מק"ט, או null =
-    # "אין תחנה כזו היום". גוברות על כל שלב אוטומטי.
+    # הצלבות שהוכרעו מחוץ לכלי (צוות סוכנים / אדם): שם תצוגה של 2012 → מק"ט,
+    # או null = "אין תחנה כזו היום". גוברות על כל שלב אוטומטי.
     try:
         manual = json.load(open(OUT / 'manual.json', encoding='utf-8'))
     except Exception:
         manual = {}
     manual = {k: (str(v) if v else None) for k, v in manual.items()}
     n_manual = 0
-    # חומר לפאנל ההצלבות: לכל שם ייחודי — כמה מסלולים, מה ההצלבה, ורמז מיקום
+    # חומר להכרעה: לכל שם ייחודי — כמה מסלולים, מה ההצלבה, ורמז מיקום
     # (חציון מיקומי התחנות הידועות הסמוכות לו במסלולים) כדי לבחור תחנה במפה
     xref = collections.defaultdict(lambda: {'c': 0, 'm': None, 'hints': [], 'rs': [], 'nb': None})
 
@@ -352,7 +351,7 @@ def main():
         for i in fixed:   # הצלבה ידנית אינה "חריגה" — היא ההכרעה של אדם
             st, mks = raw[i]
             out[i] = [st['seq'], untrunc(st['name']), st['t'], st['type'], mks] + (list(coords.get(mks[0], ())) if mks else [])
-        # חומר לפאנל: רמז מיקום מהשכנות הידועות (עד 3 מקומות לכל צד)
+        # חומר להכרעה: רמז מיקום מהשכנות הידועות (עד 3 מקומות לכל צד)
         for i, row in enumerate(out):
             e = xref[row[1]]
             e['c'] += 1
@@ -411,7 +410,7 @@ def main():
         'routes_total': len(routes),
         'lines': idx,
     }, ensure_ascii=False), encoding='utf-8')
-    # ---- פאנל ההצלבות: xref.json (שמות שדורשים עין אנושית) + stops-lite.json (רישום התחנות) ----
+    # ---- xref.json: שמות שדורשים הכרעה (חומר לצוות הסוכנים המצליב; בקשת שלמה 05.09) ----
     def median(xs):
         s = sorted(xs)
         return s[len(s) // 2]
@@ -459,14 +458,7 @@ def main():
         'gen': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()),
         'counts': dict(cnt), 'names': len(xref), 'rows': rows_x,
     }, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-    try:
-        st_all = json.load(open('line-history/data/stops-state.json', encoding='utf-8'))
-        lite = [[mk, row[0], row[3] if len(row) > 3 else '', row[1], row[2]]
-                for mk, row in st_all.items() if len(row) > 2 and row[1] and row[2]]
-        (OUT / 'stops-lite.json').write_text(json.dumps(lite, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
-    except Exception:
-        pass
-    print(f'פאנל הצלבות: {len(rows_x)} שמות לבדיקה מתוך {len(xref)} · {dict(cnt)} · הצלבות ידניות בשימוש: {n_manual}')
+    print(f'xref: {len(rows_x)} שמות להכרעה מתוך {len(xref)} · {dict(cnt)} · הצלבות ידניות בשימוש: {n_manual}')
     print(f'הכרעת מועמדים לפי המסלול: {n_res} מתוך {n_amb} תחנות רב-משמעיות · '
           f'{n_out} התאמות בוטלו כחריגות גאוגרפיות · {n_weak} התאמות לפי שם בלי עיר, ליד עוגן')
     print(f'נבנו {len(idx)} קווים | {len(routes)} מסלולים | '

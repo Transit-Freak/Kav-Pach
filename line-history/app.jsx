@@ -2137,7 +2137,6 @@ function Line2012Page({ k12, anchorRd, openLine, onBack }) {
       </div>
       <div className="facts">{d.an} · {stops.length} תחנות · {(d.routes || []).length} מסלולים ·
         {" "}{matched} תחנות הוצלבו למק"ט של היום
-        {" · "}<a className="totoday" href="xref-2012.html" title="הצלבה ידנית של תחנות 2012 שלא הוצלבו או הוצלבו לעיר אחרת">🧩 פאנל הצלבות</a>
         {anchorRd && <> · <a className="totoday" href={lineHref(anchorRd)}
           onClick={(e) => { if (!plainClick(e)) return; e.preventDefault(); openLine(anchorRd); }}>הקו של היום ←</a></>}
       </div>
