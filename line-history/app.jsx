@@ -32,6 +32,7 @@ const KINDS = {
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
   access:      { label: "שינוי נגישות", color: "#0f766e" },
   vehicle:     { label: "שינוי סוג רכב", color: "#7c3aed" },
+  returned:    { label: "בוטל וחזר", color: "#f59e0b" },
   board:       { label: "שינוי עלייה/ירידה", color: "#854d0e" },
   platform:    { label: "שינוי רציף", color: "#0e7490" },
   "planned-dropped": { label: "תוכנן ולא נכנס לפעול", color: "#9f1239" },
@@ -138,7 +139,8 @@ function PlanLines({ p, max }) {
 }
 // ביטול שנשאר בתוקף מעל שנה (הגרסה האחרונה היא removed וישנה משנה) מקבל קטגוריה משלו
 function dispKind(x, i, vs) {
-  if (x.k === "removed" && i === vs.length - 1 && (Date.now() - new Date(x.d)) / 864e5 >= 365) return "removed-year";
+  // "האחרון" — בלי אירועים נגזרים (סוג רכב ברישוי) שעלולים לבוא אחרי הביטול
+  if (x.k === "removed" && vs.slice(i + 1).every((v) => v.syn) && (Date.now() - new Date(x.d)) / 864e5 >= 365) return "removed-year";
   if (x.k === "planned-dropped") return plKindOf(x) === "new" ? "planned-new" : "planned-route";
   return evKind(x);
 }
@@ -163,7 +165,7 @@ const CAT_GROUPS = [
   { title: "שינויי מסלול", items: ["route", "endpoint"] },
   { title: "שינויי תחנות", items: ["stops", "stops-add", "stops-del"] },
   { title: "תדירות ולוח זמנים", items: ["freq", "sched"] },
-  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode", "platform"] },
+  { title: "רישום ופרטים", items: ["new", "operator", "dest", "renum", "mode", "platform", "vehicle"] },
   { title: "שינויים שלא נכנסו לפעול", items: ["planned-new", "planned-route"] },
   { title: "שינויים טכניים", items: ["redraw"] },
 ];
@@ -183,6 +185,7 @@ const CAT_LABELS = {
   renum: "שינוי מספר קו",
   mode: "שינוי סוג הקו (למשל רגיל ↔ לפי דרישה)",
   platform: "שינוי רציף — הקו עוצר ברציף אחר",
+  vehicle: "שינוי סוג הרכב שנקבע לקו ברישוי משרד התחבורה",
   // ניסוח קצר (שלמה 05.09: "זה ארוך ומסורבל"). הכלל המלא כתוב על האירוע עצמו.
   "planned-dropped": "תוכנן ולא נכנס לפעול — ירד מהרישום לפני תאריך ההתחלה",
   "planned-new": "קו שפורסם ולא נכנס לפעול — ירד מהרישום לפני שהתחיל",
@@ -227,20 +230,45 @@ function materializeLf(lf) {
     if (typeof v.shp === "number") v.shp = (spool && v.shp > 0 && spool[v.shp]) || "";
   });
   delete lf.pool; delete lf.spool;
-  // סוג הרכב ברישוי משרד התחבורה (שלמה 06.09): veh = [[תאריך, סוג, גודל], …],
-  // הראשון הוא מצב הפתיחה והשאר שינויים. השינויים נכנסים לציר הזמן כאירועים
-  // בלי גאומטריה, בלי לגעת בגרסאות המסלול.
-  const veh = lf.veh || [];
-  if (veh.length >= 2 && !lf._vehMerged) {
-    const evs = [];
+  // אירועים נגזרים (syn) שנכנסים לציר הזמן כקטגוריות משלהם, בלי גאומטריה
+  // ובלי לגעת בגרסאות המסלול (שלמה 06.09: "קטגוריה נפרדת, לא חלק מהטקסט"):
+  // · "שינוי סוג רכב" — לכל שינוי במאגר הרישוי של משרד התחבורה (veh =
+  //   [[תאריך, סוג, גודל], …]; המצב הנוכחי כתוב בשורת הפרטים, "מיניבוס עירוני נגיש").
+  //   "אוטובוס" לבד לא אומר כלום, אז הקטגוריות של המשרד מוצגות כגודל:
+  //   אוטובוס רגיל / אוטובוס מפרקי / מידיבוס / מיניבוס, ו"לא מוגדר" = לא נקבע.
+  // · "בוטל וחזר" — כרטיס ביום שהקו חזר לרישום אחרי תקופת ביטול, במקום פס
+  //   טקסט בכותרת. קו שעדיין מבוטל נשאר עם כרטיס "בוטל" והודעת הסטטוס.
+  if (!lf._synMerged) {
+    const VSZ = { "אוטובוס": "אוטובוס רגיל", "מפרקי": "אוטובוס מפרקי", "לא מוגדר": "לא נקבע סוג רכב" };
+    const szl = (s) => VSZ[s] || s || "";
+    const real = (lf.versions || []).filter((v) => !v.syn);
+    const veh = lf.veh || [], evs = [];
     for (let i = 1; i < veh.length; i++) {
       const [d, t, s] = veh[i], [, pt, ps] = veh[i - 1];
-      evs.push({ d, k: "vehicle", syn: true, stops: [], shp: "",
-        note: `סוג הרכב ברישוי שונה: ${[ps, pt].filter(Boolean).join(" ")} ← ${[s, t].filter(Boolean).join(" ")}` });
+      let note;
+      if (s === "לא מוגדר" && ps !== "לא מוגדר") note = `ברישוי לא נקבע עוד סוג רכב לקו (היה: ${szl(ps)})`;
+      else if (ps === "לא מוגדר" && s !== "לא מוגדר") note = `ברישוי נקבע לקו סוג רכב: ${szl(s)} (קודם לא היה מוגדר)`;
+      else if (ps !== s && pt !== t && pt && t) note = `הרכב ברישוי שונה: ${szl(ps)} ${pt} ← ${szl(s)} ${t}`;
+      else if (ps !== s) note = `גודל הרכב ברישוי שונה: ${szl(ps)} ← ${szl(s)}`;
+      else note = `סוג הקו ברישוי שונה: ${pt || "לא מוגדר"} ← ${t || "לא מוגדר"}`;
+      evs.push({ d, k: "vehicle", syn: true, stops: [], shp: "", note });
     }
-    lf.versions = [...(lf.versions || []), ...evs]
-      .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : (a.syn ? 1 : 0) - (b.syn ? 1 : 0)));
-    lf._vehMerged = true;
+    // התקופה נגמרת בגרסה הבאה מכל סוג, לא רק ב"וריאנט חדש" (דיווח שלמה 03.09,
+    // קו 6 רהט: הסריקה רשמה חזרה כ"שינוי מסלול" בלי אירוע new)
+    for (let i = 0; i < real.length; i++) {
+      if (real[i].k !== "removed") continue;
+      const nx = real[i + 1];
+      if (!nx || nx.k === "removed") continue;
+      const days = gapDays(real[i].d, nx.d);
+      const span = days >= 60 ? Math.round(days / 30.44) + " חודשים" : days + " ימים";
+      evs.push({ d: nx.d, k: "returned", syn: true, stops: [], shp: "", src: nx.src,
+        note: `הקו לא היה ברישום מ-${fmtD(real[i].d)} עד ${fmtD(nx.d)} (${span}) — ואז חזר לפעול` });
+    }
+    if (evs.length) {
+      lf.versions = [...(lf.versions || []), ...evs]
+        .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : (a.syn ? 1 : 0) - (b.syn ? 1 : 0)));
+    }
+    lf._synMerged = true;
   }
   return lf;
 }
@@ -948,14 +976,30 @@ function SchedBox({ rd, vs, selD, isLast }) {
         </>}
       </div>
       <table className="schedtbl"><tbody>
-        {SCHED_DAYS.filter((b) => (days[b] || []).length).map((b) => (
-          <tr key={b}>
-            <th>{SCHED_LBL[b]}{past && touched.has(b) ? " ✱" : ""}</th>
-            <td>{(days[b] || []).map((t, i) => Array.isArray(t)
-              ? <span key={i} className="tchip tb" title={`${t[1]} אוטובוסים יוצאים בשעה זו (תגבור)`}>{t[0]} ×{t[1]}</span>
-              : <span key={i} className="tchip">{t}</span>)}</td>
-          </tr>
-        ))}
+        {(() => {
+          // ימים עוקבים עם אותו לו"ז בדיוק מתאחדים לשורה אחת — "ראשון–חמישי"
+          // במקום חמש שורות זהות (שלמה 06.09). יום ריק באמצע שובר את הרצף.
+          const rows = [];
+          for (const b of SCHED_DAYS) {
+            const ts = days[b] || [];
+            if (!ts.length) continue;
+            const key = JSON.stringify(ts), last = rows[rows.length - 1];
+            const nextOf = (x) => SCHED_DAYS[SCHED_DAYS.indexOf(x) + 1];
+            if (last && last.key === key && last.next === b) { last.days.push(b); last.next = nextOf(b); }
+            else rows.push({ key, days: [b], ts, next: nextOf(b) });
+          }
+          const lbl = (ds) => ds.length === 1 ? SCHED_LBL[ds[0]]
+            : ds.length === 2 ? SCHED_LBL[ds[0]] + " ו" + SCHED_LBL[ds[1]]
+            : SCHED_LBL[ds[0]] + "–" + SCHED_LBL[ds[ds.length - 1]];
+          return rows.map((r) => (
+            <tr key={r.days.join("")}>
+              <th>{lbl(r.days)}{past && r.days.some((b) => touched.has(b)) ? " ✱" : ""}</th>
+              <td>{r.ts.map((t, i) => Array.isArray(t)
+                ? <span key={i} className="tchip tb" title={`${t[1]} אוטובוסים יוצאים בשעה זו (תגבור)`}>{t[0]} ×{t[1]}</span>
+                : <span key={i} className="tchip">{t}</span>)}</td>
+            </tr>
+          ));
+        })()}
       </tbody></table>
     </details>
   );
@@ -1650,34 +1694,28 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           ))}
         </div>
         {/* "עירוני" פעם אחת בלבד (שלמה 06.09): כשהוא מופיע ליד "נגיש" — התג הנפרד לא מוצג */}
-        <div className="facts">{lf.op}{lf.ty && !(lf.vt && lf.vt.startsWith(lf.ty) && (lf.wa === "1" || lf.wa === "2")) ? " · " + lf.ty : ""}{!lf.ty && lf.vt && lf.wa !== "1" && lf.wa !== "2" ? " · " + lf.vt : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
+        <div className="facts">{lf.op}{lf.ty && !(lf.vt && lf.vt.startsWith(lf.ty)) ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
           {/* נגישות לכיסא גלגלים מגיעה מ-wheelchair_accessible בפיד, והיא
               אחידה לכל נסיעות הקו — ולכן תכונה של הקו. אם תועד אירוע שינוי
               נגישות, התג מציין מאיזה תאריך המצב הנוכחי; שינוי שקרה יחד עם
               שינוי מסלול מסווג route/stops ולא access, ולכן הזיהוי נעזר גם
               בהערה. לקווים שלא נצפה בהם שינוי — תג בלי תאריך, לא תאריך מומצא. */}
-          {/* סוג הרכב שנקבע לקו ברישוי משרד התחבורה (גודל + סוג), ולצד "נגיש"
-              הסוג עצמו — "עירוני נגיש" (שלמה 06.09) */}
-          {lf.vsz ? (() => {
-            // "🚌 אוטובוס" לא אומר כלום — ברור שזה אוטובוס (שלמה 06.09). הקטגוריה של
-            // המשרד היא גודל: רגיל / מפרקי / מידיבוס / מיניבוס, או "לא מוגדר" — סטטוס
-            // אמיתי ברישוי (לא נקבע לקו סוג רכב). ואם השתנה — מאז מתי ומה היה קודם.
-            const VSZ = { "אוטובוס": "אוטובוס רגיל", "מפרקי": "אוטובוס מפרקי", "מיניבוס": "מיניבוס", "מידיבוס": "מידיבוס", "לא מוגדר": "לא נקבע סוג רכב" };
-            const label = (v) => VSZ[v] || v || "";
-            const veh = lf.veh || [];
-            const cur = veh.length ? veh[veh.length - 1] : null, prev = veh.length >= 2 ? veh[veh.length - 2] : null;
-            const vchg = prev ? cur[0] : null;
-            const before = prev ? (prev[2] !== cur[2] ? label(prev[2]) : (prev[1] || "")) : "";
-            const tip = (lf.vsz === "לא מוגדר" ? "ברישוי משרד התחבורה לא נקבע לקו סוג רכב" : "גודל הרכב שמשרד התחבורה קבע לקו ברישוי") + (vchg ? " — שונה ב-" + fmtD(vchg) : "");
-            return <span className="vsz" title={tip}> · 🚌 ברישוי: {label(lf.vsz)}{vchg ? " (מאז " + fmtD(vchg) + (before ? ", קודם " + before : "") + ")" : ""}</span>;
-          })() : null}
+          {/* גודל הרכב וסוג הקו מהרישוי נכתבים בביטוי אחד ליד הנגישות —
+              "מיניבוס עירוני נגיש" (שלמה 06.09); שינויים בהם — קטגוריה בציר הזמן */}
           {(() => {
-            if (lf.wa !== "1" && lf.wa !== "2") return null;
+            // ביטוי אחד: "מיניבוס עירוני נגיש" — גודל הרכב וסוג הקו מרישוי משרד
+            // התחבורה, והנגישות מהפיד הארצי (שלמה 06.09: "פשוט לרשום מיניבוס עירוני
+            // נגיש"). "אוטובוס" נשאר כמילה כי "אוטובוס עירוני נגיש" קריא; "לא מוגדר"
+            // לא נכתב — נשאר רק סוג הקו.
+            const VSZ = { "אוטובוס": "אוטובוס", "מפרקי": "אוטובוס מפרקי", "מיניבוס": "מיניבוס", "מידיבוס": "מידיבוס" };
+            const what = [VSZ[lf.vsz] || "", lf.vt || ""].filter(Boolean).join(" ");
+            if (lf.wa !== "1" && lf.wa !== "2")
+              return what ? <span className="vsz" title="גודל הרכב וסוג הקו שנקבעו לקו ברישוי משרד התחבורה"> · 🚌 {what}</span> : null;
             const chg = [...vs].reverse().find((v) => v.k === "access" || String(v.note || "").includes("הנגישות שוּנתה"));
             const since = chg ? " מאז " + fmtD(chg.d) : "";
             const tip = (lf.wa === "1" ? "לפי הפיד הארצי, הקו מונגש לכיסא גלגלים" : "לפי הפיד הארצי, הקו אינו מונגש לכיסא גלגלים")
-              + (chg ? " — השינוי נקלט בפיד ב-" + fmtD(chg.d) : "") + (lf.vt ? " · סוג הרכב ברישוי: " + lf.vt : "");
-            return <span className={"wa " + (lf.wa === "1" ? "yes" : "no")} title={tip}> · ♿ {lf.vt ? lf.vt + " " : ""}{lf.wa === "1" ? "נגיש" : "אינו נגיש"}{since}</span>;
+              + (chg ? " — השינוי נקלט בפיד ב-" + fmtD(chg.d) : "") + (what ? " · גודל הרכב וסוג הקו לפי רישוי משרד התחבורה: " + what : "");
+            return <span className={"wa " + (lf.wa === "1" ? "yes" : "no")} title={tip}> · ♿ {what ? what + " " : ""}{lf.wa === "1" ? "נגיש" : "אינו נגיש"}{since}</span>;
           })()}
           {/* כמה נסיעות מתוכננות יש לחלופה היום. "קיים בפיד" אינו "פועל":
               הפיד מפרסם קווים לפני הפתיחה, והקו הירוק בירושלים נכנס עם
@@ -1689,27 +1727,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               {" · "}{ntr === 1 ? "נסיעה אחת ביום" : `${ntr.toLocaleString()} נסיעות ביום`}</span>
           )}
           {" · מק״ט "}{lf.rd} · {vs.length} גרסאות מתועדות</div>
-        {/* תקופות שבהן הקו לא היה ברישום — סיכום בולט (בקשת שלמה: הביטול
-            נבלע בין עשרות כרטיסי גרסאות ולא נראה) */}
-        {(() => {
-          // התקופה נגמרת בגרסה הבאה מכל סוג, לא רק ב"וריאנט חדש": סריקת הארכיון
-          // רשמה חזרה כ"שינוי מסלול" בלי אירוע new, והדף אמר "ועדיין לא חזר" על
-          // קו עם 37 גרסאות אחרי הביטול (דיווח שלמה 03.09, קו 6 רהט)
-          const per = []; let start = null;
-          for (const v of vs) {
-            if (v.k === "removed") { if (!start) start = v.d; }
-            else if (start) { per.push([start, v.d]); start = null; }
-          }
-          if (start) per.push([start, null]);
-          const span = (a, b) => {
-            const days = Math.round((new Date(b || Date.now()) - new Date(a)) / 864e5);
-            return days >= 60 ? Math.round(days / 30.44) + " חודשים" : days + " ימים";
-          };
-          return per.map(([a, b]) => (
-            <div className="offband" key={a}>⏸️ הקו לא היה ברישום: <b>{fmtD(a)}</b>
-              {b ? <> עד <b>{fmtD(b)}</b> ({span(a, b)}) — ואז חזר לפעול</> : <> ({span(a, null)}) — ועדיין לא חזר</>}</div>
-          ));
-        })()}
+        {/* תקופות שבהן הקו לא היה ברישום וחזר — כרטיס "בוטל וחזר" בציר הזמן
+            (materializeLf), לא פס טקסט כאן (שלמה 06.09). ביטול שעדיין לא נגמר
+            מוצג בהודעת הסטטוס למטה. */}
         {/* רק "שירות לפי דרישה" מקבל הערה, כי היא נושאת מידע שאינו במקום
             אחר: הקו יושב בין קווי האוטובוס ונראה רגיל לחלוטין, ואי אפשר
             לדעת ממנו שהנסיעה מותנית בהזמנה. לשאר הסוגים התווית בשורת
@@ -1798,8 +1818,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
         {/* הסטטוס נגזר מהרשומה האחרונה שאינה "תוכנן ולא נכנס לתוקף": תוכנית
             להחזיר קו מבוטל שלא התממשה אינה מבטלת את הביטול */}
         {vs.length > 0 && (() => {
+          // וגם לא אירוע נגזר (סוג רכב ברישוי) שתאריכו מאוחר מהביטול
           let li = vs.length - 1;
-          while (li > 0 && vs[li].k === "planned-dropped") li--;
+          while (li > 0 && (vs[li].k === "planned-dropped" || vs[li].syn)) li--;
           const lv = vs[li];
           return lv.k === "removed" && (
           <div className="facts" style={{ color: lineGone ? (KINDS[dispKind(lv, li, vs)] || {}).color : "#c2410c", fontWeight: 700 }}>
