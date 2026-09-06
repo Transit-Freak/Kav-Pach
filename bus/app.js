@@ -32,7 +32,10 @@ const partial = d => d.sched > 0 && d.obs < d.sched * 0.3;
 
 // ---------------------------------------------------------------- צבירה (כמה ימים)
 function emptyAgg() { return {sched: 0, obs: 0, meas: 0, c: [0, 0, 0, 0, 0], o: [0, 0, 0, 0, 0], sum: 0, s: null, far: 0, extra: 0, vt: [0, 0, 0]}; }
-const VNAMES = {'מיניבוס': 'מיניבוס', 'מידיבוס': 'מידיבוס', 'אוטובוס': 'אוטובוס', 'מפרקי': 'מפרקי'};
+// גודל הרכב במילים של האתר: "אוטובוס" אצל המשרד הוא קטגוריית גודל (לא מיניבוס,
+// לא מידיבוס, לא מפרקי) — אותו ניסוח כמו ב"הקו בזמן" (שלמה 06.09)
+const VNAMES = {'מיניבוס': 'מיניבוס', 'מידיבוס': 'מידיבוס', 'אוטובוס': 'אוטובוס בגודל מלא', 'מפרקי': 'אוטובוס מפרקי'};
+const vname = v => VNAMES[v] || v || '';
 function addAgg(t, x) {
   const sched = x.sched != null ? x.sched : x[0], obs = x.obs != null ? x.obs : x[1], meas = x.meas != null ? x.meas : x[2], c = x.c || x[3], s = x.s || x[4];
   t.sched += sched || 0; t.obs += obs || 0; t.meas += meas || 0;
@@ -238,7 +241,7 @@ function render() {
     <div class="panel"><div class="ptitle">לפי קו</div><p class="pdesc">כל כיוון של כל קו בנפרד. אפשר לבחור מפעיל, לדרג ("הכי לא מדייקים") או לחפש מספר קו. לחיצה על מספר הקו פותחת פירוט: באיזה קטע לאורך הקו נצבר האיחור.</p>
       <div class="filters" id="lfilters"></div>
       <div id="line-detail"></div><div id="t-lines"></div></div>
-    <div class="panel"><div class="ptitle">סוג הרכב מול מה שנקבע לקו</div><p class="pdesc">לכל קו משרד התחבורה קובע גודל רכב: מיניבוס, מידיבוס, אוטובוס בגודל מלא או מפרקי. כאן משווים אותו לרכב שהגיע בפועל בכל נסיעה, לפי מספר הרכב בשידור ומאגר ציי הרכב של המשרד. "רכב קטן יותר" הוא למשל מיניבוס בקו שנקבע לו אוטובוס.</p><div id="vt-sum"></div><div class="filters" id="vt-filters"></div><div id="t-vt"></div></div>
+    <div class="panel"><div class="ptitle">סוג הרכב מול מה שנקבע לקו</div><p class="pdesc">לכל קו משרד התחבורה קובע גודל רכב: מיניבוס, מידיבוס, אוטובוס בגודל מלא או מפרקי. כאן משווים אותו לרכב שהגיע בפועל בכל נסיעה, לפי מספר הרכב בשידור ומאגר ציי הרכב של המשרד. "רכב קטן יותר" הוא למשל מיניבוס בקו שנקבע לו אוטובוס בגודל מלא.</p><div id="vt-sum"></div><div class="filters" id="vt-filters"></div><div id="t-vt"></div></div>
     <div class="panel"><div class="ptitle">הנסיעות שאיחרו הכי הרבה</div><p class="pdesc">נסיעות בודדות שבאחת התחנות איחרו 20 דקות ומעלה, מהגרועה ביותר. לחיצה על נסיעה מציגה אותה תחנה אחרי תחנה: מתוכנן, בפועל והפער.</p><ul class="worst" id="worst"></ul></div>
     <div class="panel"><div class="ptitle">לפי עיר</div><p class="pdesc">כל ההגעות לתחנות שנמצאות בעיר, מכל הקווים שעוברים בה.</p><div id="t-city"></div></div>`;
   lineChart($('#c-trend'), trend, {color: C.line, min: 0, max: 100, unit: '%'});
@@ -268,7 +271,7 @@ function renderVehicles() {
   const total = rows.length;
   if (!vAll) rows = rows.slice(0, 40);
   box.innerHTML = rows.length ? `<div class="tblbox" style="margin-top:10px"><table><thead><tr><th>קו</th><th>מסלול</th><th>מפעיל</th><th>נקבע לקו</th><th>הגיע בפועל (הנפוץ)</th><th>נסיעות עם רכב מזוהה</th><th>רכב קטן יותר</th><th>רכב גדול יותר</th></tr></thead><tbody>` +
-    rows.map(r => `<tr><td class="nm"><button class="linebtn" data-rid="${esc(r.rid)}">${esc(r.short)}</button></td><td style="font-size:12px;color:var(--mut)">${esc(r.long)}</td><td style="font-size:12px">${esc(r.agency)}</td><td>${esc(r.plan)}</td><td><b>${esc(r.act)}</b></td><td>${num(r.n)}</td><td class="${r.small > .5 ? 'd4' : r.small > .2 ? 'd3' : ''}">${Math.round(r.small * 100)}%</td><td>${Math.round(r.large * 100)}%</td></tr>`).join('') + '</tbody></table></div>' +
+    rows.map(r => `<tr><td class="nm"><button class="linebtn" data-rid="${esc(r.rid)}">${esc(r.short)}</button></td><td style="font-size:12px;color:var(--mut)">${esc(r.long)}</td><td style="font-size:12px">${esc(r.agency)}</td><td>${esc(vname(r.plan))}</td><td><b>${esc(vname(r.act))}</b></td><td>${num(r.n)}</td><td class="${r.small > .5 ? 'd4' : r.small > .2 ? 'd3' : ''}">${Math.round(r.small * 100)}%</td><td>${Math.round(r.large * 100)}%</td></tr>`).join('') + '</tbody></table></div>' +
     (total > rows.length ? `<button class="more" id="more-v">הצגת כל ${num(total)} הקווים</button>` : '') +
     `<div class="mut" style="margin-top:6px">${num(total)} מסלולים${vAgency ? ' של ' + esc(vAgency) : ''} · רק קווים עם 5 נסיעות לפחות שבהן הרכב מזוהה · רכבי קבלן ורכבים שאינם במאגר המשרד לא נספרים</div>` :
     '<div class="empty">אין קווים כאלה</div>';
@@ -355,7 +358,7 @@ function renderLineDetail() {
       <div><b>${s.avg == null ? '—' : fmt1(s.avg)}<i>דק׳</i></b><span>איחור ממוצע${s.s && s.s[2] != null ? ` · 90% עד ${fmt1(s.s[2])}` : ''}</span></div>
       <div><b>${num(s.obs)}</b><span>נסיעות נצפו מתוך ${num(s.sched)}</span></div>
     </div>
-    ${s.vt[0] ? `<p class="pdesc">סוג הרכב: נקבע לקו <b>${esc(s.vplan)}</b>. ב-${num(s.vt[0])} נסיעות הרכב מזוהה: ${Object.entries(s.vact).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${esc(t)} ${pct(n, s.vt[0])}`).join(', ')}${s.vt[1] ? ` · <b class="d4">רכב קטן ממה שנקבע ב-${pct(s.vt[1], s.vt[0])}</b>` : ''}${s.vt[2] ? ` · רכב גדול ממה שנקבע ב-${pct(s.vt[2], s.vt[0])}` : ''}.</p>` : ''}
+    ${s.vt[0] ? `<p class="pdesc">גודל הרכב: נקבע לקו <b>${esc(vname(s.vplan))}</b>. ב-${num(s.vt[0])} נסיעות הרכב מזוהה: ${Object.entries(s.vact).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${esc(vname(t))} ${pct(n, s.vt[0])}`).join(', ')}${s.vt[1] ? ` · <b class="d4">רכב קטן ממה שנקבע ב-${pct(s.vt[1], s.vt[0])}</b>` : ''}${s.vt[2] ? ` · רכב גדול ממה שנקבע ב-${pct(s.vt[2], s.vt[0])}` : ''}.</p>` : ''}
     ${distHtml(s)}
     <div class="cols2" style="margin-top:10px"><div><div class="ptitle">אחוז בזמן לפי השעה ביום</div><p class="pdesc">לפי השעה שבה האוטובוס היה אמור להגיע לתחנה.</p><div class="chart" id="c-lh"></div></div>
     <div><div class="ptitle">האיחור הממוצע לאורך הקו</div><p class="pdesc">עמודה לכל תחנה, מהמוצא (ימין) ליעד. איפה שהעמודות קופצות, שם הקו מאבד זמן.</p><div class="chart" id="c-lp"><div class="empty">טוען…</div></div></div></div>
