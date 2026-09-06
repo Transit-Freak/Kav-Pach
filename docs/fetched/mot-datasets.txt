@@ -1,0 +1,586 @@
+
+=== רישוי אוטובוסים לפי מק"ט קו · חיפוש: licensing_bus_system ===
+  נמצאו 20 מאגרים
+  * מאגר: מערכת מידע פסולת - נספחים · name=waste-information-system · ארגון=המשרד להגנת הסביבה · עודכן=2026-09-06T19:01:25.735207 · רישיון=
+    תיאור: מאגר נתונים זה כולל את הנספחים הנלווים למדריך החיבור למערכת מידע פסולת, שנשלח לאתרי הטיפול בפסולת מחויבי הדיווח על פי תנאי רשיון העסק לטיפול בפסולת.  הנספחים כוללים: רשימת תחנות מעבר, אתרי הטמנה, מפעלי מיחזור פסולת וכן רשימת רשויות מקומיות וסוגי פסולת. יודגש כי מאגרים אלה נועדו לשמש מפתחים ועובדי א
+    - משאב: סוגי פסולת · CSV · 1603 בייט · עודכן=2026-09-06T19:01:14.091296 · datastore=True · id=ca71e149-49f1-48a2-b319-b27be21e3e21
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/ca71e149-49f1-48a2-b319-b27be21e3e21/download/ca71e149-49f1-48a2-b319-b27be21e3e21.csv
+      שדות: ['_id', 'שם', 'מזהה', 'האם חומר?']
+      סה"כ רשומות: 83
+      דוגמה: {"_id": 1, "שם": "פלסטיק HDPE", "מזהה": 1, "האם חומר?": "לא"}
+      דוגמה: {"_id": 2, "שם": "פלסטיק LDPE", "מזהה": 2, "האם חומר?": "לא"}
+      דוגמה: {"_id": 3, "שם": "פלסטיק PET", "מזהה": 3, "האם חומר?": "לא"}
+    - משאב: רשויות מקומיות  · CSV · 5084 בייט · עודכן=2026-09-06T19:00:58.837463 · datastore=True · id=4e041600-1ce3-4780-9e3f-3d2ce1561dea
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/4e041600-1ce3-4780-9e3f-3d2ce1561dea/download/4e041600-1ce3-4780-9e3f-3d2ce1561dea.csv
+      שדות: ['_id', 'Authority', 'Authority ID']
+      סה"כ רשומות: 259
+      דוגמה: {"_id": 1, "Authority": "אבו בסמה", "Authority ID": 500262670}
+      דוגמה: {"_id": 2, "Authority": "אבו גוש", "Authority ID": 500204722}
+      דוגמה: {"_id": 3, "Authority": "אבו סנאן", "Authority ID": 500204730}
+    - משאב: מפעלי השבת אנרגיה · CSV · 142 בייט · עודכן=2026-09-06T19:01:08.706733 · datastore=True · id=89ab056c-ca88-43f6-aa83-32a0cbcbe79c
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/89ab056c-ca88-43f6-aa83-32a0cbcbe79c/download/89ab056c-ca88-43f6-aa83-32a0cbcbe79c.csv
+      שדות: ['_id', 'EnergyRecoveryFacility_Name', 'EnergyRecoveryFacility company', 'EnergyRecoveryFacility ID']
+      סה"כ רשומות: 1
+      דוגמה: {"_id": 1, "EnergyRecoveryFacility_Name": "נשר - מפעלי מלט ישראליים בע\"מ - מלט", "EnergyRecoveryFacility company": 510720626, "EnergyRecoveryFacility ID": 67101}
+    - משאב: מטמנות לפסולת בניין · XLSX · 20136 בייט · עודכן=2026-09-06T19:00:56.953379 · datastore=True · id=4afcd995-2645-45de-9d92-1473f6339b28
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/4afcd995-2645-45de-9d92-1473f6339b28/download/4afcd995-2645-45de-9d92-1473f6339b28.xlsx
+      שדות: ['_id', 'Landfill Name', 'Landfill company', 'Landfill ID']
+      סה"כ רשומות: 14
+      דוגמה: {"_id": 1, "Landfill Name": "איכות ירוקה", "Landfill company": 513364190, "Landfill ID": 188787}
+      דוגמה: {"_id": 2, "Landfill Name": "אתר להטמנת פסולת יבשה - חורה", "Landfill company": 516586278, "Landfill ID": 360468}
+      דוגמה: {"_id": 3, "Landfill Name": "גרין", "Landfill company": 514246388, "Landfill ID": 185199}
+    - משאב: מטמנות פסולת מעורבת · XLSX · 19159 בייט · עודכן=2026-09-06T19:00:50.206363 · datastore=True · id=21df12e1-6e16-48e0-92c1-bb51974428a0
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/21df12e1-6e16-48e0-92c1-bb51974428a0/download/21df12e1-6e16-48e0-92c1-bb51974428a0.xlsx
+      שדות: ['_id', 'Landfill_Name', 'Landfill_company', 'Landfill_ID']
+      סה"כ רשומות: 10
+      דוגמה: {"_id": 1, "Landfill_Name": "אתר פסולת - זוהר", "Landfill_company": 108089, "Landfill_ID": 500225602}
+      דוגמה: {"_id": 2, "Landfill_Name": "מ.מ.מ מפעלי מטמנות מאוחדים בע\"מ-גני הדס", "Landfill_company": 104346, "Landfill_ID": 512674490}
+      דוגמה: {"_id": 3, "Landfill_Name": "מטמנות אפעה", "Landfill_company": 186886, "Landfill_ID": 513372060}
+    - משאב: מפעלי מחזור לפסולת בניין · XLSX · 22216 בייט · עודכן=2026-09-06T19:00:48.632213 · datastore=True · id=076285c0-6b11-4089-8a0b-ab4d50eb4b3d
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/076285c0-6b11-4089-8a0b-ab4d50eb4b3d/download/076285c0-6b11-4089-8a0b-ab4d50eb4b3d.xlsx
+      שדות: ['_id', 'Recycling factory Name', 'Recycling factory company', 'Recycling factory ID']
+      סה"כ רשומות: 35
+      דוגמה: {"_id": 1, "Recycling factory Name": "אביבית", "Recycling factory company": 513364190, "Recycling factory ID": 259245}
+      דוגמה: {"_id": 2, "Recycling factory Name": "אבן דרך במחזור מעלה עמוס", "Recycling factory company": 516098282, "Recycling factory ID": 239017}
+      דוגמה: {"_id": 3, "Recycling factory Name": "אוזן מחזור וקליטת פסולת", "Recycling factory company": 513624718, "Recycling factory ID": 156950}
+    - משאב: מפעלי מחזור לפסולת מעורבת · XLSX · 20149 בייט · עודכן=2026-09-06T19:00:46.618158 · datastore=True · id=0064cb30-1176-4808-889d-5ef05d72f116
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/0064cb30-1176-4808-889d-5ef05d72f116/download/0064cb30-1176-4808-889d-5ef05d72f116.xlsx
+      שדות: ['_id', 'Recycling_factory_Name', 'Recycling_factory_company', 'Recycling_factory_ID']
+      סה"כ רשומות: 31
+      דוגמה: {"_id": 1, "Recycling_factory_Name": "אביב תעשיות מיחזור", "Recycling_factory_company": 511558116, "Recycling_factory_ID": 92872}
+      דוגמה: {"_id": 2, "Recycling_factory_Name": "איכות ירוקה חברת ניהול בעמ", "Recycling_factory_company": 513364190, "Recycling_factory_ID": 188787}
+      דוגמה: {"_id": 3, "Recycling_factory_Name": "אל די הנקודה הירוקה בעמ", "Recycling_factory_company": 514126218, "Recycling_factory_ID": 182744}
+    - משאב: תחנת מעבר לפסולת בניין · XLSX · 23864 בייט · עודכן=2026-09-06T19:00:53.542795 · datastore=True · id=395bdcda-b898-4739-9135-5d640157bee2
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/395bdcda-b898-4739-9135-5d640157bee2/download/395bdcda-b898-4739-9135-5d640157bee2.xlsx
+      שדות: ['_id', 'Transition station Name', 'Transition station company', 'Transition station ID']
+      סה"כ רשומות: 11
+      דוגמה: {"_id": 1, "Transition station Name": "ע.א.א עבודת עפר", "Transition station company": 515617470, "Transition station ID": 327225}
+      דוגמה: {"_id": 2, "Transition station Name": "פרפר בגובה", "Transition station company": 305079618, "Transition station ID": 360613}
+      דוגמה: {"_id": 3, "Transition station Name": "גרין מיחזור א.א ומכולות בע'מ-פתח תקווה", "Transition station company": 514846641, "Transition station ID": 251663}
+    - משאב: תחנת מעבר לפסולת מעורבת · XLSX · 21351 בייט · עודכן=2026-09-06T19:01:12.792502 · datastore=True · id=c5d2f1b9-c4f6-4e58-ba3d-ef02ba6d43c8
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/c5d2f1b9-c4f6-4e58-ba3d-ef02ba6d43c8/download/c5d2f1b9-c4f6-4e58-ba3d-ef02ba6d43c8.xlsx
+      שדות: ['_id', 'Transition_station_Name', 'Transition_station_company', 'Transition_station_ID']
+      סה"כ רשומות: 59
+      דוגמה: {"_id": 1, "Transition_station_Name": "א.מ. עסקים - אלבז מאיר בע\"מ", "Transition_station_company": 514865757, "Transition_station_ID": 356080}
+      דוגמה: {"_id": 2, "Transition_station_Name": "א.נ. מרכז המיחזור בע\"מ", "Transition_station_company": 514601202, "Transition_station_ID": 325267}
+      דוגמה: {"_id": 3, "Transition_station_Name": "א.ניר פינוי פסולת", "Transition_station_company": 513625517, "Transition_station_ID": 166123}
+    - משאב: אתרי טיפול בפסולת אורגנית.xlsx · XLSX · 22980 בייט · עודכן=2026-09-06T19:01:25.680380 · datastore=True · id=fe5fe429-895c-4bfe-8941-eb01aff35547
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/fe5fe429-895c-4bfe-8941-eb01aff35547/download/fe5fe429-895c-4bfe-8941-eb01aff35547.xlsx
+      שדות: ['_id', 'Recycling_factory_Name', 'Recycling_factory_company', 'Recycling_factory_ID']
+      סה"כ רשומות: 5
+      דוגמה: {"_id": 1, "Recycling_factory_Name": "קומפוסט משואה- טובלן 184204", "Recycling_factory_company": 520041724, "Recycling_factory_ID": 184204}
+      דוגמה: {"_id": 2, "Recycling_factory_Name": "ס.ד.מ לסביבה בע\"מ", "Recycling_factory_company": 513065060, "Recycling_factory_ID": 345083}
+      דוגמה: {"_id": 3, "Recycling_factory_Name": "מתקן לטיפול בפסולת אורגנית- בשיטת גור- דודאים", "Recycling_factory_company": 511486227, "Recycling_factory_ID": 352150}
+    - משאב: תחנות מעבר לגזם · XLSX · 19624 בייט · עודכן=2026-09-06T19:01:10.115430 · datastore=True · id=8e322234-4511-4f0b-b0c1-ac19710d4846
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/8e322234-4511-4f0b-b0c1-ac19710d4846/download/8e322234-4511-4f0b-b0c1-ac19710d4846.xlsx
+      שדות: ['_id', 'Transition station Name', 'Transition station company', 'Transition station ID']
+      סה"כ רשומות: 16
+      דוגמה: {"_id": 1, "Transition station Name": "א.מ. עסקים - אלבז מאיר בע\"מ", "Transition station company": 514865757, "Transition station ID": 356080}
+      דוגמה: {"_id": 2, "Transition station Name": "אקספרס ירוק בע\"מ", "Transition station company": 515520625, "Transition station ID": 341245}
+      דוגמה: {"_id": 3, "Transition station Name": "ארושה תברואה וניקיון בע\"מ- קיצוץ גזם", "Transition station company": 514094069, "Transition station ID": 337868}
+    - משאב: פרטים כללים ודרכי התקשרות - אתרי טיפול בפסולת מעורבת · XLSX · 29958 בייט · עודכן=2026-09-06T19:01:11.267417 · datastore=True · id=9d5ed09b-744c-4694-a748-038a382fd8d6
+      url=https://data.gov.il/dataset/e444962a-0f58-429c-bc3c-f63786be1cfe/resource/9d5ed09b-744c-4694-a748-038a382fd8d6/download/9d5ed09b-744c-4694-a748-038a382fd8d6.xlsx
+      שדות: ['_id', "מס' סידורי", 'מחוז', 'רשות מקומית', 'שם האתר', 'סוג מתקן', 'מיקום', 'בעל האתר', 'פרטי קשר - טלפון', 'כתובת מייל']
+      סה"כ רשומות: 11
+      דוגמה: {"_id": 1, "מס' סידורי": null, "מחוז": "צפון", "רשות מקומית": null, "שם האתר": "נאסר מיחזור בע\"מ", "סוג מתקן": "מטמנה", "מיקום": "אעבלין", "בעל האתר": "איהב דאוד", "פרטי קשר - טלפון": "054-5901163", "כתובת מייל": "info@naser4green.net"}
+      דוגמה: {"_id": 2, "מס' סידורי": null, "מחוז": "צפון", "רשות מקומית": null, "שם האתר": "סיתהל - חגל (טליה)", "סוג מתקן": "מטמנה", "מיקום": "מנחמיה", "בעל האתר": "רועי פדרמן", "פרטי קשר - טלפון": "03-6924534", "כתובת מייל": "RoiF@tahal.com"}
+      דוגמה: {"_id": 3, "מס' סידורי": null, "מחוז": "צפון", "רשות מקומית": null, "שם האתר": "עברון שותפות מוגבלת", "סוג מתקן": "מטמנה", "מיקום": "עברון", "בעל האתר": "אסי רוטביין", "פרטי קשר - טלפון": "04-9857731", "כתובת מייל": "asi_r@bermad.com"}
+  * מאגר: רישוי מערך האוטובוסים · name=licensing_bus_system · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T10:41:50.273856 · רישיון=Other (Open)
+    תיאור: מאגר זה מציג את כמות הנסיעות היומית ברישוי לפי קו. 
+    - משאב: מבנה הנתונים במאגר · PDF · 90144 בייט · עודכן=2020-11-10T04:42:55.762236 · datastore=False · id=41f49c0d-d5c8-47ac-b760-7698dded9dfa
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/41f49c0d-d5c8-47ac-b760-7698dded9dfa/download/licensing_bus_system_structure.pdf
+    - משאב:  מאגר רישוי מערך האוטובוסים לשנת 2026 · CSV · 292755661 בייט · עודכן=2026-09-06T10:35:03.727777 · datastore=True · id=58593e9b-2d71-4c39-8663-b34ab29607ab
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/58593e9b-2d71-4c39-8663-b34ab29607ab/download/58593e9b-2d71-4c39-8663-b34ab29607ab.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'VehicleType_nm', 'VehicleSize_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1118984
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2026-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "desti
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2026-01-01", "origin_station_cd": 35523, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מא 25\"", "des
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 425, "office_line_id": 10425, "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2026-01-01", "origin_station_cd": 38765, "origin_station_nm": "חוף ראשון לציון", "origin_yishuv_nm": "ראשון לציון", "destination
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2025 · CSV · 451697871 בייט · עודכן=2026-02-04T14:41:01.758534 · datastore=True · id=d32171d2-7a47-4bb3-89cb-d11305c0692d
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/d32171d2-7a47-4bb3-89cb-d11305c0692d/download/rishui_2025-1.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'VehicleType_nm', 'VehicleSize_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1725628
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2025-01-01", "origin_station_cd": 35523, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מ\"א 25", "des
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2025-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "desti
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 425, "office_line_id": 10425, "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2025-01-01", "origin_station_cd": 26806, "origin_station_nm": "מסוף עתידים", "origin_yishuv_nm": "תל אביב -יפו", "destination_st
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2024 · CSV · 456170443 בייט · עודכן=2025-01-30T05:03:14.197362 · datastore=True · id=5646ae25-706d-4bbb-9e45-03aa9942404b
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/5646ae25-706d-4bbb-9e45-03aa9942404b/download/rishui2024.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'VehicleType_nm', 'VehicleSize_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1747026
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2024-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "desti
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2024-01-01", "origin_station_cd": 35523, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מ\"א 25", "des
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 425, "office_line_id": 10425, "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2024-01-01", "origin_station_cd": 38765, "origin_station_nm": "שדרות רחבעם זאבי", "origin_yishuv_nm": "ראשון לציון", "destinatio
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2023 · CSV · 448739412 בייט · עודכן=2025-01-30T04:52:46.370673 · datastore=True · id=486251ef-06c3-4197-9ab2-4ab356d7f340
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/486251ef-06c3-4197-9ab2-4ab356d7f340/download/rishui2023.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'VehicleType_nm', 'VehicleSize_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1721882
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2023-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "desti
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "VehicleType_nm": "בינעירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2023-01-01", "origin_station_cd": 35523, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מ\"א 25", "des
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 425, "office_line_id": 10425, "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "אוטובוס", "rishui_date": "2023-01-01", "origin_station_cd": 26806, "origin_station_nm": "מסוף עתידים", "origin_yishuv_nm": "תל אביב -יפו", "destination_st
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2022 · CSV · 454764577 בייט · עודכן=2023-02-26T14:01:17.993881 · datastore=True · id=8fd3aa6c-a64f-4c91-818e-fd35017cd19b
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/8fd3aa6c-a64f-4c91-818e-fd35017cd19b/download/8fd3aa6c-a64f-4c91-818e-fd35017cd19b.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'VehicleType_nm', 'VehicleSize_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1762382
+      דוגמה: {"_id": 1, "operator_cd": "3", "operator_nm": "אגד", "cluster_cd": "71", "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": "171", "office_line_id": "12171", "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "מידיבוס", "rishui_date": "2022-01-01", "origin_station_cd": "31881", "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "d
+      דוגמה: {"_id": 2, "operator_cd": "3", "operator_nm": "אגד", "cluster_cd": "71", "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": "171", "office_line_id": "12171", "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "מידיבוס", "rishui_date": "2022-01-01", "origin_station_cd": "26643", "origin_station_nm": "מסוף אזורי חן", "origin_yishuv_nm": "תל אביב -יפו", "de
+      דוגמה: {"_id": 3, "operator_cd": "3", "operator_nm": "אגד", "cluster_cd": "71", "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": "271", "office_line_id": "12271", "line_type_nm": "עירוני", "VehicleType_nm": "עירוני", "VehicleSize_nm": "מידיבוס", "rishui_date": "2022-01-01", "origin_station_cd": "26682", "origin_station_nm": "מסוף אונברסיטת ת\"א", "origin_yishuv_nm": "תל אביב -יפו
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2021 · CSV · 377149508 בייט · עודכן=2022-01-17T04:31:06.594966 · datastore=True · id=deb1e7b7-de61-4e8b-a86d-4b02c817bfcd
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/deb1e7b7-de61-4e8b-a86d-4b02c817bfcd/download/deb1e7b7-de61-4e8b-a86d-4b02c817bfcd.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1690780
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 795, "office_line_id": 11795, "line_type_nm": "עירוני", "rishui_date": "2021-01-01T00:00:00", "origin_station_cd": 35780, "origin_station_nm": "הרצוג/צדוק", "origin_yishuv_nm": "אזור", "destination_station_cd": 36342, "destination_station_nm": "משה שרת/מפרץ
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 143, "office_line_id": 12143, "line_type_nm": "עירוני", "rishui_date": "2021-01-01T00:00:00", "origin_station_cd": 38160, "origin_station_nm": "ביח שיב\"א/שדרות אהרון קציר\"", "origin_yishuv_nm": "רמת גן", "destination_station_cd": 37012, "destination_stati
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 143, "office_line_id": 12143, "line_type_nm": "עירוני", "rishui_date": "2021-01-01T00:00:00", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "destination_station_cd": 31738, "destination_station_nm": "
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2020 · CSV · 326716318 בייט · עודכן=2021-04-25T03:29:57.779681 · datastore=True · id=b0dc4281-5356-4e03-b2d8-8d431a831747
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/b0dc4281-5356-4e03-b2d8-8d431a831747/download/b0dc4281-5356-4e03-b2d8-8d431a831747.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1484226
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2020-01-01", "origin_station_cd": 30160, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מא 25\"", "destination_station_cd": 37012, "destination_station_nm": "חניו
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2020-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "destination_station_cd": 30159, "destination_station_nm": "מחנה ב
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 425, "office_line_id": 10425, "line_type_nm": "עירוני", "rishui_date": "2020-01-01", "origin_station_cd": 38765, "origin_station_nm": "שדרות רחבעם זאבי", "origin_yishuv_nm": "ראשון לציון", "destination_station_cd": 26807, "destination_station_nm": "עתידים",
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2019 · CSV · 393351790 בייט · עודכן=2020-11-12T04:09:32.542012 · datastore=True · id=00fd43f9-d68e-4b8f-bf52-cebb32e987f6
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/00fd43f9-d68e-4b8f-bf52-cebb32e987f6/download/rishui_2019.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1793449
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2019-01-01", "origin_station_cd": 30160, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מא 25\"", "destination_station_cd": 37012, "destination_station_nm": "חניו
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2019-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "destination_station_cd": 30159, "destination_station_nm": "מחנה ב
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 192, "office_line_id": 10192, "line_type_nm": "עירוני", "rishui_date": "2019-01-01", "origin_station_cd": 33512, "origin_station_nm": "ת. מרכזית רשלצ/רציפים\"", "origin_yishuv_nm": "ראשון לציון", "destination_station_cd": 25867, "destination_station_nm": "ר
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2018 · CSV · 390971273 בייט · עודכן=2020-11-10T08:11:21.461350 · datastore=True · id=aebe6d79-9f18-4552-be00-fc87a7748c4f
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/aebe6d79-9f18-4552-be00-fc87a7748c4f/download/rishui_2018.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1782443
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2018-01-01", "origin_station_cd": 30160, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מא 25\"", "destination_station_cd": 37012, "destination_station_nm": "חניו
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2018-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "destination_station_cd": 30159, "destination_station_nm": "מחנה ב
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 192, "office_line_id": 10192, "line_type_nm": "עירוני", "rishui_date": "2018-01-01", "origin_station_cd": 33512, "origin_station_nm": "ת. מרכזית רשלצ/רציפים\"", "origin_yishuv_nm": "ראשון לציון", "destination_station_cd": 25867, "destination_station_nm": "ר
+    - משאב: מאגר רישוי מערך האוטובוסים לשנת 2017 · CSV · 378992466 בייט · עודכן=2020-11-10T04:45:37.724806 · datastore=True · id=f7b8b843-a95c-4380-9656-b78a7eacb95e
+      url=https://data.gov.il/dataset/a38ee853-150f-4360-9177-669063f3322b/resource/f7b8b843-a95c-4380-9656-b78a7eacb95e/download/rishui_2017.csv
+      שדות: ['_id', 'operator_cd', 'operator_nm', 'cluster_cd', 'cluster_nm', 'operator_line_id', 'office_line_id', 'line_type_nm', 'rishui_date', 'origin_station_cd', 'origin_station_nm', 'origin_yishuv_nm', 'destination_station_cd', 'destination_station_nm', 'destination_yishuv_nm', 'trips_count']
+      סה"כ רשומות: 1730388
+      דוגמה: {"_id": 1, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2017-01-01", "origin_station_cd": 31881, "origin_station_nm": "חניון חולון/תחנת מוצא", "origin_yishuv_nm": "חולון", "destination_station_cd": 30159, "destination_station_nm": "מחנה ב
+      דוגמה: {"_id": 2, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 144, "office_line_id": 10144, "line_type_nm": "בינעירוני", "rishui_date": "2017-01-01", "origin_station_cd": 30160, "origin_station_nm": "מחנה בן עמי", "origin_yishuv_nm": "אזור רמלה מא 25\"", "destination_station_cd": 37012, "destination_station_nm": "חניו
+      דוגמה: {"_id": 3, "operator_cd": 3, "operator_nm": "אגד", "cluster_cd": 71, "cluster_nm": "חולון עירוני ומטרופוליני+תחרות חולון", "operator_line_id": 192, "office_line_id": 10192, "line_type_nm": "עירוני", "rishui_date": "2017-01-01", "origin_station_cd": 28619, "origin_station_nm": "מסוף רידינג", "origin_yishuv_nm": "תל אביב -יפו", "destination_station_cd": 35744, "destination_station_nm": "ת. מרכזית רא
+  * מאגר: ציי רכב אוטובוסים · name=bus_fleet · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T10:35:10.668600 · רישיון=אחר (פתוח)
+    תיאור: מאגר זה מכיל נתונים אודות ציי האוטובוסים ופרטים נוספים על האוטובוס השייכים למפעילי האוטובוסים בתחבורה הציבורית. הקובץ מתעדכן יומית עם הנתונים הבאים: שם מפעיל, מספר אוטובוס, ממוגן אבנים, ממוגן ירי, שנת ייצור, מדינת ייצור, קילומטראז'.
+    - משאב: ציי רכב אוטובוסים · CSV · 2967346 בייט · עודכן=2026-09-06T10:35:10.654096 · datastore=True · id=91d298ed-a260-4f93-9d50-d5e3c5b82ce1
+      url=https://data.gov.il/dataset/d89ecfe3-e443-4fde-925a-bf686790b35d/resource/91d298ed-a260-4f93-9d50-d5e3c5b82ce1/download/91d298ed-a260-4f93-9d50-d5e3c5b82ce1.csv
+      שדות: ['_id', 'operator_nm', 'cluster_nm', 'bus_license_id', 'stone_proof_nm', 'bullet_proof_nm', 'BusSize_nm', 'BusType_nm', 'SeatsNum', 'production_year', 'production_country', 'PropulsionType_nm', 'total_kilometer']
+      סה"כ רשומות: 15330
+      דוגמה: {"_id": 1, "operator_nm": "אגד", "cluster_nm": "חיפה-שרון-ירושלים", "bus_license_id": 3177039, "stone_proof_nm": "לא ממוגן אבנים", "bullet_proof_nm": "לא ממוגן ירי", "BusSize_nm": "אוטובוס", "BusType_nm": "בינעירוני", "SeatsNum": 59, "production_year": 2016, "production_country": "גרמניה", "PropulsionType_nm": "דיזל", "total_kilometer": 401284}
+      דוגמה: {"_id": 2, "operator_nm": "אגד", "cluster_nm": "לא מוגדר", "bus_license_id": 7509869, "stone_proof_nm": "לא ממוגן אבנים", "bullet_proof_nm": "לא ממוגן ירי", "BusSize_nm": "אוטובוס", "BusType_nm": "עירוני", "SeatsNum": 37, "production_year": 2009, "production_country": "שבדיה", "PropulsionType_nm": "דיזל", "total_kilometer": 392411}
+      דוגמה: {"_id": 3, "operator_nm": "אגד", "cluster_nm": "לא מוגדר", "bus_license_id": 7596069, "stone_proof_nm": "לא ממוגן אבנים", "bullet_proof_nm": "לא ממוגן ירי", "BusSize_nm": "מפרקי 4 דלתות", "BusType_nm": "עירוני", "SeatsNum": 47, "production_year": 2015, "production_country": "גרמניה", "PropulsionType_nm": "דיזל", "total_kilometer": 449627}
+  * מאגר: מאגר רישיונות רופאים משרד הבריאות · name=database-of-doctors-licenses-moh · ארגון=משרד הבריאות · עודכן=2026-09-06T03:12:28.463649 · רישיון=Other (Open)
+    תיאור: מאגר לניהול הרישוי לבעלי מקצועות הרפואה והבריאות במדינת ישראל 
+    - משאב: מאגר רישיונות רופאים משרד הבריאות  · CSV · 3073635 בייט · עודכן=2026-09-06T03:12:06.306722 · datastore=True · id=9c64c522-bbc2-48fe-96fb-3b2a8626f59e
+      url=https://data.gov.il/dataset/2721d62d-d0da-45fd-93ac-5e7809849222/resource/9c64c522-bbc2-48fe-96fb-3b2a8626f59e/download/drg_2026-09-06.csv
+      שדות: ['_id', 'שם פרטי', 'שם משפחה', 'מספר רישיון רופא', 'תאריך רישום רישיון', 'מספר תעודת התמחות', 'תאריך רישום התמחות', 'שם התמחות']
+      סה"כ רשומות: 64419
+      דוגמה: {"_id": 1, "שם פרטי": "ישראל", "שם משפחה": "זיו", "מספר רישיון רופא": 11903, "תאריך רישום רישיון": 12011976, "מספר תעודת התמחות": 7420, "תאריך רישום התמחות": 20101982, "שם התמחות": "כירורגיה אורתופדית"}
+      דוגמה: {"_id": 2, "שם פרטי": "דניאל", "שם משפחה": "שור", "מספר רישיון רופא": 14174, "תאריך רישום רישיון": 14031980, "מספר תעודת התמחות": 8178, "תאריך רישום התמחות": 28101984, "שם התמחות": "רפואת ילדים"}
+      דוגמה: {"_id": 3, "שם פרטי": "גדי", "שם משפחה": "חורב", "מספר רישיון רופא": 12556, "תאריך רישום רישיון": 20071977, "מספר תעודת התמחות": 7937, "תאריך רישום התמחות": 13021984, "שם התמחות": "רדיולוגיה אבחנתית"}
+  * מאגר: תחנות תחבורה ציבורית · name=bus_stops · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-01T03:05:03.645260 · רישיון=Other (Open)
+    תיאור: קובץ עזר לשיוך מרחבי של תחנות אוטובוס, רק"ל ורכבת ישראל. השיוכים הקיימים במאגר הם למטרופולין, שטח ישוב \ מועצה אזורית, שכונה ואזור סטטיסטי. בנוסף הקובץ מכיל גם קואורדינטות מיקום התחנה בפורמט WGS84 לביצוע ניתוחים גיאוגרפים שונים.
+    - משאב: תחנות תחבורה ציבורית · CSV · 4853097 בייט · עודכן=2026-09-01T03:04:46.641706 · datastore=True · id=e873e6a2-66c1-494f-a677-f5e77348edb0
+      url=https://data.gov.il/dataset/27047419-e1fc-4f1d-bb15-7f5f0805d226/resource/e873e6a2-66c1-494f-a677-f5e77348edb0/download/e873e6a2-66c1-494f-a677-f5e77348edb0.csv
+      שדות: ['_id', 'StationId', 'CityCode', 'CityName', 'MetropolinCode', 'MetropolinName', 'StationTypeCode', 'StationTypeName', 'StationOperatorTypeCode', 'StationOperatorTypeName', 'Lat', 'Long']
+      סה"כ רשומות: 34221
+      דוגמה: {"_id": 1, "StationId": 2228, "CityCode": 472, "CityName": "אבו גוש", "MetropolinCode": 4, "MetropolinName": "ירושלים", "StationTypeCode": 1, "StationTypeName": "תחנה רגילה", "StationOperatorTypeCode": 1, "StationOperatorTypeName": "מפעילי אוטובוסים", "Lat": 31.806622, "Long": 35.114168}
+      דוגמה: {"_id": 2, "StationId": 2229, "CityCode": 472, "CityName": "אבו גוש", "MetropolinCode": 4, "MetropolinName": "ירושלים", "StationTypeCode": 1, "StationTypeName": "תחנה רגילה", "StationOperatorTypeCode": 1, "StationOperatorTypeName": "מפעילי אוטובוסים", "Lat": 31.810908, "Long": 35.10752}
+      דוגמה: {"_id": 3, "StationId": 404, "CityCode": 472, "CityName": "אבו גוש", "MetropolinCode": 4, "MetropolinName": "ירושלים", "StationTypeCode": 1, "StationTypeName": "תחנה רגילה", "StationOperatorTypeCode": 1, "StationOperatorTypeName": "מפעילי אוטובוסים", "Lat": 31.800676, "Long": 35.121828}
+  * מאגר: רישוי עסקים · name=business-licensing-br7 · ארגון=עיריית באר שבע · עודכן=2026-07-28T08:14:04.012010 · רישיון=Other (Open)
+    תיאור: המאגר מכיל עסקים טעוני רישוי לפי חוק רישוי עסקים התשכ"ח (1968). המאגר אינו מכיל עסקים אחרים שאינם טעוני רישוי לפי אותו החוק, או עסקים הנמצאים בתהליך רישוי.  במאגר השדות הבאים: שם העסק, כתובת, פרטי התקשרות, מספר רישיון, תאריך פקיעת הרישיון, מהות העסק ותאריך אישור הרישיון של עסקים בעלי רישיון בתוקף 
+    - משאב: CSV · CSV · 512281 בייט · עודכן=2026-07-28T08:14:00.188413 · datastore=True · id=7d4c61e2-2416-453e-8efb-bd02ec89db35
+      url=https://data.gov.il/dataset/39ffaf87-c67a-4eeb-91cc-edfc79b4dd8e/resource/7d4c61e2-2416-453e-8efb-bd02ec89db35/download/business-licensing.csv
+      שדות: ['_id', 'מספר תיק עסק', 'מספר רישיון', 'ח.פ', 'שם עסק', 'תאריך תוקף', 'סטטוס', 'תאור סטטוס', 'תאור רישיון', 'תאריך שינוי מצב', 'טלפון בעסק', 'שם רחוב', 'בית', 'מייל בעסק']
+      סה"כ רשומות: 3046
+      דוגמה: {"_id": 1, "מספר תיק עסק": 15, "מספר רישיון": 15003, "ח.פ": 41226549, "שם עסק": "כהן אליהו", "תאריך תוקף": "2099-12-31 00:00:00", "סטטוס": 8, "תאור סטטוס": "מתחדש", "תאור רישיון": "מכולת,בשר,עפות ומוצר", "תאריך שינוי מצב": null, "טלפון בעסק": "086278586", "שם רחוב": "שפירא", "בית": 10, "מייל בעסק": null}
+      דוגמה: {"_id": 2, "מספר תיק עסק": 37, "מספר רישיון": 37001, "ח.פ": 7366491, "שם עסק": "חברי ג'מילה", "תאריך תוקף": "2099-12-31 00:00:00", "סטטוס": 8, "תאור סטטוס": "מתחדש", "תאור רישיון": "פירות וירקות-מכירתם", "תאריך שינוי מצב": null, "טלפון בעסק": null, "שם רחוב": "באר שבע", "בית": 152, "מייל בעסק": null}
+      דוגמה: {"_id": 3, "מספר תיק עסק": 97, "מספר רישיון": 97007, "ח.פ": 512869439, "שם עסק": "דור אלון ניהול מתחמים קמעונאיים בע\"מ", "תאריך תוקף": "2026-12-31 00:00:00", "סטטוס": 8, "תאור סטטוס": "מתחדש", "תאור רישיון": "תחנת דלק ותדלוק", "תאריך שינוי מצב": null, "טלפון בעסק": null, "שם רחוב": "דרך חברון", "בית": 5, "מייל בעסק": "batsheva.shabatani@dorgas.co.il"}
+    - משאב: XLSX · XLSX · 334610 בייט · עודכן=2026-07-28T08:14:01.197707 · datastore=True · id=06259dee-7208-4647-9b70-30a3048cfda2
+      url=https://data.gov.il/dataset/39ffaf87-c67a-4eeb-91cc-edfc79b4dd8e/resource/06259dee-7208-4647-9b70-30a3048cfda2/download/business-licensing.xlsx
+      שדות: ['_id', 'מספר תיק עסק', 'מספר רישיון', 'ח.פ', 'שם עסק', 'תאריך תוקף', 'סטטוס', 'תאור סטטוס', 'תאור רישיון', 'תאריך שינוי מצב', 'טלפון בעסק', 'שם רחוב', 'בית', 'מייל בעסק']
+      סה"כ רשומות: 3046
+      דוגמה: {"_id": 1, "מספר תיק עסק": 15, "מספר רישיון": 15003, "ח.פ": 41226549, "שם עסק": "כהן אליהו", "תאריך תוקף": "2099-12-31 00:00:00", "סטטוס": 8, "תאור סטטוס": "מתחדש", "תאור רישיון": "מכולת,בשר,עפות ומוצר", "תאריך שינוי מצב": null, "טלפון בעסק": "086278586", "שם רחוב": "שפירא", "בית": 10, "מייל בעסק": ""}
+      דוגמה: {"_id": 2, "מספר תיק עסק": 37, "מספר רישיון": 37001, "ח.פ": 7366491, "שם עסק": "חברי ג'מילה", "תאריך תוקף": "2099-12-31 00:00:00", "סטטוס": 8, "תאור סטטוס": "מתחדש", "תאור רישיון": "פירות וירקות-מכירתם", "תאריך שינוי מצב": null, "טלפון בעסק": "", "שם רחוב": "באר שבע", "בית": 152, "מייל בעסק": ""}
+      דוגמה: {"_id": 3, "מספר תיק עסק": 97, "מספר רישיון": 97007, "ח.פ": 512869439, "שם עסק": "דור אלון ניהול מתחמים קמעונאיים בע\"מ", "תאריך תוקף": "2026-12-31 00:00:00", "סטטוס": 8, "תאור סטטוס": "מתחדש", "תאור רישיון": "תחנת דלק ותדלוק", "תאריך שינוי מצב": null, "טלפון בעסק": "", "שם רחוב": "דרך חברון", "בית": 5, "מייל בעסק": "batsheva.shabatani@dorgas.co.il"}
+    - משאב: JSON · JSON · 1432783 בייט · עודכן=2026-07-28T08:14:02.428724 · datastore=False · id=c84bafcf-6569-415e-9ac4-91b5d68c027f
+      url=https://data.gov.il/dataset/39ffaf87-c67a-4eeb-91cc-edfc79b4dd8e/resource/c84bafcf-6569-415e-9ac4-91b5d68c027f/download/business-licensing.json
+    - משאב: XML · XML · 2505053 בייט · עודכן=2026-07-28T08:14:03.979715 · datastore=False · id=962aee21-5888-4908-8361-2de821fc2161
+      url=https://data.gov.il/dataset/39ffaf87-c67a-4eeb-91cc-edfc79b4dd8e/resource/962aee21-5888-4908-8361-2de821fc2161/download/business-licensing.xml
+
+=== תכנון וביצוע אוטובוסים (חודשי) · חיפוש: Bus_rishui_bitzua ===
+  נמצאו 10 מאגרים
+  (כבר הוצג: רישוי מערך האוטובוסים)
+  (כבר הוצג: ציי רכב אוטובוסים)
+  (כבר הוצג: תחנות תחבורה ציבורית)
+  * מאגר: מסופים ומתקני תשתית מצב מתוכנן · name=bus_terminal_strat · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-07-12T10:39:08.820546 · רישיון=Other (Open)
+    תיאור: מתקנים, קיימים ומתוכננים, הנכללים בתוכנית האסטרטגית למתקני תשתית לתפעול תחבורה ציבורית באוטובוסים בפריסה ארצית
+    - משאב: BUS_TERMINAL_STRAT_SHP · ZIP · 281566 בייט · עודכן=2026-07-12T10:37:57.582817 · datastore=False · id=0cb6a87b-697f-41a2-8a91-58692bcb269d
+      url=https://data.gov.il/dataset/5e4ffbc7-dcc1-4d0b-b158-9f720cc02f01/resource/0cb6a87b-697f-41a2-8a91-58692bcb269d/download/bus_terminal_strat.zip
+      הורדה שגיאה: HTTP Error 404: Not Found
+    - משאב: BUS_TERMINAL_STRAT_KML · ZIP · 305826 בייט · עודכן=2026-07-12T10:38:18.036190 · datastore=False · id=a8276341-6d2a-49d9-9bbf-855e9aafb61f
+      url=https://data.gov.il/dataset/5e4ffbc7-dcc1-4d0b-b158-9f720cc02f01/resource/a8276341-6d2a-49d9-9bbf-855e9aafb61f/download/bus_terminal_strat_kmz.zip
+      הורדה שגיאה: HTTP Error 404: Not Found
+    - משאב: BUS_TERMINAL_STRAT_CSV · CSV · 377601 בייט · עודכן=2026-07-12T10:38:34.762859 · datastore=True · id=dd629faf-aad2-4778-9111-45545cea6f44
+      url=https://data.gov.il/dataset/5e4ffbc7-dcc1-4d0b-b158-9f720cc02f01/resource/dd629faf-aad2-4778-9111-45545cea6f44/download/bus_terminal_strat.csv
+      שדות: ['_id', 'OID', 'term_name', 'DISTRICT', 'AUTHO_2040', 'CITY', 'term_stat', 'term_type', 'gush_helka', 'poly_size', 'faci_size', 'term_size', 'night_size', 'OWN', 'taba_name', 'taba_num', 'taba_year', 'land_use', 'usage', 'bld_rights', 'new_taba', 'new_status', 'new_name', 'new_num', 'new_landus', 'new_is_sta', 'new_usage', 'new_rights', 'update_', 'MAKAT', 'AUTHORITY', 'IS_STAT', 'Shape_Length', 'Shape_Area']
+      סה"כ רשומות: 686
+      דוגמה: {"_id": 1, "OID": -1, "term_name": "מגדל העמק צפון מערב", "DISTRICT": "צפון", "AUTHO_2040": "מגדל העמק", "CITY": "מגדל העמק", "term_stat": "איתור", "term_type": "מסוף קטן", "gush_helka": "(17952:21)", "poly_size": 2.36072385840863, "faci_size": 2.0, "term_size": 2.0, "night_size": 0.0, "OWN": "רמ\"\"י", "taba_name": "מגדל העמק, שכונה מערבית - שלב ב'", "taba_num": "221-0524033", "taba_year": "2021"
+      דוגמה: {"_id": 2, "OID": -1, "term_name": "מחלף נס ציונה", "DISTRICT": "מרכז", "AUTHO_2040": "נס ציונה", "CITY": "נס ציונה", "term_stat": "איתור", "term_type": "מסוף בינוני", "gush_helka": "(3634:139,142,148,150)", "poly_size": 7.95047938084975, "faci_size": 7.9, "term_size": 7.9, "night_size": 0.0, "OWN": "רמ\"\"י", "taba_name": "תכנית מתאר מקומית נס ציונה", "taba_num": "נס/1/1", "taba_year": "1972", "l
+      דוגמה: {"_id": 3, "OID": -1, "term_name": "שגב שלום צפון", "DISTRICT": "דרום", "AUTHO_2040": "שגב שלום", "CITY": "שגב שלום", "term_stat": "איתור", "term_type": "מסוף קטן", "gush_helka": "70011:146)", "poly_size": 14.300341731644934, "faci_size": 1.5, "term_size": 1.5, "night_size": 0.0, "OWN": "רמ\"\"י", "taba_name": "הרחבת שגב שלום-שכונות נחל  צאן- תכנית צפונית (שגב שלום מערב)", "taba_num": "652-0366104
+    - משאב: מטאדאטה · XLSX · 18550 בייט · עודכן=2026-07-12T10:39:08.785026 · datastore=True · id=e98d6803-f612-44cc-961a-08e88d3f0c80
+      url=https://data.gov.il/dataset/5e4ffbc7-dcc1-4d0b-b158-9f720cc02f01/resource/e98d6803-f612-44cc-961a-08e88d3f0c80/download/bus_terminal_strat_metadata.xlsx
+      שדות: ['_id', 'Author', 'נתיבי איילון']
+      סה"כ רשומות: 68
+      דוגמה: {"_id": 1, "Author": "Publisher", "נתיבי איילון": "משרד התחבורה"}
+      דוגמה: {"_id": 2, "Author": "Contact", "נתיבי איילון": "צוות חצב"}
+      דוגמה: {"_id": 3, "Author": "Contact Email", "נתיבי איילון": "geo@mot.gov.il"}
+  * מאגר: מסופים ומתקני תשתית מצב קיים · name=bus_terminal_fcl · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-07-12T10:30:07.325988 · רישיון=Creative Commons Attribution
+    תיאור: שכבה המציגה שטחי מתקני תשתית קיימים לתח"צ באטובוסים ומכילה נתונים נבחרים של מיקום, פעילות ותכולה בכל מתקן 
+    - משאב: BUS_TERMINAL_FCL_SHP · ZIP · 124486 בייט · עודכן=2026-07-12T10:23:38.940216 · datastore=False · id=2dcd861a-d605-4fc9-b59c-87c1523491e2
+      url=https://data.gov.il/dataset/3edcd023-f7ca-43eb-928f-6fdda479c172/resource/2dcd861a-d605-4fc9-b59c-87c1523491e2/download/bus_terminal_fcl.zip
+      הורדה שגיאה: HTTP Error 404: Not Found
+    - משאב: BUS_TERMINAL_FCL_KML · ZIP · 603 בייט · עודכן=2026-07-12T10:25:07.889340 · datastore=False · id=13df27e2-caed-47cd-895c-2997716b0ede
+      url=https://data.gov.il/dataset/3edcd023-f7ca-43eb-928f-6fdda479c172/resource/13df27e2-caed-47cd-895c-2997716b0ede/download/bus_terminal_fcl_kmz.zip
+      הורדה שגיאה: HTTP Error 404: Not Found
+    - משאב: BUS_TERMINAL_FCL_CSV · CSV · 172434 בייט · עודכן=2026-07-12T10:29:34.055342 · datastore=True · id=15e4d0e2-f961-4083-adbd-f93dcb14dde7
+      url=https://data.gov.il/dataset/3edcd023-f7ca-43eb-928f-6fdda479c172/resource/15e4d0e2-f961-4083-adbd-f93dcb14dde7/download/bus_terminal_fcl.csv
+      שדות: ['_id', 'OID', 'MAKAT', 'NAME', 'DISTRICT', 'AUTHORITY', 'AUTHCODE', 'X', 'Y', 'ADDRESS', 'BLOCK', 'PARCEL', 'DUNAM', 'LANDUSE', 'PARKINGN', 'FLOORS', 'BUSS_N', 'BUSDROP_N', 'BUSSD_N', 'TIFULLN', 'NIGHTP_N', 'RAVKAVN', 'CALP_AREA', 'PINUYY', 'COMMENTS', 'SOURCE', 'D_UPDATE', 'YEARMONTH', 'OPENYEAR', 'T_TYPE', 'TRAVELERS', 'CLOSEYEAR', 'PARK_RIDE', 'DRIVERSR', 'TOILET', 'SIZERANK', 'COMMERCIAL', 'STATUS', 'MATAN', 'ECharge_N', 'KISSNRIDE', 'BIC_PARK', 'BUSPARKN', 'MAAVAR', 'OWN', 'Shape_Length', 'Shape_Area']
+      סה"כ רשומות: 296
+      דוגמה: {"_id": 1, "OID": -1, "MAKAT": 740006, "NAME": "חניון דורי", "DISTRICT": "חיפה", "AUTHORITY": "חיפה", "AUTHCODE": "4000", "X": 202963.5, "Y": 743080.96, "ADDRESS": "יעקב דורי 45", "BLOCK": "11210", "PARCEL": "57, 60", "DUNAM": 17.35, "LANDUSE": "אתר לחניון אוטובוסים ושמורת טבע", "PARKINGN": 80, "FLOORS": 1, "BUSS_N": 0, "BUSDROP_N": 0, "BUSSD_N": 0, "TIFULLN": 80, "NIGHTP_N": 80, "RAVKAVN": 0, "CA
+      דוגמה: {"_id": 2, "OID": -1, "MAKAT": 740018, "NAME": "רכבת מרכז", "DISTRICT": "חיפה", "AUTHORITY": "חיפה", "AUTHCODE": "4000", "X": 200039.79, "Y": 747444.41, "ADDRESS": " ", "BLOCK": "10889", "PARCEL": "53", "DUNAM": 1.16, "LANDUSE": " ", "PARKINGN": 4, "FLOORS": 1, "BUSS_N": 0, "BUSDROP_N": 0, "BUSSD_N": 1, "TIFULLN": 4, "NIGHTP_N": 0, "RAVKAVN": 0, "CALP_AREA": 0.5, "PINUYY": 0, "COMMENTS": "שירותים 
+      דוגמה: {"_id": 3, "OID": -1, "MAKAT": 740007, "NAME": "מרכזית המפרץ חיפה", "DISTRICT": "חיפה", "AUTHORITY": "חיפה", "AUTHCODE": "4000", "X": 203530.76, "Y": 744243.95, "ADDRESS": " ", "BLOCK": "11658", "PARCEL": "123, 125, 127, 129", "DUNAM": 20.98, "LANDUSE": "מרכז תחבורה, מסילת ברזל, דרך, מסחר ותעסוקה", "PARKINGN": 45, "FLOORS": 1, "BUSS_N": 24, "BUSDROP_N": 0, "BUSSD_N": 3, "TIFULLN": 45, "NIGHTP_N": 
+    - משאב: מטאדאטה · XLSX · 19171 בייט · עודכן=2026-07-12T10:30:07.284897 · datastore=True · id=46674657-e866-45c8-b435-3471ce757b4a
+      url=https://data.gov.il/dataset/3edcd023-f7ca-43eb-928f-6fdda479c172/resource/46674657-e866-45c8-b435-3471ce757b4a/download/bus_terminal_fcl_metadata.xlsx
+      שדות: ['_id', 'File Fields', 'name', 'type', 'description', 'comment', 'value', 'label']
+      סה"כ רשומות: 47
+      דוגמה: {"_id": 1, "File Fields": "", "name": "NAME", "type": "String", "description": "שם", "comment": "שם", "value": "", "label": ""}
+      דוגמה: {"_id": 2, "File Fields": "", "name": "MAKAT", "type": "Integer", "description": "מק\"ט מסוף", "comment": "מזהה מסוף", "value": "", "label": ""}
+      דוגמה: {"_id": 3, "File Fields": "", "name": "AUTHCODE", "type": "Integer", "description": "קוד רשות מקומית", "comment": "קוד רשות מקומית", "value": "", "label": ""}
+  * מאגר: תכנון מול ביצוע נסיעות אוטובוסים ברמת נסיעה בודדת · name=bitzua_bus_trip · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-06-16T11:46:41.845621 · רישיון=Other (Open)
+    תיאור: מאגר זה מציג את תכנון הנסיעות של האוטובוסים בתחבורה הציבורית ואת הנסיעות שבוצעו בפועל ברמת נסיעה בודדת
+    - משאב: תכנון מול ביצוע נסיעות אוטובוסים 2026 ברמת נסיעה בודדת · CSV · 948453999 בייט · עודכן=2026-06-16T11:39:34.600779 · datastore=True · id=eafccff0-7552-44ee-8beb-26e5c3d94133
+      url=https://data.gov.il/dataset/626b0931-8385-4f62-87e5-cadae3379754/resource/eafccff0-7552-44ee-8beb-26e5c3d94133/download/risui_bitzua_bus_trip_2026.csv
+      שדות: ['_id', 'OperatorId', 'operator_nm', 'ClusterId', 'cluster_nm', 'OperatorLineId', 'OfficeLineId', 'Direction', 'LineAlternative', 'Viechle_num', 'TripId', 'trip_dt', 'trip_time', 'trip_month', 'trip_day_in_week', 'bitzua_history_start_dt', 'bitzua_history_end_dt', 'erua_hachraga_ind']
+      סה"כ רשומות: 5479676
+      דוגמה: {"_id": 1, "OperatorId": 5, "operator_nm": "דן", "ClusterId": 11, "cluster_nm": "תל אביב", "OperatorLineId": "82", "OfficeLineId": 29082, "Direction": 1, "LineAlternative": "0", "Viechle_num": "14906702", "TripId": 584630350, "trip_dt": "2026-02-25", "trip_time": "05:29", "trip_month": 2, "trip_day_in_week": 4, "bitzua_history_start_dt": "2026-02-25 05:29:23", "bitzua_history_end_dt": "2026-02-25 
+      דוגמה: {"_id": 2, "OperatorId": 5, "operator_nm": "דן", "ClusterId": 11, "cluster_nm": "תל אביב", "OperatorLineId": "40", "OfficeLineId": 16040, "Direction": 2, "LineAlternative": "0", "Viechle_num": "17778203", "TripId": 39214981, "trip_dt": "2026-02-25", "trip_time": "13:35", "trip_month": 2, "trip_day_in_week": 4, "bitzua_history_start_dt": "2026-02-25 13:37:14", "bitzua_history_end_dt": "2026-02-25 1
+      דוגמה: {"_id": 3, "OperatorId": 5, "operator_nm": "דן", "ClusterId": 11, "cluster_nm": "תל אביב", "OperatorLineId": "160", "OfficeLineId": 11160, "Direction": 2, "LineAlternative": "0", "Viechle_num": "09301601", "TripId": 6967395, "trip_dt": "2026-02-25", "trip_time": "15:55", "trip_month": 2, "trip_day_in_week": 4, "bitzua_history_start_dt": "2026-02-25 15:55:33", "bitzua_history_end_dt": "2026-02-25 1
+    - משאב: תכנון מול ביצוע נסיעות אוטובוסים 2025 ברמת נסיעה בודדת · CSV · 5655786120 בייט · עודכן=2026-04-10T11:01:14.765447 · datastore=True · id=084b8e33-e359-47aa-95f7-26782e52c9af
+      url=https://data.gov.il/dataset/626b0931-8385-4f62-87e5-cadae3379754/resource/084b8e33-e359-47aa-95f7-26782e52c9af/download/084b8e33-e359-47aa-95f7-26782e52c9af.csv
+      שדות: ['_id', 'OperatorId', 'operator_nm', 'ClusterId', 'cluster_nm', 'OperatorLineId', 'OfficeLineId', 'Direction', 'LineAlternative', 'Viechle_num', 'TripId', 'trip_dt', 'trip_time', 'trip_month', 'trip_day_in_week', 'bitzua_history_start_dt', 'bitzua_history_end_dt', 'erua_hachraga_ind']
+      סה"כ רשומות: 32600122
+      דוגמה: {"_id": 1, "OperatorId": 16, "operator_nm": "סופרבוס", "ClusterId": 120, "cluster_nm": "העמקים", "OperatorLineId": "68", "OfficeLineId": 17068, "Direction": 2, "LineAlternative": "0", "Viechle_num": "74735902", "TripId": 585378293, "trip_dt": "2025-01-03", "trip_time": "00:20", "trip_month": 1, "trip_day_in_week": 6, "bitzua_history_start_dt": "2025-01-03 00:20:46", "bitzua_history_end_dt": "2025-
+      דוגמה: {"_id": 2, "OperatorId": 15, "operator_nm": "מטרופולין", "ClusterId": 117, "cluster_nm": "שרון חולון מרחבי", "OperatorLineId": "35", "OfficeLineId": 36035, "Direction": 1, "LineAlternative": "#", "Viechle_num": "51949803", "TripId": 38819092, "trip_dt": "2025-01-05", "trip_time": "11:30", "trip_month": 1, "trip_day_in_week": 1, "bitzua_history_start_dt": "2025-01-05 11:31:03", "bitzua_history_end_
+      דוגמה: {"_id": 3, "OperatorId": 16, "operator_nm": "סופרבוס", "ClusterId": 120, "cluster_nm": "העמקים", "OperatorLineId": "11", "OfficeLineId": 38011, "Direction": 1, "LineAlternative": "0", "Viechle_num": "12805903", "TripId": 584750971, "trip_dt": "2025-01-09", "trip_time": "14:00", "trip_month": 1, "trip_day_in_week": 5, "bitzua_history_start_dt": "2025-01-09 14:01:20", "bitzua_history_end_dt": "2025-
+    - משאב: תכנון מול ביצוע נסיעות אוטובוסים 2024 ברמת נסיעה בודדת · CSV · 5601288898 בייט · עודכן=2025-07-13T11:58:17.504034 · datastore=True · id=aba233c2-6a5a-487d-b0a8-9413ef849f15
+      url=https://data.gov.il/dataset/626b0931-8385-4f62-87e5-cadae3379754/resource/aba233c2-6a5a-487d-b0a8-9413ef849f15/download/aba233c2-6a5a-487d-b0a8-9413ef849f15.csv
+      שדות: ['_id', 'OperatorId', 'operator_nm', 'ClusterId', 'cluster_nm', 'OperatorLineId', 'OfficeLineId', 'Direction', 'LineAlternative', 'Viechle_num', 'TripId', 'trip_dt', 'trip_time', 'trip_month', 'trip_day_in_week', 'bitzua_history_start_dt', 'bitzua_history_end_dt', 'erua_hachraga_ind']
+      סה"כ רשומות: 32534268
+      דוגמה: {"_id": 1, "OperatorId": 5, "operator_nm": "דן", "ClusterId": 11, "cluster_nm": "תל אביב", "OperatorLineId": "5", "OfficeLineId": 25005, "Direction": 1, "LineAlternative": "0", "Viechle_num": "17782303", "TripId": 0, "trip_dt": "2024-01-01", "trip_time": "19:46", "trip_month": 1, "trip_day_in_week": 2, "bitzua_history_start_dt": "2024-01-01 19:46:02", "bitzua_history_end_dt": "2024-01-01 20:45:15"
+      דוגמה: {"_id": 2, "OperatorId": 5, "operator_nm": "דן", "ClusterId": 11, "cluster_nm": "תל אביב", "OperatorLineId": "45", "OfficeLineId": 14045, "Direction": 2, "LineAlternative": "0", "Viechle_num": "17779103", "TripId": 0, "trip_dt": "2024-01-01", "trip_time": "21:50", "trip_month": 1, "trip_day_in_week": 2, "bitzua_history_start_dt": "2024-01-01 21:50:40", "bitzua_history_end_dt": "2024-01-01 22:32:47
+      דוגמה: {"_id": 3, "OperatorId": 5, "operator_nm": "דן", "ClusterId": 11, "cluster_nm": "תל אביב", "OperatorLineId": "141", "OfficeLineId": 22141, "Direction": 1, "LineAlternative": "0", "Viechle_num": "53128003", "TripId": 0, "trip_dt": "2024-01-01", "trip_time": "22:20", "trip_month": 1, "trip_day_in_week": 2, "bitzua_history_start_dt": "2024-01-01 22:20:36", "bitzua_history_end_dt": "2024-01-01 23:05:0
+
+=== תכנון מול ביצוע לפי נסיעה בודדת (GPS) · חיפוש: risui_bitzua_bus_trip ===
+  נמצאו 11 מאגרים
+  (כבר הוצג: רישוי מערך האוטובוסים)
+  * מאגר: רכבת תכנון מול ביצוע · name=train_trip · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T10:35:34.949170 · רישיון=Other (Open)
+    תיאור: מאגר זה מציג את התכנון של הנסיעות, ביצוען ואחוזי הביצוע של הרכבת הארצית בתחבורה הציבורית. הקובץ יתעדכן אחת לחודש עם הנתונים הבאים: שנה, חודש, מספר רכבת, תחנת מוצא, תחנת יעד, סה"כ נסיעות רישוי, נסיעות רישוי בלבד (ללא ביצוע), נסיעות ביצוע בלבד (ללא רישוי), אחוז ביצוע. --- כרגע אין צפי לקבלת נתונים --
+    - משאב: רכבת תכנון מול ביצוע · CSV · 9547139 בייט · עודכן=2026-09-06T10:35:09.243204 · datastore=True · id=6cf35ec2-c0eb-4ef0-a904-f093dab0abfd
+      url=https://data.gov.il/dataset/63b7bf0b-69eb-4a73-9b98-b9fd2b8a4b5b/resource/6cf35ec2-c0eb-4ef0-a904-f093dab0abfd/download/6cf35ec2-c0eb-4ef0-a904-f093dab0abfd.csv
+      שדות: ['_id', 'shana', 'hodesh', 'train_trip_cd', 'first_train_station_nm', 'last_train_station_nm', 'rishui_all', 'rishui_only', 'bitzua_only', 'ahuz_bitzua']
+      סה"כ רשומות: 125943
+      דוגמה: {"_id": 1, "shana": 2015, "hodesh": 1, "train_trip_cd": 1, "first_train_station_nm": "נהריה", "last_train_station_nm": "נתבג\"", "rishui_all": 21, "rishui_only": 0, "bitzua_only": 0, "ahuz_bitzua": 100}
+      דוגמה: {"_id": 2, "shana": 2015, "hodesh": 1, "train_trip_cd": 2, "first_train_station_nm": "נתבג\"", "last_train_station_nm": "נהריה", "rishui_all": 21, "rishui_only": 0, "bitzua_only": 0, "ahuz_bitzua": 100}
+      דוגמה: {"_id": 3, "shana": 2015, "hodesh": 1, "train_trip_cd": 3, "first_train_station_nm": "נהריה", "last_train_station_nm": "נתבג\"", "rishui_all": 21, "rishui_only": 0, "bitzua_only": 0, "ahuz_bitzua": 100}
+    - משאב: מבנה הנתונים במאגר · PDF · 98429 בייט · עודכן=2020-11-05T10:36:16.306058 · datastore=False · id=9bf5f8d5-3b2e-4852-9055-bf2408cfd2dd
+      url=https://data.gov.il/dataset/63b7bf0b-69eb-4a73-9b98-b9fd2b8a4b5b/resource/9bf5f8d5-3b2e-4852-9055-bf2408cfd2dd/download/train_trip_structure_05-11-2020.pdf
+  (כבר הוצג: ציי רכב אוטובוסים)
+  (כבר הוצג: תחנות תחבורה ציבורית)
+  (כבר הוצג: מסופים ומתקני תשתית מצב מתוכנן)
+  (כבר הוצג: מסופים ומתקני תשתית מצב קיים)
+
+=== זמני הגעה לתחנה לפי שעה · חיפוש: ArrivalToStationHours ===
+  נמצאו 19 מאגרים
+  * מאגר: רכבת לו"ז · name=train_station · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T10:35:16.836321 · רישיון=Other (Open)
+    תיאור: מאגר זה מציג את הדיוק של הרכבת ביחס לתכנון בכל התחנות ובכלל הנסיעות ברכבת הארצית בתחבורה הציבורית. הקובץ יתעדכן אחת לחודש עם הנתונים הבאים: שנה, חודש, שם תחנה, דיוק סטטוס (תקין, איחור, הקדמה), כמות לסטטוס. --- כרגע אין צפי לקבלת נתונים ---
+    - משאב: מאגר רכבת לו"ז · CSV · 870712 בייט · עודכן=2026-09-06T10:35:07.613955 · datastore=True · id=1ebbbb91-1d44-4f41-a85c-4a93a35e32d6
+      url=https://data.gov.il/dataset/cdffbed6-8388-4b72-8c74-d36403cc5b83/resource/1ebbbb91-1d44-4f41-a85c-4a93a35e32d6/download/1ebbbb91-1d44-4f41-a85c-4a93a35e32d6.csv
+      שדות: ['_id', 'shana', 'hodesh', 'train_station_nm', 'station_status_nm', 'status_count']
+      סה"כ רשומות: 16483
+      דוגמה: {"_id": 1, "shana": 2015, "hodesh": 1, "train_station_nm": "אשדוד עד הלום", "station_status_nm": "איחור", "status_count": 33}
+      דוגמה: {"_id": 2, "shana": 2015, "hodesh": 1, "train_station_nm": "אשדוד עד הלום", "station_status_nm": "בזמן", "status_count": 1625}
+      דוגמה: {"_id": 3, "shana": 2015, "hodesh": 1, "train_station_nm": "אשדוד עד הלום", "station_status_nm": "הקדמה ביציאה", "status_count": 17}
+  * מאגר: תחנות התחסנות כנגד חצבת · name=list-measles-vaccination-stations · ארגון=משרד הבריאות · עודכן=2026-09-06T10:12:13.788114 · רישיון=Other (Open)
+    תיאור: שעות פעילות תחנות ההתחסנות לפי ערים, קופות חולים או לשכות בריאות
+    - משאב: תחנות התחסנות כנגד חצבת · CSV · 44265 בייט · עודכן=2026-09-06T10:12:05.904255 · datastore=True · id=54533763-9edb-4fff-bc9b-1952f1ae66d0
+      url=https://data.gov.il/dataset/7a973115-c27c-40f4-8072-07bbe3aef3d2/resource/54533763-9edb-4fff-bc9b-1952f1ae66d0/download/measles_vaccin_station_2026-09-06-13.csv
+      שדות: ['_id', 'station_code', 'station_name', 'population_type', 'population_name', 'vaccination_type', 'vaccination_type_name', 'owner_code', 'owner', 'availability_time', 'city', 'city_code', 'address', 'in_institute_code', 'in_institute']
+      סה"כ רשומות: 191
+      דוגמה: {"_id": 1, "station_code": "931708", "station_name": "טיפת חלב - פת", "population_type": 3, "population_name": "ילדים ומבוגרים", "vaccination_type": 717030000, "vaccination_type_name": "חצבת", "owner_code": 17, "owner": "עיריית ירושלים", "availability_time": "23.10.25: 8:00-18:00", "city": "ירושלים", "city_code": 3000, "address": "רח' ברל לוקר 17, ירושלים", "in_institute_code": "", "in_institute":
+      דוגמה: {"_id": 2, "station_code": "932030", "station_name": "כללית - בני ברית", "population_type": 3, "population_name": "ילדים ומבוגרים", "vaccination_type": 717030000, "vaccination_type_name": "חצבת", "owner_code": 3, "owner": "שירותי בריאות כללית", "availability_time": "א' 7:30-13:00 16:00-19:00, ב' 7:30-15:00, ג' 7:30-19:00, ד' 7:30-12:30 , ה' 7:30-18:00, ו' 8:00-12:00", "city": "ירושלים", "city_code
+      דוגמה: {"_id": 3, "station_code": "932031", "station_name": "טיפת חלב-מעלות דפנה", "population_type": 3, "population_name": "ילדים ומבוגרים", "vaccination_type": 717030000, "vaccination_type_name": "חצבת", "owner_code": 17, "owner": "עיריית ירושלים", "availability_time": "א',ב',ד',ה' 8:00-13:00 , ג' 8:00-16:30, 5.8 יום ג': 7:30-18:00, 22.8 יום ו' 8:00-12:00", "city": "ירושלים", "city_code": 3000, "addres
+  * מאגר: תיקופי מסלקה לתחנה · name=tikufim_station_2022 · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-02T10:58:23.903250 · רישיון=Other (Open)
+    תיאור: המאגר מציג את כמות התיקופים שבוצעו בתחבורה הציבורית ברמת תחנה בכל אמצעי הכרטוס. חיבור למיקום התחנה יעשה כרגע דרך טבלת stops ב-GTFS והשדה המקשר הוא station_id. לגבי שעות שפל ושיא, מדובר בשעות קשיחות שאינן משתנות בהתאם לעונות, חגים או מועדים אחרים או אירועים חריגים. הנתונים מוצגים ביחס לתחנות המפורטות
+    - משאב: מאגר תיקופי מסלקה לתחנה 2026 · CSV · 259348615 בייט · עודכן=2026-09-02T10:55:01.839789 · datastore=True · id=3ad014c3-e0a6-4ba0-9b2b-12a29d273512
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/3ad014c3-e0a6-4ba0-9b2b-12a29d273512/download/3ad014c3-e0a6-4ba0-9b2b-12a29d273512.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 1276127
+      דוגמה: {"_id": 1, "StationId": -1, "StationName": "לא מוגדר", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": 2026, "month_key": 1, "day_1": 129, "day_2": 131, "day_3": 8, "day_4": 171, "day_5": 76, "day_6": 154, "day_7": 98, "day_8": 238, "day_9": 120, "day_10": 14, "day_11": 133, "day_12": 186, "day_13": 73, "day_14": 73, "day_15": 285, "day_16": 143, "day_17": 6, "day_18": 196, "day
+      דוגמה: {"_id": 2, "StationId": -1, "StationName": "לא מוגדר", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": 2026, "month_key": 2, "day_1": 150, "day_2": 223, "day_3": 121, "day_4": 100, "day_5": 150, "day_6": 147, "day_7": 12, "day_8": 111, "day_9": 97, "day_10": 151, "day_11": 100, "day_12": 102, "day_13": 46, "day_14": 19, "day_15": 95, "day_16": 93, "day_17": 92, "day_18": 111, "d
+      דוגמה: {"_id": 3, "StationId": -1, "StationName": "לא מוגדר", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": 2026, "month_key": 3, "day_1": 194, "day_2": 270, "day_3": 298, "day_4": 404, "day_5": 397, "day_6": 227, "day_7": 18, "day_8": 562, "day_9": 492, "day_10": 360, "day_11": 442, "day_12": 543, "day_13": 315, "day_14": 9, "day_15": 709, "day_16": 500, "day_17": 407, "day_18": 598
+    - משאב: מאגר תיקופי מסלקה לתחנה 2025 · CSV · 401725248 בייט · עודכן=2026-03-10T09:15:23.554972 · datastore=True · id=b2c6b258-4638-4f8e-bcad-600f0cdfb449
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/b2c6b258-4638-4f8e-bcad-600f0cdfb449/download/b2c6b258-4638-4f8e-bcad-600f0cdfb449.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 1980814
+      דוגמה: {"_id": 1, "StationId": 2721, "StationName": "מסוף גילה/המרגלית", "LowOrPeakDescFull": "19:00 - 23:59 - שפל ערב", "year_key": 2025, "month_key": 6, "day_1": null, "day_2": 32, "day_3": 105, "day_4": 88, "day_5": 97, "day_6": null, "day_7": 26, "day_8": 52, "day_9": 249, "day_10": 93, "day_11": 49, "day_12": 114, "day_13": null, "day_14": 1, "day_15": 1, "day_16": 31, "day_17": 10, "day_18": 11, "d
+      דוגמה: {"_id": 2, "StationId": 2721, "StationName": "מסוף גילה/המרגלית", "LowOrPeakDescFull": "19:00 - 23:59 - שפל ערב", "year_key": 2025, "month_key": 7, "day_1": 71, "day_2": 49, "day_3": 90, "day_4": null, "day_5": 36, "day_6": 52, "day_7": 113, "day_8": 51, "day_9": 147, "day_10": 117, "day_11": null, "day_12": 25, "day_13": 57, "day_14": 70, "day_15": 113, "day_16": 75, "day_17": 164, "day_18": null
+      דוגמה: {"_id": 3, "StationId": 2721, "StationName": "מסוף גילה/המרגלית", "LowOrPeakDescFull": "19:00 - 23:59 - שפל ערב", "year_key": 2025, "month_key": 8, "day_1": null, "day_2": 30, "day_3": 37, "day_4": 103, "day_5": 74, "day_6": 121, "day_7": 68, "day_8": null, "day_9": 33, "day_10": 102, "day_11": 72, "day_12": 203, "day_13": 50, "day_14": 76, "day_15": null, "day_16": 32, "day_17": 116, "day_18": 84
+    - משאב: מאגר תיקופי מסלקה לתחנה 2024 · CSV · 391507654 בייט · עודכן=2025-02-24T15:08:54.146746 · datastore=True · id=51703b73-c27b-497e-8701-ea979a0c3835
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/51703b73-c27b-497e-8701-ea979a0c3835/download/51703b73-c27b-497e-8701-ea979a0c3835.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 1942296
+      דוגמה: {"_id": 1, "StationId": 30178, "StationName": "פנימיית הדסה נעורים", "LowOrPeakDescFull": "06:00 - 08:59 - שיא בוקר", "year_key": 2024, "month_key": 5, "day_1": null, "day_2": null, "day_3": null, "day_4": null, "day_5": null, "day_6": 2, "day_7": 3, "day_8": 1, "day_9": null, "day_10": null, "day_11": null, "day_12": 3, "day_13": 1, "day_14": null, "day_15": 1, "day_16": 2, "day_17": null, "day_1
+      דוגמה: {"_id": 2, "StationId": 30178, "StationName": "פנימיית הדסה נעורים", "LowOrPeakDescFull": "06:00 - 08:59 - שיא בוקר", "year_key": 2024, "month_key": 6, "day_1": null, "day_2": null, "day_3": null, "day_4": 3, "day_5": 1, "day_6": 1, "day_7": null, "day_8": null, "day_9": null, "day_10": 1, "day_11": 1, "day_12": null, "day_13": 2, "day_14": 1, "day_15": null, "day_16": 3, "day_17": 1, "day_18": 1,
+      דוגמה: {"_id": 3, "StationId": 30178, "StationName": "פנימיית הדסה נעורים", "LowOrPeakDescFull": "06:00 - 08:59 - שיא בוקר", "year_key": 2024, "month_key": 7, "day_1": 1, "day_2": null, "day_3": 3, "day_4": 1, "day_5": 1, "day_6": null, "day_7": 3, "day_8": 2, "day_9": 1, "day_10": 1, "day_11": 1, "day_12": null, "day_13": null, "day_14": 1, "day_15": 1, "day_16": 1, "day_17": 2, "day_18": 2, "day_19": n
+    - משאב: מאגר תיקופי מסלקה לתחנה 2023 · CSV · 392709164 בייט · עודכן=2024-02-15T05:37:58.567845 · datastore=True · id=e265857e-9f53-419f-ad0b-860d2bf6fbb8
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/e265857e-9f53-419f-ad0b-860d2bf6fbb8/download/e265857e-9f53-419f-ad0b-860d2bf6fbb8.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 1957511
+      דוגמה: {"_id": 1, "StationId": 1010, "StationName": "עין גדי/אפרתה", "LowOrPeakDescFull": "06:00 - 08:59 - שיא בוקר", "year_key": 2023, "month_key": 1, "day_1": "85", "day_2": "101", "day_3": "90", "day_4": "101", "day_5": "98", "day_6": "31", "day_7": "", "day_8": "43", "day_9": "94", "day_10": "93", "day_11": "87", "day_12": "98", "day_13": "33", "day_14": "", "day_15": "85", "day_16": "86", "day_17": 
+      דוגמה: {"_id": 2, "StationId": 1010, "StationName": "עין גדי/אפרתה", "LowOrPeakDescFull": "06:00 - 08:59 - שיא בוקר", "year_key": 2023, "month_key": 2, "day_1": "103", "day_2": "80", "day_3": "31", "day_4": "", "day_5": "56", "day_6": "97", "day_7": "80", "day_8": "81", "day_9": "84", "day_10": "34", "day_11": "", "day_12": "103", "day_13": "80", "day_14": "75", "day_15": "91", "day_16": "79", "day_17": 
+      דוגמה: {"_id": 3, "StationId": 1010, "StationName": "עין גדי/אפרתה", "LowOrPeakDescFull": "06:00 - 08:59 - שיא בוקר", "year_key": 2023, "month_key": 3, "day_1": "88", "day_2": "82", "day_3": "26", "day_4": "", "day_5": "82", "day_6": "70", "day_7": "45", "day_8": "19", "day_9": "96", "day_10": "27", "day_11": "", "day_12": "92", "day_13": "102", "day_14": "86", "day_15": "85", "day_16": "84", "day_17": "
+    - משאב: מאגר תיקופי מסלקה לתחנה 2022 · CSV · 471793160 בייט · עודכן=2023-02-24T05:02:59.747454 · datastore=True · id=7382a5e4-f12c-4644-87c1-e6942da3ee92
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/7382a5e4-f12c-4644-87c1-e6942da3ee92/download/7382a5e4-f12c-4644-87c1-e6942da3ee92.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 2430746
+      דוגמה: {"_id": 1, "StationId": "33446", "StationName": "יהודה שטיין/שד. דוד רזיאל", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": "2022", "month_key": "8", "day_1": "2", "day_2": "1", "day_3": "3", "day_4": "1", "day_5": "1", "day_6": "", "day_7": "1", "day_8": "2", "day_9": "3", "day_10": "3", "day_11": "2", "day_12": "2", "day_13": "", "day_14": "4", "day_15": "12", "day_16": "2", 
+      דוגמה: {"_id": 2, "StationId": "33446", "StationName": "יהודה שטיין/שד. דוד רזיאל", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": "2022", "month_key": "9", "day_1": "2", "day_2": "2", "day_3": "", "day_4": "3", "day_5": "4", "day_6": "2", "day_7": "15", "day_8": "3", "day_9": "2", "day_10": "", "day_11": "2", "day_12": "3", "day_13": "2", "day_14": "5", "day_15": "3", "day_16": "1", 
+      דוגמה: {"_id": 3, "StationId": "33446", "StationName": "יהודה שטיין/שד. דוד רזיאל", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": "2022", "month_key": "10", "day_1": "", "day_2": "2", "day_3": "3", "day_4": "1", "day_5": "", "day_6": "3", "day_7": "1", "day_8": "", "day_9": "2", "day_10": "", "day_11": "5", "day_12": "3", "day_13": "", "day_14": "3", "day_15": "", "day_16": "2", "day
+    - משאב: מאגר תיקופי מסלקה לתחנה 2021 · CSV · 433250093 בייט · עודכן=2025-07-07T12:31:29.550044 · datastore=True · id=c79a0f09-c1c2-4db3-90aa-91cbe8632be8
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/c79a0f09-c1c2-4db3-90aa-91cbe8632be8/download/tikufim_station_2021.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 2216216
+      דוגמה: {"_id": 1, "StationId": -1, "StationName": "לא מוגדר", "LowOrPeakDescFull": "24:00 - 27:59 - שפל לילה", "year_key": 2021, "month_key": 1, "day_1": 16, "day_2": null, "day_3": 6, "day_4": 3, "day_5": 2, "day_6": 3, "day_7": 4, "day_8": 16, "day_9": null, "day_10": 4, "day_11": 2, "day_12": 2, "day_13": 4, "day_14": 4, "day_15": 16, "day_16": null, "day_17": 4, "day_18": 5, "day_19": 5, "day_20": 2,
+      דוגמה: {"_id": 2, "StationId": -1, "StationName": "לא מוגדר", "LowOrPeakDescFull": "24:00 - 27:59 - שפל לילה", "year_key": 2021, "month_key": 2, "day_1": 5, "day_2": 5, "day_3": 8, "day_4": 6, "day_5": 14, "day_6": null, "day_7": 4, "day_8": 5, "day_9": 7, "day_10": 6, "day_11": 7, "day_12": 27, "day_13": null, "day_14": 6, "day_15": 6, "day_16": 10, "day_17": 8, "day_18": 1, "day_19": 10, "day_20": null
+      דוגמה: {"_id": 3, "StationId": -1, "StationName": "לא מוגדר", "LowOrPeakDescFull": "24:00 - 27:59 - שפל לילה", "year_key": 2021, "month_key": 3, "day_1": 2, "day_2": 6, "day_3": 7, "day_4": 3, "day_5": 28, "day_6": 2, "day_7": 6, "day_8": 2, "day_9": 6, "day_10": 4, "day_11": 2, "day_12": 29, "day_13": 7, "day_14": 3, "day_15": 7, "day_16": 7, "day_17": 7, "day_18": 13, "day_19": 88, "day_20": 4, "day_21
+    - משאב: מאגר תיקופי מסלקה לתחנה 2020 · CSV · 339955166 בייט · עודכן=2025-07-07T12:22:14.471426 · datastore=True · id=4d36ad72-f056-4bac-b831-ddc7d92326bb
+      url=https://data.gov.il/dataset/1e9d4542-97af-47ac-a780-f2a6b291b1f5/resource/4d36ad72-f056-4bac-b831-ddc7d92326bb/download/tikufim_station_2020.csv
+      שדות: ['_id', 'StationId', 'StationName', 'LowOrPeakDescFull', 'year_key', 'month_key', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7', 'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16', 'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25', 'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31']
+      סה"כ רשומות: 1705857
+      דוגמה: {"_id": 1, "StationId": 3, "StationName": "ישיבת הרי יהודה", "LowOrPeakDescFull": "24:00 - 27:59 - שפל לילה", "year_key": 2020, "month_key": 6, "day_1": null, "day_2": null, "day_3": null, "day_4": null, "day_5": null, "day_6": null, "day_7": null, "day_8": null, "day_9": null, "day_10": null, "day_11": 2, "day_12": null, "day_13": null, "day_14": null, "day_15": null, "day_16": null, "day_17": nu
+      דוגמה: {"_id": 2, "StationId": 3, "StationName": "ישיבת הרי יהודה", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": 2020, "month_key": 1, "day_1": null, "day_2": null, "day_3": null, "day_4": null, "day_5": null, "day_6": null, "day_7": null, "day_8": null, "day_9": null, "day_10": null, "day_11": null, "day_12": null, "day_13": null, "day_14": null, "day_15": 2, "day_16": null, "day_1
+      דוגמה: {"_id": 3, "StationId": 3, "StationName": "ישיבת הרי יהודה", "LowOrPeakDescFull": "04:00 - 05:59 - שפל לפנות בוקר", "year_key": 2020, "month_key": 2, "day_1": null, "day_2": null, "day_3": null, "day_4": null, "day_5": null, "day_6": null, "day_7": null, "day_8": null, "day_9": null, "day_10": null, "day_11": null, "day_12": null, "day_13": null, "day_14": null, "day_15": null, "day_16": null, "da
+  * מאגר: תחנות - דיגום איכות מים · name=qual_per_hydro_station · ארגון=הרשות הממשלתית למים ולביוב · עודכן=2026-09-01T12:32:38.661805 · רישיון=Creative Commons Attribution
+    תיאור: מאגר המידע מכיל נתוני איכות מים: פרוט נתונים כימיים עיקריים במי גיאויות וזרימות בסיס בנחלים, אשר נדגמים על ידי השירות ההידרולוגי.
+    - משאב: תחנות - דיגום איכות מים · CSV · 6548344 בייט · עודכן=2026-09-01T12:30:25.588790 · datastore=True · id=eea54e96-d51e-4def-b975-bd409eda7c64
+      url=https://data.gov.il/dataset/db8f9bc9-738a-4d83-b3ce-74e8a5f7f844/resource/eea54e96-d51e-4def-b975-bd409eda7c64/download/eea54e96-d51e-4def-b975-bd409eda7c64.csv
+      שדות: ['_id', 'מספר זיהוי', 'שם עברית', 'שם אנגלית', 'מוסד דוגם', 'מעבדה', 'שנה הידרולוגית', 'תאריך דגימה', 'סימן גדול/קטן', 'תוצאה', 'סמל פרמטר', 'תאור מקוצר', 'יחידת מידה']
+      סה"כ רשומות: 49141
+      דוגמה: {"_id": 1, "מספר זיהוי": 1105, "שם עברית": "בצת - ע''י אילון", "שם אנגלית": "BEZET - NEAR AYYALON", "מוסד דוגם": "שירות הידרולוגי", "מעבדה": "מעבדה לאומית לניטור", "שנה הידרולוגית": "1954/1955", "תאריך דגימה": "09/11/1954 00:00", "סימן גדול/קטן": "", "תוצאה": 25, "סמל פרמטר": "CL", "תאור מקוצר": "CHLORIDE A", "יחידת מידה": "MG/L"}
+      דוגמה: {"_id": 2, "מספר זיהוי": 1105, "שם עברית": "בצת - ע''י אילון", "שם אנגלית": "BEZET - NEAR AYYALON", "מוסד דוגם": "שירות הידרולוגי", "מעבדה": "מעבדה לאומית לניטור", "שנה הידרולוגית": "1954/1955", "תאריך דגימה": "09/11/1954 00:00", "סימן גדול/קטן": "", "תוצאה": 32, "סמל פרמטר": "HARD", "תאור מקוצר": "HARDNESS A", "יחידת מידה": "MG/L"}
+      דוגמה: {"_id": 3, "מספר זיהוי": 1105, "שם עברית": "בצת - ע''י אילון", "שם אנגלית": "BEZET - NEAR AYYALON", "מוסד דוגם": "שירות הידרולוגי", "מעבדה": "מעבדה לאומית לניטור", "שנה הידרולוגית": "1954/1955", "תאריך דגימה": "09/11/1954 00:00", "סימן גדול/קטן": "", "תוצאה": 7.6, "סמל פרמטר": "PHFD", "תאור מקוצר": "PH MEASURE", "יחידת מידה": "UNIT"}
+  * מאגר: רשימת תחנות הידרומטריות · name=hydro_station · ארגון=הרשות הממשלתית למים ולביוב · עודכן=2026-09-01T12:30:35.347713 · רישיון=Creative Commons Attribution
+    תיאור: רשימת תחנות תצפית של השרות ההידרולוגי (פעילות ולא פעילות כיום), המספקות נתונים הידרולוגיים מדודים.
+    - משאב: רשימת תחנות הידרומטריות · CSV · 39146 בייט · עודכן=2026-09-01T12:30:01.710455 · datastore=True · id=a0522b41-00ad-4367-a00a-2d97b050ec1d
+      url=https://data.gov.il/dataset/096db5d2-dc8b-40c8-9fe7-2b839a435d92/resource/a0522b41-00ad-4367-a00a-2d97b050ec1d/download/a0522b41-00ad-4367-a00a-2d97b050ec1d.csv
+      שדות: ['_id', 'זיהוי תחנה', 'שם עברית', 'שם אנגלית', 'תאריך הקמה', "שטח היקוות (קמ''ר)", 'שטח משותף', 'נ.צ. X (רוחב)', 'נ.צ. Y (רוחב)', 'מספר קבוצה', 'תחום התנקזות של נחל ראשי', 'סטטוס תחנה נוכחי']
+      סה"כ רשומות: 458
+      דוגמה: {"_id": 1, "זיהוי תחנה": 1102, "שם עברית": "בצת-כביש 4", "שם אנגלית": "BEZET- ROAD 4", "תאריך הקמה": "27/01/2015", "שטח היקוות (קמ''ר)": 102, "שטח משותף": "לא", "נ.צ. X (רוחב)": 211086, "נ.צ. Y (רוחב)": 775565, "מספר קבוצה": null, "תחום התנקזות של נחל ראשי": "בצת", "סטטוס תחנה נוכחי": "לא פעילה"}
+      דוגמה: {"_id": 2, "זיהוי תחנה": 1105, "שם עברית": "בצת - ע''י אילון", "שם אנגלית": "BEZET - NEAR AYYALON", "תאריך הקמה": "01/10/1949", "שטח היקוות (קמ''ר)": 71, "שטח משותף": "לא", "נ.צ. X (רוחב)": 221150, "נ.צ. Y (רוחב)": 775650, "מספר קבוצה": 1106, "תחום התנקזות של נחל ראשי": "בצת", "סטטוס תחנה נוכחי": "לא פעילה"}
+      דוגמה: {"_id": 3, "זיהוי תחנה": 1106, "שם עברית": "בצת - ע''י חורבת כרכרה", "שם אנגלית": "BEZET - NEAR AYYALON", "תאריך הקמה": "01/10/1944", "שטח היקוות (קמ''ר)": 71, "שטח משותף": "לא", "נ.צ. X (רוחב)": 220950, "נ.צ. Y (רוחב)": 775350, "מספר קבוצה": 1106, "תחום התנקזות של נחל ראשי": "בצת", "סטטוס תחנה נוכחי": "לא פעילה"}
+  * מאגר: מאגר תחנות הדלק · name=fuelstationbynumber · ארגון=משרד האנרגיה  · עודכן=2026-08-06T08:34:05.762589 · רישיון=
+    תיאור: רשימת תחנות הדלק חוקיות לפי מספר תחנה
+    - משאב: מאגר תחנות הדלק · XLSX · 96635 בייט · עודכן=2026-08-06T08:34:05.736640 · datastore=True · id=ff3b653c-d268-4eb7-a86b-6de69e77043a
+      url=https://data.gov.il/dataset/09f0e9ee-5cef-48f7-84f6-10235e6dd9ed/resource/ff3b653c-d268-4eb7-a86b-6de69e77043a/download/fuel-station-by-number-27.xlsx
+      שדות: ['_id', 'station_number', 'station_name', 'company', 'location', 'City', 'authority_name', 'telephone']
+      סה"כ רשומות: 1271
+      דוגמה: {"_id": 1, "station_number": 877, "station_name": "טן ראש פינה", "company": "טן", "location": "ראש פינה סנטר", "City": "ראש פינה", "authority_name": "ראש פינה", "telephone": "04-6930906"}
+      דוגמה: {"_id": 2, "station_number": 878, "station_name": "טן טבריה", "company": "טן", "location": "ויצמן 1 טבריה עילית אזור התעשיה", "City": "טבריה", "authority_name": "טבריה", "telephone": "04-6737146"}
+      דוגמה: {"_id": 3, "station_number": 881, "station_name": "טן עילבון", "company": "טן", "location": "עילבון", "City": "עילבון", "authority_name": "עילבון", "telephone": "04-6778330"}
+
+=== זמני הגעה לתחנה לפי יום ושעה · חיפוש: ArrivalToStationDayandHours ===
+  נמצאו 19 מאגרים
+  (כבר הוצג: רכבת לו"ז)
+  (כבר הוצג: תחנות התחסנות כנגד חצבת)
+  (כבר הוצג: תיקופי מסלקה לתחנה)
+  (כבר הוצג: תחנות - דיגום איכות מים)
+  (כבר הוצג: רשימת תחנות הידרומטריות)
+  (כבר הוצג: מאגר תחנות הדלק)
+
+=== רכבת לו"ז ברמת תחנה · חיפוש: Train_luz_station ===
+  נמצאו 21 מאגרים
+  (כבר הוצג: רכבת תכנון מול ביצוע)
+  (כבר הוצג: רכבת לו"ז)
+  * מאגר: בטיחות ברכבת · name=train_safety · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T10:35:06.457389 · רישיון=אחר (פתוח)
+    תיאור: מאגר זה מציג את האירועים הבטיחותיים ברכבת. הנתונים יתעדכנו אחת לשנה עם הנתונים הבאים: שנה, סיווג ראשי של אירוע, כמות אירועים.
+    - משאב: בטיחות ברכבת · CSV · 4528 בייט · עודכן=2026-09-06T10:35:06.431480 · datastore=True · id=5e57b0f2-60ce-4c69-9312-9aba3a56a52a
+      url=https://data.gov.il/dataset/88e3e258-0cf0-4c10-b172-3d8fb8c4ad20/resource/5e57b0f2-60ce-4c69-9312-9aba3a56a52a/download/5e57b0f2-60ce-4c69-9312-9aba3a56a52a.csv
+      שדות: ['_id', 'shana', 'sivug_rashi', 'sivug_rashi_count']
+      סה"כ רשומות: 108
+      דוגמה: {"_id": 1, "shana": 2015, "sivug_rashi": "אחר", "sivug_rashi_count": 10}
+      דוגמה: {"_id": 2, "shana": 2015, "sivug_rashi": "התאבדות", "sivug_rashi_count": 6}
+      דוגמה: {"_id": 3, "shana": 2015, "sivug_rashi": "התנגשות בכלי רכב במפגש", "sivug_rashi_count": 1}
+    - משאב: מבנה הנתונים במאגר · PDF · 95763 בייט · עודכן=2020-08-31T12:15:15.671641 · datastore=False · id=4c454d9a-e7e7-40f6-b4fd-971fa602bed9
+      url=https://data.gov.il/dataset/88e3e258-0cf0-4c10-b172-3d8fb8c4ad20/resource/4c454d9a-e7e7-40f6-b4fd-971fa602bed9/download/train_safety_structure.pdf
+  (כבר הוצג: תחנות התחסנות כנגד חצבת)
+  * מאגר: השתלמויות למורי דרך · name=training-courses · ארגון=משרד התיירות · עודכן=2026-09-06T07:51:45.559028 · רישיון=Other (Open)
+    תיאור: מורי דרך מחויבים בביצוע שתי השתלמויות, במהלך שנתיים, לשם חידוש רישיונם בהתאם להנחיות הממונה, כמוגדר בתקנות.   עד לחודש יולי 2020 סיפק המשרד בעצמו את ההשתלמויות והחל מחודש זה שונתה השיטה ולמורי הדרך הוצעה תכנית השתלמויות שבוצעה ותופעלה על ידי מארגני השתלמויות חיצוניים, בהתאם לתנאים שנקבעו על ידי המ
+    - משאב: השתלמויות מורי דרך 2020 - 2021 · CSV · 176008 בייט · עודכן=2025-09-07T06:28:37.681733 · datastore=True · id=5343c53e-f49b-4cd4-a9f6-1fd62379ab51
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/5343c53e-f49b-4cd4-a9f6-1fd62379ab51/download/tourist-guides-continuing-education-2025-2026_2025-06-15_3-6-2-1-1-1-1-2-1-1.csv
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'character', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 506
+      דוגמה: {"_id": 1, "School": "אגודת מורי הדרך בישראל", "Name": "בעקבות דוברי הארמית", "Number": 6219, "Date": "8.7.25", "Instructor": "עודד אמיתי", "Region": "ירושלים", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/3OkZS8lgGkqkkqWMSat69A/PaymentSP\" target='_blank'>הרשמה</a>"}
+      דוגמה: {"_id": 2, "School": "אגודת מורי הדרך בישראל", "Name": "מעיליא לעומק", "Number": 6169, "Date": "27.8.25", "Instructor": "אליאס אבו עוקסא", "Region": "חיפה והצפון", "character": "סיור רכוב", "Language": "עברית", "Price": 190, "Price_Range": "151-200", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/8AUJmu5ly0OYoFxuijh4WA/Intro\" target='_blank'>הרשמה</a>"}
+      דוגמה: {"_id": 3, "School": "אגודת מורי הדרך בישראל", "Name": "שימוש באמצעים דיגיטליים בהדרכה עירונית", "Number": 6233, "Date": "10.9.25", "Instructor": "ד\"ר רביק צבי זרם", "Region": "מרכז", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/FVhyuccxBkeJ9g4EglW3CQ/PaymentSP\" target='_blank'>הרשמה</a
+    - משאב: השתלמויות 2021-2022 · XLSX · 38555 בייט · עודכן=2022-06-09T03:58:46.404597 · datastore=True · id=39722a8c-95db-496d-9723-0c547fbe2efe
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/39722a8c-95db-496d-9723-0c547fbe2efe/download/tour_guides_tutorial_20220609.xlsx
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'Place', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 286
+      דוגמה: {"_id": 1, "School": "מוזיאון חצר הישוב הישן", "Name": "Surprises on the streets of Jerusalem", "Number": 3905, "Date": "2021-10-01T00:00:00", "Instructor": "תמר הירדני", "Region": "ירושלים", "Place": "ירושלים", "Language": "אנגלית", "Price": 100, "Price_Range": "50 עד 100 ₪", "Registration": "<a href=\"https://www.oyc.co.il/הרשמה-להשתלמויות/\" target=_blank\">להרשמה לחצו כאן</a>"}
+      דוגמה: {"_id": 2, "School": "נגב ברמה אחרת (שביל הידע במדבר)", "Name": "מצפה רמון ואנשיה", "Number": 3956, "Date": "2021-08-25T00:00:00", "Instructor": "אייל אלכסנדר", "Region": "דרום", "Place": "מצפה רמון", "Language": "עברית", "Price": 100, "Price_Range": "50 עד 100 ₪", "Registration": "<a href=\"https://www.fee.co.il/Md0421\" target=_blank\">להרשמה לחצו כאן</a>"}
+      דוגמה: {"_id": 3, "School": "אוניברסיטת אריאל בשומרון", "Name": "ארכיאולוגיה, טכנולוגיה וסביבה", "Number": 3960, "Date": "2021-07-04T00:00:00", "Instructor": "ד\"ר עדי אליהו בהר, פרופ' אורן אקרמן", "Region": "שומרון", "Place": "שומרון", "Language": "עברית", "Price": 80, "Price_Range": "50 עד 100 ₪", "Registration": "<a href=\"https://www.ariel.ac.il/wp/externalcertificate/%d7%94%d7%a9%d7%aa%d7%9c%d7%9e%d
+    - משאב: מוסדות לימוד · XLSX · 11319 בייט · עודכן=2026-02-17T10:37:10.539449 · datastore=True · id=6df4369b-54ee-4d17-b36a-0d57c4cab517
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/6df4369b-54ee-4d17-b36a-0d57c4cab517/download/tourism-studies-institutions_20220818_0925_16_2_26.xlsx
+      שדות: ['_id', 'institution', 'address', 'city', 'contact', 'phone', 'email', 'remarks']
+      סה"כ רשומות: 9
+      דוגמה: {"_id": 1, "institution": "בית הספר לתיירות (שלוחת חיפה)", "address": "רחוב הנמל 65 חיפה 33032", "city": "חיפה", "contact": " יאיר זריבי", "phone": "<a href=\"tel:04-8240367\">04-8240367</a>", "email": "<a href=\"mailto:infoshivuk@gmail.com\">infoshivuk@gmail.com</a>", "remarks": "קורס בעברית בלבד"}
+      דוגמה: {"_id": 2, "institution": "בית הספר לתיירות (שלוחת ירושלים)", "address": "ת\"ד 39222  ירושלים 91391", "city": "ירושלים", "contact": "בתי סומך", "phone": "<a href=\"tel:02-6796579\">02-6796579</a>", "email": "<a href=\"mailto:tourism@netvision.net.il\">tourism@netvision.net.il</a>", "remarks": "קורס בעברית ובאנגלית"}
+      דוגמה: {"_id": 3, "institution": "בית הספר לתיירות (שלוחת תל-אביב)", "address": "ת\"ד 22273  תל-אביב 61227", "city": "תל אביב", "contact": "מיכאל", "phone": "<a href=\"tel:03-6055916 \">03-6055916 </a>", "email": "<a href=\"mailto:isot3@netvision.net.il\">isot3@netvision.net.il</a>", "remarks": "קורס בעברית ובאנגלית"}
+    - משאב: השתלמויות למורי דרך 2022 - 2023 · XLSX · 42768 בייט · עודכן=2023-05-22T10:05:00.467388 · datastore=True · id=588f8c64-667d-42b5-8ee7-f67c816f86bd
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/588f8c64-667d-42b5-8ee7-f67c816f86bd/download/tour_guides_continuing_education_20230522a.xlsx
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'character', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 332
+      דוגמה: {"_id": 1, "School": "בית הספר לתיירות בישראל", "Name": "חידושי מחקר בעיר דוד", "Number": 4321, "Date": "2022-09-21T00:00:00", "Instructor": "ד\"ר אייל מירון", "Region": "ירושלים", "character": "סיור עירוני", "Language": "אנגלית", "Price": 150, "Price_Range": "101-150", "Registration": "<a href=\"https://studentreg.or-bit.net/CourseRegistration/Tayarut/RegPage.aspx?lid=846 \"target=\"_blank\">הרשמ
+      דוגמה: {"_id": 2, "School": "בית הספר לתיירות בישראל", "Name": "קיסריה סיור עומק", "Number": 4336, "Date": "2023-03-13T00:00:00", "Instructor": "ד\"ר אייל מירון", "Region": "מישור החוף", "character": "סיור רגלי", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://studentreg.or-bit.net/CourseRegistration/Tayarut/RegPage.aspx?lid=835 \"target=\"_blank\">הרשמה</a
+      דוגמה: {"_id": 3, "School": "בית הספר לתיירות בישראל", "Name": "מתחנת רכבת בת גלים לרכבת מרכז", "Number": 4337, "Date": "2023-05-08T00:00:00", "Instructor": "יגאל נחום", "Region": "חיפה והצפון", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://studentreg.or-bit.net/CourseRegistration/Tayarut/RegPage.aspx?lid=840 \"target=\"_blank\
+    - משאב: השתלמויות למורי דרך 2023 - 2024 · XLSX · 47319 בייט · עודכן=2024-06-17T05:41:44.433266 · datastore=True · id=e358a495-7289-478c-8bd9-4fd9f42387a7
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/e358a495-7289-478c-8bd9-4fd9f42387a7/download/tour_guides_continuing_education_170624.xlsx
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'character', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 322
+      דוגמה: {"_id": 1, "School": "מוזיאון חצר הישוב הישן", "Name": "חפשו את האשה", "Number": 4796, "Date": "2023-09-12T00:00:00", "Instructor": "תמר הירדני", "Region": "ירושלים", "character": "סיור עירוני", "Language": "עברית", "Price": 100, "Price_Range": "50-100", "Registration": "<a href=\"https://www.oyc.co.il/education/השתלמויות-מורי-דרך/\" target=\"_blank\">הרשמה</a>"}
+      דוגמה: {"_id": 2, "School": "בית התפוצות חל\"צ (אנו מוזיאון העם היהודי)", "Name": "מאחורי הקלעים: מרעיון לסיפור ועד למוזיאון ", "Number": 4797, "Date": "2023-12-04T00:00:00", "Instructor": "אורית שחם גובר, אירית שפירא מאיר, מיכל הומינר", "Region": "תל אביב", "character": "יום עיון", "Language": "עברית", "Price": 100, "Price_Range": "50-100", "Registration": "<a href=\"https://tickets.anumuseum.org.il/ ev
+      דוגמה: {"_id": 3, "School": "המרכז האקדמי לוינסקי וינגייט בע\"מ", "Name": "שביל ישוע בגליל - למיטיבי לכת", "Number": 4798, "Date": "2024-03-11T00:00:00", "Instructor": "אורי רייס", "Region": "גליל תחתון", "character": "סיור רגלי למיטבי לכת", "Language": "עברית", "Price": 165, "Price_Range": "151-200", "Registration": "<a href=\"https://www.wincol.ac.il/?item=59337&section=1402\" target=\"_blank\">הרשמה</
+    - משאב: השתלמויות למורי דרך 2024 - 2025 · CSV · 123118 בייט · עודכן=2025-06-23T09:49:00.272063 · datastore=True · id=6a5be2ac-2714-4cc1-b580-772beb184da3
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/6a5be2ac-2714-4cc1-b580-772beb184da3/download/tour_guides_continuing_education_20250522_2-22-1-1-3.csv
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'character', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 443
+      דוגמה: {"_id": 1, "School": " זוזו תיירות מוטורית בע\"מ ", "Name": "סיור פורץ דלתות - לוד ורמלה", "Number": 5506, "Date": "08/12/2024", "Instructor": "רון פלד, שמעון גת", "Region": "מרכז", "character": "סיור רכוב", "Language": "עברית", "Price": 180, "Price_Range": "151-200", "Registration": "<a href=\"https://did.li/u8xrl\"  target=\"_blank\">הרשמה</a>"}
+      דוגמה: {"_id": 2, "School": " זוזו תיירות מוטורית בע\"מ ", "Name": "סיור פורץ דלתות - לוד ורמלה", "Number": 5507, "Date": "08/06/2025", "Instructor": "רון פלד, שמעון גת", "Region": "מרכז", "character": "סיור רכוב", "Language": "עברית", "Price": 180, "Price_Range": "151-200", "Registration": "<a href=\"https://did.li/u8xrl\"  target=\"_blank\">הרשמה</a>"}
+      דוגמה: {"_id": 3, "School": "אגודת מורי הדרך בישראל", "Name": "חוץ לארץ בירושלים של קדושה", "Number": 5640, "Date": "15/07/2024", "Instructor": "עודד אמיתי", "Region": "ירושלים", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/Tam0cVtB0qNDbpBN7DQpA/Intro\"  target=\"_blank\">הרשמה</a>"}
+    - משאב: השתלמויות למורי דרך 2025 - 2026 · CSV · 149185 בייט · עודכן=2026-06-02T06:23:59.836955 · datastore=True · id=11f05da1-b784-46bf-a706-6eaa632379f2
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/11f05da1-b784-46bf-a706-6eaa632379f2/download/tourist-guides-continuing-education-2025-2026_2025-06-15_3-6-2-1-1-1-8-1-1-1-1-1-2-1-1-1-1-1-1-1.csv
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'character', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 423
+      דוגמה: {"_id": 1, "School": "אגודת מורי הדרך בישראל", "Name": "בעקבות דוברי הארמית", "Number": 6219, "Date": "2025-07-08T00:00:00", "Instructor": "עודד אמיתי", "Region": "ירושלים", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/3OkZS8lgGkqkkqWMSat69A/PaymentSP\" target='_blank'>הרשמה</a>"}
+      דוגמה: {"_id": 2, "School": "אגודת מורי הדרך בישראל", "Name": "מעיליא לעומק", "Number": 6169, "Date": "2025-08-27T00:00:00", "Instructor": "אליאס אבו עוקסא", "Region": "חיפה והצפון", "character": "סיור רכוב", "Language": "עברית", "Price": 190, "Price_Range": "151-200", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/8AUJmu5ly0OYoFxuijh4WA/Intro\" target='_blank'>הרשמה</a>"}
+      דוגמה: {"_id": 3, "School": "אגודת מורי הדרך בישראל", "Name": "שימוש באמצעים דיגיטליים בהדרכה עירונית", "Number": 6233, "Date": "2025-09-10T00:00:00", "Instructor": "ד\"ר רביק צבי זרם", "Region": "מרכז", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "101-150", "Registration": "<a href=\"https://secure.cardcom.solutions/EA/EA5/FVhyuccxBkeJ9g4EglW3CQ/PaymentSP\" target='_bla
+    - משאב: השתלמויות למורי דרך 2026 - 2027 · CSV · 161053 בייט · עודכן=2026-09-06T07:51:35.009887 · datastore=True · id=b760848c-ce5e-4786-849c-20f93b2faaf4
+      url=https://data.gov.il/dataset/0d51bcd2-aa52-4c7c-8e5f-96d0d193a1fb/resource/b760848c-ce5e-4786-849c-20f93b2faaf4/download/tourist-guides-continuing-education-2027-2026-2-1-1-1-1-1-1-1-2-1-1-2.csv
+      שדות: ['_id', 'School', 'Name', 'Number', 'Date', 'Instructor', 'Region', 'character', 'Language', 'Price', 'Price_Range', 'Registration']
+      סה"כ רשומות: 464
+      דוגמה: {"_id": 1, "School": "מדרשת שומרון", "Name": "חברון בימי הביניים ובעת החדשה", "Number": "6380", "Date": "2026-07-01T00:00:00", "Instructor": "אסף דל", "Region": "הר חברון", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "100-149", "Registration": "<a href=\"https://www.midshomron.org.il/tourguide-2027/\" target=\"_blank\">הרשמו כאן</a>"}
+      דוגמה: {"_id": 2, "School": "החברה לשיקום ופיתוח הרובע היהודי בעיר העתיקה בירושלים בע\"מ", "Name": "שרידי חומות ירושלים", "Number": "6409", "Date": "2026-07-01T00:00:00", "Instructor": "שמואל בהט", "Region": "ירושלים", "character": "סיור עירוני", "Language": "עברית", "Price": 100, "Price_Range": "100-149", "Registration": "<a href=\"https://travelrova.co.il/%d7%a9%d7%a8%d7%99%d7%93%d7%99-%d7%97%d7%95%d7%
+      דוגמה: {"_id": 3, "School": "אגודת מורי הדרך בישראל", "Name": "חיפה של מטה", "Number": "6643", "Date": "2026-07-05T00:00:00", "Instructor": "גילי שולץ", "Region": "חיפה והצפון", "character": "סיור עירוני", "Language": "עברית", "Price": 120, "Price_Range": "100-149", "Registration": "<a href=\"https://itga.org.il/?page_id=18438\" target=\"_blank\">הרשמו כאן</a>"}
+  (כבר הוצג: תיקופי מסלקה לתחנה)
+
+=== רכבת תכנון מול ביצוע · חיפוש: train_trip ===
+  נמצאו 9 מאגרים
+  (כבר הוצג: רכבת תכנון מול ביצוע)
+  (כבר הוצג: רכבת לו"ז)
+  (כבר הוצג: בטיחות ברכבת)
+  (כבר הוצג: השתלמויות למורי דרך)
+  (כבר הוצג: תכנון מול ביצוע נסיעות אוטובוסים ברמת נסיעה בודדת)
+  * מאגר: מרכזי הכשרה · name=training-centers · ארגון=משרד העבודה · עודכן=2025-11-04T16:15:05.501385 · רישיון=Other (Open)
+    תיאור: מרכזי הכשרה
+    - משאב: מאגר מרכזי הכשרה · CSV · 179422 בייט · עודכן=2025-11-04T16:15:05.459194 · datastore=True · id=55d1c36c-dc86-4401-9336-e309965f692b
+      url=https://data.gov.il/dataset/e1721717-3e0a-4d6d-93b3-0129df2a57e2/resource/55d1c36c-dc86-4401-9336-e309965f692b/download/55d1c36c-dc86-4401-9336-e309965f692b.csv
+      שדות: ['_id', 'ObjectID', 'Mosad_Id', 'Mosad_Name', 'Nbr_Of_Students', 'Megama_Code_list', 'Megama_Name_list', 'Adress', 'Postal_Code', 'Distrcit_Code', 'Nafa_Code', 'City_Id', 'City_Name', 'Poc_Name', 'Manager_Name', 'Osek_Morshe_Num_Calc', 'Nbr_Of_Noar_Actions', 'Nbr_Of_Adult_Actions', 'geom']
+      סה"כ רשומות: 496
+      דוגמה: {"_id": 1, "ObjectID": 40080, "Mosad_Id": 40080, "Mosad_Name": "סלע מעבדות תכנה  בעמ     ", "Nbr_Of_Students": 167, "Megama_Code_list": "3485, 3381", "Megama_Name_list": "מפתח spOveD- מומחה, תכנות ופיתוח אפליקציות SWODNIW/BEW", "Adress": "ברוך הירש 14        ", "Postal_Code": 51202, "Distrcit_Code": 4, "Nafa_Code": 52, "City_Id": 6100, "City_Name": "בני ברק", "Poc_Name": "ולריה דובוב         ", "M
+      דוגמה: {"_id": 2, "ObjectID": 42501, "Mosad_Id": 42501, "Mosad_Name": "המכללה הטכנולוגית רופין  ", "Nbr_Of_Students": 381, "Megama_Code_list": "2371, 445, 1034, 2240, 2389, 1472, 3821, 473, 2390, 2356, 3814, 2360, 2354, 3842, 3841", "Megama_Name_list": "אוטוטק/אוטוטרוניקה-רכב קל ) עד 0053 ק\"ג(, נהיגת רכב ציבורי - עיוני, מתקין גז פחמימני מעובה)גפ\"מ( רמה 1, מינהל עסקי-למנהלי מוסך/מרכז שירותי רכב, רכב היב
+      דוגמה: {"_id": 3, "ObjectID": 40006, "Mosad_Id": 40006, "Mosad_Name": "רשת תיכוני טומשין  בע\"מ  ", "Nbr_Of_Students": 639, "Megama_Code_list": "451, 445, 466, 444, 473, 408, 420", "Megama_Name_list": "נהג אוטובוס זעיר פרטי, נהיגת רכב ציבורי - עיוני, יישום הוראות תקן אבטחת מטענים, נהיגת רכב משא כבד - עיוני, חקירת תאונות דרכים והפקת לקחים, מורה נהיגה, הסעת ילדים לנהגי רכב ציבורי", "Adress": "הרשל גרינשפן 
+
+=== רכבים ציבוריים פעילים · חיפוש: kli_rechev_ciburiim ===
+  נמצאו 7 מאגרים
+  * מאגר: מספרי רישוי של כלי הרכב הציבוריים הפעילים · name=kli_rechev_ciburiim · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T02:54:54.110043 · רישיון=Other (Open)
+    תיאור: מאגר זה מכיל מידע על כל כלי הרכב הציבוריים הפעילים (מוניות, זוטובוסים – מוניות שירות, אוטובוסים להסעות בתשלום)
+    - משאב: קובץ מספרי רישוי של כלי הרכב הציבוריים הפעילים · CSV · 12608075 בייט · עודכן=2026-09-06T02:51:00.702827 · datastore=True · id=cf29862d-ca25-4691-84f6-1be60dcb4a1e
+      url=https://data.gov.il/dataset/840827c2-7420-4687-9f2a-62aeb5602c11/resource/cf29862d-ca25-4691-84f6-1be60dcb4a1e/download/cf29862d-ca25-4691-84f6-1be60dcb4a1e.csv
+      שדות: ['_id', 'mispar_rechev', 'sug_rechev_cd', 'sug_rechev_nm', 'shnat_yitzur', 'mishkal_kolel', 'tozeret_cd', 'tozeret_nm', 'tzeva_cd', 'tzeva_rechev', 'degem_cd', 'degem_nm', 'kinuy_mishari', 'sug_rechev_EU_cd', 'sug_rechev_EU_nm', 'bitul_cd', 'bitul_nm', 'bitul_dt', 'tokef_dt', 'mispar_mekomot', 'mispar_mekomot_leyd_nahag']
+      סה"כ רשומות: 66061
+      דוגמה: {"_id": 1, "mispar_rechev": 78983802, "sug_rechev_cd": 611, "sug_rechev_nm": "אוטובוס צבורי עירוני", "shnat_yitzur": 2022, "mishkal_kolel": 5500, "tozeret_cd": 593, "tozeret_nm": "מרצדס בנץ גרמנ", "tzeva_cd": 80, "tzeva_rechev": "שנהב לבן", "degem_cd": null, "degem_nm": "SPRINTER 907.657", "kinuy_mishari": "", "sug_rechev_EU_cd": "M3", "sug_rechev_EU_nm": "", "bitul_cd": "0", "bitul_nm": "לא מבוטל
+      דוגמה: {"_id": 2, "mispar_rechev": 17763003, "sug_rechev_cd": 611, "sug_rechev_nm": "אוטובוס צבורי עירוני", "shnat_yitzur": 2022, "mishkal_kolel": 19000, "tozeret_cd": 965, "tozeret_nm": "הייגר סין", "tzeva_cd": 80, "tzeva_rechev": "שנהב לבן", "degem_cd": null, "degem_nm": "KLQ6129GQ2", "kinuy_mishari": "", "sug_rechev_EU_cd": "M3", "sug_rechev_EU_nm": "", "bitul_cd": "0", "bitul_nm": "לא מבוטל", "bitul_
+      דוגמה: {"_id": 3, "mispar_rechev": 14934402, "sug_rechev_cd": 611, "sug_rechev_nm": "אוטובוס צבורי עירוני", "shnat_yitzur": 2021, "mishkal_kolel": 19000, "tozeret_cd": 965, "tozeret_nm": "הייגר סין", "tzeva_cd": 30, "tzeva_rechev": "כחול", "degem_cd": null, "degem_nm": "KLQ6129GQ2", "kinuy_mishari": "", "sug_rechev_EU_cd": "M3", "sug_rechev_EU_nm": "", "bitul_cd": "0", "bitul_nm": "לא מבוטל", "bitul_dt":
+  * מאגר: מספרי רישוי של כלי רכב לא פעילים וחסרי קוד דגם · name=rechev_le_pail_without-degem · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T02:53:34.801883 · רישיון=Other (Open)
+    תיאור: המאגר מציג פרטים אודות כלי רכב חסרי קוד דגם, חסרי תוקף 13 חודש אחורה, לא גנובים וללא ביטול סופי. המאגר מתעדכן כל יום.
+    - משאב: מספרי רישוי של כלי רכב לא פעילים וחסרי קוד דגם · CSV · 202797238 בייט · עודכן=2026-09-06T02:44:57.322269 · datastore=True · id=6f6acd03-f351-4a8f-8ecf-df792f4f573a
+      url=https://data.gov.il/dataset/8672aa2c-3873-443a-b1ea-47ad546c6043/resource/6f6acd03-f351-4a8f-8ecf-df792f4f573a/download/6f6acd03-f351-4a8f-8ecf-df792f4f573a.csv
+      שדות: ['_id', 'mispar_rechev', 'mispar_shilda', 'tkina_EU', 'shnat_yitzur', 'tozeret_cd', 'tozeret_nm', 'tozeret_eretz_nm', 'sug_delek_cd', 'sug_delek_nm', 'mishkal_kolel', 'degem_nm', 'mishkal_azmi', 'nefach_manoa', 'degem_manoa', 'hanaa_cd', 'hanaa_nm', 'mishkal_mitan_harama', 'horaat_rishum']
+      סה"כ רשומות: 1439180
+      דוגמה: {"_id": 1, "mispar_rechev": 9240968, "mispar_shilda": "KG92P17BR8B009079", "tkina_EU": "O2", "shnat_yitzur": 2008, "tozeret_cd": 539, "tozeret_nm": "מרכבי", "tozeret_eretz_nm": "ישראל", "sug_delek_cd": null, "sug_delek_nm": "", "mishkal_kolel": 1250, "degem_nm": "PLM1250A", "mishkal_azmi": 400, "nefach_manoa": 0, "degem_manoa": "", "hanaa_cd": "Z", "hanaa_nm": "לא ידוע", "mishkal_mitan_harama": 85
+      דוגמה: {"_id": 2, "mispar_rechev": 9528874, "mispar_shilda": "KG92KJ5DRDB009027", "tkina_EU": "O2", "shnat_yitzur": 2013, "tozeret_cd": 539, "tozeret_nm": "מרכבי", "tozeret_eretz_nm": "ישראל", "sug_delek_cd": null, "sug_delek_nm": "", "mishkal_kolel": 1400, "degem_nm": "MN1402L", "mishkal_azmi": 810, "nefach_manoa": 0, "degem_manoa": "", "hanaa_cd": "Z", "hanaa_nm": "לא ידוע", "mishkal_mitan_harama": 590
+      דוגמה: {"_id": 3, "mispar_rechev": 9444979, "mispar_shilda": "KG91P75AAGB079114", "tkina_EU": "O1", "shnat_yitzur": 2016, "tozeret_cd": 658, "tozeret_nm": "מסגרי", "tozeret_eretz_nm": "ישראל", "sug_delek_cd": null, "sug_delek_nm": "", "mishkal_kolel": 750, "degem_nm": "ABM750", "mishkal_azmi": 250, "nefach_manoa": 0, "degem_manoa": "", "hanaa_cd": "Z", "hanaa_nm": "לא ידוע", "mishkal_mitan_harama": 500, 
+  * מאגר: תוצרים ודגמים של כלי רכב פרטי ומסחרי · name=degem-rechev-wltp · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T02:50:39.121879 · רישיון=אחר (פתוח)
+    תיאור: מאגר זה מכיל מידע רשמי של דגמי רכב פרטי משנת יצור 1996 ומעלה ודגמי רכב מסחרי משנת יצור 1998 ומעלה כולל נתוני WLTP
+    - משאב: תוצרים ודגמים של כלי רכב WLTP · CSV · 53327585 בייט · עודכן=2026-09-06T02:50:39.091602 · datastore=True · id=142afde2-6228-49f9-8a29-9b6c3a0cbe40
+      url=https://data.gov.il/dataset/45e317cf-7bb1-4535-b8cf-be5e79ea341f/resource/142afde2-6228-49f9-8a29-9b6c3a0cbe40/download/142afde2-6228-49f9-8a29-9b6c3a0cbe40.csv
+      שדות: ['_id', 'sug_degem', 'tozeret_cd', 'tozeret_nm', 'tozeret_eretz_nm', 'tozar', 'degem_cd', 'degem_nm', 'shnat_yitzur', 'kvuzat_agra_cd', 'nefah_manoa', 'mishkal_kolel', 'gova', 'hanaa_cd', 'hanaa_nm', 'mazgan_ind', 'abs_ind', 'kariot_avir_source', 'mispar_kariot_avir', 'hege_koah_ind', 'automatic_ind', 'halonot_hashmal_source', 'mispar_halonot_hashmal', 'halon_bagg_ind', 'galgaley_sagsoget_kala_ind', 'argaz_ind', 'merkav', 'ramat_gimur', 'delek_cd', 'delek_nm', 'mispar_dlatot', 'koah_sus', 'mispar_moshavim', 'bakarat_yatzivut_ind', 'kosher_grira_im_blamim', 'kosher_grira_bli_blamim', 'sug_tkina_cd', 'sug_tkina_nm', 'sug_mamir_cd', 'sug_mamir_nm', 'technologiat_hanaa_cd', 'technologiat_hanaa_nm', 'kamut_CO2', 'kamut_NOX', 'kamut_PM10', 'kamut_HC', 'kamut_HC_NOX', 'kamut_CO', 'kamut_CO2_city', 'kamut_NOX_city', 'kamut_PM10_city', 'kamut_HC_city', 'kamut_CO_city', 'kamut_CO2_hway', 'kamut_NOX_hway', 'kamut_PM10_hway', 'kamut_HC_hway', 'kamut_CO_hway', 'madad_yarok', 'kvutzat_zihum', 'bakarat_stiya_menativ_ind', 'bakarat_stiya_menativ_makor_hatkana', 'nitur_merhak_milfanim_ind', 'nitur_merhak_milfanim_makor_hatkana', 'zihuy_beshetah_nistar_ind', 'bakarat_shyut_adaptivit_ind', 'zihuy_holchey_regel_ind', 'zihuy_holchey_regel_makor_hatkana', 'maarechet_ezer_labalam_ind', 'matzlemat_reverse_ind', 'hayshaney_lahatz_avir_batzmigim_ind', 'hayshaney_hagorot_ind', 'nikud_betihut', 'ramat_eivzur_betihuty', 'teura_automatit_benesiya_kadima_ind', 'shlita_automatit_beorot_gvohim_ind', 'shlita_automatit_beorot_gvohim_makor_hatkana', 'zihuy_matzav_hitkarvut_mesukenet_ind', 'zihuy_tamrurey_tnua_ind', 'zihuy_rechev_do_galgali', 'zihuy_tamrurey_tnua_makor_hatkana', 'CO2_WLTP', 'HC_WLTP', 'PM_WLTP', 'NOX_WLTP', 'CO_WLTP', 'CO2_WLTP_NEDC', 'bakarat_stiya_activ_s', 'blima_otomatit_nesia_leahor', 'bakarat_mehirut_isa', 'blimat_hirum_lifnei_holhei_regel_ofanaim', 'hitnagshut_cad_shetah_met', 'alco_lock', 'dg_metach_solela', 'kinuy_mishari']
+      סה"כ רשומות: 101342
+      דוגמה: {"_id": 1, "sug_degem": "M", "tozeret_cd": 5, "tozeret_nm": "צ'אנג יאנג סין", "tozeret_eretz_nm": "סין", "tozar": "צ'אנג יאנג", "degem_cd": 179, "degem_nm": "4MN0N2", "shnat_yitzur": 2021, "kvuzat_agra_cd": 7, "nefah_manoa": 2967, "mishkal_kolel": 2900, "gova": 0, "hanaa_cd": null, "hanaa_nm": "לא ידוע קוד", "mazgan_ind": 1, "abs_ind": 1, "kariot_avir_source": "6", "mispar_kariot_avir": 6, "hege_k
+      דוגמה: {"_id": 2, "sug_degem": "M", "tozeret_cd": 5, "tozeret_nm": "צ'אנג יאנג סין", "tozeret_eretz_nm": "סין", "tozar": "צ'אנג יאנג", "degem_cd": 179, "degem_nm": "4MN0N2", "shnat_yitzur": 2022, "kvuzat_agra_cd": 7, "nefah_manoa": 2967, "mishkal_kolel": 2900, "gova": 0, "hanaa_cd": null, "hanaa_nm": "לא ידוע קוד", "mazgan_ind": 1, "abs_ind": 1, "kariot_avir_source": "6", "mispar_kariot_avir": 6, "hege_k
+      דוגמה: {"_id": 3, "sug_degem": "M", "tozeret_cd": 5, "tozeret_nm": "צ'אנג יאנג סין", "tozeret_eretz_nm": "סין", "tozar": "צ'אנג יאנג", "degem_cd": 179, "degem_nm": "4MN0N2", "shnat_yitzur": 2023, "kvuzat_agra_cd": 7, "nefah_manoa": 2967, "mishkal_kolel": 2900, "gova": 0, "hanaa_cd": null, "hanaa_nm": "לא ידוע קוד", "mazgan_ind": 1, "abs_ind": 1, "kariot_avir_source": "6", "mispar_kariot_avir": 6, "hege_k
+    - משאב: מאגר כמויות כלי רכב לפי תוצר, דגם ושנת יצור · CSV · 9037905 בייט · עודכן=2026-09-06T02:45:32.709936 · datastore=True · id=5e87a7a1-2f6f-41c1-8aec-7216d52a6cf6
+      url=https://data.gov.il/dataset/45e317cf-7bb1-4535-b8cf-be5e79ea341f/resource/5e87a7a1-2f6f-41c1-8aec-7216d52a6cf6/download/5e87a7a1-2f6f-41c1-8aec-7216d52a6cf6.csv
+      שדות: ['_id', 'sug_degem', 'tozeret_cd', 'tozeret_nm', 'tozeret_eretz_nm', 'tozar', 'degem_cd', 'degem_nm', 'shnat_yitzur', 'mispar_rechavim_pailim', 'mispar_rechavim_le_pailim', 'kinuy_mishari']
+      סה"כ רשומות: 101342
+      דוגמה: {"_id": 1, "sug_degem": "P", "tozeret_cd": 771, "tozeret_nm": "רנו טורקיה", "tozeret_eretz_nm": "טורקיה", "tozar": "רנו", "degem_cd": 311, "degem_nm": "BZAR0A", "shnat_yitzur": 2011, "mispar_rechavim_pailim": 57, "mispar_rechavim_le_pailim": 62, "kinuy_mishari": "MEGANE"}
+      דוגמה: {"_id": 2, "sug_degem": "P", "tozeret_cd": 177, "tozeret_nm": "פיאט טורקיה", "tozeret_eretz_nm": "טורקיה", "tozar": "פיאט", "degem_cd": 28, "degem_nm": "225AXD11", "shnat_yitzur": 2014, "mispar_rechavim_pailim": 3, "mispar_rechavim_le_pailim": 8, "kinuy_mishari": "FIORINO"}
+      דוגמה: {"_id": 3, "sug_degem": "M", "tozeret_cd": 603, "tozeret_nm": "מיצובישי תאילנ", "tozeret_eretz_nm": "תאילנד", "tozar": "מיצובישי", "degem_cd": 29, "degem_nm": "KB4TNJNUZL6", "shnat_yitzur": 2010, "mispar_rechavim_pailim": 45, "mispar_rechavim_le_pailim": 32, "kinuy_mishari": "L200"}
+  * מאגר: מספרי רישוי של כלי רכב לא פעילים עם קוד דגם · name=rechev_le_pail_with_degem · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T02:50:15.657701 · רישיון=Other (Open)
+    תיאור: המאגר מציג פרטים אודות כלי רכב עם קוד דגם, חסרי תוקף 13 חודש אחורה, לא גנובים וללא ביטול סופי. המאגר מתעדכן כל יום.
+    - משאב: מספרי רישוי של כלי רכב לא פעילים עם קוד דגם · CSV · 130913720 בייט · עודכן=2026-09-06T02:45:07.074229 · datastore=True · id=f6efe89a-fb3d-43a4-bb61-9bf12a9b9099
+      url=https://data.gov.il/dataset/aef33db6-37c4-4026-82ba-6c1237bd2cf0/resource/f6efe89a-fb3d-43a4-bb61-9bf12a9b9099/download/f6efe89a-fb3d-43a4-bb61-9bf12a9b9099.csv
+      שדות: ['_id', 'mispar_rechev', 'tozeret_cd', 'sug_degem', 'tozeret_nm', 'degem_cd', 'degem_nm', 'ramat_gimur', 'ramat_eivzur_betihuty', 'kvutzat_zihum', 'shnat_yitzur', 'degem_manoa', 'mivchan_acharon_dt', 'tokef_dt', 'baalut', 'misgeret', 'tzeva_cd', 'tzeva_rechev', 'zmig_kidmi', 'zmig_ahori', 'sug_delek_nm', 'horaat_rishum', 'moed_aliya_lakvish', 'kinuy_mishari']
+      סה"כ רשומות: 604091
+      דוגמה: {"_id": 1, "mispar_rechev": 4396557, "tozeret_cd": 496, "sug_degem": "M", "tozeret_nm": "סיטרואן ספרד", "degem_cd": 750, "degem_nm": "GJRHYB", "ramat_gimur": "SX", "ramat_eivzur_betihuty": null, "kvutzat_zihum": null, "shnat_yitzur": 2005, "degem_manoa": "RHY", "mivchan_acharon_dt": "2024-10-20", "tokef_dt": "2024-10-23", "baalut": "חברה", "misgeret": "VF7GJRHYB5J008149", "tzeva_cd": 80, "tzeva_re
+      דוגמה: {"_id": 2, "mispar_rechev": 3469362, "tozeret_cd": 776, "sug_degem": "M", "tozeret_nm": "פורד תורכיה", "degem_cd": 12, "degem_nm": "PH2", "ramat_gimur": "S", "ramat_eivzur_betihuty": null, "kvutzat_zihum": null, "shnat_yitzur": 2007, "degem_manoa": "HCPB", "mivchan_acharon_dt": "2024-01-08", "tokef_dt": "2024-11-04", "baalut": "חברה", "misgeret": "WF0HXXTTP76M19467", "tzeva_cd": 32, "tzeva_rechev"
+      דוגמה: {"_id": 3, "mispar_rechev": 7753470, "tozeret_cd": 724, "sug_degem": "M", "tozeret_nm": "פולקסווגן גרמנ", "degem_cd": 126, "degem_nm": "7HA172", "ramat_gimur": "", "ramat_eivzur_betihuty": null, "kvutzat_zihum": 15, "shnat_yitzur": 2010, "degem_manoa": "BRS", "mivchan_acharon_dt": "2025-03-10", "tokef_dt": "2025-03-02", "baalut": "חברה", "misgeret": "WV1ZZZ7HZ9H153454", "tzeva_cd": 80, "tzeva_rech
+  * מאגר: שמאי רכב · name=shamaim_rechev · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-06T02:45:13.191214 · רישיון=Creative Commons Attribution
+    תיאור: שמאי רכב מורשים להערכת נזק לרכב בפיקוח ואישור משרד התחבורה. על השמאי חלה החובה לקבוע, טרם תחילת תיקון הרכב, את שיעור הנזק הגולמי שנגרם לו וכנגזר ממנו עליו לפעול.
+    - משאב: שמאי רכב · CSV · 49768 בייט · עודכן=2026-09-06T02:45:13.166339 · datastore=True · id=4a434d65-3ca2-45e5-8026-5d9819c3f95c
+      url=https://data.gov.il/dataset/5c8c7be1-3825-4c7d-bcd6-9735355b4a04/resource/4a434d65-3ca2-45e5-8026-5d9819c3f95c/download/4a434d65-3ca2-45e5-8026-5d9819c3f95c.csv
+      שדות: ['_id', 'mispar_rishayon', 'shem_prati', 'shem_mishpaha', 'yishuv']
+      סה"כ רשומות: 1019
+      דוגמה: {"_id": 1, "mispar_rishayon": 1040, "shem_prati": "עלי", "shem_mishpaha": "חאג'", "yishuv": "אבו סנאן"}
+      דוגמה: {"_id": 2, "mispar_rishayon": 848, "shem_prati": "זיאד", "shem_mishpaha": "תורג'מן", "yishuv": "אבטין"}
+      דוגמה: {"_id": 3, "mispar_rishayon": 1303, "shem_prati": "יעקב", "shem_mishpaha": "וקסמן", "yishuv": "אבני חפץ"}
+  * מאגר: כלי רכב עם תג חניה לנכה · name=rechev-tag-nachim · ארגון=משרד התחבורה והבטיחות בדרכים · עודכן=2026-09-03T22:00:39.106186 · רישיון=Creative Commons Attribution
+    תיאור: מאגר זה מכיל את מספרי הרכבים המורשים לשאת תג חניה לנכה של משרד התחבורה.
+    - משאב: כלי רכב עם תג חניה לנכה · CSV · 14911313 בייט · עודכן=2026-09-03T21:59:47.361788 · datastore=True · id=c8b9f9c8-4612-4068-934f-d4acd2e3c06e
+      url=https://data.gov.il/dataset/11369651-1c70-4d8f-8090-ee49354a7c52/resource/c8b9f9c8-4612-4068-934f-d4acd2e3c06e/download/c8b9f9c8-4612-4068-934f-d4acd2e3c06e.csv
+      שדות: ['_id', 'MISPAR RECHEV', 'TAARICH HAFAKAT TAG', 'SUG TAV']
+      סה"כ רשומות: 677785
+      דוגמה: {"_id": 1, "MISPAR RECHEV": 50096, "TAARICH HAFAKAT TAG": 20230419, "SUG TAV": 1}
+      דוגמה: {"_id": 2, "MISPAR RECHEV": 100133, "TAARICH HAFAKAT TAG": 20250129, "SUG TAV": 1}
+      דוגמה: {"_id": 3, "MISPAR RECHEV": 112267, "TAARICH HAFAKAT TAG": 20241229, "SUG TAV": 1}
+
+=== ציי רכב אוטובוסים · חיפוש: Bus_fleet ===
+  נמצאו 10 מאגרים
+  (כבר הוצג: רישוי מערך האוטובוסים)
+  (כבר הוצג: ציי רכב אוטובוסים)
+  (כבר הוצג: תחנות תחבורה ציבורית)
+  (כבר הוצג: מסופים ומתקני תשתית מצב מתוכנן)
+  (כבר הוצג: מסופים ומתקני תשתית מצב קיים)
+  (כבר הוצג: תכנון מול ביצוע נסיעות אוטובוסים ברמת נסיעה בודדת)
+
+=== תחנות אוטובוסים · חיפוש: bus_stops_stations ===
+  נמצאו 25 מאגרים
+  (כבר הוצג: רישוי מערך האוטובוסים)
+  (כבר הוצג: רכבת לו"ז)
+  (כבר הוצג: ציי רכב אוטובוסים)
+  (כבר הוצג: תחנות התחסנות כנגד חצבת)
+  (כבר הוצג: תיקופי מסלקה לתחנה)
+  (כבר הוצג: תחנות - דיגום איכות מים)
+
+=== העמוד ב-gov.il: https://www.gov.il/he/pages/mot_maagarei_netunim ===
+  שגיאה בטעינת העמוד: HTTP Error 403: Forbidden
