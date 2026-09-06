@@ -1,0 +1,95 @@
+name: bus-reliability
+
+# מדד דיוק האוטובוסים — ריצה לילית על יום השירות של אתמול (tools/bus_reliability.py):
+# GTFS של אותו יום מהארכיון היומי של דאטאבוס ב-S3, ו-SIRI גולמי (קובץ לדקה)
+# מ-S3 — ליום כולו ולשלוש השעות הראשונות של מחרת (נסיעות אחרי חצות). הכל
+# הורדה מ-S3, בלי קריאות ל-API של דאטאבוס. הפלט: bus/data/.
+# הפעלה ידנית: יום בודד, או טווח (from/to) למילוי לאחור.
+
+on:
+  schedule:
+    - cron: '30 1 * * *'   # 04:30 ישראל בקיץ — הקבצים של אתמול כבר שלמים
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'מיום (YYYY-MM-DD); ריק = אתמול'
+        required: false
+        default: ''
+      to:
+        description: 'עד יום (YYYY-MM-DD); ריק = כמו from'
+        required: false
+        default: ''
+      redo:
+        description: 'חישוב מחדש גם לימים שכבר קיימים (1)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bus-reliability
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: תלויות
+        run: pip install -q brotli
+
+      - name: חישוב
+        env:
+          FROM: ${{ github.event.inputs.from }}
+          TO: ${{ github.event.inputs.to }}
+          REDO: ${{ github.event.inputs.redo }}
+        run: |
+          set -euo pipefail
+          B="https://openbus-stride-public.s3.eu-west-1.amazonaws.com"
+          FROM=${FROM:-$(date -u -d 'yesterday' +%F)}
+          TO=${TO:-$FROM}
+          d="$FROM"
+          while [ "$d" \< "$TO" ] || [ "$d" = "$TO" ]; do
+            if [ -f "bus/data/days/$d.json" ] && [ "$REDO" != "1" ]; then
+              echo "== $d כבר קיים =="; d=$(date -u -d "$d + 1 day" +%F); continue
+            fi
+            echo "== $d =="
+            Y=${d:0:4}; M=${d:5:2}; D=${d:8:2}
+            n=$(date -u -d "$d + 1 day" +%F); NY=${n:0:4}; NM=${n:5:2}; ND=${n:8:2}
+            rm -rf siri gtfs.zip; mkdir -p siri
+            # GTFS של אותו יום מהארכיון (נופל ל-gov.il אם חסר)
+            if ! curl -fsS -o gtfs.zip "$B/gtfs_archive/$Y/$M/$D/israel-public-transportation.zip"; then
+              echo "אין GTFS בארכיון ל-$d — מנסה gov.il"
+              curl -fSL -A "Mozilla/5.0" --retry 5 --retry-delay 30 -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip"
+            fi
+            ls -la gtfs.zip | awk '{print "GTFS:", $5}'
+            # SIRI: 24 שעות של היום + 03 שעות של מחר, 16 הורדות במקביל
+            {
+              for h in $(seq -w 0 23); do for m in $(seq -w 0 59); do echo "stride-siri-requester/$Y/$M/$D/$h/$m.br siri/$h/$m.br"; done; done
+              # שלוש השעות הראשונות של מחר נשמרות כ-24/25/26 כדי שהמיון יישאר כרונולוגי
+              for h in 00 01 02; do for m in $(seq -w 0 59); do echo "stride-siri-requester/$NY/$NM/$ND/$h/$m.br siri/$((24 + 10#$h))/$m.br"; done; done
+            } > list.txt
+            mkdir -p siri/{00..23} siri/24 siri/25 siri/26
+            cat list.txt | xargs -P 16 -n 2 sh -c 'curl -fsS --retry 3 -o "$1" "https://openbus-stride-public.s3.eu-west-1.amazonaws.com/$0" || true'
+            echo "קבצי SIRI: $(find siri -name '*.br' | wc -l) · $(du -sh siri | cut -f1)"
+            python3 tools/bus_reliability.py --day "$d" --gtfs gtfs.zip --siri siri --out bus/data --workers 4
+            d=$(date -u -d "$d + 1 day" +%F)
+          done
+          rm -rf siri gtfs.zip list.txt
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A bus/data
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: bus — מדד דיוק האוטובוסים"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "push rejected — retry $i"; sleep 15
+          done
+          echo "הדחיפה נכשלה"; exit 1
