@@ -56,18 +56,29 @@ jobs:
               curl -sS "$B/?list-type=2&prefix=stride-etl-packages/$sub/&max-keys=5" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -5
             done
             echo
-            echo "===== API: siri_ride_stops ליום אחד — דוגמה ושדות ====="
             A="https://open-bus-stride-api.hasadna.org.il"
-            curl -sS "$A/siri_ride_stops/list?siri_rides__scheduled_start_time_from=${DAY}T04:00:00%2B03:00&siri_rides__scheduled_start_time_to=${DAY}T05:00:00%2B03:00&limit=2" | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d[:1], ensure_ascii=False, indent=1)[:2500]); print('...', len(d), 'שורות')"
+            # יום מעובד (לא היום): רשומת siri_rides מלאה, רשומת siri_ride_stops מלאה עם הצמדה, וספירות לשעה
+            echo "===== API: siri_rides — רשומה מלאה (יום $DAY, שעה 08 שעון ישראל) ====="
+            curl -sS "$A/siri_rides/list?scheduled_start_time_from=${DAY}T08:00:00%2B03:00&scheduled_start_time_to=${DAY}T08:05:00%2B03:00&limit=2" | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d[:1], ensure_ascii=False, indent=1)[:3000]); print('...', len(d), 'שורות')"
             echo
-            echo "===== API: כמה נסיעות SIRI ביום (siri_rides, לפי שעות התחלה) ====="
-            for h in 06 08 12 17; do
-              n=$(curl -sS "$A/siri_rides/list?scheduled_start_time_from=${DAY}T${h}:00:00%2B03:00&scheduled_start_time_to=${DAY}T${h}:59:59%2B03:00&limit=10000" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
-              echo "שעה $h: $n נסיעות (עד 10,000)"
+            echo "===== API: siri_ride_stops עם הצמדה (יום $DAY, נסיעות שהתחילו 08:00–08:02) ====="
+            curl -sS "$A/siri_ride_stops/list?siri_rides__scheduled_start_time_from=${DAY}T08:00:00%2B03:00&siri_rides__scheduled_start_time_to=${DAY}T08:02:00%2B03:00&limit=3000" | python3 -c "
+import json,sys; d=json.load(sys.stdin); print(len(d),'שורות ב-2 דקות של התחלות')
+m=[x for x in d if x.get('nearest_siri_vehicle_location_id')]; g=[x for x in d if x.get('gtfs_ride_stop__arrival_time')]
+print('עם מיקום קרוב:',len(m),'· עם לו\"ז GTFS:',len(g))
+x=(g or m or d)[:1]; print(json.dumps(x, ensure_ascii=False, indent=1)[:3500])"
+            echo
+            echo "===== API: ספירת siri_ride_stops בשעה 08 (עד 10,000 בעמוד, offset) ====="
+            for off in 0 10000 20000 40000 80000; do
+              n=$(curl -sS "$A/siri_ride_stops/list?siri_rides__scheduled_start_time_from=${DAY}T08:00:00%2B03:00&siri_rides__scheduled_start_time_to=${DAY}T08:59:59%2B03:00&limit=10000&offset=$off" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+              echo "offset $off: $n"
             done
             echo
-            echo "===== API: gtfs_rides ביום (שעה 08) ====="
-            curl -sS "$A/gtfs_rides/list?start_time_from=${DAY}T08:00:00%2B03:00&start_time_to=${DAY}T08:59:59%2B03:00&limit=10000" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d), 'נסיעות GTFS בשעה 08'); print(json.dumps(d[:1], ensure_ascii=False)[:600])"
+            echo "===== API: gtfs_rides בשעה 08 שעון ישראל (05 UTC) ====="
+            curl -sS "$A/gtfs_rides/list?start_time_from=${DAY}T08:00:00%2B03:00&start_time_to=${DAY}T08:59:59%2B03:00&limit=10000" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d), 'נסיעות GTFS'); import collections; print(collections.Counter(x.get('gtfs_route__route_type') for x in d))"
+            echo
+            echo "===== API: siri_rides בשעה 08 שעון ישראל ====="
+            curl -sS "$A/siri_rides/list?scheduled_start_time_from=${DAY}T08:00:00%2B03:00&scheduled_start_time_to=${DAY}T08:59:59%2B03:00&limit=10000" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d), 'נסיעות SIRI'); print('עם gtfs_ride_id:', sum(1 for x in d if x.get('gtfs_ride_id')), '· עם first/last location:', sum(1 for x in d if x.get('first_vehicle_location_id') and x.get('last_vehicle_location_id')))"
           } > "$OUT" 2>&1 || true
           wc -c "$OUT"
           tail -c 3000 "$OUT"
