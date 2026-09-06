@@ -435,7 +435,8 @@ def main():
             if hint and mk in coords and km(coords[mk], hint) > 3:
                 flags.append('far')
         if name in manual:
-            flags.append('manual')
+            cnt['manual'] += 1
+            continue          # הוכרע — לא דורש הכרעה נוספת
         cnt[st] += 1
         for f in flags:
             cnt[f] += 1
