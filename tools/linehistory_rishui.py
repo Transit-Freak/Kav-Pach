@@ -38,6 +38,8 @@ BROWSER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 PAGE = 32000          # מקסימום שורות לקריאה אחת ב-datastore_search
 COMPLETE = 0.7        # היום האחרון בקובץ נחשב מלא רק אם יש בו לפחות 70% מהשורות של היום הגדול בשבוע
 TODAY = datetime.date.today().isoformat()
+KNOWN = {'אוטובוס', 'מיניבוס', 'מידיבוס', 'מפרקי'}   # גדלי רכב ממשיים; "לא מוגדר"/ריק = אין מידע, לא מצב
+NOISE_DAYS = 7        # במילוי לאחור: מצב-ביניים שנמשך פחות משבוע ונעלם — רעש בקובץ, לא שינוי
 
 
 def log(*a):
@@ -92,6 +94,17 @@ def resources():
 
 def clean(s):
     return ' '.join(str(s or '').split())
+
+
+def row_state(r):
+    """(סוג, גודל) של שורת רישוי, או None כשאין גודל ממשי. במקור יש שורות עם
+    "לא מוגדר" — פקיד שלא מילא, לא רכב אחר — ואם נתייחס אליהן כמצב, רוב
+    "השינויים" יהיו אוטובוס ← לא מוגדר ← אוטובוס. לכן הן פשוט לא נספרות."""
+    s = clean(r.get('VehicleSize_nm'))
+    if s not in KNOWN:
+        return None
+    t = clean(r.get('VehicleType_nm'))
+    return ('' if t == 'לא מוגדר' else t, s)
 
 
 def fsafe(rd):
@@ -161,6 +174,23 @@ def flush_changes():
         jdump(chm, p)
 
 
+def purge_vehicle_changes():
+    """מוחק את כל אירועי 'vehicle' מהפיד החודשי (לפני מילוי לאחור שכותב אותם מחדש)."""
+    n = 0
+    for fn in os.listdir(f'{OUTDIR}/changes'):
+        if not fn.endswith('.json'):
+            continue
+        p = f'{OUTDIR}/changes/{fn}'
+        chm = jload(p, None)
+        if not chm or not isinstance(chm.get('changes'), list):
+            continue
+        keep = [c for c in chm['changes'] if c.get('k') != 'vehicle']
+        n += len(chm['changes']) - len(keep)
+        chm['changes'] = keep
+        _chm[chm.get('month') or fn[:-5]] = (p, chm)
+    return n
+
+
 # ---------------------------------------------------------------- יומי
 def fetch_day(rid, day):
     flt = urllib.parse.quote(json.dumps({'rishui_date': day}))
@@ -195,9 +225,9 @@ def daily(day):
     today = {}
     for r in rows:
         mkt = str(r.get('office_line_id') or '')
-        t, s = clean(r.get('VehicleType_nm')), clean(r.get('VehicleSize_nm'))
-        if mkt and (t or s):
-            today[mkt] = (t, s)
+        st = row_state(r)
+        if mkt and st:
+            today[mkt] = st
     files = line_files()
     n_new = n_chg = n_files = 0
     for mkt, (t, s) in sorted(today.items()):
@@ -238,22 +268,73 @@ def daily(day):
 
 
 # ---------------------------------------------------------------- מילוי לאחור
-# לכל מק"ט: לכל מצב (סוג, גודל) — התאריך הראשון, האחרון, וכמה ימים. הקבצים
-# גדולים (300–450MB לשנה) ולא בהכרח ממוינים, אז לא שומרים כל יום. שתי דרכים
+# לכל מק"ט בייט לכל יום עם המצב (סוג, גודל), ומזה רצפים. הקבצים גדולים
+# (300–450MB לשנה) ולא בהכרח ממוינים, אז קוראים בזרימה בלי לשמור. שתי דרכים
 # לקרוא שנה: הורדת ה-CSV (מהיר; מופרד ב-'|'), ואם השרת מסרב — דפדוף ב-API
 # (32,000 שורות לקריאה, ~55 קריאות לשנה). שורות של היום עצמו חלקיות ומדולגות.
+EPOCH = datetime.date(2017, 1, 1)
+NDAYS = (datetime.date.today() - EPOCH).days + 1
+_dn = {}
+SID, SKEYS = {}, [None]        # מצב (סוג, גודל) → מספר קטן (לתא בבייט), ובחזרה
+
+
+def dn(d):
+    """'YYYY-MM-DD' → מספר היום מאז EPOCH (עם מטמון: יש רק ~1,800 תאריכים שונים)."""
+    i = _dn.get(d)
+    if i is None:
+        try:
+            i = (datetime.date.fromisoformat(d) - EPOCH).days
+        except ValueError:
+            i = -1
+        _dn[d] = i
+    return i
+
+
 def _add(per, mkt, d, key):
+    """שומר לכל מק"ט בייט לכל יום (0 = אין שורה): 3,400 מק"טים × 1,800 ימים ≈ 6MB,
+    וכך רואים את הרצף האמיתי — כולל מצב שחוזר אחרי הפסקה — ולא רק ראשון/אחרון."""
     if d >= TODAY:
         return
-    st = per[mkt].get(key)
-    if st is None:
-        per[mkt][key] = [d, d, 1]
-    else:
-        if d < st[0]:
-            st[0] = d
-        if d > st[1]:
-            st[1] = d
-        st[2] += 1
+    i = dn(d)
+    if i < 0 or i >= NDAYS:
+        return
+    sid = SID.get(key)
+    if sid is None:
+        sid = SID[key] = len(SKEYS)
+        SKEYS.append(key)
+    arr = per.get(mkt)
+    if arr is None:
+        arr = per[mkt] = bytearray(NDAYS)
+    arr[i] = sid
+
+
+def runs_of(arr):
+    """רצפי ימים באותו מצב: [[יום ראשון, מצב, ימים עם שורה, יום אחרון], …]. ימים בלי
+    שורה (קו עונתי, חג) לא שוברים רצף."""
+    runs = []
+    for i, v in enumerate(arr):
+        if not v:
+            continue
+        if runs and runs[-1][1] == v:
+            runs[-1][2] += 1
+            runs[-1][3] = i
+        else:
+            runs.append([i, v, 1, i])
+    return runs
+
+
+def clean_runs(runs):
+    """רצף קצר משבוע שאינו האחרון — רעש: נמחק, ושכנים באותו מצב מתאחדים."""
+    out = []
+    for j, r in enumerate(runs):
+        if j != len(runs) - 1 and r[2] < NOISE_DAYS:
+            continue
+        if out and out[-1][1] == r[1]:
+            out[-1][2] += r[2]
+            out[-1][3] = r[3]
+        else:
+            out.append(list(r))
+    return out
 
 
 def _add_rows(per, rows):
@@ -264,9 +345,10 @@ def _add_rows(per, rows):
             return n, False
         d = str(r.get('rishui_date') or '')[:10]
         mkt = str(r.get('office_line_id') or '').strip()
-        if not mkt or not d:
+        st = row_state(r)
+        if not mkt or not d or not st:
             continue
-        _add(per, mkt, d, (clean(r.get('VehicleType_nm')), clean(r.get('VehicleSize_nm'))))
+        _add(per, mkt, d, st)
         n += 1
     return n, True
 
@@ -300,8 +382,9 @@ def year_download(url, per):
                         n += 1
                         d = (r.get('rishui_date') or '')[:10]
                         mkt = str(r.get('office_line_id') or '').strip()
-                        if mkt and d:
-                            _add(per, mkt, d, (clean(r.get('VehicleType_nm')), clean(r.get('VehicleSize_nm'))))
+                        st = row_state(r) if mkt and d else None
+                        if st:
+                            _add(per, mkt, d, st)
                         if n % 500000 == 0:
                             log(f'  {n:,} שורות…')
                     return n
@@ -332,7 +415,7 @@ def backfill(from_year):
     years = [y for y in sorted(res) if y >= from_year]
     if not years:
         raise SystemExit('אין משאבים לשנים המבוקשות')
-    per = collections.defaultdict(dict)   # mkt → {(t,s): [first, last, n]}
+    per = {}                             # mkt → bytearray(יום → מצב)
     for y in years:
         rid, url = res[y]
         n = None
@@ -349,27 +432,41 @@ def backfill(from_year):
             log(f'  אין שדות סוג רכב בקובץ {y} — מדלג')
         log(f'  {y}: {n:,} שורות · מק"טים עד כה {len(per):,}')
     files = line_files()
-    state = {'d': None, 'm': {}}
-    last_d = ''
-    n_files = n_chg_mkt = 0
-    for mkt, states in per.items():
-        # רצף המצבים לפי התאריך הראשון של כל מצב; מצב שחוזר אחרי מצב אחר
-        # (חפיפה בתאריכים) נרשם לפי התאריך הראשון שלו — הכי פשוט, ומספיק
-        seq = sorted(((v[0], k[0], k[1], v[1]) for k, v in states.items()), key=lambda x: x[0])
-        veh = [[d, t, s] for d, t, s, _ in seq]
-        # מצב שנעלם לתמיד לפני שהמצב הבא התחיל ומופיע פחות מ-3 ימים — רעש
-        veh = [x for i, x in enumerate(veh) if i == 0 or i == len(veh) - 1 or states[(x[1], x[2])][2] >= 3]
+    # המילוי לאחור בונה את כל התמונה מחדש: אירועי 'vehicle' ישנים בפיד נמחקים
+    # ונכתבים שוב, וקו שאין לו עוד מצב ידוע מאבד את veh/vt/vsz
+    n_purged = purge_vehicle_changes()
+    n_clr = 0
+    for mkt, fns in files.items():
+        if mkt in per:
+            continue
+        for fn in fns:
+            p = f'{OUTDIR}/lines/{fn}'
+            lf = jload(p, None)
+            if lf and any(k in lf for k in ('veh', 'vt', 'vsz')):
+                for k in ('veh', 'vt', 'vsz'):
+                    lf.pop(k, None)
+                jdump(lf, p)
+                n_clr += 1
+    st_out = {'d': None, 'm': {}}
+    last_i = 0
+    n_files = n_chg_mkt = n_noise = 0
+    for mkt, arr in per.items():
+        runs = runs_of(arr)
+        cl = clean_runs(runs)
+        n_noise += len(runs) - len(cl)
+        veh = [[(EPOCH + datetime.timedelta(days=r[0])).isoformat(), SKEYS[r[1]][0], SKEYS[r[1]][1]] for r in cl]
         cur = veh[-1]
-        state['m'][mkt] = [cur[1], cur[2], cur[0]]
-        last_d = max(last_d, max(v[3] for v in seq))
+        st_out['m'][mkt] = [cur[1], cur[2], cur[0]]
+        last_i = max(last_i, cl[-1][3])
         changes = [(veh[i][0], veh[i][1], veh[i][2], veh[i - 1][1], veh[i - 1][2]) for i in range(1, len(veh))]
         if changes:
             n_chg_mkt += 1
         n_files += apply_to_lines(files, mkt, veh, changes)
-    state['d'] = last_d
-    jdump(state, STATE)
+    last_d = (EPOCH + datetime.timedelta(days=last_i)).isoformat()
+    st_out['d'] = last_d
+    jdump(st_out, STATE)
     flush_changes()
-    log(f'מילוי לאחור: {len(per):,} מק"טים · {n_chg_mkt:,} עם שינוי סוג רכב · {n_files:,} קובצי קו עודכנו · המצב עד {last_d}')
+    log(f'מילוי לאחור: {len(per):,} מק"טים · {n_chg_mkt:,} עם שינוי סוג רכב · {n_noise:,} רצפים קצרים סוננו · {n_files:,} קובצי קו עודכנו · {n_clr:,} נוקו · {n_purged:,} אירועים ישנים הוחלפו · המצב עד {last_d}')
 
 
 if __name__ == '__main__':

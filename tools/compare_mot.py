@@ -136,6 +136,10 @@ def compare_bus(day, rides_path, out_dir):
 
     diffs, pairs = [], []
     veh_eq = veh_n = 0
+    # מספר הרכב אצל המשרד (Viechle_num) לא בהכרח לוחית הרישוי כמו ב-SIRI — סופרים
+    # גם צורות אחרות (בלי הספרה/הספרתיים האחרונות, בלי הראשונה, הכלה) ושומרים דוגמאות
+    veh_var = collections.Counter()
+    veh_sample = []
     per_op = collections.defaultdict(lambda: {'n': 0, 'mot_on': 0, 'our_on': 0, 'diffs': [], 'veh_eq': 0, 'veh_n': 0})
     hist = collections.Counter()
     for k in both:
@@ -144,12 +148,20 @@ def compare_bus(day, rides_path, out_dir):
         od = x[5] / 60 if x[5] is not None else None
         op = r.get('operator_nm') or '?'
         p = per_op[op]
-        if str(r.get('Viechle_num') or '').strip() and x[9]:
+        m, o = str(r.get('Viechle_num') or '').strip(), str(x[9] or '').strip()
+        if m and o:
             veh_n += 1
             p['veh_n'] += 1
-            if str(r['Viechle_num']).strip().lstrip('0') == str(x[9]).strip().lstrip('0'):
+            mm, oo = m.lstrip('0'), o.lstrip('0')
+            if mm == oo:
                 veh_eq += 1
                 p['veh_eq'] += 1
+            elif len(veh_sample) < 12:
+                veh_sample.append([m, o, op])
+            for name, ok in (('זהה', mm == oo), ('בלי הספרה האחרונה', m[:-1].lstrip('0') == oo), ('בלי 2 האחרונות', m[:-2].lstrip('0') == oo),
+                             ('בלי הראשונה', m[1:].lstrip('0') == oo), ('שלנו מוכל במשרד', len(oo) >= 5 and oo in m), ('משרד מוכל בשלנו', len(mm) >= 5 and mm in o)):
+                if ok:
+                    veh_var[name] += 1
         if md is None or od is None:
             continue
         d = od - md
@@ -174,7 +186,7 @@ def compare_bus(day, rides_path, out_dir):
         'mot_delay_median': round(statistics.median([m for m, o in pairs]), 2) if pairs else None,
         'our_delay_median': round(statistics.median([o for m, o in pairs]), 2) if pairs else None,
         'hist_minutes': dict(sorted(hist.items())),
-        'vehicle_same': veh_eq, 'vehicle_compared': veh_n,
+        'vehicle_same': veh_eq, 'vehicle_compared': veh_n, 'vehicle_variants': dict(veh_var), 'vehicle_sample': veh_sample,
         'hachraga': sum(1 for r in rows if str(r.get('erua_hachraga_ind') or '') not in ('', '0', 'None', 'False')),
         'per_operator': sorted([[op, p['n'], p['mot_on'], p['our_on'], round(statistics.median(p['diffs']), 2) if p['diffs'] else None, p['veh_eq'], p['veh_n']] for op, p in per_op.items()], key=lambda x: -x[1]),
         'mot_only_sample': [list(k) for k in mot_only[:10]], 'ours_only_sample': [list(k) for k in ours_only[:10]],
@@ -188,7 +200,9 @@ def compare_bus(day, rides_path, out_dir):
           f'- חציון האיחור במוצא: משרד {res["mot_delay_median"]} דק׳ · אנחנו {res["our_delay_median"]} דק׳',
           f'- הפרש (אנחנו פחות משרד): חציון {res["diff_median"]} דק׳ · ממוצע {res["diff_mean"]} דק׳ · בתוך דקה {pct(res["diff_within_1"], len(pairs))} · בתוך 2 דק׳ {pct(res["diff_within_2"], len(pairs))} · בתוך 5 דק׳ {pct(res["diff_within_5"], len(pairs))}',
           f'- "יצאה בזמן" (בין 2- ל-5 דק׳): משרד {pct(mot_on, len(pairs))} · אנחנו {pct(our_on, len(pairs))} · הסכמה נסיעה-נסיעה {pct(agree, len(pairs))}',
-          f'- מספר הרכב זהה: {pct(veh_eq, veh_n)} מתוך {veh_n:,}', f'- נסיעות עם "אירוע החרגה" אצל המשרד: {res["hachraga"]:,}', '',
+          f'- מספר הרכב זהה: {pct(veh_eq, veh_n)} מתוך {veh_n:,} · צורות אחרות: ' + ' · '.join(f'{k} {pct(v, veh_n)}' for k, v in veh_var.most_common()),
+          f'- דוגמאות (משרד, שלנו, מפעיל): ' + ' · '.join(f'{m}/{o} ({op})' for m, o, op in veh_sample[:8]),
+          f'- נסיעות עם "אירוע החרגה" אצל המשרד: {res["hachraga"]:,}', '',
           '## לפי מפעיל', '| מפעיל | זוגות | בזמן לפי המשרד | בזמן לפי המדד | חציון ההפרש | רכב זהה |', '|---|---|---|---|---|---|']
     for op, n, mo, oo, dm, ve, vn in res['per_operator'][:25]:
         md.append(f'| {op} | {n:,} | {pct(mo, n)} | {pct(oo, n)} | {dm} | {pct(ve, vn)} |')
