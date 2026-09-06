@@ -205,7 +205,7 @@ function mergeDays(days) {
 function lineLabel(rid) {
   const c = CAT[rid] || [];
   // route_long_name מסתיים בקוד כיוון+חלופה ("…-כרמיאל-10") — לא לתצוגה
-  return {short: c[1] || rid, long: (c[2] || '').replace(/-\d[\d#א-ת]?$/, '').replace('<->', ' ← '), agency: c[3] || '', dir: c[4] || '', alt: c[5] || ''};
+  return {short: c[1] || rid, long: (c[2] || '').replace(/-\d[\d#א-ת]?$/, '').replace('<->', ' ← '), agency: c[3] || '', dir: c[4] || '', alt: c[5] || '', aid: c[7] || ''};
 }
 let M = null;
 function render() {
@@ -357,9 +357,13 @@ function openRide(w) {
     `<div class="route"><div class="rs h"><span></span><span>תחנה</span><span>מתוכנן</span><span>בפועל</span><span>איחור</span></div>` +
     ps.map((x, i) => { const [code, sc, act] = x; const dm = (act - sc) / 60; const b = catOf(dm); const first = i === 0;
       return `<div class="rs"><span class="dot s${b}"></span><span class="rn">${esc(stopName(code))}${first ? ' <small>מוצא · יציאה</small>' : i === ps.length - 1 ? ' <small>אחרונה שנמדדה</small>' : ''}</span><span class="rt">${hhmm(sc)}</span><span class="ra">${hhmm(act)}</span><span class="rd ${dcls(dm)}">${delayTxt(dm)} דק׳</span></div>`; }).join('') + '</div>';
-  const dbLink = `https://open-bus-map-search.hasadna.org.il/profile/${encodeURIComponent(trip)}`;
+  // קישור לציר הזמן של דאטאבוס: מפעיל + מספר קו + זמן היציאה (שם בוחרים כיוון ונסיעה).
+  // מזהה הנסיעה של משרד התחבורה לא מוכר להם (שלמה 06.09: "Route with id … not found").
+  const [dy, dm, dd] = d.split('-').map(Number);
+  const ts = new Date(dy, dm - 1, dd, 0, 0, sched || 0).getTime();
+  const dbLink = `https://open-bus-map-search.hasadna.org.il/timeline?${l.aid ? `operatorId=${encodeURIComponent(l.aid)}&` : ''}lineNumber=${encodeURIComponent(l.short)}&timestamp=${ts}`;
   ovl.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mhead"><h2>קו ${esc(l.short)}</h2><span class="st s4">+${num(dl)} דק׳ לכל היותר</span><button class="x" aria-label="סגירה">✕</button></div>
-    <div class="msub">${esc(l.long)} · ${esc(l.agency)} · ${heDate(d)} · יציאה מתוכננת ${hhmm(sched)} · <a href="${dbLink}" target="_blank" rel="noopener">הנסיעה בדאטאבוס ↗</a></div>
+    <div class="msub">${esc(l.long)} · ${esc(l.agency)} · ${heDate(d)} · יציאה מתוכננת ${hhmm(sched)} · <a href="${dbLink}" target="_blank" rel="noopener">הקו בדאטאבוס ↗</a> <small style="color:var(--dim)">(שם בוחרים את הכיוון ואת הנסיעה של ${hhmm(sched)})</small></div>
     <div id="ride-body">${NAMES ? body() : '<div class="empty">טוען שמות תחנות…</div>'}</div>
     <div class="note">"בפועל" בתחנת המוצא הוא רגע היציאה, ובשאר התחנות רגע ההגעה (דיוק של כחצי דקה). תחנות שהאוטובוס לא שידר לידן לא מופיעות.</div></div>`;
   document.body.appendChild(ovl);

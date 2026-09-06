@@ -108,7 +108,7 @@ def load_gtfs(path, day):
         routes[r['route_id']] = {
             'mkt': desc[0] if desc else '', 'dir': desc[1] if len(desc) > 1 else '', 'alt': desc[2] if len(desc) > 2 else '',
             'short': r.get('route_short_name') or '', 'long': r.get('route_long_name') or '',
-            'agency': agencies.get(r['agency_id'], r['agency_id']), 'type': r.get('route_type') or '',
+            'agency': agencies.get(r['agency_id'], r['agency_id']), 'agency_id': r['agency_id'], 'type': r.get('route_type') or '',
         }
     trips = {}          # trip_id → route_id (רק שירותים פעילים היום, רק אוטובוסים)
     for r in rows('trips.txt'):
@@ -618,7 +618,8 @@ def main():
     stop_names = {}     # מק"ט → שם (קטלוג לתצוגה)
     for rid, r in R.items():
         info = routes.get(rid, {})
-        catalog[rid] = [info.get('mkt', ''), info.get('short', ''), info.get('long', ''), info.get('agency', ''), info.get('dir', ''), info.get('alt', ''), info.get('type', '')]
+        # [מק"ט, מספר קו, שם, מפעיל, כיוון, חלופה, סוג, מזהה מפעיל (לקישור לדאטאבוס)]
+        catalog[rid] = [info.get('mkt', ''), info.get('short', ''), info.get('long', ''), info.get('agency', ''), info.get('dir', ''), info.get('alt', ''), info.get('type', ''), info.get('agency_id', '')]
         # שלוש התחנות עם האיחור הממוצע הגבוה (לפחות 3 הגעות, אחרת מדידה בודדת מטה)
         ws = sorted([kv for kv in r['stops'].items() if kv[1][0] >= 3], key=lambda kv: -(kv[1][1] / kv[1][0]))[:3]
         out_routes.append([rid, sched_per_route.get(rid, 0), r['obs'], r['meas'], r['c'], stats(r['d']), r['o'],
