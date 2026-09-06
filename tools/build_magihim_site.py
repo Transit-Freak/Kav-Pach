@@ -94,6 +94,7 @@ def build_stop_lookup():
     born = {}                                  # מק"ט -> תאריך אירוע 'new' המוקדם
     old_named = collections.defaultdict(set)   # norm(שם ישן) -> מק"טים שנשאו אותו
     cur_named = collections.defaultdict(set)   # norm(שם היום) -> מק"טים
+    dels = []                                  # (תאריך, norm(שם), (lat, lon)) של תחנות שנמחקו
 
     def add(n, city, mk):
         nn, nc = norm(n), norm(city)
@@ -131,6 +132,8 @@ def build_stop_lookup():
                     old_named[norm(e['on'])].add(mk)
                 if e.get('k') == 'new' and e.get('d'):
                     born[mk] = min(born.get(mk, '9'), e['d'])
+                if e.get('k') == 'del' and e.get('d') and e.get('la') and e.get('lo'):
+                    dels.append((e['d'], norm(e.get('n') or ''), (e['la'], e['lo'])))
                 if mk not in coords and e.get('la') and e.get('lo'):
                     coords[mk] = (e['la'], e['lo'])
     except Exception:
@@ -157,7 +160,37 @@ def build_stop_lookup():
     for c, items in by_city.items():
         for nn, mk in set(items):
             tok_city[c].append((frozenset(nn.split()), mk))
-    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named, cur_named, twins
+    # תחנה "צעירה": נולדה מ-2018 (הארכיון מתחיל ב-2017, אז לידה מאוחרת יותר
+    # היא אמיתית) ואין לה קודמת — תחנה שנמחקה עד 60 מ׳ ממנה (או עד 120 מ׳
+    # באותו שם) בטווח חצי שנה מהלידה, כלומר מספור מחדש של אותה תחנה. תחנה
+    # כזו לא הייתה קיימת ב-2012 ואינה יכולה להיות התחנה של 2012 (שלמה 06.09,
+    # "מחלף חולון" — מק"ט 3199 שנולד ב-2026).
+    def km_(a, b):
+        return math.hypot((a[0] - b[0]) * 111, (a[1] - b[1]) * 111 * math.cos(math.radians(a[0])))
+    young = set()
+    nm_of = {}
+    try:
+        for mk, row in state.items():
+            nm_of[mk] = norm(row[0])
+    except Exception:
+        pass
+    for mk, d in born.items():
+        if d < '2018' or mk not in coords:
+            continue
+        y0, y1 = int(d[:4]) - 1, int(d[:4]) + 1
+        pred = False
+        for dd, dn, dc in dels:
+            if not (str(y0) <= dd[:4] <= str(y1)):
+                continue
+            if abs((int(dd[:4]) - int(d[:4])) * 365 + (int(dd[5:7]) - int(d[5:7])) * 30 + (int(dd[8:10]) - int(d[8:10]))) > 183:
+                continue
+            dist = km_(dc, coords[mk])
+            if dist <= .06 or (dist <= .12 and dn == nm_of.get(mk)):
+                pred = True
+                break
+        if not pred:
+            young.add(mk)
+    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named, cur_named, twins, young
 
 
 def main():
@@ -198,9 +231,9 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named, cur_named, twins = build_stop_lookup()
+    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named, cur_named, twins, young = build_stop_lookup()
     m_hit = m_tot = 0
-    n_side = 0
+    n_side = n_young = 0
 
     def right_side(out):
         """תחנה שיש לה תאומה מעבר לכביש: בוחרים את הצד הימני ביחס לכיוון
@@ -395,18 +428,26 @@ def main():
         הכיוונים של אותו רחוב. השם לבדו אינו יכול להכריע, אבל המסלול כן:
         התחנה הנכונה היא זו שמתיישבת עם השכנות שלה ברצף.
         """
-        nonlocal n_amb, n_res, n_weak, n_manual
+        nonlocal n_amb, n_res, n_weak, n_manual, n_young
+
+        def not_young(mks):
+            nonlocal n_young
+            keep = [mk for mk in mks if mk not in young]
+            if len(keep) < len(mks):
+                n_young += len(mks) - len(keep)
+            return keep
+
         raw = []
         fixed = set()
         for st in (r.get('stops') or []):
             disp = untrunc(st['name'])
             if disp in manual:
                 mk = manual[disp]
-                raw.append((st, [mk] if mk and mk in coords else []))
+                raw.append((st, not_young([mk] if mk and mk in coords else [])))
                 fixed.add(len(raw) - 1)
                 n_manual += 1
             else:
-                raw.append((st, mks_of(st['name'])))
+                raw.append((st, not_young(mks_of(st['name']))))
         anchors = [(i, coords[mk[0]]) for i, (st, mk) in enumerate(raw)
                    if len(mk) == 1 and mk[0] in coords]
         out = []
@@ -418,7 +459,7 @@ def main():
             if not mks:
                 # שם זהה תחת עיר אחרת — מתקבל רק ליד עוגן סמוך (עד 3 ק"מ)
                 near = [c for j, c in anchors if 0 < abs(j - i) <= 3]
-                cands = [mk for mk in weak_mks_of(st['name'])
+                cands = [mk for mk in not_young(weak_mks_of(st['name']))
                          if mk in coords and any(km(coords[mk], c) <= 3 for c in near)]
                 if cands:
                     mks = [min(cands, key=lambda mk: min(km(coords[mk], c) for c in near))]
@@ -558,7 +599,7 @@ def main():
     print(f'xref: {len(rows_x)} שמות להכרעה מתוך {len(xref)} · {dict(cnt)} · הצלבות ידניות בשימוש: {n_manual}')
     print(f'הכרעת מועמדים לפי המסלול: {n_res} מתוך {n_amb} תחנות רב-משמעיות · '
           f'{n_out} התאמות בוטלו כחריגות גאוגרפיות · {n_weak} התאמות לפי שם בלי עיר, ליד עוגן · '
-          f'{n_side} הועברו לצד הימני של הכביש')
+          f'{n_side} הועברו לצד הימני של הכביש · {n_young} מועמדים נפסלו כתחנות שנולדו אחרי 2017 בלי קודמת')
     print(f'נבנו {len(idx)} קווים | {len(routes)} מסלולים | '
           f'{sum(1 for _ in OUT.glob("l*.json"))} קבצים | '
           f'הצלבת תחנות: {m_hit}/{m_tot} ({m_hit * 100 // max(m_tot, 1)}%)')
