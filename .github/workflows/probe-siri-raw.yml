@@ -1,0 +1,80 @@
+name: probe-siri-raw
+
+# בדיקה חד-פעמית: קבצי ה-SIRI הגולמיים של דאטאבוס ב-S3 (stride-siri-requester —
+# התשובה של משרד התחבורה לכל דקה, כל הרכבים בארץ): מבנה תיקיות, גודל קובץ
+# לדקה, ומבנה הרשומה. אם זה שמיש, זה המקור למדד דיוק לאוטובוסים בלי להעמיס
+# על ה-API. התוצאה: docs/fetched/siri-raw.txt
+
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'יום (YYYY-MM-DD)'
+        required: false
+        default: '2026-09-01'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: בדיקה
+        env:
+          DAY: ${{ github.event.inputs.day }}
+        run: |
+          set -uo pipefail
+          mkdir -p docs/fetched
+          OUT=docs/fetched/siri-raw.txt
+          B="https://openbus-stride-public.s3.eu-west-1.amazonaws.com"
+          Y=${DAY:0:4}; M=${DAY:5:2}; D=${DAY:8:2}
+          {
+            echo "SIRI גולמי · יום $DAY · $(date -u +%FT%TZ)"
+            echo "===== stride-siri-requester/ — רמה ראשונה ====="
+            curl -sS "$B/?list-type=2&delimiter=/&prefix=stride-siri-requester/&max-keys=50" | tr '<' '\n' | grep -E '^(Prefix|Key)>' | sed 's/^[A-Za-z]*>//' | head -20
+            for pfx in "stride-siri-requester/$Y/$M/$D/08/" "stride-siri-requester/monitored-stop-visits/$Y/$M/$D/08/" "stride-siri-requester/$Y/$M/$D/"; do
+              echo "===== $pfx ====="
+              curl -sS "$B/?list-type=2&prefix=$pfx&max-keys=12" | tr '<' '\n' | grep -E '^(Key|Size|Prefix)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -12
+            done
+            echo "===== חיפוש רחב: כל מפתח שמתחיל ב-stride-siri-requester/ (12 ראשונים) ====="
+            curl -sS "$B/?list-type=2&prefix=stride-siri-requester/&max-keys=12" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -12
+            echo "===== חיפוש רחב: מפתחות של היום המבוקש (start-after) ====="
+            curl -sS "$B/?list-type=2&prefix=stride-siri-requester/&start-after=stride-siri-requester/$Y/$M/$D/08&max-keys=8" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -8
+            echo "===== הורדת קובץ אחד לדוגמה (הראשון של השעה 08) ====="
+            KEY=$(curl -sS "$B/?list-type=2&prefix=stride-siri-requester/$Y/$M/$D/08/&max-keys=1" | tr '<' '\n' | grep -E '^Key>' | sed 's/^Key>//' | head -1)
+            [ -z "$KEY" ] && KEY=$(curl -sS "$B/?list-type=2&prefix=stride-siri-requester/&start-after=stride-siri-requester/$Y/$M/$D/08&max-keys=1" | tr '<' '\n' | grep -E '^Key>' | sed 's/^Key>//' | head -1)
+            echo "מפתח: $KEY"
+            if [ -n "$KEY" ]; then
+              curl -sS -o /tmp/one "$B/$KEY"; ls -la /tmp/one | awk '{print "גודל:", $5}'; file /tmp/one
+              case "$KEY" in
+                *.br) brotli -d -c /tmp/one > /tmp/one.txt 2>/dev/null || python3 -c "import brotli,sys; open('/tmp/one.txt','wb').write(brotli.decompress(open('/tmp/one','rb').read()))" ;;
+                *.gz) gzip -d -c /tmp/one > /tmp/one.txt ;;
+                *.zst) zstd -d -c /tmp/one > /tmp/one.txt ;;
+                *) cp /tmp/one /tmp/one.txt ;;
+              esac
+              ls -la /tmp/one.txt | awk '{print "גודל אחרי פריסה:", $5}'
+              echo "--- 2500 התווים הראשונים ---"; head -c 2500 /tmp/one.txt; echo
+              echo "--- מספר MonitoredStopVisit ---"; grep -o 'MonitoredStopVisit' /tmp/one.txt | wc -l
+              echo "--- שדות (מפתחות JSON ייחודיים, 60 ראשונים) ---"; grep -oE '"[A-Za-z]+":' /tmp/one.txt | sort | uniq -c | sort -rn | head -60
+            fi
+            echo "===== hasadna requester endpoint לאותה דקה ====="
+            curl -sS -o /tmp/h -w "http %{http_code} · %{size_download} bytes · %{content_type}\n" "https://open-bus-siri-requester.hasadna.org.il/$Y/$M/$D/08/00" || true
+            head -c 600 /tmp/h 2>/dev/null; echo
+          } > "$OUT" 2>&1 || true
+          wc -c "$OUT"; head -c 4000 "$OUT"
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/fetched/siri-raw.txt
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "docs: בדיקת SIRI גולמי ב-S3 לקראת מדד דיוק לאוטובוסים"
+          for i in 1 2 3 4; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true; sleep 10
+          done
+          exit 1
