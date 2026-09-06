@@ -15,6 +15,9 @@ header h1 { font-size: 24px; font-weight: 900; margin: 6px 0 4px; }
 .search { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 13px; font-size: 15px; font-family: inherit; }
 .search.sm { flex: 1; min-width: 180px; width: auto; padding: 6px 11px; font-size: 13px; }
 .search:focus { outline: 2px solid #7c3aed; border-color: transparent; }
+/* בפיד היומי שורת הימים נגעה בתיבת החיפוש, ומסגרת הפוקוס של התיבה כיסתה את
+   הקצה העליון של הצ'יפים — נראה כאילו הם חתוכים (שלמה 06.09) */
+.search + div > .months { margin-top: 10px; }
 .empty { padding: 28px 10px; text-align: center; color: #64748b; font-weight: 700; font-size: 14px; line-height: 1.9; }
 .mut { color: #64748b; font-size: 12px; font-weight: 700; }
 .llist { margin-top: 10px; }
