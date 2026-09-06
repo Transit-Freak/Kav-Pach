@@ -766,6 +766,23 @@ function ChoiceScreen({ onPick }) {
             </div>
           </a>
 
+          {/* מדד דיוק האוטובוסים — עמוד עצמאי בתיקיית bus/, מ-SIRI גולמי של דאטאבוס (שלמה 06.09) */}
+          <a
+            href="bus/"
+            className="group relative block overflow-hidden rounded-[2.5rem] p-8 text-right shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+            style={{ background: 'linear-gradient(155deg,#111214 0%,#26282c 55%,#4a3f00 100%)' }}
+          >
+            <div className="absolute -left-8 -top-8 w-44 h-44 rounded-full" style={{ background: '#ffc800', opacity: .22 }} />
+            <div className="relative">
+              <div className="flex items-center mb-6 h-28">
+                <span className="text-[72px] leading-none drop-shadow-xl transition-transform duration-300 group-hover:-translate-y-1">🚌</span>
+              </div>
+              <h2 className="text-3xl font-[900]" style={{ color: '#fff4c2' }}>מדד דיוק האוטובוסים</h2>
+              <p className="font-bold mt-2 text-sm leading-relaxed" style={{ color: 'rgba(255,244,194,.8)' }}>כל אוטובוס בארץ מול הלו"ז, תחנה אחרי תחנה: כמה הגיעו בזמן, מי יצא מוקדם ומי איחר — לפי קו, מפעיל, עיר ושעה, יום אחרי יום, מנתוני דאטאבוס</p>
+              <span className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 rounded-2xl font-black text-sm group-hover:gap-3.5 transition-all" style={{ background: '#ffc800', color: '#111214' }}>כניסה <span>←</span></span>
+            </div>
+          </a>
+
         </div>
 
         <p className="text-center text-slate-500 font-bold text-xs mt-8">נבנה על ידי שלמה הרטמן · <a href="mailto:shlomihartman@gmail.com" className="hover:underline" dir="ltr">shlomihartman@gmail.com</a></p>

@@ -193,7 +193,8 @@ function mergeDays(days) {
 
 function lineLabel(rid) {
   const c = CAT[rid] || [];
-  return {short: c[1] || rid, long: c[2] || '', agency: c[3] || '', dir: c[4] || '', alt: c[5] || ''};
+  // route_long_name מסתיים בקוד כיוון+חלופה ("…-כרמיאל-10") — לא לתצוגה
+  return {short: c[1] || rid, long: (c[2] || '').replace(/-\d[\d#]?$/, ''), agency: c[3] || '', dir: c[4] || '', alt: c[5] || ''};
 }
 function render() {
   renderPeriods();
@@ -216,7 +217,7 @@ function render() {
     <div class="panel"><div class="ptitle">התפלגות ההגעות לתחנות</div>${distHtml(M.tot)}</div>
     <div class="cols2">
       <div class="panel"><div class="ptitle">אחוז בזמן, יום אחרי יום</div><div class="chart" id="c-trend"></div></div>
-      <div class="panel"><div class="ptitle">לפי שעת היום</div><div class="chart" id="c-hours"></div></div>
+      <div class="panel"><div class="ptitle">אחוז בזמן לפי השעה שבלו״ז</div><div class="chart" id="c-hours"></div></div>
     </div>
     <div class="panel"><div class="ptitle">לפי מפעיל</div><div id="t-ag"></div></div>
     <div class="panel"><div class="ptitle">לפי קו</div><input class="search" id="lq" placeholder="חיפוש קו: מספר, יעד או מפעיל…" value="${esc(lq)}"><div id="line-detail"></div><div id="t-lines"></div></div>
@@ -277,7 +278,7 @@ function renderLineDetail(M) {
       <div><b>${num(s.obs)}</b><span>נסיעות נצפו מתוך ${num(s.sched)}</span></div>
     </div>
     ${distHtml(s)}
-    <div class="cols2" style="margin-top:10px"><div><div class="ptitle">לפי שעת היציאה המתוכננת</div><div class="chart" id="c-lh"></div></div>
+    <div class="cols2" style="margin-top:10px"><div><div class="ptitle">אחוז בזמן לפי השעה שבלו״ז</div><div class="chart" id="c-lh"></div></div>
     <div><div class="ptitle">התחנות עם האיחור הגדול ביותר${period === 'day' ? '' : ' (ביום האחרון בתקופה)'}</div>${(s.ws || []).length ? `<table><thead><tr><th>תחנה</th><th>הגעות</th><th>איחור ממוצע</th></tr></thead><tbody>${s.ws.map(w => `<tr><td class="nm">${esc(w[1])} <small style="color:var(--dim)">${esc(w[0])}</small></td><td>${num(w[2])}</td><td class="${dcls(w[3])}">${fmt1(w[3])} דק׳</td></tr>`).join('')}</tbody></table>` : '<div class="mut">אין פירוט לתחנות</div>'}</div></div>
   </div>`;
   barChart($('#c-lh'), hours, {color: C.line, max: 100, unit: '%', h: 160});
