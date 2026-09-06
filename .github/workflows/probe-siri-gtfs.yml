@@ -1,0 +1,68 @@
+name: probe-siri-gtfs
+
+# בדיקה חד-פעמית: הצמדת SIRI גולמי (S3 של דאטאבוס) ל-GTFS של אותו יום —
+# מפתחות trip_id / route_id / stop_code — וגם: איפה נמצא ה-GTFS של יום שעבר
+# (gtfs_archive ב-S3). התוצאה: docs/fetched/siri-gtfs.txt
+
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'יום (YYYY-MM-DD)'
+        required: false
+        default: '2026-09-01'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: בדיקה
+        env:
+          DAY: ${{ github.event.inputs.day }}
+        run: |
+          set -uo pipefail
+          pip install -q brotli
+          mkdir -p docs/fetched siri
+          OUT=docs/fetched/siri-gtfs.txt
+          B="https://openbus-stride-public.s3.eu-west-1.amazonaws.com"
+          Y=${DAY:0:4}; M=${DAY:5:2}; D=${DAY:8:2}
+          {
+            echo "SIRI ↔ GTFS · יום $DAY · $(date -u +%FT%TZ)"
+            echo "===== S3 gtfs_archive/ ====="
+            curl -sS "$B/?list-type=2&delimiter=/&prefix=gtfs_archive/&max-keys=20" | tr '<' '\n' | grep -E '^(Prefix|Key)>' | sed 's/^[A-Za-z]*>//' | head -20
+            echo "--- gtfs_archive/$Y/$M/$D ---"
+            curl -sS "$B/?list-type=2&prefix=gtfs_archive/$Y/$M/$D&max-keys=20" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -20
+            echo "--- gtfs_archive/$Y/$M/ (תיקיות) ---"
+            curl -sS "$B/?list-type=2&delimiter=/&prefix=gtfs_archive/$Y/$M/&max-keys=40" | tr '<' '\n' | grep -E '^Prefix>' | sed 's/^[A-Za-z]*>//' | head -40
+            KEY=$(curl -sS "$B/?list-type=2&prefix=gtfs_archive/$Y/$M/$D&max-keys=20" | tr '<' '\n' | grep -E '^Key>' | sed 's/^Key>//' | grep -i 'zip' | head -1)
+            echo "GTFS key: $KEY"
+            if [ -n "$KEY" ]; then
+              curl -sS -o gtfs.zip "$B/$KEY"; ls -la gtfs.zip | awk '{print "GTFS size:", $5}'
+            else
+              echo "אין GTFS ב-S3 ליום הזה — מוריד מ-gov.il (של היום)"
+              curl -fSL -A "Mozilla/5.0" -o gtfs.zip "https://gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip" || echo "gov.il נכשל"
+            fi
+            echo "===== SIRI: 3 דקות (08:00–08:02) ====="
+            for mm in 00 01 02; do curl -sS -o siri/08$mm.br "$B/stride-siri-requester/$Y/$M/$D/08/$mm.br"; done
+            ls -la siri | awk '{print $5, $9}'
+            python3 tools/probe_siri_gtfs.py "$DAY" gtfs.zip siri/0800.br siri/0801.br siri/0802.br
+          } > "$OUT" 2>&1 || true
+          wc -c "$OUT"; cat "$OUT" | tail -c 3500
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/fetched/siri-gtfs.txt
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "docs: בדיקת הצמדת SIRI גולמי ל-GTFS לקראת מדד דיוק לאוטובוסים"
+          for i in 1 2 3 4; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true; sleep 10
+          done
+          exit 1
