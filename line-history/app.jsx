@@ -1649,7 +1649,8 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               title={"התראה על כל שינוי מהותי בקווים של " + ct} />
           ))}
         </div>
-        <div className="facts">{lf.op}{lf.ty ? " · " + lf.ty : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
+        {/* "עירוני" פעם אחת בלבד (שלמה 06.09): כשהוא מופיע ליד "נגיש" — התג הנפרד לא מוצג */}
+        <div className="facts">{lf.op}{lf.ty && !(lf.vt === lf.ty && (lf.wa === "1" || lf.wa === "2")) ? " · " + lf.ty : ""}{!lf.ty && lf.vt && lf.wa !== "1" && lf.wa !== "2" ? " · " + lf.vt : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
           {/* נגישות לכיסא גלגלים מגיעה מ-wheelchair_accessible בפיד, והיא
               אחידה לכל נסיעות הקו — ולכן תכונה של הקו. אם תועד אירוע שינוי
               נגישות, התג מציין מאיזה תאריך המצב הנוכחי; שינוי שקרה יחד עם
@@ -1657,12 +1658,18 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               בהערה. לקווים שלא נצפה בהם שינוי — תג בלי תאריך, לא תאריך מומצא. */}
           {/* סוג הרכב שנקבע לקו ברישוי משרד התחבורה (גודל + סוג), ולצד "נגיש"
               הסוג עצמו — "עירוני נגיש" (שלמה 06.09) */}
-          {lf.vsz || lf.vt ? (() => {
-            const vchg = (lf.veh || []).length >= 2 ? lf.veh[lf.veh.length - 1][0] : null;
-            // "לא מוגדר" הוא סטטוס אמיתי ברישוי: המשרד לא קבע לקו סוג רכב (שלמה 06.09)
-            const undef = lf.vsz === "לא מוגדר";
-            const tip = (undef ? "ברישוי משרד התחבורה לא נקבע לקו סוג רכב" : "סוג הרכב שנקבע לקו ברישוי משרד התחבורה") + (vchg ? " — שונה לאחרונה ב-" + fmtD(vchg) : "");
-            return <span className="vsz" title={tip}> · 🚌 {undef ? "לא נקבע ברישוי" : (lf.vsz || "")}{!undef && lf.wa !== "1" && lf.wa !== "2" && lf.vt ? " " + lf.vt : ""}{vchg ? " (מאז " + fmtD(vchg) + ")" : ""}</span>;
+          {lf.vsz ? (() => {
+            // "🚌 אוטובוס" לא אומר כלום — ברור שזה אוטובוס (שלמה 06.09). הקטגוריה של
+            // המשרד היא גודל: רגיל / מפרקי / מידיבוס / מיניבוס, או "לא מוגדר" — סטטוס
+            // אמיתי ברישוי (לא נקבע לקו סוג רכב). ואם השתנה — מאז מתי ומה היה קודם.
+            const VSZ = { "אוטובוס": "אוטובוס רגיל", "מפרקי": "אוטובוס מפרקי", "מיניבוס": "מיניבוס", "מידיבוס": "מידיבוס", "לא מוגדר": "לא נקבע סוג רכב" };
+            const label = (v) => VSZ[v] || v || "";
+            const veh = lf.veh || [];
+            const cur = veh.length ? veh[veh.length - 1] : null, prev = veh.length >= 2 ? veh[veh.length - 2] : null;
+            const vchg = prev ? cur[0] : null;
+            const before = prev ? (prev[2] !== cur[2] ? label(prev[2]) : (prev[1] || "")) : "";
+            const tip = (lf.vsz === "לא מוגדר" ? "ברישוי משרד התחבורה לא נקבע לקו סוג רכב" : "גודל הרכב שמשרד התחבורה קבע לקו ברישוי") + (vchg ? " — שונה ב-" + fmtD(vchg) : "");
+            return <span className="vsz" title={tip}> · 🚌 ברישוי: {label(lf.vsz)}{vchg ? " (מאז " + fmtD(vchg) + (before ? ", קודם " + before : "") + ")" : ""}</span>;
           })() : null}
           {(() => {
             if (lf.wa !== "1" && lf.wa !== "2") return null;

@@ -108,14 +108,25 @@ def row_state(r):
     return ('' if t == UNDEF else t, s)
 
 
+SZL = {'אוטובוס': 'אוטובוס רגיל', 'מפרקי': 'אוטובוס מפרקי'}   # "אוטובוס" לבד לא אומר כלום (שלמה 06.09)
+
+
+def szl(s):
+    return SZL.get(s, s)
+
+
 def note_for(pt, ps, t, s):
-    """טקסט האירוע בפיד: מה היה ומה נקבע, כולל כשהרישוי הפסיק/התחיל לקבוע סוג רכב."""
-    old, new = f'{ps} {pt}'.strip(), f'{s} {t}'.strip()
+    """טקסט האירוע בפיד: מה היה ומה נקבע — גודל הרכב, סוג הקו (עירוני/בינעירוני)
+    או שניהם, וגם כשהרישוי הפסיק/התחיל לקבוע סוג רכב."""
     if s == UNDEF and ps != UNDEF:
-        return f'ברישוי לא נקבע עוד סוג רכב לקו (היה: {old})'
+        return f'ברישוי לא נקבע עוד סוג רכב לקו (היה: {szl(ps)})'
     if ps == UNDEF and s != UNDEF:
-        return f'ברישוי נקבע לקו סוג רכב: {new} (קודם לא היה מוגדר)'
-    return f'סוג הרכב ברישוי שונה: {old} ← {new}'
+        return f'ברישוי נקבע לקו סוג רכב: {szl(s)} (קודם לא היה מוגדר)'
+    if ps != s and pt != t and pt and t:
+        return f'הרכב ברישוי שונה: {szl(ps)} {pt} ← {szl(s)} {t}'
+    if ps != s:
+        return f'גודל הרכב ברישוי שונה: {szl(ps)} ← {szl(s)}'
+    return f'סוג הקו ברישוי שונה: {pt or UNDEF} ← {t or UNDEF}'
 
 
 def fsafe(rd):
@@ -258,7 +269,7 @@ def daily(day):
             continue
         if (st[0], st[1]) != (t, s):
             n_chg += 1
-            log(f'  שינוי: מק"ט {mkt}: {st[1]} {st[0]} ← {s} {t} ({used})')
+            log(f'  שינוי: מק"ט {mkt}: {note_for(st[0], st[1], t, s)} ({used})')
             for fn in files.get(mkt, []):
                 p = f'{OUTDIR}/lines/{fn}'
                 lf = jload(p, None)
