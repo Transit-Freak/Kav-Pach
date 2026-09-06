@@ -89,6 +89,39 @@ for title, q in QUERIES:
                 except Exception as e:  # noqa: BLE001
                     log(f'      הורדה שגיאה: {e}')
 
+# --- העמוד עצמו ב-gov.il (המקור של שלמה): הקישורים לקבצים שמופיעים בו ---
+import re  # noqa: E402
+PAGE = 'https://www.gov.il/he/pages/mot_maagarei_netunim'
+log(f'\n=== העמוד ב-gov.il: {PAGE} ===')
+try:
+    html = get(PAGE, timeout=120).decode('utf-8', errors='replace')
+    log(f'  גודל העמוד: {len(html):,} תווים')
+    links = []
+    for m in re.finditer(r'href="([^"]+)"', html):
+        u = m.group(1)
+        if re.search(r'\.(csv|xlsx|xls|zip|json|txt)(\?|$)|/BlobFolder/|/files/|data\.gov\.il|apps\.gov\.il', u, re.I):
+            u = urllib.parse.urljoin(PAGE, u.replace('&amp;', '&'))
+            if u not in links:
+                links.append(u)
+    log(f'  קישורים לקבצים/מאגרים: {len(links)}')
+    for u in links[:60]:
+        line = f'  - {u}'
+        try:
+            req = urllib.request.Request(u, method='HEAD', headers={'User-Agent': 'kav-bochan-probe/1.0', 'Referer': PAGE})
+            with urllib.request.urlopen(req, timeout=60) as r:
+                line += f' · {r.status} · {r.headers.get("Content-Type")} · {r.headers.get("Content-Length")} בייט · {r.headers.get("Last-Modified")}'
+        except Exception as e:  # noqa: BLE001
+            line += f' · HEAD שגיאה: {str(e)[:80]}'
+        log(line)
+    # גם טקסט הטבלה שבעמוד (שמות הקבצים באנגלית), כדי לדעת מה מקושר למה
+    text = re.sub(r'<[^>]+>', ' ', html)
+    for name in ['licensing_bus_system', 'Bus_rishui_bitzua', 'risui_bitzua_bus_trip', 'ArrivalToStation', 'Train_luz_station', 'train_trip', 'kli_rechev', 'Bus_fleet', 'Tikufim', 'RIDERSHIP']:
+        i = text.find(name)
+        if i >= 0:
+            log(f'  הקשר "{name}": {" ".join(text[max(0, i - 200):i + 200].split())[:400]}')
+except Exception as e:  # noqa: BLE001
+    log(f'  שגיאה בטעינת העמוד: {e}')
+
 with open('docs/fetched/mot-datasets.txt', 'w', encoding='utf-8') as f:
     f.write('\n'.join(out) + '\n')
 log('\nנכתב docs/fetched/mot-datasets.txt')
