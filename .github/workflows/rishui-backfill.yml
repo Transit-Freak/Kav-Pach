@@ -1,0 +1,45 @@
+name: rishui-backfill
+
+# מילוי לאחור חד-פעמי ל"הקו בזמן": סוג הרכב שנקבע לכל קו ברישוי משרד התחבורה
+# (data.gov.il, "רישוי מערך האוטובוסים") מ-2022 — השנה הראשונה שבה יש שדות
+# סוג/גודל רכב — ועד היום. כותב veh/vt/vsz לקובצי הקו ואירועי 'vehicle' לפיד
+# החודשי, בלי לגעת בגרסאות המסלול. הפעלה ידנית בלבד.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_year:
+        description: 'שנת התחלה'
+        required: false
+        default: '2022'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: line-history-refs/heads/main
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: מילוי לאחור
+        run: OUTDIR=line-history/data python3 tools/linehistory_rishui.py --backfill "${{ github.event.inputs.from_year || '2022' }}"
+      - name: אינדקס
+        run: OUTDIR=line-history/data python3 tools/rebuild_lines_index.py || echo "בניית האינדקס נכשלה — הריצה היומית תבנה"
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A line-history/data
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "data: הקו בזמן — סוג הרכב ברישוי משרד התחבורה, מילוי לאחור"
+          for i in 1 2 3 4 5 6; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true; sleep 15
+          done
+          exit 1

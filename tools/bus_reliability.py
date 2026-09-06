@@ -156,18 +156,90 @@ def load_stop_times(g, want_trips):
 VRANK = {'מיניבוס': 1, 'מידיבוס': 2, 'אוטובוס': 3, 'מפרקי': 4}
 
 
-def load_vehicle_classes(site):
-    """הסוג שנקבע לכל קו (מק"ט → מיניבוס/מידיבוס/אוטובוס/מפרקי, מקובץ הקווים של
-    המשרד, data-main.json עמודה 13) והסוג של כל רכב לפי מספרו: קודם מאגר "ציי רכב
+CKAN = 'https://data.gov.il/api/3/action'
+
+
+def ckan_get(url, timeout=120):
+    import urllib.request
+    req = urllib.request.Request(url, headers={'User-Agent': 'kav-bochan-bus/1.0', 'Referer': 'https://data.gov.il/'})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.loads(r.read().decode('utf-8'))
+
+
+def norm_size(t):
+    t = str(t or '')
+    if 'מפרק' in t:
+        return 'מפרקי'
+    if 'מיני' in t:
+        return 'מיניבוס'
+    if 'מידי' in t:
+        return 'מידיבוס'
+    if 'אוטובוס' in t:
+        return 'אוטובוס'
+    return None
+
+
+def load_rishui_sizes(day):
+    """גודל הרכב שנקבע לכל מק"ט ליום נתון, ממאגר "רישוי מערך האוטובוסים" של משרד
+    התחבורה ב-data.gov.il (שורה לכל מק"ט לכל יום: VehicleSize_nm, trips_count).
+    המקור הרשמי היומי (שלמה 06.09) במקום העמודה בקובץ הידני. אם אין שורות ליום —
+    היום הקודם הקרוב (עד שבוע). מחזיר (מק"ט → גודל, תאריך המקור) או ({}, None)."""
+    import urllib.parse
+    year = day[:4]
+    pkg = ckan_get(f'{CKAN}/package_show?id=licensing_bus_system')['result']
+    rid = None
+    for r in pkg.get('resources', []):
+        if (r.get('format') or '').upper() == 'CSV' and year in (r.get('name') or '') and r.get('datastore_active'):
+            rid = r['id']
+    if not rid:
+        raise RuntimeError(f'אין משאב רישוי לשנת {year}')
+    d0 = datetime.date.fromisoformat(day)
+    for back in range(0, 8):
+        d = (d0 - datetime.timedelta(days=back)).isoformat()
+        flt = urllib.parse.quote(json.dumps({'rishui_date': d}))
+        rows, offset = [], 0
+        while True:
+            res = ckan_get(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&fields=office_line_id,VehicleSize_nm,VehicleType_nm,trips_count&limit=32000&offset={offset}')['result']
+            recs = res.get('records', [])
+            rows.extend(recs)
+            if len(recs) < 32000:
+                break
+            offset += 32000
+        if rows:
+            sizes = {}
+            raw = collections.Counter()
+            for r in rows:
+                raw[str(r.get('VehicleSize_nm'))] += 1
+                s = norm_size(r.get('VehicleSize_nm'))
+                if s and r.get('office_line_id') is not None:
+                    sizes[str(r['office_line_id'])] = s
+            print(f'רישוי {d}: {len(rows):,} שורות · גדלי רכב במקור: {dict(raw.most_common(8))}', flush=True)
+            return sizes, d
+    return {}, None
+
+
+def load_vehicle_classes(site, day=None):
+    """הסוג שנקבע לכל קו (מק"ט → מיניבוס/מידיבוס/אוטובוס/מפרקי): קודם המקור הרשמי
+    היומי (רישוי מערך האוטובוסים ב-data.gov.il), ובהיעדרו קובץ הקווים של האתר
+    (data-main.json עמודה 13). הסוג של כל רכב לפי מספרו: קודם מאגר "ציי רכב
     אוטובוסים" של המשרד (fleet-official.json, שדה 5, אותו אוצר מילים), ובהיעדרו
     סיווג הרישוי (fleet.json: 'מפרק' → מפרקי, 'זעיר' → מיניבוס, אחרת אוטובוס)."""
     plan, veh = {}, {}
-    try:
-        for r in json.load(open(os.path.join(site, 'data-main.json'), encoding='utf-8')):
-            if len(r) > 13 and r[13] in VRANK:
-                plan[str(r[0])] = r[13]
-    except Exception as e:  # noqa: BLE001
-        print(f'אזהרה: data-main.json לא נטען ({e})', flush=True)
+    src_date = None
+    if day:
+        try:
+            plan, src_date = load_rishui_sizes(day)
+        except Exception as e:  # noqa: BLE001
+            print(f'אזהרה: מאגר הרישוי לא נטען ({e}) — נופלים לקובץ הקווים של האתר', flush=True)
+    if not plan:
+        try:
+            for r in json.load(open(os.path.join(site, 'data-main.json'), encoding='utf-8')):
+                if len(r) > 13 and r[13] in VRANK:
+                    plan[str(r[0])] = r[13]
+            src_date = 'data-main.json'
+        except Exception as e:  # noqa: BLE001
+            print(f'אזהרה: data-main.json לא נטען ({e})', flush=True)
+    print(f'מקור סוג הרכב שנקבע לקו: {src_date}', flush=True)
     try:
         fl = json.load(open(os.path.join(site, 'fleet/data/fleet.json'), encoding='utf-8'))
         off = 1 if fl.get('v') == 2 else 0
@@ -405,6 +477,8 @@ def main():
     ap.add_argument('--out', default='bus/data')
     ap.add_argument('--workers', type=int, default=4)
     ap.add_argument('--site', default='.', help='שורש האתר — לקובצי סוגי הרכב (data-main.json, fleet/data)')
+    ap.add_argument('--no-rishui', action='store_true', help='בלי מאגר הרישוי של המשרד (data.gov.il) לסוג הרכב שנקבע לקו')
+    ap.add_argument('--dump-rides', default='', help='קובץ JSON עם שורה לכל נסיעה שנמדדה (להשוואה מול נתוני המשרד)')
     a = ap.parse_args()
     day = a.day
     t0 = datetime.datetime.now()
@@ -434,7 +508,7 @@ def main():
 
     g = load_gtfs(a.gtfs, day)
     print(f'GTFS: {len(g["trips"]):,} נסיעות פעילות · {len(g["routes"]):,} מסלולים · {len(g["stops"]):,} תחנות', flush=True)
-    plan_cls, veh_cls = load_vehicle_classes(a.site)
+    plan_cls, veh_cls = load_vehicle_classes(a.site, None if a.no_rishui else day)
     print(f'סוגי רכב: {len(plan_cls):,} מק"טים עם סוג שנקבע · {len(veh_cls):,} רכבים עם סוג ידוע', flush=True)
     # רצפי התחנות של כל הנסיעות הפעילות היום — נדרש גם להצמדה (שעת היציאה
     # של התחנה הראשונה) וגם למדידה
@@ -517,6 +591,7 @@ def main():
     diag_mx = collections.Counter()      # היסטוגרמת האיחור המרבי לנסיעה (5 דק׳)
     diag_mx_o = collections.Counter()    # נסיעות עם מרבי ≥55 דק׳: האיחור במוצא (10 דק׳)
     diag_ex = []                         # דוגמאות של נסיעות כאלה שיצאו בזמן
+    rides_dump = []                      # --dump-rides: [מק"ט, כיוון, חלופה, trip, יציאה מתוכננת, איחור במוצא, איחור אחרון, תחנה אחרונה, מדידות, רכב, זמן יציאה, זמן אחרון]
     diag_raw, diag_raw2, diag_raw3 = [], [], []   # רשומות גולמיות לאבחון המוצא, ונסיעות טיפוסיות
     spikes = 0
     n_rides = 0
@@ -645,6 +720,11 @@ def main():
             tot['d'].append(delay)
             if ride_max is None or delay > ride_max[0]:
                 ride_max = (delay, s[1], sched)
+        if a.dump_rides:
+            od = next((d for k, s, sc, d in meas if k == 1), None)
+            info = routes.get(rid, {})
+            rides_dump.append([info.get('mkt', ''), info.get('dir', ''), info.get('alt', ''), tid.split('_')[0], seq[0][3], od,
+                               meas[-1][3], meas[-1][0], len(meas), key[2], t_of.get(1), max(t_of.values())])
         if ride_max and ride_max[0] >= 1200:
             worst.append((ride_max[0], rid, tid, ride_max[1], ride_max[2], ride_pass))
             diag_mx[int(ride_max[0] // 300) * 5] += 1
@@ -656,6 +736,12 @@ def main():
                     diag_ex.append(f'{rid}/{tid} רשומות={len(recs)} {hms_(recs[0][0])}–{hms_(recs[-1][0])} יציאה מתוכננת {hms_(seq[0][3])} n={len(seq)} מעברים: '
                                    + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in sorted(meas)))
     print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לסף: {beyond:,} · קפיצות בודדות שהושמטו: {spikes:,} · מעברים לפי מרחק/לפי Order: {dict(FRAC)} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    if a.dump_rides:
+        os.makedirs(os.path.dirname(a.dump_rides) or '.', exist_ok=True)
+        json.dump({'d': day, 'cols': ['mkt', 'dir', 'alt', 'trip', 'sched dep sec', 'origin delay sec', 'last delay sec', 'last stop k', 'n meas', 'vehicle', 'dep sec', 'last pass sec'],
+                   'sched_trips': [[routes.get(rid, {}).get('mkt', ''), routes.get(rid, {}).get('dir', ''), routes.get(rid, {}).get('alt', ''), tid.split('_')[0], lst[0][3]] for tid, lst in st.items() if lst for rid in [g['trips'].get(tid)]],
+                   'rides': rides_dump}, open(a.dump_rides, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+        print(f'נכתב {a.dump_rides}: {len(rides_dump):,} נסיעות שנמדדו', flush=True)
     for ex in diag_raw + diag_raw2 + diag_raw3:
         print('  גולמי:', ex, flush=True)
     print(f'אבחון מוצא (דקות → נסיעות): {dict(sorted(diag_o.items()))}', flush=True)

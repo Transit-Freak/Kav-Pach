@@ -31,6 +31,7 @@ const KINDS = {
   renamed:     { label: "שינוי שם תחנת קצה", color: "#b45309" },
   mode:        { label: "שינוי סוג הקו", color: "#0369a1" },
   access:      { label: "שינוי נגישות", color: "#0f766e" },
+  vehicle:     { label: "שינוי סוג רכב", color: "#7c3aed" },
   board:       { label: "שינוי עלייה/ירידה", color: "#854d0e" },
   platform:    { label: "שינוי רציף", color: "#0e7490" },
   "planned-dropped": { label: "תוכנן ולא נכנס לפעול", color: "#9f1239" },
@@ -226,6 +227,21 @@ function materializeLf(lf) {
     if (typeof v.shp === "number") v.shp = (spool && v.shp > 0 && spool[v.shp]) || "";
   });
   delete lf.pool; delete lf.spool;
+  // סוג הרכב ברישוי משרד התחבורה (שלמה 06.09): veh = [[תאריך, סוג, גודל], …],
+  // הראשון הוא מצב הפתיחה והשאר שינויים. השינויים נכנסים לציר הזמן כאירועים
+  // בלי גאומטריה, בלי לגעת בגרסאות המסלול.
+  const veh = lf.veh || [];
+  if (veh.length >= 2 && !lf._vehMerged) {
+    const evs = [];
+    for (let i = 1; i < veh.length; i++) {
+      const [d, t, s] = veh[i], [, pt, ps] = veh[i - 1];
+      evs.push({ d, k: "vehicle", syn: true, stops: [], shp: "",
+        note: `סוג הרכב ברישוי שונה: ${[ps, pt].filter(Boolean).join(" ")} ← ${[s, t].filter(Boolean).join(" ")}` });
+    }
+    lf.versions = [...(lf.versions || []), ...evs]
+      .sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : (a.syn ? 1 : 0) - (b.syn ? 1 : 0)));
+    lf._vehMerged = true;
+  }
   return lf;
 }
 
@@ -1584,7 +1600,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     // מופיעה ביעד או בתחנות של הקו הפתוח. מילים גנריות ("תחנה מרכזית",
     // "הרצל") הטעו את הסינון הקודם והכניסו וריאנטים מערים אחרות.
     const hay = String(lf.dest || "") + " " +
-      ((vs[vs.length - 1] || {}).stops || []).map((s) => s[1]).join(" ");
+      (([...vs].reverse().find((x) => (x.stops || []).length) || {}).stops || []).map((s) => s[1]).join(" ");
     const cityOf = (x) => { const p = String(x || "").split(" - "); return p.length > 1 ? p[p.length - 1].trim() : null; };
     const passCity = (r) => { const a = cityOf(r.f), b = cityOf(r.l); return !!((a && hay.includes(a)) || (b && hay.includes(b))); };
     let rel = routes.map((r, i) => [r, i]).filter((x) => passCity(x[0])).map((x) => x[1]);
@@ -1639,13 +1655,19 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               נגישות, התג מציין מאיזה תאריך המצב הנוכחי; שינוי שקרה יחד עם
               שינוי מסלול מסווג route/stops ולא access, ולכן הזיהוי נעזר גם
               בהערה. לקווים שלא נצפה בהם שינוי — תג בלי תאריך, לא תאריך מומצא. */}
+          {/* סוג הרכב שנקבע לקו ברישוי משרד התחבורה (גודל + סוג), ולצד "נגיש"
+              הסוג עצמו — "עירוני נגיש" (שלמה 06.09) */}
+          {lf.vsz || lf.vt ? (() => {
+            const vchg = (lf.veh || []).length >= 2 ? lf.veh[lf.veh.length - 1][0] : null;
+            return <span className="vsz" title={"סוג הרכב שנקבע לקו ברישוי משרד התחבורה" + (vchg ? " — שונה לאחרונה ב-" + fmtD(vchg) : "")}> · 🚌 {lf.vsz || ""}{lf.wa !== "1" && lf.wa !== "2" && lf.vt ? " " + lf.vt : ""}{vchg ? " (מאז " + fmtD(vchg) + ")" : ""}</span>;
+          })() : null}
           {(() => {
             if (lf.wa !== "1" && lf.wa !== "2") return null;
             const chg = [...vs].reverse().find((v) => v.k === "access" || String(v.note || "").includes("הנגישות שוּנתה"));
             const since = chg ? " מאז " + fmtD(chg.d) : "";
             const tip = (lf.wa === "1" ? "לפי הפיד הארצי, הקו מונגש לכיסא גלגלים" : "לפי הפיד הארצי, הקו אינו מונגש לכיסא גלגלים")
-              + (chg ? " — השינוי נקלט בפיד ב-" + fmtD(chg.d) : "");
-            return <span className={"wa " + (lf.wa === "1" ? "yes" : "no")} title={tip}> · ♿ {lf.wa === "1" ? "נגיש" : "אינו נגיש"}{since}</span>;
+              + (chg ? " — השינוי נקלט בפיד ב-" + fmtD(chg.d) : "") + (lf.vt ? " · סוג הרכב ברישוי: " + lf.vt : "");
+            return <span className={"wa " + (lf.wa === "1" ? "yes" : "no")} title={tip}> · ♿ {lf.vt ? lf.vt + " " : ""}{lf.wa === "1" ? "נגיש" : "אינו נגיש"}{since}</span>;
           })()}
           {/* כמה נסיעות מתוכננות יש לחלופה היום. "קיים בפיד" אינו "פועל":
               הפיד מפרסם קווים לפני הפתיחה, והקו הירוק בירושלים נכנס עם
@@ -1870,7 +1892,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               </div>
               {/* מאיפה האירוע הזה הגיע. ההערות אמרו "מארכיון הפיד הארצי"
                   בלי לנקוב בשם, ואי אפשר היה לדעת מה נמדד ומי מדד. */}
-              <div className="evsrc">{SRC_LABEL[x.src] || SRC_LABEL._daily}</div>
+              <div className="evsrc">{x.k === "vehicle" ? SRC_LABEL.rishui : (SRC_LABEL[x.src] || SRC_LABEL._daily)}</div>
               {/* שינוי שתוכנן ולא נכנס לתוקף: מה קרה בסוף, שני התאריכים (מתי היה
                   אמור להיכנס, מתי ירד), ומה התוכנית הייתה משנה — במקום מספר
                   התחנות (שלמה 05.09) */}
@@ -2967,6 +2989,7 @@ const SRC_LABEL = {
   ob: "מקור: ארכיון הסדנא לידע ציבורי (Open Bus) — צילומים יומיים, 01.2022–07.2026",
   v10: "מקור: קובץ הרישוי היומי Gtfs_10_days של משרד התחבורה — הפורמט שמייצג כמה רכבים באותה יציאה",
   _daily: "מקור: הסריקה היומית שלנו — השוואת הפיד הארצי, יום מול יום",
+  rishui: "מקור: מאגר \"רישוי מערך האוטובוסים\" של משרד התחבורה (data.gov.il) — סוג וגודל הרכב שנקבעו לקו, שורה לכל מק\"ט לכל יום מ-2022",
 };
 
 // רשימת המקורות המלאה. היא מוצגת למשתמש ולא רק מתועדת בקוד: מי שקורא
@@ -2980,6 +3003,8 @@ const SOURCES = [
     b: "צילומים יומיים של הפיד הארצי. מהם נבנתה היסטוריית הקווים והתחנות לתקופה הזו, וממנו גם השינויים שתוכננו ולא נכנסו לתוקף מינואר 2023 ואילך." },
   { t: "ארכיון TransitFeeds / OpenMobilityData", d: "16.03.2017 – 14.01.2022",
     b: "799 צילומים של הפיד הארצי. 16.03.2017 הוא הצילום הישן ביותר שקיים שם. משם מגיעה כל ההיסטוריה שלפני 2022, בקווים ובתחנות כאחד." },
+  { t: "רישוי מערך האוטובוסים — משרד התחבורה", d: "מ-01.2022 והלאה",
+    b: "מאגר ב-data.gov.il עם שורה לכל מק\"ט לכל יום: הסוג (עירוני/בינעירוני) והגודל (אוטובוס/מיניבוס/מידיבוס/מפרקי) של הרכב שנקבע לקו. ממנו מגיעים \"שינוי סוג רכב\" בציר הזמן והתג ליד הנגישות. השדות קיימים רק מ-2022." },
   { t: "רשת 2012 מאתר מגיעים", d: "צילום יחיד מ-2012",
     b: "רצפי התחנות של 3,214 קווים, חמש שנים לפני תחילת הארכיון. משמש כעוגן בעמוד הקו, וכעדות שקו עצר בתחנה מסוימת." },
 ];

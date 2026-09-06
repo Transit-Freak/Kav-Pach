@@ -922,10 +922,13 @@ print(f'תחנות: חדשות {ns} | בוטלו {nd} | שם {nr} | מיקום {
 # (קווים מבוטלים חייבים להישאר ניתנים לחיפוש ולסינון לפי קטגוריה).
 # ks = סוגי השינויים שיש לקו, lk/ld = הרשומה האחרונה (לסטטוס "מבוטל").
 def idx_entry(rdesc, line, dest, op, ty, tt=None):
-    vs = materialize(jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {})).get('versions', [])
+    _lf = materialize(jload(f'{OUTDIR}/lines/{fsafe(rdesc)}.json', {}))
+    vs = _lf.get('versions', [])
     e = {'rd': rdesc, 'line': line, 'dest': dest[:80], 'op': op, 'ty': ty, 'v': len(vs)}
     if tt: e['tt'] = tt      # סוג תחבורה שאינו אוטובוס — לסינון באתר
+    if _lf.get('vt'): e['vt'] = _lf['vt']   # סוג הרכב ברישוי (linehistory_rishui.py)
     ks = {v['k'] for v in vs if v['k'] != 'baseline'}
+    if len(_lf.get('veh') or []) >= 2: ks.add('vehicle')
     # גרסאות ארכיון שהועשרו בהפרשי תחנות (enrich_stop_diffs) נספרות גם
     # בקטגוריות התחנות — אחרת ההיסטוריה של 2022–2026 לא מופיעה שם בכלל
     for v in vs:

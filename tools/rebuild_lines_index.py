@@ -103,6 +103,13 @@ for fn in os.listdir(f'{OUTDIR}/lines'):
         for v in vs:
             if v.get('k') == 'planned-dropped':
                 ks.add('planned-new' if (v.get('pk') or ('new' if 'הווריאנט' in (v.get('note') or '') else 'route')) == 'new' else 'planned-route')
+    # שינוי סוג הרכב ברישוי (linehistory_rishui.py): קטגוריה כשיש יותר ממצב אחד
+    if len(lf.get('veh') or []) >= 2:
+        ks.add('vehicle')
+    if lf.get('vt'):
+        e['vt'] = lf['vt']
+    else:
+        e.pop('vt', None)
     ks = sorted(ks)
     e['v'] = len(vs)
     if ks:
