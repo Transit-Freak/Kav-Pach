@@ -38,7 +38,8 @@ BROWSER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/
 PAGE = 32000          # מקסימום שורות לקריאה אחת ב-datastore_search
 COMPLETE = 0.7        # היום האחרון בקובץ נחשב מלא רק אם יש בו לפחות 70% מהשורות של היום הגדול בשבוע
 TODAY = datetime.date.today().isoformat()
-KNOWN = {'אוטובוס', 'מיניבוס', 'מידיבוס', 'מפרקי'}   # גדלי רכב ממשיים; "לא מוגדר"/ריק = אין מידע, לא מצב
+UNDEF = 'לא מוגדר'    # סטטוס אמיתי ברישוי (שלמה 06.09): המשרד לא קבע לקו סוג רכב — נשמר כמצב
+SIZES = {'אוטובוס', 'מיניבוס', 'מידיבוס', 'מפרקי', UNDEF}
 NOISE_DAYS = 7        # במילוי לאחור: מצב-ביניים שנמשך פחות משבוע ונעלם — רעש בקובץ, לא שינוי
 
 
@@ -97,14 +98,24 @@ def clean(s):
 
 
 def row_state(r):
-    """(סוג, גודל) של שורת רישוי, או None כשאין גודל ממשי. במקור יש שורות עם
-    "לא מוגדר" — פקיד שלא מילא, לא רכב אחר — ואם נתייחס אליהן כמצב, רוב
-    "השינויים" יהיו אוטובוס ← לא מוגדר ← אוטובוס. לכן הן פשוט לא נספרות."""
+    """(סוג, גודל) של שורת רישוי, או None כשאין גודל בכלל (שורה ריקה). "לא מוגדר"
+    הוא מצב לכל דבר — קו שהרישוי לא קובע לו סוג רכב — ומעבר אליו וממנו מתועד.
+    סוג "לא מוגדר" (עירוני/בינעירוני לא ידוע) נשמר כריק כדי לא להציג אותו ליד "נגיש"."""
     s = clean(r.get('VehicleSize_nm'))
-    if s not in KNOWN:
+    if s not in SIZES:
         return None
     t = clean(r.get('VehicleType_nm'))
-    return ('' if t == 'לא מוגדר' else t, s)
+    return ('' if t == UNDEF else t, s)
+
+
+def note_for(pt, ps, t, s):
+    """טקסט האירוע בפיד: מה היה ומה נקבע, כולל כשהרישוי הפסיק/התחיל לקבוע סוג רכב."""
+    old, new = f'{ps} {pt}'.strip(), f'{s} {t}'.strip()
+    if s == UNDEF and ps != UNDEF:
+        return f'ברישוי לא נקבע עוד סוג רכב לקו (היה: {old})'
+    if ps == UNDEF and s != UNDEF:
+        return f'ברישוי נקבע לקו סוג רכב: {new} (קודם לא היה מוגדר)'
+    return f'סוג הרכב ברישוי שונה: {old} ← {new}'
 
 
 def fsafe(rd):
@@ -146,7 +157,7 @@ def apply_to_lines(files, mkt, veh, changes_out):
         jdump(lf, p)
         n += 1
         for d, t, s, pt, ps in changes_out:
-            add_change(d, lf, f'סוג הרכב ברישוי שונה: {ps} {pt} ← {s} {t}')
+            add_change(d, lf, note_for(pt, ps, t, s))
     return n
 
 
@@ -258,7 +269,7 @@ def daily(day):
                 lf['veh'] = veh
                 lf['vt'], lf['vsz'] = t, s
                 jdump(lf, p)
-                add_change(used, lf, f'סוג הרכב ברישוי שונה: {st[1]} {st[0]} ← {s} {t}')
+                add_change(used, lf, note_for(st[0], st[1], t, s))
                 n_files += 1
             state['m'][mkt] = [t, s, used]
     state['d'] = used

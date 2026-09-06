@@ -1659,7 +1659,10 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               הסוג עצמו — "עירוני נגיש" (שלמה 06.09) */}
           {lf.vsz || lf.vt ? (() => {
             const vchg = (lf.veh || []).length >= 2 ? lf.veh[lf.veh.length - 1][0] : null;
-            return <span className="vsz" title={"סוג הרכב שנקבע לקו ברישוי משרד התחבורה" + (vchg ? " — שונה לאחרונה ב-" + fmtD(vchg) : "")}> · 🚌 {lf.vsz || ""}{lf.wa !== "1" && lf.wa !== "2" && lf.vt ? " " + lf.vt : ""}{vchg ? " (מאז " + fmtD(vchg) + ")" : ""}</span>;
+            // "לא מוגדר" הוא סטטוס אמיתי ברישוי: המשרד לא קבע לקו סוג רכב (שלמה 06.09)
+            const undef = lf.vsz === "לא מוגדר";
+            const tip = (undef ? "ברישוי משרד התחבורה לא נקבע לקו סוג רכב" : "סוג הרכב שנקבע לקו ברישוי משרד התחבורה") + (vchg ? " — שונה לאחרונה ב-" + fmtD(vchg) : "");
+            return <span className="vsz" title={tip}> · 🚌 {undef ? "לא נקבע ברישוי" : (lf.vsz || "")}{!undef && lf.wa !== "1" && lf.wa !== "2" && lf.vt ? " " + lf.vt : ""}{vchg ? " (מאז " + fmtD(vchg) + ")" : ""}</span>;
           })() : null}
           {(() => {
             if (lf.wa !== "1" && lf.wa !== "2") return null;
