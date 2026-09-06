@@ -133,13 +133,29 @@ def build_stop_lookup():
                     coords[mk] = (e['la'], e['lo'])
     except Exception:
         pass
+    # תאומות: שתי תחנות באותו שם משני צידי הכביש (עד 120 מ׳). ההצלבה לפי
+    # שם לבדו בוחרת צד אקראי; הצד נקבע אחר כך לפי כיוון הנסיעה (route_stops).
+    twins = collections.defaultdict(set)
+    try:
+        by_nm = collections.defaultdict(list)
+        for mk, row in state.items():
+            if len(row) > 2 and row[1] and row[2]:
+                by_nm[norm(row[0])].append(mk)
+        for nm, mks in by_nm.items():
+            for a in mks:
+                for b in mks:
+                    if a < b and abs(coords[a][0] - coords[b][0]) * 111 < .12 and abs(coords[a][1] - coords[b][1]) * 94 < .12:
+                        twins[a].add(b)
+                        twins[b].add(a)
+    except Exception:
+        pass
     # אינדקס מילים לכל עיר, להתאמת שם שקיבל או איבד מילה: "שדרות בן
     # גוריון/בן אהרון" של 2012 מול "שדרות דוד בן גוריון/בן אהרון" אצלנו.
     tok_city = collections.defaultdict(list)
     for c, items in by_city.items():
         for nn, mk in set(items):
             tok_city[c].append((frozenset(nn.split()), mk))
-    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named
+    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named, twins
 
 
 def main():
@@ -180,8 +196,49 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named = build_stop_lookup()
+    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named, twins = build_stop_lookup()
     m_hit = m_tot = 0
+    n_side = 0
+
+    def right_side(out):
+        """תחנה שיש לה תאומה מעבר לכביש: בוחרים את הצד הימני ביחס לכיוון
+        הנסיעה (מהתחנה הידועה הקודמת לבאה) — בישראל נוסעים בימין והאוטובוס
+        עוצר בצד הימני. הצלבה לצד הלא נכון שלחה את מנוע הניווט לפניית פרסה
+        במרחק עשרות ק"מ (שלמה 06.09, קווים 180 ו-388)."""
+        nonlocal n_side
+        def near(i, step):
+            j = i + step
+            while 0 <= j < len(out):
+                if len(out[j]) >= 7:
+                    return out[j]
+                j += step
+            return None
+        for i, row in enumerate(out):
+            if len(row) < 7 or not row[4] or len(row[4]) != 1:
+                continue
+            mk = row[4][0]
+            tw = twins.get(mk)
+            if not tw:
+                continue
+            a, b = near(i, -1), near(i, 1)
+            if a is None and b is None:
+                continue
+            here = coords[mk]
+            src = (a[5], a[6]) if a is not None else here
+            dst = (b[5], b[6]) if b is not None else here
+            cosl = math.cos(math.radians(here[0]))
+            dx, dy = (dst[1] - src[1]) * 111000 * cosl, (dst[0] - src[0]) * 111000
+            if math.hypot(dx, dy) < 50:
+                continue
+            cands = [mk] + sorted(tw)
+            my, mx = (sum(coords[c][0] for c in cands) / len(cands), sum(coords[c][1] for c in cands) / len(cands))
+            def score(c):
+                ox, oy = (coords[c][1] - mx) * 111000 * cosl, (coords[c][0] - my) * 111000
+                return ox * dy - oy * dx          # חיובי = מימין לכיוון הנסיעה
+            best = max(cands, key=score)
+            if best != mk:
+                out[i] = row[:4] + [[best]] + list(coords[best])
+                n_side += 1
 
     def prefer_old(name, mks):
         """בין כמה מועמדים: קודם מי שנשא בעבר בדיוק את השם של 2012, ואז מי
@@ -378,6 +435,7 @@ def main():
         for i in fixed:   # הצלבה ידנית אינה "חריגה" — היא ההכרעה של אדם
             st, mks = raw[i]
             out[i] = [st['seq'], untrunc(st['name']), st['t'], st['type'], mks] + (list(coords.get(mks[0], ())) if mks else [])
+        right_side(out)   # גם על הידניות: ההכרעה היא על המקום, הצד לפי כיוון הנסיעה
         # חומר להכרעה: רמז מיקום מהשכנות הידועות (עד 3 מקומות לכל צד)
         for i, row in enumerate(out):
             e = xref[row[1]]
@@ -488,7 +546,8 @@ def main():
     }, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     print(f'xref: {len(rows_x)} שמות להכרעה מתוך {len(xref)} · {dict(cnt)} · הצלבות ידניות בשימוש: {n_manual}')
     print(f'הכרעת מועמדים לפי המסלול: {n_res} מתוך {n_amb} תחנות רב-משמעיות · '
-          f'{n_out} התאמות בוטלו כחריגות גאוגרפיות · {n_weak} התאמות לפי שם בלי עיר, ליד עוגן')
+          f'{n_out} התאמות בוטלו כחריגות גאוגרפיות · {n_weak} התאמות לפי שם בלי עיר, ליד עוגן · '
+          f'{n_side} הועברו לצד הימני של הכביש')
     print(f'נבנו {len(idx)} קווים | {len(routes)} מסלולים | '
           f'{sum(1 for _ in OUT.glob("l*.json"))} קבצים | '
           f'הצלבת תחנות: {m_hit}/{m_tot} ({m_hit * 100 // max(m_tot, 1)}%)')

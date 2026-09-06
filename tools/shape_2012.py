@@ -28,6 +28,7 @@ import json
 import math
 import os
 import time
+import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,23 +47,56 @@ def hav(a, b):
     return 2 * r * math.asin(math.sqrt(x))
 
 
-def osrm_route(base, pts, tries=3):
-    """נסיעה דרך כל הנקודות (lat, lon) לפי הסדר — פוליליין precision 5 ואורך."""
+def bearing(a, b):
+    """כיוון מ-a ל-b במעלות מצפון, עם כיוון השעון."""
+    p1, p2 = math.radians(a[0]), math.radians(b[0])
+    dl = math.radians(b[1] - a[1])
+    x = math.sin(dl) * math.cos(p2)
+    y = math.cos(p1) * math.sin(p2) - math.sin(p1) * math.cos(p2) * math.cos(dl)
+    return int(round(math.degrees(math.atan2(x, y)))) % 360
+
+
+def bearings(pts):
+    """כיוון הנסיעה בכל תחנה: מהקודמת לבאה (בקצוות — לבאה / מהקודמת). זה מה
+    שמונע מהמנוע להיצמד לנתיב הנגדי של כביש מופרד ולחפש פניית פרסה
+    שמרחיקה עשרות קילומטרים (שלמה 06.09, קווים 180 ו-388)."""
+    out = []
+    for i, p in enumerate(pts):
+        a = pts[i - 1] if i > 0 else p
+        b = pts[i + 1] if i < len(pts) - 1 else p
+        if a == b:
+            out.append(None)
+        else:
+            out.append(bearing(a, b))
+    return out
+
+
+def osrm_route(base, pts, bear=None, tries=3):
+    """נסיעה דרך כל הנקודות (lat, lon) לפי הסדר — פוליליין precision 5, אורך,
+    ואורכי הקטעים בין נקודה לנקודה. bear: כיוון נסיעה לכל נקודה (או None)."""
     coords = ';'.join(f'{lon:.6f},{lat:.6f}' for lat, lon in pts)
     url = f'{base}/route/v1/driving/{coords}?overview=full&geometries=polyline&steps=false&continue_straight=false'
+    if bear and any(b is not None for b in bear):
+        url += '&bearings=' + ';'.join('' if b is None else f'{b},60' for b in bear)
     for t in range(tries):
         try:
             with urllib.request.urlopen(url, timeout=120) as r:
                 j = json.load(r)
             if j.get('code') != 'Ok' or not j.get('routes'):
-                return None, j.get('code')
+                return None, j.get('code'), None
             rt = j['routes'][0]
-            return rt['geometry'], rt['distance']
+            return rt['geometry'], rt['distance'], [lg['distance'] for lg in rt.get('legs', [])]
+        except urllib.error.HTTPError as ex:
+            try:
+                code = json.load(ex).get('code')
+            except Exception:  # noqa: BLE001
+                code = f'HTTP {ex.code}'
+            return None, code, None
         except Exception as ex:  # noqa: BLE001
             if t == tries - 1:
-                return None, repr(ex)
+                return None, repr(ex), None
             time.sleep(2)
-    return None, 'no answer'
+    return None, 'no answer', None
 
 
 def decode(pl):
@@ -115,30 +149,61 @@ def drop_spikes(known):
     return out
 
 
+def route_legs(base, known):
+    """מסלול דרך כל התחנות, במקטעים חופפים בנקודה אחת. מחזיר נקודות, אורך
+    ואורכי קטעים (אחד לכל זוג תחנות עוקבות). קודם עם כיווני נסיעה; מקטע
+    שהמנוע לא מצא לו מסלול עם הכיוונים — בלעדיהם."""
+    bear = bearings(known)
+    pts, dist, legs = [], 0.0, []
+    i = 0
+    while i < len(known) - 1:
+        chunk = known[i:i + CHUNK]
+        pl, d, lg = osrm_route(base, chunk, bear[i:i + CHUNK])
+        if pl is None:
+            pl, d, lg = osrm_route(base, chunk)
+        if pl is None:
+            return None, f'OSRM: {d}', None
+        seg = decode(pl)
+        if pts and seg and seg[0] == pts[-1]:
+            seg = seg[1:]
+        pts.extend(seg)
+        dist += d
+        legs.extend(lg)
+        i += CHUNK - 1
+    return pts, dist, legs
+
+
 def route_shape(base, stops):
     known = [(s[5], s[6]) for s in stops if len(s) >= 7 and s[5] and s[6]]
     tot = len(stops)
     known = drop_spikes(known)
     if tot < 2 or len(known) < 2 or len(known) / tot < MIN_KNOWN:
         return None, f'ידועות {len(known)}/{tot}'
+    dropped = 0
+    for _ in range(3):
+        pts, dist, legs = route_legs(base, known)
+        if pts is None:
+            return None, dist
+        # קטע שהתנפח: יותר מפי 5 מהמרחק האווירי ויותר מ-3 ק"מ מעליו — התחנה
+        # שבקצהו הוצמדה לכביש הלא נכון (הצד השני, דרך שירות). מורידים אותה
+        # ומחשבים שוב; עד שלוש פעמים.
+        bad = [j for j, ld in enumerate(legs)
+               if j + 1 < len(known) and ld > max(5 * hav(known[j], known[j + 1]), hav(known[j], known[j + 1]) + 3000)]
+        if not bad or len(known) <= 3:
+            break
+        drop = {j + 1 for j in bad if j + 1 in bad}          # תחנה בין שני קטעים מנופחים
+        if not drop:
+            drop = {j + 1 for j in bad}
+        drop = {j for j in drop if 0 < j < len(known) - 1} or {min(bad) + 1 if min(bad) + 1 < len(known) - 1 else min(bad)}
+        known = [p for j, p in enumerate(known) if j not in drop]
+        dropped += len(drop)
     air = sum(hav(known[i - 1], known[i]) for i in range(1, len(known)))
-    pts, dist = [], 0.0
-    # מקטעים חופפים בנקודה אחת, כדי שהקו יהיה רציף
-    i = 0
-    while i < len(known) - 1:
-        chunk = known[i:i + CHUNK]
-        pl, d = osrm_route(base, chunk)
-        if pl is None:
-            return None, f'OSRM: {d}'
-        seg = decode(pl)
-        if pts and seg and seg[0] == pts[-1]:
-            seg = seg[1:]
-        pts.extend(seg)
-        dist += d
-        i += CHUNK - 1
     if air > 0 and dist > air * MAX_RATIO + 1500:
         return None, f'ארוך מדי ({dist / 1000:.1f} ק״מ מול {air / 1000:.1f} אווירי)'
-    return {'pl': encode(pts), 'n': len(known), 'tot': tot, 'm': int(dist), 'air': int(air)}, None
+    res = {'pl': encode(pts), 'n': len(known), 'tot': tot, 'm': int(dist), 'air': int(air)}
+    if dropped:
+        res['x'] = dropped
+    return res, None
 
 
 def main():
