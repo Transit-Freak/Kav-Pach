@@ -62,11 +62,18 @@ jobs:
             curl -sS "$A/siri_rides/list?scheduled_start_time_from=${DAY}T08:00:00%2B03:00&scheduled_start_time_to=${DAY}T08:05:00%2B03:00&limit=2" | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d[:1], ensure_ascii=False, indent=1)[:3000]); print('...', len(d), 'שורות')"
             echo
             echo "===== API: siri_ride_stops עם הצמדה (יום $DAY, נסיעות שהתחילו 08:00–08:02) ====="
-            curl -sS "$A/siri_ride_stops/list?siri_rides__scheduled_start_time_from=${DAY}T08:00:00%2B03:00&siri_rides__scheduled_start_time_to=${DAY}T08:02:00%2B03:00&limit=3000" | python3 -c "
-import json,sys; d=json.load(sys.stdin); print(len(d),'שורות ב-2 דקות של התחלות')
-m=[x for x in d if x.get('nearest_siri_vehicle_location_id')]; g=[x for x in d if x.get('gtfs_ride_stop__arrival_time')]
-print('עם מיקום קרוב:',len(m),'· עם לו\"ז GTFS:',len(g))
-x=(g or m or d)[:1]; print(json.dumps(x, ensure_ascii=False, indent=1)[:3500])"
+            cat > /tmp/rs.py <<'PY'
+            import json, sys
+            d = json.load(sys.stdin)
+            print(len(d), 'שורות ב-2 דקות של התחלות')
+            m = [x for x in d if x.get('nearest_siri_vehicle_location_id')]
+            g = [x for x in d if x.get('gtfs_ride_stop__arrival_time')]
+            print('עם מיקום קרוב:', len(m), '· עם לו"ז GTFS:', len(g))
+            x = (g or m or d)[:1]
+            print(json.dumps(x, ensure_ascii=False, indent=1)[:3500])
+            PY
+            sed -i 's/^            //' /tmp/rs.py
+            curl -sS "$A/siri_ride_stops/list?siri_rides__scheduled_start_time_from=${DAY}T08:00:00%2B03:00&siri_rides__scheduled_start_time_to=${DAY}T08:02:00%2B03:00&limit=3000" | python3 /tmp/rs.py
             echo
             echo "===== API: ספירת siri_ride_stops בשעה 08 (עד 10,000 בעמוד, offset) ====="
             for off in 0 10000 20000 40000 80000; do
