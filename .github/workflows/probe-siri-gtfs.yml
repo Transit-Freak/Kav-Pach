@@ -39,7 +39,7 @@ jobs:
             curl -sS "$B/?list-type=2&prefix=gtfs_archive/$Y/$M/$D&max-keys=20" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -20
             echo "--- gtfs_archive/$Y/$M/ (תיקיות) ---"
             curl -sS "$B/?list-type=2&delimiter=/&prefix=gtfs_archive/$Y/$M/&max-keys=40" | tr '<' '\n' | grep -E '^Prefix>' | sed 's/^[A-Za-z]*>//' | head -40
-            KEY=$(curl -sS "$B/?list-type=2&prefix=gtfs_archive/$Y/$M/$D&max-keys=20" | tr '<' '\n' | grep -E '^Key>' | sed 's/^Key>//' | grep -i 'zip' | head -1)
+            KEY=$(curl -sS "$B/?list-type=2&prefix=gtfs_archive/$Y/$M/$D&max-keys=20" | tr '<' '\n' | grep -E '^Key>' | sed 's/^Key>//' | grep 'israel-public-transportation.zip' | head -1)
             echo "GTFS key: $KEY"
             if [ -n "$KEY" ]; then
               curl -sS -o gtfs.zip "$B/$KEY"; ls -la gtfs.zip | awk '{print "GTFS size:", $5}'
