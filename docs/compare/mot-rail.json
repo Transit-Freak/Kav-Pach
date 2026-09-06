@@ -1,0 +1,882 @@
+{
+ "mot_statuses": [
+  "איחור",
+  "בזמן",
+  "הקדמה ביציאה"
+ ],
+ "mot_last_month": "2026-09",
+ "mot_months": 105,
+ "mot_monthly": [
+  {
+   "ym": "2024-10",
+   "total": 97295,
+   "on": 91099,
+   "on_share": 0.9363,
+   "איחור": 6196,
+   "בזמן": 91099,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2024-11",
+   "total": 112271,
+   "on": 104812,
+   "on_share": 0.9336,
+   "איחור": 7459,
+   "בזמן": 104812,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2024-12",
+   "total": 123705,
+   "on": 117600,
+   "on_share": 0.9506,
+   "איחור": 6105,
+   "בזמן": 117600,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-01",
+   "total": 102780,
+   "on": 98055,
+   "on_share": 0.954,
+   "איחור": 4725,
+   "בזמן": 98055,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-02",
+   "total": 114624,
+   "on": 109512,
+   "on_share": 0.9554,
+   "איחור": 5112,
+   "בזמן": 109512,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-03",
+   "total": 125355,
+   "on": 119777,
+   "on_share": 0.9555,
+   "איחור": 5578,
+   "בזמן": 119777,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-04",
+   "total": 127906,
+   "on": 122927,
+   "on_share": 0.9611,
+   "איחור": 4979,
+   "בזמן": 122927,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-05",
+   "total": 128333,
+   "on": 120997,
+   "on_share": 0.9428,
+   "איחור": 7336,
+   "בזמן": 120997,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-06",
+   "total": 90342,
+   "on": 85379,
+   "on_share": 0.9451,
+   "איחור": 4963,
+   "בזמן": 85379,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-07",
+   "total": 125191,
+   "on": 115240,
+   "on_share": 0.9205,
+   "איחור": 9951,
+   "בזמן": 115240,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-08",
+   "total": 109265,
+   "on": 96809,
+   "on_share": 0.886,
+   "איחור": 12456,
+   "בזמן": 96809,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-09",
+   "total": 111964,
+   "on": 103609,
+   "on_share": 0.9254,
+   "איחור": 8355,
+   "בזמן": 103609,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-10",
+   "total": 100171,
+   "on": 91330,
+   "on_share": 0.9117,
+   "איחור": 8841,
+   "בזמן": 91330,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-11",
+   "total": 121573,
+   "on": 110692,
+   "on_share": 0.9105,
+   "איחור": 10881,
+   "בזמן": 110692,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2025-12",
+   "total": 137824,
+   "on": 124984,
+   "on_share": 0.9068,
+   "איחור": 12840,
+   "בזמן": 124984,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-01",
+   "total": 132217,
+   "on": 125082,
+   "on_share": 0.946,
+   "איחור": 7135,
+   "בזמן": 125082,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-02",
+   "total": 126044,
+   "on": 120759,
+   "on_share": 0.9581,
+   "איחור": 5285,
+   "בזמן": 120759,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-03",
+   "total": 50901,
+   "on": 40895,
+   "on_share": 0.8034,
+   "איחור": 10006,
+   "בזמן": 40895,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-04",
+   "total": 93612,
+   "on": 88116,
+   "on_share": 0.9413,
+   "איחור": 5496,
+   "בזמן": 88116,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-05",
+   "total": 118829,
+   "on": 112274,
+   "on_share": 0.9448,
+   "איחור": 6555,
+   "בזמן": 112274,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-06",
+   "total": 123650,
+   "on": 112092,
+   "on_share": 0.9065,
+   "איחור": 11558,
+   "בזמן": 112092,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-07",
+   "total": 129090,
+   "on": 119438,
+   "on_share": 0.9252,
+   "איחור": 9652,
+   "בזמן": 119438,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-08",
+   "total": 105267,
+   "on": 98436,
+   "on_share": 0.9351,
+   "איחור": 6831,
+   "בזמן": 98436,
+   "הקדמה ביציאה": 0
+  },
+  {
+   "ym": "2026-09",
+   "total": 16090,
+   "on": 15284,
+   "on_share": 0.9499,
+   "איחור": 806,
+   "בזמן": 15284,
+   "הקדמה ביציאה": 0
+  }
+ ],
+ "mot_performance_monthly": [
+  {
+   "ym": "2024-10",
+   "rishui_all": 14871,
+   "rishui_only": 3113,
+   "bitzua_only": 516,
+   "performed_share": 0.7907
+  },
+  {
+   "ym": "2024-11",
+   "rishui_all": 13631,
+   "rishui_only": 37,
+   "bitzua_only": 63,
+   "performed_share": 0.9973
+  },
+  {
+   "ym": "2024-12",
+   "rishui_all": 15176,
+   "rishui_only": 50,
+   "bitzua_only": 41,
+   "performed_share": 0.9967
+  },
+  {
+   "ym": "2025-01",
+   "rishui_all": 13532,
+   "rishui_only": 865,
+   "bitzua_only": 2607,
+   "performed_share": 0.9361
+  },
+  {
+   "ym": "2025-02",
+   "rishui_all": 13043,
+   "rishui_only": 15,
+   "bitzua_only": 37,
+   "performed_share": 0.9988
+  },
+  {
+   "ym": "2025-03",
+   "rishui_all": 14243,
+   "rishui_only": 17,
+   "bitzua_only": 302,
+   "performed_share": 0.9988
+  },
+  {
+   "ym": "2025-04",
+   "rishui_all": 14183,
+   "rishui_only": 45,
+   "bitzua_only": 59,
+   "performed_share": 0.9968
+  },
+  {
+   "ym": "2025-05",
+   "rishui_all": 14567,
+   "rishui_only": 78,
+   "bitzua_only": 172,
+   "performed_share": 0.9946
+  },
+  {
+   "ym": "2025-06",
+   "rishui_all": 12037,
+   "rishui_only": 1661,
+   "bitzua_only": 483,
+   "performed_share": 0.862
+  },
+  {
+   "ym": "2025-07",
+   "rishui_all": 15518,
+   "rishui_only": 274,
+   "bitzua_only": 20,
+   "performed_share": 0.9823
+  },
+  {
+   "ym": "2025-08",
+   "rishui_all": 15273,
+   "rishui_only": 294,
+   "bitzua_only": 66,
+   "performed_share": 0.9808
+  },
+  {
+   "ym": "2025-09",
+   "rishui_all": 14033,
+   "rishui_only": 653,
+   "bitzua_only": 13,
+   "performed_share": 0.9535
+  },
+  {
+   "ym": "2025-10",
+   "rishui_all": 15931,
+   "rishui_only": 3293,
+   "bitzua_only": 49,
+   "performed_share": 0.7933
+  },
+  {
+   "ym": "2025-11",
+   "rishui_all": 15088,
+   "rishui_only": 30,
+   "bitzua_only": 15,
+   "performed_share": 0.998
+  },
+  {
+   "ym": "2025-12",
+   "rishui_all": 16702,
+   "rishui_only": 14,
+   "bitzua_only": 8,
+   "performed_share": 0.9992
+  },
+  {
+   "ym": "2026-01",
+   "rishui_all": 15746,
+   "rishui_only": 12,
+   "bitzua_only": 2,
+   "performed_share": 0.9992
+  },
+  {
+   "ym": "2026-02",
+   "rishui_all": 14875,
+   "rishui_only": 53,
+   "bitzua_only": 19,
+   "performed_share": 0.9964
+  },
+  {
+   "ym": "2026-03",
+   "rishui_all": 9364,
+   "rishui_only": 1178,
+   "bitzua_only": 437,
+   "performed_share": 0.8742
+  },
+  {
+   "ym": "2026-04",
+   "rishui_all": 13922,
+   "rishui_only": 2747,
+   "bitzua_only": 434,
+   "performed_share": 0.8027
+  },
+  {
+   "ym": "2026-05",
+   "rishui_all": 14199,
+   "rishui_only": 976,
+   "bitzua_only": 11,
+   "performed_share": 0.9313
+  },
+  {
+   "ym": "2026-06",
+   "rishui_all": 14670,
+   "rishui_only": 75,
+   "bitzua_only": 28,
+   "performed_share": 0.9949
+  },
+  {
+   "ym": "2026-07",
+   "rishui_all": 16174,
+   "rishui_only": 52,
+   "bitzua_only": 44,
+   "performed_share": 0.9968
+  },
+  {
+   "ym": "2026-08",
+   "rishui_all": 15708,
+   "rishui_only": 2183,
+   "bitzua_only": 0,
+   "performed_share": 0.861
+  },
+  {
+   "ym": "2026-09",
+   "rishui_all": 2199,
+   "rishui_only": 247,
+   "bitzua_only": 0,
+   "performed_share": 0.8877
+  }
+ ],
+ "our_period": [
+  "2026-08-05",
+  "2026-09-05"
+ ],
+ "our_days": 32,
+ "our_stop_arrivals": 69282,
+ "our_on_share": 0.8919,
+ "stations_last_month_vs_ours": [
+  {
+   "station": "תל אביב מרכז",
+   "mot_total": 1049,
+   "mot_on_share": 0.9724,
+   "our_n": 4429,
+   "our_on_share": 0.8736
+  },
+  {
+   "station": "השלום",
+   "mot_total": 897,
+   "mot_on_share": 0.9309,
+   "our_n": 4883,
+   "our_on_share": 0.8583
+  },
+  {
+   "station": "תל אביב ההגנה",
+   "mot_total": 897,
+   "mot_on_share": 0.942,
+   "our_n": 4896,
+   "our_on_share": 0.8756
+  },
+  {
+   "station": "תא אוניברסיטה",
+   "mot_total": 783,
+   "mot_on_share": 0.9336,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "הרצליה",
+   "mot_total": 529,
+   "mot_on_share": 0.9149,
+   "our_n": 1889,
+   "our_on_share": 0.9058
+  },
+  {
+   "station": "בת גלים",
+   "mot_total": 448,
+   "mot_on_share": 0.9799,
+   "our_n": 1796,
+   "our_on_share": 0.9098
+  },
+  {
+   "station": "חיפה מרכז",
+   "mot_total": 422,
+   "mot_on_share": 0.9597,
+   "our_n": 1813,
+   "our_on_share": 0.8891
+  },
+  {
+   "station": "חוף הכרמל",
+   "mot_total": 414,
+   "mot_on_share": 0.9783,
+   "our_n": 1360,
+   "our_on_share": 0.8838
+  },
+  {
+   "station": "לוד",
+   "mot_total": 404,
+   "mot_on_share": 0.9406,
+   "our_n": 2404,
+   "our_on_share": 0.8939
+  },
+  {
+   "station": "נתבג\"",
+   "mot_total": 388,
+   "mot_on_share": 0.9459,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "קרית מוצקין",
+   "mot_total": 384,
+   "mot_on_share": 0.9844,
+   "our_n": 1979,
+   "our_on_share": 0.9151
+  },
+  {
+   "station": "מרכזית המפרץ/קו החוף",
+   "mot_total": 363,
+   "mot_on_share": 0.9862,
+   "our_n": 1736,
+   "our_on_share": 0.9153
+  },
+  {
+   "station": "באר שבע צפון",
+   "mot_total": 305,
+   "mot_on_share": 0.977,
+   "our_n": 1394,
+   "our_on_share": 0.9354
+  },
+  {
+   "station": "קרית חיים",
+   "mot_total": 303,
+   "mot_on_share": 0.9934,
+   "our_n": 1273,
+   "our_on_share": 0.9214
+  },
+  {
+   "station": "בית יהושע",
+   "mot_total": 290,
+   "mot_on_share": 0.9724,
+   "our_n": 1289,
+   "our_on_share": 0.9558
+  },
+  {
+   "station": "חוצות מפרץ",
+   "mot_total": 290,
+   "mot_on_share": 0.9862,
+   "our_n": 1299,
+   "our_on_share": 0.9199
+  },
+  {
+   "station": "בנימינה",
+   "mot_total": 285,
+   "mot_on_share": 0.9684,
+   "our_n": 494,
+   "our_on_share": 0.8502
+  },
+  {
+   "station": "פאתי מודיעין",
+   "mot_total": 285,
+   "mot_on_share": 0.9895,
+   "our_n": 1230,
+   "our_on_share": 0.9683
+  },
+  {
+   "station": "ראש העין צפון",
+   "mot_total": 280,
+   "mot_on_share": 0.9429,
+   "our_n": 866,
+   "our_on_share": 0.8857
+  },
+  {
+   "station": "נתניה",
+   "mot_total": 265,
+   "mot_on_share": 0.9623,
+   "our_n": 935,
+   "our_on_share": 0.9487
+  },
+  {
+   "station": "עכו",
+   "mot_total": 257,
+   "mot_on_share": 0.9767,
+   "our_n": 1217,
+   "our_on_share": 0.9228
+  },
+  {
+   "station": "חדרה מערב",
+   "mot_total": 248,
+   "mot_on_share": 0.9516,
+   "our_n": 1078,
+   "our_on_share": 0.923
+  },
+  {
+   "station": "אשדוד עד הלום",
+   "mot_total": 240,
+   "mot_on_share": 0.8917,
+   "our_n": 1194,
+   "our_on_share": 0.8291
+  },
+  {
+   "station": "סגולה",
+   "mot_total": 208,
+   "mot_on_share": 0.9183,
+   "our_n": 878,
+   "our_on_share": 0.8907
+  },
+  {
+   "station": "קיסריה פרדס חנה",
+   "mot_total": 203,
+   "mot_on_share": 0.9852,
+   "our_n": 814,
+   "our_on_share": 0.9816
+  },
+  {
+   "station": "בני ברק",
+   "mot_total": 200,
+   "mot_on_share": 0.915,
+   "our_n": 717,
+   "our_on_share": 0.848
+  },
+  {
+   "station": "קרית אריה",
+   "mot_total": 200,
+   "mot_on_share": 0.915,
+   "our_n": 826,
+   "our_on_share": 0.8765
+  },
+  {
+   "station": "הוד השרון",
+   "mot_total": 196,
+   "mot_on_share": 0.8878,
+   "our_n": 886,
+   "our_on_share": 0.8431
+  },
+  {
+   "station": "נתניה קריית ספיר",
+   "mot_total": 194,
+   "mot_on_share": 0.9794,
+   "our_n": 811,
+   "our_on_share": 0.9766
+  },
+  {
+   "station": "רעננה דרום",
+   "mot_total": 194,
+   "mot_on_share": 0.8711,
+   "our_n": 95,
+   "our_on_share": 0.7895
+  },
+  {
+   "station": "רעננה מערב",
+   "mot_total": 193,
+   "mot_on_share": 0.8653,
+   "our_n": 902,
+   "our_on_share": 0.837
+  },
+  {
+   "station": "כפר סבא",
+   "mot_total": 192,
+   "mot_on_share": 0.8958,
+   "our_n": 893,
+   "our_on_share": 0.86
+  },
+  {
+   "station": "אשקלון",
+   "mot_total": 176,
+   "mot_on_share": 0.9091,
+   "our_n": 519,
+   "our_on_share": 0.8035
+  },
+  {
+   "station": "כפר חבד",
+   "mot_total": 168,
+   "mot_on_share": 0.9345,
+   "our_n": 515,
+   "our_on_share": 0.8816
+  },
+  {
+   "station": "רשלצ משה דיין\"",
+   "mot_total": 168,
+   "mot_on_share": 0.9107,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "חולון וולפסון",
+   "mot_total": 166,
+   "mot_on_share": 0.9398,
+   "our_n": 692,
+   "our_on_share": 0.8671
+  },
+  {
+   "station": "רמלה",
+   "mot_total": 165,
+   "mot_on_share": 0.9333,
+   "our_n": 892,
+   "our_on_share": 0.917
+  },
+  {
+   "station": "טייבה-שער אפריים",
+   "mot_total": 163,
+   "mot_on_share": 1.0,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "באר יעקב",
+   "mot_total": 160,
+   "mot_on_share": 0.9437,
+   "our_n": 920,
+   "our_on_share": 0.9207
+  },
+  {
+   "station": "ירושלים/יצחק נבון",
+   "mot_total": 155,
+   "mot_on_share": 0.9742,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "בת ים יוספטל",
+   "mot_total": 152,
+   "mot_on_share": 0.8882,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "אחיהוד",
+   "mot_total": 150,
+   "mot_on_share": 1.0,
+   "our_n": 575,
+   "our_on_share": 0.927
+  },
+  {
+   "station": "מודיעין מרכז",
+   "mot_total": 150,
+   "mot_on_share": 0.9667,
+   "our_n": 119,
+   "our_on_share": 0.958
+  },
+  {
+   "station": "רחובות",
+   "mot_total": 148,
+   "mot_on_share": 0.9324,
+   "our_n": 598,
+   "our_on_share": 0.8729
+  },
+  {
+   "station": "יבנה מערב",
+   "mot_total": 144,
+   "mot_on_share": 0.9167,
+   "our_n": 596,
+   "our_on_share": 0.8305
+  },
+  {
+   "station": "קרית גת",
+   "mot_total": 141,
+   "mot_on_share": 0.9787,
+   "our_n": 710,
+   "our_on_share": 0.9197
+  },
+  {
+   "station": "אופקים",
+   "mot_total": 138,
+   "mot_on_share": 0.9203,
+   "our_n": 453,
+   "our_on_share": 0.8499
+  },
+  {
+   "station": "באר שבע מרכז",
+   "mot_total": 138,
+   "mot_on_share": 0.9493,
+   "our_n": 79,
+   "our_on_share": 0.9114
+  },
+  {
+   "station": "שדרות",
+   "mot_total": 131,
+   "mot_on_share": 0.9084,
+   "our_n": 507,
+   "our_on_share": 0.8067
+  },
+  {
+   "station": "בת ים קוממיות",
+   "mot_total": 130,
+   "mot_on_share": 0.9769,
+   "our_n": 439,
+   "our_on_share": 0.9317
+  },
+  {
+   "station": "עתלית",
+   "mot_total": 130,
+   "mot_on_share": 0.9769,
+   "our_n": 293,
+   "our_on_share": 0.901
+  },
+  {
+   "station": "צומת חולון",
+   "mot_total": 128,
+   "mot_on_share": 0.9688,
+   "our_n": 488,
+   "our_on_share": 0.9447
+  },
+  {
+   "station": "נתיבות",
+   "mot_total": 126,
+   "mot_on_share": 0.9127,
+   "our_n": 491,
+   "our_on_share": 0.8086
+  },
+  {
+   "station": "נהריה",
+   "mot_total": 122,
+   "mot_on_share": 0.9672,
+   "our_n": 107,
+   "our_on_share": 0.9252
+  },
+  {
+   "station": "לוד גני אביב",
+   "mot_total": 117,
+   "mot_on_share": 0.8974,
+   "our_n": 912,
+   "our_on_share": 0.8629
+  },
+  {
+   "station": "יבנה מזרח",
+   "mot_total": 103,
+   "mot_on_share": 0.9417,
+   "our_n": 593,
+   "our_on_share": 0.8836
+  },
+  {
+   "station": "להבים רהט",
+   "mot_total": 103,
+   "mot_on_share": 0.9806,
+   "our_n": 593,
+   "our_on_share": 0.9629
+  },
+  {
+   "station": "מזכרת בתיה",
+   "mot_total": 103,
+   "mot_on_share": 0.9709,
+   "our_n": 480,
+   "our_on_share": 0.9688
+  },
+  {
+   "station": "קרית מלאכי",
+   "mot_total": 103,
+   "mot_on_share": 0.9806,
+   "our_n": 435,
+   "our_on_share": 0.9793
+  },
+  {
+   "station": "עפולה",
+   "mot_total": 94,
+   "mot_on_share": 1.0,
+   "our_n": 392,
+   "our_on_share": 0.9209
+  },
+  {
+   "station": "כפר ברוך",
+   "mot_total": 89,
+   "mot_on_share": 0.9888,
+   "our_n": 521,
+   "our_on_share": 0.8829
+  },
+  {
+   "station": "כפר יהושע",
+   "mot_total": 83,
+   "mot_on_share": 0.9639,
+   "our_n": 547,
+   "our_on_share": 0.83
+  },
+  {
+   "station": "חדרה מזרח",
+   "mot_total": 82,
+   "mot_on_share": 1.0,
+   "our_n": 83,
+   "our_on_share": 0.9759
+  },
+  {
+   "station": "כרמיאל",
+   "mot_total": 69,
+   "mot_on_share": 1.0,
+   "our_n": 21,
+   "our_on_share": 1.0
+  },
+  {
+   "station": "בית שאן",
+   "mot_total": 31,
+   "mot_on_share": 0.9032,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "ראשונים",
+   "mot_total": 30,
+   "mot_on_share": 0.9333,
+   "our_n": null,
+   "our_on_share": null
+  },
+  {
+   "station": "בית שמש",
+   "mot_total": 18,
+   "mot_on_share": 0.5,
+   "our_n": 3,
+   "our_on_share": 1.0
+  },
+  {
+   "station": "דימונה",
+   "mot_total": 10,
+   "mot_on_share": 1.0,
+   "our_n": 2,
+   "our_on_share": 0.5
+  }
+ ]
+}
