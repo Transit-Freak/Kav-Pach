@@ -1,4 +1,4 @@
-SIRI ↔ GTFS · יום 2026-09-01 · 2026-09-06T10:56:47Z
+SIRI ↔ GTFS · יום 2026-09-01 · 2026-09-06T11:00:39Z
 ===== S3 gtfs_archive/ =====
 gtfs_archive/
 gtfs_archive/2022/
@@ -19,8 +19,8 @@ gtfs_archive/2026/09/03/
 gtfs_archive/2026/09/04/
 gtfs_archive/2026/09/05/
 gtfs_archive/2026/09/06/
-GTFS key: gtfs_archive/2026/09/01/ClusterToLine.zip
-GTFS size: 24386
+GTFS key: gtfs_archive/2026/09/01/israel-public-transportation.zip
+GTFS size: 159330698
 ===== SIRI: 3 דקות (08:00–08:02) =====
  
 4096 .
@@ -28,16 +28,14 @@ GTFS size: 24386
 231728 0800.br
 238583 0801.br
 238319 0802.br
-GTFS: [('ClusterToLine.txt', 280489)]
-Traceback (most recent call last):
-  File "/home/runner/work/kav-bochan/kav-bochan/tools/probe_siri_gtfs.py", line 35, in <module>
-    for r in rows('trips.txt'):
-  File "/home/runner/work/kav-bochan/kav-bochan/tools/probe_siri_gtfs.py", line 30, in rows
-    with z.open(name) as f:
-         ^^^^^^^^^^^^
-  File "/usr/lib/python3.12/zipfile/__init__.py", line 1617, in open
-    zinfo = self.getinfo(name)
-            ^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/zipfile/__init__.py", line 1545, in getinfo
-    raise KeyError(
-KeyError: "There is no item named 'trips.txt' in the archive"
+GTFS: [('agency.txt', 2962), ('calendar.txt', 1868210), ('fare_attributes.txt', 398), ('fare_rules.txt', 18056538), ('routes.txt', 974520), ('shapes.txt', 226531934), ('stop_times.txt', 785880660), ('stops.txt', 5020031), ('translations.txt', 6201470), ('trips.txt', 27413458)]
+trips: 397106 · דוגמה: ('17332543_010926', '10')
+stops: 35306 · stop_desc לדוגמה: רחוב: בן יהודה 74 עיר: כפר סבא רציף:  קומה: 
+רשומות: 25860 מ- 3 דקות
+DatedVehicleJourneyRef == 0 (בלי נסיעה): 3948 (15.3%)
+DataFrameRef: [('2026-09-01', 25854), ('2026-08-31', 6)]
+נסיעות ייחודיות: 7496 · trip_id = ref_010926 קיים ב-GTFS: 13 (0.2%)
+LineRef == route_id: 34 · שונה: 3 · דוגמאות לשונה: [('30313', '1', '75_010926'), ('30313', '1', '75_010926'), ('30313', '1', '75_010926')]
+stop_times לנסיעות שנצפו: 653 שורות · 13 נסיעות
+StopPointRef תואם stop_code לפי Order: 31 · לא תואם: 6 · Order מחוץ לטווח: 0 · דוגמאות: [('586127377_010926', '20', '53768', '53764'), ('75_010926', '3', '17113', '31273'), ('586127377_010926', '22', '53772', '59609')]
+stop_sequence מתחיל ב: 1 · דוגמה: [(1, ('47807', '11:00:00', '0')), (2, ('4634', '11:01:59', '606')), (3, ('19086', '11:02:29', '1117'))]
