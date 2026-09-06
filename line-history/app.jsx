@@ -770,6 +770,13 @@ function usePersistedQ(key) {
   useEffect(() => { try { sessionStorage.setItem(key, q); } catch (e) { /* דפדפן חוסם אחסון */ } }, [key, q]);
   return [q, setQ];
 }
+// ערך שמתעדכן רק אחרי הפסקה בהקלדה: הסינון של "כל התקופה" בטאב התחנות מרנדר
+// מאות שורות, וכל תו הריץ אותו מחדש — בטלפון זה איטי (שלמה 06.09)
+function useDebounced(v, ms) {
+  const [d, setD] = useState(v);
+  useEffect(() => { const t = setTimeout(() => setD(v), ms); return () => clearTimeout(t); }, [v, ms]);
+  return d;
+}
 
 /* עוגן 2012: rd -> תקציר המסלול דאז (נטען פעם אחת לכל הדפדוף) */
 let ANC2012 = null;
@@ -2630,8 +2637,11 @@ function StopsTab({ sel, selN }) {
     if (sel && q.trim() !== sel && (location.hash || "").includes("stop="))
       history.replaceState(null, "", "#t=stops");
   }, [q, sel]);
-  const [lim, setLim] = useState(250);   // "הצג עוד" מרחיב; סינון חדש מאפס
-  useEffect(() => setLim(250), [q, mon, kinds, onlyNs]);
+  // 100 תחנות בטעינה (היו 250): ב"כל התקופה" כל קבוצה היא כמה שורות, ומאות
+  // שורות בכל הקלדה הרגישו כקיפאון בטלפון. "הצג עוד" מרחיב.
+  const [lim, setLim] = useState(100);   // "הצג עוד" מרחיב; סינון חדש מאפס
+  const dq = useDebounced(q, 220);       // הסינון רץ אחרי הפסקה בהקלדה, לא על כל תו
+  useEffect(() => setLim(100), [dq, mon, kinds, onlyNs]);
   // תחנה שהגיעה מהכתובת: כל קורות החיים שלה, ולא רק החודש שנבחר
   useEffect(() => {
     if (!sel) return;
@@ -2737,9 +2747,12 @@ function StopsTab({ sel, selN }) {
   // ממואם: בלי זה כל הקלדה בחיפוש בנתה ומיינה מחדש את כל האירועים (לאגים).
   // "כל התקופה": כל האירועים מכל הזמנים מתוך קורות-החיים, עם תאריך ליד כל אחד
   const source = useMemo(() => {
+    // מחרוזת חיפוש אחת לכל אירוע, מחושבת פעם אחת — במקום ארבע החלפות-regex
+    // לכל אירוע בכל הקלדה; המיון בהשוואת מחרוזות רגילה (localeCompare איטי פי 2)
+    const withS = (e) => ({ ...e, s: sQ(e.n) + "|" + sQ(e.nn) + "|" + sQ(e.on) + "|" + sQ(e.t) });
     const raw = mon === "all"
-      ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => ({ ...e, c }))).sort((a, b) => b.d.localeCompare(a.d)) : null)
-      : chs;
+      ? (hist ? Object.entries(hist).flatMap(([c, evs]) => evs.map((e) => withS({ ...e, c }))).sort((a, b) => (a.d < b.d ? 1 : a.d > b.d ? -1 : 0)) : null)
+      : (chs ? chs.map(withS) : chs);
     // כשמגיעים לתחנה מקישור מציגים את כל מה שידוע עליה. כללי התצוגה
     // נועדו לפיד החודשי, ובתחנה מסוימת הם הסתירו גם את מה שביקשו לראות:
     // ‎#stop=48‎ הראה מסך ריק, כי שני האירועים שלה נחשבים "חוזרים".
@@ -2754,11 +2767,11 @@ function StopsTab({ sel, selN }) {
   // ב-useMemo — הסינון על עשרות אלפי אירועים לא רץ מחדש בפעולות שאינן
   // חיפוש (סעיף 14); הערה קיימת על source מסבירה את אותו לאג
   const { nsCount, list } = useMemo(() => {
-    const needle = q.trim(); const sNeedle = sQ(needle);
+    const needle = dq.trim(); const sNeedle = sQ(needle);
     const ls = (source || []).filter((c) => (!kinds.size || kinds.has(c.k)) && (!onlyNs || c.ns) &&
-      (!needle || sQ(c.n).includes(sNeedle) || sQ(c.nn).includes(sNeedle) || sQ(c.on).includes(sNeedle) || sQ(c.t).includes(sNeedle) || c.c === needle));
+      (!needle || c.s.includes(sNeedle) || c.c === needle));
     return { nsCount: (source || []).filter((c) => c.ns).length, list: ls };
-  }, [source, q, kinds, onlyNs]);
+  }, [source, dq, kinds, onlyNs]);
   if (months === null) return <div className="card">טוען…</div>;
   if (mErr) return <div className="card"><NetErr onRetry={() => { setMonths(null); setRty((n) => n + 1); }} /></div>;
   if (!months.length) return <div className="card"><div className="empty">עדיין אין נתוני שינויי תחנות — הם יצטברו מהריצות היומיות הקרובות.</div></div>;
@@ -2907,7 +2920,7 @@ function StopsTab({ sel, selN }) {
               <React.Fragment>
                 {rows}
                 {groups.length > lim && (
-                  <button className="morebtn" onClick={() => setLim(lim + 300)}>
+                  <button className="morebtn" onClick={() => setLim(lim + 150)}>
                     ⌄ הצג עוד — מוצגות {shown.length.toLocaleString()} מתוך {groups.length.toLocaleString()} תחנות
                   </button>
                 )}
