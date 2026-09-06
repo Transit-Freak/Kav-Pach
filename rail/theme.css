@@ -48,3 +48,8 @@
     .rstats{grid-template-columns:1fr 1fr;width:100%}
     .rtext{width:100%}
   }
+  /* המדד השני: הגעות בזמן לכל התחנות, כולל ביניים (שלמה 06.09) */
+  .stopsline{margin-top:14px;padding-top:12px;border-top:1.5px solid var(--line);font-size:14px;font-weight:700;color:var(--ink);line-height:1.6}
+  .stopsline b{font-family:var(--disp);font-weight:400;font-size:26px;color:var(--accent);margin-inline-end:4px}
+  .stopsline small{font-size:12px;color:var(--mut);font-weight:600}
+  .pdesc{font-size:12.5px;color:var(--mut);font-weight:500;line-height:1.6;margin:-2px 0 10px}
