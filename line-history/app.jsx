@@ -206,6 +206,27 @@ function catMatch(l, k) {
   if (k === "endpoint") return ENDPOINT_KINDS.some((x) => (l.ks || []).includes(x));
   return (l.ks || []).includes(k);
 }
+// אותו כלל ברמת האירוע הבודד בעמוד הקו: האם האירוע הזה שייך לקטגוריה של
+// החיפוש. משמש כשנכנסים לקו מתוך חיפוש לפי קטגוריה — הסינון בעמוד נדלק
+// אוטומטית על אותה קטגוריה (שלמה 06.09), ואפשר לשנות אותו בסרגל.
+function evInCat(x, i, vs, k) {
+  const dk = dispKind(x, i, vs);
+  if (k === "endpoint") return ENDPOINT_KINDS.includes(dk);
+  if (k === "removed-year") return dk === "removed-year";
+  if (k === "removed-now") return dk === "removed";
+  if (k === "removed-past") return dk === "removed" || dk === "returned";
+  if (k === "sched") return dk === "sched" || dk === "freq";
+  if (k === "stops" || k === "stops-add" || k === "stops-del") {
+    if (dk === k) return true;
+    // כמו באינדקס: שינוי מסלול שנוספו/ירדו בו תחנות נספר גם כשינוי תחנות
+    if ((x.src === "ob" || x.gd) && dk !== "removed") {
+      const a = x.add && x.add.length, r = x.rem && x.rem.length;
+      return k === "stops" ? (a && r) : k === "stops-add" ? (a && !r) : (r && !a);
+    }
+    return false;
+  }
+  return dk === k;
+}
 const REMOVAL_CATS = new Set(["removed-year", "removed-now", "removed-past"]);
 const SKINDS = {
   new:     { label: "חדשה", color: "#15803d" },
@@ -1263,7 +1284,7 @@ function DigestPage({ city, days, onBack, openLine }) {
   );
 }
 
-function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
+function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate, initCats }) {
   const plats = usePlatforms();   // "רציף N" ליד תחנה במסוף — מתעדכן מדי יום (שלמה 03.09)
   const withPlat = (str, c) => (c != null && plats[String(c)]) ? `${str} · רציף ${plats[String(c)]}` : str;
   const [lf, setLf] = useState(null);
@@ -1328,7 +1349,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
     setLf(null); setErr(null); setSel(null); setMon(""); setOffK(new Set()); setCmpI(null); setOnlyCur(false);
     dfetch("data/lines/" + fsafe(rd) + ".json")
       .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then((d) => { if (!ok) return; setLf(materializeLf(d));
+      .then((d) => { if (!ok) return; const m = materializeLf(d); setLf(m);
         // קישור מציר תחנה מגיע עם תאריך (‎#מקט@תאריך‎) — נוחתים ישר על
         // הגרסה של אותו שינוי, לא על הגרסה האחרונה
         let s = d.versions.length - 1;
@@ -1336,10 +1357,20 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           const i = d.versions.findIndex((v) => v.d === initDate);
           if (i >= 0) s = i;
         }
-        setSel(s); })
+        setSel(s);
+        // נכנסו מתוך חיפוש לפי קטגוריה: הסרגל נדלק רק על סוגי האירועים
+        // שמתאימים לה (שלמה 06.09). הסינון הוא לפי סוג האירוע, כמו בסרגל —
+        // סוג שיש בו לפחות אירוע אחד מתאים נשאר דלוק. אם שום אירוע לא
+        // מתאים — מציגים הכול, לא עמוד ריק.
+        const cats = String(initCats || "").split(",").filter(Boolean);
+        if (cats.length) {
+          const vs2 = m.versions || [], keep = new Set(), all = new Set();
+          vs2.forEach((x, i) => { const dk = dispKind(x, i, vs2); all.add(dk); if (cats.some((c) => evInCat(x, i, vs2, c))) keep.add(dk); });
+          if (keep.size && keep.size < all.size) setOffK(new Set([...all].filter((k) => !keep.has(k))));
+        } })
       .catch((e) => { if (ok) setErr(e); });
     return () => { ok = false; };
-  }, [rd, rty, initDate]);
+  }, [rd, rty, initDate, initCats]);
   // הודעת שגיאה אחת לשני מצבים שונים הטעתה: כשל רשת רגעי בנייד הוצג
   // כ"לא נמצאו נתונים" והגולש הסיק שאין מה לראות. סטטוס HTTP (404) הוא
   // באמת קו שאין לו קובץ; כל השאר — תקלה, עם כפתור לנסות שוב.
@@ -1866,6 +1897,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
               </div>
             ) : null}
           </div>
+        )}
+        {kindsHere.length > 1 && initCats && offK.size > 0 && (
+          <div className="khint">🔎 מוצגים רק השינויים מהקטגוריה שבחרת בחיפוש. "הכול" מציג את כל השינויים בקו.</div>
         )}
         {kindsHere.length > 1 && (
           <div className="kfilter">
@@ -3369,7 +3403,8 @@ function App() {
            קרס ללבן (הבאג ששלמה מצא): idx עדיין null ו-idx.lines התפוצץ */
         <LinePage rd={rd} lineGone={idx ? !mktAlive[rd.split("-")[0]] : false}
           sibs={((idx && idx.lines) || []).filter((x) => x.rd.split("-")[0] === rd.split("-")[0])}
-          onSwitch={switchLine} onBack={backToList} initDate={rdDate} />
+          onSwitch={switchLine} onBack={backToList} initDate={rdDate}
+          initCats={[...kats].sort().join(",")} />
       ) : byDay ? (
         <DayFeed idx={idx} openLine={openLine} open12={open12} onBack={() => setByDay(false)} />
       ) : (
