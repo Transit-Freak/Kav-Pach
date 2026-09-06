@@ -9,13 +9,15 @@
 MonitoredCall {StopPointRef = מק"ט התחנה הבאה, Order = מספרה הסידורי, DistanceFromStop
 במטרים}. הורדה מ-S3 אינה מעמיסה על שרת ה-API של דאטאבוס (אישור המיזם 06.09).
 
-שיטה: לכל נסיעה (מפתח: יום המסגרת + מזהה הנסיעה) עוקבים אחרי Order: כשהוא
+שיטה: לכל נסיעה (מפתח: קו + יציאה מתוכננת + רכב) עוקבים אחרי Order: כשהוא
 עולה מ-k ל-k+1 הרכב עבר את תחנה k בין שתי הדגימות, וזמן המעבר משוערך
 בקו ישר לפי DistanceFromStop והמרחק בין התחנות (shape_dist_traveled).
-דגימה עם DistanceFromStop קטן ממש היא הגעה. איחור = זמן המעבר פחות
-זמן ההגעה המתוכנן ב-stop_times. קטגוריות: מוקדם (<-2 דק׳), בזמן (-2..5),
-5–10, 10–20, מעל 20. נסיעה עם DatedVehicleJourneyRef=0 (בלי מזהה) מוצמדת לפי
-route_id + שעת היציאה המתוכננת.
+דגימה עם DistanceFromStop קטן ממש היא הגעה (הזמן משוערך לפי המרחק בדגימה
+הקודמת). בתחנת המוצא נמדדת היציאה — הדגימה האחרונה שבה הרכב עוד עמד
+בתחנה — ולא ההגעה (הרכב ממתין במסוף לפני היציאה). איחור = זמן המעבר פחות
+הזמן המתוכנן ב-stop_times. קטגוריות: מוקדם (<-2 דק׳), בזמן (-2..5),
+5–10, 10–20, מעל 20. ההצמדה ללו"ז: route_id + שעת היציאה המתוכננת (מזהה
+הנסיעה של SIRI אינו trip_id — בדיקה 06.09). רק אוטובוסים (route_type 3).
 
     python3 tools/bus_reliability.py --day 2026-09-01 --gtfs gtfs.zip --siri siri/ --out bus/data
 
@@ -45,9 +47,10 @@ except ImportError:  # noqa
 FMT = 1
 EARLY, ONTIME, L5, L10, L20 = range(5)          # אינדקסים בקטגוריות
 BUCKETS = [(-120, 'early'), (300, 'ontime'), (600, 'l5'), (1200, 'l10'), (10 ** 9, 'l20')]
-MAX_ABS = 90 * 60                                # איחור/הקדמה מעבר לזה — הצמדה שגויה
+MAX_ABS = 60 * 60                                # איחור/הקדמה מעבר לשעה — זו לא הנסיעה שבלו"ז (רכב שהוסב לנסיעה אחרת)
 ARRIVE_M = 25                                    # DistanceFromStop עד כאן = הגעה
 MIN_STOPS_RIDE = 2
+BUS_TYPES = {'3'}                                # route_type של אוטובוס (רכבת=2, רכבת קלה=0 — לא כאן)
 
 
 def cat(delay):
@@ -106,9 +109,9 @@ def load_gtfs(path, day):
             'short': r.get('route_short_name') or '', 'long': r.get('route_long_name') or '',
             'agency': agencies.get(r['agency_id'], r['agency_id']), 'type': r.get('route_type') or '',
         }
-    trips = {}          # trip_id → route_id (רק שירותים פעילים היום)
+    trips = {}          # trip_id → route_id (רק שירותים פעילים היום, רק אוטובוסים)
     for r in rows('trips.txt'):
-        if r['service_id'] in services:
+        if r['service_id'] in services and routes.get(r['route_id'], {}).get('type') in BUS_TYPES:
             trips[r['trip_id']] = r['route_id']
     stops = {}
     for r in rows('stops.txt'):
@@ -196,15 +199,28 @@ def passages(recs, seq):
         else:
             cum[i] = cum[i - 1] + 400.0   # אין shape_dist — הערכה גסה
     prev = None
+    at_origin = None    # הדגימה האחרונה שבה הרכב עמד בתחנת המוצא (לפני שזז)
     for t, order, dist in recs:
         if order < 1 or order > n:
             prev = (t, order, dist)
             continue
-        if dist <= ARRIVE_M and order not in out:
-            out[order] = t
+        if order == 1:
+            # במוצא לא מודדים הגעה (הרכב ממתין במסוף) אלא יציאה — נקבעת כשהוא זז
+            if dist <= ARRIVE_M:
+                at_origin = t
+        elif dist <= ARRIVE_M and order not in out:
+            if prev is not None and prev[1] == order and prev[2] > dist:
+                # הגעה בין שתי הדגימות — שיערוך לפי המרחק שנותר בדגימה הקודמת
+                t1, _, d1 = prev
+                out[order] = int(t1 + (t - t1) * (d1 - ARRIVE_M) / (d1 - dist))
+            else:
+                out[order] = t
         if prev is not None:
             t1, o1, d1 = prev
             if 1 <= o1 < order <= n:
+                if o1 == 1 and 1 not in out and at_origin is not None:
+                    # יציאה מהמוצא: בין הדגימה האחרונה בתחנה לדגימה הבאה (עד חצי דקה)
+                    out[1] = at_origin + min(30, max(0, (t - at_origin) // 2))
                 # הרכב עבר את התחנות o1..order-1 בין t1 ל-t. מיקום בזמן t1:
                 # d1 לפני תחנה o1; בזמן t: dist לפני תחנה order.
                 p1 = cum[o1 - 1] - d1
@@ -294,7 +310,19 @@ def main():
             continue
         jt[key] = tid
         used.add(tid)
-    print(f'הוצמדו ל-GTFS: {len(jt):,} נסיעות SIRI ({len(used):,} נסיעות GTFS שונות) · לא: {dict(unmatched)} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    # כמה שידורים לאותה נסיעה (רכב תגבור, או רכב ששידר תחת שני מזהים) — נמדד
+    # השידור הארוך ביותר בלבד, כדי שנסיעה בלו"ז תיספר פעם אחת
+    by_tid = collections.defaultdict(list)
+    for key, tid in jt.items():
+        by_tid[tid].append(key)
+    dup = 0
+    for tid, keys in by_tid.items():
+        if len(keys) > 1:
+            keys.sort(key=lambda k: -len(journeys[k]))
+            for k in keys[1:]:
+                del jt[k]
+                dup += 1
+    print(f'הוצמדו ל-GTFS: {len(jt):,} נסיעות SIRI ({len(used):,} נסיעות GTFS שונות, {dup:,} שידורים כפולים הושמטו) · לא: {dict(unmatched)} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
 
     # --- מדידה ---
     routes = g['routes']
@@ -305,7 +333,8 @@ def main():
     A = collections.defaultdict(lambda: {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': []})
     C = collections.defaultdict(lambda: {'meas': 0, 'c': [0] * 5, 'd': []})
     H = collections.defaultdict(lambda: [0, 0])
-    tot = {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': []}
+    tot = {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5}
+    far = 0             # נסיעות ששודרו אך כל מדידותיהן רחוקות מהלו"ז ביותר משעה
     worst = []
     sched_per_route = collections.Counter(g['trips'].values())
     for rid, n in sched_per_route.items():
@@ -320,18 +349,23 @@ def main():
         pas = passages(recs, seq)
         if len(pas) < MIN_STOPS_RIDE:
             continue
+        meas = []
+        for k, t in pas.items():
+            s = seq[k - 1]
+            sched = s[3] if k == 1 else s[2]
+            delay = t - sched
+            if abs(delay) <= MAX_ABS:
+                meas.append((k, s, sched, delay))
+        if len(meas) < MIN_STOPS_RIDE:
+            far += 1
+            continue
         r = R[rid]
         r['obs'] += 1
         ag = routes.get(rid, {}).get('agency', '?')
         A[ag]['obs'] += 1
         tot['obs'] += 1
         ride_max = None
-        for k, t in pas.items():
-            s = seq[k - 1]
-            sched = s[3] if k == 1 else s[2]
-            delay = t - sched
-            if abs(delay) > MAX_ABS:
-                continue
+        for k, s, sched, delay in meas:
             c = cat(delay)
             r['meas'] += 1
             r['c'][c] += 1
@@ -347,6 +381,7 @@ def main():
             stp[2] += 1 if c >= L5 else 0
             if k == 1:
                 r['o'][c] += 1
+                tot['o'][c] += 1
             A[ag]['meas'] += 1
             A[ag]['c'][c] += 1
             A[ag]['d'].append(delay)
@@ -362,7 +397,7 @@ def main():
                 ride_max = (delay, s[1], sched)
         if ride_max and ride_max[0] >= 1200:
             worst.append((ride_max[0], rid, tid, ride_max[1], ride_max[2]))
-    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
 
     def stats(d):
         if not d:
@@ -389,7 +424,8 @@ def main():
     day_obj = {
         'd': day, 'fmt': FMT, 'built': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
         'minutes': len(files), 'records': n_rec,
-        'tot': {'sched': tot['sched'], 'obs': tot['obs'], 'meas': tot['meas'], 'c': tot['c'], 's': stats(tot['d'])},
+        'tot': {'sched': tot['sched'], 'obs': tot['obs'], 'meas': tot['meas'], 'c': tot['c'], 's': stats(tot['d']), 'o': tot['o'],
+                'far': far, 'extra': unmatched.get('no_trip', 0)},
         'hours': [[h, v[0], v[1]] for h, v in sorted(H.items())],
         'agencies': sorted([[ag, v['sched'], v['obs'], v['meas'], v['c'], stats(v['d'])] for ag, v in A.items()], key=lambda x: -x[3]),
         'cities': sorted([[c, v['meas'], v['c'], stats(v['d'])] for c, v in C.items() if v['meas'] >= 50], key=lambda x: -x[1]),
@@ -397,13 +433,24 @@ def main():
         'worst': [[rid, tid.split('_')[0], round(dl / 60), stops.get(sid, ('', ''))[1], sched] for dl, rid, tid, sid, sched in sorted(worst, reverse=True)[:40]],
         'cols': {'routes': ['route_id', 'sched', 'obs', 'meas', 'cats[early,ontime,5-10,10-20,20+]', 'stats[avg,med,p90 min]', 'origin cats', 'hours[[h,n,on]]', 'worst stops[[code,name,n,avg]]'],
                  'agencies': ['name', 'sched', 'obs', 'meas', 'cats', 'stats'], 'cities': ['city', 'meas', 'cats', 'stats'],
-                 'worst': ['route_id', 'trip', 'max delay min', 'stop', 'sched sec']},
+                 'worst': ['route_id', 'trip', 'max delay min', 'stop', 'sched sec'],
+                 'tot': 'o = origin cats · far = rides beyond ±60 min (dropped) · extra = SIRI journeys with no GTFS trip'},
     }
     json.dump(day_obj, open(f'{a.out}/days/{day}.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     json.dump(catalog, open(catalog_path, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
-    days = sorted(f[:-5] for f in os.listdir(f'{a.out}/days') if f.endswith('.json'))
-    idx = {'days': days, 'updated': day_obj['built']}
-    json.dump(idx, open(f'{a.out}/index.json', 'w', encoding='utf-8'), ensure_ascii=False)
+    # האינדקס נושא את הסיכום הארצי של כל יום, כדי שהעמוד יצייר מגמה ולוח שנה
+    # בלי להוריד את קובצי הימים (1–3MB כל אחד)
+    days = []
+    for f in sorted(os.listdir(f'{a.out}/days')):
+        if not f.endswith('.json'):
+            continue
+        try:
+            dj = json.load(open(f'{a.out}/days/{f}', encoding='utf-8'))
+            days.append({'d': f[:-5], **{k: dj['tot'][k] for k in ('sched', 'obs', 'meas', 'c', 's', 'o') if k in dj['tot']}})
+        except Exception:  # noqa: BLE001
+            days.append({'d': f[:-5]})
+    idx = {'days': days, 'updated': day_obj['built'], 'fmt': FMT}
+    json.dump(idx, open(f'{a.out}/index.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     sz = os.path.getsize(f'{a.out}/days/{day}.json')
     print(f'נכתב {a.out}/days/{day}.json ({sz / 1e6:.1f}MB) · מסלולים: {len(out_routes):,} · בזמן ארצי: {tot["c"][ONTIME] / max(tot["meas"], 1):.1%} · {(datetime.datetime.now() - t0).seconds} שנ׳')
 

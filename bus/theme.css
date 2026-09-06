@@ -1,0 +1,65 @@
+/* מדד דיוק האוטובוסים — עיצוב "שילוט תחנה": בטון אפור, שלט שחור עם פס צהוב,
+   ספרות גבוהות וצרות (Anton). שונה בכוונה ממדד הרכבת (לבן, טבעת, כחול). */
+:root{
+  --bg:#E6E8EB; --panel:#F7F8FA; --panel2:#EDEFF2; --line:#D3D7DD; --line2:#B6BCC6;
+  --ink:#111214; --mut:#4C525B; --dim:#7D848E; --accent:#FFC800; --accent2:#7A5F00;
+  --ok:#1B9E4B; --warn:#E39B00; --late:#E0621A; --bad:#C81E1E; --none:#B6BCC6; --early:#2563EB;
+  --mono:'Anton','Heebo',sans-serif; --disp:'Heebo',sans-serif; --disp-w:900; --body:'Heebo',sans-serif;
+  --radius:6px; --radius-sm:4px; --tag-ink:#111; --scheme:light; --tip-bg:#111214; --tip-ink:#fff; --ovl:rgba(17,18,20,.6);
+}
+.bar-top{background:#111214;color:#fff;padding:12px 16px;border-radius:6px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:6px solid var(--accent)}
+.bar-top h1{color:#fff;font-size:26px;letter-spacing:-.2px;margin:0}
+.bar-top .homelink{color:#fff;border-color:#444}
+.glyph{width:42px;height:42px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:4px}
+.sign{margin:0 0 18px;background:#111214;color:#fff;border-radius:8px;overflow:hidden}
+.sign-main{padding:18px 22px 14px;display:flex;align-items:baseline;gap:22px;flex-wrap:wrap;border-bottom:1px solid #2A2C30}
+.sign-main b{font-family:'Anton',var(--body);font-size:104px;line-height:1;color:var(--accent);letter-spacing:1px}
+.sl{font-size:15px;font-weight:800;color:#fff}
+.sc{font-size:12px;color:#A6ACB6;flex-basis:100%}
+.sign-row{display:grid;grid-template-columns:repeat(4,1fr)}
+.sg{padding:14px 18px;border-inline-start:1px solid #2A2C30;display:flex;flex-direction:column;gap:4px;min-width:0}
+.sg:first-child{border:none}
+.sg .sl{font-size:12px;color:#C9CED6}
+.sg b{font-family:'Anton',var(--body);font-size:40px;line-height:1;color:#fff;letter-spacing:.5px}
+.sg b i{font-style:normal;font-family:var(--body);font-size:12px;color:#A6ACB6;margin-inline-start:5px;font-weight:700}
+.sg .sc{font-size:11.5px;flex-basis:auto}
+.seg,.daynav{border-color:#111214}
+.pchip.on{background:#111214;color:var(--accent)}
+.daynav .dbtn{color:#111214;font-family:var(--body);font-weight:800}
+.panel{border:none;border-inline-start:6px solid #111214}
+.ptitle::before{background:var(--accent);border:2px solid #111214;width:8px;height:14px;box-sizing:content-box}
+.st{border-radius:2px}
+.mono{font-family:'Anton',var(--body);font-size:16px;letter-spacing:.6px;font-weight:400}
+.mono.t{color:#111214}
+.modal{border:none;border-top:8px solid var(--accent)}
+/* חמש קטגוריות: מוקדם (כחול) לפני "בזמן" */
+.dist i.s0{background:var(--early)}.dist i.s1{background:var(--ok)}.dist i.s2{background:var(--warn)}.dist i.s3{background:var(--late)}.dist i.s4{background:var(--bad)}
+.d0{color:var(--early)}.d1{color:var(--ok)}.d2{color:var(--warn)}.d3{color:var(--late)}.d4{color:var(--bad)}
+.search{width:100%;border:1.5px solid var(--line2);border-radius:6px;padding:9px 12px;font:inherit;font-size:15px;margin:0 0 10px;background:#fff}
+.search:focus{outline:2px solid var(--accent);border-color:transparent}
+.tblbox{max-height:520px;overflow:auto}
+.linebtn{background:none;border:none;font:inherit;font-weight:800;color:var(--ink);cursor:pointer;padding:0;text-decoration:underline dotted var(--dim);text-underline-offset:3px}
+.linebtn:hover{color:var(--accent2)}
+.lhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.lhead .badge{font-family:'Anton',var(--body);font-size:28px;background:#111214;color:var(--accent);padding:2px 12px;border-radius:4px;letter-spacing:1px}
+.lhead .ldest{font-weight:700;color:var(--mut);font-size:13px}
+.closebtn{margin-inline-start:auto;border:1.5px solid var(--ink);background:#fff;border-radius:6px;padding:4px 10px;font:inherit;font-weight:800;cursor:pointer}
+.worst li{padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.worst .badge{font-family:'Anton',var(--body);background:#111214;color:var(--accent);padding:0 8px;border-radius:3px;font-size:15px}
+.worst .dl{font-family:'Anton',var(--body);font-size:18px;color:var(--bad)}
+.mut{font-size:11.5px;color:var(--dim);font-weight:600}
+.method ul{margin:6px 0 0;padding-inline-start:18px}
+.method li{font-size:12.5px;line-height:1.8;color:var(--mut);font-weight:500;margin:2px 0}
+.method li b{color:var(--ink)}
+.cols2 .panel{margin-top:0}
+.cols2{margin-top:14px}
+.stat-row{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 10px}
+.stat-row div{background:var(--panel2);border-radius:4px;padding:8px 12px;min-width:110px}
+.stat-row b{display:block;font-family:'Anton',var(--body);font-size:26px;letter-spacing:.5px}
+.stat-row span{font-size:11.5px;color:var(--mut);font-weight:700}
+@media(max-width:760px){
+  .sign-row{grid-template-columns:1fr 1fr}
+  .sg:nth-child(3){border:none}
+  .sign-main b{font-size:80px}
+  .bar-top h1{font-size:22px}
+}
