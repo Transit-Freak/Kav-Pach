@@ -47,7 +47,8 @@ except ImportError:  # noqa
 FMT = 1
 EARLY, ONTIME, L5, L10, L20 = range(5)          # אינדקסים בקטגוריות
 BUCKETS = [(-120, 'early'), (300, 'ontime'), (600, 'l5'), (1200, 'l10'), (10 ** 9, 'l20')]
-MAX_ABS = 60 * 60                                # איחור/הקדמה מעבר לשעה — זו לא הנסיעה שבלו"ז (רכב שהוסב לנסיעה אחרת)
+MAX_ABS = 90 * 60                                # איחור/הקדמה מעבר לשעה וחצי — זו לא הנסיעה שבלו"ז (רכב שהוסב לנסיעה אחרת)
+SPIKE = 20 * 60                                  # מדידה בודדת שרחוקה מזה משתי שכנותיה — תקלה, לא איחור
 ARRIVE_M = 25                                    # DistanceFromStop עד כאן = הגעה
 MIN_STOPS_RIDE = 2
 BUS_TYPES = {'3'}                                # route_type של אוטובוס (רכבת=2, רכבת קלה=0 — לא כאן)
@@ -216,17 +217,64 @@ def passages(recs, seq, codes=None):
             cum[i] = cum[i - 1] + (b[4] - a[4])
         else:
             cum[i] = cum[i - 1] + 400.0   # אין shape_dist — הערכה גסה
+    def sched_at(p):
+        """הזמן שבלו"ז במיקום p לאורך המסלול (שיערוך ליניארי בין תחנות)."""
+        if p <= 0:
+            return seq[0][3]
+        for i in range(1, n):
+            if p <= cum[i]:
+                seg = max(cum[i] - cum[i - 1], 1.0)
+                return seq[i - 1][3] + (seq[i][2] - seq[i - 1][3]) * (p - cum[i - 1]) / seg
+        return seq[-1][2]
+
+    # --- יציאה מהמוצא: הרכב עמד (שתי דגימות רצופות לפחות בלי תזוזה, עד 300 מ׳ מהמוצא)
+    # ואז זז. דגימה בודדת "בתחנה" לא נחשבת: המשרד מציב את הרכב בתחנה 5 דק׳ לפני
+    # היציאה (בדיקה 06.09: שיא של 20,849 נסיעות בדיוק ב-5 דק׳ "מוקדם"), ואחר כך
+    # משדר GPS אמיתי מהרציף — שיכול להיות גם אחרי העמוד, ואז Order כבר 2.
+    dep = None          # זמן היציאה שנצפה
+    dep_gap = None      # (t0, t, p2): עמד, ואז פער בשידור, ואז כבר בדרך
+    pp = None
+    stat = False
+    for rec in recs:
+        t, order, dist = rec[0], rec[1], rec[2]
+        if not (1 <= order <= min(n, 3)):
+            if pp is not None:
+                break
+            continue
+        p = cum[order - 1] - dist
+        if pp is not None:
+            t0, p0 = pp
+            if abs(p0) <= 300 and abs(p - p0) <= 30 and t - t0 <= 120:
+                stat = True
+            elif stat and p - p0 > 30:
+                if t - t0 <= 120:
+                    dep = t0 + min(30, (t - t0) // 2)
+                else:
+                    dep_gap = (t0, t, p)
+                break
+            elif stat and t - t0 > 120 and p - p0 > 30:
+                dep_gap = (t0, t, p)
+                break
+            else:
+                stat = False
+        pp = (t, p)
+        if p > 300 and not stat:
+            break
+    if dep is not None:
+        out[1] = dep
+    elif dep_gap is not None:
+        # לא ראינו את היציאה עצמה: שיערוך מהמיקום הראשון בדרך לפי מהירות הלו"ז
+        t0, t, p2 = dep_gap
+        out[1] = int(max(t0, t - (sched_at(p2) - seq[0][3])))
+
     prev = None
-    at_origin = None    # הדגימה האחרונה שבה הרכב עמד בתחנת המוצא (לפני שזז)
     for rec in recs:
         t, order, dist = rec[0], rec[1], rec[2]
         if order < 1 or order > n:
             prev = (t, order, dist)
             continue
         if order == 1:
-            # במוצא לא מודדים הגעה (הרכב ממתין במסוף) אלא יציאה — נקבעת כשהוא זז
-            if dist <= ARRIVE_M:
-                at_origin = t
+            pass    # במוצא נמדדת היציאה (למעלה), לא ההגעה
         elif dist <= ARRIVE_M and order not in out:
             if prev is not None and prev[1] == order and prev[2] > dist:
                 # הגעה בין שתי הדגימות — שיערוך לפי המרחק שנותר בדגימה הקודמת
@@ -237,16 +285,17 @@ def passages(recs, seq, codes=None):
         if prev is not None:
             t1, o1, d1 = prev
             if 1 <= o1 < order <= n:
-                if o1 == 1 and 1 not in out and at_origin is not None and d1 <= ARRIVE_M:
-                    # יציאה מהמוצא: הרכב עמד בתחנה עד הדגימה האחרונה לפני שזז — היציאה
-                    # בינה לבין הדגימה הבאה (עד חצי דקה). אם הדגימה האחרונה הייתה רחוקה
-                    # מהעמוד (רציף במסוף; המשרד "מציב" את הרכב בתחנה 5 דק׳ לפני היציאה
-                    # ואחר כך משדר GPS אמיתי) — נופלים לשיערוך המעבר לפי המרחק, למטה.
-                    out[1] = at_origin + min(30, max(0, (t - at_origin) // 2))
                 # הרכב עבר את התחנות o1..order-1 בין t1 ל-t. מיקום בזמן t1:
                 # d1 לפני תחנה o1; בזמן t: dist לפני תחנה order.
                 p1 = cum[o1 - 1] - d1
                 p2 = cum[order - 1] - dist
+                if o1 == 1:
+                    if 1 not in out and t - t1 > 120:
+                        # פער בשידור אחרי המוצא — היציאה לא נצפתה: שיערוך לפי מהירות הלו"ז
+                        out[1] = int(max(t1, t - (sched_at(p2) - seq[0][3])))
+                    if 1 in out:
+                        # עוגן השיערוך לתחנות הבאות הוא היציאה, לא הדגימה (המלאכותית) בתחנה
+                        t1, p1 = max(t1, out[1]), max(p1, 0.0)
                 span = max(p2 - p1, 1.0)
                 for k in range(o1, order):
                     if k in out:
@@ -360,7 +409,7 @@ def main():
     stops = g['stops']
     # מצברים
     R = collections.defaultdict(lambda: {'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5, 'on': 0,
-                                         'hours': collections.defaultdict(lambda: [0, 0]), 'stops': collections.defaultdict(lambda: [0, 0.0, 0])})
+                                         'hours': collections.defaultdict(lambda: [0, 0]), 'stops': collections.defaultdict(lambda: [0, 0.0, 0, 10 ** 9])})
     A = collections.defaultdict(lambda: {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5})
     C = collections.defaultdict(lambda: {'meas': 0, 'c': [0] * 5, 'd': []})
     H = collections.defaultdict(lambda: [0, 0])
@@ -371,6 +420,9 @@ def main():
     diag_mx = collections.Counter()      # היסטוגרמת האיחור המרבי לנסיעה (5 דק׳)
     diag_mx_o = collections.Counter()    # נסיעות עם מרבי ≥55 דק׳: האיחור במוצא (10 דק׳)
     diag_ex = []                         # דוגמאות של נסיעות כאלה שיצאו בזמן
+    diag_raw, diag_raw2, diag_raw3 = [], [], []   # רשומות גולמיות לאבחון המוצא, ונסיעות טיפוסיות
+    spikes = 0
+    n_rides = 0
     hms_ = lambda s: f'{s // 3600:02d}:{s % 3600 // 60:02d}'  # noqa: E731
     worst = []
     sched_per_route = collections.Counter(g['trips'].values())
@@ -396,17 +448,41 @@ def main():
                 meas.append((k, s, sched, delay))
             else:
                 n_beyond += 1
-        # רוב המעברים רחוקים מהלו"ז ביותר משעה — זו לא הנסיעה שבלו"ז
+        # רוב המעברים רחוקים מהלו"ז ביותר משעה וחצי — זו לא הנסיעה שבלו"ז
         if len(meas) < MIN_STOPS_RIDE or n_beyond > len(meas):
             far += 1
             continue
         beyond += n_beyond
+        # מדידה בודדת שקופצת ביותר מ-20 דק׳ משתי שכנותיה (שדומות זו לזו) — תקלת
+        # מק"ט/שיערוך ולא איחור; מושמטת (דוגמה 06.09: +7, +56, +5)
+        meas.sort()
+        if len(meas) >= 3:
+            keep = []
+            for i, m in enumerate(meas):
+                if 0 < i < len(meas) - 1:
+                    a, b = meas[i - 1][3], meas[i + 1][3]
+                    if abs(m[3] - a) > SPIKE and abs(m[3] - b) > SPIKE and abs(a - b) < SPIKE / 2:
+                        spikes += 1
+                        continue
+                keep.append(m)
+            meas = keep
+        if len(diag_raw) < 6 and meas[0][0] == 1 and -300 <= meas[0][3] < -240:
+            diag_raw.append(f'מוצא -5 {rid}/{tid} יציאה {hms_(seq[0][3])} n={len(seq)} רשומות(שנ׳ מהיציאה,סדר,מרחק): '
+                            + ' '.join(f'{r[0] - seq[0][3]:+d}/{r[1]}/{r[2]}' for r in recs[:10]) + ' · מעברים: ' + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in meas[:6]))
+        if len(diag_raw2) < 4 and meas[0][0] == 1 and meas[0][3] >= 480 and len(meas) > 1 and meas[1][0] == 2 and meas[1][3] <= 120:
+            diag_raw2.append(f'מוצא +8/תחנה 2 בזמן {rid}/{tid} יציאה {hms_(seq[0][3])} תחנה 2 בלו"ז {hms_(seq[1][2])} רשומות: '
+                             + ' '.join(f'{r[0] - seq[0][3]:+d}/{r[1]}/{r[2]}' for r in recs[:14]) + ' · מעברים: ' + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in meas[:6]))
+        n_rides += 1
+        if n_rides % 30000 == 0:
+            diag_raw3.append(f'טיפוסית {rid}/{tid} יציאה {hms_(seq[0][3])} n={len(seq)} מעברים: ' + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in meas))
         r = R[rid]
         r['obs'] += 1
         ag = routes.get(rid, {}).get('agency', '?')
         A[ag]['obs'] += 1
         tot['obs'] += 1
         ride_max = None
+        ride_pass = []                       # [מק"ט, מתוכנן, בפועל] לכל תחנה — לרשימת המאחרות
+        t_of = {k: sc + d for k, s, sc, d in meas}
         for k, s, sched, delay in meas:
             c = cat(delay)
             r['meas'] += 1
@@ -417,10 +493,13 @@ def main():
             r['hours'][hr][1] += 1 if c == ONTIME else 0
             H[hr][0] += 1
             H[hr][1] += 1 if c == ONTIME else 0
+            # פרופיל לאורך הקו: לכל תחנה — הגעות, סכום איחור, בזמן, המקום ברצף
             stp = r['stops'][s[1]]
             stp[0] += 1
             stp[1] += delay
-            stp[2] += 1 if c >= L5 else 0
+            stp[2] += 1 if c == ONTIME else 0
+            stp[3] = min(stp[3], k)
+            ride_pass.append([stops.get(s[1], ('',))[0], sched, t_of[k]])
             if k == 1:
                 r['o'][c] += 1
                 tot['o'][c] += 1
@@ -440,7 +519,7 @@ def main():
             if ride_max is None or delay > ride_max[0]:
                 ride_max = (delay, s[1], sched)
         if ride_max and ride_max[0] >= 1200:
-            worst.append((ride_max[0], rid, tid, ride_max[1], ride_max[2]))
+            worst.append((ride_max[0], rid, tid, ride_max[1], ride_max[2], ride_pass))
             diag_mx[int(ride_max[0] // 300) * 5] += 1
             if ride_max[0] >= 55 * 60:
                 od = next((d for k, s, sc, d in meas if k == 1), None)
@@ -449,7 +528,9 @@ def main():
                     # דוגמאות: יצאה בזמן והגיעה ל-55+ דק׳ — איפה הקפיצה?
                     diag_ex.append(f'{rid}/{tid} רשומות={len(recs)} {hms_(recs[0][0])}–{hms_(recs[-1][0])} יציאה מתוכננת {hms_(seq[0][3])} n={len(seq)} מעברים: '
                                    + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in sorted(meas)))
-    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לשעה: {beyond:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לסף: {beyond:,} · קפיצות בודדות שהושמטו: {spikes:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    for ex in diag_raw + diag_raw2 + diag_raw3:
+        print('  גולמי:', ex, flush=True)
     print(f'אבחון מוצא (דקות → נסיעות): {dict(sorted(diag_o.items()))}', flush=True)
     print(f'אבחון איחור מרבי לנסיעה (5 דק׳ → נסיעות): {dict(sorted(diag_mx.items()))} · מרבי ≥55: איחור במוצא: {dict(sorted(diag_mx_o.items(), key=lambda kv: str(kv[0])))}', flush=True)
     for ex in diag_ex:
@@ -469,14 +550,32 @@ def main():
     except Exception:  # noqa: BLE001
         catalog = {}
     out_routes = []
+    profiles = {}       # route_id → [[מק"ט, הגעות, איחור ממוצע בעשיריות דקה, בזמן]] לאורך הקו
+    stop_names = {}     # מק"ט → שם (קטלוג לתצוגה)
     for rid, r in R.items():
         info = routes.get(rid, {})
         catalog[rid] = [info.get('mkt', ''), info.get('short', ''), info.get('long', ''), info.get('agency', ''), info.get('dir', ''), info.get('alt', ''), info.get('type', '')]
-        ws = sorted(r['stops'].items(), key=lambda kv: -(kv[1][1] / kv[1][0]))[:3]
+        # שלוש התחנות עם האיחור הממוצע הגבוה (לפחות 3 הגעות, אחרת מדידה בודדת מטה)
+        ws = sorted([kv for kv in r['stops'].items() if kv[1][0] >= 3], key=lambda kv: -(kv[1][1] / kv[1][0]))[:3]
         out_routes.append([rid, sched_per_route.get(rid, 0), r['obs'], r['meas'], r['c'], stats(r['d']), r['o'],
                            [[h, v[0], v[1]] for h, v in sorted(r['hours'].items())],
                            [[stops.get(sid, ('',))[0], stops.get(sid, ('', ''))[1], v[0], round(v[1] / v[0] / 60, 1)] for sid, v in ws]])
+        prof = []
+        for sid, v in sorted(r['stops'].items(), key=lambda kv: kv[1][3]):
+            code, name = stops.get(sid, ('', ''))[0], stops.get(sid, ('', ''))[1]
+            stop_names[code] = name
+            prof.append([code, v[0], round(v[1] / v[0] / 6), v[2]])
+        profiles[rid] = prof
     out_routes.sort(key=lambda x: -x[3])
+    worst.sort(key=lambda w: -w[0])
+    for w in worst[:40]:
+        for code, _, _ in w[5]:
+            stop_names.setdefault(code, '')
+    # שמות התחנות של המאחרות — מהרישום (הפרופילים כבר כיסו את רובן)
+    by_code = {v[0]: v[1] for v in stops.values()}
+    for code in list(stop_names):
+        if not stop_names[code]:
+            stop_names[code] = by_code.get(code, '')
     day_obj = {
         'd': day, 'fmt': FMT, 'built': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
         'minutes': len(files), 'records': n_rec,
@@ -486,19 +585,29 @@ def main():
         'agencies': sorted([[ag, v['sched'], v['obs'], v['meas'], v['c'], stats(v['d']), v['o']] for ag, v in A.items()], key=lambda x: -x[3]),
         'cities': sorted([[c, v['meas'], v['c'], stats(v['d'])] for c, v in C.items() if v['meas'] >= 50], key=lambda x: -x[1]),
         'routes': out_routes,
-        'worst': [[rid, tid.split('_')[0], round(dl / 60), stops.get(sid, ('', ''))[1], sched] for dl, rid, tid, sid, sched in sorted(worst, reverse=True)[:40]],
+        'worst': [[rid, tid.split('_')[0], round(dl / 60), stops.get(sid, ('', ''))[1], sched, ps] for dl, rid, tid, sid, sched, ps in worst[:40]],
         'cols': {'routes': ['route_id', 'sched', 'obs', 'meas', 'cats[early,ontime,5-10,10-20,20+]', 'stats[avg,med,p90 min]', 'origin cats', 'hours[[h,n,on]]', 'worst stops[[code,name,n,avg]]'],
                  'agencies': ['name', 'sched', 'obs', 'meas', 'cats', 'stats', 'origin cats'], 'cities': ['city', 'meas', 'cats', 'stats'],
-                 'worst': ['route_id', 'trip', 'max delay min', 'stop', 'sched sec'],
-                 'tot': 'o = origin cats · far = rides beyond ±60 min (dropped) · extra = SIRI journeys with no GTFS trip'},
+                 'worst': ['route_id', 'trip', 'max delay min', 'stop', 'sched sec', 'passages[[code,sched sec,actual sec]]'],
+                 'tot': 'o = origin cats · far = rides beyond ±90 min (dropped) · extra = SIRI journeys with no GTFS trip',
+                 'stops file': 'days/D.stops.json = {route_id: [[code, n, avg delay (tenths of min), on-time n]] along the route}; stops.json = {code: name}'},
     }
     json.dump(day_obj, open(f'{a.out}/days/{day}.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    json.dump(profiles, open(f'{a.out}/days/{day}.stops.json', 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     json.dump(catalog, open(catalog_path, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
+    # קטלוג שמות תחנות — מצטבר (תחנות שנעלמו נשארות לימים ישנים)
+    names_path = f'{a.out}/stops.json'
+    try:
+        old_names = json.load(open(names_path, encoding='utf-8'))
+    except Exception:  # noqa: BLE001
+        old_names = {}
+    old_names.update({k: v for k, v in stop_names.items() if v})
+    json.dump(old_names, open(names_path, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     # האינדקס נושא את הסיכום הארצי של כל יום, כדי שהעמוד יצייר מגמה ולוח שנה
     # בלי להוריד את קובצי הימים (1–3MB כל אחד)
     days = []
     for f in sorted(os.listdir(f'{a.out}/days')):
-        if not f.endswith('.json'):
+        if not f.endswith('.json') or f.endswith('.stops.json'):
             continue
         try:
             dj = json.load(open(f'{a.out}/days/{f}', encoding='utf-8'))
