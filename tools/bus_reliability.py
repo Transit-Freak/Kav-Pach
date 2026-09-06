@@ -291,6 +291,8 @@ def main():
     jt = {}
     unmatched = collections.Counter()
     used = set()
+    diag_dd = collections.Counter()      # מרחק ההצמדה (שניות) — אבחון
+    diag_near = collections.Counter()    # לא הוצמדו: הנסיעה הקרובה ביותר (דקות)
     for key in journeys:
         line, dep = key[0], key[1]
         ds = dep_sec(dep, day)
@@ -298,18 +300,25 @@ def main():
             unmatched['no_route' if line not in deps_by_route else 'no_dep'] += 1
             continue
         tid = by_dep.get((line, ds))
-        if tid is None:
+        if tid is not None:
+            diag_dd[0] += 1
+        else:
             best = None
             for sec, t2 in deps_by_route[line]:
                 dd = abs(sec - ds)
-                if dd <= 180 and (best is None or dd < best[0]):
+                if best is None or dd < best[0]:
                     best = (dd, t2)
-            tid = best[1] if best else None
+            if best and best[0] <= 180:
+                tid = best[1]
+                diag_dd[60 if best[0] <= 60 else 180] += 1
+            else:
+                diag_near[min(best[0] // 60, 30) if best else -1] += 1
         if tid is None:
             unmatched['no_trip'] += 1
             continue
         jt[key] = tid
         used.add(tid)
+    print(f'אבחון הצמדה — מדויק/עד דקה/עד 3 דק׳: {dict(sorted(diag_dd.items()))} · לא הוצמדו, הקרובה ביותר בדקות: {dict(sorted(diag_near.items()))}', flush=True)
     # כמה שידורים לאותה נסיעה (רכב תגבור, או רכב ששידר תחת שני מזהים) — נמדד
     # השידור הארוך ביותר בלבד, כדי שנסיעה בלו"ז תיספר פעם אחת
     by_tid = collections.defaultdict(list)
@@ -330,11 +339,15 @@ def main():
     # מצברים
     R = collections.defaultdict(lambda: {'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5, 'on': 0,
                                          'hours': collections.defaultdict(lambda: [0, 0]), 'stops': collections.defaultdict(lambda: [0, 0.0, 0])})
-    A = collections.defaultdict(lambda: {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': []})
+    A = collections.defaultdict(lambda: {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5})
     C = collections.defaultdict(lambda: {'meas': 0, 'c': [0] * 5, 'd': []})
     H = collections.defaultdict(lambda: [0, 0])
     tot = {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5}
-    far = 0             # נסיעות ששודרו אך כל מדידותיהן רחוקות מהלו"ז ביותר משעה
+    far = 0             # נסיעות ששודרו אך רוב מדידותיהן רחוקות מהלו"ז ביותר משעה
+    beyond = 0          # מדידות בודדות מעבר לשעה בנסיעות שנשמרו
+    diag_o = collections.Counter()       # היסטוגרמת איחור במוצא (דקות) — אבחון
+    diag_mx = collections.Counter()      # היסטוגרמת האיחור המרבי לנסיעה (5 דק׳)
+    diag_mx_o = collections.Counter()    # נסיעות עם מרבי ≥55 דק׳: האיחור במוצא (10 דק׳)
     worst = []
     sched_per_route = collections.Counter(g['trips'].values())
     for rid, n in sched_per_route.items():
@@ -350,15 +363,20 @@ def main():
         if len(pas) < MIN_STOPS_RIDE:
             continue
         meas = []
+        n_beyond = 0
         for k, t in pas.items():
             s = seq[k - 1]
             sched = s[3] if k == 1 else s[2]
             delay = t - sched
             if abs(delay) <= MAX_ABS:
                 meas.append((k, s, sched, delay))
-        if len(meas) < MIN_STOPS_RIDE:
+            else:
+                n_beyond += 1
+        # רוב המעברים רחוקים מהלו"ז ביותר משעה — זו לא הנסיעה שבלו"ז
+        if len(meas) < MIN_STOPS_RIDE or n_beyond > len(meas):
             far += 1
             continue
+        beyond += n_beyond
         r = R[rid]
         r['obs'] += 1
         ag = routes.get(rid, {}).get('agency', '?')
@@ -382,6 +400,8 @@ def main():
             if k == 1:
                 r['o'][c] += 1
                 tot['o'][c] += 1
+                A[ag]['o'][c] += 1
+                diag_o[max(-15, min(15, int(delay // 60)))] += 1
             A[ag]['meas'] += 1
             A[ag]['c'][c] += 1
             A[ag]['d'].append(delay)
@@ -397,7 +417,13 @@ def main():
                 ride_max = (delay, s[1], sched)
         if ride_max and ride_max[0] >= 1200:
             worst.append((ride_max[0], rid, tid, ride_max[1], ride_max[2]))
-    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+            diag_mx[int(ride_max[0] // 300) * 5] += 1
+            if ride_max[0] >= 55 * 60:
+                od = next((d for k, s, sc, d in meas if k == 1), None)
+                diag_mx_o['אין' if od is None else int(od // 600) * 10] += 1
+    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לשעה: {beyond:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    print(f'אבחון מוצא (דקות → נסיעות): {dict(sorted(diag_o.items()))}', flush=True)
+    print(f'אבחון איחור מרבי לנסיעה (5 דק׳ → נסיעות): {dict(sorted(diag_mx.items()))} · מרבי ≥55: איחור במוצא: {dict(sorted(diag_mx_o.items(), key=lambda kv: str(kv[0])))}', flush=True)
 
     def stats(d):
         if not d:
@@ -427,12 +453,12 @@ def main():
         'tot': {'sched': tot['sched'], 'obs': tot['obs'], 'meas': tot['meas'], 'c': tot['c'], 's': stats(tot['d']), 'o': tot['o'],
                 'far': far, 'extra': unmatched.get('no_trip', 0)},
         'hours': [[h, v[0], v[1]] for h, v in sorted(H.items())],
-        'agencies': sorted([[ag, v['sched'], v['obs'], v['meas'], v['c'], stats(v['d'])] for ag, v in A.items()], key=lambda x: -x[3]),
+        'agencies': sorted([[ag, v['sched'], v['obs'], v['meas'], v['c'], stats(v['d']), v['o']] for ag, v in A.items()], key=lambda x: -x[3]),
         'cities': sorted([[c, v['meas'], v['c'], stats(v['d'])] for c, v in C.items() if v['meas'] >= 50], key=lambda x: -x[1]),
         'routes': out_routes,
         'worst': [[rid, tid.split('_')[0], round(dl / 60), stops.get(sid, ('', ''))[1], sched] for dl, rid, tid, sid, sched in sorted(worst, reverse=True)[:40]],
         'cols': {'routes': ['route_id', 'sched', 'obs', 'meas', 'cats[early,ontime,5-10,10-20,20+]', 'stats[avg,med,p90 min]', 'origin cats', 'hours[[h,n,on]]', 'worst stops[[code,name,n,avg]]'],
-                 'agencies': ['name', 'sched', 'obs', 'meas', 'cats', 'stats'], 'cities': ['city', 'meas', 'cats', 'stats'],
+                 'agencies': ['name', 'sched', 'obs', 'meas', 'cats', 'stats', 'origin cats'], 'cities': ['city', 'meas', 'cats', 'stats'],
                  'worst': ['route_id', 'trip', 'max delay min', 'stop', 'sched sec'],
                  'tot': 'o = origin cats · far = rides beyond ±60 min (dropped) · extra = SIRI journeys with no GTFS trip'},
     }

@@ -174,7 +174,7 @@ function mergeDays(days) {
     addAgg(tot, d.tot);
     tot.far += d.tot.far || 0; tot.extra += d.tot.extra || 0;
     if (days.length === 1) tot.s = d.tot.s;
-    for (const [nm, sched, obs, meas, c, s] of d.agencies) addAgg(A[nm] || (A[nm] = emptyAgg()), {sched, obs, meas, c, s});
+    for (const [nm, sched, obs, meas, c, s, o] of d.agencies) { const x = A[nm] || (A[nm] = emptyAgg()); addAgg(x, {sched, obs, meas, c, s}); (o || []).forEach((v, i) => x.o[i] += v); }
     for (const [nm, meas, c, s] of d.cities) addAgg(Cc[nm] || (Cc[nm] = emptyAgg()), {meas, c, s});
     for (const [h, n, on] of d.hours) { const x = H[h] || (H[h] = [0, 0]); x[0] += n; x[1] += on; }
     for (const r of d.routes) {
@@ -229,10 +229,10 @@ function render() {
   $('#lq').oninput = e => { lq = e.target.value; showAllL = false; renderLines(M); };
 }
 function renderAgencies(M) {
-  const rows = Object.entries(M.A).map(([nm, s]) => ({nm, sched: s.sched, obs: s.obs, meas: s.meas, on: s.on, early: s.meas ? s.c[0] / s.meas : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}));
+  const rows = Object.entries(M.A).map(([nm, s]) => { const oT = s.o.reduce((x, y) => x + y, 0); return {nm, sched: s.sched, obs: s.obs, meas: s.meas, on: s.on, oon: oT ? s.o[1] / oT : null, oearly: oT ? s.o[0] / oT : null, early: s.meas ? s.c[0] / s.meas : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}; });
   sortRows(rows, sortA);
-  $('#t-ag').innerHTML = `<div class="tblbox"><table id="ta"><thead><tr>${th('מפעיל', 'nm', sortA)}${th('נסיעות בלו״ז', 'sched', sortA)}${th('נצפו', 'obs', sortA)}${th('הגעות נמדדו', 'meas', sortA)}${th('בזמן', 'on', sortA)}${th('מוקדם', 'early', sortA)}${th('איחור ממוצע', 'avg', sortA)}${th('מעל 20 דק׳', 'b4', sortA)}</tr></thead><tbody>` +
-    rows.map(r => `<tr><td class="nm">${esc(r.nm)}</td><td>${num(r.sched)}</td><td>${num(r.obs)} <small style="color:var(--dim)">(${pct(r.obs, r.sched)})</small></td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.early == null ? '—' : Math.round(r.early * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
+  $('#t-ag').innerHTML = `<div class="tblbox"><table id="ta"><thead><tr>${th('מפעיל', 'nm', sortA)}${th('נסיעות בלו״ז', 'sched', sortA)}${th('נצפו', 'obs', sortA)}${th('הגעות נמדדו', 'meas', sortA)}${th('בזמן', 'on', sortA)}${th('יציאה בזמן מהמוצא', 'oon', sortA)}${th('יצאו מוקדם', 'oearly', sortA)}${th('איחור ממוצע', 'avg', sortA)}${th('מעל 20 דק׳', 'b4', sortA)}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="nm">${esc(r.nm)}</td><td>${num(r.sched)}</td><td>${num(r.obs)} <small style="color:var(--dim)">(${pct(r.obs, r.sched)})</small></td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.oon == null ? '—' : Math.round(r.oon * 100) + '%'}</td><td>${r.oearly == null ? '—' : Math.round(r.oearly * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
   $('#ta thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortA = {k, dir: sortA.k === k ? -sortA.dir : (k === 'nm' ? 1 : -1)}; renderAgencies(M); };
 }
 function renderCities(M) {
