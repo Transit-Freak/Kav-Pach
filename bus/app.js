@@ -31,7 +31,8 @@ const stopName = code => (NAMES && NAMES[code]) || code;
 const partial = d => d.sched > 0 && d.obs < d.sched * 0.3;
 
 // ---------------------------------------------------------------- צבירה (כמה ימים)
-function emptyAgg() { return {sched: 0, obs: 0, meas: 0, c: [0, 0, 0, 0, 0], o: [0, 0, 0, 0, 0], sum: 0, s: null, far: 0, extra: 0}; }
+function emptyAgg() { return {sched: 0, obs: 0, meas: 0, c: [0, 0, 0, 0, 0], o: [0, 0, 0, 0, 0], sum: 0, s: null, far: 0, extra: 0, vt: [0, 0, 0]}; }
+const VNAMES = {'מיניבוס': 'מיניבוס', 'מידיבוס': 'מידיבוס', 'אוטובוס': 'אוטובוס', 'מפרקי': 'מפרקי'};
 function addAgg(t, x) {
   const sched = x.sched != null ? x.sched : x[0], obs = x.obs != null ? x.obs : x[1], meas = x.meas != null ? x.meas : x[2], c = x.c || x[3], s = x.s || x[4];
   t.sched += sched || 0; t.obs += obs || 0; t.meas += meas || 0;
@@ -185,14 +186,16 @@ function mergeDays(days) {
     addAgg(tot, d.tot);
     tot.far += d.tot.far || 0; tot.extra += d.tot.extra || 0;
     if (days.length === 1) tot.s = d.tot.s;
-    for (const [nm, sched, obs, meas, c, s, o] of d.agencies) { const x = A[nm] || (A[nm] = emptyAgg()); addAgg(x, {sched, obs, meas, c, s}); (o || []).forEach((v, i) => x.o[i] += v); }
+    for (const [nm, sched, obs, meas, c, s, o, va] of d.agencies) { const x = A[nm] || (A[nm] = emptyAgg()); addAgg(x, {sched, obs, meas, c, s}); (o || []).forEach((v, i) => x.o[i] += v); (va || []).forEach((v, i) => x.vt[i] += v); }
+    (d.tot.vt || []).forEach((v, i) => tot.vt[i] += v);
     for (const [nm, meas, c, s] of d.cities) addAgg(Cc[nm] || (Cc[nm] = emptyAgg()), {meas, c, s});
     for (const [h, n, on] of d.hours) { const x = H[h] || (H[h] = [0, 0]); x[0] += n; x[1] += on; }
     for (const r of d.routes) {
-      const [rid, sched, obs, meas, c, s, o, hours, ws] = r;
-      const x = Rr[rid] || (Rr[rid] = Object.assign(emptyAgg(), {rid, hours: {}, ws: []}));
+      const [rid, sched, obs, meas, c, s, o, hours, ws, vt] = r;
+      const x = Rr[rid] || (Rr[rid] = Object.assign(emptyAgg(), {rid, hours: {}, ws: [], vplan: '', vact: {}}));
       addAgg(x, {sched, obs, meas, c, s}); o.forEach((v, i) => { x.o[i] += v; tot.o[i] += v; });
       for (const [h, n, on] of hours) { const y = x.hours[h] || (x.hours[h] = [0, 0]); y[0] += n; y[1] += on; }
+      if (vt) { x.vplan = vt[0]; x.vt[0] += vt[1]; x.vt[1] += vt[2]; x.vt[2] += vt[3]; x.vact[vt[4]] = (x.vact[vt[4]] || 0) + vt[1]; }
       if (days.length === 1) { x.s = s; x.ws = ws; }
     }
     for (const w of d.worst) worst.push([d.d, ...w]);
@@ -235,11 +238,42 @@ function render() {
     <div class="panel"><div class="ptitle">לפי קו</div><p class="pdesc">כל כיוון של כל קו בנפרד. אפשר לבחור מפעיל, לדרג ("הכי לא מדייקים") או לחפש מספר קו. לחיצה על מספר הקו פותחת פירוט: באיזה קטע לאורך הקו נצבר האיחור.</p>
       <div class="filters" id="lfilters"></div>
       <div id="line-detail"></div><div id="t-lines"></div></div>
+    <div class="panel"><div class="ptitle">סוג הרכב מול מה שנקבע לקו</div><p class="pdesc">לכל קו משרד התחבורה קובע סוג רכב: מיניבוס, מידיבוס, אוטובוס או מפרקי. כאן משווים אותו לרכב שהגיע בפועל בכל נסיעה, לפי מספר הרכב בשידור ומאגר ציי הרכב של המשרד. "רכב קטן יותר" הוא למשל מיניבוס בקו שנקבע לו אוטובוס.</p><div id="vt-sum"></div><div class="filters" id="vt-filters"></div><div id="t-vt"></div></div>
     <div class="panel"><div class="ptitle">הנסיעות שאיחרו הכי הרבה</div><p class="pdesc">נסיעות בודדות שבאחת התחנות איחרו 20 דקות ומעלה, מהגרועה ביותר. לחיצה על נסיעה מציגה אותה תחנה אחרי תחנה: מתוכנן, בפועל והפער.</p><ul class="worst" id="worst"></ul></div>
     <div class="panel"><div class="ptitle">לפי עיר</div><p class="pdesc">כל ההגעות לתחנות שנמצאות בעיר, מכל הקווים שעוברים בה.</p><div id="t-city"></div></div>`;
   lineChart($('#c-trend'), trend, {color: C.line, min: 0, max: 100, unit: '%'});
   barChart($('#c-hours'), hours, {color: C.line, max: 100, unit: '%'});
-  renderAgencies(); renderCities(); renderFilters(); renderLines(); renderWorst();
+  renderAgencies(); renderCities(); renderFilters(); renderLines(); renderWorst(); renderVehicles();
+}
+let vsort = 'small', vAll = false, vAgency = '';
+function renderVehicles() {
+  const box = $('#t-vt'); if (!box) return;
+  const T = M.tot.vt;
+  if (!T[0]) { $('#vt-sum').innerHTML = '<div class="empty">אין עדיין נתוני רכב לתקופה הזו (מחושב מהריצה הבאה)</div>'; $('#vt-filters').innerHTML = ''; box.innerHTML = ''; return; }
+  const ags = Object.entries(M.A).filter(([, s]) => s.vt[0]).sort((a, b) => b[1].vt[0] - a[1].vt[0]);
+  $('#vt-sum').innerHTML = `<div class="stat-row">
+      <div><b>${pct(T[1], T[0])}</b><span>מהנסיעות הגיע רכב קטן ממה שנקבע לקו</span></div>
+      <div><b>${pct(T[2], T[0])}</b><span>רכב גדול ממה שנקבע</span></div>
+      <div><b>${num(T[0])}</b><span>נסיעות שבהן גם הרכב וגם סוג הקו ידועים (${pct(T[0], M.tot.obs)} מהנסיעות שנצפו)</span></div></div>
+    <div class="tblbox"><table><thead><tr><th>מפעיל</th><th>נסיעות עם רכב מזוהה</th><th>רכב קטן יותר</th><th>רכב גדול יותר</th></tr></thead><tbody>${ags.sort((a, b) => b[1].vt[1] / b[1].vt[0] - a[1].vt[1] / a[1].vt[0]).map(([nm, s]) => `<tr><td class="nm">${esc(nm)}</td><td>${num(s.vt[0])}</td><td class="${s.vt[1] / s.vt[0] > .2 ? 'd4' : s.vt[1] / s.vt[0] > .05 ? 'd2' : ''}">${pct(s.vt[1], s.vt[0])}</td><td>${pct(s.vt[2], s.vt[0])}</td></tr>`).join('')}</tbody></table></div>`;
+  $('#vt-filters').innerHTML = `<select id="vt-ag"><option value="">כל המפעילים</option>${ags.map(([a]) => `<option value="${esc(a)}"${a === vAgency ? ' selected' : ''}>${esc(a)}</option>`).join('')}</select>` +
+    [['small', 'הכי הרבה רכב קטן יותר'], ['large', 'הכי הרבה רכב גדול יותר']].map(([k, t]) => `<button class="fchip${vsort === k ? ' on' : ''}" data-v="${k}">${t}</button>`).join('');
+  $('#vt-ag').onchange = e => { vAgency = e.target.value; vAll = false; renderVehicles(); };
+  $('#vt-filters').querySelectorAll('.fchip').forEach(b => b.onclick = () => { vsort = b.dataset.v; vAll = false; renderVehicles(); });
+  let rows = Object.values(M.Rr).filter(s => s.vt[0] >= 5).map(s => { const l = lineLabel(s.rid); const act = Object.entries(s.vact).sort((a, b) => b[1] - a[1])[0]; return {rid: s.rid, short: l.short, long: l.long, agency: l.agency, plan: s.vplan, act: act ? act[0] : '', n: s.vt[0], small: s.vt[1] / s.vt[0], large: s.vt[2] / s.vt[0]}; });
+  if (vAgency) rows = rows.filter(r => r.agency === vAgency);
+  const k = vsort === 'small' ? 'small' : 'large';
+  rows.sort((a, b) => b[k] - a[k] || b.n - a.n);
+  rows = rows.filter(r => r[k] > 0);
+  const total = rows.length;
+  if (!vAll) rows = rows.slice(0, 40);
+  box.innerHTML = rows.length ? `<div class="tblbox" style="margin-top:10px"><table><thead><tr><th>קו</th><th>מסלול</th><th>מפעיל</th><th>נקבע לקו</th><th>הגיע בפועל (הנפוץ)</th><th>נסיעות עם רכב מזוהה</th><th>רכב קטן יותר</th><th>רכב גדול יותר</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="nm"><button class="linebtn" data-rid="${esc(r.rid)}">${esc(r.short)}</button></td><td style="font-size:12px;color:var(--mut)">${esc(r.long)}</td><td style="font-size:12px">${esc(r.agency)}</td><td>${esc(r.plan)}</td><td><b>${esc(r.act)}</b></td><td>${num(r.n)}</td><td class="${r.small > .5 ? 'd4' : r.small > .2 ? 'd3' : ''}">${Math.round(r.small * 100)}%</td><td>${Math.round(r.large * 100)}%</td></tr>`).join('') + '</tbody></table></div>' +
+    (total > rows.length ? `<button class="more" id="more-v">הצגת כל ${num(total)} הקווים</button>` : '') +
+    `<div class="mut" style="margin-top:6px">${num(total)} מסלולים${vAgency ? ' של ' + esc(vAgency) : ''} · רק קווים עם 5 נסיעות לפחות שבהן הרכב מזוהה · רכבי קבלן ורכבים שאינם במאגר המשרד לא נספרים</div>` :
+    '<div class="empty">אין קווים כאלה</div>';
+  box.querySelectorAll('.linebtn').forEach(b => b.onclick = () => { openLine = b.dataset.rid; renderLineDetail(); $('#line-detail').scrollIntoView({behavior: 'smooth', block: 'start'}); });
+  const mb = $('#more-v'); if (mb) mb.onclick = () => { vAll = true; renderVehicles(); };
 }
 function renderAgencies() {
   const rows = Object.entries(M.A).map(([nm, s]) => { const oT = s.o.reduce((x, y) => x + y, 0); return {nm, sched: s.sched, obs: s.obs, meas: s.meas, on: s.on, oon: oT ? s.o[1] / oT : null, oearly: oT ? s.o[0] / oT : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}; });
@@ -321,6 +355,7 @@ function renderLineDetail() {
       <div><b>${s.avg == null ? '—' : fmt1(s.avg)}<i>דק׳</i></b><span>איחור ממוצע${s.s && s.s[2] != null ? ` · 90% עד ${fmt1(s.s[2])}` : ''}</span></div>
       <div><b>${num(s.obs)}</b><span>נסיעות נצפו מתוך ${num(s.sched)}</span></div>
     </div>
+    ${s.vt[0] ? `<p class="pdesc">סוג הרכב: נקבע לקו <b>${esc(s.vplan)}</b>. ב-${num(s.vt[0])} נסיעות הרכב מזוהה: ${Object.entries(s.vact).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${esc(t)} ${pct(n, s.vt[0])}`).join(', ')}${s.vt[1] ? ` · <b class="d4">רכב קטן ממה שנקבע ב-${pct(s.vt[1], s.vt[0])}</b>` : ''}${s.vt[2] ? ` · רכב גדול ממה שנקבע ב-${pct(s.vt[2], s.vt[0])}` : ''}.</p>` : ''}
     ${distHtml(s)}
     <div class="cols2" style="margin-top:10px"><div><div class="ptitle">אחוז בזמן לפי השעה ביום</div><p class="pdesc">לפי השעה שבה האוטובוס היה אמור להגיע לתחנה.</p><div class="chart" id="c-lh"></div></div>
     <div><div class="ptitle">האיחור הממוצע לאורך הקו</div><p class="pdesc">עמודה לכל תחנה, מהמוצא (ימין) ליעד. איפה שהעמודות קופצות, שם הקו מאבד זמן.</p><div class="chart" id="c-lp"><div class="empty">טוען…</div></div></div></div>

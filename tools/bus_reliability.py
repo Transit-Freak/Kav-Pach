@@ -152,6 +152,45 @@ def load_stop_times(g, want_trips):
     return st
 
 
+# ---------------------------------------------------------------- סוגי רכב
+VRANK = {'מיניבוס': 1, 'מידיבוס': 2, 'אוטובוס': 3, 'מפרקי': 4}
+
+
+def load_vehicle_classes(site):
+    """הסוג שנקבע לכל קו (מק"ט → מיניבוס/מידיבוס/אוטובוס/מפרקי, מקובץ הקווים של
+    המשרד, data-main.json עמודה 13) והסוג של כל רכב לפי מספרו: קודם מאגר "ציי רכב
+    אוטובוסים" של המשרד (fleet-official.json, שדה 5, אותו אוצר מילים), ובהיעדרו
+    סיווג הרישוי (fleet.json: 'מפרק' → מפרקי, 'זעיר' → מיניבוס, אחרת אוטובוס)."""
+    plan, veh = {}, {}
+    try:
+        for r in json.load(open(os.path.join(site, 'data-main.json'), encoding='utf-8')):
+            if len(r) > 13 and r[13] in VRANK:
+                plan[str(r[0])] = r[13]
+    except Exception as e:  # noqa: BLE001
+        print(f'אזהרה: data-main.json לא נטען ({e})', flush=True)
+    try:
+        fl = json.load(open(os.path.join(site, 'fleet/data/fleet.json'), encoding='utf-8'))
+        off = 1 if fl.get('v') == 2 else 0
+        for op in fl.get('operators', []):
+            for v in op.get('vehicles', []):
+                t = str(v[6 + off] or '') if len(v) > 6 + off else ''
+                if not t:
+                    continue
+                veh[str(v[0])] = 'מפרקי' if 'מפרק' in t else 'מיניבוס' if 'זעיר' in t or 'זעצ' in t else 'אוטובוס'
+    except Exception as e:  # noqa: BLE001
+        print(f'אזהרה: fleet.json לא נטען ({e})', flush=True)
+    try:
+        of = json.load(open(os.path.join(site, 'fleet/data/fleet-official.json'), encoding='utf-8')).get('of', {})
+        for plate, row in of.items():
+            t = str(row[5] or '') if len(row) > 5 else ''
+            cls = 'מפרקי' if t.startswith('מפרקי') else t if t in VRANK else None
+            if cls:
+                veh[str(plate)] = cls
+    except Exception as e:  # noqa: BLE001
+        print(f'אזהרה: fleet-official.json לא נטען ({e})', flush=True)
+    return plan, veh
+
+
 # ---------------------------------------------------------------- SIRI
 def parse_minute(args):
     """קובץ דקה → רשומות מצומצמות: (frame, ref, line, op, dep, veh, t_sec, order, dist, stopcode)."""
@@ -365,6 +404,7 @@ def main():
     ap.add_argument('--siri', required=True, help='תיקייה עם HH/MM.br (היום + תחילת מחר)')
     ap.add_argument('--out', default='bus/data')
     ap.add_argument('--workers', type=int, default=4)
+    ap.add_argument('--site', default='.', help='שורש האתר — לקובצי סוגי הרכב (data-main.json, fleet/data)')
     a = ap.parse_args()
     day = a.day
     t0 = datetime.datetime.now()
@@ -394,6 +434,8 @@ def main():
 
     g = load_gtfs(a.gtfs, day)
     print(f'GTFS: {len(g["trips"]):,} נסיעות פעילות · {len(g["routes"]):,} מסלולים · {len(g["stops"]):,} תחנות', flush=True)
+    plan_cls, veh_cls = load_vehicle_classes(a.site)
+    print(f'סוגי רכב: {len(plan_cls):,} מק"טים עם סוג שנקבע · {len(veh_cls):,} רכבים עם סוג ידוע', flush=True)
     # רצפי התחנות של כל הנסיעות הפעילות היום — נדרש גם להצמדה (שעת היציאה
     # של התחנה הראשונה) וגם למדידה
     st = load_stop_times(g, set(g['trips']))
@@ -465,6 +507,10 @@ def main():
     C = collections.defaultdict(lambda: {'meas': 0, 'c': [0] * 5, 'd': []})
     H = collections.defaultdict(lambda: [0, 0])
     tot = {'sched': 0, 'obs': 0, 'meas': 0, 'c': [0] * 5, 'd': [], 'o': [0] * 5}
+    # סוג הרכב מול מה שנקבע לקו: [נסיעות עם רכב וקו מזוהים, רכב קטן יותר, רכב גדול יותר]
+    VT = collections.defaultdict(lambda: [0, 0, 0, collections.Counter()])   # route_id
+    VA = collections.defaultdict(lambda: [0, 0, 0])                          # מפעיל
+    vt_tot = [0, 0, 0]
     far = 0             # נסיעות ששודרו אך רוב מדידותיהן רחוקות מהלו"ז ביותר משעה
     beyond = 0          # מדידות בודדות מעבר לשעה בנסיעות שנשמרו
     diag_o = collections.Counter()       # היסטוגרמת איחור במוצא (דקות) — אבחון
@@ -544,6 +590,23 @@ def main():
         ag = routes.get(rid, {}).get('agency', '?')
         A[ag]['obs'] += 1
         tot['obs'] += 1
+        # סוג הרכב שהגיע (לפי מספר הרכב בשידור) מול הסוג שנקבע לקו (לפי המק"ט)
+        planned = plan_cls.get(routes.get(rid, {}).get('mkt', ''))
+        actual = veh_cls.get(key[2])
+        if planned and actual:
+            vt = VT[rid]
+            vt[0] += 1
+            vt[3][actual] += 1
+            VA[ag][0] += 1
+            vt_tot[0] += 1
+            if VRANK[actual] < VRANK[planned]:
+                vt[1] += 1
+                VA[ag][1] += 1
+                vt_tot[1] += 1
+            elif VRANK[actual] > VRANK[planned]:
+                vt[2] += 1
+                VA[ag][2] += 1
+                vt_tot[2] += 1
         ride_max = None
         ride_pass = []                       # [מק"ט, מתוכנן, בפועל] לכל תחנה — לרשימת המאחרות
         t_of = {k: sc + d for k, s, sc, d in meas}
@@ -622,9 +685,12 @@ def main():
         catalog[rid] = [info.get('mkt', ''), info.get('short', ''), info.get('long', ''), info.get('agency', ''), info.get('dir', ''), info.get('alt', ''), info.get('type', ''), info.get('agency_id', '')]
         # שלוש התחנות עם האיחור הממוצע הגבוה (לפחות 3 הגעות, אחרת מדידה בודדת מטה)
         ws = sorted([kv for kv in r['stops'].items() if kv[1][0] >= 3], key=lambda kv: -(kv[1][1] / kv[1][0]))[:3]
+        vt = VT.get(rid)
+        vt_row = [plan_cls.get(info.get('mkt', ''), ''), vt[0], vt[1], vt[2], vt[3].most_common(1)[0][0]] if vt else None
         out_routes.append([rid, sched_per_route.get(rid, 0), r['obs'], r['meas'], r['c'], stats(r['d']), r['o'],
                            [[h, v[0], v[1]] for h, v in sorted(r['hours'].items())],
-                           [[stops.get(sid, ('',))[0], stops.get(sid, ('', ''))[1], v[0], round(v[1] / v[0] / 60, 1)] for sid, v in ws]])
+                           [[stops.get(sid, ('',))[0], stops.get(sid, ('', ''))[1], v[0], round(v[1] / v[0] / 60, 1)] for sid, v in ws],
+                           vt_row])
         prof = []
         for sid, v in sorted(r['stops'].items(), key=lambda kv: kv[1][3]):
             code, name = stops.get(sid, ('', ''))[0], stops.get(sid, ('', ''))[1]
@@ -645,14 +711,14 @@ def main():
         'd': day, 'fmt': FMT, 'built': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%MZ'),
         'minutes': len(files), 'records': n_rec,
         'tot': {'sched': tot['sched'], 'obs': tot['obs'], 'meas': tot['meas'], 'c': tot['c'], 's': stats(tot['d']), 'o': tot['o'],
-                'far': far, 'extra': unmatched.get('no_trip', 0)},
+                'far': far, 'extra': unmatched.get('no_trip', 0), 'vt': vt_tot},
         'hours': [[h, v[0], v[1]] for h, v in sorted(H.items())],
-        'agencies': sorted([[ag, v['sched'], v['obs'], v['meas'], v['c'], stats(v['d']), v['o']] for ag, v in A.items()], key=lambda x: -x[3]),
+        'agencies': sorted([[ag, v['sched'], v['obs'], v['meas'], v['c'], stats(v['d']), v['o'], VA.get(ag, [0, 0, 0])] for ag, v in A.items()], key=lambda x: -x[3]),
         'cities': sorted([[c, v['meas'], v['c'], stats(v['d'])] for c, v in C.items() if v['meas'] >= 50], key=lambda x: -x[1]),
         'routes': out_routes,
         'worst': [[rid, tid.split('_')[0], round(dl / 60), stops.get(sid, ('', ''))[1], sched, ps] for dl, rid, tid, sid, sched, ps in worst[:40]],
-        'cols': {'routes': ['route_id', 'sched', 'obs', 'meas', 'cats[early,ontime,5-10,10-20,20+]', 'stats[avg,med,p90 min]', 'origin cats', 'hours[[h,n,on]]', 'worst stops[[code,name,n,avg]]'],
-                 'agencies': ['name', 'sched', 'obs', 'meas', 'cats', 'stats', 'origin cats'], 'cities': ['city', 'meas', 'cats', 'stats'],
+        'cols': {'routes': ['route_id', 'sched', 'obs', 'meas', 'cats[early,ontime,5-10,10-20,20+]', 'stats[avg,med,p90 min]', 'origin cats', 'hours[[h,n,on]]', 'worst stops[[code,name,n,avg]]', 'vehicle[planned class, rides with known vehicle, smaller, larger, most common actual]'],
+                 'agencies': ['name', 'sched', 'obs', 'meas', 'cats', 'stats', 'origin cats', 'vehicle[known, smaller, larger]'], 'cities': ['city', 'meas', 'cats', 'stats'],
                  'worst': ['route_id', 'trip', 'max delay min', 'stop', 'sched sec', 'passages[[code,sched sec,actual sec]]'],
                  'tot': 'o = origin cats · far = rides beyond ±90 min (dropped) · extra = SIRI journeys with no GTFS trip',
                  'stops file': 'days/D.stops.json = {route_id: [[code, n, avg delay (tenths of min), on-time n]] along the route}; stops.json = {code: name}'},
