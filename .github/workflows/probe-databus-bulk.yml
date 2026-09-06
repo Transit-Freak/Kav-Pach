@@ -1,0 +1,86 @@
+name: probe-databus-bulk
+
+# בדיקה חד-פעמית לקראת מדד דיוק לאוטובוסים: מה יש בקבצי ה-S3 היומיים של
+# דאטאבוס (open-bus-stride) ומה ה-API מחזיר לטבלת ההצמדה רכב-לתחנה
+# (siri_ride_stops) — שמות, גדלים, שדות, וספירות ליום אחד. התוצאה נכתבת
+# ל-docs/fetched/databus-bulk.txt.
+
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'יום לבדיקה (YYYY-MM-DD)'
+        required: false
+        default: '2026-09-03'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: בדיקה
+        env:
+          DAY: ${{ github.event.inputs.day }}
+        run: |
+          set -uo pipefail
+          mkdir -p docs/fetched
+          OUT=docs/fetched/databus-bulk.txt
+          B="https://openbus-stride-public.s3.eu-west-1.amazonaws.com"
+          {
+            echo "בדיקת מקורות דאטאבוס · יום $DAY · $(date -u +%FT%TZ)"
+            echo
+            echo "===== S3: תיקיות שורש ====="
+            curl -sS "$B/?list-type=2&delimiter=/&max-keys=100" | tr '<' '\n' | grep -E '^(Prefix|Key)>' | sed 's/^[A-Za-z]*>//' | head -50
+            echo
+            echo "===== S3: stride-etl-packages/ ====="
+            curl -sS "$B/?list-type=2&delimiter=/&prefix=stride-etl-packages/&max-keys=100" | tr '<' '\n' | grep -E '^(Prefix|Key)>' | sed 's/^[A-Za-z]*>//' | head -50
+            for sub in siri gtfs; do
+              echo
+              echo "===== S3: stride-etl-packages/$sub/ (מפוצל לשנה) ====="
+              curl -sS "$B/?list-type=2&delimiter=/&prefix=stride-etl-packages/$sub/&max-keys=100" | tr '<' '\n' | grep -E '^(Prefix|Key)>' | sed 's/^[A-Za-z]*>//' | head -30
+              Y=${DAY:0:4}; M=${DAY:5:2}; D=${DAY:8:2}
+              echo "--- $sub/$Y/$M/$D ---"
+              curl -sS "$B/?list-type=2&prefix=stride-etl-packages/$sub/$Y/$M/$D&max-keys=200" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -60
+              echo "--- $sub/$Y/$M (רשימת ימים, 40 ראשונים) ---"
+              curl -sS "$B/?list-type=2&delimiter=/&prefix=stride-etl-packages/$sub/$Y/$M/&max-keys=100" | tr '<' '\n' | grep -E '^Prefix>' | sed 's/^[A-Za-z]*>//' | head -40
+            done
+            echo
+            echo "===== S3: stride-etl-packages/siri/ תיקיות לפי תבנית אחרת (siri-vehicle-locations, ...) ====="
+            for sub in siri-vehicle-locations siri-rides siri-ride-stops siri-routes siri-stops siri-snapshots gtfs-rides gtfs-ride-stops; do
+              n=$(curl -sS "$B/?list-type=2&prefix=stride-etl-packages/$sub/&max-keys=5" | tr '<' '\n' | grep -c '^Key>')
+              echo "$sub: $n מפתחות ראשונים"
+              curl -sS "$B/?list-type=2&prefix=stride-etl-packages/$sub/&max-keys=5" | tr '<' '\n' | grep -E '^(Key|Size)>' | sed 's/^[A-Za-z]*>//' | paste - - | head -5
+            done
+            echo
+            echo "===== API: siri_ride_stops ליום אחד — דוגמה ושדות ====="
+            A="https://open-bus-stride-api.hasadna.org.il"
+            curl -sS "$A/siri_ride_stops/list?siri_rides__scheduled_start_time_from=${DAY}T04:00:00%2B03:00&siri_rides__scheduled_start_time_to=${DAY}T05:00:00%2B03:00&limit=2" | python3 -c "import json,sys; d=json.load(sys.stdin); print(json.dumps(d[:1], ensure_ascii=False, indent=1)[:2500]); print('...', len(d), 'שורות')"
+            echo
+            echo "===== API: כמה נסיעות SIRI ביום (siri_rides, לפי שעות התחלה) ====="
+            for h in 06 08 12 17; do
+              n=$(curl -sS "$A/siri_rides/list?scheduled_start_time_from=${DAY}T${h}:00:00%2B03:00&scheduled_start_time_to=${DAY}T${h}:59:59%2B03:00&limit=10000" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+              echo "שעה $h: $n נסיעות (עד 10,000)"
+            done
+            echo
+            echo "===== API: gtfs_rides ביום (שעה 08) ====="
+            curl -sS "$A/gtfs_rides/list?start_time_from=${DAY}T08:00:00%2B03:00&start_time_to=${DAY}T08:59:59%2B03:00&limit=10000" | python3 -c "import json,sys; d=json.load(sys.stdin); print(len(d), 'נסיעות GTFS בשעה 08'); print(json.dumps(d[:1], ensure_ascii=False)[:600])"
+          } > "$OUT" 2>&1 || true
+          wc -c "$OUT"
+          tail -c 3000 "$OUT"
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/fetched/databus-bulk.txt
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "docs: בדיקת מקורות דאטאבוס לקראת מדד דיוק לאוטובוסים"
+          for i in 1 2 3 4; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true; sleep 10
+          done
+          exit 1
