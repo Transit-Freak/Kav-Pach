@@ -978,20 +978,28 @@ function SchedBox({ rd, vs, selD, isLast }) {
       </div>
       <table className="schedtbl"><tbody>
         {(() => {
-          // ימים עוקבים עם אותו לו"ז בדיוק מתאחדים לשורה אחת — "ראשון–חמישי"
-          // במקום חמש שורות זהות (שלמה 06.09). יום ריק באמצע שובר את הרצף.
-          const rows = [];
+          // ימים עם אותו לו"ז בדיוק מתאחדים לשורה אחת, גם כשאינם עוקבים:
+          // "ראשון–חמישי", "ראשון וחמישי", "ראשון–שלישי וחמישי" (שלמה 06.09)
+          const groups = new Map();
           for (const b of SCHED_DAYS) {
             const ts = days[b] || [];
             if (!ts.length) continue;
-            const key = JSON.stringify(ts), last = rows[rows.length - 1];
-            const nextOf = (x) => SCHED_DAYS[SCHED_DAYS.indexOf(x) + 1];
-            if (last && last.key === key && last.next === b) { last.days.push(b); last.next = nextOf(b); }
-            else rows.push({ key, days: [b], ts, next: nextOf(b) });
+            const key = JSON.stringify(ts);
+            if (!groups.has(key)) groups.set(key, { ts, days: [] });
+            groups.get(key).days.push(b);
           }
-          const lbl = (ds) => ds.length === 1 ? SCHED_LBL[ds[0]]
-            : ds.length === 2 ? SCHED_LBL[ds[0]] + " ו" + SCHED_LBL[ds[1]]
-            : SCHED_LBL[ds[0]] + "–" + SCHED_LBL[ds[ds.length - 1]];
+          const rows = [...groups.values()];
+          const lbl = (ds) => {
+            const items = [];
+            for (let i = 0; i < ds.length;) {
+              let j = i;
+              while (j + 1 < ds.length && SCHED_DAYS.indexOf(ds[j + 1]) === SCHED_DAYS.indexOf(ds[j]) + 1) j++;
+              if (j - i >= 2) items.push(SCHED_LBL[ds[i]] + "–" + SCHED_LBL[ds[j]]);
+              else for (let k = i; k <= j; k++) items.push(SCHED_LBL[ds[k]]);
+              i = j + 1;
+            }
+            return items.length === 1 ? items[0] : items.slice(0, -1).join(", ") + " ו" + items[items.length - 1];
+          };
           return rows.map((r) => (
             <tr key={r.days.join("")}>
               <th>{lbl(r.days)}{past && r.days.some((b) => touched.has(b)) ? " ✱" : ""}</th>
@@ -1716,7 +1724,9 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             const since = chg ? " מאז " + fmtD(chg.d) : "";
             const tip = (lf.wa === "1" ? "לפי הפיד הארצי, הקו מונגש לכיסא גלגלים" : "לפי הפיד הארצי, הקו אינו מונגש לכיסא גלגלים")
               + (chg ? " — השינוי נקלט בפיד ב-" + fmtD(chg.d) : "") + (what ? " · גודל הרכב וסוג הקו לפי רישוי משרד התחבורה: " + what : "");
-            return <span className={"wa " + (lf.wa === "1" ? "yes" : "no")} title={tip}> · ♿ {what ? what + " " : ""}{lf.wa === "1" ? "נגיש" : "אינו נגיש"}{since}</span>;
+            // סמל הנגישות רק כשהקו נגיש; לקו שאינו נגיש — סמל אוטובוס והמילים (שלמה 06.09)
+            if (lf.wa === "1") return <span className="wa yes" title={tip}> · ♿ {what ? what + " " : ""}נגיש{since}</span>;
+            return <span className="wa no" title={tip}> · {what ? "🚌 " + what + " · " : ""}אינו נגיש{since}</span>;
           })()}
           {/* כמה נסיעות מתוכננות יש לחלופה היום. "קיים בפיד" אינו "פועל":
               הפיד מפרסם קווים לפני הפתיחה, והקו הירוק בירושלים נכנס עם
@@ -1727,7 +1737,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
             <span title="מספר הנסיעות המתוכננות לחלופה הזו בפיד של היום, לפי לוחות הזמנים שבתוקף">
               {" · "}{ntr === 1 ? "נסיעה אחת ביום" : `${ntr.toLocaleString()} נסיעות ביום`}</span>
           )}
-          {" · מק״ט "}{lf.rd} · {vs.length} גרסאות מתועדות</div>
+          {" · מק״ט "}<span className="rdnum" dir="ltr">{lf.rd}</span> · {vs.length} גרסאות מתועדות</div>
         {/* תקופות שבהן הקו לא היה ברישום וחזר — כרטיס "בוטל וחזר" בציר הזמן
             (materializeLf), לא פס טקסט כאן (שלמה 06.09). ביטול שעדיין לא נגמר
             מוצג בהודעת הסטטוס למטה. */}
@@ -2457,7 +2467,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
                     <span className="badge sm">{c.line || TT_ICON[m.tt] || "—"}</span>
                     <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
                     <span className="ldest">{m.dest || c.rd}</span>
-                    <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
+                    <span className="lmeta">{m.op || ""} · מק״ט <span className="rdnum" dir="ltr">{c.rd}</span></span>
                     {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
                     {c.k === "planned-dropped" && c.ps ? <span className="lnote">📅 תוכנן ל-{fmtD(c.ps)} · בוטל ב-{fmtD(c.pc || c.d)}</span> : null}
                     {c.note ? <span className="lnote">{noteFix(c.note)}</span> : null}
@@ -2576,7 +2586,7 @@ function RecentChanges({ idx, openLine, onAll }) {
                 <span className="badge sm">{c.line}</span>
                 <span className="k" style={{ background: (KINDS[evKind(c)] || {}).color || "#64748b" }}>{(KINDS[evKind(c)] || { label: c.k }).label}</span>
                 <span className="ldest">{m.dest || c.rd}</span>
-                <span className="lmeta">{m.op || ""} · מק״ט {c.rd}</span>
+                <span className="lmeta">{m.op || ""} · מק״ט <span className="rdnum" dir="ltr">{c.rd}</span></span>
                 {c.sd && gapDays(c.sd, c.d) > 3 ? <TipTag cls="approxd" tip={"אותר בין " + fmtD(c.sd) + " ל-" + fmtD(c.d) + " — היום המדויק אינו ידוע"}>≈ תאריך מקורב</TipTag> : null}
                     {c.k === "planned-dropped" && c.ps ? <span className="lnote">📅 תוכנן ל-{fmtD(c.ps)} · בוטל ב-{fmtD(c.pc || c.d)}</span> : null}
                     {c.note ? <span className="lnote">{noteFix(c.note)}</span> : null}
@@ -3104,7 +3114,7 @@ function ModesTab({ idx, openLine, spec }) {
               </span>
             )}
             <span className="ldest">{l.dest}</span>
-            <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}</span>
+            <span className="lmeta">{l.op} · מק״ט <span className="rdnum" dir="ltr">{l.rd}</span> · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}</span>
           </a>
         ))}
         {list.length === 0 && <div className="empty">לא נמצא קו תואם.</div>}
@@ -3416,7 +3426,7 @@ function App() {
                     </span>
                   ))}
                   <span className="ldest">{l.dest}</span>
-                  <span className="lmeta">{l.op} · מק״ט {l.rd} · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}
+                  <span className="lmeta">{l.op} · מק״ט <span className="rdnum" dir="ltr">{l.rd}</span> · {l.v > 1 ? (l.v - 1) + " שינויים" : "ללא שינויים עדיין"}
                     {l.lk === "removed" && <> · מבוטל מאז {fmtD(l.ld)}</>}</span>
                 </a>
               ))}

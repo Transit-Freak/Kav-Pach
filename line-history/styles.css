@@ -379,3 +379,6 @@ button.kbtn { border: 0; cursor: pointer; font: inherit; }
 .schedtbl td{padding:3px 0}
 .tchip{display:inline-block;background:#fff;border:1px solid #ddd6fe;border-radius:6px;padding:1px 6px;margin:2px 3px 2px 0;font-size:.85em;font-variant-numeric:tabular-nums}
 .tchip.tb{background:#fef3c7;border-color:#f59e0b;font-weight:700}
+
+/* מק"ט "10213-3-#" נקרא משמאל לימין (מק"ט–כיוון–חלופה) ולא מתהפך בתוך עברית */
+.rdnum { direction: ltr; unicode-bidi: isolate; display: inline-block; }
