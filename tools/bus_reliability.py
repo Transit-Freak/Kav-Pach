@@ -141,8 +141,13 @@ def load_stop_times(g, want_trips):
                 continue
             sh = row[ish] if ish is not None and row[ish] else ''
             st[tid].append((int(row[iseq]), row[isid], hms(row[ia]), hms(row[idp]), float(sh) if sh else None))
+    gaps = 0
     for tid, lst in st.items():
         lst.sort()
+        if lst[0][0] != 1 or lst[-1][0] != len(lst):
+            gaps += 1
+    if gaps:
+        print(f'אזהרה: {gaps:,} נסיעות עם stop_sequence לא רציף (Order של SIRI ממופה לפי מיקום ברשימה)', flush=True)
     return st
 
 
@@ -186,11 +191,24 @@ def dep_sec(dep, day):
 
 
 # ---------------------------------------------------------------- מעברי תחנות
-def passages(recs, seq):
-    """מרשומות (t, order, dist) ממוינות ורצף תחנות GTFS — זמן המעבר בכל תחנה.
-    מחזיר {stop_sequence: t_sec}."""
+def passages(recs, seq, codes=None):
+    """מרשומות (t, order, dist, code) ממוינות ורצף תחנות GTFS — זמן המעבר בכל תחנה.
+    מחזיר {stop_sequence: t_sec}. codes: מק"ט התחנה לכל מקום ברצף — Order של SIRI
+    אינו תמיד stop_sequence של GTFS (בדיקה 06.09: 6 מ-37 לא תאמו), ולכן התחנה
+    נקבעת לפי המק"ט ששודר, הקרוב ביותר ל-Order."""
     out = {}
     n = len(seq)
+    if codes:
+        fixed = []
+        for rec in recs:
+            t, order, dist = rec[0], rec[1], rec[2]
+            code = rec[3] if len(rec) > 3 else ''
+            if code and not (1 <= order <= n and codes[order - 1] == code):
+                cands = [i + 1 for i, c in enumerate(codes) if c == code]
+                if cands:
+                    order = min(cands, key=lambda k: abs(k - order))
+            fixed.append((t, order, dist))
+        recs = fixed
     cum = [0.0] * n     # מרחק מצטבר לאורך המסלול
     for i in range(1, n):
         a, b = seq[i - 1], seq[i]
@@ -200,7 +218,8 @@ def passages(recs, seq):
             cum[i] = cum[i - 1] + 400.0   # אין shape_dist — הערכה גסה
     prev = None
     at_origin = None    # הדגימה האחרונה שבה הרכב עמד בתחנת המוצא (לפני שזז)
-    for t, order, dist in recs:
+    for rec in recs:
+        t, order, dist = rec[0], rec[1], rec[2]
         if order < 1 or order > n:
             prev = (t, order, dist)
             continue
@@ -218,8 +237,11 @@ def passages(recs, seq):
         if prev is not None:
             t1, o1, d1 = prev
             if 1 <= o1 < order <= n:
-                if o1 == 1 and 1 not in out and at_origin is not None:
-                    # יציאה מהמוצא: בין הדגימה האחרונה בתחנה לדגימה הבאה (עד חצי דקה)
+                if o1 == 1 and 1 not in out and at_origin is not None and d1 <= ARRIVE_M:
+                    # יציאה מהמוצא: הרכב עמד בתחנה עד הדגימה האחרונה לפני שזז — היציאה
+                    # בינה לבין הדגימה הבאה (עד חצי דקה). אם הדגימה האחרונה הייתה רחוקה
+                    # מהעמוד (רציף במסוף; המשרד "מציב" את הרכב בתחנה 5 דק׳ לפני היציאה
+                    # ואחר כך משדר GPS אמיתי) — נופלים לשיערוך המעבר לפי המרחק, למטה.
                     out[1] = at_origin + min(30, max(0, (t - at_origin) // 2))
                 # הרכב עבר את התחנות o1..order-1 בין t1 ל-t. מיקום בזמן t1:
                 # d1 לפני תחנה o1; בזמן t: dist לפני תחנה order.
@@ -265,7 +287,7 @@ def main():
                 # מפתח הנסיעה: קו + יציאה מתוכננת + רכב (+ מזהה הנסיעה של SIRI, שאינו
                 # trip_id של GTFS — הבדיקה 06.09: רק 0.2% תואמים — ולכן משמש רק להפרדה)
                 key = (line, dep, veh, ref)
-                journeys[key].append((t, order, dist))
+                journeys[key].append((t, order, dist, sys.intern(code)))
                 if key not in meta:
                     meta[key] = (line, op, dep, veh)
     print(f'רשומות: {n_rec:,} · נסיעות (מפתחות): {len(journeys):,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
@@ -348,6 +370,8 @@ def main():
     diag_o = collections.Counter()       # היסטוגרמת איחור במוצא (דקות) — אבחון
     diag_mx = collections.Counter()      # היסטוגרמת האיחור המרבי לנסיעה (5 דק׳)
     diag_mx_o = collections.Counter()    # נסיעות עם מרבי ≥55 דק׳: האיחור במוצא (10 דק׳)
+    diag_ex = []                         # דוגמאות של נסיעות כאלה שיצאו בזמן
+    hms_ = lambda s: f'{s // 3600:02d}:{s % 3600 // 60:02d}'  # noqa: E731
     worst = []
     sched_per_route = collections.Counter(g['trips'].values())
     for rid, n in sched_per_route.items():
@@ -359,7 +383,7 @@ def main():
             continue
         recs = sorted(journeys[key])
         rid = g['trips'].get(tid)
-        pas = passages(recs, seq)
+        pas = passages(recs, seq, [stops.get(s[1], ('',))[0] for s in seq])
         if len(pas) < MIN_STOPS_RIDE:
             continue
         meas = []
@@ -421,9 +445,15 @@ def main():
             if ride_max[0] >= 55 * 60:
                 od = next((d for k, s, sc, d in meas if k == 1), None)
                 diag_mx_o['אין' if od is None else int(od // 600) * 10] += 1
+                if od is not None and od < 600 and len(diag_ex) < 8:
+                    # דוגמאות: יצאה בזמן והגיעה ל-55+ דק׳ — איפה הקפיצה?
+                    diag_ex.append(f'{rid}/{tid} רשומות={len(recs)} {hms_(recs[0][0])}–{hms_(recs[-1][0])} יציאה מתוכננת {hms_(seq[0][3])} n={len(seq)} מעברים: '
+                                   + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in sorted(meas)))
     print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לשעה: {beyond:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
     print(f'אבחון מוצא (דקות → נסיעות): {dict(sorted(diag_o.items()))}', flush=True)
     print(f'אבחון איחור מרבי לנסיעה (5 דק׳ → נסיעות): {dict(sorted(diag_mx.items()))} · מרבי ≥55: איחור במוצא: {dict(sorted(diag_mx_o.items(), key=lambda kv: str(kv[0])))}', flush=True)
+    for ex in diag_ex:
+        print('  דוגמה:', ex, flush=True)
 
     def stats(d):
         if not d:
