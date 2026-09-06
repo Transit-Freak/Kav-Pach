@@ -155,13 +155,14 @@ function heroHtml(a, days) {
   const title = days.length === 1 ? heDate(days[0].d) : days.length ? `${shortDate(days[0].d)} – ${shortDate(days[days.length - 1].d)}.${days[days.length - 1].d.slice(0, 4)} · ${days.length} ימים` : '';
   const on = a.meas ? pct(a.c[1], a.meas) : '—';
   const oT = a.o.reduce((x, y) => x + y, 0);
+  // כל נתון מסביר את עצמו במקום, במשפט פשוט (שלמה 06.09: "לא מובן מה כל דבר אומר")
   const items = [
-    ['יציאה בזמן מהמוצא', oT ? pct(a.o[1], oT) : '—', '', oT ? `${pct(a.o[0], oT)} יצאו מוקדם · ${pct(a.o[2] + a.o[3] + a.o[4], oT)} יצאו באיחור` : 'אין מדידה במוצא'],
-    ['איחור ממוצע בתחנה', a.avg == null ? '—' : fmt1(a.avg), 'דק׳', a.s && a.s[1] != null ? `חציון ${fmt1(a.s[1])} · 90% עד ${fmt1(a.s[2])} דק׳` : `על ${num(a.meas)} הגעות לתחנה`],
-    ['מעל 20 דקות', a.meas ? pct(a.c[4], a.meas) : '—', '', `מעל 10 דק׳: ${a.meas ? pct(a.c[3] + a.c[4], a.meas) : '—'} · מוקדם: ${a.meas ? pct(a.c[0], a.meas) : '—'}`],
-    ['נסיעות שנצפו', num(a.obs), '', `מתוך ${num(a.sched)} בלו״ז (${pct(a.obs, a.sched)})${a.extra ? ` · ועוד ${num(a.extra)} שודרו ואינן בלו״ז` : ''}`],
+    ['יציאה בזמן מהמוצא', oT ? pct(a.o[1], oT) : '—', '', oT ? `מכל הנסיעות, ${pct(a.o[1], oT)} יצאו מהתחנה הראשונה בזמן. ${pct(a.o[0], oT)} יצאו מוקדם (יותר מ-2 דקות לפני השעה שבלו״ז) ו-${pct(a.o[2] + a.o[3] + a.o[4], oT)} יצאו באיחור (יותר מ-5 דקות אחריה).` : 'אין מדידה בתחנת המוצא'],
+    ['איחור ממוצע בתחנה', a.avg == null ? '—' : fmt1(a.avg), 'דק׳', `בממוצע, אוטובוס מגיע לתחנה ${a.avg == null ? '—' : fmt1(a.avg)} דקות אחרי השעה שבלו״ז.${a.s && a.s[1] != null ? ` חצי מההגעות עד ${fmt1(a.s[1])} דקות, ו-90% עד ${fmt1(a.s[2])} דקות.` : ''}`],
+    ['מעל 20 דקות', a.meas ? pct(a.c[4], a.meas) : '—', '', `${a.meas ? pct(a.c[4], a.meas) : '—'} מההגעות לתחנות היו באיחור של יותר מ-20 דקות (${a.meas ? pct(a.c[3] + a.c[4], a.meas) : '—'} יותר מ-10 דקות). ${a.meas ? pct(a.c[0], a.meas) : '—'} מההגעות היו מוקדמות מדי.`],
+    ['נסיעות שנצפו', num(a.obs), '', `מתוך ${num(a.sched)} נסיעות בלוח הזמנים, ${num(a.obs)} (${pct(a.obs, a.sched)}) שידרו מיקום ונמדדו.${a.extra ? ` עוד ${num(a.extra)} נסיעות שודרו אבל לא מופיעות בלו״ז (תגבורים).` : ''}`],
   ];
-  const cap = `${title} · ${num(a.meas)} הגעות לתחנות נמדדו · "בזמן": עד 5 דקות איחור ולא יותר מ-2 דקות הקדמה`;
+  const cap = `${title}. נמדדו ${num(a.meas)} הגעות של אוטובוסים לתחנות ברחבי הארץ. הגעה נחשבת "בזמן" כשהאוטובוס מגיע לא יותר מ-5 דקות אחרי השעה שבלוח הזמנים, ולא יותר מ-2 דקות לפניה.`;
   const r = 54, circ = 2 * Math.PI * r, share = a.meas ? a.c[1] / a.meas : 0;
   const segs = a.meas ? a.c.map(v => v / a.meas) : [0, 0, 0, 0, 0];
   let off = 0, arcs = '';
@@ -225,17 +226,17 @@ function render() {
   const hours = Array.from({length: 24}, (_, h) => { const v = M.H[h]; const sh = v && v[0] >= 30 ? v[1] / v[0] : null; return {x: String(h).padStart(2, '0'), y: sh == null ? null : Math.round(sh * 100), color: hourColor(sh), tip: `<b>${String(h).padStart(2, '0')}:00–${String(h).padStart(2, '0')}:59</b><br>${v && v[0] ? pct(v[1], v[0]) + ' בזמן · ' + num(v[0]) + ' הגעות' : 'אין נתונים'}`}; });
   app.innerHTML = `
     ${heroHtml(M.tot, loaded)}
-    <div class="panel"><div class="ptitle">התפלגות ההגעות לתחנות</div>${distHtml(M.tot)}</div>
+    <div class="panel"><div class="ptitle">התפלגות ההגעות לתחנות</div><p class="pdesc">כל הגעה של אוטובוס לתחנה נספרת פעם אחת, לפי הפער בינה לבין השעה שבלוח הזמנים: כמה הגיעו מוקדם, כמה בזמן, וכמה איחרו ובכמה.</p>${distHtml(M.tot)}</div>
     <div class="cols2">
-      <div class="panel"><div class="ptitle">אחוז בזמן, יום אחרי יום</div><div class="chart" id="c-trend"></div></div>
-      <div class="panel"><div class="ptitle">אחוז בזמן לפי השעה שבלו״ז</div><div class="chart" id="c-hours"></div></div>
+      <div class="panel"><div class="ptitle">אחוז בזמן, יום אחרי יום</div><p class="pdesc">כמה מההגעות לתחנות היו בזמן בכל יום שנמדד. לחיצה על יום בלוח השנה למעלה פותחת אותו.</p><div class="chart" id="c-trend"></div></div>
+      <div class="panel"><div class="ptitle">אחוז בזמן לפי השעה ביום</div><p class="pdesc">לפי השעה שבה האוטובוס היה אמור להגיע לתחנה. ירוק: 80% ומעלה בזמן, צהוב: 65%–80%, כתום: 50%–65%, אדום: פחות מ-50%.</p><div class="chart" id="c-hours"></div></div>
     </div>
-    <div class="panel"><div class="ptitle">לפי מפעיל <small>לחיצה על כותרת ממיינת</small></div><div id="t-ag"></div></div>
-    <div class="panel"><div class="ptitle">לפי קו <small>לחיצה על מספר הקו פותחת פירוט: איפה לאורך הקו נצבר האיחור</small></div>
+    <div class="panel"><div class="ptitle">לפי מפעיל</div><p class="pdesc">אותם מדדים לכל חברת אוטובוסים. לחיצה על כותרת עמודה ממיינת, לחיצה על שם המפעיל מציגה את הקווים שלו.</p><div id="t-ag"></div></div>
+    <div class="panel"><div class="ptitle">לפי קו</div><p class="pdesc">כל כיוון של כל קו בנפרד. אפשר לבחור מפעיל, לדרג ("הכי לא מדייקים") או לחפש מספר קו. לחיצה על מספר הקו פותחת פירוט: באיזה קטע לאורך הקו נצבר האיחור.</p>
       <div class="filters" id="lfilters"></div>
       <div id="line-detail"></div><div id="t-lines"></div></div>
-    <div class="panel"><div class="ptitle">הנסיעות שאיחרו הכי הרבה <small>לחיצה על נסיעה מציגה תחנה אחרי תחנה</small></div><ul class="worst" id="worst"></ul></div>
-    <div class="panel"><div class="ptitle">לפי עיר <small>לפי העיר של התחנה</small></div><div id="t-city"></div></div>`;
+    <div class="panel"><div class="ptitle">הנסיעות שאיחרו הכי הרבה</div><p class="pdesc">נסיעות בודדות שבאחת התחנות איחרו 20 דקות ומעלה, מהגרועה ביותר. לחיצה על נסיעה מציגה אותה תחנה אחרי תחנה: מתוכנן, בפועל והפער.</p><ul class="worst" id="worst"></ul></div>
+    <div class="panel"><div class="ptitle">לפי עיר</div><p class="pdesc">כל ההגעות לתחנות שנמצאות בעיר, מכל הקווים שעוברים בה.</p><div id="t-city"></div></div>`;
   lineChart($('#c-trend'), trend, {color: C.line, min: 0, max: 100, unit: '%'});
   barChart($('#c-hours'), hours, {color: C.line, max: 100, unit: '%'});
   renderAgencies(); renderCities(); renderFilters(); renderLines(); renderWorst();
@@ -321,9 +322,9 @@ function renderLineDetail() {
       <div><b>${num(s.obs)}</b><span>נסיעות נצפו מתוך ${num(s.sched)}</span></div>
     </div>
     ${distHtml(s)}
-    <div class="cols2" style="margin-top:10px"><div><div class="ptitle">אחוז בזמן לפי השעה שבלו״ז</div><div class="chart" id="c-lh"></div></div>
-    <div><div class="ptitle">האיחור הממוצע לאורך הקו</div><div class="chart" id="c-lp"><div class="empty">טוען…</div></div></div></div>
-    <div class="ptitle" style="margin-top:12px">תחנה אחרי תחנה <small>איפה נצבר האיחור</small></div><div id="lprof"><div class="empty">טוען…</div></div>
+    <div class="cols2" style="margin-top:10px"><div><div class="ptitle">אחוז בזמן לפי השעה ביום</div><p class="pdesc">לפי השעה שבה האוטובוס היה אמור להגיע לתחנה.</p><div class="chart" id="c-lh"></div></div>
+    <div><div class="ptitle">האיחור הממוצע לאורך הקו</div><p class="pdesc">עמודה לכל תחנה, מהמוצא (ימין) ליעד. איפה שהעמודות קופצות, שם הקו מאבד זמן.</p><div class="chart" id="c-lp"><div class="empty">טוען…</div></div></div></div>
+    <div class="ptitle" style="margin-top:12px">תחנה אחרי תחנה</div><p class="pdesc">לכל תחנה בקו: כמה הגעות נמדדו, האיחור הממוצע, ואיזה חלק מההגעות היה בזמן.</p><div id="lprof"><div class="empty">טוען…</div></div>
   </div>`;
   barChart($('#c-lh'), hours, {color: C.line, max: 100, unit: '%', h: 160});
   $('#close-l').onclick = () => { openLine = null; el.innerHTML = ''; };
