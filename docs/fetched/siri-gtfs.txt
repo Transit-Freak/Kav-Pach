@@ -1,0 +1,43 @@
+SIRI ↔ GTFS · יום 2026-09-01 · 2026-09-06T10:56:47Z
+===== S3 gtfs_archive/ =====
+gtfs_archive/
+gtfs_archive/2022/
+gtfs_archive/2023/
+gtfs_archive/2024/
+gtfs_archive/2025/
+gtfs_archive/2026/
+--- gtfs_archive/2026/09/01 ---
+gtfs_archive/2026/09/01/ClusterToLine.zip	24386
+gtfs_archive/2026/09/01/Tariff.zip	105086
+gtfs_archive/2026/09/01/TripIdToDate.zip	7634775
+gtfs_archive/2026/09/01/israel-public-transportation.zip	159330698
+--- gtfs_archive/2026/09/ (תיקיות) ---
+gtfs_archive/2026/09/
+gtfs_archive/2026/09/01/
+gtfs_archive/2026/09/02/
+gtfs_archive/2026/09/03/
+gtfs_archive/2026/09/04/
+gtfs_archive/2026/09/05/
+gtfs_archive/2026/09/06/
+GTFS key: gtfs_archive/2026/09/01/ClusterToLine.zip
+GTFS size: 24386
+===== SIRI: 3 דקות (08:00–08:02) =====
+ 
+4096 .
+4096 ..
+231728 0800.br
+238583 0801.br
+238319 0802.br
+GTFS: [('ClusterToLine.txt', 280489)]
+Traceback (most recent call last):
+  File "/home/runner/work/kav-bochan/kav-bochan/tools/probe_siri_gtfs.py", line 35, in <module>
+    for r in rows('trips.txt'):
+  File "/home/runner/work/kav-bochan/kav-bochan/tools/probe_siri_gtfs.py", line 30, in rows
+    with z.open(name) as f:
+         ^^^^^^^^^^^^
+  File "/usr/lib/python3.12/zipfile/__init__.py", line 1617, in open
+    zinfo = self.getinfo(name)
+            ^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/zipfile/__init__.py", line 1545, in getinfo
+    raise KeyError(
+KeyError: "There is no item named 'trips.txt' in the archive"
