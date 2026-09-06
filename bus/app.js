@@ -1,16 +1,19 @@
 // מדד דיוק האוטובוסים — הלוגיקה של העמוד. הנתונים: data/index.json (סיכום ארצי
-// לכל יום) ו-data/days/YYYY-MM-DD.json (מסלולים, מפעילים, ערים, שעות, המאחרות).
+// לכל יום), data/days/YYYY-MM-DD.json (מסלולים, מפעילים, ערים, שעות, המאחרות),
+// data/days/YYYY-MM-DD.stops.json (פרופיל איחור לאורך כל קו — נטען כשפותחים קו),
+// data/stops.json (שמות תחנות לפי מק"ט). העיצוב: כמו מדד אמינות הרכבת.
 (function(){
 'use strict';
 
 const CATS = ['מוקדם (יותר מ-2 דק׳)', 'בזמן (עד 5 דק׳)', 'איחור 5–10 דק׳', 'איחור 10–20 דק׳', 'איחור מעל 20 דק׳'];
-const C = {early: '#2563EB', ok: '#1B9E4B', warn: '#E39B00', late: '#E0621A', bad: '#C81E1E', grid: '#D3D7DD', axis: '#7D848E', bg: '#F7F8FA', line: '#111214', accent: '#FFC800'};
+const C = {early: '#7C3AED', ok: '#00A65A', warn: '#F4B400', late: '#F26B1D', bad: '#D7263D', grid: '#E5E7EB', axis: '#8A94A3', bg: '#FFFFFF', line: '#1E5BC6', accent: '#101418'};
 const BCOL = [C.early, C.ok, C.warn, C.late, C.bad];
 const GRID = C.grid, AXIS = C.axis, BG = C.bg;
 const DAYNAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const DATA = 'data/';
-let IDX = null, DAYS = [], CAT = {}, period = 'day', dayD = null, dayCache = {}, curDay = null;
-let sortA = {k: 'meas', dir: -1}, sortC = {k: 'meas', dir: -1}, sortL = {k: 'meas', dir: -1}, lq = '', openLine = null, showAllL = false;
+const MIN_RIDES = 10;   // דירוג קווים: לפחות כך וכך נסיעות שנצפו, אחרת קו של נסיעה אחת מוביל
+let IDX = null, DAYS = [], CAT = {}, NAMES = null, period = 'day', dayD = null, dayCache = {}, stopCache = {};
+let sortA = {k: 'meas', dir: -1}, sortC = {k: 'meas', dir: -1}, sortL = {k: 'meas', dir: -1}, lq = '', agency = '', rank = '', openLine = null, showAllL = false;
 const $ = (s, el) => (el || document).querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '—';
@@ -20,13 +23,16 @@ const heDate = d => { const [y, m, dd] = d.split('-'); return `${DAYNAMES[new Da
 const shortDate = d => { const [, m, dd] = d.split('-'); return `${+dd}.${+m}`; };
 const hhmm = s => s == null ? '—' : `${String(Math.floor(s / 3600) % 24).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}`;
 const dcls = v => v == null ? 'dn' : v < -2 ? 'd0' : v <= 5 ? 'd1' : v <= 10 ? 'd2' : v <= 20 ? 'd3' : 'd4';
+const catOf = v => v == null ? -1 : v < -2 ? 0 : v <= 5 ? 1 : v <= 10 ? 2 : v <= 20 ? 3 : 4;
+const delayTxt = m => m == null ? '—' : (m > 0 ? '+' : '') + fmt1(m);
 function load(url) { return fetch(url + '?v=' + Date.now()).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }); }
+const stopName = code => (NAMES && NAMES[code]) || code;
 // יום שבו נצפו פחות מ-30% מהנסיעות המתוכננות — שידור חלקי, מוצג בנפרד
 const partial = d => d.sched > 0 && d.obs < d.sched * 0.3;
 
 // ---------------------------------------------------------------- צבירה (כמה ימים)
 function emptyAgg() { return {sched: 0, obs: 0, meas: 0, c: [0, 0, 0, 0, 0], o: [0, 0, 0, 0, 0], sum: 0, s: null, far: 0, extra: 0}; }
-function addAgg(t, x) {   // x = [sched, obs, meas, c, s] או אובייקט
+function addAgg(t, x) {
   const sched = x.sched != null ? x.sched : x[0], obs = x.obs != null ? x.obs : x[1], meas = x.meas != null ? x.meas : x[2], c = x.c || x[3], s = x.s || x[4];
   t.sched += sched || 0; t.obs += obs || 0; t.meas += meas || 0;
   (c || []).forEach((v, i) => t.c[i] += v);
@@ -44,7 +50,7 @@ function lineChart(el, pts, o) {
   const px = i => L + (W - L - R) * (pts.length > 1 ? i / (pts.length - 1) : 0.5);
   const py = v => T + (H - T - B) * (1 - (v - mn) / (mx - mn));
   const ticks = 4; let grid = '';
-  for (let i = 0; i <= ticks; i++) { const v = mn + (mx - mn) * i / ticks, y = py(v); grid += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="${GRID}"/><text x="${L - 6}" y="${y + 4}" font-size="10" fill="${AXIS}" text-anchor="end">${o.fmtY ? o.fmtY(v) : Math.round(v)}${o.unit || ''}</text>`; }
+  for (let i = 0; i <= ticks; i++) { const v = mn + (mx - mn) * i / ticks, y = py(v); grid += `<line x1="${L}" x2="${W - R}" y1="${y}" y2="${y}" stroke="${GRID}"/><text x="${L - 6}" y="${y + 4}" font-size="10" fill="${AXIS}" text-anchor="end">${Math.round(v)}${o.unit || ''}</text>`; }
   let path = '', area = '', dots = '', started = false;
   pts.forEach((p, i) => {
     if (p.y == null) { started = false; return; }
@@ -57,7 +63,7 @@ function lineChart(el, pts, o) {
   });
   const step = Math.max(1, Math.ceil(pts.length / 8)); let xl = '';
   pts.forEach((p, i) => { if (i % step === 0 || i === pts.length - 1) xl += `<text x="${px(i)}" y="${H - 8}" font-size="10" fill="${AXIS}" text-anchor="middle">${esc(p.x)}</text>`; });
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="aspect-ratio:${W}/${H}">${grid}${xl}<path d="${area}" fill="${o.color}" opacity=".10"/><path d="${path}" fill="none" stroke="${o.color}" stroke-width="2" stroke-linejoin="round"/><line id="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="${C.accent2 || '#7A5F00'}" stroke-dasharray="3 3" opacity="0" /><rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent"/>${dots}</svg><div class="tip"></div>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="aspect-ratio:${W}/${H}">${grid}${xl}<path d="${area}" fill="${o.color}" opacity=".10"/><path d="${path}" fill="none" stroke="${o.color}" stroke-width="2" stroke-linejoin="round"/><line id="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="${C.accent}" stroke-dasharray="3 3" opacity="0" /><rect x="${L}" y="0" width="${W - L - R}" height="${H}" fill="transparent"/>${dots}</svg><div class="tip"></div>`;
   const svg = $('svg', el), tip = $('.tip', el), cross = $('#cross', el);
   const move = ev => {
     const r = svg.getBoundingClientRect(); const fx = (ev.clientX - r.left) / r.width * W;
@@ -77,19 +83,20 @@ function barChart(el, bars, o) {
   let rects = '', xl = '';
   bars.forEach((b, i) => {
     const x = L + i * bw + gap / 2;
-    if (b.y != null) rects += `<rect x="${x}" y="${py(b.y)}" width="${bw - gap}" height="${py(0) - py(b.y)}" rx="2" fill="${b.color || o.color}"/>`;
+    if (b.y != null) rects += `<rect x="${x}" y="${py(Math.min(b.y, mx))}" width="${bw - gap}" height="${py(0) - py(Math.min(b.y, mx))}" rx="2" fill="${b.color || o.color}"/>`;
     else rects += `<rect x="${x}" y="${py(0) - 2}" width="${bw - gap}" height="2" rx="1" fill="${GRID}"/>`;
-    if (n <= 26 || i % 2 === 0) xl += `<text x="${x + (bw - gap) / 2}" y="${H - 8}" font-size="10" fill="${AXIS}" text-anchor="middle">${esc(b.x)}</text>`;
+    if (n <= 26 || i % Math.ceil(n / 26) === 0) xl += `<text x="${x + (bw - gap) / 2}" y="${H - 8}" font-size="10" fill="${AXIS}" text-anchor="middle">${esc(b.x)}</text>`;
   });
   el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="aspect-ratio:${W}/${H}">${grid}${rects}${xl}</svg><div class="tip"></div>`;
   const tip = $('.tip', el), svg = $('svg', el);
   el.onmousemove = ev => {
     const r = svg.getBoundingClientRect(); const fx = (ev.clientX - r.left) / r.width * W; const i = Math.min(n - 1, Math.max(0, Math.floor((fx - L) / bw)));
     const b = bars[i]; if (!b) return; tip.innerHTML = b.tip; tip.style.display = 'block';
-    tip.style.right = `${100 - (L + (i + .5) * bw) / W * 100}%`; tip.style.top = `${Math.max(0, py(b.y || 0) / H * r.height - 60)}px`;
+    tip.style.right = `${100 - (L + (i + .5) * bw) / W * 100}%`; tip.style.top = `${Math.max(0, py(Math.min(b.y || 0, mx)) / H * r.height - 60)}px`;
   };
   el.onmouseleave = () => { tip.style.display = 'none'; };
 }
+const hourColor = share => share == null ? GRID : share >= .8 ? C.ok : share >= .65 ? C.warn : share >= .5 ? C.late : C.bad;
 
 // ---------------------------------------------------------------- לוח שנה ותקופות
 const HEMONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -144,19 +151,23 @@ function windowDays() {
 }
 
 // ---------------------------------------------------------------- תצוגה
-function signHtml(a, days) {
+function heroHtml(a, days) {
   const title = days.length === 1 ? heDate(days[0].d) : days.length ? `${shortDate(days[0].d)} – ${shortDate(days[days.length - 1].d)}.${days[days.length - 1].d.slice(0, 4)} · ${days.length} ימים` : '';
   const on = a.meas ? pct(a.c[1], a.meas) : '—';
   const oT = a.o.reduce((x, y) => x + y, 0);
   const items = [
-    ['יציאה בזמן מהמוצא', oT ? pct(a.o[1], oT) : '—', '', oT ? `${pct(a.o[0], oT)} יצאו מוקדם (יותר מ-2 דק׳ לפני) · ${pct(a.o[2] + a.o[3] + a.o[4], oT)} באיחור` : 'אין מדידה במוצא'],
-    ['איחור ממוצע', a.avg == null ? '—' : fmt1(a.avg), 'דק׳', a.s && a.s[1] != null ? `חציון ${fmt1(a.s[1])} · 90% עד ${fmt1(a.s[2])} דק׳` : `על ${num(a.meas)} הגעות לתחנה`],
+    ['יציאה בזמן מהמוצא', oT ? pct(a.o[1], oT) : '—', '', oT ? `${pct(a.o[0], oT)} יצאו מוקדם · ${pct(a.o[2] + a.o[3] + a.o[4], oT)} יצאו באיחור` : 'אין מדידה במוצא'],
+    ['איחור ממוצע בתחנה', a.avg == null ? '—' : fmt1(a.avg), 'דק׳', a.s && a.s[1] != null ? `חציון ${fmt1(a.s[1])} · 90% עד ${fmt1(a.s[2])} דק׳` : `על ${num(a.meas)} הגעות לתחנה`],
     ['מעל 20 דקות', a.meas ? pct(a.c[4], a.meas) : '—', '', `מעל 10 דק׳: ${a.meas ? pct(a.c[3] + a.c[4], a.meas) : '—'} · מוקדם: ${a.meas ? pct(a.c[0], a.meas) : '—'}`],
-    ['נסיעות שנצפו', num(a.obs), '', `מתוך ${num(a.sched)} בלו״ז · ${pct(a.obs, a.sched)}${a.extra ? ` · ועוד ${num(a.extra)} שודרו ואינן בלו״ז` : ''}`],
+    ['נסיעות שנצפו', num(a.obs), '', `מתוך ${num(a.sched)} בלו״ז (${pct(a.obs, a.sched)})${a.extra ? ` · ועוד ${num(a.extra)} שודרו ואינן בלו״ז` : ''}`],
   ];
-  const cap = `${title} · ${num(a.meas)} הגעות לתחנות נמדדו · "בזמן" = עד 5 דקות איחור ולא יותר מ-2 דקות הקדמה`;
-  return `<div class="sign"><div class="sign-main"><span class="sl">הגעות בזמן לתחנות</span><b>${on}</b><span class="sc">${esc(cap)}</span></div>
-    <div class="sign-row">${items.map(([l, v, u, c]) => `<div class="sg"><span class="sl">${l}</span><b>${v}${u ? `<i>${u}</i>` : ''}</b><span class="sc">${c}</span></div>`).join('')}</div></div>`;
+  const cap = `${title} · ${num(a.meas)} הגעות לתחנות נמדדו · "בזמן": עד 5 דקות איחור ולא יותר מ-2 דקות הקדמה`;
+  const r = 54, circ = 2 * Math.PI * r, share = a.meas ? a.c[1] / a.meas : 0;
+  const segs = a.meas ? a.c.map(v => v / a.meas) : [0, 0, 0, 0, 0];
+  let off = 0, arcs = '';
+  segs.forEach((s, i) => { if (s > 0) arcs += `<circle r="${r}" cx="70" cy="70" fill="none" stroke="${BCOL[i]}" stroke-width="14" stroke-dasharray="${(s * circ).toFixed(1)} ${circ.toFixed(1)}" stroke-dashoffset="${(-off * circ).toFixed(1)}" transform="rotate(-90 70 70)"/>`; off += s; });
+  return `<div class="ringwrap"><div class="ring"><svg viewBox="0 0 140 140"><circle r="${r}" cx="70" cy="70" fill="none" stroke="var(--line)" stroke-width="14"/>${arcs}</svg><div class="rv"><b>${on}</b><span>בזמן</span></div></div>
+    <div class="rtext"><h2>${Math.round(share * 100) || 0}% מההגעות לתחנות היו בזמן</h2><p>${esc(cap)}</p><div class="rstats">${items.map(([l, v, u, c]) => `<div><b>${v}${u ? `<i>${u}</i>` : ''}</b><span>${l}</span><small>${c}</small></div>`).join('')}</div></div></div>`;
 }
 function distHtml(a) {
   if (!a.meas) return '';
@@ -168,7 +179,6 @@ function th(label, k, s) { return `<th data-k="${k}" class="${s.k === k ? 'on' :
 const onCell = on => `${on == null ? '—' : Math.round(on * 100) + '%'}<span class="bar"><i style="width:${Math.round((on || 0) * 100)}%"></i></span>`;
 
 function mergeDays(days) {
-  // צבירה של כמה ימים: ארצי, מפעילים, ערים, שעות, מסלולים
   const tot = emptyAgg(), A = {}, Cc = {}, H = {}, Rr = {}, worst = [];
   for (const d of days) {
     addAgg(tot, d.tot);
@@ -179,7 +189,7 @@ function mergeDays(days) {
     for (const [h, n, on] of d.hours) { const x = H[h] || (H[h] = [0, 0]); x[0] += n; x[1] += on; }
     for (const r of d.routes) {
       const [rid, sched, obs, meas, c, s, o, hours, ws] = r;
-      const x = Rr[rid] || (Rr[rid] = Object.assign(emptyAgg(), {rid, o: [0, 0, 0, 0, 0], hours: {}, ws: []}));
+      const x = Rr[rid] || (Rr[rid] = Object.assign(emptyAgg(), {rid, hours: {}, ws: []}));
       addAgg(x, {sched, obs, meas, c, s}); o.forEach((v, i) => { x.o[i] += v; tot.o[i] += v; });
       for (const [h, n, on] of hours) { const y = x.hours[h] || (x.hours[h] = [0, 0]); y[0] += n; y[1] += on; }
       if (days.length === 1) { x.s = s; x.ws = ws; }
@@ -188,14 +198,15 @@ function mergeDays(days) {
   }
   finish(tot); Object.values(A).forEach(finish); Object.values(Cc).forEach(finish); Object.values(Rr).forEach(finish);
   worst.sort((a, b) => b[3] - a[3]);
-  return {tot, A, Cc, H, Rr, worst: worst.slice(0, 40)};
+  return {tot, A, Cc, H, Rr, worst, days: days.map(d => d.d)};
 }
 
 function lineLabel(rid) {
   const c = CAT[rid] || [];
   // route_long_name מסתיים בקוד כיוון+חלופה ("…-כרמיאל-10") — לא לתצוגה
-  return {short: c[1] || rid, long: (c[2] || '').replace(/-\d[\d#]?$/, ''), agency: c[3] || '', dir: c[4] || '', alt: c[5] || ''};
+  return {short: c[1] || rid, long: (c[2] || '').replace(/-\d[\d#א-ת]?$/, '').replace('<->', ' ← '), agency: c[3] || '', dir: c[4] || '', alt: c[5] || ''};
 }
+let M = null;
 function render() {
   renderPeriods();
   const days = windowDays();
@@ -208,43 +219,57 @@ function render() {
   }
   const loaded = days.map(d => dayCache[d.d]);
   if (!loaded.length) { app.innerHTML = '<div class="msg">אין נתונים לתקופה</div>'; return; }
-  const M = mergeDays(loaded);
-  $('#sub').textContent = `${num(DAYS.length)} ימים · מעודכן ${IDX.updated ? IDX.updated.replace('T', ' ').replace('Z', ' UTC') : ''} · המקור: SIRI של משרד התחבורה דרך דאטאבוס, GTFS של משרד התחבורה`;
+  M = mergeDays(loaded);
+  $('#sub').textContent = `${num(DAYS.length)} ימים · מעודכן ${IDX.updated ? IDX.updated.replace('T', ' ').replace('Z', ' UTC') : ''} · המקור: שידורי המיקום של משרד התחבורה (SIRI) דרך דאטאבוס, לוח הזמנים (GTFS) של משרד התחבורה`;
   const trend = DAYS.map(d => ({x: shortDate(d.d), y: partial(d) || !d.meas ? null : Math.round(100 * d.c[1] / d.meas), tip: `<b>${heDate(d.d)}</b><br>${d.meas ? pct(d.c[1], d.meas) + ' בזמן' : 'אין מדידות'}${partial(d) ? '<br>שידור חלקי' : ''}<br>${num(d.obs)} נסיעות נצפו מתוך ${num(d.sched)}`}));
-  const hours = Array.from({length: 24}, (_, h) => { const v = M.H[h]; return {x: String(h).padStart(2, '0'), y: v && v[0] >= 30 ? Math.round(100 * v[1] / v[0]) : null, color: v && v[0] ? (v[1] / v[0] >= .8 ? C.ok : v[1] / v[0] >= .65 ? C.warn : C.late) : GRID, tip: `<b>${String(h).padStart(2, '0')}:00–${String(h).padStart(2, '0')}:59</b><br>${v && v[0] ? pct(v[1], v[0]) + ' בזמן · ' + num(v[0]) + ' הגעות' : 'אין נתונים'}`}; });
+  const hours = Array.from({length: 24}, (_, h) => { const v = M.H[h]; const sh = v && v[0] >= 30 ? v[1] / v[0] : null; return {x: String(h).padStart(2, '0'), y: sh == null ? null : Math.round(sh * 100), color: hourColor(sh), tip: `<b>${String(h).padStart(2, '0')}:00–${String(h).padStart(2, '0')}:59</b><br>${v && v[0] ? pct(v[1], v[0]) + ' בזמן · ' + num(v[0]) + ' הגעות' : 'אין נתונים'}`}; });
   app.innerHTML = `
-    ${signHtml(M.tot, loaded)}
+    ${heroHtml(M.tot, loaded)}
     <div class="panel"><div class="ptitle">התפלגות ההגעות לתחנות</div>${distHtml(M.tot)}</div>
     <div class="cols2">
       <div class="panel"><div class="ptitle">אחוז בזמן, יום אחרי יום</div><div class="chart" id="c-trend"></div></div>
       <div class="panel"><div class="ptitle">אחוז בזמן לפי השעה שבלו״ז</div><div class="chart" id="c-hours"></div></div>
     </div>
-    <div class="panel"><div class="ptitle">לפי מפעיל</div><div id="t-ag"></div></div>
-    <div class="panel"><div class="ptitle">לפי קו</div><input class="search" id="lq" placeholder="חיפוש קו: מספר, יעד או מפעיל…" value="${esc(lq)}"><div id="line-detail"></div><div id="t-lines"></div></div>
-    <div class="panel"><div class="ptitle">לפי עיר (תחנות בעיר)</div><div id="t-city"></div></div>
-    <div class="panel"><div class="ptitle">הנסיעות שאיחרו הכי הרבה</div><ul class="worst" id="worst"></ul></div>`;
+    <div class="panel"><div class="ptitle">לפי מפעיל <small>לחיצה על כותרת ממיינת</small></div><div id="t-ag"></div></div>
+    <div class="panel"><div class="ptitle">לפי קו <small>לחיצה על מספר הקו פותחת פירוט: איפה לאורך הקו נצבר האיחור</small></div>
+      <div class="filters" id="lfilters"></div>
+      <div id="line-detail"></div><div id="t-lines"></div></div>
+    <div class="panel"><div class="ptitle">הנסיעות שאיחרו הכי הרבה <small>לחיצה על נסיעה מציגה תחנה אחרי תחנה</small></div><ul class="worst" id="worst"></ul></div>
+    <div class="panel"><div class="ptitle">לפי עיר <small>לפי העיר של התחנה</small></div><div id="t-city"></div></div>`;
   lineChart($('#c-trend'), trend, {color: C.line, min: 0, max: 100, unit: '%'});
   barChart($('#c-hours'), hours, {color: C.line, max: 100, unit: '%'});
-  renderAgencies(M); renderCities(M); renderLines(M); renderWorst(M);
-  $('#lq').oninput = e => { lq = e.target.value; showAllL = false; renderLines(M); };
+  renderAgencies(); renderCities(); renderFilters(); renderLines(); renderWorst();
 }
-function renderAgencies(M) {
-  const rows = Object.entries(M.A).map(([nm, s]) => { const oT = s.o.reduce((x, y) => x + y, 0); return {nm, sched: s.sched, obs: s.obs, meas: s.meas, on: s.on, oon: oT ? s.o[1] / oT : null, oearly: oT ? s.o[0] / oT : null, early: s.meas ? s.c[0] / s.meas : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}; });
+function renderAgencies() {
+  const rows = Object.entries(M.A).map(([nm, s]) => { const oT = s.o.reduce((x, y) => x + y, 0); return {nm, sched: s.sched, obs: s.obs, meas: s.meas, on: s.on, oon: oT ? s.o[1] / oT : null, oearly: oT ? s.o[0] / oT : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}; });
   sortRows(rows, sortA);
-  $('#t-ag').innerHTML = `<div class="tblbox"><table id="ta"><thead><tr>${th('מפעיל', 'nm', sortA)}${th('נסיעות בלו״ז', 'sched', sortA)}${th('נצפו', 'obs', sortA)}${th('הגעות נמדדו', 'meas', sortA)}${th('בזמן', 'on', sortA)}${th('יציאה בזמן מהמוצא', 'oon', sortA)}${th('יצאו מוקדם', 'oearly', sortA)}${th('איחור ממוצע', 'avg', sortA)}${th('מעל 20 דק׳', 'b4', sortA)}</tr></thead><tbody>` +
-    rows.map(r => `<tr><td class="nm">${esc(r.nm)}</td><td>${num(r.sched)}</td><td>${num(r.obs)} <small style="color:var(--dim)">(${pct(r.obs, r.sched)})</small></td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.oon == null ? '—' : Math.round(r.oon * 100) + '%'}</td><td>${r.oearly == null ? '—' : Math.round(r.oearly * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
-  $('#ta thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortA = {k, dir: sortA.k === k ? -sortA.dir : (k === 'nm' ? 1 : -1)}; renderAgencies(M); };
+  $('#t-ag').innerHTML = `<div class="tblbox"><table id="ta"><thead><tr>${th('מפעיל', 'nm', sortA)}${th('נסיעות בלו״ז', 'sched', sortA)}${th('נצפו', 'obs', sortA)}${th('הגעות נמדדו', 'meas', sortA)}${th('בזמן בתחנות', 'on', sortA)}${th('יציאה בזמן מהמוצא', 'oon', sortA)}${th('יצאו מוקדם', 'oearly', sortA)}${th('איחור ממוצע', 'avg', sortA)}${th('מעל 20 דק׳', 'b4', sortA)}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="nm"><button class="linebtn" data-ag="${esc(r.nm)}" title="סינון הקווים למפעיל הזה">${esc(r.nm)}</button></td><td>${num(r.sched)}</td><td>${num(r.obs)} <small style="color:var(--dim)">(${pct(r.obs, r.sched)})</small></td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.oon == null ? '—' : Math.round(r.oon * 100) + '%'}</td><td>${r.oearly == null ? '—' : Math.round(r.oearly * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
+  $('#ta thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortA = {k, dir: sortA.k === k ? -sortA.dir : (k === 'nm' ? 1 : -1)}; renderAgencies(); };
+  $('#t-ag').querySelectorAll('.linebtn').forEach(b => b.onclick = () => { agency = b.dataset.ag; rank = rank || 'worst'; showAllL = false; renderFilters(); renderLines(); renderWorst(); $('#lfilters').scrollIntoView({behavior: 'smooth', block: 'start'}); });
 }
-function renderCities(M) {
+function renderCities() {
   const rows = Object.entries(M.Cc).map(([nm, s]) => ({nm, meas: s.meas, on: s.on, early: s.meas ? s.c[0] / s.meas : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}));
   sortRows(rows, sortC);
   $('#t-city').innerHTML = `<div class="tblbox"><table id="tc"><thead><tr>${th('עיר', 'nm', sortC)}${th('הגעות נמדדו', 'meas', sortC)}${th('בזמן', 'on', sortC)}${th('מוקדם', 'early', sortC)}${th('איחור ממוצע', 'avg', sortC)}${th('מעל 20 דק׳', 'b4', sortC)}</tr></thead><tbody>` +
     rows.map(r => `<tr><td class="nm">${esc(r.nm)}</td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.early == null ? '—' : Math.round(r.early * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>';
-  $('#tc thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortC = {k, dir: sortC.k === k ? -sortC.dir : (k === 'nm' ? 1 : -1)}; renderCities(M); };
+  $('#tc thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortC = {k, dir: sortC.k === k ? -sortC.dir : (k === 'nm' ? 1 : -1)}; renderCities(); };
 }
-function renderLines(M) {
+function renderFilters() {
+  const ags = Object.keys(M.A).sort((a, b) => M.A[b].meas - M.A[a].meas);
+  const chips = [['worst', 'הכי לא מדייקים'], ['best', 'הכי מדייקים'], ['early', 'הכי הרבה יציאות מוקדמות'], ['', 'הכי הרבה נסיעות']];
+  $('#lfilters').innerHTML = `<select id="agsel" title="מפעיל"><option value="">כל המפעילים</option>${ags.map(a => `<option value="${esc(a)}"${a === agency ? ' selected' : ''}>${esc(a)}</option>`).join('')}</select>` +
+    chips.map(([k, t]) => `<button class="fchip${rank === k ? ' on' : ''}" data-r="${k}">${t}</button>`).join('') +
+    `<input class="search" id="lq" placeholder="חיפוש קו: מספר, יעד…" value="${esc(lq)}">`;
+  $('#agsel').onchange = e => { agency = e.target.value; showAllL = false; renderLines(); renderWorst(); };
+  $('#lfilters').querySelectorAll('.fchip').forEach(b => b.onclick = () => { rank = b.dataset.r; showAllL = false; sortL = rank === 'worst' ? {k: 'on', dir: 1} : rank === 'best' ? {k: 'on', dir: -1} : rank === 'early' ? {k: 'oearly', dir: -1} : {k: 'meas', dir: -1}; renderFilters(); renderLines(); });
+  $('#lq').oninput = e => { lq = e.target.value; showAllL = false; renderLines(); };
+}
+function renderLines() {
   const q = lq.trim();
-  let rows = Object.values(M.Rr).map(s => { const l = lineLabel(s.rid); return Object.assign({short: l.short, long: l.long, agency: l.agency, dir: l.dir, on: s.on, early: s.meas ? s.c[0] / s.meas : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}, s); });
+  let rows = Object.values(M.Rr).map(s => { const l = lineLabel(s.rid); const oT = s.o.reduce((x, y) => x + y, 0); return Object.assign({short: l.short, long: l.long, agency: l.agency, dir: l.dir, on: s.on, early: s.meas ? s.c[0] / s.meas : null, oearly: oT ? s.o[0] / oT : null, avg: s.avg, b4: s.meas ? s.c[4] / s.meas : null}, s); });
+  if (agency) rows = rows.filter(r => r.agency === agency);
+  if (rank) rows = rows.filter(r => r.obs >= MIN_RIDES);
   if (q) {
     const tok = q.split(/\s+/);
     const numTok = tok.find(t => /^\d/.test(t)), txt = tok.filter(t => t !== numTok).join(' ');
@@ -253,49 +278,105 @@ function renderLines(M) {
   sortRows(rows, sortL);
   const total = rows.length;
   if (!showAllL) rows = rows.slice(0, q ? 60 : 40);
-  $('#t-lines').innerHTML = `<div class="tblbox"><table id="tlines"><thead><tr>${th('קו', 'short', sortL)}${th('מסלול', 'long', sortL)}${th('מפעיל', 'agency', sortL)}${th('נסיעות', 'sched', sortL)}${th('נצפו', 'obs', sortL)}${th('הגעות', 'meas', sortL)}${th('בזמן', 'on', sortL)}${th('מוקדם', 'early', sortL)}${th('איחור ממוצע', 'avg', sortL)}${th('מעל 20 דק׳', 'b4', sortL)}</tr></thead><tbody>` +
-    rows.map(r => `<tr><td class="nm"><button class="linebtn" data-rid="${esc(r.rid)}">${esc(r.short)}</button></td><td style="font-size:12px;color:var(--mut)">${esc(r.long.replace('<->', ' ← '))}</td><td style="font-size:12px">${esc(r.agency)}</td><td>${num(r.sched)}</td><td>${num(r.obs)}</td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.early == null ? '—' : Math.round(r.early * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>' +
-    (total > rows.length ? `<button class="more" id="more-l">הצגת כל ${num(total)} הקווים</button>` : `<div class="mut" style="margin-top:6px">${num(total)} מסלולים (כיוון וחלופה נספרים בנפרד)</div>`);
-  $('#tlines thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortL = {k, dir: sortL.k === k ? -sortL.dir : (['short', 'long', 'agency'].includes(k) ? 1 : -1)}; renderLines(M); };
-  $('#t-lines').querySelectorAll('.linebtn').forEach(b => b.onclick = () => { openLine = b.dataset.rid; renderLineDetail(M); $('#line-detail').scrollIntoView({behavior: 'smooth', block: 'start'}); });
-  const mb = $('#more-l'); if (mb) mb.onclick = () => { showAllL = true; renderLines(M); };
-  renderLineDetail(M);
+  $('#t-lines').innerHTML = `<div class="tblbox"><table id="tlines"><thead><tr>${th('קו', 'short', sortL)}${th('מסלול', 'long', sortL)}${th('מפעיל', 'agency', sortL)}${th('נסיעות', 'sched', sortL)}${th('נצפו', 'obs', sortL)}${th('הגעות', 'meas', sortL)}${th('בזמן', 'on', sortL)}${th('יצאו מוקדם', 'oearly', sortL)}${th('איחור ממוצע', 'avg', sortL)}${th('מעל 20 דק׳', 'b4', sortL)}</tr></thead><tbody>` +
+    rows.map(r => `<tr><td class="nm"><button class="linebtn" data-rid="${esc(r.rid)}">${esc(r.short)}</button></td><td style="font-size:12px;color:var(--mut)">${esc(r.long)}</td><td style="font-size:12px">${esc(r.agency)}</td><td>${num(r.sched)}</td><td>${num(r.obs)}</td><td>${num(r.meas)}</td><td>${onCell(r.on)}</td><td>${r.oearly == null ? '—' : Math.round(r.oearly * 100) + '%'}</td><td class="${dcls(r.avg)}">${r.avg == null ? '—' : fmt1(r.avg) + ' דק׳'}</td><td>${r.b4 == null ? '—' : Math.round(r.b4 * 100) + '%'}</td></tr>`).join('') + '</tbody></table></div>' +
+    (total > rows.length ? `<button class="more" id="more-l">הצגת כל ${num(total)} הקווים</button>` : '') +
+    `<div class="mut" style="margin-top:6px">${num(total)} מסלולים${agency ? ' של ' + esc(agency) : ''} (כיוון וחלופה נספרים בנפרד)${rank ? ` · בדירוג רק קווים עם לפחות ${MIN_RIDES} נסיעות שנצפו` : ''}</div>`;
+  $('#tlines thead').onclick = e => { const k = e.target.closest('th') && e.target.closest('th').dataset.k; if (!k) return; sortL = {k, dir: sortL.k === k ? -sortL.dir : (['short', 'long', 'agency'].includes(k) ? 1 : -1)}; renderLines(); };
+  $('#t-lines').querySelectorAll('.linebtn').forEach(b => b.onclick = () => { openLine = b.dataset.rid; renderLineDetail(); $('#line-detail').scrollIntoView({behavior: 'smooth', block: 'start'}); });
+  const mb = $('#more-l'); if (mb) mb.onclick = () => { showAllL = true; renderLines(); };
+  renderLineDetail();
 }
-function renderLineDetail(M) {
+// פרופיל לאורך הקו: מהקבצים היומיים של התחנות (נטענים בפעם הראשונה), מאוחד על פני התקופה
+function loadProfiles(days) {
+  const need = days.filter(d => !stopCache[d]);
+  const p = [];
+  if (!NAMES) p.push(load(DATA + 'stops.json').then(j => { NAMES = j; }).catch(() => { NAMES = {}; }));
+  need.forEach(d => p.push(load(DATA + 'days/' + d + '.stops.json').then(j => { stopCache[d] = j; }).catch(() => { stopCache[d] = {}; })));
+  return Promise.all(p);
+}
+function profileOf(rid, days) {
+  const acc = new Map();
+  for (const d of days) {
+    const rows = (stopCache[d] || {})[rid];
+    if (!rows) continue;
+    rows.forEach(([code, n, avg10, on], i) => { const x = acc.get(code) || {code, n: 0, sum: 0, on: 0, i}; x.n += n; x.sum += avg10 / 10 * n; x.on += on; acc.set(code, x); });
+  }
+  return [...acc.values()].sort((a, b) => a.i - b.i).map(x => ({code: x.code, n: x.n, avg: x.sum / x.n, on: x.on / x.n}));
+}
+function renderLineDetail() {
   const el = $('#line-detail'); if (!el) return;
   const s = openLine && M.Rr[openLine];
   if (!s) { el.innerHTML = ''; return; }
   const l = lineLabel(openLine);
-  const hours = Array.from({length: 24}, (_, h) => { const v = s.hours[h]; return {x: String(h).padStart(2, '0'), y: v && v[0] >= 5 ? Math.round(100 * v[1] / v[0]) : null, color: v && v[0] ? (v[1] / v[0] >= .8 ? C.ok : v[1] / v[0] >= .65 ? C.warn : C.late) : GRID, tip: `<b>${String(h).padStart(2, '0')}:00</b><br>${v && v[0] ? pct(v[1], v[0]) + ' בזמן · ' + num(v[0]) + ' הגעות' : 'אין נתונים'}`}; });
-  const oTot = s.o.reduce((a, b) => a + b, 0);
-  el.innerHTML = `<div class="panel" style="background:var(--panel2);margin-bottom:12px">
-    <div class="lhead"><span class="badge">${esc(l.short)}</span><span class="ldest">${esc(l.long.replace('<->', ' ← '))} · ${esc(l.agency)}${l.dir ? ' · כיוון ' + esc(l.dir) : ''}${l.alt && l.alt !== '#' ? ' · חלופה ' + esc(l.alt) : ''}</span><button class="closebtn" id="close-l">✕ סגירה</button></div>
+  const hours = Array.from({length: 24}, (_, h) => { const v = s.hours[h]; const sh = v && v[0] >= 5 ? v[1] / v[0] : null; return {x: String(h).padStart(2, '0'), y: sh == null ? null : Math.round(sh * 100), color: hourColor(sh), tip: `<b>${String(h).padStart(2, '0')}:00</b><br>${v && v[0] ? pct(v[1], v[0]) + ' בזמן · ' + num(v[0]) + ' הגעות' : 'אין נתונים'}`}; });
+  const oT = s.o.reduce((a, b) => a + b, 0);
+  el.innerHTML = `<div class="ldetail">
+    <div class="lhead"><span class="badge">${esc(l.short)}</span><span class="ldest">${esc(l.long)} · ${esc(l.agency)}${l.dir ? ' · כיוון ' + esc(l.dir) : ''}${l.alt && l.alt !== '#' && l.alt !== '0' ? ' · חלופה ' + esc(l.alt) : ''}</span><button class="closebtn" id="close-l">✕ סגירה</button></div>
     <div class="stat-row">
       <div><b>${s.meas ? pct(s.c[1], s.meas) : '—'}</b><span>בזמן, בכל התחנות</span></div>
-      <div><b>${oTot ? pct(s.o[1], oTot) : '—'}</b><span>יציאה בזמן מתחנת המוצא</span></div>
-      <div><b>${oTot ? pct(s.o[0], oTot) : '—'}</b><span>יציאה מוקדמת מהמוצא</span></div>
-      <div><b>${s.avg == null ? '—' : fmt1(s.avg)}<i style="font:700 12px var(--body);color:var(--mut)"> דק׳</i></b><span>איחור ממוצע${s.s && s.s[2] != null ? ` · 90% עד ${fmt1(s.s[2])}` : ''}</span></div>
+      <div><b>${oT ? pct(s.o[1], oT) : '—'}</b><span>יציאה בזמן מהמוצא</span></div>
+      <div><b>${oT ? pct(s.o[0], oT) : '—'}</b><span>יציאה מוקדמת מהמוצא</span></div>
+      <div><b>${s.avg == null ? '—' : fmt1(s.avg)}<i>דק׳</i></b><span>איחור ממוצע${s.s && s.s[2] != null ? ` · 90% עד ${fmt1(s.s[2])}` : ''}</span></div>
       <div><b>${num(s.obs)}</b><span>נסיעות נצפו מתוך ${num(s.sched)}</span></div>
     </div>
     ${distHtml(s)}
     <div class="cols2" style="margin-top:10px"><div><div class="ptitle">אחוז בזמן לפי השעה שבלו״ז</div><div class="chart" id="c-lh"></div></div>
-    <div><div class="ptitle">התחנות עם האיחור הגדול ביותר${period === 'day' ? '' : ' (ביום האחרון בתקופה)'}</div>${(s.ws || []).length ? `<table><thead><tr><th>תחנה</th><th>הגעות</th><th>איחור ממוצע</th></tr></thead><tbody>${s.ws.map(w => `<tr><td class="nm">${esc(w[1])} <small style="color:var(--dim)">${esc(w[0])}</small></td><td>${num(w[2])}</td><td class="${dcls(w[3])}">${fmt1(w[3])} דק׳</td></tr>`).join('')}</tbody></table>` : '<div class="mut">אין פירוט לתחנות</div>'}</div></div>
+    <div><div class="ptitle">האיחור הממוצע לאורך הקו</div><div class="chart" id="c-lp"><div class="empty">טוען…</div></div></div></div>
+    <div class="ptitle" style="margin-top:12px">תחנה אחרי תחנה <small>איפה נצבר האיחור</small></div><div id="lprof"><div class="empty">טוען…</div></div>
   </div>`;
   barChart($('#c-lh'), hours, {color: C.line, max: 100, unit: '%', h: 160});
   $('#close-l').onclick = () => { openLine = null; el.innerHTML = ''; };
+  const rid = openLine, days = M.days;
+  loadProfiles(days).then(() => {
+    if (openLine !== rid) return;
+    const prof = profileOf(rid, days);
+    const box = $('#lprof'), ch = $('#c-lp');
+    if (!box) return;
+    if (!prof.length) { box.innerHTML = '<div class="empty">אין עדיין פירוט לתחנות ליום הזה (מחושב מהריצה הבאה)</div>'; ch.innerHTML = '<div class="empty">אין נתונים</div>'; return; }
+    const mx = Math.max(10, Math.ceil(Math.max(...prof.map(p => p.avg)) / 5) * 5);
+    barChart(ch, prof.map((p, i) => ({x: String(i + 1), y: Math.max(0, p.avg), color: BCOL[catOf(p.avg)], tip: `<b>${esc(stopName(p.code))}</b><br>איחור ממוצע ${delayTxt(p.avg)} דק׳ · ${pct(p.on * p.n, p.n)} בזמן · ${num(p.n)} הגעות`})), {color: C.line, max: mx, unit: '׳', h: 160});
+    box.innerHTML = `<div class="prof"><div class="ps h"><span></span><span>תחנה</span><span>הגעות</span><span>איחור ממוצע</span><span>בזמן</span></div>` +
+      prof.map((p, i) => `<div class="ps"><span class="dot s${catOf(p.avg)}"></span><span class="rn">${esc(stopName(p.code))} <small>${esc(p.code)}${i === 0 ? ' · מוצא' : i === prof.length - 1 ? ' · יעד' : ''}</small></span><span class="num">${num(p.n)}</span><span class="num ${dcls(p.avg)}">${delayTxt(p.avg)} דק׳</span><span class="num">${Math.round(p.on * 100)}%</span></div>`).join('') + '</div>' +
+      '<div class="mut" style="margin-top:6px">בתחנת המוצא: יציאה מול השעה שבלו״ז. בשאר התחנות: הגעה. קפיצה חדה בין שתי תחנות סמוכות היא הקטע שבו הקו מאבד זמן.</div>';
+  });
 }
-function renderWorst(M) {
-  $('#worst').innerHTML = M.worst.length ? M.worst.map(([d, rid, trip, dl, stop, sched]) => { const l = lineLabel(rid); return `<li><span class="badge">${esc(l.short)}</span><span class="dl">+${num(dl)} דק׳</span><span>${esc(l.long.replace('<->', ' ← '))}</span><small style="color:var(--dim)">${esc(l.agency)} · יציאה מתוכננת ${hhmm(sched)}${period !== 'day' ? ' · ' + shortDate(d) : ''} · האיחור הגדול נמדד ב${esc(stop)}</small></li>`; }).join('') : '<li>אין נסיעות עם איחור מעל 20 דקות</li>';
+function renderWorst() {
+  let rows = M.worst;
+  if (agency) rows = rows.filter(w => lineLabel(w[1]).agency === agency);
+  rows = rows.slice(0, 40);
+  $('#worst').innerHTML = rows.length ? rows.map((w, i) => { const [d, rid, , dl, stop, sched, ps] = w; const l = lineLabel(rid); return `<li data-i="${i}" tabindex="0"><span class="badge">${esc(l.short)}</span><span class="dl">+${num(dl)} דק׳</span><span>${esc(l.long)}</span><small style="color:var(--dim)">${esc(l.agency)} · יציאה מתוכננת ${hhmm(sched)}${period !== 'day' ? ' · ' + shortDate(d) : ''} · האיחור הגדול נמדד ב${esc(stop)}${ps && ps.length ? '' : ' · אין פירוט תחנות'}</small></li>`; }).join('') : `<li>אין נסיעות עם איחור מעל 20 דקות${agency ? ' אצל ' + esc(agency) : ''}</li>`;
+  $('#worst').querySelectorAll('li[data-i]').forEach(li => { const open = () => openRide(rows[+li.dataset.i]); li.onclick = open; li.onkeydown = e => { if (e.key === 'Enter') open(); }; });
+}
+function openRide(w) {
+  const [d, rid, trip, dl, stop, sched, ps] = w;
+  const l = lineLabel(rid);
+  const ovl = document.createElement('div'); ovl.className = 'ovl';
+  const body = () => !ps || !ps.length ? '<div class="empty">אין פירוט תחנות לנסיעה הזו</div>' :
+    `<div class="route"><div class="rs h"><span></span><span>תחנה</span><span>מתוכנן</span><span>בפועל</span><span>איחור</span></div>` +
+    ps.map((x, i) => { const [code, sc, act] = x; const dm = (act - sc) / 60; const b = catOf(dm); const first = i === 0;
+      return `<div class="rs"><span class="dot s${b}"></span><span class="rn">${esc(stopName(code))}${first ? ' <small>מוצא · יציאה</small>' : i === ps.length - 1 ? ' <small>אחרונה שנמדדה</small>' : ''}</span><span class="rt">${hhmm(sc)}</span><span class="ra">${hhmm(act)}</span><span class="rd ${dcls(dm)}">${delayTxt(dm)} דק׳</span></div>`; }).join('') + '</div>';
+  const dbLink = `https://open-bus-map-search.hasadna.org.il/profile/${encodeURIComponent(trip)}`;
+  ovl.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><div class="mhead"><h2>קו ${esc(l.short)}</h2><span class="st s4">+${num(dl)} דק׳ לכל היותר</span><button class="x" aria-label="סגירה">✕</button></div>
+    <div class="msub">${esc(l.long)} · ${esc(l.agency)} · ${heDate(d)} · יציאה מתוכננת ${hhmm(sched)} · <a href="${dbLink}" target="_blank" rel="noopener">הנסיעה בדאטאבוס ↗</a></div>
+    <div id="ride-body">${NAMES ? body() : '<div class="empty">טוען שמות תחנות…</div>'}</div>
+    <div class="note">"בפועל" בתחנת המוצא הוא רגע היציאה, ובשאר התחנות רגע ההגעה (דיוק של כחצי דקה). תחנות שהאוטובוס לא שידר לידן לא מופיעות.</div></div>`;
+  document.body.appendChild(ovl);
+  const close = () => { ovl.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', onKey);
+  $('.x', ovl).onclick = close; ovl.onclick = e => { if (e.target === ovl) close(); };
+  if (!NAMES) loadProfiles([]).then(() => { const b = $('#ride-body', ovl); if (b) b.innerHTML = body(); });
 }
 
 const METHOD = `<div class="ptitle">איך זה נמדד</div>
 <p><b>בקצרה:</b> משרד התחבורה משדר כל דקה את המיקום של כל אוטובוס בארץ, ולצידו את התחנה הבאה שלו ואת המרחק אליה. דאטאבוס (הסדנא לידע ציבורי) שומרים את השידורים האלה, ואנחנו מורידים את השמירה של כל יום, מצמידים כל נסיעה ללוח הזמנים שמשרד התחבורה פרסם לאותו יום, ובודקים בכל תחנה: מתי האוטובוס היה אמור להגיע, ומתי הגיע.</p>
 <ul>
-<li><b>מתי "הגיע":</b> כשהמרחק לתחנה הבאה יורד לאפס, או כשהתחנה הבאה מתחלפת בזו שאחריה. בין שתי דגימות (דקה) הזמן משוערך לפי המרחק, כך שהדיוק הוא כחצי דקה.</li>
-<li><b>ההצמדה ללו״ז:</b> לפי מספר המסלול ושעת היציאה המתוכננת שהאוטובוס עצמו משדר, מול קובץ ה-GTFS של אותו יום.</li>
+<li><b>מתי "הגיע":</b> כשהמרחק לתחנה הבאה יורד לאפס, או כשהתחנה הבאה מתחלפת בזו שאחריה. בין שתי דגימות (דקה) הזמן משוערך לפי המרחק, כך שהדיוק הוא כחצי דקה. התחנה עצמה נקבעת לפי המק״ט ששודר, לא לפי המספר הסידורי.</li>
+<li><b>תחנת המוצא:</b> שם נמדדת היציאה, לא ההגעה. משרד התחבורה מציג את הרכב "בתחנה" חמש דקות לפני היציאה גם כשהוא עומד ברציף, ולכן היציאה נקבעת רק אחרי שראינו אותו עומד באמת (שתי דגימות לפחות) ואז זז. אם השידור נקטע בין העמידה לנסיעה, היציאה משוערכת מהמיקום הראשון בדרך לפי מהירות הלו״ז. "יצא מוקדם" הוא אוטובוס שעזב את המוצא יותר מ-2 דקות לפני השעה שבלו״ז.</li>
+<li><b>ההצמדה ללו״ז:</b> לפי מספר המסלול ושעת היציאה המתוכננת שהאוטובוס עצמו משדר, מול קובץ ה-GTFS של אותו יום. כשכמה רכבים משדרים את אותה נסיעה (תגבור), נמדד השידור הארוך.</li>
 <li><b>קטגוריות:</b> מוקדם = יותר מ-2 דקות לפני הלו״ז (בעיה לנוסע שמגיע בזמן); בזמן = עד 5 דקות איחור; ואז 5–10, 10–20, ומעל 20 דקות. "בזמן" נספר לכל הגעה לתחנה, לא לנסיעה.</li>
-<li><b>תחנת המוצא:</b> שם נמדדת היציאה, לא ההגעה — הרגע שבו האוטובוס זז מהתחנה הראשונה (הוא ממתין במסוף לפני כן). "יצא מוקדם" הוא אוטובוס שעזב את המוצא יותר מ-2 דקות לפני השעה שבלו״ז.</li>
-<li><b>מה לא נספר:</b> נסיעות שלא שידרו בכלל (מופיעות כ"לא נצפו"), נסיעה ששודרה יותר משעה רחוק מהלו״ז שלה (כנראה רכב שהוסב לנסיעה אחרת), רכבת ורכבת קלה, ויום שבו נצפו פחות מ-30% מהנסיעות (שידור חלקי, מוצג בנפרד). נסיעות ששודרו ואין להן נסיעה בלו״ז (תגבורים) נספרות בנפרד.</li>
+<li><b>מה לא נספר:</b> נסיעות שלא שידרו בכלל (מופיעות כ"לא נצפו"); נסיעה ששודרה יותר משעה וחצי רחוק מהלו״ז שלה (כנראה רכב שהוסב לנסיעה אחרת); מדידה בודדת שקופצת ב-20 דקות משתי שכנותיה (תקלת שיערוך); רכבת ורכבת קלה; ויום שבו נצפו פחות מ-30% מהנסיעות (שידור חלקי, מוצג בנפרד). נסיעות ששודרו ואין להן נסיעה בלו״ז (תגבורים) נספרות בנפרד.</li>
 <li><b>העומס על דאטאבוס:</b> אפס קריאות ל-API. הקבצים היומיים יורדים מאחסון S3 שנועד לזה, פעם אחת בלילה.</li>
 </ul>`;
 

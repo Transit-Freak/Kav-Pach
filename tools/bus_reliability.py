@@ -192,31 +192,49 @@ def dep_sec(dep, day):
 
 
 # ---------------------------------------------------------------- מעברי תחנות
+FRAC = collections.Counter()   # אבחון: איפה נפל המרחק של GTFS בתוך קטע הדגימות שבו Order התקדם
+
+
 def passages(recs, seq, codes=None):
     """מרשומות (t, order, dist, code) ממוינות ורצף תחנות GTFS — זמן המעבר בכל תחנה.
-    מחזיר {stop_sequence: t_sec}. codes: מק"ט התחנה לכל מקום ברצף — Order של SIRI
-    אינו תמיד stop_sequence של GTFS (בדיקה 06.09: 6 מ-37 לא תאמו), ולכן התחנה
-    נקבעת לפי המק"ט ששודר, הקרוב ביותר ל-Order."""
+    מחזיר {stop_sequence: t_sec}.
+
+    הסמנטיקה של השידור (מהרשומות הגולמיות, 06.09): DistanceFromStop הוא המרחק
+    שהרכב נסע מתחילת הנסיעה (עולה בהתמדה לאורך כל הנסיעה), ו-Order הוא התחנה
+    האחרונה שהרכב ביקר בה (לא הבאה). לפני היציאה המרחק 0 ו-Order לא אמין.
+    codes: מק"ט התחנה לכל מקום ברצף — Order לא תמיד תואם stop_sequence, ולכן
+    התחנה נקבעת לפי המק"ט ששודר, הקרוב ביותר ל-Order."""
     out = {}
     n = len(seq)
-    if codes:
-        fixed = []
-        for rec in recs:
-            t, order, dist = rec[0], rec[1], rec[2]
-            code = rec[3] if len(rec) > 3 else ''
-            if code and not (1 <= order <= n and codes[order - 1] == code):
-                cands = [i + 1 for i, c in enumerate(codes) if c == code]
-                if cands:
-                    order = min(cands, key=lambda k: abs(k - order))
-            fixed.append((t, order, dist))
-        recs = fixed
-    cum = [0.0] * n     # מרחק מצטבר לאורך המסלול
+    if n < 2:
+        return out
+    fixed = []
+    for rec in recs:
+        t, order, dist = rec[0], rec[1], rec[2]
+        code = rec[3] if len(rec) > 3 else ''
+        if codes and code and not (1 <= order <= n and codes[order - 1] == code):
+            cands = [i + 1 for i, c in enumerate(codes) if c == code]
+            if cands:
+                order = min(cands, key=lambda k: abs(k - order))
+        fixed.append((t, order, dist))
+    # רשומה "תקועה" (אותו RecordedAtTime חוזר בכמה קובצי דקה כשאין GPS חדש) — פעם אחת
+    samples = []
+    last_t = None
+    for t, order, dist in sorted(fixed):
+        if t == last_t:
+            continue
+        last_t = t
+        samples.append((t, float(dist), order))
+    if len(samples) < 2:
+        return out
+    cum = [0.0] * n     # מרחק מצטבר לאורך המסלול לפי GTFS (מטרים)
     for i in range(1, n):
         a, b = seq[i - 1], seq[i]
         if a[4] is not None and b[4] is not None and b[4] >= a[4]:
             cum[i] = cum[i - 1] + (b[4] - a[4])
         else:
             cum[i] = cum[i - 1] + 400.0   # אין shape_dist — הערכה גסה
+
     def sched_at(p):
         """הזמן שבלו"ז במיקום p לאורך המסלול (שיערוך ליניארי בין תחנות)."""
         if p <= 0:
@@ -227,82 +245,80 @@ def passages(recs, seq, codes=None):
                 return seq[i - 1][3] + (seq[i][2] - seq[i - 1][3]) * (p - cum[i - 1]) / seg
         return seq[-1][2]
 
-    # --- יציאה מהמוצא: הרכב עמד (שתי דגימות רצופות לפחות בלי תזוזה, עד 300 מ׳ מהמוצא)
-    # ואז זז. דגימה בודדת "בתחנה" לא נחשבת: המשרד מציב את הרכב בתחנה 5 דק׳ לפני
-    # היציאה (בדיקה 06.09: שיא של 20,849 נסיעות בדיוק ב-5 דק׳ "מוקדם"), ואחר כך
-    # משדר GPS אמיתי מהרציף — שיכול להיות גם אחרי העמוד, ואז Order כבר 2.
-    dep = None          # זמן היציאה שנצפה
-    dep_gap = None      # (t0, t, p2): עמד, ואז פער בשידור, ואז כבר בדרך
-    pp = None
-    stat = False
-    for rec in recs:
-        t, order, dist = rec[0], rec[1], rec[2]
-        if not (1 <= order <= min(n, 3)):
-            if pp is not None:
+    has_dist = max(s[1] for s in samples) > ARRIVE_M
+    dep = None
+    if has_dist:
+        # --- יציאה מהמוצא: הרכב עמד בתחילת המסלול (שתי דגימות לפחות עם אותו מרחק) ואז
+        # המרחק התחיל לגדול. דגימה בודדת "במרחק 0" לא נחשבת — המשרד מציב את הרכב
+        # בתחנה 5 דק׳ לפני היציאה (בדיקה 06.09: שיא של 20,849 נסיעות ב-5 דק׳ "מוקדם").
+        prev = None
+        stat = False
+        for t, p, o in samples:
+            if prev is not None:
+                t0, p0 = prev
+                if p0 <= 300 and abs(p - p0) <= 30:
+                    stat = True
+                elif p - p0 > 30:
+                    if stat:
+                        if t - t0 <= 120:
+                            dep = t0 + min(30, (t - t0) // 2)
+                        else:
+                            # פער בשידור בין העמידה לנסיעה: לפי מהירות הלו"ז מהמיקום הראשון בדרך
+                            dep = max(t0, min(t, t - (sched_at(p) - seq[0][3])))
+                    break
+            prev = (t, p)
+            if p > 300:
                 break
-            continue
-        p = cum[order - 1] - dist
-        if pp is not None:
-            t0, p0 = pp
-            if abs(p0) <= 300 and abs(p - p0) <= 30 and t - t0 <= 120:
-                stat = True
-            elif stat and p - p0 > 30:
-                if t - t0 <= 120:
-                    dep = t0 + min(30, (t - t0) // 2)
-                else:
-                    dep_gap = (t0, t, p)
-                break
-            elif stat and t - t0 > 120 and p - p0 > 30:
-                dep_gap = (t0, t, p)
-                break
-            else:
-                stat = False
-        pp = (t, p)
-        if p > 300 and not stat:
-            break
-    if dep is not None:
-        out[1] = dep
-    elif dep_gap is not None:
-        # לא ראינו את היציאה עצמה: שיערוך מהמיקום הראשון בדרך לפי מהירות הלו"ז
-        t0, t, p2 = dep_gap
-        out[1] = int(max(t0, t - (sched_at(p2) - seq[0][3])))
+        if dep is None:
+            t, p, o = samples[0]
+            if ARRIVE_M < p <= 3000:
+                # השידור התחיל כשהרכב כבר בדרך, קרוב למוצא: שיערוך אחורה לפי הלו"ז
+                dep = t - (sched_at(p) - seq[0][3])
+        if dep is not None:
+            out[1] = int(dep)
 
-    prev = None
-    for rec in recs:
-        t, order, dist = rec[0], rec[1], rec[2]
-        if order < 1 or order > n:
-            prev = (t, order, dist)
-            continue
-        if order == 1:
-            pass    # במוצא נמדדת היציאה (למעלה), לא ההגעה
-        elif dist <= ARRIVE_M and order not in out:
-            if prev is not None and prev[1] == order and prev[2] > dist:
-                # הגעה בין שתי הדגימות — שיערוך לפי המרחק שנותר בדגימה הקודמת
-                t1, _, d1 = prev
-                out[order] = int(t1 + (t - t1) * (d1 - ARRIVE_M) / (d1 - dist))
-            else:
-                out[order] = t
+    # --- מעברים בתחנות 2..n. עיקרי: חציית המרחק המצטבר של GTFS על ידי המרחק ששודר
+    # (מתחילת הנסיעה), בשיערוך ליניארי בין שתי הדגימות — ובתנאי ש-Order (התחנה
+    # האחרונה שבוקרה) מאשר בהמשך שהרכב אכן ביקר בתחנה. Order לבדו הוא לא אמין מיד
+    # אחרי היציאה (בדיקה 06.09: "ביקר ב-2" במרחק 50 מ׳ מהמוצא). משני, כשאין מרחק או
+    # כשאין חצייה: מעבר Order מ-o1 ל-o בין שתי דגימות — אמצע הקטע.
+    start_i = 0
+    if has_dist:
+        while start_i < len(samples) and samples[start_i][1] <= ARRIVE_M and (dep is None or samples[start_i][0] <= dep):
+            start_i += 1
+    sufmax = [0] * (len(samples) + 1)
+    for i in range(len(samples) - 1, -1, -1):
+        sufmax[i] = max(sufmax[i + 1], samples[i][2])
+    if has_dist:
+        k = 2
+        t1, p1 = (dep, 0.0) if dep is not None else (None, None)
+        for j in range(start_i, len(samples)):
+            t, p, o = samples[j]
+            if t1 is not None and p > p1 and t > t1:
+                while k <= n and cum[k - 1] <= p:
+                    if cum[k - 1] >= p1 and sufmax[max(j - 1, 0)] >= k:
+                        out[k] = int(t1 + (t - t1) * (cum[k - 1] - p1) / (p - p1))
+                        FRAC['dist'] += 1
+                    k += 1
+            if t1 is None or p >= p1:
+                t1, p1 = t, p
+    # השלמה לפי מעברי Order (בלי מרחק, או תחנות שהמרחק לא חצה)
+    prev = (dep, 0.0, 1) if dep is not None else None
+    for j in range(start_i, len(samples)):
+        t, p, o = samples[j]
         if prev is not None:
-            t1, o1, d1 = prev
-            if 1 <= o1 < order <= n:
-                # הרכב עבר את התחנות o1..order-1 בין t1 ל-t. מיקום בזמן t1:
-                # d1 לפני תחנה o1; בזמן t: dist לפני תחנה order.
-                p1 = cum[o1 - 1] - d1
-                p2 = cum[order - 1] - dist
-                if o1 == 1:
-                    if 1 not in out and t - t1 > 120:
-                        # פער בשידור אחרי המוצא — היציאה לא נצפתה: שיערוך לפי מהירות הלו"ז
-                        out[1] = int(max(t1, t - (sched_at(p2) - seq[0][3])))
-                    if 1 in out:
-                        # עוגן השיערוך לתחנות הבאות הוא היציאה, לא הדגימה (המלאכותית) בתחנה
-                        t1, p1 = max(t1, out[1]), max(p1, 0.0)
-                span = max(p2 - p1, 1.0)
-                for k in range(o1, order):
+            t1, p1, o1 = prev
+            if 1 <= o1 < o and t > t1:
+                for k in range(o1 + 1, min(o, n) + 1):
                     if k in out:
                         continue
-                    frac = min(max((cum[k - 1] - p1) / span, 0.0), 1.0)
+                    frac = 0.5
+                    if has_dist and p > p1:
+                        frac = min(max((cum[k - 1] - p1) / (p - p1), 0.0), 1.0)
                     out[k] = int(t1 + (t - t1) * frac)
-        prev = (t, order, dist)
+                    FRAC['order'] += 1
+        if prev is None or o >= prev[2]:
+            prev = (t, p, o)
     return out
 
 
@@ -458,12 +474,22 @@ def main():
         meas.sort()
         if len(meas) >= 3:
             keep = []
+            last = len(meas) - 1
             for i, m in enumerate(meas):
-                if 0 < i < len(meas) - 1:
-                    a, b = meas[i - 1][3], meas[i + 1][3]
-                    if abs(m[3] - a) > SPIKE and abs(m[3] - b) > SPIKE and abs(a - b) < SPIKE / 2:
+                if 0 < i < last:
+                    da, db = meas[i - 1][3], meas[i + 1][3]
+                    if abs(m[3] - da) > SPIKE and abs(m[3] - db) > SPIKE and abs(da - db) < SPIKE / 2:
                         spikes += 1
                         continue
+                elif i == last and m[3] - meas[i - 1][3] > SPIKE:
+                    # תחנה אחרונה שקופצת ב-20+ דק׳ מהקודמת: הרכב חנה במסוף ליד התחנה
+                    # ועבר אותה שוב הרבה אחר כך (דוגמאות 06.09: +5 ואז +80)
+                    spikes += 1
+                    continue
+                elif i == 0 and m[3] - meas[1][3] > SPIKE:
+                    # מוצא שנמדד 20+ דק׳ אחרי התחנה השנייה — לא ייתכן פיזית, תוצר שידור
+                    spikes += 1
+                    continue
                 keep.append(m)
             meas = keep
         if len(diag_raw) < 6 and meas[0][0] == 1 and -300 <= meas[0][3] < -240:
@@ -528,7 +554,7 @@ def main():
                     # דוגמאות: יצאה בזמן והגיעה ל-55+ דק׳ — איפה הקפיצה?
                     diag_ex.append(f'{rid}/{tid} רשומות={len(recs)} {hms_(recs[0][0])}–{hms_(recs[-1][0])} יציאה מתוכננת {hms_(seq[0][3])} n={len(seq)} מעברים: '
                                    + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in sorted(meas)))
-    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לסף: {beyond:,} · קפיצות בודדות שהושמטו: {spikes:,} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    print(f'מדידות: {tot["meas"]:,} · נסיעות נצפו: {tot["obs"]:,} מתוך {tot["sched"]:,} · רחוקות מהלו"ז (הושמטו): {far:,} · מדידות בודדות מעבר לסף: {beyond:,} · קפיצות בודדות שהושמטו: {spikes:,} · מעברים לפי מרחק/לפי Order: {dict(FRAC)} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
     for ex in diag_raw + diag_raw2 + diag_raw3:
         print('  גולמי:', ex, flush=True)
     print(f'אבחון מוצא (דקות → נסיעות): {dict(sorted(diag_o.items()))}', flush=True)
