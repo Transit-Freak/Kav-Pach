@@ -1,0 +1,65 @@
+name: compare-mot
+
+# השוואה חד-פעמית של המדדים שלנו מול קובצי משרד התחבורה ב-data.gov.il (שלמה 06.09).
+# יום האוטובוסים מחושב לתיקייה זמנית (לא ל-bus/data), והתוצאות נכתבות רק
+# ל-docs/compare. הפעלה ידנית בלבד.
+
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'יום להשוואת האוטובוסים (YYYY-MM-DD) — צריך להיות בקובץ הביצוע של המשרד; ריק = רק רכבת'
+        required: false
+        default: '2026-05-12'
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: תלויות
+        run: pip install -q brotli
+
+      - name: יום האוטובוסים לתיקייה זמנית
+        if: github.event.inputs.day != ''
+        env:
+          D: ${{ github.event.inputs.day }}
+        run: |
+          set -euo pipefail
+          B="https://openbus-stride-public.s3.eu-west-1.amazonaws.com"
+          Y=${D:0:4}; M=${D:5:2}; DD=${D:8:2}
+          n=$(date -u -d "$D + 1 day" +%F); NY=${n:0:4}; NM=${n:5:2}; ND=${n:8:2}
+          mkdir -p /tmp/cmp siri
+          curl -fsS -o gtfs.zip "$B/gtfs_archive/$Y/$M/$DD/israel-public-transportation.zip"
+          {
+            for h in $(seq -w 0 23); do for m in $(seq -w 0 59); do echo "stride-siri-requester/$Y/$M/$DD/$h/$m.br siri/$h/$m.br"; done; done
+            for h in 00 01 02; do for m in $(seq -w 0 59); do echo "stride-siri-requester/$NY/$NM/$ND/$h/$m.br siri/$((24 + 10#$h))/$m.br"; done; done
+          } > list.txt
+          mkdir -p siri/{00..23} siri/24 siri/25 siri/26
+          cat list.txt | xargs -P 16 -n 2 sh -c 'curl -fsS --retry 3 -o "$1" "https://openbus-stride-public.s3.eu-west-1.amazonaws.com/$0" || true'
+          echo "קבצי SIRI: $(find siri -name '*.br' | wc -l)"
+          python3 tools/bus_reliability.py --day "$D" --gtfs gtfs.zip --siri siri --out /tmp/cmp/out --workers 4 --site . --dump-rides /tmp/cmp/rides.json
+          rm -rf siri gtfs.zip list.txt
+
+      - name: השוואה
+        env:
+          D: ${{ github.event.inputs.day }}
+        run: python3 tools/compare_mot.py --day "$D" --rides /tmp/cmp/rides.json --out docs/compare
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/compare
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "docs: השוואת המדדים לקובצי משרד התחבורה (docs/compare)"
+          for i in 1 2 3 4; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true; sleep 10
+          done
+          exit 1
