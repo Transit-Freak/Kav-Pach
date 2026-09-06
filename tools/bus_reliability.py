@@ -247,6 +247,7 @@ def passages(recs, seq, codes=None):
 
     has_dist = max(s[1] for s in samples) > ARRIVE_M
     dep = None
+    first_i = 0
     if has_dist:
         # --- יציאה מהמוצא: הרכב עמד בתחילת המסלול (שתי דגימות לפחות עם אותו מרחק) ואז
         # המרחק התחיל לגדול. דגימה בודדת "במרחק 0" לא נחשבת — המשרד מציב את הרכב
@@ -260,8 +261,9 @@ def passages(recs, seq, codes=None):
         for i, (t, p, o) in enumerate(samples):
             if prev is not None:
                 t0, p0 = prev
-                if p0 - p > 300 and p0 <= 3000:
-                    # איפוס מרחק בתחילת הנסיעה — ערכים ישנים; מתחילים מחדש מכאן
+                if p0 - p > 300 and (p0 <= 3000 or i < 10):
+                    # איפוס מרחק בתחילת הנסיעה — ערכים ישנים (גם מעל 3 ק"מ, דוגמה 06.09:
+                    # 2682 → 6354 → 395); מתחילים מחדש מכאן
                     prev = (t, p)
                     stat = False
                     cand = None
@@ -277,7 +279,7 @@ def passages(recs, seq, codes=None):
                         cand = max(t0, min(t, t - (sched_at(p) - seq[0][3])))
                     stat = False
             prev = (t, p)
-            if p > 3000:
+            if p > 3000 and i >= 10:
                 break
         dep = cand
         if dep is None:
@@ -303,7 +305,7 @@ def passages(recs, seq, codes=None):
     # אחרי היציאה (בדיקה 06.09: "ביקר ב-2" במרחק 50 מ׳ מהמוצא) — ערך Order שכבר
     # הופיע לפני היציאה לא נחשב למעבר. כשהחצייה ומעבר ה-Order רחוקים זה מזה ביותר
     # מ-5 דק׳ (מרחק שנתקע), מעבר ה-Order קובע. בלי מרחק — מעבר Order, אמצע הקטע.
-    start_i = 0
+    start_i = first_i if has_dist else 0    # אחרי איפוס מרחק — הדגימות שלפניו לא נחשבות
     pre_o = 1
     if has_dist:
         while start_i < len(samples) and samples[start_i][1] <= ARRIVE_M and (dep is None or samples[start_i][0] <= dep):
