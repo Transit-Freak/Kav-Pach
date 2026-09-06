@@ -1,0 +1,33 @@
+name: probe-mot-datasets
+
+# בדיקה חד-פעמית של מאגרי משרד התחבורה ב-data.gov.il (עמוד "מאגרי מידע" של
+# הרשות הארצית לתח"צ, שלמה 06.09): רישוי לפי מק"ט, תכנון מול ביצוע, זמני הגעה,
+# רכבת. הפלט נכתב ל-docs/fetched/mot-datasets.txt. הפעלה ידנית בלבד.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: בדיקה
+        run: python3 tools/probe_mot_datasets.py
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/fetched/mot-datasets.txt
+          git diff --cached --quiet && { echo "אין שינוי"; exit 0; }
+          git commit -m "docs: בדיקת מאגרי משרד התחבורה ב-data.gov.il"
+          for i in 1 2 3 4; do
+            git pull -q --rebase -X theirs origin main && git push -q origin HEAD:main && exit 0
+            git rebase --abort 2>/dev/null || true; sleep 10
+          done
+          exit 1
