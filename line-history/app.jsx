@@ -1650,7 +1650,7 @@ function LinePage({ rd, lineGone, sibs, onSwitch, onBack, initDate }) {
           ))}
         </div>
         {/* "עירוני" פעם אחת בלבד (שלמה 06.09): כשהוא מופיע ליד "נגיש" — התג הנפרד לא מוצג */}
-        <div className="facts">{lf.op}{lf.ty && !(lf.vt === lf.ty && (lf.wa === "1" || lf.wa === "2")) ? " · " + lf.ty : ""}{!lf.ty && lf.vt && lf.wa !== "1" && lf.wa !== "2" ? " · " + lf.vt : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
+        <div className="facts">{lf.op}{lf.ty && !(lf.vt && lf.vt.startsWith(lf.ty) && (lf.wa === "1" || lf.wa === "2")) ? " · " + lf.ty : ""}{!lf.ty && lf.vt && lf.wa !== "1" && lf.wa !== "2" ? " · " + lf.vt : ""}{lf.tt ? " · " + (TT_LABEL[lf.tt] || "") : ""}
           {/* נגישות לכיסא גלגלים מגיעה מ-wheelchair_accessible בפיד, והיא
               אחידה לכל נסיעות הקו — ולכן תכונה של הקו. אם תועד אירוע שינוי
               נגישות, התג מציין מאיזה תאריך המצב הנוכחי; שינוי שקרה יחד עם
