@@ -1,4 +1,4 @@
-בדיקת מקורות דאטאבוס · יום 2026-09-03 · 2026-09-06T10:11:36Z
+בדיקת מקורות דאטאבוס · יום 2026-09-01 · 2026-09-06T10:26:50Z
 
 ===== S3: תיקיות שורש =====
 
@@ -18,13 +18,13 @@ stride-etl-packages/
 
 ===== S3: stride-etl-packages/siri/ (מפוצל לשנה) =====
 stride-etl-packages/siri/
---- siri/2026/09/03 ---
+--- siri/2026/09/01 ---
 --- siri/2026/09 (רשימת ימים, 40 ראשונים) ---
 stride-etl-packages/siri/2026/09/
 
 ===== S3: stride-etl-packages/gtfs/ (מפוצל לשנה) =====
 stride-etl-packages/gtfs/
---- gtfs/2026/09/03 ---
+--- gtfs/2026/09/01 ---
 --- gtfs/2026/09 (רשימת ימים, 40 ראשונים) ---
 stride-etl-packages/gtfs/2026/09/
 
@@ -38,20 +38,58 @@ siri-snapshots: 0 מפתחות ראשונים
 gtfs-rides: 0 מפתחות ראשונים
 gtfs-ride-stops: 0 מפתחות ראשונים
 
-===== API: siri_ride_stops ליום אחד — דוגמה ושדות =====
+===== API: siri_rides — רשומה מלאה (יום 2026-09-01, שעה 08 שעון ישראל) =====
 [
  {
-  "id": 3766521608,
-  "siri_stop_id": 30512,
-  "siri_ride_id": 147239752,
-  "order": 5,
+  "id": 146745406,
+  "siri_route_id": 392,
+  "journey_ref": "2026-09-01-32685867",
+  "scheduled_start_time": "2026-09-01T05:00:00+00:00",
+  "vehicle_ref": "24608301",
+  "updated_first_last_vehicle_locations": "2026-09-05T13:09:18.081492+00:00",
+  "first_vehicle_location_id": 8541659927,
+  "last_vehicle_location_id": 8528940837,
+  "updated_duration_minutes": "2026-09-05T13:09:18.081539+00:00",
+  "duration_minutes": 102,
+  "journey_gtfs_ride_id": null,
+  "route_gtfs_ride_id": null,
+  "gtfs_ride_id": null,
+  "siri_route__line_ref": 22041,
+  "siri_route__operator_ref": 15,
+  "gtfs_ride__gtfs_route_id": null,
+  "gtfs_ride__journey_ref": null,
+  "gtfs_ride__start_time": null,
+  "gtfs_ride__end_time": null,
+  "gtfs_route__date": null,
+  "gtfs_route__line_ref": null,
+  "gtfs_route__operator_ref": null,
+  "gtfs_route__route_short_name": null,
+  "gtfs_route__route_long_name": null,
+  "gtfs_route__route_mkt": null,
+  "gtfs_route__route_direction": null,
+  "gtfs_route__route_alternative": null,
+  "gtfs_route__agency_name": null,
+  "gtfs_route__route_type": null
+ }
+]
+... 2 שורות
+
+===== API: siri_ride_stops עם הצמדה (יום 2026-09-01, נסיעות שהתחילו 08:00–08:02) =====
+3000 שורות ב-2 דקות של התחלות
+עם מיקום קרוב: 0 · עם לו"ז GTFS: 0
+[
+ {
+  "id": 3766547805,
+  "siri_stop_id": 30510,
+  "siri_ride_id": 147240461,
+  "order": 3,
   "gtfs_stop_id": null,
   "nearest_siri_vehicle_location_id": null,
-  "siri_stop__code": 43719,
+  "siri_stop__code": 43715,
   "siri_ride__siri_route_id": 8551,
-  "siri_ride__journey_ref": "2026-09-06-585066298",
-  "siri_ride__scheduled_start_time": "2026-09-06T09:50:00+00:00",
-  "siri_ride__vehicle_ref": "67574802",
+  "siri_ride__journey_ref": "2026-09-06-584982049",
+  "siri_ride__scheduled_start_time": "2026-09-06T10:00:00+00:00",
+  "siri_ride__vehicle_ref": "67290802",
   "siri_ride__updated_first_last_vehicle_locations": null,
   "siri_ride__first_vehicle_location_id": null,
   "siri_ride__last_vehicle_location_id": null,
@@ -99,14 +137,18 @@ gtfs-ride-stops: 0 מפתחות ראשונים
   "gtfs_route__route_type": null
  }
 ]
-... 2 שורות
 
-===== API: כמה נסיעות SIRI ביום (siri_rides, לפי שעות התחלה) =====
-שעה 06: 7664 נסיעות (עד 10,000)
-שעה 08: 7668 נסיעות (עד 10,000)
-שעה 12: 7018 נסיעות (עד 10,000)
-שעה 17: 6784 נסיעות (עד 10,000)
+===== API: ספירת siri_ride_stops בשעה 08 (עד 10,000 בעמוד, offset) =====
+offset 0: 10000
+offset 10000: 10000
+offset 20000: 10000
+offset 40000: 10000
+offset 80000: 10000
 
-===== API: gtfs_rides ביום (שעה 08) =====
-2961 נסיעות GTFS בשעה 08
-[{"id": 155794878, "gtfs_route_id": 9521414, "journey_ref": "4062_020926", "start_time": "2026-09-03T05:00:00+00:00", "end_time": "2026-09-03T05:52:59+00:00", "gtfs_route__date": "2026-09-03", "gtfs_route__line_ref": 66, "gtfs_route__operator_ref": 25, "gtfs_route__route_short_name": "315", "gtfs_route__route_long_name": "ת. מרכזית אשדוד/רציפים-אשדוד<->בי''ח שיב''א/שדרות אהרון קציר-רמת גן-1#", "gtfs_route__route_mkt": "10315", "gtfs_route__route_direction": "1", "gtfs_route__route_alternative": "#", "gtfs_route__agency_name": "אלקטרה אפיקים", "gtfs_route__route_type": "3"}]
+===== API: gtfs_rides בשעה 08 שעון ישראל (05 UTC) =====
+2961 נסיעות GTFS
+Counter({'3': 2856, '5': 66, '0': 22, '715': 9, '2': 8})
+
+===== API: siri_rides בשעה 08 שעון ישראל =====
+7636 נסיעות SIRI
+עם gtfs_ride_id: 0 · עם first/last location: 7627
