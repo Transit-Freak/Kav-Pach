@@ -492,6 +492,9 @@ def main():
                     continue
                 keep.append(m)
             meas = keep
+        if len(meas) < MIN_STOPS_RIDE:
+            far += 1
+            continue
         if len(diag_raw) < 6 and meas[0][0] == 1 and -300 <= meas[0][3] < -240:
             diag_raw.append(f'מוצא -5 {rid}/{tid} יציאה {hms_(seq[0][3])} n={len(seq)} רשומות(שנ׳ מהיציאה,סדר,מרחק): '
                             + ' '.join(f'{r[0] - seq[0][3]:+d}/{r[1]}/{r[2]}' for r in recs[:10]) + ' · מעברים: ' + ' '.join(f'{k}:{d // 60:+d}' for k, s, sc, d in meas[:6]))
