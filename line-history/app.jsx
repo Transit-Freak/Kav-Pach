@@ -239,18 +239,25 @@ function materializeLf(lf) {
   // · "בוטל וחזר" — כרטיס ביום שהקו חזר לרישום אחרי תקופת ביטול, במקום פס
   //   טקסט בכותרת. קו שעדיין מבוטל נשאר עם כרטיס "בוטל" והודעת הסטטוס.
   if (!lf._synMerged) {
-    const VSZ = { "אוטובוס": "אוטובוס רגיל", "מפרקי": "אוטובוס מפרקי", "לא מוגדר": "לא נקבע סוג רכב" };
-    const szl = (s) => VSZ[s] || s || "";
+    // אותו ניסוח כמו בפיד (tools/linehistory_rishui.py: desc/note_for): "אוטובוס"
+    // אצל המשרד הוא קטגוריית גודל, ו"אוטובוס רגיל" לא אמר כלום (שלמה 06.09) —
+    // תמיד גודל וסוג יחד: "אוטובוס עירוני בגודל מלא", "מיניבוס עירוני"
+    const UND = "לא מוגדר";
+    const desc = (s, t) => {
+      if (!s || s === UND) return UND;
+      if (s === "אוטובוס") return ["אוטובוס", t, "בגודל מלא"].filter(Boolean).join(" ");
+      if (s === "מפרקי") return ["אוטובוס מפרקי", t].filter(Boolean).join(" ");
+      return [s, t].filter(Boolean).join(" ");
+    };
     const real = (lf.versions || []).filter((v) => !v.syn);
     const veh = lf.veh || [], evs = [];
     for (let i = 1; i < veh.length; i++) {
       const [d, t, s] = veh[i], [, pt, ps] = veh[i - 1];
       let note;
-      if (s === "לא מוגדר" && ps !== "לא מוגדר") note = `ברישוי לא נקבע עוד סוג רכב לקו (היה: ${szl(ps)})`;
-      else if (ps === "לא מוגדר" && s !== "לא מוגדר") note = `ברישוי נקבע לקו סוג רכב: ${szl(s)} (קודם לא היה מוגדר)`;
-      else if (ps !== s && pt !== t && pt && t) note = `הרכב ברישוי שונה: ${szl(ps)} ${pt} ← ${szl(s)} ${t}`;
-      else if (ps !== s) note = `גודל הרכב ברישוי שונה: ${szl(ps)} ← ${szl(s)}`;
-      else note = `סוג הקו ברישוי שונה: ${pt || "לא מוגדר"} ← ${t || "לא מוגדר"}`;
+      if (s === UND && ps !== UND) note = `ברישוי לא נקבע עוד סוג רכב לקו (היה: ${desc(ps, pt)})`;
+      else if (ps === UND && s !== UND) note = `ברישוי נקבע לקו סוג רכב: ${desc(s, t)} (קודם לא היה מוגדר)`;
+      else if (ps !== s) note = `סוג הרכב ברישוי שונה: ${desc(ps, pt)} ← ${desc(s, t)}`;
+      else note = `סוג הקו ברישוי שונה: ${pt || UND} ← ${t || UND} (הרכב: ${desc(s, "")})`;
       evs.push({ d, k: "vehicle", syn: true, stops: [], shp: "", note });
     }
     // התקופה נגמרת בגרסה הבאה מכל סוג, לא רק ב"וריאנט חדש" (דיווח שלמה 03.09,
