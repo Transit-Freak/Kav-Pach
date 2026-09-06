@@ -107,11 +107,9 @@ def load_gtfs(path, day):
             'agency': agencies.get(r['agency_id'], r['agency_id']), 'type': r.get('route_type') or '',
         }
     trips = {}          # trip_id → route_id (רק שירותים פעילים היום)
-    by_num = {}         # מספר הנסיעה (לפני '_') → trip_id
     for r in rows('trips.txt'):
         if r['service_id'] in services:
             trips[r['trip_id']] = r['route_id']
-            by_num[r['trip_id'].split('_')[0]] = r['trip_id']
     stops = {}
     for r in rows('stops.txt'):
         desc = r.get('stop_desc') or ''
@@ -119,12 +117,13 @@ def load_gtfs(path, day):
         if 'עיר:' in desc:
             city = desc.split('עיר:', 1)[1].split('רציף:')[0].split('קומה:')[0].strip()
         stops[r['stop_id']] = (r['stop_code'], r['stop_name'], float(r['stop_lat'] or 0), float(r['stop_lon'] or 0), city)
-    return {'routes': routes, 'trips': trips, 'by_num': by_num, 'stops': stops, 'zip': z}
+    return {'routes': routes, 'trips': trips, 'stops': stops, 'zip': z}
 
 
 def load_stop_times(g, want_trips):
-    """רצף התחנות של הנסיעות המבוקשות: trip_id → רשימה לפי stop_sequence של
-    (stop_id, arrival_sec, departure_sec, shape_dist)."""
+    """רצף התחנות של הנסיעות המבוקשות (כל הנסיעות הפעילות היום — ~4 מיליון
+    שורות מתוך קובץ של ~800MB): trip_id → רשימה לפי stop_sequence של
+    (seq, stop_id, arrival_sec, departure_sec, shape_dist)."""
     z = g['zip']
     st = collections.defaultdict(list)
     with z.open('stop_times.txt') as f:
@@ -247,7 +246,9 @@ def main():
         for recs in pool.imap(parse_minute, [(f, day) for f in files], chunksize=4):
             for ref, line, op, dep, veh, t, order, dist, code in recs:
                 n_rec += 1
-                key = (ref, line, dep, veh) if ref == '0' else (ref, line)
+                # מפתח הנסיעה: קו + יציאה מתוכננת + רכב (+ מזהה הנסיעה של SIRI, שאינו
+                # trip_id של GTFS — הבדיקה 06.09: רק 0.2% תואמים — ולכן משמש רק להפרדה)
+                key = (line, dep, veh, ref)
                 journeys[key].append((t, order, dist))
                 if key not in meta:
                     meta[key] = (line, op, dep, veh)
@@ -255,52 +256,45 @@ def main():
 
     g = load_gtfs(a.gtfs, day)
     print(f'GTFS: {len(g["trips"]):,} נסיעות פעילות · {len(g["routes"]):,} מסלולים · {len(g["stops"]):,} תחנות', flush=True)
-    # אינדקס לנסיעות בלי מזהה: (route_id, שניית יציאה) → trip_id — נבנה רק אם צריך
-    need_dep = any(k[0] == '0' for k in journeys)
+    # רצפי התחנות של כל הנסיעות הפעילות היום — נדרש גם להצמדה (שעת היציאה
+    # של התחנה הראשונה) וגם למדידה
+    st = load_stop_times(g, set(g['trips']))
+    print(f'stop_times: {sum(len(v) for v in st.values()):,} שורות ל-{len(st):,} נסיעות · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+    # הצמדה: LineRef של SIRI = route_id של GTFS, ו-OriginAimedDepartureTime = שעת
+    # היציאה המתוכננת מהתחנה הראשונה. (route_id, שנייה) → trip_id; ואם אין
+    # התאמה מדויקת — הנסיעה הקרובה ביותר באותו מסלול עד 3 דקות.
     by_dep = {}
-    # הצמדת נסיעה → trip_id
+    deps_by_route = collections.defaultdict(list)
+    for tid, lst in st.items():
+        if lst:
+            rid = g['trips'].get(tid)
+            by_dep.setdefault((rid, lst[0][3]), tid)
+            deps_by_route[rid].append((lst[0][3], tid))
+    for v in deps_by_route.values():
+        v.sort()
     jt = {}
     unmatched = collections.Counter()
+    used = set()
     for key in journeys:
-        ref, line = key[0], key[1]
-        if ref != '0':
-            tid = g['by_num'].get(ref)
-            if tid and g['trips'].get(tid) == line:
-                jt[key] = tid
-            elif tid:
-                jt[key] = tid          # מזהה נסיעה תקין, route שונה (חלופה) — סומכים על המזהה
-                unmatched['route_diff'] += 1
-            else:
-                unmatched['no_trip'] += 1
-        else:
-            unmatched['ref0'] += 1
-    want = set(jt.values())
-    print(f'הוצמדו ל-GTFS: {len(jt):,} · לא: {dict(unmatched)}', flush=True)
-    st = load_stop_times(g, want)
-    if need_dep:
-        # נסיעות בלי מזהה: לפי route_id + שעת יציאה מתוכננת (departure של התחנה הראשונה)
-        first_dep = {tid: lst[0][3] for tid, lst in st.items() if lst}
-        # צריך גם נסיעות שלא נצפו במזהה — טוענים stop_times לכל הנסיעות של המסלולים הרלוונטיים
-        lines0 = {k[1] for k in journeys if k[0] == '0'}
-        extra = {tid for tid, rid in g['trips'].items() if rid in lines0 and tid not in want}
-        if extra:
-            st2 = load_stop_times(g, extra)
-            for tid, lst in st2.items():
-                st[tid] = lst
-                if lst:
-                    first_dep[tid] = lst[0][3]
-        for tid, sec in first_dep.items():
-            by_dep[(g['trips'].get(tid), sec)] = tid
-        n0 = 0
-        for key in journeys:
-            if key[0] == '0':
-                ds = dep_sec(key[2], day)
-                tid = by_dep.get((key[1], ds)) if ds is not None else None
-                if tid and tid not in jt.values():
-                    jt[key] = tid
-                    n0 += 1
-        print(f'נסיעות בלי מזהה שהוצמדו לפי יציאה: {n0:,}', flush=True)
-    print(f'stop_times: {sum(len(v) for v in st.values()):,} שורות · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
+        line, dep = key[0], key[1]
+        ds = dep_sec(dep, day)
+        if ds is None or line not in deps_by_route:
+            unmatched['no_route' if line not in deps_by_route else 'no_dep'] += 1
+            continue
+        tid = by_dep.get((line, ds))
+        if tid is None:
+            best = None
+            for sec, t2 in deps_by_route[line]:
+                dd = abs(sec - ds)
+                if dd <= 180 and (best is None or dd < best[0]):
+                    best = (dd, t2)
+            tid = best[1] if best else None
+        if tid is None:
+            unmatched['no_trip'] += 1
+            continue
+        jt[key] = tid
+        used.add(tid)
+    print(f'הוצמדו ל-GTFS: {len(jt):,} נסיעות SIRI ({len(used):,} נסיעות GTFS שונות) · לא: {dict(unmatched)} · {(datetime.datetime.now() - t0).seconds} שנ׳', flush=True)
 
     # --- מדידה ---
     routes = g['routes']
