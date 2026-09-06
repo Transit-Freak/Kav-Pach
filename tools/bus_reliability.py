@@ -193,29 +193,42 @@ def load_rishui_sizes(day):
             rid = r['id']
     if not rid:
         raise RuntimeError(f'אין משאב רישוי לשנת {year}')
+    # הקובץ מתמלא במהלך היום והיום האחרון בו חלקי (מאות שורות במקום אלפים; בשבת
+    # יש כמחצית משורות יום חול — וזה מלא). לכן קודם סופרים: יום שיש אחריו יום עם
+    # שורות — מלא; היום האחרון עם שורות — רק אם יש בו לפחות 70% מהיום הגדול בשבוע.
     d0 = datetime.date.fromisoformat(day)
+    totals = []
     for back in range(0, 8):
         d = (d0 - datetime.timedelta(days=back)).isoformat()
+        if d[:4] != year:
+            break
         flt = urllib.parse.quote(json.dumps({'rishui_date': d}))
-        rows, offset = [], 0
-        while True:
-            res = ckan_get(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&fields=office_line_id,VehicleSize_nm,VehicleType_nm,trips_count&limit=32000&offset={offset}')['result']
-            recs = res.get('records', [])
-            rows.extend(recs)
-            if len(recs) < 32000:
-                break
-            offset += 32000
-        if rows:
-            sizes = {}
-            raw = collections.Counter()
-            for r in rows:
-                raw[str(r.get('VehicleSize_nm'))] += 1
-                s = norm_size(r.get('VehicleSize_nm'))
-                if s and r.get('office_line_id') is not None:
-                    sizes[str(r['office_line_id'])] = s
-            print(f'רישוי {d}: {len(rows):,} שורות · גדלי רכב במקור: {dict(raw.most_common(8))}', flush=True)
-            return sizes, d
-    return {}, None
+        res = ckan_get(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&fields=office_line_id&limit=1')['result']
+        totals.append((d, int(res.get('total') or 0)))
+    mx = max((n for _, n in totals), default=0)
+    latest = next((d for d, n in totals if n > 0), None)
+    used = next((d for d, n in totals if n > 0 and (d != latest or n >= 0.7 * mx)), None)
+    print('שורות רישוי לפי יום: ' + ' · '.join(f'{d}:{n:,}' for d, n in totals), flush=True)
+    if not used:
+        return {}, None
+    flt = urllib.parse.quote(json.dumps({'rishui_date': used}))
+    rows, offset = [], 0
+    while True:
+        res = ckan_get(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&fields=office_line_id,VehicleSize_nm,VehicleType_nm,trips_count&limit=32000&offset={offset}')['result']
+        recs = res.get('records', [])
+        rows.extend(recs)
+        if len(recs) < 32000:
+            break
+        offset += 32000
+    sizes = {}
+    raw = collections.Counter()
+    for r in rows:
+        raw[str(r.get('VehicleSize_nm'))] += 1
+        s = norm_size(r.get('VehicleSize_nm'))
+        if s and r.get('office_line_id') is not None:
+            sizes[str(r['office_line_id'])] = s
+    print(f'רישוי {used}: {len(rows):,} שורות · גדלי רכב במקור: {dict(raw.most_common(8))}', flush=True)
+    return sizes, used
 
 
 def load_vehicle_classes(site, day=None):

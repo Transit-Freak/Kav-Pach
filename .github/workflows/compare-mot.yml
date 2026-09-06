@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       day:
-        description: 'יום להשוואת האוטובוסים (YYYY-MM-DD) — צריך להיות בקובץ הביצוע של המשרד; ריק = רק רכבת'
+        description: 'יום להשוואת האוטובוסים (YYYY-MM-DD) — צריך להיות בקובץ הביצוע של המשרד (קובץ 2026 מכיל רק ~48 ימים, ינואר–פברואר); ריק = רק רכבת'
         required: false
-        default: '2026-05-12'
+        default: '2026-02-25'
 
 permissions:
   contents: write

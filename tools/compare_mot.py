@@ -83,7 +83,19 @@ def compare_bus(day, rides_path, out_dir):
                      fields=['OperatorId', 'operator_nm', 'OfficeLineId', 'Direction', 'LineAlternative', 'Viechle_num', 'TripId', 'trip_time', 'bitzua_history_start_dt', 'bitzua_history_end_dt', 'erua_hachraga_ind'])
     log(f'משרד: {len(rows):,} שורות ל-{day} (הקובץ עודכן {updated})')
     if not rows:
-        return {'day': day, 'mot_rows': 0, 'note': 'אין שורות בקובץ המשרד ליום הזה'}
+        # לפחות טווח הימים שבקובץ, לריצה הבאה. distinct=true מחזיר ב-data.gov.il
+        # רשימה חלקית בלבד, אז ממיינים (יכול להיות איטי על עשרות מיליוני שורות)
+        span = {}
+        for order in ('asc', 'desc'):
+            try:
+                res = ckan(f'{CKAN}/datastore_search?resource_id={rid}&sort=trip_dt%20{order}&fields=trip_dt&limit=1', timeout=180)['result']
+                span[order] = str((res.get('records') or [{}])[0].get('trip_dt') or '')[:10]
+            except Exception as e:  # noqa: BLE001
+                log(f'  טווח הימים בקובץ ({order}) לא נקרא: {e}')
+        log(f'  טווח הימים בקובץ המשרד: {span.get("asc")} — {span.get("desc")}')
+        note = {'day': day, 'mot_rows': 0, 'mot_file_updated': updated, 'note': 'אין שורות בקובץ המשרד ליום הזה', 'mot_first_day': span.get('asc'), 'mot_last_day': span.get('desc')}
+        json.dump(note, open(f'{out_dir}/mot-bus-{day}.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        return note
     # מפתח: (מק"ט, כיוון, חלופה מנורמלת, HH:MM)
     mot = {}
     dup = 0

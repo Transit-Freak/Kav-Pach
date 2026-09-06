@@ -24,6 +24,7 @@ import io
 import json
 import os
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -31,6 +32,12 @@ CKAN = 'https://data.gov.il/api/3/action'
 OUTDIR = os.environ.get('OUTDIR', 'line-history/data')
 STATE = f'{OUTDIR}/rishui-state.json'
 UA = {'User-Agent': 'kav-bochan-linehistory/1.0', 'Referer': 'https://data.gov.il/'}
+# להורדה ישירה של קובץ שנתי — השרת מחזיר 403 לכותרות "רובוט"; מנסים כמה צורות
+BROWSER = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+           'Accept': 'text/csv,*/*;q=0.8', 'Accept-Language': 'he,en;q=0.8', 'Referer': 'https://data.gov.il/'}
+PAGE = 32000          # מקסימום שורות לקריאה אחת ב-datastore_search
+COMPLETE = 0.7        # היום האחרון בקובץ נחשב מלא רק אם יש בו לפחות 70% מהשורות של היום הגדול בשבוע
+TODAY = datetime.date.today().isoformat()
 
 
 def log(*a):
@@ -41,6 +48,33 @@ def ckan(url, timeout=120):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode('utf-8'))
+
+
+def day_total(rid, day):
+    """כמה שורות יש ברישוי ליום נתון (בלי להוריד אותן)."""
+    flt = urllib.parse.quote(json.dumps({'rishui_date': day}))
+    res = ckan(f'{CKAN}/datastore_search?resource_id={rid}&filters={flt}&fields=office_line_id&limit=1')['result']
+    return int(res.get('total') or 0)
+
+
+def pick_complete_day(rid, day, back=8):
+    """היום האחרון (עד `back` ימים אחורה, באותה שנה) שיש בו רישוי מלא. הקובץ
+    מתמלא במהלך היום, והיום האחרון בו חלקי (מאות שורות במקום אלפים; בשבת יש
+    כמחצית מהשורות של יום חול — וזה מלא). לכן: יום שיש אחריו יום עם שורות —
+    מלא; היום האחרון עם שורות — מלא רק אם יש בו לפחות 70% מהיום הגדול בחלון."""
+    d0 = datetime.date.fromisoformat(day)
+    totals = []
+    for b in range(0, back):
+        d = (d0 - datetime.timedelta(days=b)).isoformat()
+        if d[:4] != day[:4]:
+            break
+        totals.append((d, day_total(rid, d)))
+    mx = max((n for _, n in totals), default=0)
+    latest = next((d for d, n in totals if n > 0), None)
+    for d, n in totals:
+        if n > 0 and (d != latest or n >= COMPLETE * mx):
+            return d, totals
+    return None, totals
 
 
 def resources():
@@ -147,18 +181,13 @@ def daily(day):
     if y not in res:
         raise SystemExit(f'אין משאב רישוי לשנת {y}')
     rid = res[y][0]
-    d0 = datetime.date.fromisoformat(day)
-    rows, used = [], None
-    for back in range(0, 8):
-        d = (d0 - datetime.timedelta(days=back)).isoformat()
-        if int(d[:4]) != y:
-            break
-        rows = fetch_day(rid, d)
-        if rows:
-            used = d
-            break
+    used, totals = pick_complete_day(rid, day)
+    log('שורות רישוי לפי יום: ' + ' · '.join(f'{d}:{n:,}' for d, n in totals))
+    if not used:
+        raise SystemExit(f'אין יום רישוי מלא ב-{day} ובשבוע שלפניו')
+    rows = fetch_day(rid, used)
     if not rows:
-        raise SystemExit(f'אין שורות רישוי ל-{day} ולשבוע שלפניו')
+        raise SystemExit(f'אין שורות רישוי ל-{used}')
     state = jload(STATE, {'d': None, 'm': {}})
     if state.get('d') and used <= state['d']:
         log(f'רישוי {used}: כבר נסרק (המצב עד {state["d"]}) — אין מה לעשות')
@@ -209,52 +238,116 @@ def daily(day):
 
 
 # ---------------------------------------------------------------- מילוי לאחור
+# לכל מק"ט: לכל מצב (סוג, גודל) — התאריך הראשון, האחרון, וכמה ימים. הקבצים
+# גדולים (300–450MB לשנה) ולא בהכרח ממוינים, אז לא שומרים כל יום. שתי דרכים
+# לקרוא שנה: הורדת ה-CSV (מהיר; מופרד ב-'|'), ואם השרת מסרב — דפדוף ב-API
+# (32,000 שורות לקריאה, ~55 קריאות לשנה). שורות של היום עצמו חלקיות ומדולגות.
+def _add(per, mkt, d, key):
+    if d >= TODAY:
+        return
+    st = per[mkt].get(key)
+    if st is None:
+        per[mkt][key] = [d, d, 1]
+    else:
+        if d < st[0]:
+            st[0] = d
+        if d > st[1]:
+            st[1] = d
+        st[2] += 1
+
+
+def _add_rows(per, rows):
+    """שורות (dict) → per. מחזיר (כמה נקלטו, האם יש שדות סוג רכב)."""
+    n = 0
+    for r in rows:
+        if 'VehicleSize_nm' not in r:
+            return n, False
+        d = str(r.get('rishui_date') or '')[:10]
+        mkt = str(r.get('office_line_id') or '').strip()
+        if not mkt or not d:
+            continue
+        _add(per, mkt, d, (clean(r.get('VehicleType_nm')), clean(r.get('VehicleSize_nm'))))
+        n += 1
+    return n, True
+
+
+def year_download(url, per):
+    """זרימה של ה-CSV השנתי (בלי לשמור). השרת מחזיר 403 לכותרות "רובוט", והכתובת
+    ב-e.data.gov.il מפנה לדף כניסה — אז קודם data.gov.il עם כותרות דפדפן, ובודקים
+    שבאמת הגיע CSV עם השדות (ולא HTML). המפריד בקובץ הוא '|' (מזהים מהכותרת)."""
+    urls = []
+    if url.startswith('https://e.data.gov.il/'):
+        urls.append(url.replace('https://e.data.gov.il/', 'https://data.gov.il/', 1))
+    urls.append(url)
+    errors = []
+    for u in urls:
+        for hdr in (BROWSER, UA):
+            try:
+                req = urllib.request.Request(u, headers=hdr)
+                with urllib.request.urlopen(req, timeout=600) as resp:
+                    f = io.TextIOWrapper(resp, encoding='utf-8-sig', errors='replace')
+                    head = f.readline()
+                    delim = '|' if head.count('|') > head.count(',') else ','
+                    names = [h.strip() for h in head.rstrip('\r\n').split(delim)]
+                    if 'office_line_id' not in names or 'rishui_date' not in names:
+                        errors.append(f'{u}: לא CSV של רישוי ({head[:60]!r})')
+                        continue
+                    if 'VehicleSize_nm' not in names:
+                        return 0
+                    rd = csv.DictReader(f, fieldnames=names, delimiter=delim)
+                    n = 0
+                    for r in rd:
+                        n += 1
+                        d = (r.get('rishui_date') or '')[:10]
+                        mkt = str(r.get('office_line_id') or '').strip()
+                        if mkt and d:
+                            _add(per, mkt, d, (clean(r.get('VehicleType_nm')), clean(r.get('VehicleSize_nm'))))
+                        if n % 500000 == 0:
+                            log(f'  {n:,} שורות…')
+                    return n
+            except urllib.error.HTTPError as e:
+                errors.append(f'{u} ({"דפדפן" if hdr is BROWSER else "רגיל"}): HTTP {e.code}')
+    raise RuntimeError(' · '.join(errors) or 'הורדה נכשלה')
+
+
+def year_paged(rid, per):
+    """דפדוף ב-datastore_search (32,000 שורות לקריאה, ~50 קריאות לשנה)."""
+    offset = n = 0
+    while True:
+        res = ckan(f'{CKAN}/datastore_search?resource_id={rid}&fields=office_line_id,rishui_date,VehicleType_nm,VehicleSize_nm&limit={PAGE}&offset={offset}', timeout=600)['result']
+        recs = res.get('records', [])
+        k, has = _add_rows(per, recs)
+        if not has:
+            return 0
+        n += k
+        if len(recs) < PAGE:
+            return n
+        offset += PAGE
+        if offset % (PAGE * 10) == 0:
+            log(f'  {offset:,} שורות…')
+
+
 def backfill(from_year):
     res = resources()
     years = [y for y in sorted(res) if y >= from_year]
     if not years:
         raise SystemExit('אין משאבים לשנים המבוקשות')
-    # לכל מק"ט: לכל מצב (סוג, גודל) — התאריך הראשון, האחרון, וכמה ימים. הקבצים
-    # גדולים (300–450MB לשנה) ולא בהכרח ממוינים, אז לא שומרים כל יום.
     per = collections.defaultdict(dict)   # mkt → {(t,s): [first, last, n]}
-    unordered = 0
     for y in years:
         rid, url = res[y]
-        log(f'שנה {y}: מוריד {url}')
-        req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=600) as resp:
-            rd = csv.DictReader(io.TextIOWrapper(resp, encoding='utf-8-sig', errors='replace'))
-            n = 0
-            prev_d = ''
-            has = None
-            for r in rd:
-                n += 1
-                if has is None:
-                    has = 'VehicleSize_nm' in r
-                    if not has:
-                        log(f'  אין שדות סוג רכב בקובץ {y} — מדלג')
-                        break
-                d = (r.get('rishui_date') or '')[:10]
-                if d < prev_d:
-                    unordered += 1
-                prev_d = d
-                mkt = str(r.get('office_line_id') or '').strip()
-                if not mkt or not d:
-                    continue
-                key = (clean(r.get('VehicleType_nm')), clean(r.get('VehicleSize_nm')))
-                st = per[mkt].get(key)
-                if st is None:
-                    per[mkt][key] = [d, d, 1]
-                else:
-                    if d < st[0]:
-                        st[0] = d
-                    if d > st[1]:
-                        st[1] = d
-                    st[2] += 1
-                if n % 500000 == 0:
-                    log(f'  {n:,} שורות…')
-            log(f'  {y}: {n:,} שורות · מק"טים עד כה {len(per):,}')
-    log(f'שורות לא בסדר תאריכים: {unordered:,}')
+        n = None
+        for name, fn in (('הורדה', lambda: year_download(url, per)), ('דפדוף', lambda: year_paged(rid, per))):
+            log(f'שנה {y}: {name}…')
+            try:
+                n = fn()
+                break
+            except Exception as e:  # noqa: BLE001
+                log(f'  {name} נכשל: {str(e)[:200]}')
+        if n is None:
+            raise SystemExit(f'שנה {y}: אף דרך לא עבדה')
+        if n == 0:
+            log(f'  אין שדות סוג רכב בקובץ {y} — מדלג')
+        log(f'  {y}: {n:,} שורות · מק"טים עד כה {len(per):,}')
     files = line_files()
     state = {'d': None, 'm': {}}
     last_d = ''
