@@ -87,6 +87,12 @@ def build_stop_lookup():
     cities = set()
     coords = {}                                # מק"ט -> (lat, lon)
     city_of = collections.defaultdict(set)     # מק"ט -> שמות העיר המנורמלים (כולל כינויים)
+    # תחנה שנולדה אחרי 2012 לא יכולה להיות התחנה של 2012 כשיש לצידה תחנה
+    # ותיקה באותו שם: "מסוף רמז - אשקלון" נפל על המסוף החדש (מק"ט מ-2024)
+    # במקום על הישן, שנקרא אז בדיוק "מסוף-רמז" (שלמה 06.09). לכן נשמרים
+    # תאריך הלידה של כל מק"ט (אירוע 'new' בארכיון) והשמות שנשאה בעבר.
+    born = {}                                  # מק"ט -> תאריך אירוע 'new' המוקדם
+    old_named = collections.defaultdict(set)   # norm(שם ישן) -> מק"טים שנשאו אותו
 
     def add(n, city, mk):
         nn, nc = norm(n), norm(city)
@@ -119,6 +125,10 @@ def build_stop_lookup():
                 for n in (e.get('n'), e.get('nn'), e.get('on')):
                     if n:
                         add(n, e.get('t', ''), mk)
+                if e.get('on'):
+                    old_named[norm(e['on'])].add(mk)
+                if e.get('k') == 'new' and e.get('d'):
+                    born[mk] = min(born.get(mk, '9'), e['d'])
                 if mk not in coords and e.get('la') and e.get('lo'):
                     coords[mk] = (e['la'], e['lo'])
     except Exception:
@@ -129,7 +139,7 @@ def build_stop_lookup():
     for c, items in by_city.items():
         for nn, mk in set(items):
             tok_city[c].append((frozenset(nn.split()), mk))
-    return lk, srt, by_city, cities, coords, tok_city, city_of
+    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named
 
 
 def main():
@@ -170,8 +180,23 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, srt, by_city, cities, coords, tok_city, city_of = build_stop_lookup()
+    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named = build_stop_lookup()
     m_hit = m_tot = 0
+
+    def prefer_old(name, mks):
+        """בין כמה מועמדים: קודם מי שנשא בעבר בדיוק את השם של 2012, ואז מי
+        שלא נולד אחרי 2017 (הארכיון מתחיל ב-2017; לידה מ-2018 ואילך היא
+        אמיתית). מועמד יחיד נשאר כמו שהוא."""
+        if len(mks) <= 1:
+            return mks
+        street = name.rsplit(' - ', 1)[0] if ' - ' in name else name
+        carried = [mk for mk in mks if mk in old_named.get(norm(street), ())]
+        if carried and len(carried) < len(mks):
+            mks = carried
+        old = [mk for mk in mks if born.get(mk, '0') < '2018']
+        if old and len(old) < len(mks):
+            mks = old
+        return mks
     # הצלבות שהוכרעו מחוץ לכלי (צוות סוכנים / אדם): שם תצוגה של 2012 → מק"ט,
     # או null = "אין תחנה כזו היום". גוברות על כל שלב אוטומטי.
     try:
@@ -336,6 +361,8 @@ def main():
                 if cands:
                     mks = [min(cands, key=lambda mk: min(km(coords[mk], c) for c in near))]
                     n_weak += 1
+            if len(mks) > 1:
+                mks = prefer_old(st['name'], mks)
             if len(mks) > 1 and all(mk in coords for mk in mks):
                 n_amb += 1
                 near = [c for j, c in anchors if 0 < abs(j - i) <= 3]

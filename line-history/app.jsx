@@ -2177,6 +2177,29 @@ function Line2012Page({ k12, anchorRd, openLine, onBack }) {
 // שב-2012 היה 548 אחר, של אגד, מקרית מלאכי לבני ברק. הוא לא נעלם מהאתר:
 // הוא נמצא רק בצילום 2012, כי הארכיון של הפיד מתחיל במרץ 2017 והקו כבר לא
 // היה שם. מי שמחפש מספר קו צריך לראות גם את זה.
+// חיפוש בקווי 2012: "1 קרית מלאכי" = מספר קו + טקסט (שלמה 06.09: החיפוש לא
+// מצא כלום, כי המחרוזת כולה הושוותה למספר הקו). התוצאות ממוינות לפי מספר
+// הקו, ומספר מדויק לפני מספר שרק מתחיל כך (חיפוש "קרית מלאכי" החזיר את 301 ראשון).
+function parse12(needle) {
+  const m = /^\s*(\d+[א-ת]?)?\s*(.*)$/.exec(needle || "");
+  return { no: (m && m[1]) || "", text: ((m && m[2]) || "").trim() };
+}
+function match12(v, needle) {
+  const { no, text } = parse12(needle);
+  if (!no && !text) return true;
+  const vno = String(v.no || "");
+  if (no && !(vno === no || (!text && vno.startsWith(no)))) return false;
+  if (text && !((v.dest || "").includes(text) || (v.an || "").includes(text))) return false;
+  return true;
+}
+function lineNum(no) { const m = /^(\d+)/.exec(String(no || "")); return m ? parseInt(m[1], 10) : 1e9; }
+function sort12(list, needle) {
+  const { no } = parse12(needle);
+  return list.slice().sort((a, b) => {
+    if (no) { const ea = String(a.no) === no ? 0 : 1, eb = String(b.no) === no ? 0 : 1; if (ea !== eb) return ea - eb; }
+    return lineNum(a.no) - lineNum(b.no) || String(a.no).localeCompare(String(b.no), "he") || (a.dest || "").localeCompare(b.dest || "", "he");
+  });
+}
 function Res2012({ needle, onOpen }) {
   const [idx12, setIdx12] = useState(null);
   useEffect(() => {
@@ -2186,11 +2209,7 @@ function Res2012({ needle, onOpen }) {
       .then(setIdx12).catch(() => setIdx12({ lines: [] }));
   }, [needle, idx12]);
   if (!needle || !idx12) return null;
-  const num = /^\d/.test(needle);
-  const hit = (v) => num
-    ? String(v.no) === needle || String(v.no).startsWith(needle)
-    : (v.dest || "").includes(needle) || (v.an || "").includes(needle);
-  const list = (idx12.lines || []).filter(hit).slice(0, 12);
+  const list = sort12((idx12.lines || []).filter((v) => match12(v, needle)), needle).slice(0, 12);
   if (!list.length) return null;
   return (
     <div className="r12">
@@ -2319,8 +2338,7 @@ function DayFeed({ idx, openLine, open12, onBack }) {
       <input className="search" type="search" placeholder="סינון: מספר קו, יעד, מפעיל או מק״ט…" value={q} onChange={(e) => setQ(e.target.value)} />
       {yr === "2012" ? (() => {
         if (!a12 || !idx12) return "טוען…";
-        const list12 = rows12.filter((v) =>
-          !needle || String(v.no).includes(needle) || (v.dest || "").includes(needle) || (v.an || "").includes(needle));
+        const list12 = sort12(rows12.filter((v) => match12(v, needle)), needle);
         if (!list12.length) return <div className="empty">אין קווי 2012 תואמים.</div>;
         const linked = list12.filter((v) => v.rd).length;
         return (
