@@ -93,6 +93,7 @@ def build_stop_lookup():
     # תאריך הלידה של כל מק"ט (אירוע 'new' בארכיון) והשמות שנשאה בעבר.
     born = {}                                  # מק"ט -> תאריך אירוע 'new' המוקדם
     old_named = collections.defaultdict(set)   # norm(שם ישן) -> מק"טים שנשאו אותו
+    cur_named = collections.defaultdict(set)   # norm(שם היום) -> מק"טים
 
     def add(n, city, mk):
         nn, nc = norm(n), norm(city)
@@ -111,6 +112,7 @@ def build_stop_lookup():
         state = json.load(open('line-history/data/stops-state.json', encoding='utf-8'))
         for mk, row in state.items():
             add(row[0], row[3] if len(row) > 3 else '', mk)
+            cur_named[norm(row[0])].add(mk)
             if len(row) > 2 and row[1] and row[2]:
                 coords[mk] = (row[1], row[2])
     except Exception:
@@ -155,7 +157,7 @@ def build_stop_lookup():
     for c, items in by_city.items():
         for nn, mk in set(items):
             tok_city[c].append((frozenset(nn.split()), mk))
-    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named, twins
+    return lk, srt, by_city, cities, coords, tok_city, city_of, born, old_named, cur_named, twins
 
 
 def main():
@@ -196,7 +198,7 @@ def main():
     for old in OUT.glob('l*.json'):
         old.unlink()
 
-    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named, twins = build_stop_lookup()
+    lookup, srt, by_city, cities, coords, tok_city, city_of, born, old_named, cur_named, twins = build_stop_lookup()
     m_hit = m_tot = 0
     n_side = 0
 
@@ -246,8 +248,11 @@ def main():
         אמיתית). מועמד יחיד נשאר כמו שהוא."""
         if len(mks) <= 1:
             return mks
-        street = name.rsplit(' - ', 1)[0] if ' - ' in name else name
-        carried = [mk for mk in mks if mk in old_named.get(norm(street), ())]
+        street = norm(name.rsplit(' - ', 1)[0] if ' - ' in name else name)
+        # "נשא את השם": היום או בעבר. רק העבר הביא "בית ספר אזורי" של באר שבע
+        # לתחנה בפרדס חנה שנקראה כך פעם, במקום לזו בנאות חובב שנקראת כך היום
+        # (שלמה 06.09). וזה רק שובר שוויון — הגאוגרפיה של המסלול מכריעה קודם.
+        carried = [mk for mk in mks if mk in old_named.get(street, ()) or mk in cur_named.get(street, ())]
         if carried and len(carried) < len(mks):
             mks = carried
         old = [mk for mk in mks if born.get(mk, '0') < '2018']
@@ -418,8 +423,6 @@ def main():
                 if cands:
                     mks = [min(cands, key=lambda mk: min(km(coords[mk], c) for c in near))]
                     n_weak += 1
-            if len(mks) > 1:
-                mks = prefer_old(st['name'], mks)
             if len(mks) > 1 and all(mk in coords for mk in mks):
                 n_amb += 1
                 near = [c for j, c in anchors if 0 < abs(j - i) <= 3]
@@ -427,8 +430,16 @@ def main():
                     def cost(mk):
                         y, x = coords[mk]
                         return sum((y - b) ** 2 + (x - a) ** 2 for b, a in near)
-                    mks = [min(mks, key=cost)]
+                    best = min(mks, key=cost)
+                    # הגאוגרפיה קודם: מועמדים באותו מקום כמו הקרוב ביותר (עד
+                    # 300 מ׳); ביניהם — מי שנשא את השם ומי שוותיק יותר
+                    close = [mk for mk in mks if km(coords[mk], coords[best]) <= 0.3]
+                    mks = [min(prefer_old(st['name'], close), key=cost)]
                     n_res += 1
+                else:
+                    mks = prefer_old(st['name'], mks)
+            elif len(mks) > 1:
+                mks = prefer_old(st['name'], mks)
             out.append([st['seq'], untrunc(st['name']), st['t'], st['type'], mks]
                        + (list(coords.get(mks[0], ())) if mks else []))
         drop_outliers(out)
