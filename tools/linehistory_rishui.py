@@ -154,19 +154,20 @@ def jdump(obj, p):
 
 
 def apply_to_lines(files, mkt, veh, changes_out):
-    """כותב veh/vt/vsz לכל קובצי הקו של המק"ט; מחזיר כמה קבצים עודכנו."""
+    """כותב veh/vt/vsz לכל קובצי הקו של המק"ט; מחזיר כמה קבצים עודכנו. אירועי
+    הפיד נכתבים תמיד (הפיד נמחק ונבנה מחדש בכל מילוי לאחור), גם כשקובץ הקו
+    כבר מעודכן."""
     n = 0
     for fn in files.get(mkt, []):
         p = f'{OUTDIR}/lines/{fn}'
         lf = jload(p, None)
         if not lf:
             continue
-        if lf.get('veh') == veh:
-            continue
-        lf['veh'] = veh
-        lf['vt'], lf['vsz'] = veh[-1][1], veh[-1][2]
-        jdump(lf, p)
-        n += 1
+        if lf.get('veh') != veh:
+            lf['veh'] = veh
+            lf['vt'], lf['vsz'] = veh[-1][1], veh[-1][2]
+            jdump(lf, p)
+            n += 1
         for d, t, s, pt, ps in changes_out:
             add_change(d, lf, note_for(pt, ps, t, s))
     return n
@@ -197,7 +198,10 @@ def flush_changes():
 
 
 def purge_vehicle_changes():
-    """מוחק את כל אירועי 'vehicle' מהפיד החודשי (לפני מילוי לאחור שכותב אותם מחדש)."""
+    """מוחק את כל אירועי 'vehicle' מהפיד החודשי (לפני מילוי לאחור שכותב אותם מחדש).
+    בתיקייה יש גם פיד תחנות (stops-YYYY-MM.json) עם אותו שדה month — הוא לא
+    חלק מהפיד הזה; המפתח במטמון הוא שם הקובץ, ואירוע 'vehicle' שנכתב אליו בטעות
+    נמחק במקום."""
     n = 0
     for fn in os.listdir(f'{OUTDIR}/changes'):
         if not fn.endswith('.json'):
@@ -207,9 +211,13 @@ def purge_vehicle_changes():
         if not chm or not isinstance(chm.get('changes'), list):
             continue
         keep = [c for c in chm['changes'] if c.get('k') != 'vehicle']
-        n += len(chm['changes']) - len(keep)
+        removed = len(chm['changes']) - len(keep)
+        n += removed
         chm['changes'] = keep
-        _chm[chm.get('month') or fn[:-5]] = (p, chm)
+        if len(fn) == 12 and fn[:-5].replace('-', '').isdigit():      # YYYY-MM.json — פיד הקווים
+            _chm[fn[:-5]] = (p, chm)
+        elif removed:                                                  # stops-YYYY-MM.json — נוקה במקום
+            jdump(chm, p)
     return n
 
 
@@ -472,10 +480,20 @@ def backfill(from_year):
     st_out = {'d': None, 'm': {}}
     last_i = 0
     n_files = n_chg_mkt = n_noise = 0
+    # אבחון הרעש: כמה ימים נמשכו הרצפים הקצרים שסוננו, בין אילו מצבים, ובאיזה
+    # יום בשבוע הם מתחילים (רצף של יום אחד שחוזר כל שבוע = דפוס בקובץ, לא שינוי)
+    noise_len, noise_pat, noise_wd = collections.Counter(), collections.Counter(), collections.Counter()
     for mkt, arr in per.items():
         runs = runs_of(arr)
         cl = clean_runs(runs)
         n_noise += len(runs) - len(cl)
+        for j, r in enumerate(runs):
+            if j != len(runs) - 1 and r[2] < NOISE_DAYS:
+                noise_len[r[2]] += 1
+                prv = SKEYS[runs[j - 1][1]][1] if j else '—'
+                noise_pat[(prv, SKEYS[r[1]][1], SKEYS[runs[j + 1][1]][1])] += 1
+                if r[2] == 1:
+                    noise_wd[(EPOCH + datetime.timedelta(days=r[0])).strftime('%a')] += 1
         veh = [[(EPOCH + datetime.timedelta(days=r[0])).isoformat(), SKEYS[r[1]][0], SKEYS[r[1]][1]] for r in cl]
         cur = veh[-1]
         st_out['m'][mkt] = [cur[1], cur[2], cur[0]]
@@ -488,7 +506,11 @@ def backfill(from_year):
     st_out['d'] = last_d
     jdump(st_out, STATE)
     flush_changes()
-    log(f'מילוי לאחור: {len(per):,} מק"טים · {n_chg_mkt:,} עם שינוי סוג רכב · {n_noise:,} רצפים קצרים סוננו · {n_files:,} קובצי קו עודכנו · {n_clr:,} נוקו · {n_purged:,} אירועים ישנים הוחלפו · המצב עד {last_d}')
+    n_ev = sum(1 for _, chm in _chm.values() for c in chm['changes'] if c.get('k') == 'vehicle')
+    log(f'רצפים קצרים שסוננו — לפי אורך בימים: {dict(sorted(noise_len.items()))}')
+    log(f'  הדפוסים הנפוצים (לפני, הרצף הקצר, אחרי): {noise_pat.most_common(8)}')
+    log(f'  רצפים של יום אחד לפי יום בשבוע: {dict(noise_wd.most_common())}')
+    log(f'מילוי לאחור: {len(per):,} מק"טים · {n_chg_mkt:,} עם שינוי סוג רכב · {n_noise:,} רצפים קצרים סוננו · {n_files:,} קובצי קו עודכנו · {n_clr:,} נוקו · {n_purged:,} אירועים ישנים הוחלפו ב-{n_ev:,} חדשים · המצב עד {last_d}')
 
 
 if __name__ == '__main__':
