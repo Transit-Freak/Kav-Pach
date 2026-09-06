@@ -93,3 +93,6 @@ h1{font-size:32px}
   .rtext{width:100%}
   .ps{grid-template-columns:20px 1fr 44px 70px 52px;gap:5px;font-size:12px}
 }
+/* שמות מסלול ארוכים בטבלאות הקווים — קיצוץ עם שלוש נקודות כדי שכל העמודות ייכנסו */
+#tlines td:nth-child(2),#t-vt td:nth-child(2){max-width:300px;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){#tlines td:nth-child(2),#t-vt td:nth-child(2){max-width:160px}}
