@@ -1,0 +1,19 @@
+name: probe-ckan
+
+# בדיקה חד-פעמית של data.gov.il (הפלט ללוג בלבד, בלי commit): שורות ליום ברישוי,
+# דרכי קריאה של קובץ שנתי, ותאריכי הביצוע הקיימים. הפעלה ידנית בלבד.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: בדיקה
+        run: python3 tools/probe_ckan.py
