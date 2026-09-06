@@ -47,7 +47,7 @@ except ImportError:  # noqa
 FMT = 1
 EARLY, ONTIME, L5, L10, L20 = range(5)          # אינדקסים בקטגוריות
 BUCKETS = [(-120, 'early'), (300, 'ontime'), (600, 'l5'), (1200, 'l10'), (10 ** 9, 'l20')]
-MAX_ABS = 90 * 60                                # איחור/הקדמה מעבר לשעה וחצי — זו לא הנסיעה שבלו"ז (רכב שהוסב לנסיעה אחרת)
+MAX_ABS = 150 * 60                               # איחור/הקדמה מעבר לשעתיים וחצי — זו לא הנסיעה שבלו"ז (רכב שהוסב לנסיעה אחרת)
 SPIKE = 20 * 60                                  # מדידה בודדת שרחוקה מזה משתי שכנותיה — תקלה, לא איחור
 ARRIVE_M = 25                                    # DistanceFromStop עד כאן = הגעה
 MIN_STOPS_RIDE = 2
@@ -250,45 +250,85 @@ def passages(recs, seq, codes=None):
     if has_dist:
         # --- יציאה מהמוצא: הרכב עמד בתחילת המסלול (שתי דגימות לפחות עם אותו מרחק) ואז
         # המרחק התחיל לגדול. דגימה בודדת "במרחק 0" לא נחשבת — המשרד מציב את הרכב
-        # בתחנה 5 דק׳ לפני היציאה (בדיקה 06.09: שיא של 20,849 נסיעות ב-5 דק׳ "מוקדם").
+        # בתחנה 5 דק׳ לפני היציאה (בדיקה 06.09: שיא של 20,849 נסיעות ב-5 דק׳ "מוצא").
+        # נלקחת העמידה האחרונה בתוך 300 המטרים הראשונים (רכב שזז בין רציפים במסוף),
+        # ואיפוס מרחק (ירידה של 100+ מ׳ לפני היציאה — ערכים ישנים מנסיעה קודמת) מתחיל מחדש.
         prev = None
         stat = False
-        for t, p, o in samples:
+        cand = None
+        first_i = 0
+        for i, (t, p, o) in enumerate(samples):
             if prev is not None:
                 t0, p0 = prev
+                if p0 - p > 300 and p0 <= 3000:
+                    # איפוס מרחק בתחילת הנסיעה — ערכים ישנים; מתחילים מחדש מכאן
+                    prev = (t, p)
+                    stat = False
+                    cand = None
+                    first_i = i
+                    continue
                 if p0 <= 300 and abs(p - p0) <= 30:
                     stat = True
-                elif p - p0 > 30:
-                    if stat:
-                        if t - t0 <= 120:
-                            dep = t0 + min(30, (t - t0) // 2)
-                        else:
-                            # פער בשידור בין העמידה לנסיעה: לפי מהירות הלו"ז מהמיקום הראשון בדרך
-                            dep = max(t0, min(t, t - (sched_at(p) - seq[0][3])))
-                    break
+                elif p - p0 > 30 and stat:
+                    if t - t0 <= 120:
+                        cand = t0 + min(30, (t - t0) // 2)
+                    else:
+                        # פער בשידור בין העמידה לנסיעה: לפי מהירות הלו"ז מהמיקום הראשון בדרך
+                        cand = max(t0, min(t, t - (sched_at(p) - seq[0][3])))
+                    stat = False
             prev = (t, p)
-            if p > 300:
+            if p > 3000:
                 break
+        dep = cand
         if dep is None:
-            t, p, o = samples[0]
+            t, p, o = samples[first_i]
             if ARRIVE_M < p <= 3000:
-                # השידור התחיל כשהרכב כבר בדרך, קרוב למוצא: שיערוך אחורה לפי הלו"ז
-                dep = t - (sched_at(p) - seq[0][3])
+                # השידור התחיל כשהרכב כבר בדרך, קרוב למוצא: שיערוך אחורה — לפי המהירות
+                # שנצפתה בדגימות הבאות, ואם אין — לפי הלו"ז
+                v = None
+                for t2, p2, o2 in samples[first_i + 1:first_i + 4]:
+                    if t2 - t >= 30 and p2 > p:
+                        v = (p2 - p) / (t2 - t)
+                        break
+                if v is not None and 2 <= v <= 30:
+                    dep = t - p / v
+                else:
+                    dep = t - (sched_at(p) - seq[0][3])
         if dep is not None:
             out[1] = int(dep)
 
     # --- מעברים בתחנות 2..n. עיקרי: חציית המרחק המצטבר של GTFS על ידי המרחק ששודר
     # (מתחילת הנסיעה), בשיערוך ליניארי בין שתי הדגימות — ובתנאי ש-Order (התחנה
     # האחרונה שבוקרה) מאשר בהמשך שהרכב אכן ביקר בתחנה. Order לבדו הוא לא אמין מיד
-    # אחרי היציאה (בדיקה 06.09: "ביקר ב-2" במרחק 50 מ׳ מהמוצא). משני, כשאין מרחק או
-    # כשאין חצייה: מעבר Order מ-o1 ל-o בין שתי דגימות — אמצע הקטע.
+    # אחרי היציאה (בדיקה 06.09: "ביקר ב-2" במרחק 50 מ׳ מהמוצא) — ערך Order שכבר
+    # הופיע לפני היציאה לא נחשב למעבר. כשהחצייה ומעבר ה-Order רחוקים זה מזה ביותר
+    # מ-5 דק׳ (מרחק שנתקע), מעבר ה-Order קובע. בלי מרחק — מעבר Order, אמצע הקטע.
     start_i = 0
+    pre_o = 1
     if has_dist:
         while start_i < len(samples) and samples[start_i][1] <= ARRIVE_M and (dep is None or samples[start_i][0] <= dep):
+            pre_o = max(pre_o, samples[start_i][2])
             start_i += 1
     sufmax = [0] * (len(samples) + 1)
     for i in range(len(samples) - 1, -1, -1):
         sufmax[i] = max(sufmax[i + 1], samples[i][2])
+    # זמן לפי מעבר Order: תחנה k → (t1, p1, t, p) של הקטע שבו Order הגיע ל-k לראשונה
+    t_ord = {}
+    prev = (dep, 0.0, 1) if dep is not None else None
+    for j in range(start_i, len(samples)):
+        t, p, o = samples[j]
+        if prev is not None:
+            t1, p1, o1 = prev
+            if 1 <= o1 < o and t > t1:
+                for k in range(o1 + 1, min(o, n) + 1):
+                    frac = 0.5
+                    if has_dist and p > p1:
+                        frac = min(max((cum[k - 1] - p1) / (p - p1), 0.0), 1.0)
+                    t_ord[k] = int(t1 + (t - t1) * frac)
+                    if has_dist and j > 0:
+                        FRAC[('off', max(-1000, min(1000, int((cum[k - 1] - p) // 250) * 250)))] += 1
+        if prev is None or o >= prev[2]:
+            prev = (t, p, o)
     if has_dist:
         k = 2
         t1, p1 = (dep, 0.0) if dep is not None else (None, None)
@@ -297,28 +337,21 @@ def passages(recs, seq, codes=None):
             if t1 is not None and p > p1 and t > t1:
                 while k <= n and cum[k - 1] <= p:
                     if cum[k - 1] >= p1 and sufmax[max(j - 1, 0)] >= k:
-                        out[k] = int(t1 + (t - t1) * (cum[k - 1] - p1) / (p - p1))
-                        FRAC['dist'] += 1
+                        tc = int(t1 + (t - t1) * (cum[k - 1] - p1) / (p - p1))
+                        to = t_ord.get(k)
+                        if to is not None and k > pre_o and abs(tc - to) > 300:
+                            out[k] = to
+                            FRAC['conflict'] += 1
+                        else:
+                            out[k] = tc
+                            FRAC['dist'] += 1
                     k += 1
             if t1 is None or p >= p1:
                 t1, p1 = t, p
-    # השלמה לפי מעברי Order (בלי מרחק, או תחנות שהמרחק לא חצה)
-    prev = (dep, 0.0, 1) if dep is not None else None
-    for j in range(start_i, len(samples)):
-        t, p, o = samples[j]
-        if prev is not None:
-            t1, p1, o1 = prev
-            if 1 <= o1 < o and t > t1:
-                for k in range(o1 + 1, min(o, n) + 1):
-                    if k in out:
-                        continue
-                    frac = 0.5
-                    if has_dist and p > p1:
-                        frac = min(max((cum[k - 1] - p1) / (p - p1), 0.0), 1.0)
-                    out[k] = int(t1 + (t - t1) * frac)
-                    FRAC['order'] += 1
-        if prev is None or o >= prev[2]:
-            prev = (t, p, o)
+    for k, to in t_ord.items():
+        if k not in out and (not has_dist or k > pre_o):
+            out[k] = to
+            FRAC['order'] += 1
     return out
 
 
